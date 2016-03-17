@@ -1,0 +1,16 @@
+Organism	Mart	Dataset	KeggCode	Attribute_GOs	Attribute_entrez	biomaRt_Host	E	R
+Arabidopsis	plants_mart	athaliana_eg_gene	ath	go_accession	entrezgene	plants.ensembl.org	ensembl_gene_id	refseq_peptide
+Bovine	ensembl	btaurus_gene_ensembl	bta	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide
+Chicken	ensembl	ggallus_gene_ensembl	gga	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide
+Fly	ensembl	dmelanogaster_gene_ensembl	dme	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide
+Human	ensembl	hsapiens_gene_ensembl	hsa	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide
+Mouse	ensembl	mmusculus_gene_ensembl	mmu	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide
+Rat	ensembl	rnorvegicus_gene_ensembl	rno	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide
+Populus	plants_mart	ptrichocarpa_eg_gene	pop	go_accession	entrezgene	plants.emsembl.org	ensembl_gene_id	refseq_peptide
+Grapevine	plants_mart	vvinifera_eg_gene	vvi	go_accession	entrezgene	plants.ensembl.org	ensembl_gene_id	refseq_peptide
+Worm	ensembl	celegans_gene_ensembl	cel	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide
+Xenopus	ensembl	xtropicalis_gene_ensembl	xla	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide
+Yeast	ensembl	scerevisiae_gene_ensembl	sce	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide
+Zebrafish	ensembl	drerio_gene_ensembl	dre	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide
+
+
