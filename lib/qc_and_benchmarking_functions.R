@@ -1,53 +1,48 @@
 #############################################
 ### QC AND BENCHMARKING FUNCTIONS 
 #############################################
-
-
-generate_heatmap <- function(norm_data){  ## A) Hierarchical clustering routine
-  h_pearson <- hclust(as.dist(1-cor(t(norm_data), method="pearson")), method="complete") #Generates row and column dendrograms
-  h_spearman <- hclust(as.dist(1-cor(norm_data, method="spearman")), method="complete")
-  
-  mycl <- cutree(h_pearson, h=max(h_pearson$height)/1.5)
-  mycolhc <- rainbow(length(unique(mycl)), start=0.1, end=0.9)
-  mycolhc <- mycolhc[as.vector(mycl)] #creates color vector for clusters
- 
-  write_data(mycl, file.path(paths[["Common_results"]]),"cluster_jerarquico_DE.txt")
-    
-  pdf(file.path(paths[['Common_results']], "Heatmap_DE.pdf"), height=12, width=10) #Creates heatmap for entire data set where the obtained clusters are indicated in the color bar.
-    heatmap.2(norm_data, Rowv=as.dendrogram(h_pearson), Colv=as.dendrogram(h_spearman), col=redgreen(75), scale="row", density.info="none", trace="none", RowSideColors=mycolhc)
-  dev.off()  
+checking_filtering_settings <- function(opt){
+  if (opt$minlibraries < 1){
+    stop(cat("Minimum library number to check minimum read counts cannot be less than 1."))
+  }
+  if (opt$reads == 0){
+    cat("Minimum reads option is set to cero. Raw count table will not be filtered.")
+  }
 }
 
 
-clustering_with_zscore <- function(norm_data){
-  data_z <- genescale(norm_data, axis=1, method="Z")
-  cl_z <- kmeans(data_z,3) ## B) Clustering kmeans from normalized data by z-score
+preparing_rlog_PCA <- function(raw_filter){
+  coldata_df <- data.frame(cond=design_vector, each=colnames(raw_filter))
+  rownames(coldata_df) <- colnames(raw_filter)
+  dds <- DESeqDataSetFromMatrix(countData = raw_filter, colData = coldata_df, design = ~ cond)
+  rld <- rlog(dds, blind=FALSE)
+  return(rld)
+}
 
-  write_data(data_z, file.path(paths[["Common_results"]]),"rows-zscore.txt")
-  write_data(cl_z$cluster, file.path(paths[["Common_results"]]),"cluster_kmeans_DE.txt")
-  
-  pdf(file.path(paths[['Common_results']], "plot_groups.pdf"), height=12, width=10) # plot de los agrupamientos
-    plot(data_z, col=cl_z$cluster)
-    points(cl_z$centers, pch="x", cex=1, col="magenta")
-  dev.off()
 
-  pdf(file.path(paths[['Common_results']], "expression_cluster.pdf"), height=12, width=10)
-    par(mfrow=c(2,3)) # 2 x 3 pictures on one plot
-    for(i in 1:3) {
-      matplot(t(data_z[cl_z$cluster==i,]), type = "l" , main=paste("cluster:", i), ylab="Z.score.Exp", xlab="sample")
+labeling_genes <- function(all_genes_df, DEG_pack_columns, is_union_genenames){  
+    coincid_counter <- c()
+  for (i in c(1:nrow(all_genes_df))){
+    is_a_DEG <- as.logical(all_genes_df[i, DEG_pack_columns])  
+      sum_DEGs <- sum(is_a_DEG)
+    if (sum_DEGs <= 1){
+      coincid_counter[i] <- length(is_a_DEG)-sum_DEGs
+    } else {
+      coincid_counter[i] <- sum_DEGs
     }
-  dev.off()
+    if (is_union_genenames[i] == FALSE){
+      is_union_genenames[i] <- "NOT_DEG"
+    }
+    if (is_union_genenames[i] == TRUE){
+        is_union_genenames[i] <- "POSSIBLE_DEG"
+    }
+    if (sum(is_a_DEG)>=opt$minpack_common){
+        is_union_genenames[i] <- "PREVALENT_DEG"
+    }  
+  }
+  return(list(coincid_counter, is_union_genenames))
 }
 
-
-heatmapping_and_clustering <- function(norm_data, genes){     
-  norm_data <- get_specific_dataframe_names(norm_data, rownames(norm_data), genes)
-  norm_data <- as.matrix(na.omit(norm_data)) # Assigns row indices and converts the data into a matrix object.
-
-  generate_heatmap(norm_data)
-
-  clustering_with_zscore(norm_data)    
-}
 
 calculate_percentage_DEGs_in_intersection <- function(raw, x_all){
   genes_raw <- nrow(raw)
@@ -80,10 +75,8 @@ calculate_mean_logFC <- function(extraction_lfcs){
 
 generate_report <- function(all_data, all_LFC_names, genes){
   vector_names <- names(all_data)
-  print(vector_names)
   statistics_report <- NULL
-  union_names <- unite_result_names(all_data)
-  print(head(union_names))   
+  union_names <- unite_result_names(all_data) 
   for (i in c(1:length(all_data))){
     all_results_in_package <- nrow(all_data[[i]])
     percentage_DEGs_in_package <- calculate_percentage_DEGs_in_package_results(raw, all_results_in_package)
@@ -108,5 +101,125 @@ generate_report <- function(all_data, all_LFC_names, genes){
   write.table(statistics_report, file=file.path(paths$root, "statistics_report.txt"), quote=F, sep="\t", row.names = FALSE)  
 }
 
- 
 
+combine_log_fischer <- function(adjp_values){
+  value_range <- (adjp_values > 0) & (adjp_values <= 1)
+  log_adjp <- log(adjp_values[value_range])
+  xi_squared <- (-2) * sum(log_adjp)
+  freedom_degree <- 2 * length(log_adjp)
+  combined_pvalue <- pchisq(xi_squared, freedom_degree, lower.tail = FALSE)
+  if (length(log_adjp) != length(adjp_values)) {
+      warning("Some adjusted p-values probably are set cero in some package")
+  }
+  return(combined_pvalue)
+}
+
+
+calculating_combined_pvalue_per_geneID <-function(final_BIG_table){
+  genenames <- c()
+  combined_pvalues <- c()
+    for (i in c(1:nrow(final_BIG_table))){
+      genenames[i] <- final_BIG_table[i, "Row.names"]
+
+      adjp_values <- as.numeric(final_BIG_table[i, final_FDR_names])
+      if (any(is.na(adjp_values))){
+        combined_pvalues[i] <- "NA"
+      } else {
+      combined_pvalues[i] <- combine_log_fischer(adjp_values)
+    }
+  }
+  
+  combined_pvalues <- as.numeric(combined_pvalues)
+  names(combined_pvalues) <- genenames
+  return(combined_pvalues)
+}
+
+
+
+labeling_comb_pvalue <- function(combined_pvalues){
+  pval_labeling <- c()
+  for (i in c(1:length(combined_pvalues))){
+    if (is.na(combined_pvalues[i])){
+      pval_labeling[i] <- "NOTSIGN"
+    } else{
+    if (combined_pvalues[i] < 0.05){
+      pval_labeling[i] <- "SIGN"
+    }
+    if (combined_pvalues[i] > 0.05){    
+      pval_labeling[i] <- "NOTSIGN"
+    }
+  }}
+  return(pval_labeling)
+}
+
+
+checking_prevalent_criteria <- function(opt, all_data, final_BIG_table, is_union_genenames, all_package_results){
+  if (opt$minpack_common<length(all_data)){
+    common_df <- subset(final_BIG_table, is_union_genenames == "PREVALENT_DEG")
+    x_all <- common_df[,"Row.names"]
+      print("'prevalent DEG' criteria changed")
+   } else {
+       print("'prevalent DEG' criteria maintained")
+       x_all <- calculate_intersection(all_package_results)
+       print(length(x_all))
+   }
+  return(x_all)
+}
+
+
+calculate_sensitivity <- function(True_Pos, False_Neg){
+  sensitivity <- True_Pos/(True_Pos + False_Neg)
+  return(sensitivity)
+}
+
+calculate_specificity <- function(True_Neg, False_Pos){
+  specificity <- True_Neg/(False_Pos + True_Neg)
+  return(specificity)
+} 
+
+calculate_positive_predictive_value_PPV <- function(True_Pos, False_Pos){
+  positive_predictive_value_PPV <- True_Pos/(True_Pos + False_Pos)
+  return(positive_predictive_value_PPV)
+}
+
+calculate_negative_predictive_value_NPV <- function(True_Neg, False_Neg){
+  negative_predictive_value_NPV <- True_Neg/(False_Neg + True_Neg)
+  return(negative_predictive_value_NPV)
+}
+
+calculate_accuracy <- function(True_Pos, True_Neg, False_Pos, False_Neg){
+  negative_predictive_value_NPV <- True_Neg/(False_Neg + True_Neg)
+  return(negative_predictive_value_NPV)
+}
+
+
+
+
+calculating_logFC_mean <- function(final_BIG_table){
+  geneids <- c()
+  mean_logFCs <- c()
+  for (i in c(1:nrow(final_BIG_table))){
+      geneids[i] <- final_BIG_table[i, "Row.names"]
+      logFC_values <- as.numeric(final_BIG_table[i, final_logFC_names])
+      mean_logFCs[i] <- mean(logFC_values)
+  }
+  names(mean_logFCs) <- geneids
+  return(mean_logFCs)
+} 
+
+
+
+creating_genenumbers_barplot <- function(raw, raw_filter, complete_alldata_df, x_all){
+  gene_numbers <- c(nrow(raw), nrow(raw_filter), length(complete_alldata_df), length(x_all))
+  names <- c("Raw counts", "Filtered raw counts","All possible DEGs","Prevalent DEGs")
+  barplot_df <- data.frame(numbers=gene_numbers, cat=names)
+  barplot_df$cat <- factor(barplot_df$cat, levels = barplot_df$cat[order(barplot_df$numbers)])
+  return(barplot_df)
+}
+
+
+creating_top20_table <- function(final_BIG_table){
+  final_BIG_table <- final_BIG_table[order(final_BIG_table["combined_pvalues"]),]
+  best_20_genes <- final_BIG_table[1:20,]
+  write.table(best_20_genes, file=file.path(paths$root, "top20_genes.txt"), quote=F, col.names=NA, sep="\t")
+}

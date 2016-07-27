@@ -1,0 +1,373 @@
+\documentclass{article}
+\usepackage{graphicx}
+%% for inline R code: if the inline code is not correctly parsed, you will see a message
+\newcommand{\rinline}[1]{SOMETHING WRONG WITH knitr}
+%% begin.rcode setup, include=FALSE
+% library(knitr)
+% opts_chunk$set(fig.path='figure/latex-', cache.path='cache/latex-', echo=FALSE)
+%% end.rcode
+\usepackage{graphicx}
+
+\begin{document}
+
+
+\title{DEgenes Hunter - Differential expression analysis report}
+	\maketitle
+
+
+\section{General description of the employed analysis workflow}
+
+
+
+\subsection{Main concepts}
+
+In DEgenes Hunter, genes are labeled according to the following considerations:
+\begin{itemize}
+       \item {\bf Prevalent DEGs}: They are differentially expressed genes (DEGs) considered by all packages employed except for one
+       \item {\bf All possible DEGs}: They are differentially expressed genes considered by at least one of the R-packages but not enough of them to be considered as "prevalent DEGs".
+       \item {\bf Raw counts}: Raw count matrix (without passing through the filtering process) 
+       \item {\bf Filtered raw counts}: Raw count matrix after filtering
+       \item {\bf Filtered out}: Genes discarded during the filtering process
+       \item {\bf Not DEGs}: Genes rejected by all packages (by a minimum of n-1 packages employed if we used more than three algorithms)
+\end{itemize}
+
+
+\section{Data quality control (QC)}
+
+
+<<echo=FALSE>>=
+wd <- getwd()
+@
+
+
+\newif\ifPositive
+
+<<results = "asis">>=
+path <- paste(wd,"/genenumbers.pdf", sep="")
+exists <- file.exists(paste(wd,"/genenumbers.pdf", sep=""))
+if (exists == TRUE) {
+  cat("\\Positivetrue")
+}
+@
+
+\ifPositive
+  \begin{center}
+    \includegraphics[width=1\textwidth]{\Sexpr{path}}
+  \end{center}
+\fi
+
+
+DEgenes Hunter creates box plots and Multidimensional Scaling (MDS) plots before and after normalization of the raw count data to assess the consistence of comparison groups. 
+
+
+\newif\ifPositive
+
+<<results = "asis">>=
+path <- paste(wd,"/boxplot_before_normalization.pdf", sep="")
+exists <- file.exists(paste(wd,"/boxplot_before_normalization.pdf", sep=""))
+if (exists == TRUE) {
+  cat("\\Positivetrue")
+}
+@
+
+\ifPositive
+\subsection{Box plots}
+It is expected that samples belonging to the same treatment appear together at least after normalization, guarantying that the comparison groups are sufficiently different from each other and can be compared.
+\newline This is a boxplot before normalization of the count data (Image extracted from {\bf"boxplot\_before\_normalization.pdf"} file):
+  \begin{center}
+    \includegraphics[width=1\textwidth]{\Sexpr{path}}
+  \end{center}
+\fi
+
+
+
+
+\newif\ifPositive
+
+<<results = "asis">>=
+path <- paste(wd,"/boxplot_normalized_data.pdf", sep="")
+exists <- file.exists(paste(wd,"/boxplot_normalized_data.pdf", sep=""))
+if (exists == TRUE) {
+  cat("\\Positivetrue")
+}
+@
+
+\ifPositive
+This is a boxplot after normalization of the count data (Image extracted from {\bf"boxplot\_normalized\_data.pdf"} file):
+  \begin{center}
+    \includegraphics[width=1\textwidth]{\Sexpr{path}}
+  \end{center}
+\fi
+
+
+
+
+\newif\ifPositive
+
+<<results = "asis">>=
+path <- paste(wd,"/PCAplot.pdf", sep="")
+exists <- file.exists(paste(wd,"/PCAplot.pdf", sep=""))
+if (exists == TRUE) {
+  cat("\\Positivetrue")
+}
+@
+
+\ifPositive
+  \subsection{Principal Component Analysis (PCA) plots}
+
+  This is a PCA plot before normalization of the count data (Image extracted from {\bf"PCAplot.pdf"} file):
+    \begin{center}
+      \includegraphics[width=1\textwidth]{\Sexpr{path}}
+    \end{center}
+  The samples are shown in the 2D plane and distributed by their first two principal components. This type of plot is useful for visualizing the overall effect of experimental covariates and batch effects.
+\fi
+
+
+\newif\ifPositive
+
+<<results = "asis">>=
+path <- paste(wd,"/group_dendrogram.pdf", sep="")
+exists <- file.exists(paste(wd,"/group_dendrogram.pdf", sep=""))
+if (exists == TRUE) {
+  cat("\\Positivetrue")
+}
+@
+
+\ifPositive
+  \subsection{Dendrograms}
+
+    This is an MDS plot before normalization of the count data (Image extracted from {\bf"group\_dendrogram.pdf"} file):
+    \begin{center}
+      \includegraphics[width=1\textwidth]{\Sexpr{path}}
+    \end{center}
+\fi
+
+
+
+\newif\ifPositive
+
+<<results = "asis">>=
+path <- paste(wd,"/group_dendrogram_normalized.pdf", sep="")
+exists <- file.exists(paste(wd,"/group_dendrogram_normalized.pdf", sep=""))
+if (exists == TRUE) {
+  cat("\\Positivetrue")
+}
+@
+
+\ifPositive
+  This is an MDS plot after normalization of the count data (Image extracted from {\bf"group\_dendrogram\_normalized.pdf"} file):
+  \begin{center}
+    \includegraphics[width=1\textwidth]{\Sexpr{path}}
+  \end{center}
+  In case that the samples of the experimental conditions tested are not grouped as expected, perhaps it would be advisable repeating the experiment without the problematic sample(s).
+\fi
+
+
+
+
+\newif\ifPositive
+
+<<results = "asis">>=
+path <- paste(wd,"/MDSplot.pdf", sep="")
+exists <- file.exists(paste(wd,"/MDSplot.pdf", sep=""))
+if (exists == TRUE) {
+  cat("\\Positivetrue")
+}
+@
+
+\ifPositive
+  \subsection{Multidimensional Scaling (MDS) plots}
+
+    This is an MDS plot before normalization of the count data (Image extracted from {\bf"MDSplot.pdf"} file):
+    \begin{center}
+      \includegraphics[width=1\textwidth]{\Sexpr{path}}
+    \end{center}
+\fi
+
+
+
+\newif\ifPositive
+
+<<results = "asis">>=
+path <- paste(wd,"/MDSplot_norm.pdf", sep="")
+exists <- file.exists(paste(wd,"/MDSplot_norm.pdf", sep=""))
+if (exists == TRUE) {
+  cat("\\Positivetrue")
+}
+@
+
+\ifPositive
+  This is an MDS plot after normalization of the count data (Image extracted from {\bf"MDSplot\_norm.pdf"} file):
+  \begin{center}
+    \includegraphics[width=1\textwidth]{\Sexpr{path}}
+  \end{center}
+  In case that the samples of the experimental conditions tested are not grouped as expected, perhaps it would be advisable repeating the experiment without the problematic sample(s).
+\fi
+
+
+\section{Graph outputs of the employed analysis methods}
+
+In this section the different plots concerning every differential gene expression algorithm employed are shown.
+
+
+\newif\ifPositive
+
+<<results = "asis">>=
+path <- paste(wd,"/Results_DESeq2/MA_plot_DESeq2.pdf", sep="")
+exists <- file.exists(paste(wd,"/Results_DESeq2/MA_plot_DESeq2.pdf", sep=""))
+if (exists == TRUE) {
+  cat("\\Positivetrue")
+}
+@
+
+\ifPositive
+  \subsection{DESeq2 MA plot}
+
+    This is the MA plot from DESeq2 package (Image extracted from {\bf"MA\_plot\_DESeq2.pdf"} file):
+    \begin{center}
+      \includegraphics[width=1\textwidth]{\Sexpr{path}}
+    \end{center}
+
+    In DESeq2, the MA-plot shows the log2 fold changes are attributable to a given variable over the mean of normalized counts. Points will be colored red if the adjusted p-value is less than 0.1. Points which fall out of the window are plotted as open triangles pointing either up or down.
+    \newline
+    A table containing the DESeq2 DEGs is provided in {\bf"DEgenes\_DESEq2.txt"}.
+    \newline
+    A table containing the DESeq2 normalized counts is provided in {\bf"Normalized\_counts\_DESEq2.txt"}.
+
+\fi
+
+
+
+\newif\ifPositive
+
+<<results = "asis">>=
+path <- paste(wd,"/Results_edgeR/MA_plot_edgeR.pdf", sep="")
+exists <- file.exists(paste(wd,"/Results_edgeR/MA_plot_edgeR.pdf", sep=""))
+if (exists == TRUE) {
+  cat("\\Positivetrue")
+}
+@
+
+\ifPositive
+  \subsection{edgeR MA plot}
+
+    This is the MA plot from DESeq2 package (Image extracted from {\bf"MA\_plot\_edgeR.pdf"} file):
+    \begin{center}
+      \includegraphics[width=1\textwidth]{\Sexpr{path}}
+    \end{center}
+
+    Differential gene expression data can be visualized as ‘MA’ plots (log ratio versus abundance) where each dot represents a gene. The differentially expressed genes are colored red and the non-differentially expressed ones are colored black.  
+    \newline
+    A table containing the edgeR DEGs is provided in {\bf"DEgenes\_edgeR.txt"}.
+    \newline
+    A table containing the edgeR normalized counts is provided in {\bf"Normalized\_counts\_edgeR.txt"}.
+
+\fi
+
+
+
+
+\newif\ifPositive
+
+<<results = "asis">>=
+path <- paste(wd,"/Results_limma/Volcanoplot_limma.pdf", sep="")
+exists <- file.exists(paste(wd,"/Results_limma/Volcanoplot_limma.pdf", sep=""))
+if (exists == TRUE) {
+  cat("\\Positivetrue")
+}
+@
+
+\ifPositive
+  \subsection{limma Volcanoplot}
+
+    This is the Volcano plot of log-fold changes versus log-odds of differential expression from limma package (Image extracted from {\bf"Volcanoplot\_limma.pdf"} file):
+    \begin{center}
+      \includegraphics[width=1\textwidth]{\Sexpr{path}}
+    \end{center}
+
+    A table containing the limma DEGs is provided in {\bf"DEgenes\_limma.txt"}.
+    \newline
+    A table containing the limma normalized counts is provided in {\bf"Normalized\_counts\_limma.txt"}.
+
+\fi
+
+
+
+
+\newif\ifPositive
+
+<<results = "asis">>=
+path <- paste(wd,"/Results_NOISeq/ExpressionPlot_NOISeq.pdf", sep="")
+exists <- file.exists(paste(wd,"/Results_NOISeq/ExpressionPlot_NOISeq.pdf", sep=""))
+if (exists == TRUE) {
+  cat("\\Positivetrue")
+}
+@
+
+\ifPositive
+  \subsection{NOISeq Expressionplot}
+
+    This is the summary plot for (M,D) values (black) and the differentially expressed genes (red) from the NOISeq package (Image extracted from {\bf"ExpressionPlot.pdf"} file):
+    \begin{center}
+      \includegraphics[width=1\textwidth]{\Sexpr{path}}
+    \end{center}
+
+    A table containing the NOISeq DEGs is provided in {\bf"DEgenes\_NOISeq.txt"}.
+    \newline
+    A table containing the NOISeq normalized counts is provided in {\bf"Normalized\_counts\_NOISeq.txt"}.
+
+\fi
+
+
+
+
+
+\newif\ifPositive
+
+<<results = "asis">>=
+path <- paste(wd,"/Common_results/VennDiagram.pdf", sep="")
+exists <- file.exists(paste(wd,"/Common_results/VennDiagram.pdf", sep=""))
+if (exists == TRUE) {
+  cat("\\Positivetrue")
+}
+@
+
+\ifPositive
+  \section{Graph concerning common results}
+  \subsection{Venn Diagram}
+
+    This is the Venn Diagram of the all possible DEGs encountered in the experiment (Image extracted from {\bf"VennDiagram.pdf"} file):
+    \begin{center}
+      \includegraphics[width=1\textwidth]{\Sexpr{path}}
+    \end{center}
+\fi
+
+
+
+\newif\ifPositive
+
+<<results = "asis">>=
+path <- paste(wd,"/Common_results/padj_prevalent_DEGs.pdf", sep="")
+exists <- file.exists(paste(wd,"/Common_results/padj_prevalent_DEGs.pdf", sep=""))
+if (exists == TRUE) {
+  cat("\\Positivetrue")
+}
+@
+
+\ifPositive
+  \subsection{FDR gene-wise benchmarking}
+
+  Benchmark of false positive calling (Image extracted from {\bf"padj\_prevalent\_DEGs.pdf"} file):
+  \begin{center}
+    \includegraphics[width=1\textwidth]{\Sexpr{path}}
+  \end{center}
+  Estimates of P(p-value $<$ 0.05) under the null hypothesis among prevalent DEGs are shown.  
+\fi
+
+
+The complete results of the DEgenes Hunter differential expression analysis can be found in the "hunter\_results\_file.txt"
+
+
+
+\end{document}
+

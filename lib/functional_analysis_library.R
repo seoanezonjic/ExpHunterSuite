@@ -1,6 +1,16 @@
 #################################################################################
 ############################ FUNCTIONAL ANALYSIS LIBRARY ########################
 #################################################################################
+defining_functional_hunter_subfolders <- function(opt){
+  subfolders <- c()
+  if (grepl("G", opt$functional_analysis)){
+    subfolders <- c(subfolders, 'Results_topGO')
+  }
+  if (grepl("K", opt$functional_analysis)){
+    subfolders <- c(subfolders, 'Results_KEGG')
+  }
+}
+
 
 obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, attr){
     query <- NULL
@@ -24,7 +34,6 @@ getting_information_with_BiomaRt <- function(orthologues, id_type, mart, dataset
 
 perform_GSEA_analysis <- function(interesting_genenames, DEG_annot_table, ontology, graphname){
     geneID2GO <- split(DEG_annot_table$go_accession, DEG_annot_table[,opt$biomaRt_filter])
-
     geneID2GO <- lapply(geneID2GO, unique)
     geneNames <- names(geneID2GO)
     geneList <- factor(as.integer(geneNames %in% interesting_genenames))
@@ -32,6 +41,15 @@ perform_GSEA_analysis <- function(interesting_genenames, DEG_annot_table, ontolo
 
     GOdata <- new("topGOdata", ontology =ontology, allGenes = geneList, annot=annFUN.gene2GO, gene2GO = geneID2GO)
     resultFis <- runTest(GOdata, algorithm = "classic", statistic = "fisher") 
+
+    resultKS <- runTest(GOdata, algorithm = "classic", statistic = "ks")
+    resultKS.elim <- runTest(GOdata, algorithm = "elim", statistic = "ks")
+
+    allRes <- GenTable(GOdata, classicFisher = resultFis,
+        classicKS = resultKS, elimKS = resultKS.elim,
+        orderBy = "elimKS", ranksOf = "classicFisher", topNodes = length(GOdata@graph@nodes))
+
+    write.table(allRes, file=file.path(paths$root, "allResGOs.txt"), quote=F, col.names=NA, sep="\t")
 
     pdf(file.path(paths, graphname), w=11, h=8.5)
         showSigOfNodes(GOdata, score(resultFis), firstSigNodes = 10, useInfo = 'all')
@@ -84,7 +102,6 @@ getting_number_geneIDs <- function(mart, dataset, host, biomaRt_filter){
 
 
 find_interesting_pathways <- function(biomaRt_organism_info, genes_of_interest){
-    print(length(genes_of_interest))
     pathway_pval <- list()
     complete_pathway_df <- NULL
     EC_number<- character(0)
@@ -97,7 +114,7 @@ find_interesting_pathways <- function(biomaRt_organism_info, genes_of_interest){
     total_genes <- getting_number_geneIDs(mart = as.character(biomaRt_organism_info[,"Mart"]),as.character(biomaRt_organism_info[,"Dataset"]), organism_host, opt$biomaRt_filter)
     total_pathways <- length(pathway_codes)
 
-    for(i in seq(1, total_pathways, by=10 )){ # We get paths from kegg by packages of 10
+    for(i in c(1:total_pathways)){
         left <- total_pathways - i
         range <- 9
         if(left < range){
@@ -108,23 +125,25 @@ find_interesting_pathways <- function(biomaRt_organism_info, genes_of_interest){
         for(i in 1:10){ #Processing package retrieved from kegg
             genes_in_pathway <- query_genespathway[[1]]$GENE[c(TRUE, FALSE)]
             pVal_for_pathway <- calculate_pvalue(genes_in_pathway, genes_of_interest, total_genes)
-            if(pVal_for_pathway < 0.05){                
+            if(pVal_for_pathway < 0.1){                
                 path_name <- query_genespathway[[1]]$ENTRY
                 EC_list <- keggGet(path_name)[[1]]$GENE
-                number_genes <- c(1:length(genes_in_pathway))
-                even_number_v <- number_genes[number_genes%%2==0]
-                odd_number_v <- number_genes[number_genes%%2!=0]
-                real_genes_number <- length(number_genes)/2
-                for (i in c(1:real_genes_number)){
-                    line_EC <- as.vector(unlist(EC_list[[even_number_v[i]]]))
-                    EC_number <- str_match(line_EC, "(EC\\:[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)")
-                    EC_number <- EC_number[1]
-                    if (length(EC_number) != 0){
-                       entrez_ID <- unlist(EC_list[[odd_number_v[i]]])
-                       complete_pathway_df <- rbind(complete_pathway_df, data.frame(pathway = path_name, 
-                       entrez = entrez_ID, EC = EC_number, row.names = NULL))
-                    } 
-                }
+                if (!is.null(EC_list)){
+                    number_genes <- c(1:length(genes_in_pathway))
+                    even_number_v <- number_genes[number_genes%%2==0]
+                    odd_number_v <- number_genes[number_genes%%2!=0]
+                    real_genes_number <- length(number_genes)/2
+                    if (length(even_number_v != 0)){
+                        for (i in c(1:real_genes_number)){
+                            line_EC <- as.vector(unlist(EC_list[[even_number_v[i]]]))
+                            EC_number <- str_match(line_EC, "(EC\\:[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)")
+                            EC_number <- EC_number[1]
+                            if (length(EC_number) != 0){
+                                entrez_ID <- unlist(EC_list[[odd_number_v[i]]])
+                                complete_pathway_df <- rbind(complete_pathway_df, data.frame(pathway = path_name, 
+                                entrez = entrez_ID, EC = EC_number, row.names = NULL))
+                            } 
+                }   }    }
             }
         }
     } 
@@ -158,7 +177,7 @@ for (i in 1:nrow(kegg_info)) {
         if(record$pathway != curret_pathway ||  i == nrow(kegg_info)){
                 # Add row to report table
                 if(i > 1){
-                        pathway_name <- '' # Habría que definirlo, por ahora no lo uso
+                        pathway_name <- '' 
                         row_table <- paste('<tr><td><a href="http://www.kegg.jp/kegg-bin/show_pathway?',
                                                 curret_pathway,
                                                 '/default%3d',
@@ -166,7 +185,7 @@ for (i in 1:nrow(kegg_info)) {
                                                 '/',
                                                 paste(unique(current_ec), collapse='%09/,'),
                                                 '">',
-                                                curret_pathway, # esto cambiar por pathway_name cuando se pueda
+                                                curret_pathway,
                                                 '</a></td></tr>',
                                                 sep='')
 
@@ -191,5 +210,21 @@ report = paste(report, '</table>',
         sep="\n")
 
 write(report, file = file.path(paths, name), sep='')
+}
+
+
+
+
+generate_FA_report <- function(){
+  template_path_functional_report <- file.path(main_path_script, 'templates', 'generate_functional_report.tex')
+  current_template_path_functional <- file.path(paths$root, 'generate_functional_report.tex')
+  latex_file_path_FA <- file.path(paths$root, 'Functional_analysis_report.tex')
+
+  file.copy(template_path_functional_report, paths$root, overwrite = TRUE)
+  opts_chunk$set(echo=FALSE)
+  knit(current_template_path_functional , output = latex_file_path_FA)
+
+  cmd <- paste('pdflatex', latex_file_path_FA, sep=' ')
+  system(cmd)
 }
 
