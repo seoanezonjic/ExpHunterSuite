@@ -14,9 +14,11 @@
 * R version 3.2.3 or higher and Bioconductor 3.0 or higher
 * LaTeX 	
 
+
 Included:
-	* main program scripts (degenes_Hunter.R and functional_Hunter.R)
-	* all functional libraries:
+	
+	* Main program scripts (degenes_Hunter.R and functional_Hunter.R)
+	* All functional libraries:
 		* general_functions.R
 		* dif_expression_packages.R
 		* qc_and_benchmarking_functions.R
@@ -24,7 +26,7 @@ Included:
 	* Table with all organisms provided: biomaRt_organism_table.txt
 	* This README
 	* Example data set (example_count_data.txt)
-	* Example output of a differential analysis report dumped out by DEgenes Hunter (example_report.pdf)
+	* Example output of a differential analysis report dumped out by DEgenes Hunter (example_DE_report.pdf)
 	* Example output of a functional analysis report dumped out by DEgenes Hunter (example_functional_report.pdf)
 
 
@@ -98,8 +100,9 @@ Launching example:
 		 Please indicate column names of control samples separated by commas
 	-T - Columns considered as treatment samples in the count table provided with -i. 
 		 Please indicate column names of treatment samples separated by commas
-	-o - Output path
 
+	-o - Output path
+	  (optional) Output folder. Default = "hunter_DE_results"
 	-r 0 | any whole number
 	  (optional) Number of minimum reads required. Lesser number of reads are discarded. -r 0 = No filtering. 
 	  By default, reads less than 2 are discarded.
@@ -199,7 +202,7 @@ Launching example:
 	(required) Specify the path to the degenes_Hunter.R output file "complete_genes_statistics.txt", the model organism, the type of gene identifier and the path to the output folder
 
 	-i - Path to the DEgenes Hunter's differential expression 
-		 analysis output file "complete_genes_statistics.txt"
+		 analysis output file "hunter_results_table.txt"
 	-m - Ortologue species to be used as model organism to perform the functional analysis with.
 	-t E | R
 		 Gene ID provided. E = ENSEMBLE gene ID, R = REFSEQ peptide. Default = E.

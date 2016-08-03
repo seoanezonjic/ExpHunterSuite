@@ -341,7 +341,7 @@ all_genes_df <- unite_all_list_dataframes(all_counts_for_plotting, all_FDR_names
 complete_alldata_df <- unite_all_rownames_from_dataframes_list(all_data)
 
 final_BIG_table <- creating_final_BIG_table(all_counts_for_plotting, complete_alldata_df, all_FDR_names, all_LFC_names, final_logFC_names, final_FDR_names, all_data, DEG_pack_columns)
-write.table(final_BIG_table, file=file.path(paths[["Common_results"]], "hunter_results_file.txt"), quote=F, col.names=T, sep="\t", row.names=F)
+write.table(final_BIG_table, file=file.path(paths[["Common_results"]], "hunter_results_table.txt"), quote=F, col.names=T, sep="\t", row.names=F)
 
 
 ################################################################

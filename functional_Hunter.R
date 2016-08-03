@@ -38,7 +38,7 @@ biomaRt_query_info <- read.table(file.path(main_path_script, "lib/biomaRt_organi
 #------------------------------------------------
 
 option_list <- list(
-	make_option(c("-i", "--input_hunter_file"), type="character", default="hunter_DE_results/Common_results/hunter_results_file.txt",
+	make_option(c("-i", "--input_hunter_file"), type="character", default="hunter_DE_results/Common_results/hunter_results_table.txt",
 		help="DEgenes Hunter's differential expression analysis output file"), 
   make_option(c("-c", "--countdata_file"), type="character", default="hunter_DE_results/filtered_count_data.txt",
     help="Filtered count data file"), 
@@ -185,7 +185,7 @@ if (module_selected == TRUE){
     perform_GSEA_analysis(pos_logFC_common_DEGs, union_annot_DEGs_df, "BP", "GOgraph_preval_overex_BP.pdf")
     perform_GSEA_analysis(neg_logFC_common_DEGs, union_annot_DEGs_df, "BP", "GOgraph_preval_underex_BP.pdf")
 
-    perform_GSEA_analysis(as.character(DEG_annot_table$Row.names), reference_table, "BP", "GOgraph_allpos_BP.pdf")
+    perform_GSEA_analysis(union_DEGs, reference_table, "BP", "GOgraph_allpos_BP.pdf")
     perform_GSEA_analysis(pos_logFC_union_DEGs, reference_table, "BP", "GOgraph_allpos_overex_BP.pdf")
     perform_GSEA_analysis(neg_logFC_union_DEGs, reference_table, "BP", "GOgraph_allpos_underex_BP.pdf")    
   }
@@ -196,7 +196,7 @@ if (module_selected == TRUE){
     perform_GSEA_analysis(pos_logFC_common_DEGs, union_annot_DEGs_df, "CC", "GOgraph_preval_overex_CC.pdf")
     perform_GSEA_analysis(neg_logFC_common_DEGs, union_annot_DEGs_df, "CC", "GOgraph_preval_underex_CC.pdf")
 
-    perform_GSEA_analysis(as.character(DEG_annot_table$Row.names), reference_table, "CC", "GOgraph_allpos_CC.pdf")
+    perform_GSEA_analysis(union_DEGs, reference_table, "CC", "GOgraph_allpos_CC.pdf")
     perform_GSEA_analysis(pos_logFC_union_DEGs, reference_table, "CC", "GOgraph_allpos_overex_CC.pdf")
     perform_GSEA_analysis(neg_logFC_union_DEGs, reference_table, "CC", "GOgraph_allpos_underex_CC.pdf")    
   }
