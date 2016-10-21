@@ -224,17 +224,19 @@ get_specific_condition_dataframe_names <- function(dataframe, selected_names_con
 
 ####################### preparing complete_genes_statistics #################################
 
-unite_all_list_dataframes <- function(all_counts_for_plotting, all_FDR_names, all_LFC_names, final_logFC_names, final_FDR_names){
+unite_all_list_dataframes <- function(all_counts_for_plotting, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names){
     all_genes_df <- as.data.frame(all_counts_for_plotting[[1]])
-    all_genes_df <- all_genes_df[c(all_LFC_names[1], all_FDR_names[1])]
+    all_genes_df <- all_genes_df[c(all_LFC_names[1], all_FDR_names[1], all_pvalue_names[1])]
     colnames(all_genes_df)[colnames(all_genes_df)==all_LFC_names[1]] <- final_logFC_names[1]
     colnames(all_genes_df)[colnames(all_genes_df)==all_FDR_names[1]] <- final_FDR_names[1]
+    colnames(all_genes_df)[colnames(all_genes_df)==all_pvalue_names[1]] <- final_pvalue_names[1]
 
     for (i in c(2:length(all_counts_for_plotting))){  
          next_all_genes_df <- as.data.frame(all_counts_for_plotting[[i]])
-         next_all_genes_df <- next_all_genes_df[c(all_LFC_names[i], all_FDR_names[i])]
+         next_all_genes_df <- next_all_genes_df[c(all_LFC_names[i], all_FDR_names[i], all_pvalue_names[i])]
          colnames(next_all_genes_df)[colnames(next_all_genes_df)==all_LFC_names[i]] <- final_logFC_names[i] 
          colnames(next_all_genes_df)[colnames(next_all_genes_df)==all_FDR_names[i]] <- final_FDR_names[i]
+         colnames(next_all_genes_df)[colnames(next_all_genes_df)==all_pvalue_names[i]] <- final_pvalue_names[i]
          all_genes_df <- merge(all_genes_df, next_all_genes_df, by="row.names") #o bin by=0, all=TRUE
          rownames_all <- all_genes_df[,1]
          all_genes_df[1] <- NULL
@@ -319,7 +321,7 @@ generate_DE_report <- function(){
 }
 
 
-creating_final_BIG_table <- function(all_counts_for_plotting, complete_alldata_df, all_FDR_names, all_LFC_names, final_logFC_names, final_FDR_names, all_data, DEG_pack_columns){
+creating_final_BIG_table <- function(all_counts_for_plotting, complete_alldata_df, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, all_data, DEG_pack_columns){
   
   is_union_genenames <- rownames(all_genes_df) %in% complete_alldata_df  #checking which genes are union results
   names(is_union_genenames) <- rownames(all_genes_df)
@@ -337,10 +339,33 @@ creating_final_BIG_table <- function(all_counts_for_plotting, complete_alldata_d
   coincidences <- as.data.frame(coincid_counter)
   final_BIG_table <- cbind(final_BIG_table, coincidences)
 
-  combined_pvalues <- calculating_combined_pvalue_per_geneID(final_BIG_table)
+  combined_pvalues <- calculating_combined_pvalue_per_geneID(final_BIG_table, final_FDR_names)
   combined_pvalues_column <- as.data.frame(combined_pvalues)
   final_BIG_table <- merge(final_BIG_table, combined_pvalues_column, by.x="Row.names", by.y="row.names")
+  print(head(final_BIG_table))
 
+  combined_nominal_pvalues <- calculating_combined_nominal_pvalue_per_geneID(final_BIG_table, final_pvalue_names)
+  combined_nominal_pvalues_column <- as.data.frame(combined_nominal_pvalues)
+  final_BIG_table <- merge(final_BIG_table, combined_nominal_pvalues_column, by.x="Row.names", by.y="row.names")
+  print(head(final_BIG_table))
+
+  final_BIG_table$BH = p.adjust(final_BIG_table$combined_nominal_pvalues, method = "BH")
+  print(head(final_BIG_table))
+
+  final_BIG_table$Bonferroni = p.adjust(final_BIG_table$combined_nominal_pvalues, method = "bonferroni")
+  print(head(final_BIG_table))
+
+  final_BIG_table$Holm = p.adjust(final_BIG_table$combined_nominal_pvalues, method = "holm")
+  print(head(final_BIG_table))
+
+  final_BIG_table$Hochberg = p.adjust(final_BIG_table$combined_nominal_pvalues, method = "hochberg")
+  print(head(final_BIG_table))
+
+  final_BIG_table$Hommel = p.adjust(final_BIG_table$combined_nominal_pvalues, method = "hommel")
+  print(head(final_BIG_table))
+
+  final_BIG_table$BY = p.adjust(final_BIG_table$combined_nominal_pvalues, method = "BY")
+  print(head(final_BIG_table))  
 
   ################### combined pvalue labeling ##############
   pval_labeling <- labeling_comb_pvalue(combined_pvalues) #checks if combined pvalue is < 0.05 (significative)

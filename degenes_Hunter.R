@@ -23,6 +23,7 @@ suppressPackageStartupMessages(library(optparse))
 suppressPackageStartupMessages(library(stringr))
 suppressPackageStartupMessages(library(plyr))
 suppressPackageStartupMessages(library(knitr))
+suppressPackageStartupMessages(library(FSA))
 
 # Load custom libraries
 source(file.path(main_path_script, 'lib', 'general_functions.R'))
@@ -140,11 +141,6 @@ if (opt$reads != 0){
 # Quality Control graphs BEFORE normalization 
 #-----------------------------------------
 
-pdf(file.path(paths$root, "group_dendrogram.pdf"), w=11, h=8.5)
-  rawt <- t(raw)
-  hc <- hclust(dist(rawt), "ave")
-  plot(hc)
-dev.off()
 
 pdf(file.path(paths$root, "boxplot_rawcounts_distribution.pdf"), w=8.5, h=6) #simple boxplot to see overall counts' distribution
   boxplot(raw_filter)
@@ -183,6 +179,7 @@ all_LFC_names <- c()
 all_pvalue_names <- c()
 final_logFC_names <- c()
 final_FDR_names <- c()
+final_pvalue_names <- c()
 DEG_pack_columns <- c()
 
 
@@ -210,6 +207,7 @@ if (module_selected == TRUE){
     all_FDR_names <- c(all_FDR_names, 'padj')
     all_LFC_names <- c(all_LFC_names, 'log2FoldChange')
     all_pvalue_names <- c(all_pvalue_names, 'pvalue')
+    final_pvalue_names <- c(final_pvalue_names, 'pvalue_DESeq2')
     final_logFC_names <- c(final_logFC_names, 'logFC_DESeq2')
     final_FDR_names <- c(final_FDR_names, 'FDR_DESeq2')
     DEG_pack_columns <- c(DEG_pack_columns, 'DESeq2_DEG')
@@ -241,6 +239,7 @@ if ((replicatesC >= 2)&(replicatesT >= 2)){
       all_FDR_names <- c(all_FDR_names, 'FDR')
       all_LFC_names <- c(all_LFC_names, 'logFC')
       all_pvalue_names <- c(all_pvalue_names, 'PValue')
+      final_pvalue_names <- c(final_pvalue_names, 'pvalue_edgeR')
       final_logFC_names <- c(final_logFC_names, 'logFC_edgeR')
       final_FDR_names <- c(final_FDR_names, 'FDR_edgeR')
       DEG_pack_columns <- c(DEG_pack_columns, 'edgeR_DEG')
@@ -274,6 +273,7 @@ if((replicatesC >= 3)&(replicatesT >= 3)){
       all_FDR_names <- c(all_FDR_names, 'adj.P.Val')
       all_LFC_names <- c(all_LFC_names, 'logFC')
       all_pvalue_names <- c(all_pvalue_names, 'P.Value')
+      final_pvalue_names <- c(final_pvalue_names, 'pvalue_limma')
       final_logFC_names <- c(final_logFC_names, 'logFC_limma')
       final_FDR_names <- c(final_FDR_names, 'FDR_limma')
       DEG_pack_columns <- c(DEG_pack_columns, 'limma_DEG')
@@ -303,7 +303,8 @@ if((replicatesC >= 3)&(replicatesT >= 3)){
     if (!is.null(all_counts_for_plotting[['NOISeq']])){
       all_FDR_names <- c(all_FDR_names, 'adj.p')
       all_LFC_names <- c(all_LFC_names, 'log2FC')
-      all_pvalue_names <- c(all_pvalue_names, 'P.Value')
+      all_pvalue_names <- c(all_pvalue_names, 'prob')
+      final_pvalue_names <- c(final_pvalue_names, 'pvalue_NOISeq')
       final_logFC_names <- c(final_logFC_names, 'logFC_NOISeq')
       final_FDR_names <- c(final_FDR_names, 'FDR_NOISeq')
       DEG_pack_columns <- c(DEG_pack_columns, 'NOISeq_DEG')
@@ -319,11 +320,6 @@ write_data_frames_list(all_counts_for_plotting, 'allgenes_', paths)
 ######### Quality Control graphs AFTER normalization ######
 ##################################################################################################
 
-pdf(file.path(paths$root, "group_dendrogram_normalized.pdf"), w=11, h=8.5)
-  rawt_norm <- t(all_data_normalized[[3]])
-  hc_norm <- hclust(dist(rawt_norm), "ave")
-  plot(hc_norm)
-dev.off()
 
 pdf(file.path(paths$root, "boxplot_normcounts_distribution.pdf"), w=8.5, h=6) #simple boxplot to see overall normalized counts' distribution
   boxplot(all_data_normalized[[1]])
@@ -337,10 +333,10 @@ dev.off()
 #################################### Preparing BIG final table #################################
 
 #### Preparing and creating final table
-all_genes_df <- unite_all_list_dataframes(all_counts_for_plotting, all_FDR_names, all_LFC_names, final_logFC_names, final_FDR_names)
+all_genes_df <- unite_all_list_dataframes(all_counts_for_plotting, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names)
 complete_alldata_df <- unite_all_rownames_from_dataframes_list(all_data)
 
-final_BIG_table <- creating_final_BIG_table(all_counts_for_plotting, complete_alldata_df, all_FDR_names, all_LFC_names, final_logFC_names, final_FDR_names, all_data, DEG_pack_columns)
+final_BIG_table <- creating_final_BIG_table(all_counts_for_plotting, complete_alldata_df, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, all_data, DEG_pack_columns)
 write.table(final_BIG_table, file=file.path(paths[["Common_results"]], "hunter_results_table.txt"), quote=F, col.names=T, sep="\t", row.names=F)
 
 

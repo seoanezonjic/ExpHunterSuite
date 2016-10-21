@@ -115,7 +115,28 @@ combine_log_fischer <- function(adjp_values){
 }
 
 
-calculating_combined_pvalue_per_geneID <-function(final_BIG_table){
+calculating_combined_nominal_pvalue_per_geneID <-function(final_BIG_table, final_pvalue_names){
+  genenames <- c()
+  combined_nominal_pvalues <- c()
+    for (i in c(1:nrow(final_BIG_table))){
+      genenames[i] <- final_BIG_table[i, "Row.names"]
+
+      nominalp_values <- as.numeric(final_BIG_table[i, final_pvalue_names])
+      if (any(is.na(nominalp_values))){
+        combined_nominal_pvalues[i] <- "NA"
+      } else {
+      combined_nominal_pvalues[i] <- combine_log_fischer(nominalp_values)
+    }
+  }
+  
+  combined_nominal_pvalues <- as.numeric(combined_nominal_pvalues)
+  names(combined_nominal_pvalues) <- genenames
+  return(combined_nominal_pvalues)
+}
+
+
+
+calculating_combined_pvalue_per_geneID <-function(final_BIG_table, final_FDR_names){
   genenames <- c()
   combined_pvalues <- c()
     for (i in c(1:nrow(final_BIG_table))){

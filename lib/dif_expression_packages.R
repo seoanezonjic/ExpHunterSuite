@@ -35,6 +35,7 @@ analysis_DESeq2 <- function(raw_filter, replicatesC, replicatesT, opt, lfc, path
 	all_DESeq2_genes <- results(all_genes_DESeq2_object)
 
 	normalized_counts <- as.data.frame(counts(all_genes_DESeq2_object, normalized=TRUE)) # Getting normalized values
+	
 	if ((replicatesC > 1)&(replicatesT > 1)){ # Filtering DEGs by adjusted p-value only when there are replicates available (if not, only a descriptive analysis is performed)
 	  expres_diff <- filter_gene_expression(all_DESeq2_genes, opt$p_val_cutoff, lfc, "padj", "log2FoldChange")
 	}
@@ -49,19 +50,42 @@ analysis_edgeR <- function(raw_filter, replicatesC, replicatesT, opt, lfc, paths
 	# Calculating differential expression
 	d_edgeR <- DGEList(counts=raw_filter, group=groups) # Building edgeR object  
 
-	cols= cols <- as.numeric(d_edgeR$samples$group)+2
+	cols <- as.numeric(d_edgeR$samples$group)+2
+
+	denraw <- cpm(d_edgeR, log=TRUE)
+
+	pdf(file.path(paths[['Results_edgeR']], "group_dendrogram_single.pdf"), w=11, h=8.5)
+	  rawt <- t(denraw)
+	  hc <- hclust(dist(rawt), "single")
+	  plot(hc)
+	dev.off()
+
+
 	pdf(file.path(paths[['Results_edgeR']], "MDSplot.pdf"))
 		plotMDS(d_edgeR, col=cols, main="MDS Plot: Treatment colours")
 	dev.off()
 
 	d_edgeR <- calcNormFactors(d_edgeR) # Calculation of normalization factor
-	
+	d_edgeR <- estimateCommonDisp(d_edgeR) # Estimate dispersions (common dispersion, then tagwise dispersion)
+	d_edgeR <- estimateTagwiseDisp(d_edgeR)
+
+	dennorm <- cpm(d_edgeR, log=TRUE)
+
+	pdf(file.path(paths[['Results_edgeR']], "group_dendrogram_norm_average.pdf"), w=11, h=8.5)
+  		dent_norm <- t(dennorm)
+  		hc_norm <- hclust(dist(dent_norm), "ave")
+  		plot(hc_norm)
+	dev.off()
+
+	pdf(file.path(paths[['Results_edgeR']], "group_dendrogram_norm_single.pdf"), w=11, h=8.5)
+  		dent_norm <- t(dennorm)
+  		hc_norm <- hclust(dist(dent_norm), "single")
+  		plot(hc_norm)
+	dev.off()
+
 	pdf(file.path(paths[['Results_edgeR']], "MDSplot_norm.pdf"))
 		plotMDS(d_edgeR, col=cols, main="MDS Plot: Treatment colours - normalized data")
 	dev.off()
-
-	d_edgeR <- estimateCommonDisp(d_edgeR) # Estimate dispersions (common dispersion, then tagwise dispersion)
-	d_edgeR <- estimateTagwiseDisp(d_edgeR)
 
 	normalized_counts <- cpm(d_edgeR) # Getting normalized counts
 	
