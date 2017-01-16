@@ -20,28 +20,44 @@ preparing_rlog_PCA <- function(raw_filter){
 }
 
 
-labeling_genes <- function(all_genes_df, DEG_pack_columns, is_union_genenames){  
-    coincid_counter <- c()
+counting_trues <- function(all_genes_df, DEG_pack_columns){
+  #print(DEG_pack_columns)
+  summary_DEGs <- c()
   for (i in c(1:nrow(all_genes_df))){
-    is_a_DEG <- as.logical(all_genes_df[i, DEG_pack_columns])  
-      sum_DEGs <- sum(is_a_DEG)
-    if (sum_DEGs <= 1){
-      coincid_counter[i] <- length(is_a_DEG)-sum_DEGs
-    } else {
-      coincid_counter[i] <- sum_DEGs
+    is_a_DEG <- as.logical(all_genes_df[i, DEG_pack_columns])
+    #print(is_a_DEG)
+    sum_DEGs <- sum(is_a_DEG)
+    #print(sum_DEGs)
+    summary_DEGs[i] <- sum_DEGs
+    #print(summary_DEGs)
+    #stopifnot(1>500)
     }
-    if (is_union_genenames[i] == FALSE){
-      is_union_genenames[i] <- "NOT_DEG"
-    }
-    if (is_union_genenames[i] == TRUE){
-        is_union_genenames[i] <- "POSSIBLE_DEG"
-    }
-    if (sum(is_a_DEG)>=opt$minpack_common){
-        is_union_genenames[i] <- "PREVALENT_DEG"
-    }  
-  }
-  return(list(coincid_counter, is_union_genenames))
+  return(summary_DEGs)
 }
+
+tagging_genes <- function(final_BIG_table, opt, DEG_counts, DEG_pack_columns){
+  activated_packages <- length(DEG_pack_columns)
+  tag <- c()
+  counts <- final_BIG_table$DEG_counts
+  print(head(counts))
+  #stopifnot(1>500)
+  for (i in c(1:nrow(final_BIG_table))){
+    #print(DEG_counts[i])
+    #stopifnot(1>500)
+    if (counts[i] == opt$minpack_common){
+      tag[i] <- "PREVALENT_DEG"
+    }
+    else if (counts[i] > 0){
+      tag[i] <- "POSSIBLE_DEG"
+    }
+    else {
+      tag[i] <- "NOT_DEG"
+    }
+    #stopifnot(1>500)
+  }
+  return(tag)
+}
+
 
 
 calculate_percentage_DEGs_in_intersection <- function(raw, x_all){
@@ -135,28 +151,6 @@ calculating_combined_nominal_pvalue_per_geneID <-function(final_BIG_table, final
 }
 
 
-
-calculating_combined_pvalue_per_geneID <-function(final_BIG_table, final_FDR_names){
-  genenames <- c()
-  combined_pvalues <- c()
-    for (i in c(1:nrow(final_BIG_table))){
-      genenames[i] <- final_BIG_table[i, "Row.names"]
-
-      adjp_values <- as.numeric(final_BIG_table[i, final_FDR_names])
-      if (any(is.na(adjp_values))){
-        combined_pvalues[i] <- "NA"
-      } else {
-      combined_pvalues[i] <- combine_log_fischer(adjp_values)
-    }
-  }
-  
-  combined_pvalues <- as.numeric(combined_pvalues)
-  names(combined_pvalues) <- genenames
-  return(combined_pvalues)
-}
-
-
-
 labeling_comb_pvalue <- function(combined_pvalues){
   pval_labeling <- c()
   for (i in c(1:length(combined_pvalues))){
@@ -171,20 +165,6 @@ labeling_comb_pvalue <- function(combined_pvalues){
     }
   }}
   return(pval_labeling)
-}
-
-
-checking_prevalent_criteria <- function(opt, all_data, final_BIG_table, is_union_genenames, all_package_results){
-  if (opt$minpack_common<length(all_data)){
-    common_df <- subset(final_BIG_table, is_union_genenames == "PREVALENT_DEG")
-    x_all <- common_df[,"Row.names"]
-      print("'prevalent DEG' criteria changed")
-   } else {
-       print("'prevalent DEG' criteria maintained")
-       x_all <- calculate_intersection(all_package_results)
-       print(length(x_all))
-   }
-  return(x_all)
 }
 
 
@@ -230,7 +210,8 @@ calculating_logFC_mean <- function(final_BIG_table){
 
 
 
-creating_genenumbers_barplot <- function(raw, raw_filter, complete_alldata_df, x_all){
+creating_genenumbers_barplot <- function(raw, raw_filter, all_data, x_all){
+  complete_alldata_df <- unite_all_rownames_from_dataframes_list(all_data)
   gene_numbers <- c(nrow(raw), nrow(raw_filter), length(complete_alldata_df), length(x_all))
   names <- c("Raw counts", "Filtered raw counts","All possible DEGs","Prevalent DEGs")
   barplot_df <- data.frame(numbers=gene_numbers, cat=names)

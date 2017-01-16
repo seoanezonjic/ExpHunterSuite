@@ -61,13 +61,15 @@ option_list <- list(
     help="Fold Change value. Default=%default"),
   make_option(c("-q", "--q_value"), type="double", default=0.95,
     help="q value for NOISeq package. Default=%default"),
+  make_option(c("-a", "--adjust_method"), type="character", default=c("BH"), #D = DESeq2, E = edgeR, L = limma, N = NOISeq
+    help="Method selection to adjust the combined nominal p-values. By default method Default=%default is performed"),
   make_option(c("-n", "--name_exp"), type="character", default="experiment1",
     help="Type the name of your experiment."),
-  make_option(c("-m", "--modules"), type="character", default=c("DELN"), #D = DESeq2, E = edgeR, L = limma, N = noiseq
+  make_option(c("-m", "--modules"), type="character", default=c("DELN"), #D = DESeq2, E = edgeR, L = limma, N = NOISeq
     help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N= NOISeq).
     By default the following modules Default=%default are performed"),
-  make_option(c("-c", "--minpack_common"), type="integer", default=3,
-    help="Number of minimum package to consider gene as COMMON DEG")
+  make_option(c("-c", "--minpack_common"), type="integer", default=4,
+    help="Number of minimum package to consider a gene as a 'PREVALENT' DEG")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
@@ -76,7 +78,7 @@ lfc <- calculate_lfc(opt)
 
 
 ##########
-
+print("SCRIPT MAGNIFICO 19 NOVIEMBRE!!!")
 
 ############################### INPUT CONTROL #################################
 checking_input(opt)
@@ -88,9 +90,9 @@ replicatesC <- length(ccolumns)
 replicatesT <- length(tcolumns)
 
 if ((sum(replicatesC, replicatesT)<3) & (((grepl("E", opt$modules)) | (grepl("L", opt$modules)) | (grepl("N", opt$modules))))){
-  stop(cat("Not enough replicates to perform analysis with the selected method. Select 'D' with parameter -m"))
+  stop(cat("Not enough replicates to perform an analysis with the selected method. Select 'D' with parameter -m"))
  } else if ((sum(replicatesC, replicatesT)<=5) & ((grepl("L", opt$modules)) | (grepl("N", opt$modules)))){
-  stop(cat("Not enough replicates to perform analysis with the selected method"))
+  stop(cat("Not enough replicates to perform an analysis with the selected method"))
 }
 
 ####################
@@ -334,9 +336,24 @@ dev.off()
 
 #### Preparing and creating final table
 all_genes_df <- unite_all_list_dataframes(all_counts_for_plotting, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names)
-complete_alldata_df <- unite_all_rownames_from_dataframes_list(all_data)
 
-final_BIG_table <- creating_final_BIG_table(all_counts_for_plotting, complete_alldata_df, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, all_data, DEG_pack_columns)
+# complete_alldata_df <- unite_all_rownames_from_dataframes_list(all_data)
+# print(head(complete_alldata_df))
+all_genes_df <- check_deg_in_pck(all_counts_for_plotting, all_data, all_genes_df, DEG_pack_columns)
+
+DEG_counts <- counting_trues(all_genes_df, DEG_pack_columns)
+
+DEG_counts <- as.data.frame(DEG_counts)
+all_genes_df <- cbind(all_genes_df, DEG_counts)
+
+final_BIG_table <- creating_final_BIG_table(all_genes_df, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, opt)
+
+tag <- as.data.frame(tagging_genes(final_BIG_table, opt, DEG_counts, DEG_pack_columns))
+colnames(tag) <- "genes_tag"
+final_BIG_table <- cbind(final_BIG_table, tag)
+
+final_BIG_table <- adding_filtered_transcripts(raw, raw_filter, final_BIG_table)
+
 write.table(final_BIG_table, file=file.path(paths[["Common_results"]], "hunter_results_table.txt"), quote=F, col.names=T, sep="\t", row.names=F)
 
 
@@ -354,7 +371,9 @@ if (length(all_data) > 1){
   dev.off()
 
   ########################
-  x_all <- checking_prevalent_criteria(opt, all_data, final_BIG_table, is_union_genenames, all_package_results)
+  #stopifnot(1>500)
+  x_all <- calculate_intersection(all_package_results)
+
   write_data(x_all, file.path(paths[["Common_results"]]),"Prevalent_geneIDs.txt")
   ##############################
 
@@ -374,7 +393,7 @@ if (length(all_data) > 1){
 
 generate_report(all_data, all_LFC_names, x_all)
 
-barplot_df <- creating_genenumbers_barplot(raw, raw_filter, complete_alldata_df, x_all)
+barplot_df <- creating_genenumbers_barplot(raw, raw_filter, all_data, x_all)
 pdf(file=file.path(paths$root, "genenumbers.pdf"), width=7, height=1.2)
   p <- ggplot(barplot_df, aes(cat, numbers)) + ylab("Number of genes") + xlab("") +
             geom_bar(position="dodge", stat="identity", fill=c("#000034", "red", "orange", "blue"), show.legend=FALSE) + coord_flip() + 
@@ -386,7 +405,6 @@ dev.off()
 creating_top20_table(final_BIG_table)
 
 generate_DE_report()
-
 
 
 
