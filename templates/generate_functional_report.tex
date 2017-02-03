@@ -20,7 +20,7 @@ wd <- getwd()
 	\maketitle
 
 
-\section{General description of the employed analysis workflow}
+\section{General description of the analysis workflow}
 
 
 The functional analysis script is based on the gene ID of the DEGs provided for a model organism. BiomaRt package has been included to get the annotations to perform a gene enrichment analysis of molecular functions, biological processes and cellular components with package topGO and a pathway enrichment study with KEGGREST and web service call to the KEGG database. 
@@ -31,8 +31,8 @@ Results provided from the functional analysis script are gene enrichment graphs 
 
 In DEgenes Hunter, genes are labeled according the following considerations:
   \begin{itemize}
-         \item {\bf Prevalent DEGs}: They are differentially expressed genes (DEGs) considered by all packages employed except for one
-         \item {\bf All possible DEGs}: They are differentially expressed genes considered by at least one of the R-packages but not enough of them to be considered as "prevalent DEGs".
+         \item {\bf Prevalent DEGs}: Differentially expressed genes considered by all packages employed but one.
+         \item {\bf All possible DEGs}: Differentially expressed genes considered by at least one of the R-packages but not enough of them to be considered as "prevalent DEGs".
   \end{itemize}
 
 
@@ -49,7 +49,7 @@ if (exists == TRUE) {
 @
 
 \ifPositive
- \section{GO graphs of all possible DEGs - Molecular Functions (MF)}
+ \section{GO graphs of all possible DEGs: Molecular Functions (MF)}
  \subsection{General GOgraph of all possible DEGs}
  This is the GO graph provided by the topGO package (Image extracted from {\bf"GOgraph\_allpos\_MF.pdf"} file):
   \begin{center}
@@ -90,7 +90,7 @@ if (exists == TRUE) {
 @
 
 \ifPositive
- \subsection{GOgraph showing underexpressed functions from all possible DEGs}
+ \subsection{GOgraph showing ONLY underexpressed functions from all possible DEGs}
   This is the GO graph concerning the underexpressed DEGs from the all possible DEGs (Image extracted from {\bf"GOgraph\_allpos\_underex\_MF.pdf"} file):
   \begin{center}
     \includegraphics[width=1\textwidth]{\Sexpr{path}}
@@ -109,7 +109,7 @@ if (exists == TRUE) {
 @
 
 \ifPositive
- \section{GO graphs of prevalent DEGs - Molecular Functions (MF)}
+ \section{GO graphs of prevalent DEGs: Molecular Functions (MF)}
   \subsection{General GOgraph from prevalent DEGs}
   This is the GO graph concerning the prevalent DEGs (Image extracted from {\bf"GOgraph\_preval\_MF.pdf"} file):
   \begin{center}
@@ -169,7 +169,7 @@ if (exists == TRUE) {
 @
 
 \ifPositive
- \section{GO graphs of all possible DEGs - Biological Process (BP))}
+ \section{GO graphs of all possible DEGs: Biological Process (BP))}
  \subsection{General GOgraph of all possible DEGs}
  This is the GO graph provided by the topGO package (Image extracted from {\bf"GOgraph\_allpos\_BP.pdf"} file):
   \begin{center}
@@ -227,7 +227,7 @@ if (exists == TRUE) {
 @
 
 \ifPositive
- \section{GO graphs of prevalent DEGs - Biological Process (BP))}
+ \section{GO graphs of prevalent DEGs: Biological Process (BP))}
   \subsection{General GOgraph from prevalent DEGs}
   This is the GO graph concerning the prevalent DEGs (Image extracted from {\bf"GOgraph\_preval\_BP.pdf"} file):
   \begin{center}
@@ -286,7 +286,7 @@ if (exists == TRUE) {
 @
 
 \ifPositive
- \section{GO graphs of all possible DEGs - Cellular Components (CC))}
+ \section{GO graphs of all possible DEGs: Cellular Components (CC))}
  \subsection{General GOgraph of all possible DEGs}
  This is the GO graph provided by the topGO package (Image extracted from {\bf"GOgraph\_allpos\_CC.pdf"} file):
   \begin{center}
@@ -346,7 +346,7 @@ if (exists == TRUE) {
 @
 
 \ifPositive
- \section{GO graphs of prevalent DEGs - Cellular Components (CC)}
+ \section{GO graphs of prevalent DEGs: Cellular Components (CC)}
   \subsection{General GOgraph from prevalent DEGs}
   This is the GO graph concerning the prevalent DEGs (Image extracted from {\bf"GOgraph\_preval\_CC.pdf"} file):
   \begin{center}

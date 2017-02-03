@@ -283,24 +283,16 @@ plotting_FDR_values <- function(FDRs, graphname, yaxis){
 }
 
 
-count_coincidences <- function(is_a_DEG, coincid_counter){  
-  sum_DEGs <- sum(is_a_DEG)
-  if (sum_DEGs <= 1){
-    coincid_counter[i] <- length(is_a_DEG)-sum_DEGs
-  } else {
-    coincid_counter[i] <- sum_DEGs
-  }
-  return(coincid_counter)
-}
-
-
 adding_filtered_transcripts <- function(raw, raw_filter, final_BIG_table){
   filtered_rows <- subset(raw, !( rownames(raw) %in% rownames(raw_filter) ))
   df_for_filtered_rows <- as.data.frame(matrix(NA, ncol = ncol(final_BIG_table), nrow = nrow(filtered_rows)))
   cols_final_BIG_table <- colnames(final_BIG_table)
   colnames(df_for_filtered_rows) <- cols_final_BIG_table
   df_for_filtered_rows["Row.names"] <- rownames(filtered_rows)
-  df_for_filtered_rows["is_union_genenames"] <- c(rep("FILTERED_OUT", nrow(df_for_filtered_rows)))
+  df_for_filtered_rows["genes_tag"] <- c(rep("FILTERED_OUT", nrow(df_for_filtered_rows)))
+  #final_BIG_table["genes_tag"] <- c(rep("NA", nrow(final_BIG_table))) #etiqueta provisional resto tabla
+  print(head(df_for_filtered_rows))
+  print(head(final_BIG_table))
   final_BIG_table <- rbind(final_BIG_table, df_for_filtered_rows)
 
   final_BIG_table <- final_BIG_table[order(final_BIG_table["combined_pvalues"]),]
@@ -321,57 +313,26 @@ generate_DE_report <- function(){
 }
 
 
-creating_final_BIG_table <- function(all_counts_for_plotting, complete_alldata_df, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, all_data, DEG_pack_columns){
+creating_final_BIG_table <- function(all_genes_df, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, opt){
   
-  is_union_genenames <- rownames(all_genes_df) %in% complete_alldata_df  #checking which genes are union results
-  names(is_union_genenames) <- rownames(all_genes_df)
-  all_genes_df <- check_deg_in_pck(all_counts_for_plotting, all_data, all_genes_df, DEG_pack_columns)
-
-
-  ############### Establishing gene label requirements and assigning (POSSIBLE, PREVALENT, NOTDEG and FILTERED_OUT) ##########
-  labeling_results <- labeling_genes(all_genes_df, DEG_pack_columns, is_union_genenames) 
-  coincid_counter <- labeling_results[[1]]
-  is_union_genenames <- labeling_results[[2]]
-
-  un_common_rej_df <- as.data.frame(is_union_genenames)
-  final_BIG_table <- merge(un_common_rej_df, all_genes_df, by.x="row.names", by.y="Row.names")
-
-  coincidences <- as.data.frame(coincid_counter)
-  final_BIG_table <- cbind(final_BIG_table, coincidences)
-
-  combined_pvalues <- calculating_combined_pvalue_per_geneID(final_BIG_table, final_FDR_names)
-  combined_pvalues_column <- as.data.frame(combined_pvalues)
-  final_BIG_table <- merge(final_BIG_table, combined_pvalues_column, by.x="Row.names", by.y="row.names")
+  final_BIG_table <- all_genes_df
   print(head(final_BIG_table))
 
   combined_nominal_pvalues <- calculating_combined_nominal_pvalue_per_geneID(final_BIG_table, final_pvalue_names)
   combined_nominal_pvalues_column <- as.data.frame(combined_nominal_pvalues)
   final_BIG_table <- merge(final_BIG_table, combined_nominal_pvalues_column, by.x="Row.names", by.y="row.names")
   print(head(final_BIG_table))
+  #stopifnot(1>500)
 
-  final_BIG_table$BH = p.adjust(final_BIG_table$combined_nominal_pvalues, method = "BH")
-  print(head(final_BIG_table))
-
-  final_BIG_table$Bonferroni = p.adjust(final_BIG_table$combined_nominal_pvalues, method = "bonferroni")
-  print(head(final_BIG_table))
-
-  final_BIG_table$Holm = p.adjust(final_BIG_table$combined_nominal_pvalues, method = "holm")
-  print(head(final_BIG_table))
-
-  final_BIG_table$Hochberg = p.adjust(final_BIG_table$combined_nominal_pvalues, method = "hochberg")
-  print(head(final_BIG_table))
-
-  final_BIG_table$Hommel = p.adjust(final_BIG_table$combined_nominal_pvalues, method = "hommel")
-  print(head(final_BIG_table))
-
-  final_BIG_table$BY = p.adjust(final_BIG_table$combined_nominal_pvalues, method = "BY")
-  print(head(final_BIG_table))  
+  final_BIG_table$combined_pvalues = p.adjust(final_BIG_table$combined_nominal_pvalues, method = opt$adjust_method)
+  #print(head(final_BIG_table))
 
   ################### combined pvalue labeling ##############
-  pval_labeling <- labeling_comb_pvalue(combined_pvalues) #checks if combined pvalue is < 0.05 (significative)
+  pval_labeling <- labeling_comb_pvalue(final_BIG_table$combined_pvalues) #checks if combined pvalue is < 0.05 (significative)
   pval_labeling_col <- as.data.frame(pval_labeling)
   final_BIG_table <- cbind(final_BIG_table, pval_labeling_col)
-
+  #print(head(final_BIG_table))
+  #stopifnot(1>500)
   ################### calculating mean logFC per gene ##############
   mean_logFCs <- calculating_logFC_mean(final_BIG_table)
   logFC_means_column <- as.data.frame(mean_logFCs)
@@ -380,7 +341,7 @@ creating_final_BIG_table <- function(all_counts_for_plotting, complete_alldata_d
   ########################################################
 
   ################## Adding filtered genes ###########
-  final_BIG_table <- adding_filtered_transcripts(raw, raw_filter, final_BIG_table)
+  
   return(final_BIG_table)  
 }
 

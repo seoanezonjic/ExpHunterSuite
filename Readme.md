@@ -11,7 +11,7 @@
 
 ## REQUIREMENTS
 
-* R version 3.2.3 or higher and Bioconductor 3.0 or higher
+* R version R-3.3.1 and Bioconductor 3.4 or higher
 * LaTeX 	
 
 
@@ -104,10 +104,10 @@ Launching example:
 	-o - Output path
 	  (optional) Output folder. Default = "hunter_DE_results"
 	-r 0 | any whole number
-	  (optional) Number of minimum reads required. Lesser number of reads are discarded. -r 0 = No filtering. 
+	  (optional) Number of minimum mapped reads required in order to not be filtered out. Lesser number of reads are discarded. -r 0 = No filtering. 
 	  By default, reads less than 2 are discarded.
 	-l any whole number <= samples provided in the experiment.
-	  (optional) Number of minlibraries in which minimal reads have to be seen to be discarded. 
+	  (optional) Minimum number of mapped reads that must have a transcript in order to not to be filtered 
 	  By default, minimum libraries required are 2.
 	-p value between 0.01 and 0.1
 	  (optional) Adjusted p-value for the differential expression analysis. Default = 0.05
@@ -115,6 +115,8 @@ Launching example:
 	  (optional) Fold Change Value threshold. Default = 1.5
 	-q value between 0.95 and 0.99
 	  (optional) q value threshold for NOISeqBIO analysis. Default = 0.95 (recommended)
+	-a "BH" | "bonferroni" | "holm" | "hochberg" | "hommel" | "BY"
+	  (optional) adjust method for the combined nominal p-values. By default the BH method is performed.
 	-n name of your experiment
 	  (optional) Your experiment name. Default = Experiment1
 	-m D | E | L | N

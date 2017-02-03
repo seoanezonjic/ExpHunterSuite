@@ -15,7 +15,7 @@
 	\maketitle
 
 
-\section{General description of the employed analysis workflow}
+\section{General description of the analysis workflow}
 
 
 
@@ -23,12 +23,12 @@
 
 In DEgenes Hunter, genes are labeled according to the following considerations:
 \begin{itemize}
-       \item {\bf Prevalent DEGs}: They are differentially expressed genes (DEGs) considered by all packages employed except for one
-       \item {\bf All possible DEGs}: They are differentially expressed genes considered by at least one of the R-packages but not enough of them to be considered as "prevalent DEGs".
-       \item {\bf Raw counts}: Raw count matrix (without passing through the filtering process) 
-       \item {\bf Filtered raw counts}: Raw counts matrix after filtering
-       \item {\bf Filtered out}: Genes discarded during the filtering process
-       \item {\bf Not DEGs}: Genes rejected by all packages (by a minimum of n-1 packages employed if we used more than three algorithms)
+       \item {\bf Prevalent DEGs}: Differentially expressed genes considered by all packages employed but one.
+       \item {\bf All possible DEGs}: Differentially expressed genes considered by at least one of the R-packages but not enough of them to be considered as "prevalent DEGs".
+       \item {\bf Raw counts}: A matrix containing the raw counts (without any filtering).
+       \item {\bf Filtered raw counts}: Raw count matrix after filtering.
+       \item {\bf Filtered out}: Genes discarded during the filtering process.
+       \item {\bf Not DEGs}: Genes not considered DEGs in any package (by a minimum of $n-1$ packages employed if we used more than three algorithms).
 \end{itemize}
 
 
@@ -57,7 +57,7 @@ if (exists == TRUE) {
 \fi
 
 
-DEgenes Hunter creates box plots and Multidimensional Scaling (MDS) plots before and after normalization of the raw count data to assess the consistence of comparison groups. 
+DEgenes Hunter creates box plots, principal component (PCA) plots, and multidimensional scaling (MDS) plots before and after raw count normalization to assess the consistence of comparison groups. 
 
 
 \newif\ifPositive
@@ -72,7 +72,7 @@ if (exists == TRUE) {
 
 \ifPositive
 \subsection{Box plots}
-It is expected that samples belonging to the same treatment appear together at least after normalization, guarantying that the comparison groups are sufficiently different from each other and can be compared.
+It is expected that samples belonging to the same treatment appear together at least after normalization, guarantying that the treatment groups to compare are sufficiently different.
 \newline This is a boxplot before normalization of the count data (Image extracted from {\bf"boxplot\_before\_normalization.pdf"} file):
   \begin{center}
     \includegraphics[width=1\textwidth]{\Sexpr{path}}
@@ -159,7 +159,7 @@ if (exists == TRUE) {
   \begin{center}
     \includegraphics[width=1\textwidth]{\Sexpr{path}}
   \end{center}
-  In case that the samples of the experimental conditions tested are not grouped as expected, perhaps it would be advisable repeating the experiment without the problematic sample(s).
+  In case that the samples of the experimental conditions tested are not grouped as expected, it would be advisable repeating the experiment without the problematic sample(s).
 \fi
 
 
@@ -201,13 +201,13 @@ if (exists == TRUE) {
   \begin{center}
     \includegraphics[width=1\textwidth]{\Sexpr{path}}
   \end{center}
-  In case that the samples of the experimental conditions tested are not grouped as expected, perhaps it would be advisable repeating the experiment without the problematic sample(s).
+  In case that the samples of the experimental conditions tested are not grouped as expected, it would be advisable repeating the experiment without the problematic sample(s).
 \fi
 
 
 \section{Graph outputs of the employed analysis methods}
 
-In this section the different plots concerning every differential gene expression algorithm employed are shown.
+Different plots concerning every differential gene expression algorithm are shown.
 
 
 \newif\ifPositive
@@ -228,7 +228,7 @@ if (exists == TRUE) {
       \includegraphics[width=1\textwidth]{\Sexpr{path}}
     \end{center}
 
-    In DESeq2, the MA-plot shows the log2 fold changes are attributable to a given variable over the mean of normalized counts. Points will be colored red if the adjusted p-value is less than 0.1. Points which fall out of the window are plotted as open triangles pointing either up or down.
+    In DESeq2, the MA-plot (log ratio versus abundance) shows the log2 fold changes are attributable to a given variable over the mean of normalized counts. Points will be colored red if the adjusted \emph{p} value is less than 0.1. Points which fall out of the window are plotted as open triangles pointing either up or down.
     \newline
     A table containing the DESeq2 DEGs is provided in {\bf"DEgenes\_DESEq2.txt"}.
     \newline
@@ -256,7 +256,7 @@ if (exists == TRUE) {
       \includegraphics[width=1\textwidth]{\Sexpr{path}}
     \end{center}
 
-    Differential gene expression data can be visualized as ‘MA’ plots (log ratio versus abundance) where each dot represents a gene. The differentially expressed genes are colored red and the non-differentially expressed ones are colored black.  
+    Differential gene expression data can be visualized as MA-plots (log ratio versus abundance) where each dot represents a gene. The differentially expressed genes are colored red and the non-differentially expressed ones are colored black.  
     \newline
     A table containing the edgeR DEGs is provided in {\bf"DEgenes\_edgeR.txt"}.
     \newline
@@ -280,7 +280,7 @@ if (exists == TRUE) {
 \ifPositive
   \subsection{limma Volcanoplot}
 
-    This is the Volcano plot of log-fold changes versus log-odds of differential expression from limma package (Image extracted from {\bf"Volcanoplot\_limma.pdf"} file):
+    This is the volcano plot of log-fold changes versus log-odds (log10 of adjusted \emph{p} values) of differential expression from limma package (Image extracted from {\bf"Volcanoplot\_limma.pdf"} file):
     \begin{center}
       \includegraphics[width=1\textwidth]{\Sexpr{path}}
     \end{center}
