@@ -264,3 +264,13 @@ Output folders tree structure:
 
 
 
+
+DEgenes Hunter was published in:
+
+González Gayte, I., Bautista Moreno, R., Seoane Zonjic, P., & Claros, M. (2017). DEgenes Hunter - A Flexible R Pipeline for Automated RNA-seq Studies in Organisms without Reference Genome. Genomics And Computational Biology, 3(3), e31. doi:http://dx.doi.org/10.18547/gcb.2017.vol3.iss3.e31
+
+
+
+Note to DEgenes Hunter publication:
+
+Bootstraps with fold changes 1.5 and 2.5 were made with a sample size of 50.000 genes. The sample size employed does not affect in any way the results obtained in the paper.
