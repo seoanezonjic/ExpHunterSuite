@@ -136,7 +136,6 @@ analysis_NOISeq <- function(raw_filter, replicatesC, replicatesT, opt, paths){
 	normalized_counts <- tmm(assayData(mydata)$exprs, long = 1000, lc = 1) # Getting normalized counts
 	expres_diff <- degenes(all_NOISeq, q = opt$q_value, M = NULL)
 	expres_diff_all <- as.data.frame(all_NOISeq@results)
-	print(head(expres_diff_all))
 
 	prob_all <- expres_diff_all$prob
 	for (i in c(1:nrow(expres_diff_all))){

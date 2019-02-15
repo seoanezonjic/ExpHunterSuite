@@ -21,16 +21,11 @@ preparing_rlog_PCA <- function(raw_filter){
 
 
 counting_trues <- function(all_genes_df, DEG_pack_columns){
-  #print(DEG_pack_columns)
   summary_DEGs <- c()
   for (i in c(1:nrow(all_genes_df))){
     is_a_DEG <- as.logical(all_genes_df[i, DEG_pack_columns])
-    #print(is_a_DEG)
     sum_DEGs <- sum(is_a_DEG)
-    #print(sum_DEGs)
     summary_DEGs[i] <- sum_DEGs
-    #print(summary_DEGs)
-    #stopifnot(1>500)
     }
   return(summary_DEGs)
 }
@@ -39,11 +34,7 @@ tagging_genes <- function(final_BIG_table, opt, DEG_counts, DEG_pack_columns){
   activated_packages <- length(DEG_pack_columns)
   tag <- c()
   counts <- final_BIG_table$DEG_counts
-  print(head(counts))
-  #stopifnot(1>500)
   for (i in c(1:nrow(final_BIG_table))){
-    #print(DEG_counts[i])
-    #stopifnot(1>500)
     if (counts[i] == opt$minpack_common){
       tag[i] <- "PREVALENT_DEG"
     }
@@ -53,7 +44,6 @@ tagging_genes <- function(final_BIG_table, opt, DEG_counts, DEG_pack_columns){
     else {
       tag[i] <- "NOT_DEG"
     }
-    #stopifnot(1>500)
   }
   return(tag)
 }
@@ -95,6 +85,7 @@ generate_report <- function(all_data, all_LFC_names, genes){
   union_names <- unite_result_names(all_data) 
   for (i in c(1:length(all_data))){
     all_results_in_package <- nrow(all_data[[i]])
+    if(length(all_results_in_package == 0)) next
     percentage_DEGs_in_package <- calculate_percentage_DEGs_in_package_results(raw, all_results_in_package)
     percentage_intersection <- calculate_percentage_DEGs_in_intersection(raw, x_all)
     intersection_number <- length(x_all)

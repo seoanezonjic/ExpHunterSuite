@@ -90,7 +90,9 @@ get_vector_names <- function(all_data){
 calculate_intersection <- function(all_package_results){
   x_all <- all_package_results[[1]]
   for (i in c(2:length(all_package_results))){
-    x_all <- intersect(x_all, all_package_results[[i]])
+    current_package_results <- all_package_results[[i]]
+    if(length(current_package_results) == 0) next
+    x_all <- intersect(x_all, current_package_results)
   }
   return(x_all)
 }
@@ -101,14 +103,14 @@ get_subset_for_fdr_df <- function(all_data, x_all, all_FDR_names){
   all_names <- c()
   vector_names <- names(all_data)
   for (i in c(1:length(all_data))){
-    reduced_dataframe <- get_specific_dataframe_names(all_data[[i]], rownames(all_data[[i]]), x_all)
     package_name <- vector_names[[i]]
+    reduced_dataframe <- get_specific_dataframe_names(all_data[[i]], rownames(all_data[[i]]), x_all)
     fdr_column <-reduced_dataframe[[all_FDR_names[[i]]]]
     all_fdrs <- c(all_fdrs, fdr_column)
     fdr_names <- rep(package_name, length(fdr_column))
     all_names <- c(all_names, fdr_names)
     }
-    intersection_FDR_data <- data.frame(package_name = all_names, fdr= all_fdrs)
+  intersection_FDR_data <- data.frame(package_name = all_names, fdr= all_fdrs)
   return(intersection_FDR_data)
 }
 
@@ -175,7 +177,11 @@ unite_result_names <- function(all_data){
 
 
 get_specific_dataframe_names <- function(dataframe, dataframe_names, selected_names){
-  dataframe_selection<- subset(dataframe, dataframe_names %in% selected_names)
+  if(nrow(dataframe) == 0 || length(dataframe_names) == 0 || length(selected_names) == 0){ # check that inputa data are not empty
+    dataframe_selection <- data.frame()
+  }else{
+    dataframe_selection<- subset(dataframe, dataframe_names %in% selected_names)
+  }
   return(dataframe_selection)
 }
 
@@ -275,10 +281,18 @@ check_deg_in_pck <- function(all_counts_for_plotting, all_data, all_genes_df, DE
 }
 
 
-plotting_FDR_values <- function(FDRs, graphname, yaxis){
+plotting_FDR_values <- function(FDRs, graphname, yaxis){	
   pdf(file.path(paths[["Common_results"]], graphname), w=11, h=8.5)
     p_seguros_Int <- ggplot(FDRs, aes(x = package_name, y = fdr, color = package_name))
-    plot(p_seguros_Int + geom_boxplot(outlier.colour = rgb(0, 0, 0, 0)) + theme_bw(base_size = 30) + geom_point(position = position_jitter(w = 0.1), color = "grey50", size = 1) + geom_hline(aes(yintercept = opt$p_val_cutoff)) + ylab("1 - precision (FDR)") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + xlab("") + scale_colour_discrete(guide = "none") + coord_cartesian(ylim = c(0, yaxis)))
+    plot(p_seguros_Int + geom_boxplot(outlier.colour = rgb(0, 0, 0, 0)) + 
+      theme_bw(base_size = 30) + 
+      geom_point(position = position_jitter(w = 0.1), color = "grey50", size = 1) + 
+      geom_hline(aes(yintercept = opt$p_val_cutoff)) + 
+      ylab("1 - precision (FDR)") + 
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+      xlab("") + 
+      scale_colour_discrete(guide = "none") + 
+      coord_cartesian(ylim = c(0, yaxis)))
   dev.off()    
 }
 
@@ -290,9 +304,6 @@ adding_filtered_transcripts <- function(raw, raw_filter, final_BIG_table){
   colnames(df_for_filtered_rows) <- cols_final_BIG_table
   df_for_filtered_rows["Row.names"] <- rownames(filtered_rows)
   df_for_filtered_rows["genes_tag"] <- c(rep("FILTERED_OUT", nrow(df_for_filtered_rows)))
-  #final_BIG_table["genes_tag"] <- c(rep("NA", nrow(final_BIG_table))) #etiqueta provisional resto tabla
-  print(head(df_for_filtered_rows))
-  print(head(final_BIG_table))
   final_BIG_table <- rbind(final_BIG_table, df_for_filtered_rows)
 
   final_BIG_table <- final_BIG_table[order(final_BIG_table["combined_pvalues"]),]
@@ -316,23 +327,17 @@ generate_DE_report <- function(){
 creating_final_BIG_table <- function(all_genes_df, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, opt){
   
   final_BIG_table <- all_genes_df
-  print(head(final_BIG_table))
 
   combined_nominal_pvalues <- calculating_combined_nominal_pvalue_per_geneID(final_BIG_table, final_pvalue_names)
   combined_nominal_pvalues_column <- as.data.frame(combined_nominal_pvalues)
   final_BIG_table <- merge(final_BIG_table, combined_nominal_pvalues_column, by.x="Row.names", by.y="row.names")
-  print(head(final_BIG_table))
-  #stopifnot(1>500)
 
   final_BIG_table$combined_pvalues = p.adjust(final_BIG_table$combined_nominal_pvalues, method = opt$adjust_method)
-  #print(head(final_BIG_table))
 
   ################### combined pvalue labeling ##############
   pval_labeling <- labeling_comb_pvalue(final_BIG_table$combined_pvalues) #checks if combined pvalue is < 0.05 (significative)
   pval_labeling_col <- as.data.frame(pval_labeling)
   final_BIG_table <- cbind(final_BIG_table, pval_labeling_col)
-  #print(head(final_BIG_table))
-  #stopifnot(1>500)
   ################### calculating mean logFC per gene ##############
   mean_logFCs <- calculating_logFC_mean(final_BIG_table)
   logFC_means_column <- as.data.frame(mean_logFCs)

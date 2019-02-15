@@ -78,7 +78,6 @@ lfc <- calculate_lfc(opt)
 
 
 ##########
-print("SCRIPT MAGNIFICO 19 NOVIEMBRE!!!")
 
 ############################### INPUT CONTROL #################################
 checking_input(opt)
@@ -337,8 +336,6 @@ dev.off()
 #### Preparing and creating final table
 all_genes_df <- unite_all_list_dataframes(all_counts_for_plotting, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names)
 
-# complete_alldata_df <- unite_all_rownames_from_dataframes_list(all_data)
-# print(head(complete_alldata_df))
 all_genes_df <- check_deg_in_pck(all_counts_for_plotting, all_data, all_genes_df, DEG_pack_columns)
 
 DEG_counts <- counting_trues(all_genes_df, DEG_pack_columns)
@@ -371,7 +368,6 @@ if (length(all_data) > 1){
   dev.off()
 
   ########################
-  #stopifnot(1>500)
   x_all <- calculate_intersection(all_package_results)
 
   write_data(x_all, file.path(paths[["Common_results"]]),"Prevalent_geneIDs.txt")
@@ -380,7 +376,6 @@ if (length(all_data) > 1){
   raw_filter_x_all_separate_lfcs <- separate_intersection_logFCs_by_sign(all_data, raw_filter, x_all, all_LFC_names)
   write_data(raw_filter_x_all_separate_lfcs[[1]], file.path(paths[["Common_results"]]),"pos_prevalentDEGs_logFCs.txt")
   write_data(raw_filter_x_all_separate_lfcs[[2]], file.path(paths[["Common_results"]]),"neg_prevalentDEGs_logFCs.txt")
-
   intersection_data <- get_subset_for_fdr_df(all_data, x_all, all_FDR_names)
   plotting_FDR_values(intersection_data, "padj_prevalent_DEGs.pdf" , opt$p_val_cutoff)
 

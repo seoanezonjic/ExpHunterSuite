@@ -142,12 +142,8 @@ if (opt$save_query == TRUE){
 
 common_DEGs_df <- subset(DEG_annot_table, genes_tag=="PREVALENT_DEG")
 common_DEGs <- rownames(common_DEGs_df)
-print(head(common_DEGs))
-#stopifnot(1>500)
 common_annot_DEGs_df <- get_specific_dataframe_names(reference_table, reference_table[,1], common_DEGs)
 common_unique_entrez <- unique(common_annot_DEGs_df[,"entrezgene"])
-print(head(common_annot_DEGs_df))
-#stopifnot(1>500)
 
 union_DEGs_df <- subset(DEG_annot_table, genes_tag=="POSSIBLE_DEG")
 union_DEGs_df <- rbind(common_DEGs_df, union_DEGs_df)
