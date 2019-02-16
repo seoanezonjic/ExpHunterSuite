@@ -41,7 +41,7 @@ option_list <- list(
   make_option(c("-c", "--countdata_file"), type="character", default="hunter_DE_results/filtered_count_data.txt",
     help="Filtered count data file"), 
   make_option(c("-a", "--annot_file"), type="character", default=NULL,
-    help="File with annotations for functional analysis of a non-model organism"),
+    help="Two column file with annotations for functional analysis of a non-model organism. First column must be a gene ensembl id or a refseq id from a model organism. This id must be a orthologue of the gene id of the second column, that is the custom id from a non-model organism (whose functional analysis is desired)"),
   make_option(c("-L", "--List_organisms"), action="store_true", type="logical", default=FALSE, 
     help="List all organisms provided"),
   make_option(c("-m", "--model_organism"), type="character", default=NULL,
