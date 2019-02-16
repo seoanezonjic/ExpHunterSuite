@@ -10,7 +10,6 @@ full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using
               normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', commandArgs())], '='))[2]))
 main_path_script <- dirname(full.fpath)
 
-
 #Loading libraries
 suppressPackageStartupMessages(library(optparse))
 suppressPackageStartupMessages(library(biomaRt)) 
@@ -19,7 +18,6 @@ suppressPackageStartupMessages(library(KEGGREST))
 suppressPackageStartupMessages(library(stringr))
 suppressPackageStartupMessages(library(plyr))
 suppressPackageStartupMessages(library(knitr))
-
 
 # Load custom libraries
 source(file.path(main_path_script, 'lib', 'general_functions.R'))
@@ -38,108 +36,86 @@ biomaRt_query_info <- read.table(file.path(main_path_script, "lib/biomaRt_organi
 #------------------------------------------------
 
 option_list <- list(
-	make_option(c("-i", "--input_hunter_file"), type="character", default="hunter_DE_results/Common_results/hunter_results_table.txt",
-		help="DEgenes Hunter's differential expression analysis output file"), 
+  make_option(c("-i", "--input_hunter_file"), type="character", default="hunter_DE_results/Common_results/hunter_results_table.txt",
+    help="DEgenes Hunter's differential expression analysis output file"), 
   make_option(c("-c", "--countdata_file"), type="character", default="hunter_DE_results/filtered_count_data.txt",
     help="Filtered count data file"), 
-	make_option(c("-a", "--annot_file"), type="character", default=NULL,
-		help="File with annotations for functional analysis of a non-model organism"),
+  make_option(c("-a", "--annot_file"), type="character", default=NULL,
+    help="File with annotations for functional analysis of a non-model organism"),
   make_option(c("-L", "--List_organisms"), action="store_true", type="logical", default=FALSE, 
-      help="List all organisms provided"),
+    help="List all organisms provided"),
   make_option(c("-m", "--model_organism"), type="character", default=NULL,
-    	help="Ortologue Species. Default=%default"),
+    help="Ortologue Species. Default=%default"),
   make_option(c("-t", "--biomaRt_filter"), type="character", default="E",
-      help="IDtype"),       	
-	make_option(c("-f", "--functional_analysis"), type="character", default=c("GK"),
-		help="Selection of type of functional analyses to be performed (G = GO, K = KEGG).
-    By default the following modules Default=%default are performed"),
+    help="IDtype, 'E' for 'ensembl_gene_id' or 'R' for 'refseq_peptide', Default: E"),       	
+  make_option(c("-f", "--functional_analysis"), type="character", default=c("GK"),
+    help="Selection of type of functional analyses to be performed (G = GO, K = KEGG). By default the following modules Default=%default are performed"),
   make_option(c("-G", "--GO_graphs"), type="character", default=c("M"),
     help="Modules to able/disable (M = Molecular Function, B = Biological Process, C = Celular Components). By default Default=%default GO cathegory is performed"),
   make_option(c("-K", "--Kegg_organism"), type="character", default=NULL, 
-      help="Indicate organism to look for in the Kegg database for doing the path enrichment"),
-  make_option(c("-q", "--save_query"), type="logical", default=FALSE,
+    help="Indicate organism to look for in the Kegg database for doing the path enrichment"),
+  make_option(c("-q", "--save_query"), type="logical", default=TRUE,
     help="Save biomaRt query. By default the biomaRt query is saved"), 
-	make_option(c("-o", "--output_files"), type="character", default="",
-    	help="Output path. Default=%default")
+  make_option(c("-o", "--output_files"), type="character", default="",
+    help="Output path. Default=%default")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
 
-###### Input control ######
+###### Parsing input data ######
 if(opt$List_organisms == TRUE){
   print(as.character(rownames(biomaRt_query_info)))
   stop('program ends')
-  } else if (is.null(opt$model_organism)){
-    stop('No model organism indicated. Please indicate the
+} else if (is.null(opt$model_organism)){
+  stop('No model organism indicated. Please indicate the
      model organism using parameter -m. Use -L to list all model organisms available')
 }
 
-
-# Parsing input data 
-#--------------------------------------------------
-
-DEG_annot_table <- read.table(opt$input_hunter_file, header=T, row.names=1, sep="\t")
-
 biomaRt_organism_info <- get_specific_dataframe_names(biomaRt_query_info, rownames(biomaRt_query_info), opt$model_organism)
-
-
 KEGG_enrich_selected <- grepl("K", opt$functional_analysis)
+
 if ((biomaRt_organism_info["KeggCode"] == "NotInKEGG") & (is.null(opt$Kegg_organism)) & (KEGG_enrich_selected==TRUE)){
   stop('This organism is not yet available in the KEGG database. You can select an alternative organism to perform
     the path enrichment analysis using parameter -K. Use -L to list all model organisms available.')
 }
 
-
 if (!is.null(opt$annot_file)){
   annot <- read.table(opt$annot_file, header=F, row.names=NULL, sep="\t")
   reference_table <- annot  
 } else {
+  if(!file.exists(opt$countdata_file)) stop('Count file not exists, check the PATH given to the -c flag')
   reference_table <- read.table(opt$countdata_file, header=T, row.names=NULL, sep="\t")
 }
 
-
 if (opt$biomaRt_filter == "E"){
-  opt$biomaRt_filter <- as.character(biomaRt_organism_info[1,7])
+  opt$biomaRt_filter <- 'ensembl_gene_id'
+  #opt$biomaRt_filter <- as.character(biomaRt_organism_info[1,7])
+}else if (opt$biomaRt_filter == "R"){
+  opt$biomaRt_filter <- 'refseq_peptide'
+  #opt$biomaRt_filter <- as.character(biomaRt_organism_info[1,8])
 }
 
-if (opt$biomaRt_filter == "R"){
-  opt$biomaRt_filter <- as.character(biomaRt_organism_info[1,8])
-}
-
+DEG_annot_table <- read.table(opt$input_hunter_file, header=T, row.names=1, sep="\t")
 
 ############ CREATE FOLDERS #########3
-
 paths <- list()
 dir.create(opt$output_files)
 paths$root <-opt$output_files
 
-
-
-################# PREPROCESSING INPUT DATA FOR FUNCTIONAL ANALYSIS #############
-
-############# Setting biomaRt query #############
-
-#### Setting biomaRt query
+############# BIOMART QUERY  #############
 organism_mart <- as.character(biomaRt_organism_info[,"Mart"])
 organism_dataset <- as.character(biomaRt_organism_info[,"Dataset"])
 organism_host <- as.character(biomaRt_organism_info[,"biomaRt_Host"])
-
-#### Setting biomaRt attributes
-attr <- c(opt$biomaRt_filter, as.character(biomaRt_organism_info[,"Attribute_GOs"]))
-attr <- c(attr, as.character(biomaRt_organism_info[,"Attribute_entrez"]))
-
-
-# Getting biomaRt information
-# -----------------------------------------------
+attr <- c(
+  opt$biomaRt_filter, 
+  as.character(biomaRt_organism_info[,"Attribute_GOs"]),
+  as.character(biomaRt_organism_info[,"Attribute_entrez"])
+)
 
 reference_table <- obtain_info_from_biomaRt(as.character(reference_table[,1]),opt$biomaRt_filter, organism_mart, organism_dataset, organism_host, attr)  
-print(head(reference_table))
-if (opt$save_query == TRUE){
-    query <- reference_table
-    saveRDS(query, file=file.path("query_results_temp"))
-}
+if (opt$save_query == TRUE) saveRDS(reference_table, file=file.path("query_results_temp"))
 
-
+################# PREPROCESSING INPUT DATA FOR FUNCTIONAL ANALYSIS #############
 common_DEGs_df <- subset(DEG_annot_table, genes_tag=="PREVALENT_DEG")
 common_DEGs <- rownames(common_DEGs_df)
 common_annot_DEGs_df <- get_specific_dataframe_names(reference_table, reference_table[,1], common_DEGs)
@@ -150,8 +126,6 @@ union_DEGs_df <- rbind(common_DEGs_df, union_DEGs_df)
 union_DEGs <- rownames(union_DEGs_df)
 
 union_annot_DEGs_df <- get_specific_dataframe_names(reference_table, reference_table[,1], union_DEGs)
-
-
 
 ############ PERFORMING FUNCTIONAL ANALYSIS ######################
 
@@ -200,13 +174,10 @@ if (module_selected == TRUE){
   }
 }
 
-
 module_selected <- grepl("K", opt$functional_analysis)
 
 if (module_selected == TRUE){
-  
   if(!(is.null(opt$Kegg_organism))){ 
-
     Kegg_organism_line <- get_specific_dataframe_names(biomaRt_query_info, rownames(biomaRt_query_info), opt$Kegg_organism)
     biomaRt_KEGG_organism_info["KeggCode"] <- Kegg_organism_line["KeggCode"]
     KEGG_table <- obtain_info_from_biomaRt(as.character(reference_table[,1]),opt$biomaRt_filter, organism_mart, organism_dataset, organism_host, "entrezgene")
@@ -216,24 +187,15 @@ if (module_selected == TRUE){
     common_unique_entrez <- unique(common_annot_DEGs_df[,"entrezgene"])
     pathway_common_id_EC_df <- find_interesting_pathways(biomaRt_KEGG_organism_info, common_unique_entrez)     
     visualizing_KEGG_pathways("KEGG_paths.html", pathway_common_id_EC_df) 
-  
   } else { 
     pathway_common_id_EC_df <- find_interesting_pathways(biomaRt_organism_info, common_unique_entrez)     
     visualizing_KEGG_pathways("KEGG_paths.html", pathway_common_id_EC_df) 
-
   }
 }
 
-
 ################## CREATE FINAL ANNOTATION TABLE ##########
-
 write.table(DEG_annot_table, file=file.path(paths$root, "Annotated_table.txt"), quote=F, col.names=NA, sep="\t")
 write.table(reference_table, file=file.path(paths$root, "entrez_Gos.txt"), quote=F, col.names=NA, sep="\t")
 
-
-
 #### functional
 generate_FA_report()
-
-
-

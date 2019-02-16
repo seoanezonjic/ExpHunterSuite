@@ -25,7 +25,7 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
 
 getting_information_with_BiomaRt <- function(orthologues, id_type, mart, dataset, host, attr){
     ensembl <- useMart(mart,dataset=dataset, host=host)
-    filt <- c(opt$biomaRt_filter)
+    filt <- id_type
     val <- orthologues
     attr <- attr
     query <- getBM(attributes = attr, filters = filt, values = val, mart = ensembl)
