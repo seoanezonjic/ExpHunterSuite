@@ -56,7 +56,7 @@ option_list <- list(
     help="Indicate organism to look for in the Kegg database for doing the path enrichment"),
   make_option(c("-q", "--save_query"), type="logical", default=TRUE,
     help="Save biomaRt query. By default the biomaRt query is saved"), 
-  make_option(c("-o", "--output_files"), type="character", default="",
+  make_option(c("-o", "--output_files"), type="character", default="results",
     help="Output path. Default=%default")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
@@ -117,6 +117,7 @@ if (opt$save_query == TRUE) saveRDS(reference_table, file=file.path("query_resul
 
 ################# PREPROCESSING INPUT DATA FOR FUNCTIONAL ANALYSIS #############
 common_DEGs_df <- subset(DEG_annot_table, genes_tag=="PREVALENT_DEG")
+if (nrow(common_DEGs_df) == 0) stop('Not detected genes tagged as PREVALENT_DEG. Likely some modules of degenes_Hunter.R failed and not generated output. Please, revise the input data')
 common_DEGs <- rownames(common_DEGs_df)
 common_annot_DEGs_df <- get_specific_dataframe_names(reference_table, reference_table[,1], common_DEGs)
 common_unique_entrez <- unique(common_annot_DEGs_df[,"entrezgene"])

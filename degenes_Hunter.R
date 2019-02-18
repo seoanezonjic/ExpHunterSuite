@@ -66,12 +66,18 @@ option_list <- list(
   make_option(c("-n", "--name_exp"), type="character", default="experiment1",
     help="Type the name of your experiment."),
   make_option(c("-m", "--modules"), type="character", default=c("DELN"), #D = DESeq2, E = edgeR, L = limma, N = NOISeq
-    help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N= NOISeq).
+    help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N= NOISeq.).
     By default the following modules Default=%default are performed"),
   make_option(c("-c", "--minpack_common"), type="integer", default=4,
     help="Number of minimum package to consider a gene as a 'PREVALENT' DEG")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
+
+active_modules <- nchar(opt$modules)
+if(opt$minpack_common > active_modules){
+	opt$minpack_common <- active_modules
+	warning("The number of active modules is lower than the thresold for tag PREVALENT DEG. The thresold is set to the number of active modules."
+}
 
 #Calculate global parameters
 lfc <- calculate_lfc(opt)
