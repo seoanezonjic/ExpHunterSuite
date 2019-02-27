@@ -76,7 +76,7 @@ opt <- parse_args(OptionParser(option_list=option_list))
 active_modules <- nchar(opt$modules)
 if(opt$minpack_common > active_modules){
 	opt$minpack_common <- active_modules
-	warning("The number of active modules is lower than the thresold for tag PREVALENT DEG. The thresold is set to the number of active modules."
+	warning("The number of active modules is lower than the thresold for tag PREVALENT DEG. The thresold is set to the number of active modules.")
 }
 
 #Calculate global parameters
