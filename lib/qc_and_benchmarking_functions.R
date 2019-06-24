@@ -1,19 +1,12 @@
 #############################################
 ### QC AND BENCHMARKING FUNCTIONS 
 #############################################
-checking_filtering_settings <- function(opt){
-  if (opt$minlibraries < 1){
-    stop(cat("Minimum library number to check minimum read counts cannot be less than 1."))
-  }
-  if (opt$reads == 0){
-    cat("Minimum reads option is set to cero. Raw count table will not be filtered.")
-  }
-}
-
-
-preparing_rlog_PCA <- function(raw_filter){
-  coldata_df <- data.frame(cond=design_vector, each=colnames(raw_filter))
-  rownames(coldata_df) <- colnames(raw_filter)
+preparing_rlog_PCA <- function(raw_filter,design_vector){
+  require(DESeq2) # DESeqDataSetFromMatrix, rlog
+  coldata_df <- data.frame(cond = design_vector,
+                           each = colnames(raw_filter),
+                           row.names = colnames(raw_filter))
+  # rownames(coldata_df) <- colnames(raw_filter)
   dds <- DESeqDataSetFromMatrix(countData = raw_filter, colData = coldata_df, design = ~ cond)
   rld <- rlog(dds, blind=FALSE)
   return(rld)

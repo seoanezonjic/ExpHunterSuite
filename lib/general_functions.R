@@ -1,49 +1,29 @@
 ################################# GENERAL FUNCTIONS ##############################################
-checking_input <- function(opt){
-  if (is.null(opt$input_file)){
-    stop(cat("No file with RNA-seq counts is provided. \n Please use -i to submit file"))
-  }
-  if (is.null(opt$Control_columns)){
-    stop(cat("No control samples are indicated. \n Please select column names of the count table with -C"))
-  }
-  if (is.null(opt$Treatment_columns)){
-    stop(cat("No treatment samples are indicated. \n Please select column names of the count table with -T"))
-  }
-}
-
-
-defining_subfolders <- function(replicatesC, replicatesT, opt){
-  subfolders <- c()
-  if (sum(replicatesC, replicatesT)<=3){
+defining_subfolders <- function(replicatesC, replicatesT, modules){
+  # Check experimen type
+  if(sum(replicatesC, replicatesT)<=3){
     subfolders <- c('Results_DESeq2')
-    } else if (sum(replicatesC, replicatesT)<=5){
-       subfolders <- c(subfolders, 'Common_results')
-        if (grepl("D", opt$modules)){
-          subfolders <- c(subfolders, 'Results_DESeq2')
-        }
-        if (grepl("E", opt$modules)){
-          subfolders <- c(subfolders, 'Results_edgeR')
-        }
-    } else if ((replicatesC > 2) & (replicatesT >2)){
-        subfolders <- c(subfolders, 'Common_results')
-        if (grepl("D", opt$modules)){
-          subfolders <- c(subfolders, 'Results_DESeq2')
-        }
-        if (grepl("E", opt$modules)){
-          subfolders <- c(subfolders, 'Results_edgeR')
-        }
-        if (grepl("L", opt$modules)){    
-          subfolders <- c(subfolders, 'Results_limma')  
-        }
-        if (grepl("N", opt$modules)){
-          subfolders <- c(subfolders, 'Results_NOISeq')
-        }
-    }
+    return(subfolders)
+  }else if(sum(replicatesC, replicatesT)<=5){
+    subfolders <- c('Common_results')
+  }else if((replicatesC > 2) & (replicatesT >2)){
+    subfolders <- c('Common_results')
+    if(grepl("L", opt$modules)) subfolders <- c(subfolders, 'Results_limma')  
+    if(grepl("N", opt$modules)) subfolders <- c(subfolders, 'Results_NOISeq')
+  }else{
+    subfolders <- c()
+    return(subfolders)
+  }
+
+  # Check Differential expression package used
+  if(grepl("D", opt$modules)) subfolders <- c(subfolders, 'Results_DESeq2')
+  if(grepl("E", opt$modules)) subfolders <- c(subfolders, 'Results_edgeR')
+
   return(subfolders)  
 }
 
-calculate_lfc <- function(opt){
-  lfc <- log2(opt$fc)
+calculate_lfc <- function(nfolds){
+  lfc <- log2(nfolds)
   return(lfc)
 }
 
@@ -51,16 +31,16 @@ calculate_lfc <- function(opt){
 create_folder <- function(folder, arg_paths) {
 	local_path = file.path(arg_paths$root, folder)
 	dir.create(local_path)
-	e <- globalenv() 
-  e $ paths[[folder]] <- local_path
+  return(local_path)
 }
 
 #creates subfolders
 create_subfolders <- function(subfolders, paths){
-	for (i in 1:length(subfolders)){
+	for(i in seq_along(subfolders)){
 		local_folder = subfolders[[i]]
-		create_folder(local_folder, paths)
+		paths[[as.character(local_folder)]] <- create_folder(local_folder, paths)
 	}
+  return(paths)
 }
 
 calculate_replicates_number <- function(opt){
@@ -180,7 +160,7 @@ get_specific_dataframe_names <- function(dataframe, dataframe_names, selected_na
   if(nrow(dataframe) == 0 || length(dataframe_names) == 0 || length(selected_names) == 0){ # check that inputa data are not empty
     dataframe_selection <- data.frame()
   }else{
-    dataframe_selection<- subset(dataframe, dataframe_names %in% selected_names)
+    dataframe_selection <- subset(dataframe, dataframe_names %in% selected_names)
   }
   return(dataframe_selection)
 }
