@@ -15,6 +15,12 @@ output:
 </style>
 
 ```{r config, include = FALSE}
+# Prepare recursive text
+chunks <- function(code, options = ""){paste(paste("```{r ",options,"}",sep = ""),code,"```",sep="\n")}
+render <- function(text){paste(knit(text = paste(text,collapse = "\n")),collapse = "\n")}
+
+# Prepare all HPO reports container
+out <- NULL
 
 ```
 
@@ -34,6 +40,11 @@ In DEgenes Hunter, genes are labeled according to the following considerations:
 * **Filtered raw counts:** Raw count matrix after filtering.
 * **Filtered out:** Genes discarded during the filtering process.
 * **Not DEGs:** Genes not considered DEGs in any package (by a minimum of $n-1$ packages employed if we used more than three algorithms).
+
+
+
+
+
 
 ## **Data quality control (QC)**
 
@@ -95,72 +106,143 @@ The samples are shown in the 2D plane and distributed by their first two princip
 
 
 
-## **Analysis methods**
-Different plots concerning every differential gene expression algorithm are shown
-
-### **DESeq2 MA plot**
-This is the MA plot from DESeq2 package:
-```{r deseq2_MA, echo = FALSE}
-plotMA(all_counts_for_plotting[['DESeq2']], cex.lab=1.6, cex.axis=1.5)
-```
-In DESeq2, the MA-plot (log ratio versus abundance) shows the log2 fold changes are attributable to a given variable over the mean of normalized counts. Points will be colored red if the adjusted \emph{p} value is less than 0.1. Points which fall out of the window are plotted as open triangles pointing either up or down.
-
-
-A table containing the DESeq2 DEGs is provided: in ("DEgenes\_DESEq2.txt").
-
-
-A table containing the DESeq2 normalized counts is provided in ("Normalized\_counts\_DESEq2.txt").
 
 
 
-### **edgeR MA plot**
-This is the MA plot from DESeq2 package:
-```{r edgeR_plot, echo = FALSE}
-with(all_counts_for_plotting[['edgeR']], plot(logCPM, logFC, pch=20, main="edgeR: Fold change vs abundance", cex.lab=1.5, cex.axis=1.5))
-with(subset(all_counts_for_plotting[['edgeR']], FDR < opt$p_val_cutoff), points(logCPM, logFC, pch=20, col="red"))
-abline(h=c(-1,1), col="blue")
-```
-Differential gene expression data can be visualized as MA-plots (log ratio versus abundance) where each dot represents a gene. The differentially expressed genes are colored red and the non-differentially expressed ones are colored black.  
-
-A table containing the edgeR DEGs is provided in DEgenes\_edgeR.txt.
-
-A table containing the edgeR normalized counts is provided in "Normalized\_counts\_edgeR.txt."
 
 
-### **lima Volcano plot**
-This is the volcano plot of log-fold changes versus log-odds (log10 of adjusted \emph{p} values) of differential expression from limma package:
-```{r limma_plot, echo = FALSE}
-plot(x=all_counts_for_plotting[['limma']]$logFC, y=-log10(all_counts_for_plotting[['limma']]$P.Value), xlab="logFC", ylab="logOdds", col=c("blue", "red") [k_limma+1], pch=20, main= c("groupsB-groupsA"), cex.lab=1.6, cex.axis=1.5)
-abline(v= opt$lfc, col="cyan")
+```{r analysis_section, echo = FALSE}
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Check DESeq2 MA plots
+if('DESeq2' %in% names(all_counts_for_plotting)){
+	header <- "### **DESeq2 MA plot**"
+	body1 <- "This is the MA plot from DESeq2 package:"
+	code_ch <- "plotMA(all_counts_for_plotting[['DESeq2']], cex.lab=1.6, cex.axis=1.5)" 
+	body2 <- "In DESeq2, the MA-plot (log ratio versus abundance) shows the log2 fold changes are attributable to a given variable over the mean of normalized counts. Points will be colored red if the adjusted Pvalue is less than 0.1. Points which fall out of the window are plotted as open triangles pointing either up or down.
+
+A table containing the DESeq2 DEGs is provided: in ('DEgenes\\_DESEq2.txt').
+
+A table containing the DESeq2 normalized counts is provided in ('Normalized\\_counts\\_DESEq2.txt')."
+	
+	# Concat
+	out <- c(out,knit_expand(text = paste(header,
+										body1,
+										chunks(code_ch, options = "echo = FALSE"),
+										body2,
+										"\n",sep = "\n")))
+}
+
+
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Check edgeR MA plots
+if('edgeR' %in% names(all_counts_for_plotting)){
+	header <- "### **edgeR MA plot**"
+	body1 <- "This is the MA plot from edgeR package:"
+	code_ch <- "with(all_counts_for_plotting[['edgeR']], plot(logCPM, logFC, pch=20, main='edgeR: Fold change vs abundance', cex.lab=1.5, cex.axis=1.5))
+with(subset(all_counts_for_plotting[['edgeR']], FDR < opt$p_val_cutoff), points(logCPM, logFC, pch=20, col='red'))
+abline(h=c(-1,1), col='blue')" 
+	body2 <- "Differential gene expression data can be visualized as MA-plots (log ratio versus abundance) where each dot represents a gene. The differentially expressed genes are colored red and the non-differentially expressed ones are colored black.  
+
+A table containing the edgeR DEGs is provided in DEgenes\\_edgeR.txt.
+
+A table containing the edgeR normalized counts is provided in Normalized\\_counts\\_edgeR.txt."
+	
+	# Concat
+	out <- c(out,knit_expand(text = paste(header,
+										body1,
+										chunks(code_ch, options = "echo = FALSE"),
+										body2,
+										"\n",sep = "\n")))
+}
+
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Check limma MA plots
+if('limma' %in% names(all_counts_for_plotting)){
+	header <- "### **lima Volcano plot**"
+	body1 <- "This is the volcano plot of log-fold changes versus log-odds (log10 of adjusted P values) of differential expression from limma package:"
+	code_ch <- "plot(x=all_counts_for_plotting[['limma']]$logFC, y=-log10(all_counts_for_plotting[['limma']]$P.Value), xlab='logFC', ylab='logOdds', col=c('blue', 'red') [k_limma+1], pch=20, main= c('groupsB-groupsA'), cex.lab=1.6, cex.axis=1.5)
+abline(v= opt$lfc, col='cyan')
 limit.pval_limma <- -log10(max(all_data[['limma']]$P.Value)) 
-abline(h=limit.pval_limma, col="green")
-abline(h=-log10(opt$p_val_cutoff), col="red", lty="dashed")
-```
-A table containing the limma DEGs is provided in {"DEgenes\_limma.txt"}.
+abline(h=limit.pval_limma, col='green')
+abline(h=-log10(opt$p_val_cutoff), col='red', lty='dashed')" 
+	body2 <- "A table containing the limma DEGs is provided in {'DEgenes\\_limma.txt'}.
+
+A table containing the limma normalized counts is provided in {'Normalized\\_counts\\_limma.txt'}."
+	
+	# Concat
+	out <- c(out,knit_expand(text = paste(header,
+										body1,
+										chunks(code_ch, options = "echo = FALSE"),
+										body2,
+										"\n",sep = "\n")))
+}
 
 
-A table containing the limma normalized counts is provided in {"Normalized\_counts\_limma.txt"}.
 
 
-### **NOISeq Expressionplot**
 
-This is the summary plot for (M,D) values (black) and the differentially expressed genes (red) from the NOISeq package (Image extracted from {\bf"ExpressionPlot.pdf"} file):
-```{r noiseq_plot, echo = FALSE}
-groups_val <- c(rep("A", replicatesC), rep("B", replicatesT)) 
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Check NOISeq MA plots
+if(all(c("replicatesC","replicatesT") %in% ls())){
+	header <- "### **NOISeq Expressionplot**"
+	body1 <- "This is the summary plot for (M,D) values (black) and the differentially expressed genes (red) from the NOISeq package (Image extracted from {'ExpressionPlot.pdf'} file):"
+	code_ch <- "groups_val <- c(rep('A', replicatesC), rep('B', replicatesT)) 
 myfactors = data.frame(Tissue = rev(groups_val), TissueRun = rev(design_vector))
 
 mydata <- readData(raw_filter, myfactors)
 
-mynoiseq = noiseqbio(mydata, k = 0.5, norm = "tmm", factor="Tissue", lc = 1, r = 50, adj = 1.5, plot = FALSE,
+mynoiseq = noiseqbio(mydata, k = 0.5, norm = 'tmm', factor='Tissue', lc = 1, r = 50, adj = 1.5, plot = FALSE,
 	a0per = 0.9, random.seed = 12345, filter = 1, cv.cutoff = 500, cpm = 1)
  
-DE.plot(mynoiseq, q = opt$q_value, graphic = "MD", cex.lab=1.4, cex.axis=1.4)
+DE.plot(mynoiseq, q = opt$q_value, graphic = 'MD', cex.lab=1.4, cex.axis=1.4)" 
+	body2 <- "A table containing the NOISeq DEGs is provided in {'DEgenes\\_NOISeq.txt'}.
+
+A table containing the NOISeq normalized counts is provided in {'Normalized\\_counts\\_NOISeq.txt'}."
+	
+	# Concat
+	out <- c(out,knit_expand(text = paste(header,
+										body1,
+										chunks(code_ch, options = "echo = FALSE"),
+										body2,
+										"\n",sep = "\n")))
+}
+
+
+
+
+
+
+
+# Prepare output
+# out <- knit_expand(text = out, sep = "\n")
+
+
 ```
 
-A table containing the NOISeq DEGs is provided in {"DEgenes\_NOISeq.txt"}.
 
 
-A table containing the NOISeq normalized counts is provided in {"Normalized\_counts\_NOISeq.txt"}.
+
+
+
+
+
+
+
+
+
+
+## **Analysis methods**
+Different plots concerning every differential gene expression algorithm are shown
+
+
+
+`r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
+
 
 
 
