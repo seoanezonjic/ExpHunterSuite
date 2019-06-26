@@ -539,4 +539,4 @@ creating_top20_table(final_BIG_table)
 outf <- paste(dirname(normalizePath(paths$root,"report.html")),"report.html",sep=.Platform$file.sep)
 
 rmarkdown::render(file.path(main_path_script, 'templates', 'main_report.Rmd'), 
-                  output_file = outf, intermediates_dir = outf)
+                  output_file = outf, intermediates_dir = paths$root)

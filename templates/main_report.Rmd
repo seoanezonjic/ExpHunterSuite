@@ -257,8 +257,26 @@ Different plots concerning every differential gene expression algorithm are show
 ### **Venn Diagram**
 This is the Venn Diagram of the all possible DEGs encountered in the experiment (Image extracted from {"VennDiagram.pdf"} file):
 ```{r Venn_d, echo = FALSE}
-venn_plot <- venn.diagram(all_package_results, cex = 2, cat.fontface = 1, lty = 2, filename = NULL, cat.cex=1.5)
-grid.draw(venn_plot)
+# venn_plot <- venn.diagram(all_package_results, cex = 2, cat.fontface = 1, lty = 2, filename = NULL, cat.cex=1.5)
+# grid.draw(venn_plot)
+
+sets <- all_package_results
+items <- unique(unlist(sets))
+
+# Per each item, check sets
+belonging <- unlist(lapply(sets, function(set){items %in% set}))
+belonging <- matrix(as.numeric(belonging),ncol = length(sets))
+
+# Add set names
+colnames(belonging) <- names(sets)
+
+# Calculate intersections
+intersections <- vennCounts(belonging)
+intersections[1,"Counts"] <- NA
+
+vennDiagram(intersections, circle.col = rainbow(length(sets)))
+
+
 ```
 
 
