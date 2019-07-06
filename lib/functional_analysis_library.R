@@ -91,10 +91,14 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
 
 
 
-human_ENSEMBL_to_ENTREZ <- function(ensembl_ids){
-    require(org.Hs.eg.db)
+ensembl_to_entrez <- function(ensembl_ids,organism){
+    # require(org.Hs.eg.db)
+    require(organism, character.only = TRUE)
+    # Obtain target variable
+    aux_var_name <- paste(paste(head(unlist(strsplit(organism,"\\.")),-1),collapse="."),"ENSEMBL2EG",sep="")
+    aux_var <- get(aux_var_name)
     # Translate ENSEMBL to Entrex IDs
-    ensembl2entrez <- as.list(org.Hs.egENSEMBL2EG[mappedkeys(org.Hs.egENSEMBL2EG)])
+    ensembl2entrez <- as.list(aux_var[mappedkeys(aux_var)])
     # Convert to dataframe
     ensembl2entrez_df <- as.data.frame(do.call(rbind,lapply(intersect(ensembl_ids,names(ensembl2entrez)),function(ensembl){
         # Obtain genes
@@ -112,45 +116,45 @@ human_ENSEMBL_to_ENTREZ <- function(ensembl_ids){
 
 
 
-human_ENSEMBL_to_GO <- function(ensembl_ids,sub_ontology){
-    require(org.Hs.eg.db)
-    require(topGO)
+# human_ENSEMBL_to_GO <- function(ensembl_ids,sub_ontology){
+#     require(org.Hs.eg.db)
+#     require(topGO)
 
-    # Translate ENSEMBL to Entrex IDs
-    ensembl2entrez <- as.list(org.Hs.egENSEMBL2EG[mappedkeys(org.Hs.egENSEMBL2EG)])
+#     # Translate ENSEMBL to Entrex IDs
+#     ensembl2entrez <- as.list(org.Hs.egENSEMBL2EG[mappedkeys(org.Hs.egENSEMBL2EG)])
 
-    # Obtain related GO terms
-    go2entrez <- annFUN.org(sub_ontology, mapping = "org.Hs.eg.db")
-    entrez2go <- as.data.frame(do.call(rbind,lapply(seq_along(go2entrez),function(i){
-        go_term <- names(go2entrez)[i]
-        genes <- go2entrez[[i]]
-        return(data.frame(Gene = genes, GO = rep(go_term,length(genes)), stringsAsFactors = FALSE))    
-    })))
+#     # Obtain related GO terms
+#     go2entrez <- annFUN.org(sub_ontology, mapping = "org.Hs.eg.db")
+#     entrez2go <- as.data.frame(do.call(rbind,lapply(seq_along(go2entrez),function(i){
+#         go_term <- names(go2entrez)[i]
+#         genes <- go2entrez[[i]]
+#         return(data.frame(Gene = genes, GO = rep(go_term,length(genes)), stringsAsFactors = FALSE))    
+#     })))
 
-    # Revert GO-Entrex to GO-ENSEMBL
-    ensembl2go <- as.data.frame(do.call(rbind,lapply(ensembl_ids,function(ensembl){
-        # Obtain related entrez genes
-        genes <- ensembl2entrez[ensembl]
-        if(length(genes) == 0){
-            return(data.frame())
-        }
-        # Obtain related go
-        info <- as.data.frame(do.call(rbind,lapply(genes,function(gene){
-            go_terms <- entrez2go$GO[which(entrez2go$Gene == gene)]
-            # Return info
-            return(data.frame(Gene = rep(ensembl,length(go_terms)), 
-                              GO = go_terms, 
-                              Entrez = rep(gene,length(go_terms)), stringsAsFactors = FALSE))
-        })))
-        return(info)  
-    })))
+#     # Revert GO-Entrex to GO-ENSEMBL
+#     ensembl2go <- as.data.frame(do.call(rbind,lapply(ensembl_ids,function(ensembl){
+#         # Obtain related entrez genes
+#         genes <- ensembl2entrez[ensembl]
+#         if(length(genes) == 0){
+#             return(data.frame())
+#         }
+#         # Obtain related go
+#         info <- as.data.frame(do.call(rbind,lapply(genes,function(gene){
+#             go_terms <- entrez2go$GO[which(entrez2go$Gene == gene)]
+#             # Return info
+#             return(data.frame(Gene = rep(ensembl,length(go_terms)), 
+#                               GO = go_terms, 
+#                               Entrez = rep(gene,length(go_terms)), stringsAsFactors = FALSE))
+#         })))
+#         return(info)  
+#     })))
 
-    # Add wanted names
-    colnames(ensembl2go) <- c("ensembl_gene_id", "go_id", "entrezgene")
+#     # Add wanted names
+#     colnames(ensembl2go) <- c("ensembl_gene_id", "go_id", "entrezgene")
 
-    # Return info
-    return(ensembl2go)
-}
+#     # Return info
+#     return(ensembl2go)
+# }
 
 
 
@@ -169,7 +173,7 @@ human_ENSEMBL_to_GO <- function(ensembl_ids,sub_ontology){
 #' @param entrez_targets
 #' @param entrez_universe
 #' @param sub_ontology
-perform_GSEA_analysis_local <- function(entrez_targets,entrez_universe,sub_ontology,outFile=NULL){
+perform_GSEA_analysis_local <- function(entrez_targets,entrez_universe,sub_ontology,outFile=NULL,organism){
   
   #! GOFisherTest
   
@@ -184,7 +188,7 @@ perform_GSEA_analysis_local <- function(entrez_targets,entrez_universe,sub_ontol
   names(geneList) <- allGenes
   
   if(length(levels(geneList)) == 2){ # launch analysis
-    TopGOobject <- new("topGOdata", ontology = sub_ontology, allGenes = geneList, annot = annFUN.org, mapping = "org.Hs.eg.db")
+    TopGOobject <- new("topGOdata", ontology = sub_ontology, allGenes = geneList, annot = annFUN.org, mapping = organism)
     # Prepare metrics
     classic <- new("classicCount", testStatistic = GOFisherTest, name = "Fisher_Test")
     KS <- new("classicScore", testStatistic = GOKSTest, name = "KS tests")

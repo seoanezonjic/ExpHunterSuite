@@ -82,12 +82,12 @@ opt <- parse_args(OptionParser(option_list=option_list))
 #############################################
 
 # Load available organisms
-biomaRt_query_info <- read.table(file.path(main_path_script, "lib/biomaRt_organism_table.txt"), header=T, row.names=1, sep="\t", stringsAsFactors = FALSE)
+biomaRt_query_info <- read.table(file.path(main_path_script, "lib/biomaRt_organism_table.txt"), header=T, row.names=1, sep="\t", stringsAsFactors = FALSE, fill=NA)
 
 # Load Reference-NonRefernce models gene IDs relations
 if(!is.null(opt$annot_file)){
-  reference_table <- read.table(opt$annot_file, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE)
-  # reference_table <- annot  
+  annot_table <- read.table(opt$annot_file, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "")
+  reference_table <- annot_table
 }else if(!file.exists(opt$countdata_file)){
     stop('Count file not exists, check the PATH given to the -c flag')
 }else{
@@ -130,7 +130,18 @@ flags <- list(GO   = grepl("G", opt$functional_analysis),
 
 # Load input
 DEG_annot_table <- read.table(opt$input_hunter_file, header=T, row.names=1, sep="\t", stringsAsFactors = FALSE)
-
+# Special case
+if(exists("annot_table")){
+	DEG_annot_table$Annot_IDs <- unlist(lapply(rownames(DEG_annot_table),function(id){
+		# Find model ID for non-model ID
+		indx <- which(annot_table[,2] == id)
+		if(length(indx) == 0){
+			return(id)
+		}else{
+			return(annot_table[indx[1],1])
+		}
+	}))
+}
 
 
 
@@ -174,7 +185,7 @@ if(opt$remote){ # REMOTE MODE
 }else{ # LOCAL MODE
 	# Check genetical items to be used
 	if(opt$biomaRt_filter == 'ensembl_gene_id'){
-		reference_table <- human_ENSEMBL_to_ENTREZ(reference_table[,1])
+		reference_table <- ensembl_to_entrez(reference_table[,1],biomaRt_organism_info$Bioconductor_DB[1])
 		colnames(reference_table) <- c("ensembl_gene_id", "entrezgene")
 	}else if(opt$biomaRt_filter == 'refseq_peptide'){
 		stop(paste("This genes type (",opt$biomaRt_filter,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
@@ -186,8 +197,6 @@ if(opt$remote){ # REMOTE MODE
 if(opt$save_query == TRUE){
   saveRDS(reference_table, file=file.path("query_results_temp"))
 } 
-
-
 
 ################# PREPROCESSING INPUT DATA FOR FUNCTIONAL ANALYSIS #############
 # Obtain prevalent items
@@ -207,13 +216,23 @@ if(nrow(common_DEGs_df) == 0){
 #  > union_DEGs_df : subset of DEGenes Hunter annotation file with POSSIBLE_DEG flag or PREVALENT_DEG flag
 #  > union_DEGs : genes identifiers included into union_DEGs_df
 #  > union_annot_DEGs_df : reference table subset with identifiers included into union_DEGs
-common_DEGs <- rownames(common_DEGs_df)
+if(exists("annot_table")){
+	common_DEGs <- unique(common_DEGs_df$Annot_IDs)
+}else{
+	common_DEGs <- rownames(common_DEGs_df)	
+}
+
 common_unique_entrez <- subset(reference_table, reference_table[,1] %in% common_DEGs)
 common_unique_entrez <- unique(common_unique_entrez[,"entrezgene"])
 
 union_DEGs_df <- subset(DEG_annot_table, genes_tag=="POSSIBLE_DEG")
 union_DEGs_df <- rbind(common_DEGs_df, union_DEGs_df)
-union_DEGs <- rownames(union_DEGs_df)
+
+if(exists("annot_table")){
+	union_DEGs <- unique(union_DEGs_df$Annot_IDs)
+}else{
+	union_DEGs <- rownames(union_DEGs_df)
+}
 
 union_annot_DEGs_df <- subset(reference_table, reference_table[,1] %in% union_DEGs)
 
@@ -242,10 +261,17 @@ write.table(reference_table, file=file.path(paths$root, "entrez_Gos.txt"), quote
 #############################################
 if(flags$GO){
 	# Prepare special subsets to be studied
-	pos_logFC_common_DEGs <- rownames(subset(common_DEGs_df, common_DEGs_df["logFC_DESeq2"] > 0))
-	neg_logFC_common_DEGs <- rownames(subset(common_DEGs_df, common_DEGs_df["logFC_DESeq2"] < 0))
-	pos_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df["logFC_DESeq2"] > 0))
-	neg_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df["logFC_DESeq2"] < 0))
+	if(exists("annot_table")){
+		pos_logFC_common_DEGs <- subset(common_DEGs_df, common_DEGs_df["logFC_DESeq2"] > 0)$Annot_IDs
+		neg_logFC_common_DEGs <- subset(common_DEGs_df, common_DEGs_df["logFC_DESeq2"] < 0)$Annot_IDs
+		pos_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df["logFC_DESeq2"] > 0)$Annot_IDs
+		neg_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df["logFC_DESeq2"] < 0)$Annot_IDs
+	}else{
+		pos_logFC_common_DEGs <- rownames(subset(common_DEGs_df, common_DEGs_df["logFC_DESeq2"] > 0))
+		neg_logFC_common_DEGs <- rownames(subset(common_DEGs_df, common_DEGs_df["logFC_DESeq2"] < 0))
+		pos_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df["logFC_DESeq2"] > 0))
+		neg_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df["logFC_DESeq2"] < 0))
+	}
 
 	# Prepare modules to be loaded
 	modules_to_export <- c()
@@ -282,12 +308,12 @@ if(flags$GO){
 		}else{ # LOCAL MODE
 			if(opt$biomaRt_filter == 'ensembl_gene_id'){
 				# Transform ENSEMBL ids to Entrez ids
-				entrez_common_DEGs <- human_ENSEMBL_to_ENTREZ(common_DEGs) 
-				entrez_pos_logFC_common_DEGs <- human_ENSEMBL_to_ENTREZ(pos_logFC_common_DEGs)
-				entrez_neg_logFC_common_DEGs <- human_ENSEMBL_to_ENTREZ(neg_logFC_common_DEGs)
-				entrez_union_DEGs <- human_ENSEMBL_to_ENTREZ(union_DEGs)
-				entrez_pos_logFC_union_DEGs <- human_ENSEMBL_to_ENTREZ(pos_logFC_union_DEGs)
-				entrez_neg_logFC_union_DEGs <- human_ENSEMBL_to_ENTREZ(neg_logFC_union_DEGs)
+				entrez_common_DEGs <- ensembl_to_entrez(common_DEGs,biomaRt_organism_info$Bioconductor_DB[1]) 
+				entrez_pos_logFC_common_DEGs <- ensembl_to_entrez(pos_logFC_common_DEGs,biomaRt_organism_info$Bioconductor_DB[1])
+				entrez_neg_logFC_common_DEGs <- ensembl_to_entrez(neg_logFC_common_DEGs,biomaRt_organism_info$Bioconductor_DB[1])
+				entrez_union_DEGs <- ensembl_to_entrez(union_DEGs,biomaRt_organism_info$Bioconductor_DB[1])
+				entrez_pos_logFC_union_DEGs <- ensembl_to_entrez(pos_logFC_union_DEGs,biomaRt_organism_info$Bioconductor_DB[1])
+				entrez_neg_logFC_union_DEGs <- ensembl_to_entrez(neg_logFC_union_DEGs,biomaRt_organism_info$Bioconductor_DB[1])
 			}else if(opt$biomaRt_filter == 'refseq_peptide'){
 				stop(paste("This genes type (",opt$biomaRt_filter,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
 			}else{
@@ -300,13 +326,13 @@ if(flags$GO){
 			# Launch GSEA analysis
 			invisible(lapply(modules_to_export,function(mod){
 				# Common
-				perform_GSEA_analysis_local(entrez_common_DEGs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_res_common",mod,sep="_")))
-				perform_GSEA_analysis_local(entrez_pos_logFC_common_DEGs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_res_common_pos",mod,sep="_")))
-				perform_GSEA_analysis_local(entrez_neg_logFC_common_DEGs$ENTREZ, reference_ids_common,mod, file.path(paths$root, paste("GO_res_common_neg",mod,sep="_")))
+				perform_GSEA_analysis_local(entrez_common_DEGs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_res_common",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_pos_logFC_common_DEGs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_res_common_pos",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_neg_logFC_common_DEGs$ENTREZ, reference_ids_common,mod, file.path(paths$root, paste("GO_res_common_neg",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
 				# Union
-				perform_GSEA_analysis_local(entrez_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_res_union",mod,sep="_")))
-				perform_GSEA_analysis_local(entrez_pos_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_res_union_pos",mod,sep="_")))
-				perform_GSEA_analysis_local(entrez_neg_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_res_union_neg",mod,sep="_")))    
+				perform_GSEA_analysis_local(entrez_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_res_union",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_pos_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_res_union_pos",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_neg_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_res_union_neg",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])    
 			}))
 		} # END LOCAL/REMOTE IF
 	}
@@ -334,7 +360,7 @@ if(flags$KEGG){
 
 	# Enrich
 	enrich <-  enrichKEGG(gene          = common_unique_entrez, #genes,
-						  organism      = "hsa", #organism,
+						  organism      = biomaRt_organism_info$KeggCode[1], #organism,
 						  keyType       = "kegg", #keyType,
 						  pvalueCutoff  = 1, #pvalueCutoff,
 						  pAdjustMethod = "BH", #pAdjustMethod,
