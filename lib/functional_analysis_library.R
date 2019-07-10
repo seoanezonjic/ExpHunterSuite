@@ -173,7 +173,7 @@ ensembl_to_entrez <- function(ensembl_ids,organism){
 #' @param entrez_targets
 #' @param entrez_universe
 #' @param sub_ontology
-perform_GSEA_analysis_local <- function(entrez_targets,entrez_universe,sub_ontology,outFile=NULL,organism){
+perform_GSEA_analysis_local <- function(entrez_targets,entrez_universe,sub_ontology,outFile=NULL,organism, plot_graph = TRUE){
   
   #! GOFisherTest
   
@@ -190,13 +190,19 @@ perform_GSEA_analysis_local <- function(entrez_targets,entrez_universe,sub_ontol
   if(length(levels(geneList)) == 2){ # launch analysis
     TopGOobject <- new("topGOdata", ontology = sub_ontology, allGenes = geneList, annot = annFUN.org, mapping = organism)
     # Prepare metrics
-    classic <- new("classicCount", testStatistic = GOFisherTest, name = "Fisher_Test")
-    KS <- new("classicScore", testStatistic = GOKSTest, name = "KS tests")
-    KS_elim <- new("elimScore", testStatistic = GOKSTest, name = "KS tests")
-    # Perform metrics
-    results_fisher  <- getSigGroups(TopGOobject, classic)
-    results_KS      <- getSigGroups(TopGOobject,KS)
-    results_KS_elim <- getSigGroups(TopGOobject,KS_elim)
+    # classic <- new("classicCount", testStatistic = GOFisherTest, name = "Fisher_Test")
+    # KS <- new("classicScore", testStatistic = GOKSTest, name = "KS tests")
+    # KS_elim <- new("elimScore", testStatistic = GOKSTest, name = "KS tests")
+    # # Perform metrics
+    # results_fisher  <- getSigGroups(TopGOobject, classic)
+    # results_KS      <- getSigGroups(TopGOobject,KS)
+    # results_KS_elim <- getSigGroups(TopGOobject,KS_elim)
+    # # Possible option 2
+    results_fisher  <- runTest(TopGOobject, algorithm = "classic", statistic = "fisher") 
+    results_KS      <- runTest(TopGOobject, algorithm = "classic", statistic = "ks")
+    results_KS_elim <- runTest(TopGOobject, algorithm = "elim", statistic = "ks")
+
+
     # Create results table
     all_results_table <- GenTable(TopGOobject, 
                                   classicFisher = results_fisher,
@@ -211,6 +217,13 @@ perform_GSEA_analysis_local <- function(entrez_targets,entrez_universe,sub_ontol
   # Write info
   if(!is.null(outFile)){
     write.table(all_results_table, file=outFile, quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")    
+  }
+
+  # Plot graphs
+  if(plot_graph){
+    pdf(paste(outFile,"pdf",sep="."), w=11, h=8.5)
+      showSigOfNodes(TopGOobject, score(results_fisher), firstSigNodes = 10, useInfo = 'all')
+    dev.off()
   }
   
   # Return info

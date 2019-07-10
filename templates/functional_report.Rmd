@@ -1,0 +1,337 @@
+---
+author: "Fernando Moreno Jabato"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+    fig_width: 12
+---
+
+<style>
+    body .main-container {
+        max-width: 90%;
+    }
+
+    embed {
+    	width: 800px;
+    	height: 800px;
+    }
+</style>
+
+```{r config, include = FALSE}
+# Prepare recursive text
+chunks <- function(code, options = ""){paste(paste("```{r ",options,"}",sep = ""),code,"```",sep="\n")}
+render <- function(text){paste(knit(text = paste(text,collapse = "\n")),collapse = "\n")}
+
+# Prepare all HPO reports container
+out <- NULL
+
+```
+
+
+
+
+# **DEgenes Hunter - Functional analysis report**
+
+## **General description of the analysis workflow**
+
+The functional analysis script is based on the gene ID of the DEGs provided for a model organism. BiomaRt package has been included to get the annotations to perform a gene enrichment analysis of molecular functions, biological processes and cellular components with package topGO and a pathway enrichment study with KEGGREST and web service call to the KEGG database. 
+
+Results provided from the functional analysis script are gene enrichment graphs of (i) the complete DEG set and its (ii) overexpressed and (iii) sub-expressed candidates separately. Moreover, it provides the significant KEGG pathway maps as an interactive html file.
+
+In DEgenes Hunter, genes are labeled according the following considerations:
+
+* **Prevalent DEGs:** Differentially expressed genes considered by all packages employed but one.
+* **All possible DEGs:** Differentially expressed genes considered by at least one of the R-packages but not enough of them to be considered as "prevalent DEGs".
+
+
+```{r check_graphs, echo = FALSE}
+####################################### GO
+
+# Useful_functions
+graph_file_name <- function(path = results_path, file_name, ext = "pdf"){
+	return(paste(path,.Platform$file.sep,file_name,".",ext,sep=""))
+}
+exists_graph_file <- function(path = results_path, file_name, ext = "pdf"){
+	f <- graph_file_name(path,file_name,ext)
+	return(file.exists(f))
+}
+exists_enrich_df <- function(var_name,level_depth = 3){
+	# Check if it is instantiated
+	if(!var_name %in% ls(envir = parent.frame(n = level_depth))){
+		return(FALSE)
+	}
+	# Check if is a DF with info
+	df <- get(var_name, envir = parent.frame(n = level_depth))
+	if(is.data.frame(df)){
+		if(nrow(df) <= 0){
+			return(FALSE)
+		}
+	}else if(!is.list(df) & !typeof(df)=="S4"){
+		return(FALSE)
+	}
+	# Everything OK
+	return(TRUE)
+}
+
+
+# Prepare containers
+go_flags <- list()
+go_files <- list()
+
+# Define files to be checked
+go_enrich_vars <- c("enrich_go")
+graph_files <- c("GO_preval","GO_preval_overex","GO_preval_underex",
+				"GO_allpos","GO_allpos_overex","GO_allpos_underex")
+go_subontos <- c("BP","MF","CC")
+graph_files <- apply(expand.grid(graph_files, go_subontos), 1, paste, collapse="_")
+
+# Check all files
+invisible(lapply(graph_files,function(file_name){
+	if(exists_graph_file(file_name = file_name)){
+		go_flags[file_name] <<- TRUE
+		go_files[file_name] <<- graph_file_name(file_name = file_name)
+	}else{
+		go_flags[file_name] <<- FALSE
+	}
+}))
+invisible(lapply(go_enrich_vars,function(var_name){
+	go_flags[var_name] <<- exists_enrich_df(var_name)
+}))
+# Check GO section
+go_flags$GO_SECTION <- any(unlist(go_flags))
+
+
+
+
+
+####################################### KEGG
+
+# Prepare containers
+kegg_flags <- list()
+
+# Define variables to be checked
+kegg_enrich_vars <- c("enrich_ora","enrich_gsea")
+
+# Check all variables
+invisible(lapply(kegg_enrich_vars,function(var_name){
+	kegg_flags[var_name] <<- exists_enrich_df(var_name)
+}))
+
+kegg_flags$KEGG_SECTION <- any(unlist(kegg_flags))
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+```
+
+
+
+
+
+```{r go_section, echo = FALSE}
+# Prepare text to be rendered
+headers <- list(GO_preval = "### **GO Prevalent DEGs:",
+				GO_preval_overrex = "### **GO Overexpressed functions from prevalent DEGs:",
+				GO_preval_underex = "### **GO Underexpressed functions from prevalent DEGs:",
+				GO_allpos = "### **GO All possible DEGs:",
+				GO_allpos_overrex = "### **GO Overexpressed functions from all possible DEGs:",
+				GO_allpos_underex = "### **GO Underexpressed functions from all possible DEGs:")
+bodies  <- list(GO_preval = "This is the GO graph concerning prevalent DEGs",
+				GO_preval_overrex = "This is the GO graph concerning the overexpressed prevalent DEGs:",
+				GO_preval_underex = "This is the GO graph concerning the underexpressed prevalent DEGs:",
+				GO_allpos = "This is the GO graph concerning all possible DEGs",
+				GO_allpos_overrex = "This is the GO graph concerning the overexpressed all possible DEGs:",
+				GO_allpos_underex = "This is the GO graph concerning the underexpressed all possible DEGs")
+ontos   <- list(BP = "Biological Process (BP)**",
+				MF = "Molecular Function (MF)**",
+				CC = "Cellular Component (CC)**")
+
+if(!go_flags$GO_SECTION){
+	out <- ""
+}else{
+	################## CHECK FIFLE BY FILE
+	out <- unlist(lapply(graph_files,function(f){
+		if(go_flags[[f]]){
+			# Prepare file info
+			splitted <- unlist(strsplit(f,"_"))
+			basename <- paste(head(splitted,-1),collapse="_")
+			# prepare render info
+			header <- headers[[basename]] 
+			body <- bodies[[basename]]
+			onto <- ontos[[tail(splitted,1)]]
+			# Paste and return
+			return(knit_expand(text = paste(paste(header,onto,sep=" "),
+											body,
+											"<br>",
+											chunks(code = paste("include_graphics('",go_files[[f]],"')"),
+												   options = "echo = FALSE"),
+											"\n",sep = "\n")))
+		}else{
+			return("")
+		}
+	}))
+
+	# Add section header
+	out <- c(knit_expand(text = "## **GO graphs**"),out)
+}
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+```
+
+`r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
+
+
+```{r plot_go_cl, echo = FALSE}
+# Plot kegg_ORA_enrich graphs
+if(go_flags[["enrich_go"]]){
+	suppressPackageStartupMessages(require(clusterProfiler))
+	suppressPackageStartupMessages(require(enrichplot))
+
+	for(i in seq_along(enrich_go)){
+		message(paste("PLOTS SETS FOR:", names(enrich_go[i])))
+
+		go_pp1  <- barplot(enrich_go[[i]]) + ggtitle(names(enrich_go)[i])
+		go_pp2  <- dotplot(enrich_go[[i]], showCategory=30) + ggtitle(paste(names(enrich_go)[i],":","Dotplot for ORA"))
+		go_pp4  <- cnetplot(enrich_go[[i]]) + ggtitle(names(enrich_go)[i])
+		go_pp6  <- emapplot(enrich_go[[i]]) + ggtitle(names(enrich_go)[i])
+		go_pp8  <- heatplot(enrich_go[[i]]) + ggtitle(names(enrich_go)[i])
+		go_pp10 <- upsetplot(enrich_go[[i]]) #+ ggtitle(names(enrich_go)[i])
+
+
+		# if(go_flags[["enrich_go_gsea"]]){
+		# 	require(clusterProfiler)
+		# 	require(enrichplot)
+
+		# 	go_pp3 <- dotplot(enrich_go_gsea, showCategory=30) + ggtitle("dotplot for GSEA")
+		# 	go_pp5 <- cnetplot(enrich_go_gsea)
+		# 	go_pp7 <- emapplot(enrich_go_gsea)
+		# 	go_pp9 <- heatplot(enrich_go_gsea)
+		# 	go_pp11 <- ridgeplot(enrich_go_gsea)
+		# 	go_pp12 <- gseaplot2(enrich_go_gsea, geneSetID=1:4, title = enrich_go_gsea$Description[1], pvalue_table = TRUE) 
+		# 	go_pp13 <- gsearank(enrich_go_gsea, geneSetID=1, title = enrich_go_gsea$Description[1])
+		# }
+
+		# Check vars to be plotted
+		plot_vars <- ls()[grepl("^go_pp",ls())]
+		plot_vars <- plot_vars[order(nchar(plot_vars),plot_vars)]
+		# Plot vars
+		invisible(lapply(plot_vars,function(var_name){
+			print(get(var_name))
+		}))
+		# Remove plot vars
+		rm(list=plot_vars)
+	}
+
+	message("PLOTS SETS ALL UNIFIED")
+	enr_go <- enrich_go[[1]]
+	if(length(enrich_go)>1){
+		invisible(lapply(seq_along(enrich_go)[-1],function(i){
+			enr_go@result <<- rbind(enr_go@result, enrich_go[[i]]@result)
+		}))
+	}
+
+	go_pp1  <- barplot(enr_go)
+	go_pp2  <- dotplot(enr_go, showCategory=30) + ggtitle("Dotplot for ORA")
+	go_pp4  <- cnetplot(enr_go, showCategory = 15)
+	go_pp6  <- emapplot(enr_go, showCategory = 50)
+	go_pp8  <- heatplot(enr_go)
+	go_pp10 <- upsetplot(enr_go)
+
+	# Check vars to be plotted
+	plot_vars <- ls()[grepl("^go_pp",ls())]
+	plot_vars <- plot_vars[order(nchar(plot_vars),plot_vars)]
+	# Plot vars
+	invisible(lapply(plot_vars,function(var_name){
+		print(get(var_name))
+	}))
+	# Remove plot vars
+	rm(list=plot_vars)
+}
+
+
+
+
+
+
+
+
+
+
+
+```{r check_kegg, echo = FALSE}
+if(kegg_flags$KEGG_SECTION){
+	out <- "## **KEGG plots**"
+}else{
+	out <- ""
+}
+```
+
+`r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
+
+
+```{r plot_kegg, echo = FALSE}
+if(kegg_flags[["enrich_ora"]]){
+	suppressPackageStartupMessages(require(clusterProfiler))
+	suppressPackageStartupMessages(require(enrichplot))
+
+	# Add kegg plots
+	kegg_pp1  <- barplot(enrich_ora) # NOT ACCEPT GSEA
+	kegg_pp2  <- dotplot(enrich_ora, showCategory=30) + ggtitle("dotplot for ORA")
+	kegg_pp4  <- cnetplot(enrich_ora)
+	kegg_pp6  <- emapplot(enrich_ora)
+	kegg_pp8  <- heatplot(enrich_ora)
+	kegg_pp10 <- upsetplot(enrich_ora) # NOT ACCEPT GSEA
+}
+
+if(kegg_flags[["enrich_gsea"]]){
+	suppressPackageStartupMessages(require(clusterProfiler))
+	suppressPackageStartupMessages(require(enrichplot))
+
+	kegg_pp3 <- dotplot(enrich_gsea, showCategory=30) + ggtitle("dotplot for GSEA")
+	kegg_pp5 <- cnetplot(enrich_gsea)
+	kegg_pp7 <- emapplot(enrich_gsea)
+	kegg_pp9 <- heatplot(enrich_gsea)
+	kegg_pp11 <- ridgeplot(enrich_gsea)
+	kegg_pp12 <- gseaplot2(enrich_gsea, geneSetID=1:4, title = enrich_gsea$Description[1], pvalue_table = TRUE) 
+	kegg_pp13 <- gsearank(enrich_gsea, geneSetID=1, title = enrich_gsea$Description[1])
+}
+
+if(kegg_flags$KEGG_SECTION){
+	# Check vars to be plotted
+	plot_vars <- ls()[grepl("^kegg_pp",ls())]
+	plot_vars <- plot_vars[order(nchar(plot_vars),plot_vars)]
+	# Plot vars
+	invisible(lapply(plot_vars,function(var_name){
+		print(get(var_name))
+	}))
+}
+```
+
+
+```{r check_kegg_res, echo = FALSE}
+if(kegg_flags[["enrich_ora"]]){
+	out <- "## **ClusterProfiler KEGG table**"
+}else{
+	out <- ""
+}
+```
+
+`r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
+
+
+```{r dsiplay_kegg_res, echo = FALSE}
+# Plot kegg_ORA_enrich graphs
+if(kegg_flags[["enrich_ora"]]){
+	suppressPackageStartupMessages(require(clusterProfiler))
+	suppressPackageStartupMessages(require(enrichplot))
+
+	# Add kegg table
+	kegg_df <- as.data.frame(enrich_ora)
+	kegg_df[,1] <- unlist(lapply(enrich_ora[,1],function(id){
+		link <- url <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?", id, "/", enrich_ora[id, "geneID"]) # browseKEGG(enrich_ora, id)
+		to_html <- paste0("[",id,"](",link,")")
+		# to_HTML <- paste("<a href='",link,"'>",id,"</a>",sep="")
+	}))
+
+	cols_to_show <- c("ID","Description","p.adjust","Count","geneID")
+	knitr::kable(kegg_df[,cols_to_show])
+}
+```

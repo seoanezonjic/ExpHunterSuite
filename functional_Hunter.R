@@ -51,7 +51,7 @@ option_list <- list(
   make_option(c("-t", "--biomaRt_filter"), type="character", default="E",
     help="IDtype, 'E' for 'ensembl_gene_id' or 'R' for 'refseq_peptide'. [Default:%default]"),      	
   make_option(c("-f", "--functional_analysis"), type="character", default="GK",
-    help="Type of functional analyses to be performed (G = GO, K = KEGG). [Default=%default]"),
+    help="Type of functional analyses to be performed (G = GO [topGO], K = KEGG, g = GO [clusterProfiler]). [Default=%default]"),
   make_option(c("-G", "--GO_graphs"), type="character", default=c("M"),
     help="Modules to able go enrichments (M = Molecular Function, B = Biological Process, C = Celular Components). By default Default=%default GO cathegory is performed"), # Not Checked
   make_option(c("-K", "--Kegg_organism"), type="character", default=NULL, 
@@ -124,8 +124,9 @@ if(opt$List_organisms == TRUE){
 
 
 # Check which enrichments are gonna be performed
-flags <- list(GO   = grepl("G", opt$functional_analysis),
-              KEGG = grepl("K", opt$functional_analysis))
+flags <- list(GO    = grepl("G", opt$functional_analysis),
+              KEGG  = grepl("K", opt$functional_analysis),
+              GO_cp = grepl("g", opt$functional_analysis))
 
 
 # Load input
@@ -257,7 +258,7 @@ write.table(reference_table, file=file.path(paths$root, "entrez_Gos.txt"), quote
 
 
 #############################################
-### GO ENRICHMENT
+### GO ENRICHMENT (topGO)
 #############################################
 if(flags$GO){
 	# Prepare special subsets to be studied
@@ -326,19 +327,73 @@ if(flags$GO){
 			# Launch GSEA analysis
 			invisible(lapply(modules_to_export,function(mod){
 				# Common
-				perform_GSEA_analysis_local(entrez_common_DEGs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_res_common",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
-				perform_GSEA_analysis_local(entrez_pos_logFC_common_DEGs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_res_common_pos",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
-				perform_GSEA_analysis_local(entrez_neg_logFC_common_DEGs$ENTREZ, reference_ids_common,mod, file.path(paths$root, paste("GO_res_common_neg",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_common_DEGs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_preval",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_pos_logFC_common_DEGs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_preval_overex",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_neg_logFC_common_DEGs$ENTREZ, reference_ids_common,mod, file.path(paths$root, paste("GO_preval_underex",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
 				# Union
-				perform_GSEA_analysis_local(entrez_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_res_union",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
-				perform_GSEA_analysis_local(entrez_pos_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_res_union_pos",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
-				perform_GSEA_analysis_local(entrez_neg_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_res_union_neg",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])    
+				perform_GSEA_analysis_local(entrez_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_pos_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos_overex",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_neg_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos_underex",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])    
 			}))
 		} # END LOCAL/REMOTE IF
 	}
 }
 
 
+
+
+#############################################
+### GO ENRICHMENT (clusterProfiler)
+#############################################
+
+if(flags$GO_cp){
+	# Load necessary packages
+	require(clusterProfiler)
+	
+	modules_to_export <- c()
+	if(grepl("M", opt$GO_graphs)){
+		modules_to_export <- "MF"
+	}
+	if(grepl("B", opt$GO_graphs)){
+		modules_to_export <- c(modules_to_export,"BP")
+	}
+	if(grepl("C", opt$GO_graphs)){
+		modules_to_export <- c(modules_to_export,"CC")
+	}
+	if(length(modules_to_export) == 0){
+		warning("Any GO sub-ontology have been selected. Use -G input command")
+	}
+
+
+
+	# Enrich
+	# enrich_go <- as.data.frame(do.call(rbind,lapply(modules_to_export,function(mod){
+	enrich_go <- lapply(modules_to_export,function(mod){
+		enrich <-  enrichGO(gene          = common_unique_entrez, #genes,
+							OrgDb         = biomaRt_organism_info$Bioconductor_DB[1], #organism,
+							keyType       = "ENTREZID", #keyType,
+							ont           = mod, # SubOntology
+							pvalueCutoff  = 1, #pvalueCutoff,
+							pAdjustMethod = "BH", #pAdjustMethod,
+							qvalueCutoff  = 1) #qvalueCutoff)
+		# enrich <- as.data.frame(enrich)
+		return(enrich)
+	# })))
+	})
+
+	names(enrich_go) <- modules_to_export
+
+	# Write results
+	# write.table(enrich_go, file=file.path(paths$root, "GO_clResults"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
+	write.table(as.data.frame(do.call(rbind,lapply(enrich_go,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_clResults"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
+
+	# if(length(enrich_go) > 1){
+	# 	names(enrich_go) <- modules_to_export
+	# 	enrich_go <- merge_result(enrich_go)		
+	# }else{
+	# 	enrich_go <- unlist(enrich_go)
+	# }
+}
 
 
 
@@ -359,19 +414,39 @@ if(flags$KEGG){
 	}
 
 	# Enrich
-	enrich <-  enrichKEGG(gene          = common_unique_entrez, #genes,
-						  organism      = biomaRt_organism_info$KeggCode[1], #organism,
-						  keyType       = "kegg", #keyType,
-						  pvalueCutoff  = 1, #pvalueCutoff,
-						  pAdjustMethod = "BH", #pAdjustMethod,
-						  use_internal_data = opt$remote, 
-						  qvalueCutoff  = 1) #qvalueCutoff)
+	enrich_ora <-  enrichKEGG(gene          = common_unique_entrez, #genes,
+							  organism      = biomaRt_organism_info$KeggCode[1], #organism,
+							  keyType       = "kegg", #keyType,
+							  pvalueCutoff  = 1, #pvalueCutoff,
+							  pAdjustMethod = "BH", #pAdjustMethod,
+							  use_internal_data = opt$remote, 
+							  qvalueCutoff  = 1) #qvalueCutoff)
+
+	aux <- subset(reference_table, reference_table[,1] %in% common_DEGs)
+	if(exists("annot_table")){
+		geneList <- as.vector(common_DEGs_df[which(common_DEGs_df$Annot_IDs %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+		names(geneList) <- common_DEGs_df$Annot_IDs[which(common_DEGs_df$Annot_IDs %in% aux[,"ensembl_gene_id"])]
+		names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
+	}else{
+		geneList <- as.vector(common_DEGs_df[which(rownames(common_DEGs_df) %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+		names(geneList) <- rownames(common_DEGs_df)[which(rownames(common_DEGs_df) %in% aux[,"ensembl_gene_id"])]
+		names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
+	}
+
+	geneList <- sort(geneList, decreasing = TRUE)
+
+
+	# enrich_gsea <- gseKEGG(geneList     = geneList,
+	# 					   organism     = biomaRt_organism_info$KeggCode[1],
+	# 					   use_internal_data = opt$remote,
+	# 					   nPerm        = 1000,
+	# 					   minGSSize    = 120,
+	# 					   pvalueCutoff = 0.05,
+	# 					   verbose      = FALSE)
 
 	# Write output
-	write.table(enrich, file=file.path(paths$root, "KEGG_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+	write.table(enrich_ora, file=file.path(paths$root, "KEGG_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 }
-
-
 
 
 
@@ -384,4 +459,15 @@ if(flags$KEGG){
 ################## CREATE FINAL ANNOTATION TABLE ##########
 
 #### functional
-generate_FA_report()
+# generate_FA_report()
+
+
+############################################################
+##                    GENERATE REPORT                     ##
+############################################################
+# message(dirname(normalizePath(paths$root, "report.html")))
+results_path <- paste(normalizePath(dirname(paths$root)),paths$root,sep=.Platform$file.sep)
+outf <- paste(dirname(normalizePath(paths$root,"functional_report.html")),"functional_report.html",sep=.Platform$file.sep)
+
+rmarkdown::render(file.path(main_path_script, 'templates', 'functional_report.Rmd'), 
+                  output_file = outf, intermediates_dir = paths$root)
