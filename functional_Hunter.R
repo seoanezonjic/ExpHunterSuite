@@ -85,13 +85,21 @@ opt <- parse_args(OptionParser(option_list=option_list))
 biomaRt_query_info <- read.table(file.path(main_path_script, "lib/biomaRt_organism_table.txt"), header=T, row.names=1, sep="\t", stringsAsFactors = FALSE, fill=NA)
 
 # Load Reference-NonRefernce models gene IDs relations
+if(file.exists(opt$countdata_file)){
+	count_data <- read.table(opt$countdata_file, header=TRUE, row.names=NULL, sep="\t", stringsAsFactors = FALSE)
+	exp_names <- colnames(count_data)[-1]
+}else{
+	exp_names <- "EXPERIMENT NAMES NOT AVAILABLE"
+}
+
+
 if(!is.null(opt$annot_file)){
   annot_table <- read.table(opt$annot_file, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "")
   reference_table <- annot_table
 }else if(!file.exists(opt$countdata_file)){
     stop('Count file not exists, check the PATH given to the -c flag')
 }else{
-  reference_table <- read.table(opt$countdata_file, header=TRUE, row.names=NULL, sep="\t", stringsAsFactors = FALSE)
+  reference_table <- count_data
 }
 
 

@@ -45,6 +45,14 @@ In DEgenes Hunter, genes are labeled according the following considerations:
 * **Prevalent DEGs:** Differentially expressed genes considered by all packages employed but one.
 * **All possible DEGs:** Differentially expressed genes considered by at least one of the R-packages but not enough of them to be considered as "prevalent DEGs".
 
+Specifically, in this experiment set, known experiment labels are:
+```{r add_exp_names, echo = FALSE}
+	out <- unlist(lapply(exp_names,function(names){paste("* ",names,sep="")}))
+```
+
+`r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
+
+
 
 ```{r check_graphs, echo = FALSE}
 ####################################### GO
