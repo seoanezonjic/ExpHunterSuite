@@ -419,7 +419,7 @@ if(flags$KEGG){
 							  keyType       = "kegg", #keyType,
 							  pvalueCutoff  = 1, #pvalueCutoff,
 							  pAdjustMethod = "BH", #pAdjustMethod,
-							  use_internal_data = opt$remote, 
+							  use_internal_data = !opt$remote, 
 							  qvalueCutoff  = 1) #qvalueCutoff)
 
 	aux <- subset(reference_table, reference_table[,1] %in% common_DEGs)
