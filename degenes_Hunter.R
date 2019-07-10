@@ -1,8 +1,6 @@
 #! /usr/bin/env Rscript
 
-
 #' @author refactor by Fernando Moreno Jabato. Original authors Isabel Gonzalez Gayte
-
 
 ######################################################################################################
 ############################################# DEgenes Hunter #########################################
@@ -26,9 +24,9 @@ suppressPackageStartupMessages(library(stringr))
 suppressPackageStartupMessages(library(plyr))
 suppressPackageStartupMessages(library(knitr))
 suppressPackageStartupMessages(library(FSA))
-
 suppressPackageStartupMessages(require(rmarkdown))
-
+suppressPackageStartupMessages(require(reshape2))
+suppressPackageStartupMessages(require(PerformanceAnalytics))
 
 # Obtain this script directory
 full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using source
@@ -41,10 +39,7 @@ source(file.path(main_path_script, 'lib', 'general_functions.R'))
 source(file.path(main_path_script, 'lib', 'dif_expression_packages.R'))
 source(file.path(main_path_script, 'lib', 'qc_and_benchmarking_functions.R'))
 
-
-
 # Prepare command line input 
-
 option_list <- list(
   make_option(c("-i", "--input_file"), type="character", default=NULL,
     help="Input file with read counts"),
@@ -53,14 +48,14 @@ option_list <- list(
   make_option(c("-T", "--Treatment_columns"), type="character", default=NULL,
     help="Treatment columns. Please indicate column names of treatment samples separated by commas"),  
   make_option(c("-r", "--reads"), type="integer", default=2,
-    help="Number of minimum reads required. Lesser number of reads are discarded. Default=%default.
+    help="Used in filtering. Reads (counts per million mapped reads) per gene per sample must be higher than this value to count towards the --minlibraries value. Default=%default.
     0 = No filtering"),
   make_option(c("-l", "--minlibraries"), type="integer", default=2,
-    help="Number of minimum reads required. Lesser number of reads are discarded. Default=%default"),
+    help="For each gene, the minimum number of samples that must have more than --reads. Default=%default"),
   make_option(c("-o", "--output_files"), type="character", default="hunter_DE_results",
     help="Output path. Default=%default"),
   make_option(c("-p", "--p_val_cutoff"), type="double", default=0.05,
-    help="Adjusted p-value for the differential expression analysis. Default=%default"),
+    help="Adjusted p-value cutoff for the differential expression analysis. Default=%default"),
   make_option(c("-f", "--fc"), type="double", default=1.5,
     help="Minimum fold expression change . Default=%default"),
   make_option(c("-q", "--q_value"), type="double", default=0.95,
@@ -84,9 +79,6 @@ if(opt$minpack_common > active_modules){
 }
 
 
-
-
-
 ############################################################
 ##                       CHECK INPUTS                     ##
 ############################################################
@@ -102,12 +94,11 @@ if (is.null(opt$Treatment_columns)){
   stop(cat("No treatment samples are indicated.\nPlease select column names of the count table with -T"))
 }
 if (opt$minlibraries < 1){
-  stop(cat("Minimum library number to check minimum read counts cannot be less than 1."))
+  stop(cat("Minimum library number to check minimum read counts cannot be less than 1.\nIf you want to avoid filtering, set --reads to 0."))
 }
 if (opt$reads == 0){
-  cat("Minimum reads option is set to cero. Raw count table will not be filtered.")
+  cat("Minimum reads option is set to zero. Raw count table will not be filtered.")
 }
-
 
 # Control replicate number VS method selection
 index_control_cols <- unlist(strsplit(opt$Control_columns, ",")) 
@@ -115,24 +106,17 @@ index_treatmn_cols <- unlist(strsplit(opt$Treatment_columns, ","))
 replicatesC <- length(index_control_cols)
 replicatesT <- length(index_treatmn_cols)
 
-# Chekc if there are not enough replicates for specified method
+# Check if there are not enough replicates for specified method
 if((sum(replicatesC, replicatesT)<3) &
     (((grepl("E", opt$modules)) | 
       (grepl("L", opt$modules)) | 
       (grepl("N", opt$modules))))){
-  stop("Not enough replicates to perform an analysis with the selected method. Select 'D' with parameter -m")
+  stop("Not enough replicates to perform an analysis with at least one of the selected methods. Select 'D' for parameter -m")
 }else if((sum(replicatesC, replicatesT)<=5) &
         ((grepl("L", opt$modules)) | 
           (grepl("N", opt$modules)))){
-  stop("Not enough replicates to perform an analysis with the selected method")
+  stop("Not enough replicates to perform an analysis with at least one of the selected methods")
 }
-
-
-
-
-
-
-
 
 ############################################################
 ##                         I/O DATA                       ##
@@ -148,24 +132,18 @@ subfolders <- defining_subfolders(replicatesC, replicatesT, opt$modules)
 paths <- create_subfolders(subfolders, paths)
 
 # Load raw count data
-raw <- read.table(opt$input_file, header=T, row.names=1, sep="\t")
+raw <- read.table(opt$input_file, header=TRUE, row.names=1, sep="\t")
 raw <- raw[c(index_control_cols,index_treatmn_cols)] #Indexing selected columns from input count file
 
 # Substitute NA values
 raw[is.na(raw)] <- 0
-
-
-
-
-
-
 
 ############################################################
 ##                          FILTER                        ##
 ############################################################
 # Prepare filtered set
 if(opt$reads != 0){
-  keep_cmp <- rowSums(cpm(raw) > opt$reads) >= opt$minlibraries # two reads at least in two libraries
+  keep_cmp <- rowSums(edgeR::cpm(raw) > opt$reads) >= opt$minlibraries # genes with cpm greater than --reads value for at least --minlibrariess samples
   raw_filter <- raw[keep_cmp,] # Filter out count data frame
   write.table(raw_filter, file=file.path(paths$root, "filtered_count_data.txt"),
                                           quote=F, col.names=NA, sep="\t")
@@ -173,43 +151,8 @@ if(opt$reads != 0){
   raw_filter <- raw
 }
 
-
-
-
 # Defining contrast - Experimental design
-design_vector <- c(rep("C", replicatesC), rep("T", replicatesT)) 
-
-
-
-
-############################################################
-##                        QC GRAPHS                       ## 
-##                 (before normalization)                 ##
-############################################################
-
-# # Simple boxplot to see overall counts' distribution
-# pdf(file.path(paths$root, "boxplot_rawcounts_distribution.pdf"), w=8.5, h=6) 
-#   boxplot(raw_filter)
-# dev.off()
-
-# pdf(file.path(paths$root, "boxplot_before_normalization.pdf"), w=8.5, h=6)
-#   max_mean <- max(apply(raw_filter, MARGIN = 2, function(x) mean(x, na.rm=TRUE)))
-#   boxplot(raw_filter,  ylim=c(0, max_mean*10), cex.lab=0.8, cex.axis=0.8, notch=TRUE, col=(c(rep("gold",replicatesC),rep("darkgreen",replicatesT))))
-# dev.off()
-
-# if('Results_DESeq2' %in% names(paths)){
-#   rld <- preparing_rlog_PCA(raw_filter, design_vector)
-#   pdf(file.path(paths[['Results_DESeq2']], "PCAplot.pdf"))
-#     plotPCA(rld, intgroup=c("cond", "each")) # DESeq2 package
-#   dev.off()  
-# }
-
-
-
-
-
-
-
+design_vector <- c(rep("C", replicatesC), rep("T", replicatesT))
 
 ############################################################
 ##                       D.EXP ANALYSIS                   ##
@@ -228,21 +171,15 @@ final_FDR_names         <- c()
 final_pvalue_names      <- c()
 DEG_pack_columns        <- c()
 
-all_plots               <- list()
-
 # Calculate global parameters (log fold change value)
 lfc <- calculate_lfc(opt$fc)
 
-
-
 ############## Verbose point
 if((replicatesC == 1) & (replicatesT == 1)){ 
-  warning('There are one replicate available. Only DESeq2 will be performed.\n')
+  warning('There is only one replicate available per class. Only DESeq2 will be performed.\n')
 }else{
   cat('There are', replicatesC, 'replicates in the control condition and', replicatesT, 'replicates in the treatment condition.\n')
 }
-
-
 
 #####
 ################## CASE D: DESeq2
@@ -250,7 +187,6 @@ if((replicatesC == 1) & (replicatesT == 1)){
 if(grepl("D",opt$modules)){
   # Verbose
   cat('Gene expression analysis is performed with DESeq2.\n')
-
   # Calculate results
   results <- analysis_DESeq2(data   = raw_filter, 
                              num_controls  = replicatesC, 
@@ -272,18 +208,11 @@ if(grepl("D",opt$modules)){
     final_logFC_names  <- c(final_logFC_names, 'logFC_DESeq2')
     final_FDR_names    <- c(final_FDR_names, 'FDR_DESeq2')
     DEG_pack_columns   <- c(DEG_pack_columns, 'DESeq2_DEG')
-
-    # pdf(file.path(paths[['Results_DESeq2']], "MA_plot_DESeq2.pdf"), w=11, h=8.5)
-    #   plotMA(all_counts_for_plotting[['DESeq2']], cex.lab=1.6, cex.axis=1.5) 
-    # dev.off()
   } 
 }
 
-
-
-
 #####
-################## CASE E: edgeR   (AT LEAST 2 REPLICLATES)
+################## CASE E: edgeR (AT LEAST 2 REPLICLATES)
 #####
 if((replicatesC >= 2) & 
    (replicatesT >= 2) & 
@@ -316,22 +245,11 @@ if((replicatesC >= 2) &
     final_logFC_names  <- c(final_logFC_names, 'logFC_edgeR')
     final_FDR_names    <- c(final_FDR_names, 'FDR_edgeR')
     DEG_pack_columns   <- c(DEG_pack_columns, 'edgeR_DEG')
-
-    # pdf(file.path(paths[['Results_edgeR']], "MA_plot_edgeR.pdf"), w=11, h=8.5)
-    #   with(all_counts_for_plotting[['edgeR']], plot(logCPM, logFC, pch=20, main="edgeR: Fold change vs abundance", cex.lab=1.5, cex.axis=1.5))
-    #   with(subset(all_counts_for_plotting[['edgeR']], FDR < opt$p_val_cutoff), points(logCPM, logFC, pch=20, col="red"))
-    #   abline(h=c(-1,1), col="blue")
-    # dev.off()
   }
 }
 
-
-
-
-
-
 #####
-################## CASE L: limma   (AT LEAST 3 REPLICLATES)
+################## CASE L: limma (AT LEAST 3 REPLICLATES)
 #####
 if((replicatesC >= 3) &
    (replicatesT >= 3) &
@@ -362,22 +280,13 @@ if((replicatesC >= 3) &
     final_FDR_names    <- c(final_FDR_names, 'FDR_limma')
     DEG_pack_columns   <- c(DEG_pack_columns, 'limma_DEG')
 
+    # Used for generating the report
     k_limma <- rownames(all_counts_for_plotting[['limma']]) %in% rownames(all_data[['limma']])
-    # pdf(file.path(paths[['Results_limma']], "Volcanoplot_limma.pdf"), w=11, h=8.5)
-    #   plot(x=all_counts_for_plotting[['limma']]$logFC, y=-log10(all_counts_for_plotting[['limma']]$P.Value), xlab="logFC", ylab="logOdds", col=c("blue", "red") [k_limma+1], pch=20, main= c("groupsB-groupsA"), cex.lab=1.6, cex.axis=1.5)
-    #   abline(v= opt$lfc, col="cyan")
-    #   limit.pval_limma <- -log10(max(all_data[['limma']]$P.Value)) 
-    #   abline(h=limit.pval_limma, col="green")
-    #   abline(h=-log10(opt$p_val_cutoff), col="red", lty="dashed")
-    # dev.off()
   }
 }
 
-
-
-
 #####
-################## CASE N: NOISeq  (AT LEAST 3 REPLICLATES)
+################## CASE N: NOISeq (AT LEAST 3 REPLICLATES)
 #####
 if((replicatesC >= 3) &
    (replicatesT >= 3) &
@@ -411,12 +320,6 @@ if((replicatesC >= 3) &
 }  
 
 
-
-
-
-
-
-
 ############################################################
 ##                   FINAL RESULTS TABLE                  ##
 ############################################################
@@ -436,15 +339,6 @@ colnames(tag)   <- "genes_tag"
 final_BIG_table <- cbind(final_BIG_table, tag)
 final_BIG_table <- adding_filtered_transcripts(raw, raw_filter, final_BIG_table)
 
-
-
-
-
-
-
-
-
-
 ############################################################
 ##                       EXPORT RESULTS                   ##
 ############################################################
@@ -454,27 +348,8 @@ write_data_frames_list(dataframe_list = all_data, prefix = 'DEgenes_', paths = p
 write_data_frames_list(dataframe_list = all_data_normalized, prefix = 'Normalized_counts_', paths = paths)
 write_data_frames_list(dataframe_list = all_counts_for_plotting, prefix = 'allgenes_', paths = paths)
 
-# # Plot final QC graphs after normalization
-# pdf(file.path(paths$root, "boxplot_normcounts_distribution.pdf"), w=8.5, h=6) #simple boxplot to see overall normalized counts' distribution
-#   boxplot(all_data_normalized[[1]])
-# dev.off()
-
-# pdf(file.path(paths$root, "boxplot_normalized_data.pdf"), w=8.5, h=6)
-#   max_mean <- max(apply(all_data_normalized[[1]], MARGIN = 2, function(x) mean(x, na.rm=TRUE)))
-#   boxplot(all_data_normalized[[1]],  ylim=c(0, max_mean*10), cex.lab=0.8, cex.axis=0.8, notch=TRUE, col=(c(rep("gold",replicatesC),rep("darkgreen",replicatesT))))
-# dev.off()
-
-
-# Expor "BIG FINAL TABLE" 
+# Export "BIG FINAL TABLE" 
 write.table(final_BIG_table, file=file.path(paths[["Common_results"]], "hunter_results_table.txt"), quote=F, col.names=T, sep="\t", row.names=F)
-
-
-
-
-
-
-
-
 
 
 ############################################################
@@ -484,11 +359,6 @@ write.table(final_BIG_table, file=file.path(paths[["Common_results"]], "hunter_r
 if (length(all_data) > 1){
   ########### Venn diagram ##############
   all_package_results <- get_vector_names(all_data)
-
-  # pdf(paste(file.path(paths[['Common_results']], "VennDiagram.pdf"))) 
-  #   venn_plot <- venn.diagram(all_package_results, cex = 2, cat.fontface = 1, lty = 2, filename = NULL, cat.cex=1.5)
-  #   grid.draw(venn_plot)
-  # dev.off()
 
   ########################
   x_all <- calculate_intersection(all_package_results)
@@ -509,8 +379,6 @@ if (length(all_data) > 1){
   # plotting_FDR_values(all_fdr_counts_data, "padj_all_genes.pdf" , 1.00)
 }
 
-# generate_report(all_data, all_LFC_names, x_all)
-
 barplot_df <- creating_genenumbers_barplot(raw, raw_filter, all_data, x_all)
 # pdf(file=file.path(paths$root, "genenumbers.pdf"), width=7, height=1.2)
 #   p <- ggplot(barplot_df, aes(cat, numbers)) + ylab("Number of genes") + xlab("") +
@@ -523,20 +391,12 @@ barplot_df <- creating_genenumbers_barplot(raw, raw_filter, all_data, x_all)
 
 creating_top20_table(final_BIG_table)
 
-# generate_DE_report()
-
-
-
-
-
-
-
 
 ############################################################
 ##                    GENERATE REPORT                     ##
 ############################################################
 # message(dirname(normalizePath(paths$root, "report.html")))
-outf <- paste(dirname(normalizePath(paths$root,"report.html")),"report.html",sep=.Platform$file.sep)
+outf <- paste(dirname(normalizePath(paths$root,"DEG_report.html")),"DEG_report.html",sep=.Platform$file.sep)
 
 rmarkdown::render(file.path(main_path_script, 'templates', 'main_report.Rmd'), 
                   output_file = outf, intermediates_dir = paths$root)

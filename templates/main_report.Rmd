@@ -24,9 +24,6 @@ out <- NULL
 
 ```
 
-
-
-
 # **DEgenes Hunter - Differential expression analysis report**
 
 ## **General description of the analysis workflow**
@@ -42,9 +39,12 @@ In DEgenes Hunter, genes are labeled according to the following considerations:
 * **Not DEGs:** Genes not considered DEGs in any package (by a minimum of $n-1$ packages employed if we used more than three algorithms).
 
 
+## **Details of the input files and groupingss**
 
+### **The first group of samples contains the following files: `r index_control_cols`**
+### **The second group of samples contains the following files: `r index_treatmn_cols`**
 
-
+Note: A positive log fold change shows higher expression in the second group; a negative log fold change represents higher expression in the first group.
 
 ## **Data quality control (QC)**
 
@@ -58,6 +58,27 @@ pgenes <- ggplot(barplot_df, aes(cat, numbers)) +
 
 plot(pgenes)
 ```
+
+### **Correlation between samples**
+
+```{r corr_plot,echo = FALSE}
+
+chart.Correlation(raw_filter[index_control_cols], histogram=TRUE, pch=19, log="xy")
+chart.Correlation(raw_filter[index_treatmn_cols], histogram=TRUE, pch=19, log="xy")
+
+chart.Correlation(raw_filter, histogram=TRUE, pch=19, log="xy")
+```
+
+### **Heatmap showing correlation between samples and clustering (red: higher correlation; blue: lower)**
+
+```{r heatmap_corr,echo = FALSE}
+
+col<- colorRampPalette(c("blue", "white", "red"))(20)
+res <- cor(raw_filter)
+heatmap(x = res, col = col, symm = TRUE)
+
+```
+
 
 DEgenes Hunter creates box plots, principal component (PCA) plots, and multidimensional scaling (MDS) plots before and after raw count normalization to assess the consistence of comparison groups. 
 
@@ -90,11 +111,15 @@ to_plot <- boxplot(all_data_normalized[[1]],
 
 ### Principal Component Analysis (PCA) plots
 This is a PCA plot before normalization of the count data:
+
 ```{r pca_plot, echo = FALSE}
 require(DESeq2)
 rld <- preparing_rlog_PCA(raw_filter, design_vector)
+#print(colData(rld))
+
 plotPCA(rld, intgroup=c("cond", "each"))
 ```
+
 The samples are shown in the 2D plane and distributed by their first two principal components. This type of plot is useful for visualizing the overall effect of experimental covariates and batch effects.
 
 
@@ -112,6 +137,7 @@ The samples are shown in the 2D plane and distributed by their first two princip
 
 
 ```{r analysis_section, echo = FALSE}
+
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # Check DESeq2 MA plots
 if('DESeq2' %in% names(all_counts_for_plotting)){
@@ -256,6 +282,7 @@ Different plots concerning every differential gene expression algorithm are show
 
 ### **Venn Diagram**
 This is the Venn Diagram of the all possible DEGs encountered in the experiment (Image extracted from {"VennDiagram.pdf"} file):
+
 ```{r Venn_d, echo = FALSE}
 # venn_plot <- venn.diagram(all_package_results, cex = 2, cat.fontface = 1, lty = 2, filename = NULL, cat.cex=1.5)
 # grid.draw(venn_plot)
@@ -279,12 +306,32 @@ vennDiagram(intersections, circle.col = rainbow(length(sets)))
 
 ```
 
+### **P-value Distributions**
+Distributions of p-values, unadjusted and adjusted for multiple testing (FDR)
 
+```{r pval_distr, echo = FALSE, warning = FALSE}
+
+# Get the relevant columns to plot and use to subset the output table
+pval_cols <- paste0("pvalue_", names(all_package_results))
+FDR_cols <- paste0("FDR_", names(all_package_results))
+
+df <- final_BIG_table[final_BIG_table$genes_tag != "FILTERED_OUT", ]
+df_melted_pval <- melt(df, id.vars = "Row.names", measure.vars = pval_cols)
+df_melted_FDR <- melt(df, id.vars = "Row.names", measure.vars = FDR_cols)
+
+# Now plot
+ggplot(df_melted_pval, aes(x=value)) + 
+    geom_density() + facet_grid(. ~variable)
+
+ggplot(df_melted_FDR, aes(x=value)) + 
+    geom_density() + facet_grid(. ~variable)
+```
 
 
 ### **FDR gene-wise benchmarking**
 
 Benchmark of false positive calling (Image extracted from {"padj\_prevalent\_DEGs.pdf"} file):
+
 ```{r FDR_plot, echo = FALSE}
 p_seguros_Int <- ggplot(intersection_data, aes(x = package_name, y = fdr, color = package_name)) +
     			 geom_boxplot(outlier.colour = rgb(0, 0, 0, 0)) + 

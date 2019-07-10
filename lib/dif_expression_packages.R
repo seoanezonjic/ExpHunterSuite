@@ -1,4 +1,4 @@
-################################################
+ ################################################
 ### FUNCTIONS: DIFFERENCIAL EXPRESSION PACKAGES
 ################################################
 
@@ -30,11 +30,8 @@ analysis_DESeq2 <- function(data, num_controls, num_treatmnts, p_val_cutoff, lfc
 	print(coldat)
 	# Calculating differential expression 
 	all_genes_DESeq2_object <- exp_dif_Deseq2(data, coldat)
-
-	select <- order(rowMeans(counts(all_genes_DESeq2_object, normalized=TRUE)), decreasing=TRUE)[1:20]
-
+	
 	all_DESeq2_genes <- results(all_genes_DESeq2_object)
-
 	normalized_counts <- as.data.frame(counts(all_genes_DESeq2_object, normalized=TRUE)) # Getting normalized values
 	
 	if ((num_controls > 1)&(num_treatmnts > 1)){ # Filtering DEGs by adjusted p-value only when there are replicates available (if not, only a descriptive analysis is performed)
@@ -48,11 +45,9 @@ analysis_edgeR <- function(data, p_val_cutoff, lfc, paths, groups){
 	require(edgeR)
 	# Calculating differential expression
 	d_edgeR <- DGEList(counts=data, group=groups) # Building edgeR object  
-
 	# Obtain necessary data
 	cols <- as.numeric(d_edgeR$samples$group)+2
 	denraw <- cpm(d_edgeR, log=TRUE) # Counts Per Million
-
 
 	# Export Plots into PDFs
 	pdf(file.path(paths[['Results_edgeR']], "group_dendrogram_single.pdf"), w=11, h=8.5)
@@ -61,21 +56,19 @@ analysis_edgeR <- function(data, p_val_cutoff, lfc, paths, groups){
 	  plot(hc)
 	dev.off()
 
-
 	pdf(file.path(paths[['Results_edgeR']], "MDSplot.pdf"))
 		plotMDS(d_edgeR, col=cols, main="MDS Plot: Treatment colours")
 	dev.off()
-
 
 	# Apply transformations
 	d_edgeR <- calcNormFactors(d_edgeR) # Calculation of normalization factor
 	d_edgeR <- estimateCommonDisp(d_edgeR) # Estimate dispersions (common dispersion, then tagwise dispersion)
 	d_edgeR <- estimateTagwiseDisp(d_edgeR)
 
-	# Calculate Counts Per Million
+	# Calculate Counts Per Million Mapped Reads
 	dennorm <- cpm(d_edgeR, log=TRUE)
 
-	# Eexport plots into PDFs
+	# Export plots into PDFs
 	pdf(file.path(paths[['Results_edgeR']], "group_dendrogram_norm_average.pdf"), w=11, h=8.5)
   		dent_norm <- t(dennorm)
   		hc_norm <- hclust(dist(dent_norm), "ave")
@@ -91,7 +84,6 @@ analysis_edgeR <- function(data, p_val_cutoff, lfc, paths, groups){
 	pdf(file.path(paths[['Results_edgeR']], "MDSplot_norm.pdf"))
 		plotMDS(d_edgeR, col=cols, main="MDS Plot: Treatment colours - normalized data")
 	dev.off()
-
 
 	# Getting normalized counts
 	normalized_counts <- cpm(d_edgeR)
@@ -132,11 +124,10 @@ analysis_limma <- function(data, num_controls, num_treatmnts, p_val_cutoff, lfc)
     todos_limma <- topTable(fit2, adjust.method="BH", number=nrow(fit2))
     # Obtain differential expression
 	expres_diff <- topTable(fit2, adjust.method = "BH", number=nrow(fit2), p.value= p_val_cutoff, lfc = lfc)
-	expres_diff <- expres_diff[order(rownames(expres_diff)),]
+	expres_diff <- expres_diff[order(rownames(expres_diff)), ]
 	# Return calculated info
 	return(list(expres_diff, normalized_counts, todos_limma))
 }
-
 
 analysis_NOISeq <- function(data, num_controls, num_treatmnts, q_value, groups){
 	require(NOISeq)

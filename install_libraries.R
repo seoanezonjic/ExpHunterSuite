@@ -21,7 +21,7 @@ biocLite()
 print("Installing libraries for differential expression analysis script")
 
 ## PACKAGES IN CRAN
-install.packages(c("ggplot2","VennDiagram","gplots","optparse","stringr","plyr"))
+install.packages(c("ggplot2","VennDiagram","gplots","optparse","stringr","plyr","reshape2","PerformanceAnalytics"))
 
 ## PACKAGES IN BIOCONDUCTOR
 ## try http:// if https:// URLs are not supported
