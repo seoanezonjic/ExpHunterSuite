@@ -326,7 +326,7 @@ if(kegg_flags[["enrich_ora"]]){
 	# Add kegg table
 	kegg_df <- as.data.frame(enrich_ora)
 	kegg_df[,1] <- unlist(lapply(enrich_ora[,1],function(id){
-		link <- url <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?", id, "/", enrich_ora[id, "geneID"]) # browseKEGG(enrich_ora, id)
+		link <- url <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?", id, "/default%3dorange/", enrich_ora[id, "geneID"]) # browseKEGG(enrich_ora, id)
 		to_html <- paste0("[",id,"](",link,")")
 		# to_HTML <- paste("<a href='",link,"'>",id,"</a>",sep="")
 	}))
