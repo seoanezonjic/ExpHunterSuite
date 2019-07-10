@@ -63,10 +63,10 @@ plot(pgenes)
 
 ```{r corr_plot,echo = FALSE}
 
-chart.Correlation(raw_filter[index_control_cols], histogram=TRUE, pch=19, log="xy")
-chart.Correlation(raw_filter[index_treatmn_cols], histogram=TRUE, pch=19, log="xy")
+PerformanceAnalytics::chart.Correlation(raw_filter[index_control_cols], histogram=TRUE, pch=19, log="xy")
+PerformanceAnalytics::chart.Correlation(raw_filter[index_treatmn_cols], histogram=TRUE, pch=19, log="xy")
 
-chart.Correlation(raw_filter, histogram=TRUE, pch=19, log="xy")
+PerformanceAnalytics::chart.Correlation(raw_filter, histogram=TRUE, pch=19, log="xy")
 ```
 
 ### **Heatmap showing correlation between samples and clustering (red: higher correlation; blue: lower)**
@@ -121,19 +121,6 @@ plotPCA(rld, intgroup=c("cond", "each"))
 ```
 
 The samples are shown in the 2D plane and distributed by their first two principal components. This type of plot is useful for visualizing the overall effect of experimental covariates and batch effects.
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ```{r analysis_section, echo = FALSE}
@@ -278,7 +265,7 @@ Different plots concerning every differential gene expression algorithm are show
 
 
 
-## **Graph concerning common results**
+## **Figures concerning common results**
 
 ### **Venn Diagram**
 This is the Venn Diagram of the all possible DEGs encountered in the experiment (Image extracted from {"VennDiagram.pdf"} file):
@@ -323,10 +310,24 @@ df_melted_FDR <- melt(df, id.vars = "Row.names", measure.vars = FDR_cols)
 ggplot(df_melted_pval, aes(x=value)) + 
     geom_density() + facet_grid(. ~variable)
 
+
 ggplot(df_melted_FDR, aes(x=value)) + 
     geom_density() + facet_grid(. ~variable)
 ```
 
+### **FDR Correlations**
+Correlations of adjusted p-values, adjusted for multiple testing (FDR)
+
+```{r pval_corr, echo = FALSE, warning = FALSE}
+
+chart.Correlation(df[,FDR_cols], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
+chart.Correlation(df[,pval_cols], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
+
+
+chart.Correlation(df[,paste0("logFC_", names(all_package_results))], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
+
+
+```
 
 ### **FDR gene-wise benchmarking**
 
