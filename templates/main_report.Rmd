@@ -75,7 +75,7 @@ PerformanceAnalytics::chart.Correlation(raw_filter, histogram=TRUE, pch=19, log=
 
 col<- colorRampPalette(c("blue", "white", "red"))(20)
 res <- cor(raw_filter)
-heatmap(x = res, col = col, symm = TRUE)
+heatmap(x = res, col = col, symm = TRUE, margins = c(max(nchar(colnames(res))), 5))
 
 ```
 
@@ -144,9 +144,6 @@ A table containing the DESeq2 normalized counts is provided in ('Normalized\\_co
 										body2,
 										"\n",sep = "\n")))
 }
-
-
-
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # Check edgeR MA plots

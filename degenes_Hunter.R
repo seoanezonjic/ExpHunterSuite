@@ -27,6 +27,8 @@ suppressPackageStartupMessages(library(FSA))
 suppressPackageStartupMessages(require(rmarkdown))
 suppressPackageStartupMessages(require(reshape2))
 suppressPackageStartupMessages(require(PerformanceAnalytics))
+# suppressPackageStartupMessages(require(gplots))
+
 
 # Obtain this script directory
 full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using source
@@ -138,6 +140,7 @@ raw <- raw[c(index_control_cols,index_treatmn_cols)] #Indexing selected columns 
 # Substitute NA values
 raw[is.na(raw)] <- 0
 
+
 ############################################################
 ##                          FILTER                        ##
 ############################################################
@@ -153,6 +156,12 @@ if(opt$reads != 0){
 
 # Defining contrast - Experimental design
 design_vector <- c(rep("C", replicatesC), rep("T", replicatesT))
+
+# Write Experimental design to file as 2 column data frame
+write.table(data.frame(class = design_vector, name = c(index_control_cols, index_treatmn_cols)), 
+  file=file.path(paths$root, "control_treatment.txt"), row.names=FALSE, quote=FALSE, sep="\t")
+
+
 
 ############################################################
 ##                       D.EXP ANALYSIS                   ##
@@ -317,8 +326,7 @@ if((replicatesC >= 3) &
     final_FDR_names    <- c(final_FDR_names, 'FDR_NOISeq')
     DEG_pack_columns   <- c(DEG_pack_columns, 'NOISeq_DEG')
   }
-}  
-
+} 
 
 ############################################################
 ##                   FINAL RESULTS TABLE                  ##
@@ -333,7 +341,6 @@ DEG_counts   <- as.data.frame(DEG_counts)
 all_genes_df <- cbind(all_genes_df, DEG_counts)
 
 final_BIG_table <- creating_final_BIG_table(all_genes_df, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, opt)
-
 tag <- as.data.frame(tagging_genes(final_BIG_table, opt, DEG_counts, DEG_pack_columns))
 colnames(tag)   <- "genes_tag"
 final_BIG_table <- cbind(final_BIG_table, tag)
@@ -380,14 +387,6 @@ if (length(all_data) > 1){
 }
 
 barplot_df <- creating_genenumbers_barplot(raw, raw_filter, all_data, x_all)
-# pdf(file=file.path(paths$root, "genenumbers.pdf"), width=7, height=1.2)
-#   p <- ggplot(barplot_df, aes(cat, numbers)) + ylab("Number of genes") + xlab("") +
-#             geom_bar(position="dodge", stat="identity", fill=c("#000034", "red", "orange", "blue"), show.legend=FALSE) + coord_flip() + 
-#             geom_text(aes(label = numbers, y= numbers + 1500))
-
-#   p + theme(text = element_text(face="bold", size=10))
-# dev.off()
-
 
 creating_top20_table(final_BIG_table)
 
