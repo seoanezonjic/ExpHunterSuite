@@ -30,7 +30,7 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
       }else if(all(val %in% container[,1])){
         message("All IDs are already stored at temporal query results file. Query will not be performed")
         return(container)
-      }else if(any(val %iN% container[,1])){
+      }else if(any(val %in% container[,1])){
           # Filter already calculated 
           val <- val[-which(val %in% container[,1])]
       }
