@@ -27,8 +27,6 @@ suppressPackageStartupMessages(library(FSA))
 suppressPackageStartupMessages(require(rmarkdown))
 suppressPackageStartupMessages(require(reshape2))
 suppressPackageStartupMessages(require(PerformanceAnalytics))
-# suppressPackageStartupMessages(require(gplots))
-
 
 # Obtain this script directory
 full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using source
@@ -58,8 +56,8 @@ option_list <- list(
     help="Output path. Default=%default"),
   make_option(c("-p", "--p_val_cutoff"), type="double", default=0.05,
     help="Adjusted p-value cutoff for the differential expression analysis. Default=%default"),
-  make_option(c("-f", "--fc"), type="double", default=1.5,
-    help="Minimum fold expression change . Default=%default"),
+  make_option(c("-f", "--lfc"), type="double", default=0.5849625,
+    help="Minimum log2 fold change in expression. Note this is on a log2 scale, so a value of 1 would mean a 2 fold change. Default=%default"),
   make_option(c("-q", "--q_value"), type="double", default=0.95,
     help="q value for NOISeq package. Default=%default"),
   make_option(c("-a", "--adjust_method"), type="character", default=c("BH"), #D = DESeq2, E = edgeR, L = limma, N = NOISeq
@@ -179,10 +177,13 @@ final_logFC_names       <- c()
 final_FDR_names         <- c()
 final_pvalue_names      <- c()
 DEG_pack_columns        <- c()
+# Container for the package specific objects such as the DESeq2 results
+package_objects <- list()
 
 # Calculate global parameters (log fold change value)
-lfc <- calculate_lfc(opt$fc)
-
+#lfc <- calculate_lfc(opt$fc)
+lfc <- opt$lfc
+#cat("\n\n\n\n\n\nlog fold change value is:", lfc, "\n\n\n\n\n\n")
 ############## Verbose point
 if((replicatesC == 1) & (replicatesT == 1)){ 
   warning('There is only one replicate available per class. Only DESeq2 will be performed.\n')
@@ -207,7 +208,7 @@ if(grepl("D",opt$modules)){
   all_data[['DESeq2']] <- results[[1]]
   all_data_normalized[['DESeq2']] <- results[[2]]
   all_counts_for_plotting[['DESeq2']] <- results[[3]]
-
+  package_objects[['DESeq2']] <- results[[4]]
   # Result Plot Visualization
   if (!is.null(all_counts_for_plotting[['DESeq2']])){
     all_FDR_names      <- c(all_FDR_names, 'padj')

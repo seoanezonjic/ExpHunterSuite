@@ -24,7 +24,6 @@ exp_dif_NOISeq <- function(mydata){
 }
 
 analysis_DESeq2 <- function(data, num_controls, num_treatmnts, p_val_cutoff, lfc, groups){
-
 	# Experimental design
 	coldat = DataFrame(grp=factor(groups), each=1) # Experimental design object
 	print(coldat)
@@ -35,11 +34,12 @@ analysis_DESeq2 <- function(data, num_controls, num_treatmnts, p_val_cutoff, lfc
 	normalized_counts <- as.data.frame(counts(all_genes_DESeq2_object, normalized=TRUE)) # Getting normalized values
 	
 	if ((num_controls > 1)&(num_treatmnts > 1)){ # Filtering DEGs by adjusted p-value only when there are replicates available (if not, only a descriptive analysis is performed)
-	  expres_diff <- filter_gene_expression(all_DESeq2_genes, p_val_cutoff, lfc, "padj", "log2FoldChange")
+	  expres_diff_DESeq <- filter_gene_expression(all_DESeq2_genes, p_val_cutoff, lfc, "padj", "log2FoldChange")
 	}
-	return(list(expres_diff, normalized_counts, all_DESeq2_genes))
+	# JRP better to return as data frame to keep consistent with other packages
+	# return(list(as.data.frame(expres_diff), normalized_counts, as.data.frame(all_DESeq2_genes)))
+	return(list(as.data.frame(expres_diff_DESeq), normalized_counts, as.data.frame(all_DESeq2_genes), all_DESeq2_genes))
 }
-
 
 analysis_edgeR <- function(data, p_val_cutoff, lfc, paths, groups){
 	require(edgeR)

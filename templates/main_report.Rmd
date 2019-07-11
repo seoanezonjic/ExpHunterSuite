@@ -71,11 +71,11 @@ PerformanceAnalytics::chart.Correlation(raw_filter, histogram=TRUE, pch=19, log=
 
 ### **Heatmap showing correlation between samples and clustering (red: higher correlation; blue: lower)**
 
-```{r heatmap_corr,echo = FALSE}
+```{r heatmap_corr,echo = FALSE, fig.height=15, fig.width=15}
 
 col<- colorRampPalette(c("blue", "white", "red"))(20)
 res <- cor(raw_filter)
-heatmap(x = res, col = col, symm = TRUE, margins = c(max(nchar(colnames(res))), 5))
+heatmap(x = res, col = col, symm = TRUE, margins = rep(max(nchar(colnames(res))), 2))
 
 ```
 
@@ -130,7 +130,7 @@ The samples are shown in the 2D plane and distributed by their first two princip
 if('DESeq2' %in% names(all_counts_for_plotting)){
 	header <- "### **DESeq2 MA plot**"
 	body1 <- "This is the MA plot from DESeq2 package:"
-	code_ch <- "plotMA(all_counts_for_plotting[['DESeq2']], cex.lab=1.6, cex.axis=1.5)" 
+	code_ch <- "plotMA(package_objects[['DESeq2']], cex.lab=1.6, cex.axis=1.5)" 
 	body2 <- "In DESeq2, the MA-plot (log ratio versus abundance) shows the log2 fold changes are attributable to a given variable over the mean of normalized counts. Points will be colored red if the adjusted Pvalue is less than 0.1. Points which fall out of the window are plotted as open triangles pointing either up or down.
 
 A table containing the DESeq2 DEGs is provided: in ('DEgenes\\_DESEq2.txt').
