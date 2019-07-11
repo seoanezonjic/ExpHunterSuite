@@ -58,7 +58,7 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
         # Store
         if(is.null(container)){
             container <- query
-        }else{
+        }else if(nrow(query) > 0){
             container <- rbind(container,query)
         }
 
