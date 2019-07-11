@@ -195,7 +195,7 @@ if(opt$remote){ # REMOTE MODE
 	# Check genetical items to be used
 	if(opt$biomaRt_filter == 'ensembl_gene_id'){
 		reference_table <- ensembl_to_entrez(reference_table[,1],biomaRt_organism_info$Bioconductor_DB[1])
-		colnames(reference_table) <- c("ensembl_gene_id", "entrezgene")
+		colnames(reference_table) <- c("ensembl_gene_id", biomaRt_organism_info[,"Attribute_entrez"])
 	}else if(opt$biomaRt_filter == 'refseq_peptide'){
 		stop(paste("This genes type (",opt$biomaRt_filter,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
 	}
@@ -232,7 +232,7 @@ if(exists("annot_table")){
 }
 
 common_unique_entrez <- subset(reference_table, reference_table[,1] %in% common_DEGs)
-common_unique_entrez <- unique(common_unique_entrez[,"entrezgene"])
+common_unique_entrez <- unique(common_unique_entrez[,biomaRt_organism_info[,"Attribute_entrez"]])
 
 union_DEGs_df <- subset(DEG_annot_table, genes_tag=="POSSIBLE_DEG")
 union_DEGs_df <- rbind(common_DEGs_df, union_DEGs_df)

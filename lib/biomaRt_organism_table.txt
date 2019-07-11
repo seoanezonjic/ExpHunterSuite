@@ -106,5 +106,5 @@ Worm	ENSEMBL_MART_ENSEMBL	celegans_gene_ensembl	cel	go_id	entrezgene	www.ensembl
 Xenopus	ENSEMBL_MART_ENSEMBL	xtropicalis_gene_ensembl	xtr	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide	
 Xiphophorus	ENSEMBL_GENE_ENSEMBL	xmaculatus_gene_ensembl	xma	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide	
 Yeast	ENSEMBL_MART_ENSEMBL	scerevisiae_gene_ensembl	sce	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide	
-Zebrafish	ENSEMBL_MART_ENSEMBL	drerio_gene_ensembl	dre	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide	org.Dr.eg.db
+Zebrafish	ENSEMBL_MART_ENSEMBL	drerio_gene_ensembl	dre	go_id	entrezgene_id	www.ensembl.org	ensembl_gene_id	refseq_peptide	org.Dr.eg.db
 Zea	plants_mart	zmays_eg_gene	zma	go_accession	entrezgene	plants.ensembl.org	ensembl_gene_id	refseq_peptide
