@@ -24,7 +24,10 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
     if(file.exists("query_results_temp")){
       container <- readRDS("query_results_temp")
       # Check
-      if(!all(container[,1] %in% val)){
+      if(nrow(container) != length(attr)){
+        warning("Current query results does not match. Will be overwritten") 
+        container <- NULL
+      }else if(!all(container[,1] %in% val)){
         warning("Current query results does not match. Will be overwritten")
         container <- NULL
       }else if(all(val %in% container[,1])){

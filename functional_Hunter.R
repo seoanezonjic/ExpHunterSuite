@@ -87,7 +87,10 @@ biomaRt_query_info <- read.table(file.path(main_path_script, "lib/biomaRt_organi
 # Load Reference-NonRefernce models gene IDs relations
 if(file.exists(opt$countdata_file)){
 	count_data <- read.table(opt$countdata_file, header=TRUE, row.names=NULL, sep="\t", stringsAsFactors = FALSE)
-	exp_names <- colnames(count_data)[-1]
+	# exp_names <- colnames(count_data)[-1]
+	dir <- dirname(opt$countdata_file)
+	experiments <- read.table(file = file.path(dir,"control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
+	exp_names <- experiments[which(experiments[,1] == "T"),2]
 }else{
 	exp_names <- "EXPERIMENT NAMES NOT AVAILABLE"
 }
