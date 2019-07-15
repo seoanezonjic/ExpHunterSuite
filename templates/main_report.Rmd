@@ -110,7 +110,7 @@ to_plot <- boxplot(all_data_normalized[[1]],
 
 
 ### Principal Component Analysis (PCA) plots
-This is a PCA plot before normalization of the count data:
+This is a PCA plot of the count values following rlog normalization from the DESeq2 package:
 
 ```{r pca_plot, echo = FALSE}
 require(DESeq2)
@@ -190,11 +190,6 @@ A table containing the limma normalized counts is provided in {'Normalized\\_cou
 										body2,
 										"\n",sep = "\n")))
 }
-
-
-
-
-
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # Check NOISeq MA plots
