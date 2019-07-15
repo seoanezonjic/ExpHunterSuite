@@ -63,7 +63,9 @@ option_list <- list(
   make_option(c("-o", "--output_files"), type="character", default="results",
     help="Output path. Default=%default"),
   make_option(c("-r", "--remote"), ,type = "logical", action="store_true", default=FALSE,
-    help="Flag to activate remote query from enrichments and Genes translation")
+    help="Flag to activate remote query from enrichments and Genes translation"),
+  make_option(c("-T", "--threshold"), type="double", default=0.1,
+    help="Enrichment p-value threshold. [Default = %default]")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
@@ -381,33 +383,56 @@ if(flags$GO_cp){
 
 
 
-	# Enrich
-	# enrich_go <- as.data.frame(do.call(rbind,lapply(modules_to_export,function(mod){
+	# ORA ENRICHMENTS
 	enrich_go <- lapply(modules_to_export,function(mod){
 		enrich <-  enrichGO(gene          = common_unique_entrez, #genes,
 							OrgDb         = biomaRt_organism_info$Bioconductor_DB[1], #organism,
 							keyType       = "ENTREZID", #keyType,
 							ont           = mod, # SubOntology
-							pvalueCutoff  = 1, #pvalueCutoff,
-							pAdjustMethod = "BH", #pAdjustMethod,
-							qvalueCutoff  = 1) #qvalueCutoff)
+							pvalueCutoff  = opt$threshold, #pvalueCutoff,
+							pAdjustMethod = "BH") #qvalueCutoff)
 		# enrich <- as.data.frame(enrich)
 		return(enrich)
 	# })))
 	})
 
+	
+
+	### GSEA ENRICHMENTS
+	# Obtain target genes
+	if(exists("annot_table")){
+		aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
+		geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+		names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
+		names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+	}else{
+		aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
+		geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+		names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
+		names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+	}
+	# Sort FC
+	geneList <- sort(geneList, decreasing = TRUE)
+
+	# Enrich
+	enrich_go_gsea <- lapply(modules_to_export,function(mod){
+		enrich <- gseGO(geneList      = geneList,
+						   OrgDb        = biomaRt_organism_info$Bioconductor_DB[1],
+						   keyType       = "ENTREZID", #keyType,
+						   ont           = mod, # SubOntology
+						   pvalueCutoff  = opt$threshold, #pvalueCutoff,
+						   pAdjustMethod = "BH")
+		return(enrich)
+	# })))
+	})
+
+	# Add names
 	names(enrich_go) <- modules_to_export
+	names(enrich_go_gsea) <- modules_to_export
 
 	# Write results
-	# write.table(enrich_go, file=file.path(paths$root, "GO_clResults"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
 	write.table(as.data.frame(do.call(rbind,lapply(enrich_go,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_clResults"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
-
-	# if(length(enrich_go) > 1){
-	# 	names(enrich_go) <- modules_to_export
-	# 	enrich_go <- merge_result(enrich_go)		
-	# }else{
-	# 	enrich_go <- unlist(enrich_go)
-	# }
+	write.table(as.data.frame(do.call(rbind,lapply(enrich_go_gsea,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_clResults"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
 }
 
 
@@ -432,10 +457,9 @@ if(flags$KEGG){
 	enrich_ora <-  enrichKEGG(gene          = common_unique_entrez, #genes,
 							  organism      = biomaRt_organism_info$KeggCode[1], #organism,
 							  keyType       = "kegg", #keyType,
-							  pvalueCutoff  = 1, #pvalueCutoff,
+							  pvalueCutoff  = opt$threshold, #pvalueCutoff,
 							  pAdjustMethod = "BH", #pAdjustMethod,
-							  use_internal_data = !opt$remote, 
-							  qvalueCutoff  = 1) #qvalueCutoff)
+							  use_internal_data = !opt$remote)
 
 	
 	if(exists("annot_table")){
@@ -458,22 +482,14 @@ if(flags$KEGG){
 						   use_internal_data = !opt$remote,
 						   # nPerm        = 1000,
 						   # minGSSize    = 120,
-						   # pvalueCutoff = 1,
-						   verbose      = TRUE)
+						   pvalueCutoff = opt$threshold,
+						   verbose      = FALSE)
 
 	# Write output
 	write.table(enrich_ora, file=file.path(paths$root, "KEGG_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+	write.table(enrich_gsea, file=file.path(paths$root, "KEGG_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 }
 
-
-#############################################
-### OUTPUT
-#############################################
-
-################## CREATE FINAL ANNOTATION TABLE ##########
-
-#### functional
-# generate_FA_report()
 
 
 ############################################################

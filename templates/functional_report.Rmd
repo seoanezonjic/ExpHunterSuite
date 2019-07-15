@@ -94,7 +94,7 @@ go_flags <- list()
 go_files <- list()
 
 # Define files to be checked
-go_enrich_vars <- c("enrich_go")
+go_enrich_vars <- c("enrich_go","enrich_go_gsea")
 graph_files <- c("GO_preval","GO_preval_overex","GO_preval_underex",
 				"GO_allpos","GO_allpos_overex","GO_allpos_underex")
 go_subontos <- c("BP","MF","CC")
@@ -198,6 +198,8 @@ if(go_flags[["enrich_go"]]){
 	suppressPackageStartupMessages(require(clusterProfiler))
 	suppressPackageStartupMessages(require(enrichplot))
 
+
+	############################ ORA PLOTS
 	for(i in seq_along(enrich_go)){
 		message(paste("PLOTS SETS FOR:", names(enrich_go[i])))
 
@@ -209,18 +211,17 @@ if(go_flags[["enrich_go"]]){
 		go_pp10 <- upsetplot(enrich_go[[i]]) #+ ggtitle(names(enrich_go)[i])
 
 
-		# if(go_flags[["enrich_go_gsea"]]){
-		# 	require(clusterProfiler)
-		# 	require(enrichplot)
-
-		# 	go_pp3 <- dotplot(enrich_go_gsea, showCategory=30) + ggtitle("dotplot for GSEA")
-		# 	go_pp5 <- cnetplot(enrich_go_gsea)
-		# 	go_pp7 <- emapplot(enrich_go_gsea)
-		# 	go_pp9 <- heatplot(enrich_go_gsea)
-		# 	go_pp11 <- ridgeplot(enrich_go_gsea)
-		# 	go_pp12 <- gseaplot2(enrich_go_gsea, geneSetID=1:4, title = enrich_go_gsea$Description[1], pvalue_table = TRUE) 
-		# 	go_pp13 <- gsearank(enrich_go_gsea, geneSetID=1, title = enrich_go_gsea$Description[1])
-		# }
+		if(go_flags[["enrich_go_gsea"]]){
+			if(nrow(enrich_go_gsea[[i]]@result) > 0){
+				go_pp3 <- dotplot(enrich_go_gsea[[i]], showCategory=30) + ggtitle("dotplot for GSEA")
+				go_pp5 <- cnetplot(enrich_go_gsea[[i]])
+				go_pp7 <- emapplot(enrich_go_gsea[[i]])
+				go_pp9 <- heatplot(enrich_go_gsea[[i]])
+				go_pp11 <- ridgeplot(enrich_go_gsea[[i]])
+				go_pp12 <- gseaplot2(enrich_go_gsea[[i]], geneSetID=1:4, title = enrich_go_gsea[[i]]$Description[1], pvalue_table = TRUE) 
+				go_pp13 <- gsearank(enrich_go_gsea[[i]], geneSetID=1, title = enrich_go_gsea[[i]]$Description[1])
+			}
+		}
 
 		# Check vars to be plotted
 		plot_vars <- ls()[grepl("^go_pp",ls())]
