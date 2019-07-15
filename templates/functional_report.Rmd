@@ -295,16 +295,18 @@ if(kegg_flags[["enrich_ora"]]){
 }
 
 if(kegg_flags[["enrich_gsea"]]){
-	suppressPackageStartupMessages(require(clusterProfiler))
-	suppressPackageStartupMessages(require(enrichplot))
+	if(nrow(enrich_gsea@result) > 0){
+		suppressPackageStartupMessages(require(clusterProfiler))
+		suppressPackageStartupMessages(require(enrichplot))
 
-	kegg_pp3 <- dotplot(enrich_gsea, showCategory=30) + ggtitle("dotplot for GSEA")
-	kegg_pp5 <- cnetplot(enrich_gsea)
-	kegg_pp7 <- emapplot(enrich_gsea)
-	kegg_pp9 <- heatplot(enrich_gsea)
-	kegg_pp11 <- ridgeplot(enrich_gsea)
-	kegg_pp12 <- gseaplot2(enrich_gsea, geneSetID=1:4, title = enrich_gsea$Description[1], pvalue_table = TRUE) 
-	kegg_pp13 <- gsearank(enrich_gsea, geneSetID=1, title = enrich_gsea$Description[1])
+		kegg_pp3 <- dotplot(enrich_gsea, showCategory=30) + ggtitle("dotplot for GSEA")
+		kegg_pp5 <- cnetplot(enrich_gsea)
+		kegg_pp7 <- emapplot(enrich_gsea)
+		kegg_pp9 <- heatplot(enrich_gsea)
+		kegg_pp11 <- ridgeplot(enrich_gsea)
+		kegg_pp12 <- gseaplot2(enrich_gsea, geneSetID=1:4, title = enrich_gsea$Description[1], pvalue_table = TRUE) 
+		kegg_pp13 <- gsearank(enrich_gsea, geneSetID=1, title = enrich_gsea$Description[1])
+	}
 }
 
 if(kegg_flags$KEGG_SECTION){

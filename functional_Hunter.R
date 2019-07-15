@@ -89,8 +89,12 @@ if(file.exists(opt$countdata_file)){
 	count_data <- read.table(opt$countdata_file, header=TRUE, row.names=NULL, sep="\t", stringsAsFactors = FALSE)
 	# exp_names <- colnames(count_data)[-1]
 	dir <- dirname(opt$countdata_file)
-	experiments <- read.table(file = file.path(dir,"control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
-	exp_names <- experiments[which(experiments[,1] == "T"),2]
+	if(file.exists(file.path(dir,"control_treatment.txt"))){
+		experiments <- read.table(file = file.path(dir,"control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
+		exp_names <- experiments[which(experiments[,1] == "T"),2]
+	}else{
+		exp_names <- "EXPERIMENT NAMES NOT AVAILABLE"		
+	}
 }else{
 	exp_names <- "EXPERIMENT NAMES NOT AVAILABLE"
 }
@@ -433,34 +437,33 @@ if(flags$KEGG){
 							  use_internal_data = !opt$remote, 
 							  qvalueCutoff  = 1) #qvalueCutoff)
 
-	aux <- subset(reference_table, reference_table[,1] %in% common_DEGs)
+	
 	if(exists("annot_table")){
-		geneList <- as.vector(common_DEGs_df[which(common_DEGs_df$Annot_IDs %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
-		names(geneList) <- common_DEGs_df$Annot_IDs[which(common_DEGs_df$Annot_IDs %in% aux[,"ensembl_gene_id"])]
-		names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
+		aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
+		geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+		names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
+		names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
 	}else{
-		geneList <- as.vector(common_DEGs_df[which(rownames(common_DEGs_df) %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
-		names(geneList) <- rownames(common_DEGs_df)[which(rownames(common_DEGs_df) %in% aux[,"ensembl_gene_id"])]
-		names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
+		aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
+		geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+		names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
+		names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
 	}
 
 	geneList <- sort(geneList, decreasing = TRUE)
 
 
-	# enrich_gsea <- gseKEGG(geneList     = geneList,
-	# 					   organism     = biomaRt_organism_info$KeggCode[1],
-	# 					   use_internal_data = opt$remote,
-	# 					   nPerm        = 1000,
-	# 					   minGSSize    = 120,
-	# 					   pvalueCutoff = 0.05,
-	# 					   verbose      = FALSE)
+	enrich_gsea <- gseKEGG(geneList     = geneList,
+						   organism     = biomaRt_organism_info$KeggCode[1],
+						   use_internal_data = !opt$remote,
+						   # nPerm        = 1000,
+						   # minGSSize    = 120,
+						   # pvalueCutoff = 1,
+						   verbose      = TRUE)
 
 	# Write output
 	write.table(enrich_ora, file=file.path(paths$root, "KEGG_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 }
-
-
-
 
 
 #############################################
