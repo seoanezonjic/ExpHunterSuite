@@ -93,7 +93,8 @@ if(file.exists(opt$countdata_file)){
 	dir <- dirname(opt$countdata_file)
 	if(file.exists(file.path(dir,"control_treatment.txt"))){
 		experiments <- read.table(file = file.path(dir,"control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
-		exp_names <- experiments[which(experiments[,1] == "T"),2]
+		exp_names <- paste("[Control]",experiments[which(experiments[,1] == "C"),2],sep=" ")
+		exp_names <- c(exp_names,paste("[Treatment]",experiments[which(experiments[,1] == "T"),2],sep=" "))
 	}else{
 		exp_names <- "EXPERIMENT NAMES NOT AVAILABLE"		
 	}
