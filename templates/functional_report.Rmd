@@ -45,7 +45,9 @@ In DEgenes Hunter, genes are labeled according the following considerations:
 * **Prevalent DEGs:** Differentially expressed genes considered by all packages employed but one.
 * **All possible DEGs:** Differentially expressed genes considered by at least one of the R-packages but not enough of them to be considered as "prevalent DEGs".
 
+## **Used data in this analysis**
 Specifically, in this experiment set, known experiment labels are:
+
 ```{r add_exp_names, echo = FALSE}
 	# Obtain experiments names
 	# dir <- dirname(opt$countdata_file)
@@ -137,59 +139,95 @@ kegg_flags$KEGG_SECTION <- any(unlist(kegg_flags))
 ```
 
 
+```{r check_kegg, echo=FALSE, results='asis', eval=kegg_flags$KEGG_SECTION}
+cat("## **KEGG analysis**")
+```
 
 
-
-```{r go_section, echo = FALSE}
-# Prepare text to be rendered
-headers <- list(GO_preval = "### **GO Prevalent DEGs:",
-				GO_preval_overrex = "### **GO Overexpressed functions from prevalent DEGs:",
-				GO_preval_underex = "### **GO Underexpressed functions from prevalent DEGs:",
-				GO_allpos = "### **GO All possible DEGs:",
-				GO_allpos_overrex = "### **GO Overexpressed functions from all possible DEGs:",
-				GO_allpos_underex = "### **GO Underexpressed functions from all possible DEGs:")
-bodies  <- list(GO_preval = "This is the GO graph concerning prevalent DEGs",
-				GO_preval_overrex = "This is the GO graph concerning the overexpressed prevalent DEGs:",
-				GO_preval_underex = "This is the GO graph concerning the underexpressed prevalent DEGs:",
-				GO_allpos = "This is the GO graph concerning all possible DEGs",
-				GO_allpos_overrex = "This is the GO graph concerning the overexpressed all possible DEGs:",
-				GO_allpos_underex = "This is the GO graph concerning the underexpressed all possible DEGs")
-ontos   <- list(BP = "Biological Process (BP)**",
-				MF = "Molecular Function (MF)**",
-				CC = "Cellular Component (CC)**")
-
-if(!go_flags$GO_SECTION){
-	out <- ""
+```{r check_kegg_old, echo = FALSE, eval=FALSE}
+#XQ NO USAR SOLUCION ANTERIOR?
+if(kegg_flags$KEGG_SECTION){
+	out <- "## **KEGG data**"
 }else{
-	################## CHECK FIFLE BY FILE
-	out <- unlist(lapply(graph_files,function(f){
-		if(go_flags[[f]]){
-			# Prepare file info
-			splitted <- unlist(strsplit(f,"_"))
-			basename <- paste(head(splitted,-1),collapse="_")
-			# prepare render info
-			header <- headers[[basename]] 
-			body <- bodies[[basename]]
-			onto <- ontos[[tail(splitted,1)]]
-			# Paste and return
-			return(knit_expand(text = paste(paste(header,onto,sep=" "),
-											body,
-											"<br>",
-											chunks(code = paste("include_graphics('",go_files[[f]],"')"),
-												   options = "echo = FALSE"),
-											"\n",sep = "\n")))
-		}else{
-			return("")
-		}
-	}))
-
-	# Add section header
-	out <- c(knit_expand(text = "## **GO graphs**"),out)
+	out <- ""
 }
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+```
+
+`r #paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
+
+
+```{r plot_kegg,  results='asis', echo = FALSE}
+if(kegg_flags[["enrich_ora"]]){
+	cat("### **Over Representation Analysis**\n")
+	suppressPackageStartupMessages(require(clusterProfiler))
+	suppressPackageStartupMessages(require(enrichplot))
+
+	# Add kegg plots
+	kegg_pp1  <- barplot(enrich_ora) # NOT ACCEPT GSEA
+	kegg_pp2  <- dotplot(enrich_ora, showCategory=30) + ggtitle("dotplot for ORA")
+	kegg_pp4  <- cnetplot(enrich_ora)
+	kegg_pp6  <- emapplot(enrich_ora)
+	kegg_pp8  <- heatplot(enrich_ora)
+	kegg_pp10 <- upsetplot(enrich_ora) # NOT ACCEPT GSEA
+}
+
+if(kegg_flags[["enrich_gsea"]]){
+	if(nrow(enrich_gsea@result) > 0){
+		suppressPackageStartupMessages(require(clusterProfiler))
+		suppressPackageStartupMessages(require(enrichplot))
+
+		kegg_pp3 <- dotplot(enrich_gsea, showCategory=30) + ggtitle("dotplot for GSEA")
+		kegg_pp5 <- cnetplot(enrich_gsea)
+		kegg_pp7 <- emapplot(enrich_gsea)
+		kegg_pp9 <- heatplot(enrich_gsea)
+		kegg_pp11 <- ridgeplot(enrich_gsea)
+		kegg_pp12 <- gseaplot2(enrich_gsea, geneSetID=1:4, title = enrich_gsea$Description[1], pvalue_table = TRUE) 
+		kegg_pp13 <- gsearank(enrich_gsea, geneSetID=1, title = enrich_gsea$Description[1])
+	}
+}
+
+if(kegg_flags$KEGG_SECTION){
+	# Check vars to be plotted
+	plot_vars <- ls()[grepl("^kegg_pp",ls())]
+	plot_vars <- plot_vars[order(nchar(plot_vars),plot_vars)]
+	# Plot vars
+	invisible(lapply(plot_vars,function(var_name){
+		print(get(var_name))
+	}))
+}
+```
+
+
+```{r check_kegg_res, echo = FALSE}
+if(kegg_flags[["enrich_ora"]]){
+	out <- "## **ClusterProfiler KEGG table**"
+}else{
+	out <- ""
+}
 ```
 
 `r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
+
+
+```{r dsiplay_kegg_res, echo = FALSE}
+# Plot kegg_ORA_enrich graphs
+if(kegg_flags[["enrich_ora"]]){
+	suppressPackageStartupMessages(require(clusterProfiler))
+	suppressPackageStartupMessages(require(enrichplot))
+
+	# Add kegg table
+	kegg_df <- as.data.frame(enrich_ora)
+	kegg_df[,1] <- unlist(lapply(enrich_ora[,1],function(id){
+		link <- url <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?", id, "/default%3dorange/", enrich_ora[id, "geneID"]) # browseKEGG(enrich_ora, id)
+		to_html <- paste0("[",id,"](",link,")")
+		# to_HTML <- paste("<a href='",link,"'>",id,"</a>",sep="")
+	}))
+
+	cols_to_show <- c("ID","Description","p.adjust","Count","geneID")
+	knitr::kable(kegg_df[,cols_to_show])
+}
+```
+
 
 
 ```{r plot_go_cl, echo = FALSE}
@@ -262,92 +300,60 @@ if(go_flags[["enrich_go"]]){
 
 
 
+```{r go_section, echo = FALSE}
+# Prepare text to be rendered
+headers <- list(GO_preval = "### **GO Prevalent DEGs:",
+				GO_preval_overrex = "### **GO Overexpressed functions from prevalent DEGs:",
+				GO_preval_underex = "### **GO Underexpressed functions from prevalent DEGs:",
+				GO_allpos = "### **GO All possible DEGs:",
+				GO_allpos_overrex = "### **GO Overexpressed functions from all possible DEGs:",
+				GO_allpos_underex = "### **GO Underexpressed functions from all possible DEGs:")
+bodies  <- list(GO_preval = "This is the GO graph concerning prevalent DEGs",
+				GO_preval_overrex = "This is the GO graph concerning the overexpressed prevalent DEGs:",
+				GO_preval_underex = "This is the GO graph concerning the underexpressed prevalent DEGs:",
+				GO_allpos = "This is the GO graph concerning all possible DEGs",
+				GO_allpos_overrex = "This is the GO graph concerning the overexpressed all possible DEGs:",
+				GO_allpos_underex = "This is the GO graph concerning the underexpressed all possible DEGs")
+ontos   <- list(BP = "Biological Process (BP)**",
+				MF = "Molecular Function (MF)**",
+				CC = "Cellular Component (CC)**")
 
-
-
-
-
-
-
-
-```{r check_kegg, echo = FALSE}
-if(kegg_flags$KEGG_SECTION){
-	out <- "## **KEGG plots**"
-}else{
+if(!go_flags$GO_SECTION){
 	out <- ""
+}else{
+	################## CHECK FIFLE BY FILE
+	out <- unlist(lapply(graph_files,function(f){
+		if(go_flags[[f]]){
+			# Prepare file info
+			splitted <- unlist(strsplit(f,"_"))
+			basename <- paste(head(splitted,-1),collapse="_")
+			# prepare render info
+			header <- headers[[basename]] 
+			body <- bodies[[basename]]
+			onto <- ontos[[tail(splitted,1)]]
+			# Paste and return
+			return(knit_expand(text = paste(paste(header,onto,sep=" "),
+											body,
+											"<br>",
+											chunks(code = paste("include_graphics('",go_files[[f]],"')"),
+												   options = "echo = FALSE"),
+											"\n",sep = "\n")))
+		}else{
+			return("")
+		}
+	}))
+
+	# Add section header
+	out <- c(knit_expand(text = "## **GO graphs**"),out)
 }
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ```
 
 `r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
 
 
-```{r plot_kegg, echo = FALSE}
-if(kegg_flags[["enrich_ora"]]){
-	suppressPackageStartupMessages(require(clusterProfiler))
-	suppressPackageStartupMessages(require(enrichplot))
-
-	# Add kegg plots
-	kegg_pp1  <- barplot(enrich_ora) # NOT ACCEPT GSEA
-	kegg_pp2  <- dotplot(enrich_ora, showCategory=30) + ggtitle("dotplot for ORA")
-	kegg_pp4  <- cnetplot(enrich_ora)
-	kegg_pp6  <- emapplot(enrich_ora)
-	kegg_pp8  <- heatplot(enrich_ora)
-	kegg_pp10 <- upsetplot(enrich_ora) # NOT ACCEPT GSEA
-}
-
-if(kegg_flags[["enrich_gsea"]]){
-	if(nrow(enrich_gsea@result) > 0){
-		suppressPackageStartupMessages(require(clusterProfiler))
-		suppressPackageStartupMessages(require(enrichplot))
-
-		kegg_pp3 <- dotplot(enrich_gsea, showCategory=30) + ggtitle("dotplot for GSEA")
-		kegg_pp5 <- cnetplot(enrich_gsea)
-		kegg_pp7 <- emapplot(enrich_gsea)
-		kegg_pp9 <- heatplot(enrich_gsea)
-		kegg_pp11 <- ridgeplot(enrich_gsea)
-		kegg_pp12 <- gseaplot2(enrich_gsea, geneSetID=1:4, title = enrich_gsea$Description[1], pvalue_table = TRUE) 
-		kegg_pp13 <- gsearank(enrich_gsea, geneSetID=1, title = enrich_gsea$Description[1])
-	}
-}
-
-if(kegg_flags$KEGG_SECTION){
-	# Check vars to be plotted
-	plot_vars <- ls()[grepl("^kegg_pp",ls())]
-	plot_vars <- plot_vars[order(nchar(plot_vars),plot_vars)]
-	# Plot vars
-	invisible(lapply(plot_vars,function(var_name){
-		print(get(var_name))
-	}))
-}
-```
 
 
-```{r check_kegg_res, echo = FALSE}
-if(kegg_flags[["enrich_ora"]]){
-	out <- "## **ClusterProfiler KEGG table**"
-}else{
-	out <- ""
-}
-```
-
-`r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
 
 
-```{r dsiplay_kegg_res, echo = FALSE}
-# Plot kegg_ORA_enrich graphs
-if(kegg_flags[["enrich_ora"]]){
-	suppressPackageStartupMessages(require(clusterProfiler))
-	suppressPackageStartupMessages(require(enrichplot))
 
-	# Add kegg table
-	kegg_df <- as.data.frame(enrich_ora)
-	kegg_df[,1] <- unlist(lapply(enrich_ora[,1],function(id){
-		link <- url <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?", id, "/default%3dorange/", enrich_ora[id, "geneID"]) # browseKEGG(enrich_ora, id)
-		to_html <- paste0("[",id,"](",link,")")
-		# to_HTML <- paste("<a href='",link,"'>",id,"</a>",sep="")
-	}))
-
-	cols_to_show <- c("ID","Description","p.adjust","Count","geneID")
-	knitr::kable(kegg_df[,cols_to_show])
-}
-```
