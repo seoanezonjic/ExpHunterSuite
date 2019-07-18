@@ -32,7 +32,7 @@ out <- NULL
 
 
 
-# **DEgenes Hunter - Functional analysis report**
+# **DEgenes Hunter - Functional analysis report** 
 
 ## **General description of the analysis workflow**
 
@@ -111,11 +111,14 @@ invisible(lapply(graph_files,function(file_name){
 		go_flags[file_name] <<- FALSE
 	}
 }))
+# Check GO section
+go_flags$GO_SECTION <- any(unlist(go_flags))
+# Add CL graphs
 invisible(lapply(go_enrich_vars,function(var_name){
 	go_flags[var_name] <<- exists_enrich_df(var_name)
 }))
 # Check GO section
-go_flags$GO_SECTION <- any(unlist(go_flags))
+go_flags$GO_CL_SECTION <- any(unlist(go_flags[go_enrich_vars]))
 
 
 
@@ -139,180 +142,351 @@ kegg_flags$KEGG_SECTION <- any(unlist(kegg_flags))
 ```
 
 
-```{r check_kegg, echo=FALSE, results='asis', eval=kegg_flags$KEGG_SECTION}
-cat("## **KEGG analysis**")
-```
-
-
-```{r check_kegg_old, echo = FALSE, eval=FALSE}
-#XQ NO USAR SOLUCION ANTERIOR?
-if(kegg_flags$KEGG_SECTION){
-	out <- "## **KEGG data**"
-}else{
-	out <- ""
-}
-```
-
-`r #paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
-
-
-```{r plot_kegg,  results='asis', echo = FALSE}
-if(kegg_flags[["enrich_ora"]]){
-	cat("### **Over Representation Analysis**\n")
+```{r setup_plots, echo=FALSE, results='asis', eval=kegg_flags$KEGG_SECTION}
+if(kegg_flags[["enrich_ora"]] | kegg_flags[["enrich_gsea"]] | go_flags[["enrich_go"]] | go_flags[["enrich_go_gsea"]]){
 	suppressPackageStartupMessages(require(clusterProfiler))
 	suppressPackageStartupMessages(require(enrichplot))
-
-	# Add kegg plots
-	kegg_pp1  <- barplot(enrich_ora) # NOT ACCEPT GSEA
-	kegg_pp2  <- dotplot(enrich_ora, showCategory=30) + ggtitle("dotplot for ORA")
-	kegg_pp4  <- cnetplot(enrich_ora)
-	kegg_pp6  <- emapplot(enrich_ora)
-	kegg_pp8  <- heatplot(enrich_ora)
-	kegg_pp10 <- upsetplot(enrich_ora) # NOT ACCEPT GSEA
 }
 
-if(kegg_flags[["enrich_gsea"]]){
-	if(nrow(enrich_gsea@result) > 0){
-		suppressPackageStartupMessages(require(clusterProfiler))
-		suppressPackageStartupMessages(require(enrichplot))
-
-		kegg_pp3 <- dotplot(enrich_gsea, showCategory=30) + ggtitle("dotplot for GSEA")
-		kegg_pp5 <- cnetplot(enrich_gsea)
-		kegg_pp7 <- emapplot(enrich_gsea)
-		kegg_pp9 <- heatplot(enrich_gsea)
-		kegg_pp11 <- ridgeplot(enrich_gsea)
-		kegg_pp12 <- gseaplot2(enrich_gsea, geneSetID=1:4, title = enrich_gsea$Description[1], pvalue_table = TRUE) 
-		kegg_pp13 <- gsearank(enrich_gsea, geneSetID=1, title = enrich_gsea$Description[1])
-	}
-}
-
-if(kegg_flags$KEGG_SECTION){
-	# Check vars to be plotted
-	plot_vars <- ls()[grepl("^kegg_pp",ls())]
-	plot_vars <- plot_vars[order(nchar(plot_vars),plot_vars)]
-	# Plot vars
-	invisible(lapply(plot_vars,function(var_name){
-		print(get(var_name))
-	}))
-}
-```
-
-
-```{r check_kegg_res, echo = FALSE}
-if(kegg_flags[["enrich_ora"]]){
-	out <- "## **ClusterProfiler KEGG table**"
-}else{
-	out <- ""
-}
-```
-
-`r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
-
-
-```{r dsiplay_kegg_res, echo = FALSE}
-# Plot kegg_ORA_enrich graphs
-if(kegg_flags[["enrich_ora"]]){
-	suppressPackageStartupMessages(require(clusterProfiler))
-	suppressPackageStartupMessages(require(enrichplot))
-
-	# Add kegg table
-	kegg_df <- as.data.frame(enrich_ora)
-	kegg_df[,1] <- unlist(lapply(enrich_ora[,1],function(id){
-		link <- url <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?", id, "/default%3dorange/", enrich_ora[id, "geneID"]) # browseKEGG(enrich_ora, id)
-		to_html <- paste0("[",id,"](",link,")")
-		# to_HTML <- paste("<a href='",link,"'>",id,"</a>",sep="")
-	}))
-
-	cols_to_show <- c("ID","Description","p.adjust","Count","geneID")
-	knitr::kable(kegg_df[,cols_to_show])
-}
 ```
 
 
 
-```{r plot_go_cl, echo = FALSE}
-# Plot kegg_ORA_enrich graphs
-if(go_flags[["enrich_go"]]){
-	suppressPackageStartupMessages(require(clusterProfiler))
-	suppressPackageStartupMessages(require(enrichplot))
 
 
-	############################ ORA PLOTS
-	for(i in seq_along(enrich_go)){
-		message(paste("PLOTS SETS FOR:", names(enrich_go[i])))
-
-		go_pp1  <- barplot(enrich_go[[i]]) + ggtitle(names(enrich_go)[i])
-		go_pp2  <- dotplot(enrich_go[[i]], showCategory=30) + ggtitle(paste(names(enrich_go)[i],":","Dotplot for ORA"))
-		go_pp4  <- cnetplot(enrich_go[[i]]) + ggtitle(names(enrich_go)[i])
-		go_pp6  <- emapplot(enrich_go[[i]]) + ggtitle(names(enrich_go)[i])
-		go_pp8  <- heatplot(enrich_go[[i]]) + ggtitle(names(enrich_go)[i])
-		go_pp10 <- upsetplot(enrich_go[[i]]) #+ ggtitle(names(enrich_go)[i])
 
 
-		if(go_flags[["enrich_go_gsea"]]){
-			if(nrow(enrich_go_gsea[[i]]@result) > 0){
-				go_pp3 <- dotplot(enrich_go_gsea[[i]], showCategory=30) + ggtitle("dotplot for GSEA")
-				go_pp5 <- cnetplot(enrich_go_gsea[[i]])
-				go_pp7 <- emapplot(enrich_go_gsea[[i]])
-				go_pp9 <- heatplot(enrich_go_gsea[[i]])
-				go_pp11 <- ridgeplot(enrich_go_gsea[[i]])
-				go_pp12 <- gseaplot2(enrich_go_gsea[[i]], geneSetID=1:4, title = enrich_go_gsea[[i]]$Description[1], pvalue_table = TRUE) 
-				go_pp13 <- gsearank(enrich_go_gsea[[i]], geneSetID=1, title = enrich_go_gsea[[i]]$Description[1])
-			}
-		}
 
-		# Check vars to be plotted
-		plot_vars <- ls()[grepl("^go_pp",ls())]
-		plot_vars <- plot_vars[order(nchar(plot_vars),plot_vars)]
-		# Plot vars
-		invisible(lapply(plot_vars,function(var_name){
-			print(get(var_name))
-		}))
-		# Remove plot vars
-		rm(list=plot_vars)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r kegg_main,  results='asis', echo = FALSE, eval = kegg_flags$KEGG_SECTION}
+cat("## **KEGG analysis**\n")
+```
+
+
+
+
+
+```{r kegg_ora, results='asis', echo = FALSE, eval = kegg_flags$enrich_ora}
+# Main label 
+cat("### **Over Representation Analysis**\n")
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- barplot(enrich_ora)
+# Display plot
+print(pp)
+
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- dotplot(enrich_ora, showCategory=30)
+# Display plot
+print(pp)
+
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- cnetplot(enrich_ora)
+# Display plot
+print(pp)
+
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- emapplot(enrich_ora)
+# Display plot
+print(pp)
+
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- heatplot(enrich_ora)
+# Display plot
+print(pp)
+
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- upsetplot(enrich_ora)
+# Display plot
+print(pp)
+```
+
+
+
+
+
+
+
+```{r kegg_gsea, results='asis', echo = FALSE, eval = kegg_flags$enrich_gsea}
+# Main label
+cat("### **Gene Set Enrichment Analysis**\n")
+
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- dotplot(enrich_gsea, showCategory=30)
+# Display plot
+print(pp)
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- cnetplot(enrich_gsea)
+# Display plot
+print(pp)
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- emapplot(enrich_gsea)
+# Display plot
+print(pp)
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- heatplot(enrich_gsea)
+# Display plot
+print(pp)
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- ridgeplot(enrich_gsea)
+# Display plot
+print(pp)
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- gseaplot2(enrich_gsea, geneSetID=1:4, title = enrich_gsea$Description[1], pvalue_table = TRUE)
+# Display plot
+print(pp)
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- gsearank(enrich_gsea, geneSetID=1, title = enrich_gsea$Description[1])
+# Display plot
+print(pp)
+```
+
+
+
+
+```{r display_kegg_res, results='asis', echo = FALSE, eval = kegg_flags$enrich_ora}
+
+cat("## **ClusterProfiler KEGG table**\n")
+
+# Add kegg table
+kegg_df <- as.data.frame(enrich_ora)
+kegg_df[,1] <- unlist(lapply(enrich_ora[,1],function(id){
+	link <- url <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?", id, "/default%3dorange/", enrich_ora[id, "geneID"]) # browseKEGG(enrich_ora, id)
+	to_html <- paste0("[",id,"](",link,")")
+	# to_HTML <- paste("<a href='",link,"'>",id,"</a>",sep="")
+}))
+
+cols_to_show <- c("ID","Description","p.adjust","Count","geneID")
+knitr::kable(kegg_df[,cols_to_show])
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r display_go_main, results='asis', echo = FALSE, eval = go_flags$GO_CL_SECTION}
+cat("## **GO Analysis**\n")
+```
+
+
+```{r plot_go_cl, results='asis', echo = FALSE, eval = go_flags$GO_CL_SECTION}
+# Plots per sub-ontology
+invisible(lapply(names(enrich_go),function(onto){
+# for(onto in names(enrich_go)){
+	# Special case
+	if(nrow(enrich_go[[onto]]@result) <= 0 & nrow(enrich_go_gsea[[onto]]@result) <= 0){
+		cat(paste("### **[",onto,"] GO Analysis**<br>This sub-ontology study has been executed but **has not returned any result**\n",sep=""))
 	}
 
-	message("PLOTS SETS ALL UNIFIED")
-	enr_go <- enrich_go[[1]]
-	if(length(enrich_go)>1){
-		invisible(lapply(seq_along(enrich_go)[-1],function(i){
-			enr_go@result <<- rbind(enr_go@result, enrich_go[[i]]@result)
-		}))
+
+	###################################################### ORA PLOTS
+	if(nrow(enrich_go[[onto]]@result) > 0){
+		# Add main label
+		cat(paste("### **[",onto,"] Over Representation Analysis** \n<br>",sep=""))
+		# knit(text = knit_expand(text = paste("### **[",onto,"] Over Representation Analysis**\n",sep="")))
+
+		cat("<br>**Plot Name**<br>Plot text")
+		go_pp <- barplot(enrich_go[[onto]])
+		print(go_pp)
+
+		cat("<br>**Plot Name**<br>Plot text")
+		go_pp <- dotplot(enrich_go[[onto]], showCategory=30)
+		print(go_pp)
+
+		cat("<br>**Plot Name**<br>Plot text")
+		go_pp <- cnetplot(enrich_go[[onto]])
+		print(go_pp)
+
+		cat("<br>**Plot Name**<br>Plot text")
+		go_pp <- emapplot(enrich_go[[onto]])
+		print(go_pp)
+
+		cat("<br>**Plot Name**<br>Plot text")
+		go_pp <- heatplot(enrich_go[[onto]])
+		print(go_pp)
+
+		cat("<br>**Plot Name**<br>Plot text")
+		go_pp <- upsetplot(enrich_go[[onto]])
+		print(go_pp)
+		cat("\n \n")
 	}
 
-	go_pp1  <- barplot(enr_go)
-	go_pp2  <- dotplot(enr_go, showCategory=30) + ggtitle("Dotplot for ORA")
-	go_pp4  <- cnetplot(enr_go, showCategory = 15)
-	go_pp6  <- emapplot(enr_go, showCategory = 50)
-	go_pp8  <- heatplot(enr_go)
-	go_pp10 <- upsetplot(enr_go)
 
-	# Check vars to be plotted
-	plot_vars <- ls()[grepl("^go_pp",ls())]
-	plot_vars <- plot_vars[order(nchar(plot_vars),plot_vars)]
-	# Plot vars
-	invisible(lapply(plot_vars,function(var_name){
-		print(get(var_name))
+
+	###################################################### GSEA PLOTS
+	if(nrow(enrich_go_gsea[[onto]]@result) > 0){
+		# Add main label
+		cat(paste("### **[",onto,"] Gene Set Expression Analysis** \n<br>",sep=""))
+		# knit(text = knit_expand(text = paste("### **[",onto,"] Gene Set Expression Analysis**\n",sep="")))
+
+		cat("<br>**Plot Name**<br>Plot text")
+		go_pp <- dotplot(enrich_go_gsea[[onto]], showCategory=30)
+		print(go_pp)
+
+		cat("<br>**Plot Name**<br>Plot text")
+		go_pp <- cnetplot(enrich_go_gsea[[onto]])
+		print(go_pp)
+
+		cat("<br>**Plot Name**<br>Plot text")
+		go_pp <- emapplot(enrich_go_gsea[[onto]])
+		print(go_pp)
+
+		cat("<br>**Plot Name**<br>Plot text")
+		go_pp <- heatplot(enrich_go_gsea[[onto]])
+		print(go_pp)
+
+		cat("<br>**Plot Name**<br>Plot text")
+		go_pp <- ridgeplot(enrich_go_gsea[[onto]])
+		print(go_pp)
+
+		cat("<br>**Plot Name**<br>Plot text")
+		go_pp <- gseaplot2(enrich_go_gsea[[onto]], geneSetID=1:4, title = enrich_go_gsea[[onto]]$Description[1], pvalue_table = TRUE) 
+		print(go_pp)
+
+		cat("<br>**Plot Name**<br>Plot text")
+		go_pp <- gsearank(enrich_go_gsea[[onto]], geneSetID=1, title = enrich_go_gsea[[onto]]$Description[1])
+		print(go_pp)
+		cat("\n \n")
+	}
+}))
+# }
+
+
+# message("PLOTS SETS ALL UNIFIED")
+cat("### **[All] Over Representation Analysis Unified**")
+# Concat results
+enr_go <- enrich_go[[1]]
+if(length(enrich_go)>1){
+	invisible(lapply(seq_along(enrich_go)[-1],function(i){
+		enr_go@result <<- rbind(enr_go@result, enrich_go[[i]]@result)
 	}))
-	# Remove plot vars
-	rm(list=plot_vars)
 }
+
+# Plot
+cat("<br>**Plot Name**<br>Plot text")
+go_pp1  <- barplot(enr_go)
+cat("<br>**Plot Name**<br>Plot text")
+go_pp2  <- dotplot(enr_go, showCategory=30)
+cat("<br>**Plot Name**<br>Plot text")
+go_pp4  <- cnetplot(enr_go, showCategory = 15)
+cat("<br>**Plot Name**<br>Plot text")
+go_pp6  <- emapplot(enr_go, showCategory = 50)
+cat("<br>**Plot Name**<br>Plot text")
+go_pp8  <- heatplot(enr_go)
+cat("<br>**Plot Name**<br>Plot text")
+go_pp10 <- upsetplot(enr_go)
+
+# Check vars to be plotted
+plot_vars <- ls()[grepl("^go_pp",ls())]
+plot_vars <- plot_vars[order(nchar(plot_vars),plot_vars)]
+# Plot vars
+invisible(lapply(plot_vars,function(var_name){
+	print(get(var_name))
+}))
+# Remove plot vars
+rm(list=plot_vars)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 ```{r go_section, echo = FALSE}
 # Prepare text to be rendered
 headers <- list(GO_preval = "### **GO Prevalent DEGs:",
-				GO_preval_overrex = "### **GO Overexpressed functions from prevalent DEGs:",
+				GO_preval_overex = "### **GO Overexpressed functions from prevalent DEGs:",
 				GO_preval_underex = "### **GO Underexpressed functions from prevalent DEGs:",
 				GO_allpos = "### **GO All possible DEGs:",
-				GO_allpos_overrex = "### **GO Overexpressed functions from all possible DEGs:",
+				GO_allpos_overex = "### **GO Overexpressed functions from all possible DEGs:",
 				GO_allpos_underex = "### **GO Underexpressed functions from all possible DEGs:")
 bodies  <- list(GO_preval = "This is the GO graph concerning prevalent DEGs",
-				GO_preval_overrex = "This is the GO graph concerning the overexpressed prevalent DEGs:",
+				GO_preval_overex = "This is the GO graph concerning the overexpressed prevalent DEGs:",
 				GO_preval_underex = "This is the GO graph concerning the underexpressed prevalent DEGs:",
 				GO_allpos = "This is the GO graph concerning all possible DEGs",
-				GO_allpos_overrex = "This is the GO graph concerning the overexpressed all possible DEGs:",
+				GO_allpos_overex = "This is the GO graph concerning the overexpressed all possible DEGs:",
 				GO_allpos_underex = "This is the GO graph concerning the underexpressed all possible DEGs")
 ontos   <- list(BP = "Biological Process (BP)**",
 				MF = "Molecular Function (MF)**",
@@ -331,8 +505,9 @@ if(!go_flags$GO_SECTION){
 			header <- headers[[basename]] 
 			body <- bodies[[basename]]
 			onto <- ontos[[tail(splitted,1)]]
+			label <- paste(header,onto,sep=" ")[1]
 			# Paste and return
-			return(knit_expand(text = paste(paste(header,onto,sep=" "),
+			return(knit_expand(text = paste(label,
 											body,
 											"<br>",
 											chunks(code = paste("include_graphics('",go_files[[f]],"')"),
