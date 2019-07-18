@@ -432,8 +432,8 @@ if(flags$GO_cp){
 	names(enrich_go_gsea) <- modules_to_export
 
 	# Write results
-	write.table(as.data.frame(do.call(rbind,lapply(enrich_go,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_clResults"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
-	write.table(as.data.frame(do.call(rbind,lapply(enrich_go_gsea,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_clResults"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
+	write.table(as.data.frame(do.call(rbind,lapply(enrich_go,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_ora"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
+	write.table(as.data.frame(do.call(rbind,lapply(enrich_go_gsea,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_gsea"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
 }
 
 
