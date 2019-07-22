@@ -51,7 +51,7 @@ option_list <- list(
   make_option(c("-t", "--biomaRt_filter"), type="character", default="E",
     help="IDtype, 'E' for 'ensembl_gene_id' or 'R' for 'refseq_peptide'. [Default:%default]"),      	
   make_option(c("-f", "--functional_analysis"), type="character", default="GK",
-    help="Type of functional analyses to be performed (G = GO [topGO], K = KEGG, g = GO [clusterProfiler]). [Default=%default]"),
+    help="Type of functional analyses to be performed (G = GO [topGO], K = KEGG, g = GO [clusterProfiler], R [Reactome]). [Default=%default]"),
   make_option(c("-G", "--GO_graphs"), type="character", default=c("M"),
     help="Modules to able go enrichments (M = Molecular Function, B = Biological Process, C = Celular Components). By default Default=%default GO cathegory is performed"), # Not Checked
   make_option(c("-K", "--Kegg_organism"), type="character", default=NULL, 
@@ -144,7 +144,8 @@ if(opt$List_organisms == TRUE){
 # Check which enrichments are gonna be performed
 flags <- list(GO    = grepl("G", opt$functional_analysis),
               KEGG  = grepl("K", opt$functional_analysis),
-              GO_cp = grepl("g", opt$functional_analysis))
+              GO_cp = grepl("g", opt$functional_analysis),
+              REACT = grepl("R", opt$functional_analysis))
 
 
 # Load input
@@ -364,7 +365,7 @@ if(flags$GO){
 ### GO ENRICHMENT (clusterProfiler)
 #############################################
 
-if(flags$GO_cp){
+if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1])){
 	# Load necessary packages
 	require(clusterProfiler)
 	
@@ -434,6 +435,8 @@ if(flags$GO_cp){
 	# Write results
 	write.table(as.data.frame(do.call(rbind,lapply(enrich_go,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_ora"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
 	write.table(as.data.frame(do.call(rbind,lapply(enrich_go_gsea,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_gsea"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
+}else if(flags$GO_cp){
+	warning("Specified organism is not allowed to be used with GO (clusterProfiler) module. Please check your IDs table")
 }
 
 
@@ -447,7 +450,8 @@ if(flags$GO_cp){
 ### KEGG ENRICHMENT
 #############################################
 
-if(flags$KEGG){
+if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
+
 	# Load necessary packages
 	require(clusterProfiler)
 	if(!opt$remote){
@@ -462,17 +466,18 @@ if(flags$KEGG){
 							  pAdjustMethod = "BH", #pAdjustMethod,
 							  use_internal_data = !opt$remote)
 
-	
-	if(exists("annot_table")){
-		aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
-		geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
-		names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
-		names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
-	}else{
-		aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
-		geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
-		names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
-		names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+	if(!exists("geneList")){
+		if(exists("annot_table")){
+			aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
+			geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+			names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
+			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+		}else{
+			aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
+			geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+			names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
+			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+		}		
 	}
 
 	geneList <- sort(geneList, decreasing = TRUE)
@@ -489,7 +494,77 @@ if(flags$KEGG){
 	# Write output
 	write.table(enrich_ora, file=file.path(paths$root, "KEGG_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	write.table(enrich_gsea, file=file.path(paths$root, "KEGG_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+}else if(flags$KEGG){
+	warning("Specified organism is not allowed to be used with KEGG module. Please check your IDs table")
 }
+
+
+
+
+
+
+
+
+#############################################
+### REACTOME ENRICHMENT
+#############################################
+
+if(flags$REACT & !is.na(biomaRt_organism_info$Reactome_ID[1])){
+	# Load necessary packages
+	require(ReactomePA)
+
+	# Make enrichment (ORA)
+	enrich_react <- enrichPathway(common_unique_entrez,
+								 organism = biomaRt_organism_info$Reactome_ID[1],
+								 pAdjustMethod = "BH",
+								 # minGSSize = 10,
+								 # maxGSSize = 500, 
+								 # readable = FALSE,
+ 								 pvalueCutoff = opt$threshold)
+
+
+	# Prepare enrichment (GSEA)
+	if(!exists("geneList")){
+		if(exists("annot_table")){
+			aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
+			geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+			names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
+			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+		}else{
+			aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
+			geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+			names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
+			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+		}		
+	}
+
+	geneList <- sort(geneList, decreasing = TRUE)
+
+	# Make enrichment GSEA
+	enrich_react_gsea <- gsePathway(geneList, 
+									organism = biomaRt_organism_info$Reactome_ID[1],
+									# exponent = 1, 
+									# nPerm = 1000,
+									# minGSSize = 10, 
+									# maxGSSize = 500, 
+									pvalueCutoff = opt$threshold,
+									pAdjustMethod = "BH")
+
+
+	# Write output
+	write.table(enrich_react, file=file.path(paths$root, "REACT_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+	write.table(enrich_react_gsea, file=file.path(paths$root, "REACT_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+
+}else if(flags$REACT){
+	warning("Specified organism is not allowed to be used with Reactome module. Please check your IDs table")
+}
+
+
+
+
+
+
+
 
 
 
