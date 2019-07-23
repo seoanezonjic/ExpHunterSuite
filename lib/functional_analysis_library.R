@@ -94,12 +94,11 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
 
 
 
-ensembl_to_entrez <- function(ensembl_ids,organism){
-    # require(org.Hs.eg.db)
-    require(organism, character.only = TRUE)
+ensembl_to_entrez <- function(ensembl_ids,organism_db, organism_var){
+    # Load necessary package
+    require(organism_db, character.only = TRUE)
     # Obtain target variable
-    aux_var_name <- paste(paste(head(unlist(strsplit(organism,"\\.")),-1),collapse="."),"ENSEMBL2EG",sep="")
-    aux_var <- get(aux_var_name)
+    aux_var <- get(organism_var)
     # Translate ENSEMBL to Entrex IDs
     ensembl2entrez <- as.list(aux_var[mappedkeys(aux_var)])
     # Convert to dataframe

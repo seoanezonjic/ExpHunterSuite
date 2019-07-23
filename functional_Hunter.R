@@ -202,14 +202,18 @@ if(opt$remote){ # REMOTE MODE
 	                                            host = organism_host, 
 	                                            attr = organism_attr) 
 
-}else{ # LOCAL MODE
+}else if(!is.na(biomaRt_organism_info$Bioconductor_DB[1])){ # LOCAL MODE
 	# Check genetical items to be used
 	if(opt$biomaRt_filter == 'ensembl_gene_id'){
-		reference_table <- ensembl_to_entrez(reference_table[,1],biomaRt_organism_info$Bioconductor_DB[1])
+		reference_table <- ensembl_to_entrez(ensembl_ids = reference_table[,1],
+											 organism_db = biomaRt_organism_info$Bioconductor_DB[1],
+											 organism_var = biomaRt_organism_info$Bioconductor_VarName[1])
 		colnames(reference_table) <- c("ensembl_gene_id", biomaRt_organism_info[,"Attribute_entrez"])
 	}else if(opt$biomaRt_filter == 'refseq_peptide'){
 		stop(paste("This genes type (",opt$biomaRt_filter,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
 	}
+}else{
+	error("Specified organism are not availvable to be studiend in LOCAL model. Please try REMOTE mode")
 }
 
 
