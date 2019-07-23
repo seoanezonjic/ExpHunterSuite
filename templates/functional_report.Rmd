@@ -138,12 +138,31 @@ invisible(lapply(kegg_enrich_vars,function(var_name){
 }))
 
 kegg_flags$KEGG_SECTION <- any(unlist(kegg_flags))
+
+
+
+####################################### REACTOME
+
+# Prepare containers
+react_flags <- list()
+
+# Define variables to be checked
+react_enrich_vars <- c("enrich_react","enrich_react_gsea")
+
+# Check all variables
+invisible(lapply(react_enrich_vars,function(var_name){
+	react_flags[var_name] <<- exists_enrich_df(var_name)
+}))
+
+react_flags$REACT_SECTION <- any(unlist(react_flags))
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ```
 
 
-```{r setup_plots, echo=FALSE, results='asis', eval=kegg_flags$KEGG_SECTION}
-if(kegg_flags[["enrich_ora"]] | kegg_flags[["enrich_gsea"]] | go_flags[["enrich_go"]] | go_flags[["enrich_go_gsea"]]){
+```{r setup_plots, echo=FALSE, results='asis', eval=TRUE}
+if(kegg_flags[["enrich_ora"]] | kegg_flags[["enrich_gsea"]] |
+	go_flags[["enrich_go"]] | go_flags[["enrich_go_gsea"]] |
+	react_flags[["enrich_react"]] | react_flags[["enrich_react_gsea"]]){
 	suppressPackageStartupMessages(require(clusterProfiler))
 	suppressPackageStartupMessages(require(enrichplot))
 }
@@ -525,6 +544,149 @@ if(!go_flags$GO_SECTION){
 ```
 
 `r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r react_main,  results='asis', echo = FALSE, eval = react_flags$REACT_SECTION}
+cat("## **REACTOME analysis**\n")
+```
+
+
+
+
+
+```{r react_ora, results='asis', echo = FALSE, eval = react_flags$enrich_react}
+# Main label 
+cat("### **Over Representation Analysis**\n")
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- barplot(enrich_react)
+# Display plot
+print(pp)
+
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- dotplot(enrich_react, showCategory=30)
+# Display plot
+print(pp)
+
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- cnetplot(enrich_react)
+# Display plot
+print(pp)
+
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- emapplot(enrich_react)
+# Display plot
+print(pp)
+
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- heatplot(enrich_react)
+# Display plot
+print(pp)
+
+
+# # Plot label and text
+# cat("**Plot Name**<br>Plot text")
+# # Create plot
+# pp <- upsetplot(enrich_react)
+# # Display plot
+# print(pp)
+```
+
+
+
+
+
+
+
+```{r react_gsea, results='asis', echo = FALSE, eval = react_flags$enrich_react_gsea}
+# Main label
+cat("### **Gene Set Enrichment Analysis**\n")
+
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- dotplot(enrich_react_gsea, showCategory=30)
+# Display plot
+print(pp)
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- cnetplot(enrich_react_gsea)
+# Display plot
+print(pp)
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- emapplot(enrich_react_gsea)
+# Display plot
+print(pp)
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- heatplot(enrich_react_gsea)
+# Display plot
+print(pp)
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- ridgeplot(enrich_react_gsea)
+# Display plot
+print(pp)
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- gseaplot2(enrich_react_gsea, geneSetID=1:4, title = enrich_react_gsea$Description[1], pvalue_table = TRUE)
+# Display plot
+print(pp)
+
+# Plot label and text
+cat("**Plot Name**<br>Plot text")
+# Create plot
+pp <- gsearank(enrich_react_gsea, geneSetID=1, title = enrich_react_gsea$Description[1])
+# Display plot
+print(pp)
+```
+
+
+
+
+
+
 
 
 
