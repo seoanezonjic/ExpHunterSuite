@@ -83,8 +83,24 @@ exists_enrich_df <- function(var_name,level_depth = 3){
 		if(nrow(df) <= 0){
 			return(FALSE)
 		}
+	}else if(typeof(df)=="S4"){
+		if(nrow(df@result) <= 0){
+			return(FALSE)
+		}
 	}else if(!is.list(df) & !typeof(df)=="S4"){
 		return(FALSE)
+	}else if(is.list(df)){
+		if(!all(unlist(lapply(df,function(set){
+				if(typeof(set)=="S4"){
+					if(nrow(set@result) > 0){
+						return(TRUE)
+					}
+					return(FALSE)
+				}
+				return(FALSE)
+			})))){
+			return(FALSE)
+		}
 	}
 	# Everything OK
 	return(TRUE)
