@@ -455,39 +455,81 @@ invisible(lapply(names(enrich_go),function(onto){
 # }
 
 
-# message("PLOTS SETS ALL UNIFIED")
-cat("### **[All] Over Representation Analysis Unified**")
-# Concat results
-enr_go <- enrich_go[[1]]
-if(length(enrich_go)>1){
-	invisible(lapply(seq_along(enrich_go)[-1],function(i){
-		enr_go@result <<- rbind(enr_go@result, enrich_go[[i]]@result)
-	}))
+if(go_flags$enrich_go){
+	# message("PLOTS SETS ALL UNIFIED")
+	cat("### **[All] Over Representation Analysis Unified**  \n<br>")
+	# Concat results
+	enr_go <- enrich_go[[1]]
+	if(length(enrich_go)>1){
+		invisible(lapply(seq_along(enrich_go)[-1],function(i){
+			enr_go@result <<- rbind(enr_go@result, enrich_go[[i]]@result)
+		}))
+	}
+
+	# Plot
+	cat("<br>**Plot Name**<br>Plot text")
+	go_pp  <- barplot(enr_go)
+	print(go_pp)
+	cat("<br>**Plot Name**<br>Plot text")
+	go_pp  <- dotplot(enr_go, showCategory=30)
+	print(go_pp)
+	cat("<br>**Plot Name**<br>Plot text")
+	go_pp  <- cnetplot(enr_go, showCategory = 15)
+	print(go_pp)
+	cat("<br>**Plot Name**<br>Plot text")
+	go_pp  <- emapplot(enr_go, showCategory = 50)
+	print(go_pp)
+	cat("<br>**Plot Name**<br>Plot text")
+	go_pp  <- heatplot(enr_go)
+	print(go_pp)
+	cat("<br>**Plot Name**<br>Plot text")
+	go_pp <- upsetplot(enr_go)
+	print(go_pp)
+
+	cat("\n \n")
 }
 
-# Plot
-cat("<br>**Plot Name**<br>Plot text")
-go_pp1  <- barplot(enr_go)
-cat("<br>**Plot Name**<br>Plot text")
-go_pp2  <- dotplot(enr_go, showCategory=30)
-cat("<br>**Plot Name**<br>Plot text")
-go_pp4  <- cnetplot(enr_go, showCategory = 15)
-cat("<br>**Plot Name**<br>Plot text")
-go_pp6  <- emapplot(enr_go, showCategory = 50)
-cat("<br>**Plot Name**<br>Plot text")
-go_pp8  <- heatplot(enr_go)
-cat("<br>**Plot Name**<br>Plot text")
-go_pp10 <- upsetplot(enr_go)
+if(go_flags$enrich_go_gsea){
+	# message("PLOTS SETS ALL UNIFIED")
+	cat("### **[All] Gene Set Expression Analysis Unified**  \n<br>")
+	# Concat results
+	enr_go_gsea <- enrich_go_gsea[[1]]
+	if(length(enrich_go_gsea)>1){
+		invisible(lapply(seq_along(enrich_go_gsea)[-1],function(i){
+			enr_go_gsea@result <<- rbind(enr_go_gsea@result, enrich_go_gsea[[i]]@result)
+		}))
+	}
 
-# Check vars to be plotted
-plot_vars <- ls()[grepl("^go_pp",ls())]
-plot_vars <- plot_vars[order(nchar(plot_vars),plot_vars)]
-# Plot vars
-invisible(lapply(plot_vars,function(var_name){
-	print(get(var_name))
-}))
-# Remove plot vars
-rm(list=plot_vars)
+	cat("<br>**Plot Name**<br>Plot text")
+	go_pp <- dotplot(enr_go_gsea, showCategory=30)
+	print(go_pp)
+
+	cat("<br>**Plot Name**<br>Plot text")
+	go_pp <- cnetplot(enr_go_gsea)
+	print(go_pp)
+
+	cat("<br>**Plot Name**<br>Plot text")
+	go_pp <- emapplot(enr_go_gsea)
+	print(go_pp)
+
+	cat("<br>**Plot Name**<br>Plot text")
+	go_pp <- heatplot(enr_go_gsea)
+	print(go_pp)
+
+	cat("<br>**Plot Name**<br>Plot text")
+	go_pp <- ridgeplot(enr_go_gsea)
+	print(go_pp)
+
+	cat("<br>**Plot Name**<br>Plot text")
+	go_pp <- gseaplot2(enr_go_gsea, geneSetID=ifelse(nrow(enr_go_gsea@result) < 4, seq(nrow(enr_go_gsea@result)), 1:4), title = enr_go_gsea$Description[1], pvalue_table = TRUE) 
+	print(go_pp)
+
+	cat("<br>**Plot Name**<br>Plot text")
+	go_pp <- gsearank(enr_go_gsea, geneSetID=1, title = enr_go_gsea$Description[1])
+	print(go_pp)
+	cat("\n \n")
+}
+
 
 ```
 
