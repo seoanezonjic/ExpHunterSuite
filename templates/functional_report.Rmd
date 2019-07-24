@@ -97,7 +97,7 @@ exists_enrich_df <- function(var_name,level_depth = 3){
 					}
 					return(FALSE)
 				}
-				return(FALSE)
+				return(TRUE)
 			})))){
 			return(FALSE)
 		}
@@ -175,7 +175,7 @@ react_flags$REACT_SECTION <- any(unlist(react_flags))
 ```
 
 
-```{r setup_plots, echo=FALSE, results='asis', eval=TRUE}
+```{r setup_plots, echo=FALSE}
 if(kegg_flags[["enrich_ora"]] | kegg_flags[["enrich_gsea"]] |
 	go_flags[["enrich_go"]] | go_flags[["enrich_go_gsea"]] |
 	react_flags[["enrich_react"]] | react_flags[["enrich_react_gsea"]]){
@@ -317,7 +317,7 @@ print(pp)
 # Plot label and text
 cat("**Plot Name**<br>Plot text")
 # Create plot
-pp <- gseaplot2(enrich_gsea, geneSetID=1:4, title = enrich_gsea$Description[1], pvalue_table = TRUE)
+pp <- gseaplot2(enrich_gsea, geneSetID=ifelse(nrow(enrich_gsea@result) < 4, seq(nrow(enrich_gsea@result)), 1:4), title = enrich_gsea$Description[1], pvalue_table = TRUE)
 # Display plot
 print(pp)
 
@@ -443,7 +443,7 @@ invisible(lapply(names(enrich_go),function(onto){
 		print(go_pp)
 
 		cat("<br>**Plot Name**<br>Plot text")
-		go_pp <- gseaplot2(enrich_go_gsea[[onto]], geneSetID=1:4, title = enrich_go_gsea[[onto]]$Description[1], pvalue_table = TRUE) 
+		go_pp <- gseaplot2(enrich_go_gsea[[onto]], geneSetID=ifelse(nrow(enrich_go_gsea[[onto]]@result) < 4, seq(nrow(enrich_go_gsea[[onto]]@result)), 1:4), title = enrich_go_gsea[[onto]]$Description[1], pvalue_table = TRUE) 
 		print(go_pp)
 
 		cat("<br>**Plot Name**<br>Plot text")
@@ -686,7 +686,7 @@ print(pp)
 # Plot label and text
 cat("**Plot Name**<br>Plot text")
 # Create plot
-pp <- gseaplot2(enrich_react_gsea, geneSetID=1:4, title = enrich_react_gsea$Description[1], pvalue_table = TRUE)
+pp <- gseaplot2(enrich_react_gsea, geneSetID=ifelse(nrow(enrich_react_gsea@result) < 4, seq(nrow(enrich_react_gsea@result)), 1:4), title = enrich_react_gsea$Description[1], pvalue_table = TRUE)
 # Display plot
 print(pp)
 
