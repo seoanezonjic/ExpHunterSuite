@@ -49,7 +49,7 @@ option_list <- list(
   make_option(c("-m", "--model_organism"), type="character",
     help="Ortologue Species"),
   make_option(c("-t", "--biomaRt_filter"), type="character", default="E",
-    help="IDtype, 'E' for 'ensembl_gene_id' or 'R' for 'refseq_peptide'. [Default:%default]"),      	
+    help="ID types. ENSEMBL (E) Refseq_peptide (R), TAIR/Arabidopsis (T), Gene Names (G) Gene SYMBOLS (S). [Default:%default]"),      	
   make_option(c("-f", "--functional_analysis"), type="character", default="GK",
     help="Type of functional analyses to be performed (G = GO [topGO], K = KEGG, g = GO [clusterProfiler], R [Reactome]). [Default=%default]"),
   make_option(c("-G", "--GO_graphs"), type="character", default=c("M"),
@@ -116,10 +116,16 @@ if(!is.null(opt$annot_file)){
 # Prepare ID type
 if(opt$biomaRt_filter == "E"){
   opt$biomaRt_filter <- 'ensembl_gene_id'
-  #opt$biomaRt_filter <- as.character(biomaRt_organism_info[1,7])
+  keytypes <- "ENTREZID"
 }else if(opt$biomaRt_filter == "R"){
   opt$biomaRt_filter <- 'refseq_peptide'
-  #opt$biomaRt_filter <- as.character(biomaRt_organism_info[1,8])
+  keytypes <- "ENTREZID"
+}else if(opt$biomaRt_filter == "T"){
+  opt$biomaRt_filter <- ''
+  keytypes <- "TAIR"
+}else if(opt$biomaRt_filter == "G"){
+  opt$biomaRt_filter <- ''
+  keytypes <- "GENENAME"
 }else{
   stop(paste("Given ID type (",opt$biomaRt_filter,") is not allowed.",sep=""))
 }
@@ -369,7 +375,7 @@ if(flags$GO){
 ### GO ENRICHMENT (clusterProfiler)
 #############################################
 
-if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1])){
+if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(biomaRt_organism_info$Bioconductor_VarName[1])){
 	# Load necessary packages
 	require(clusterProfiler)
 	
@@ -393,7 +399,7 @@ if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1])){
 	enrich_go <- lapply(modules_to_export,function(mod){
 		enrich <-  enrichGO(gene          = common_unique_entrez, #genes,
 							OrgDb         = biomaRt_organism_info$Bioconductor_DB[1], #organism,
-							keyType       = "ENTREZID", #keyType,
+							keyType       = keytypes, #keyType,
 							ont           = mod, # SubOntology
 							pvalueCutoff  = opt$threshold, #pvalueCutoff,
 							pAdjustMethod = "BH") #qvalueCutoff)
@@ -424,7 +430,7 @@ if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1])){
 	enrich_go_gsea <- lapply(modules_to_export,function(mod){
 		enrich <- gseGO(geneList      = geneList,
 						   OrgDb        = biomaRt_organism_info$Bioconductor_DB[1],
-						   keyType       = "ENTREZID", #keyType,
+						   keyType       = keytypes, #keyType,
 						   ont           = mod, # SubOntology
 						   pvalueCutoff  = opt$threshold, #pvalueCutoff,
 						   pAdjustMethod = "BH")
@@ -513,7 +519,7 @@ if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
 ### REACTOME ENRICHMENT
 #############################################
 
-if(flags$REACT & !is.na(biomaRt_organism_info$Reactome_ID[1])){
+if(flags$REACT & (!is.na(biomaRt_organism_info$Reactome_ID[1]) & (keytypes == "ENTREZID"))){
 	# Load necessary packages
 	require(ReactomePA)
 
@@ -559,8 +565,10 @@ if(flags$REACT & !is.na(biomaRt_organism_info$Reactome_ID[1])){
 	write.table(enrich_react, file=file.path(paths$root, "REACT_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	write.table(enrich_react_gsea, file=file.path(paths$root, "REACT_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 
-}else if(flags$REACT){
+}else if(flags$REACT & !keytypes == "GENENAME"){
 	warning("Specified organism is not allowed to be used with Reactome module. Please check your IDs table")
+}else if(flags$REACT){
+	warning("Reactome module can not be used with GENENAME identifiers")
 }
 
 

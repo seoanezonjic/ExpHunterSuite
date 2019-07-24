@@ -3,6 +3,7 @@ Aegilops	plants_mart	ataushii_eg_gene	NotInKEGG	go_accession	entrezgene	plants.e
 Amborella	plants_mart	atrichopoda_eg_gene	atr	go_accession	entrezgene	plants.ensembl.org	ensembl_gene_id	refseq_peptide			
 Arabidopsis_l	plants_mart	alyrata_eg_gene	aly	go_accession	entrezgene	plants.ensembl.org	ensembl_gene_id	refseq_peptide			
 Arabidopsis_th	plants_mart	athaliana_eg_gene	ath	go_accession	entrezgene	plants.ensembl.org	ensembl_gene_id	refseq_peptide			
+Arabidopsis	plants_mart	alyrata_eg_gene	arabidopsis	go_accession	entrezgene	plants.ensembl.org	ensembl_gene_id	refseq_peptide	org.At.tair.db		
 Ailuropoda	ENSEMBL_MART_ENSEMBL	amelanoleuca_gene_ensembl	aml	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide			
 Anas	ENSEMBL_MART_ENSEMBL	aplatyrhynchos_Gene_ensembl	apla	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide			
 Anolis	ENSEMBL_MART_ENSEMBL	acarolinensis_gene_ensembl	acs	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide			
@@ -105,7 +106,7 @@ Vicugna	ENSEMBL_MART_ENSEMBL	vpacos_gene_ensembl	NotInKEGG	go_id	entrezgene	www.
 Worm	ENSEMBL_MART_ENSEMBL	celegans_gene_ensembl	cel	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide	org.Ce.eg.db	org.Ce.egENSEMBL2EG	
 Xenopus	ENSEMBL_MART_ENSEMBL	xtropicalis_gene_ensembl	xtr	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide			
 Xiphophorus	ENSEMBL_GENE_ENSEMBL	xmaculatus_gene_ensembl	xma	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide			
-Yeast	ENSEMBL_MART_ENSEMBL	scerevisiae_gene_ensembl	sce	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide			
+Yeast	ENSEMBL_MART_ENSEMBL	scerevisiae_gene_ensembl	sce	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide	org.Sc.sgdCHR		yeast
 Zebrafish	ENSEMBL_MART_ENSEMBL	drerio_gene_ensembl	dre	go_id	entrezgene_id	www.ensembl.org	ensembl_gene_id	refseq_peptide	org.Dr.eg.db	org.Dr.egENSEMBL2EG	zebrafish
 Zea	plants_mart	zmays_eg_gene	zma	go_accession	entrezgene	plants.ensembl.org	ensembl_gene_id	refseq_peptide			
 Anopheles									org.Ag.eg.db	org.Ag.egENSEMBL2EG	
