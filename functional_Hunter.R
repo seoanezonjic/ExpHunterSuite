@@ -84,6 +84,7 @@ opt <- parse_args(OptionParser(option_list=option_list))
 #############################################
 
 # Load available organisms
+message(main_path_script)
 biomaRt_query_info <- read.table(file.path(main_path_script, "lib/biomaRt_organism_table.txt"), header=T, row.names=1, sep="\t", stringsAsFactors = FALSE, fill=NA)
 
 # Load Reference-NonRefernce models gene IDs relations
@@ -209,6 +210,9 @@ if(opt$remote){ # REMOTE MODE
 	                                            attr = organism_attr) 
 
 }else if(!is.na(biomaRt_organism_info$Bioconductor_DB[1])){ # LOCAL MODE
+	message(biomaRt_organism_info$Bioconductor_DB[1])
+	message(biomaRt_organism_info$Bioconductor_VarName[1])
+
 	# Check genetical items to be used
 	if(opt$biomaRt_filter == 'ensembl_gene_id'){
 		reference_table <- ensembl_to_entrez(ensembl_ids = reference_table[,1],
@@ -338,12 +342,12 @@ if(flags$GO){
 		}else{ # LOCAL MODE
 			if(opt$biomaRt_filter == 'ensembl_gene_id'){
 				# Transform ENSEMBL ids to Entrez ids
-				entrez_common_DEGs <- ensembl_to_entrez(common_DEGs,biomaRt_organism_info$Bioconductor_DB[1]) 
-				entrez_pos_logFC_common_DEGs <- ensembl_to_entrez(pos_logFC_common_DEGs,biomaRt_organism_info$Bioconductor_DB[1])
-				entrez_neg_logFC_common_DEGs <- ensembl_to_entrez(neg_logFC_common_DEGs,biomaRt_organism_info$Bioconductor_DB[1])
-				entrez_union_DEGs <- ensembl_to_entrez(union_DEGs,biomaRt_organism_info$Bioconductor_DB[1])
-				entrez_pos_logFC_union_DEGs <- ensembl_to_entrez(pos_logFC_union_DEGs,biomaRt_organism_info$Bioconductor_DB[1])
-				entrez_neg_logFC_union_DEGs <- ensembl_to_entrez(neg_logFC_union_DEGs,biomaRt_organism_info$Bioconductor_DB[1])
+				entrez_common_DEGs <- ensembl_to_entrez(common_DEGs,biomaRt_organism_info$Bioconductor_DB[1],biomaRt_organism_info$Bioconductor_VarName[1]) 
+				entrez_pos_logFC_common_DEGs <- ensembl_to_entrez(pos_logFC_common_DEGs,biomaRt_organism_info$Bioconductor_DB[1],biomaRt_organism_info$Bioconductor_VarName[1])
+				entrez_neg_logFC_common_DEGs <- ensembl_to_entrez(neg_logFC_common_DEGs,biomaRt_organism_info$Bioconductor_DB[1],biomaRt_organism_info$Bioconductor_VarName[1])
+				entrez_union_DEGs <- ensembl_to_entrez(union_DEGs,biomaRt_organism_info$Bioconductor_DB[1],biomaRt_organism_info$Bioconductor_VarName[1])
+				entrez_pos_logFC_union_DEGs <- ensembl_to_entrez(pos_logFC_union_DEGs,biomaRt_organism_info$Bioconductor_DB[1],biomaRt_organism_info$Bioconductor_VarName[1])
+				entrez_neg_logFC_union_DEGs <- ensembl_to_entrez(neg_logFC_union_DEGs,biomaRt_organism_info$Bioconductor_DB[1],biomaRt_organism_info$Bioconductor_VarName[1])
 			}else if(opt$biomaRt_filter == 'refseq_peptide'){
 				stop(paste("This genes type (",opt$biomaRt_filter,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
 			}else{
