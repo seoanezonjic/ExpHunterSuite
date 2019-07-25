@@ -14,38 +14,29 @@ output:
     }
 </style>
 
-```{r config, include = FALSE}
-# Prepare recursive text
-chunks <- function(code, options = ""){paste(paste("```{r ",options,"}",sep = ""),code,"```",sep="\n")}
-render <- function(text){paste(knit(text = paste(text,collapse = "\n")),collapse = "\n")}
-
-# Prepare all HPO reports container
-out <- NULL
-
-```
-
 # **DEgenes Hunter - Differential expression analysis report**
 
-## **Details of the used data**
+## **Details of the input data**
 
-### **First group of samples**
-```{r control_table, echo = FALSE}
-	knitr::kable(index_control_cols)
+### **First group of samples (to be referred to as control in the rest of the report)**
+```{r control_table, echo = FALSE, warning=FALSE}
+	knitr::kable(index_control_cols, col.names="Sample Names:")
 ```
 
-### **Second group of samples**
-```{r treatment_table, echo = FALSE}
-	knitr::kable(index_treatmn_cols)
+### **Second group of samples (to be referred to as treatment in the rest of the report)**
+```{r treatment_table, echo = FALSE, warning=FALSE}
+	knitr::kable(index_treatmn_cols, col.names="Sample Names:")
+
 ```
 
-Note: A positive log fold change shows higher expression in the second group; a negative log fold change represents higher expression in the first group.
+Note: A positive log fold change shows higher expression in the treatment group; a negative log fold change represents higher expression in the control group.
 
 ## **Data quality control (QC)**
 
 ### **Correlation between samples**
 
 #### **Splitting Controls and Treatments**
-Replicates within the same group should have correlation coeficient >= 0.96.
+Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.
 
 ```{r corr_plot, echo = FALSE}
 
@@ -54,7 +45,7 @@ PerformanceAnalytics::chart.Correlation(raw_filter[index_treatmn_cols], histogra
 ```
 
 #### **All vs all replicates**
-Correlation coefficients should be higher for replicates of the same group and lower for a replicate from the control group against the replicate of the treatment group. 
+Correlation coefficients tend to be slightly higher between replicates from the same group than between replicates from different groups. If this is not the case, it may indicate mislabelling or other potential issues.
 
 ```{r corr_plot_all, echo = FALSE}
 PerformanceAnalytics::chart.Correlation(raw_filter, histogram=TRUE, pch=19, log="xy")
@@ -65,11 +56,9 @@ PerformanceAnalytics::chart.Correlation(raw_filter, histogram=TRUE, pch=19, log=
 **RED: higher correlation; BLUE: lower**
 
 ```{r heatmap_corr,echo = FALSE, fig.height=15, fig.width=15}
-
 col<- colorRampPalette(c("blue", "white", "red"))(20)
 res <- cor(raw_filter)
 heatmap(x = res, col = col, symm = TRUE, margins = rep(max(nchar(colnames(res))), 2))
-
 ```
 
 ### **Principal Component Analysis **
@@ -77,21 +66,25 @@ This is a PCA plot of the count values following rlog normalization from the DES
 
 ```{r pca_plot, echo = FALSE}
 require(DESeq2)
-rld <- preparing_rlog_PCA(raw_filter, design_vector)
-#print(colData(rld))
+coldata_df <- data.frame(cond = design_vector,
+                           each = colnames(raw_filter),
+                           row.names = colnames(raw_filter))
+# rownames(coldata_df) <- colnames(raw_filter)
+dds <- DESeqDataSetFromMatrix(countData = raw_filter, colData = coldata_df, design = ~ cond)
+rld <- rlog(dds, blind=FALSE)
 
 plotPCA(rld, intgroup=c("cond", "each"))
 ```
 
-The samples are shown in the 2D plane and distributed by their first two principal components. This type of plot is useful for visualizing the overall effect of experimental covariates and batch effects. Control replicates should be closer between them than closer to treatment replicates and viceversa.
-
-
+The samples are shown in the 2D plane and distributed by their first two principal components. This type of plot is useful for visualizing the overall effect of experimental covariates and batch effects. It is also useful for identifying outlier samples. Control and treatment samples respectively may cluster together.
 
 ### **Visualizing normalization results**
-It is expected that samples belonging to the same treatment appear together at least after normalization, guarantying that the treatment groups to compare are sufficiently different.
-\newline This is a boxplot before normalization of the count data:
 
-```{r box_before_norm, echo = FALSE}
+These boxplots show the distributions of count data before and after normalization (shown for normalization method `r names(all_data_normalized)[1]`):
+
+Before normalization:
+
+```{r box_before_norm, echo = FALSE, warning=FALSE}
 max_mean <- max(apply(raw_filter, MARGIN = 2, function(x) mean(x, na.rm=TRUE)))
 to_plot <- boxplot(raw_filter,
 					ylim=c(0, max_mean*10), 
@@ -101,8 +94,9 @@ to_plot <- boxplot(raw_filter,
 					col=(c(rep("gold",replicatesC),rep("darkgreen",replicatesT))))
 ```
 
-This is a boxplot after normalization of the count data file):
-```{r box_after_norm, echo = FALSE}
+After normalization:
+
+```{r box_after_norm, echo = FALSE, warning=FALSE}
 max_mean <- max(apply(all_data_normalized[[1]], MARGIN = 2, function(x) mean(x, na.rm=TRUE)))
 to_plot <- boxplot(all_data_normalized[[1]],  
 					ylim=c(0, max_mean*10), 
@@ -110,57 +104,62 @@ to_plot <- boxplot(all_data_normalized[[1]],
 					cex.axis=0.8, 
 					notch=TRUE, 
 					col=(c(rep("gold",replicatesC),rep("darkgreen",replicatesT))))
-
 ```
-
 
 ## **DEgenes Hunter results**
 
 ### **Gene classification by DEgenes Hunter**
-In DEgenes Hunter, genes are labeled according to the following considerations:
+DEgenes Hunter uses multiple DE detection packages to analyse genes in the input count table and labels them accordingly:
 
-* **Raw counts:** A matrix containing the raw counts (without any filtering).
-* **Filtered raw counts:** Raw count matrix after filtering.
-* **Filtered out:** Genes discarded during the filtering process.
-* **Prevalent DEGs:** Differentially expressed genes considered by all packages employed but one.
-* **All possible DEGs:** Differentially expressed genes considered by at least one of the R-packages but not enough of them to be considered as "prevalent DEGs".
-* **Not DEGs:** Genes not considered DEGs in any package (by a minimum of $n-1$ packages employed if we used more than three algorithms).
-
+* **Filtered out:** Genes discarded during the filtering process as showing no or very low expression.
+* **Prevalent DEGs:** Genes considered as differentially expressed (DE) by at least `r opt$minpack_common` packages, as specified by the `minpack_common` argument.
+* **All possible DEGs:** Genes considered DE by at least one of the DE detection packages.
+* **Not DEGs:** Genes not considered DE in any package.
 
 ```{r qc,echo = FALSE}
-pgenes <- ggplot(barplot_df, aes(cat, numbers)) +
+# Create genes barplot
+barplot_df <- data.frame(total=c(
+		sum(DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG", "POSSIBLE_DEG", "NOT_DEG", "FILTERED_OUT")),
+		sum(DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG", "POSSIBLE_DEG", "NOT_DEG")),
+		sum(DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG", "POSSIBLE_DEG")),
+		sum(DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG"))
+		),
+	  gene_type=c("Raw counts", "Filtered raw counts", "All possible DEGs", "Prevalent DEGs")
+	)
+	barplot_df[,"gene_type"] <- factor(barplot_df[,"gene_type"], levels = barplot_df[,"gene_type"][order(barplot_df[,"total"])]) # Reorder to plot from most to least
+
+# Plot genes barplot
+pgenes <- ggplot(barplot_df, aes(gene_type, total)) +
 		  ylab("Number of genes") + 
 		  xlab("") +
 		  geom_bar(position="dodge", stat="identity", fill=c("#000034", "red", "orange", "blue"), show.legend=FALSE) + coord_flip() + 
-		  geom_text(aes(label = numbers, y= numbers + 1500))+ 
+		  geom_text(aes(label = total, y= total + 1500))+ 
 		  theme(text = element_text(face="bold", size=10))
 
 plot(pgenes)
 ```
 
 ### **Package DEG detection stats**
-This is the Venn Diagram of the all possible DEGs encountered in the experiment (Image extracted from {"VennDiagram.pdf"} file):
+This is the Venn Diagram of all possible DE genes (DEGs) according to at least on of the DE detection packages employed:
 
 ```{r Venn_d, echo = FALSE}
-# venn_plot <- venn.diagram(all_package_results, cex = 2, cat.fontface = 1, lty = 2, filename = NULL, cat.cex=1.5)
-# grid.draw(venn_plot)
-
-sets <- all_package_results
+sets <- list()
+for(DEG_pack in DEG_pack_columns){
+	pack <- unlist(strsplit(DEG_pack, split='_'))[1] # Get the name of the package
+	sets[[pack]] <- row.names(DE_all_genes)[which(DE_all_genes[,DEG_pack] == TRUE)] # 
+}
 items <- unique(unlist(sets))
 
 # Per each item, check sets
 belonging <- unlist(lapply(sets, function(set){items %in% set}))
 belonging <- matrix(as.numeric(belonging),ncol = length(sets))
-
 # Add set names
 colnames(belonging) <- names(sets)
-
 # Calculate intersections
 intersections <- vennCounts(belonging)
 intersections[1,"Counts"] <- NA
-
+# Plot
 vennDiagram(intersections, circle.col = rainbow(length(sets)))
-
 
 ```
 
@@ -168,8 +167,21 @@ vennDiagram(intersections, circle.col = rainbow(length(sets)))
 
 Benchmark of false positive calling (Image extracted from {"padj\_prevalent\_DEGs.pdf"} file):
 
+Boxplot of FDR values among all genes with an FDR <= 0.05 in at least one DE detection package
+
 ```{r FDR_plot, echo = FALSE}
-p_seguros_Int <- ggplot(intersection_data, aes(x = package_name, y = fdr, color = package_name)) +
+df <- DE_all_genes[DE_all_genes[, "genes_tag"] == "PREVALENT_DEG",]
+df <- df[final_FDR_names]
+
+df$gene_names <- row.names(df)
+df_melted_FDR <- melt(df, id.vars = "gene_names", measure.vars = final_FDR_names)
+df_melted_FDR[,"package_name"] <- unlist(lapply(strsplit(as.character(df_melted_FDR[, "variable"]), split='_'), function(x) x[2])) # Ugly way to remove FDR_ from names
+
+if(dim(df)[1] == 0){
+	cat("No Prevalent DEGs found, Bar charts of FDR values for prevalent genes cannot be shown")
+} else { 
+
+p_seguros_Int <- ggplot(df_melted_FDR, aes(x = package_name, y = value, color = package_name)) +
     			 geom_boxplot(outlier.colour = rgb(0, 0, 0, 0)) + 
 		         theme_bw(base_size = 30) + 
 		         geom_point(position = position_jitter(w = 0.1), color = "grey50", size = 1) + 
@@ -180,150 +192,132 @@ p_seguros_Int <- ggplot(intersection_data, aes(x = package_name, y = fdr, color 
 		         scale_colour_discrete(guide = "none") + 
 		         coord_cartesian(ylim = c(0, opt$p_val_cutoff))
 plot(p_seguros_Int)
+}
 ```
 
-The complete results of the DEgenes Hunter differential expression analysis can be found in the "hunter\_results\_table.txt"
+The complete results of the DEgenes Hunter differential expression analysis can be found in the "hunter\_results\_table.txt" file in the Common_results folder
 
+## **DE detection package specific results**
 
-## **Expression data description by each package**
+Various plots specific to each package are shown below:
 
-Different plots concerning every differential gene expression algorithm are shown
+```{r DESeq2_conditional_block_head, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
 
+cat("### **DESeq2 MA plot**:
 
-```{r analysis_section, echo = FALSE}
+This is the MA plot from DESeq2 package:")
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# Check DESeq2 MA plots
-if('DESeq2' %in% names(all_counts_for_plotting)){
-	header <- "### **DESeq2 MA plot**"
-	body1 <- "This is the MA plot from DESeq2 package:"
-	code_ch <- "plotMA(package_objects[['DESeq2']], cex.lab=1.6, cex.axis=1.5)" 
-	body2 <- "In DESeq2, the MA-plot (log ratio versus abundance) shows the log2 fold changes are attributable to a given variable over the mean of normalized counts. Points will be colored red if the adjusted Pvalue is less than 0.1. Points which fall out of the window are plotted as open triangles pointing either up or down.
+```
 
-A table containing the DESeq2 DEGs is provided: in ('DEgenes\\_DESEq2.txt').
+```{r DESeq2_conditional_block_plot, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE}
+	plotMA(package_objects[['DESeq2']], cex.lab=1.6, cex.axis=1.5)
+```
 
-A table containing the DESeq2 normalized counts is provided in ('Normalized\\_counts\\_DESEq2.txt')."
+```{r DESeq2_conditional_block_text, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+
 	
-	# Concat
-	out <- c(out,knit_expand(text = paste(header,
-										body1,
-										chunks(code_ch, options = "echo = FALSE"),
-										body2,
-										"\n",sep = "\n")))
-}
+cat("In DESeq2, the MA-plot (log ratio versus abundance) shows the log2 fold changes are attributable to a given variable over the mean of normalized counts. Points will be colored red if the adjusted Pvalue is less than 0.1. Points which fall out of the window are plotted as open triangles pointing either up or down.
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# Check edgeR MA plots
-if('edgeR' %in% names(all_counts_for_plotting)){
-	header <- "### **edgeR MA plot**"
-	body1 <- "This is the MA plot from edgeR package:"
-	code_ch <- "with(all_counts_for_plotting[['edgeR']], plot(logCPM, logFC, pch=20, main='edgeR: Fold change vs abundance', cex.lab=1.5, cex.axis=1.5))
+A table containing the DESeq2 DEGs is provided: in Results\\_DESeq2/DEgenes\\_DESEq2.txt
+
+A table containing the DESeq2 normalized counts is provided in Results\\_DESeq2/Normalized\\_counts\\_DESEq2.txt")
+
+```
+
+
+```{r edgeR_conditional_block_head, eval='edgeR' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+
+cat("### **edgeR MA plot**
+
+This is the MA plot from edgeR package:")
+
+```
+
+```{r edgeR_conditional_block_plot, eval='edgeR' %in% names(all_counts_for_plotting), echo=FALSE}
+
+with(all_counts_for_plotting[['edgeR']], plot(logCPM, logFC, pch=20, main='edgeR: Fold change vs abundance', cex.lab=1.5, cex.axis=1.5))
 with(subset(all_counts_for_plotting[['edgeR']], FDR < opt$p_val_cutoff), points(logCPM, logFC, pch=20, col='red'))
-abline(h=c(-1,1), col='blue')" 
-	body2 <- "Differential gene expression data can be visualized as MA-plots (log ratio versus abundance) where each dot represents a gene. The differentially expressed genes are colored red and the non-differentially expressed ones are colored black.  
-
-A table containing the edgeR DEGs is provided in DEgenes\\_edgeR.txt.
-
-A table containing the edgeR normalized counts is provided in Normalized\\_counts\\_edgeR.txt."
+abline(h=c(-1,1), col='blue')
 	
-	# Concat
-	out <- c(out,knit_expand(text = paste(header,
-										body1,
-										chunks(code_ch, options = "echo = FALSE"),
-										body2,
-										"\n",sep = "\n")))
-}
+```
 
+```{r edgeR_conditional_block_body, eval='edgeR' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
 
+cat("Differential gene expression data can be visualized as MA-plots (log ratio versus abundance) where each dot represents a gene. The differentially expressed genes are colored red and the non-differentially expressed ones are colored black.
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# Check limma MA plots
-if('limma' %in% names(all_counts_for_plotting)){
-	header <- "### **lima Volcano plot**"
-	body1 <- "This is the volcano plot of log-fold changes versus log-odds (log10 of adjusted P values) of differential expression from limma package:"
-	code_ch <- "plot(x=all_counts_for_plotting[['limma']]$logFC, y=-log10(all_counts_for_plotting[['limma']]$P.Value), xlab='logFC', ylab='logOdds', col=c('blue', 'red') [k_limma+1], pch=20, main= c('groupsB-groupsA'), cex.lab=1.6, cex.axis=1.5)
-abline(v= opt$lfc, col='cyan')
-limit.pval_limma <- -log10(max(all_data[['limma']]$P.Value)) 
-abline(h=limit.pval_limma, col='green')
-abline(h=-log10(opt$p_val_cutoff), col='red', lty='dashed')" 
-	body2 <- "A table containing the limma DEGs is provided in {'DEgenes\\_limma.txt'}.
+A table containing the edgeR DEGs is provided in Results\\_edgeR/DEgenes\\_edgeR.txt
 
-A table containing the limma normalized counts is provided in {'Normalized\\_counts\\_limma.txt'}."
-	
-	# Concat
-	out <- c(out,knit_expand(text = paste(header,
-										body1,
-										chunks(code_ch, options = "echo = FALSE"),
-										body2,
-										"\n",sep = "\n")))
-}
-
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# Check NOISeq MA plots
-if(all(c("replicatesC","replicatesT") %in% ls())){
-	header <- "### **NOISeq Expressionplot**"
-	body1 <- "This is the summary plot for (M,D) values (black) and the differentially expressed genes (red) from the NOISeq package (Image extracted from {'ExpressionPlot.pdf'} file):"
-	code_ch <- "groups_val <- c(rep('A', replicatesC), rep('B', replicatesT)) 
-myfactors = data.frame(Tissue = rev(groups_val), TissueRun = rev(design_vector))
-
-mydata <- readData(raw_filter, myfactors)
-
-mynoiseq = noiseqbio(mydata, k = 0.5, norm = 'tmm', factor='Tissue', lc = 1, r = 50, adj = 1.5, plot = FALSE,
-	a0per = 0.9, random.seed = 12345, filter = 1, cv.cutoff = 500, cpm = 1)
- 
-DE.plot(mynoiseq, q = opt$q_value, graphic = 'MD', cex.lab=1.4, cex.axis=1.4)" 
-	body2 <- "A table containing the NOISeq DEGs is provided in {'DEgenes\\_NOISeq.txt'}.
-
-A table containing the NOISeq normalized counts is provided in {'Normalized\\_counts\\_NOISeq.txt'}."
-	
-	# Concat
-	out <- c(out,knit_expand(text = paste(header,
-										body1,
-										chunks(code_ch, options = "echo = FALSE"),
-										body2,
-										"\n",sep = "\n")))
-}
-
-
-# Prepare output
-# out <- knit_expand(text = out, sep = "\n")
-
+A table containing the edgeR normalized counts is provided in Results\\_edgeR/Normalized\\_counts\\_edgeR.txt")
 
 ```
 
-
-`r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
-
+```{r limma_conditional_block_head, eval='limma' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
 
 
+cat("### **limma Volcano plot**
+
+This is the volcano plot of log-fold changes versus log-odds (log10 of adjusted P values) of differential expression from the limma package:")
+
+```
+
+```{r limma_conditional_block_plot, eval='limma' %in% names(all_counts_for_plotting), echo=FALSE, warning=FALSE}
+
+limma_sig <- DE_all_genes$limma_DEG+1
+plot(x=all_counts_for_plotting[['limma']]$logFC, y=-log10(all_counts_for_plotting[['limma']]$P.Value), xlab='logFC', ylab='logOdds', col=c('blue', 'red')[limma_sig], pch=20, main= c('groupsB-groupsA'), cex.lab=1.6, cex.axis=1.5)
+abline(v= opt$lfc, col='cyan')	
+limit.pval_limma <- -log10(max(all_counts_for_plotting[['limma']]$P.Value)) 
+abline(h=limit.pval_limma, col='green')
+abline(h=-log10(opt$p_val_cutoff), col='red', lty='dashed')
+
+```
+
+```{r limma_conditional_block_text, eval='limma' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
 
 
+cat("A table containing the limma DEGs is provided in Results\\_limma/DEgenes\\_limma.txt")
 
 
+cat("A table containing the limma normalized counts is provided in Results\\_limma/Normalized\\_counts\\_limma.txt")
+```
 
+```{r NOISeq_conditional_block_head, eval='NOISeq' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+cat("### **NOISeq Expressionplot**
 
+This is the summary plot for (M,D) values (black) and the differentially expressed genes (red) from the NOISeq package (Image extracted from {'ExpressionPlot.pdf'} file):"
+
+)
+```
+
+```{r NOISeq_conditional_block_plot, eval='NOISeq' %in% names(all_counts_for_plotting), echo=FALSE, warning=FALSE, message=FALSE, results='hide',}
+
+DE.plot(package_objects[['NOISeq']], q = opt$q_value, graphic = 'MD', cex.lab=1.4, cex.axis=1.4)
+
+```
+
+```{r NOISeq_conditional_block_text, eval='NOISeq' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+
+cat("A table containing the NOISeq DEGs is provided in Results\\_NOISeq/DEgenes\\_NOISeq.txt.
+
+A table containing the NOISeq normalized counts is provided in Results\\_NOISeq/Normalized\\_counts\\_NOISeq.txt"
+	
+)
+```
 
 ## **Detailed package results comparation**
-This is an advanced section in order to evaluate each package performance during the data analysis. The data shown here has not biological implication.
+This is an advanced section in order to compare the output of the packages used to perform data analysis. The data shown here does not necessarilly have any biological implication. 
 
 ### **P-value Distributions**
 Distributions of p-values, unadjusted and adjusted for multiple testing (FDR)
 
 ```{r pval_distr, echo = FALSE, warning = FALSE}
 
-# Get the relevant columns to plot and use to subset the output table
-pval_cols <- paste0("pvalue_", names(all_package_results))
-FDR_cols <- paste0("FDR_", names(all_package_results))
-
-df <- final_BIG_table[final_BIG_table$genes_tag != "FILTERED_OUT", ]
-df_melted_pval <- melt(df, id.vars = "Row.names", measure.vars = pval_cols)
-df_melted_FDR <- melt(df, id.vars = "Row.names", measure.vars = FDR_cols)
-
+df <- DE_all_genes[DE_all_genes$genes_tag != "FILTERED_OUT", ]
+df$gene_names <- row.names(df)
+df_melted_pval <- melt(df, id.vars = "gene_names", measure.vars = final_FDR_names)
+df_melted_FDR <- melt(df, id.vars = "gene_names", measure.vars = final_pvalue_names)
 # Now plot
 ggplot(df_melted_pval, aes(x=value)) + 
     geom_density() + facet_grid(. ~variable)
-
-
 ggplot(df_melted_FDR, aes(x=value)) + 
     geom_density() + facet_grid(. ~variable)
 ```
@@ -331,14 +325,11 @@ ggplot(df_melted_FDR, aes(x=value)) +
 ### **FDR Correlations**
 Correlations of adjusted p-values, adjusted for multiple testing (FDR) and for log Fold Change.
 
-```{r pval_corr, echo = FALSE, warning = FALSE}
+```{r pval_corr, echo = FALSE, warning = FALSE, eval = length(all_counts_for_plotting) > 1}
 
-chart.Correlation(df[,FDR_cols], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
-chart.Correlation(df[,pval_cols], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
-
-
-chart.Correlation(df[,paste0("logFC_", names(all_package_results))], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
-
+chart.Correlation(df[, c("combined_FDR", final_FDR_names)], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
+chart.Correlation(df[, final_pvalue_names], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
+chart.Correlation(df[, c("mean_logFCs", final_logFC_names)], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
 
 ```
 

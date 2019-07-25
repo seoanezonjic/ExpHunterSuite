@@ -11,37 +11,19 @@ exp_dif_Deseq2 <- function(data, coldat){
   return(dds) # extract results
 }
 
-# NOISeq
-#-----------------------------------------------
-exp_dif_NOISeq <- function(mydata){
-	mynoiseq = noiseqbio(mydata, k = 0.5, norm = "tmm", factor="Tissue", lc = 1, r = 50, adj = 1.5, plot = FALSE,
-	a0per = 0.9, random.seed = 12345, filter = 1, cv.cutoff = 500, cpm = 1)
- 
-	pdf(file.path(paths[['Results_NOISeq']], "ExpressionPlot_NOISeq.pdf"))
-		DE.plot(mynoiseq, q = opt$q_value, graphic = "MD", cex.lab=1.4, cex.axis=1.4)
-    dev.off()
-  return(mynoiseq)
-}
-
 analysis_DESeq2 <- function(data, num_controls, num_treatmnts, p_val_cutoff, lfc, groups){
 	# Experimental design
 	coldat = DataFrame(grp=factor(groups), each=1) # Experimental design object
-	print(coldat)
 	# Calculating differential expression 
 	all_genes_DESeq2_object <- exp_dif_Deseq2(data, coldat)
 	
 	all_DESeq2_genes <- results(all_genes_DESeq2_object)
 	normalized_counts <- as.data.frame(counts(all_genes_DESeq2_object, normalized=TRUE)) # Getting normalized values
 	
-	if ((num_controls > 1)&(num_treatmnts > 1)){ # Filtering DEGs by adjusted p-value only when there are replicates available (if not, only a descriptive analysis is performed)
-	  expres_diff_DESeq <- filter_gene_expression(all_DESeq2_genes, p_val_cutoff, lfc, "padj", "log2FoldChange")
-	}
-	# JRP better to return as data frame to keep consistent with other packages
-	# return(list(as.data.frame(expres_diff), normalized_counts, as.data.frame(all_DESeq2_genes)))
-	return(list(as.data.frame(expres_diff_DESeq), normalized_counts, as.data.frame(all_DESeq2_genes), all_DESeq2_genes))
+	return(list(normalized_counts, as.data.frame(all_DESeq2_genes), all_DESeq2_genes))
 }
 
-analysis_edgeR <- function(data, p_val_cutoff, lfc, paths, groups){
+analysis_edgeR <- function(data, p_val_cutoff, lfc, path, groups){
 	require(edgeR)
 	# Calculating differential expression
 	d_edgeR <- DGEList(counts=data, group=groups) # Building edgeR object  
@@ -50,13 +32,13 @@ analysis_edgeR <- function(data, p_val_cutoff, lfc, paths, groups){
 	denraw <- cpm(d_edgeR, log=TRUE) # Counts Per Million
 
 	# Export Plots into PDFs
-	pdf(file.path(paths[['Results_edgeR']], "group_dendrogram_single.pdf"), w=11, h=8.5)
+	pdf(file.path(path, "group_dendrogram_single.pdf"), w=11, h=8.5)
 	  rawt <- t(denraw)
 	  hc <- hclust(dist(rawt), "single")
 	  plot(hc)
 	dev.off()
 
-	pdf(file.path(paths[['Results_edgeR']], "MDSplot.pdf"))
+	pdf(file.path(path, "MDSplot.pdf"))
 		plotMDS(d_edgeR, col=cols, main="MDS Plot: Treatment colours")
 	dev.off()
 
@@ -69,19 +51,19 @@ analysis_edgeR <- function(data, p_val_cutoff, lfc, paths, groups){
 	dennorm <- cpm(d_edgeR, log=TRUE)
 
 	# Export plots into PDFs
-	pdf(file.path(paths[['Results_edgeR']], "group_dendrogram_norm_average.pdf"), w=11, h=8.5)
+	pdf(file.path(path, "group_dendrogram_norm_average.pdf"), w=11, h=8.5)
   		dent_norm <- t(dennorm)
   		hc_norm <- hclust(dist(dent_norm), "ave")
   		plot(hc_norm)
 	dev.off()
 
-	pdf(file.path(paths[['Results_edgeR']], "group_dendrogram_norm_single.pdf"), w=11, h=8.5)
+	pdf(file.path(path, "group_dendrogram_norm_single.pdf"), w=11, h=8.5)
   		dent_norm <- t(dennorm)
   		hc_norm <- hclust(dist(dent_norm), "single")
   		plot(hc_norm)
 	dev.off()
 
-	pdf(file.path(paths[['Results_edgeR']], "MDSplot_norm.pdf"))
+	pdf(file.path(path, "MDSplot_norm.pdf"))
 		plotMDS(d_edgeR, col=cols, main="MDS Plot: Treatment colours - normalized data")
 	dev.off()
 
@@ -89,17 +71,13 @@ analysis_edgeR <- function(data, p_val_cutoff, lfc, paths, groups){
 	normalized_counts <- cpm(d_edgeR)
 	
 	# Apply Exact Test
-	d_edgeR <- exactTest(d_edgeR, dispersion = "auto", pair=unique(groups))
+	d_edgeR_DE <- exactTest(d_edgeR, dispersion = "auto", pair=unique(groups))
 
 	# Extracts the top DE tags in a data frame for a given pair of groups, ranked by p-value or absolute log-fold change
-	all_genes_df <- topTags(d_edgeR, n= nrow(d_edgeR$table), sort.by="p.value")$table
-
-	# Obtain differential expression
-	expres_diff  <- filter_gene_expression(all_genes_df, p_val_cutoff, lfc, "FDR", "logFC")
-	expres_diff <- expres_diff[order(rownames(expres_diff)),]
+	all_genes_df <- topTags(d_edgeR_DE, n= nrow(d_edgeR_DE$table), sort.by="p.value")$table
 
 	# Return calculated info
-	return(list(expres_diff, normalized_counts, all_genes_df))
+	return(list(normalized_counts, all_genes_df, list(d_edgeR=d_edgeR, dennorm=dennorm)))
 }
 
 
@@ -123,25 +101,26 @@ analysis_limma <- function(data, num_controls, num_treatmnts, p_val_cutoff, lfc)
 	results <- decideTests(fit2, p.value = p_val_cutoff, lfc = lfc)
     todos_limma <- topTable(fit2, adjust.method="BH", number=nrow(fit2))
     # Obtain differential expression
-	expres_diff <- topTable(fit2, adjust.method = "BH", number=nrow(fit2), p.value= p_val_cutoff, lfc = lfc)
-	expres_diff <- expres_diff[order(rownames(expres_diff)), ]
 	# Return calculated info
-	return(list(expres_diff, normalized_counts, todos_limma))
+	return(list(normalized_counts, todos_limma))
 }
 
-analysis_NOISeq <- function(data, num_controls, num_treatmnts, q_value, groups){
+analysis_NOISeq <- function(data, num_controls, num_treatmnts, q_value, groups, lfc, path){
 	require(NOISeq)
 	# Experimental design
 	groups_val <- c(rep("A", num_controls), rep("B", num_treatmnts)) 
 	myfactors = data.frame(Tissue = rev(groups_val), TissueRun = rev(groups))
-	print(myfactors)
 	# Calculation of differential expression
 	mydata <- readData(data, myfactors) # Building the NOISeq Object (eset)
 
-	all_NOISeq <- exp_dif_NOISeq(mydata)
+	all_NOISeq <- noiseqbio(mydata, k = 0.5, norm = "tmm", factor="Tissue", lc = 1, r = 50, adj = 1.5, plot = FALSE,
+	a0per = 0.9, random.seed = 12345, filter = 1, cv.cutoff = 500, cpm = 1)
+ 
+	pdf(file.path(path, "ExpressionPlot_NOISeq.pdf"))
+		DE.plot(all_NOISeq, q = opt$q_value, graphic = "MD", cex.lab=1.4, cex.axis=1.4)
+    dev.off()
 
 	normalized_counts <- tmm(assayData(mydata)$exprs, long = 1000, lc = 1) # Getting normalized counts
-	expres_diff <- degenes(all_NOISeq, q = q_value, M = NULL)
 	expres_diff_all <- as.data.frame(all_NOISeq@results)
 
 	prob_all <- expres_diff_all$prob
@@ -149,13 +128,6 @@ analysis_NOISeq <- function(data, num_controls, num_treatmnts, q_value, groups){
 	prob_all <- 1 - prob_all
 	expres_diff_all <- data.frame(expres_diff_all, adj.p = prob_all)
 
-	prob <- expres_diff$prob
-	# Inverse
-	prob <- 1 - prob
-
-	# Calculate differential expression
-	expres_diff <- data.frame(expres_diff, adj.p = prob)
-	expres_diff <- expres_diff[order(rownames(expres_diff)),]
 	# Return calculated info
-	return(list(expres_diff, normalized_counts, expres_diff_all))
+	return(list(normalized_counts, expres_diff_all, all_NOISeq))
 }

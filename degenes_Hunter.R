@@ -99,37 +99,21 @@ if (opt$minlibraries < 1){
 if (opt$reads == 0){
   cat("Minimum reads option is set to zero. Raw count table will not be filtered.")
 }
-
 # Control replicate number VS method selection
 index_control_cols <- unlist(strsplit(opt$Control_columns, ",")) 
 index_treatmn_cols <- unlist(strsplit(opt$Treatment_columns, ","))
 replicatesC <- length(index_control_cols)
 replicatesT <- length(index_treatmn_cols)
 
-# Check if there are not enough replicates for specified method
-if((sum(replicatesC, replicatesT)<3) &
-    (((grepl("E", opt$modules)) | 
-      (grepl("L", opt$modules)) | 
-      (grepl("N", opt$modules))))){
-  stop("Not enough replicates to perform an analysis with at least one of the selected methods. Select 'D' for parameter -m")
-}else if((sum(replicatesC, replicatesT)<=5) &
-        ((grepl("L", opt$modules)) | 
-          (grepl("N", opt$modules)))){
-  stop("Not enough replicates to perform an analysis with at least one of the selected methods")
-}
+# Check if there are enough replicates for specified method
+if((replicatesC < 2) | (replicatesT < 2)) stop('At least two replicates per class (i.e. treatment and control) are required\n')
 
 ############################################################
 ##                         I/O DATA                       ##
 ############################################################
 
-# Create output container folders 
+# Create output folder 
 dir.create(opt$output_files)
-paths <- list()
-paths$root <- opt$output_files
-
-# Creating Subfolders
-subfolders <- defining_subfolders(replicatesC, replicatesT, opt$modules)
-paths <- create_subfolders(subfolders, paths)
 
 # Load raw count data
 raw <- read.table(opt$input_file, header=TRUE, row.names=1, sep="\t")
@@ -138,7 +122,6 @@ raw <- raw[c(index_control_cols,index_treatmn_cols)] #Indexing selected columns 
 # Substitute NA values
 raw[is.na(raw)] <- 0
 
-
 ############################################################
 ##                          FILTER                        ##
 ############################################################
@@ -146,8 +129,6 @@ raw[is.na(raw)] <- 0
 if(opt$reads != 0){
   keep_cmp <- rowSums(edgeR::cpm(raw) > opt$reads) >= opt$minlibraries # genes with cpm greater than --reads value for at least --minlibrariess samples
   raw_filter <- raw[keep_cmp,] # Filter out count data frame
-  write.table(raw_filter, file=file.path(paths$root, "filtered_count_data.txt"),
-                                          quote=F, col.names=NA, sep="\t")
 }else{ # NO FILTER
   raw_filter <- raw
 }
@@ -155,21 +136,15 @@ if(opt$reads != 0){
 # Defining contrast - Experimental design
 design_vector <- c(rep("C", replicatesC), rep("T", replicatesT))
 
-# Write Experimental design to file as 2 column data frame
-write.table(data.frame(class = design_vector, name = c(index_control_cols, index_treatmn_cols)), 
-  file=file.path(paths$root, "control_treatment.txt"), row.names=FALSE, quote=FALSE, sep="\t")
-
-
-
 ############################################################
 ##                       D.EXP ANALYSIS                   ##
 ############################################################
 
 # Prepare results containers
-all_data                <- list()
 all_data_normalized     <- list()
 all_counts_for_plotting <- list()
 all_package_results     <- list()
+package_objects         <- list()
 all_FDR_names           <- c()
 all_LFC_names           <- c()
 all_pvalue_names        <- c()
@@ -177,26 +152,17 @@ final_logFC_names       <- c()
 final_FDR_names         <- c()
 final_pvalue_names      <- c()
 DEG_pack_columns        <- c()
-# Container for the package specific objects such as the DESeq2 results
-package_objects <- list()
-
-# Calculate global parameters (log fold change value)
-#lfc <- calculate_lfc(opt$fc)
 lfc <- opt$lfc
-#cat("\n\n\n\n\n\nlog fold change value is:", lfc, "\n\n\n\n\n\n")
-############## Verbose point
-if((replicatesC == 1) & (replicatesT == 1)){ 
-  warning('There is only one replicate available per class. Only DESeq2 will be performed.\n')
-}else{
-  cat('There are', replicatesC, 'replicates in the control condition and', replicatesT, 'replicates in the treatment condition.\n')
-}
 
 #####
 ################## CASE D: DESeq2
 #####
-if(grepl("D",opt$modules)){
+if((replicatesC >= 2) & 
+   (replicatesT >= 2) & 
+   grepl("D",opt$modules)){
   # Verbose
   cat('Gene expression analysis is performed with DESeq2.\n')
+  dir.create(file.path(opt$output_files, "Results_DESeq2"))
   # Calculate results
   results <- analysis_DESeq2(data   = raw_filter, 
                              num_controls  = replicatesC, 
@@ -205,10 +171,10 @@ if(grepl("D",opt$modules)){
                              lfc    = lfc, 
                              groups = design_vector)
   # Store results
-  all_data[['DESeq2']] <- results[[1]]
-  all_data_normalized[['DESeq2']] <- results[[2]]
-  all_counts_for_plotting[['DESeq2']] <- results[[3]]
-  package_objects[['DESeq2']] <- results[[4]]
+  all_data_normalized[['DESeq2']] <- results[[1]]
+  all_counts_for_plotting[['DESeq2']] <- results[[2]]
+  package_objects[['DESeq2']] <- results[[3]]
+
   # Result Plot Visualization
   if (!is.null(all_counts_for_plotting[['DESeq2']])){
     all_FDR_names      <- c(all_FDR_names, 'padj')
@@ -219,6 +185,8 @@ if(grepl("D",opt$modules)){
     final_FDR_names    <- c(final_FDR_names, 'FDR_DESeq2')
     DEG_pack_columns   <- c(DEG_pack_columns, 'DESeq2_DEG')
   } 
+} else {
+  warning("DESeq2 will not be performed due to too few replicates")
 }
 
 #####
@@ -227,25 +195,25 @@ if(grepl("D",opt$modules)){
 if((replicatesC >= 2) & 
    (replicatesT >= 2) & 
    grepl("E", opt$modules)){ 
-
   # Verbose point
   cat('Gene expression analysis is performed with edgeR.\n')
-
+  path <- file.path(opt$output_files, "Results_edgeR")
+  dir.create(path)
   # Calculate results
   results <- tryCatch(
     # CODE
     analysis_edgeR(data   = raw_filter, 
                    p_val_cutoff = opt$p_val_cutoff, 
                    lfc    = lfc, 
-                   paths  = paths,
+                   path  = path,
                    groups = design_vector),
     # CATCH
     error = handling_errors, warning = handling_errors)
   # Store results
-  all_data[['edgeR']] <- results[[1]]
-  all_data_normalized[['edgeR']] <- results[[2]]
-  all_counts_for_plotting[['edgeR']] <- results[[3]]
- 
+  all_data_normalized[['edgeR']] <- results[[1]]
+  all_counts_for_plotting[['edgeR']] <- results[[2]]
+  package_objects[['edgeR']] <- results[[3]]
+
   # Result Plot Visualization
   if (!is.null(all_counts_for_plotting[['edgeR']])){
     all_FDR_names      <- c(all_FDR_names, 'FDR')
@@ -256,10 +224,12 @@ if((replicatesC >= 2) &
     final_FDR_names    <- c(final_FDR_names, 'FDR_edgeR')
     DEG_pack_columns   <- c(DEG_pack_columns, 'edgeR_DEG')
   }
+} else {
+  warning("edgeR will not be performed due to too few replicates")
 }
 
 #####
-################## CASE L: limma (AT LEAST 3 REPLICLATES)
+################## CASE L: limma (AT LEAST 3 REPLICATES)
 #####
 if((replicatesC >= 3) &
    (replicatesT >= 3) &
@@ -267,6 +237,7 @@ if((replicatesC >= 3) &
 
   # Verbose
   cat('Gene expression analysis is performed with limma.\n')
+  dir.create(file.path(opt$output_files, "Results_limma"))
 
   # Calculate results
   results <- analysis_limma(data = raw_filter, 
@@ -274,11 +245,9 @@ if((replicatesC >= 3) &
                             num_treatmnts = replicatesT, 
                             p_val_cutoff  = opt$p_val_cutoff, 
                             lfc  = lfc)
-
   # Store results
-  all_data[['limma']]                <- results[[1]]    
-  all_data_normalized[['limma']]     <- results[[2]]
-  all_counts_for_plotting[['limma']] <- results[[3]]
+  all_data_normalized[['limma']]     <- results[[1]]
+  all_counts_for_plotting[['limma']] <- results[[2]]
 
   # Result Plot Visualization
   if (!is.null(all_counts_for_plotting[['limma']])){
@@ -289,10 +258,9 @@ if((replicatesC >= 3) &
     final_logFC_names  <- c(final_logFC_names, 'logFC_limma')
     final_FDR_names    <- c(final_FDR_names, 'FDR_limma')
     DEG_pack_columns   <- c(DEG_pack_columns, 'limma_DEG')
-
-    # Used for generating the report
-    k_limma <- rownames(all_counts_for_plotting[['limma']]) %in% rownames(all_data[['limma']])
   }
+} else {
+  warning("limma will not be performed due to too few replicates")
 }
 
 #####
@@ -303,19 +271,21 @@ if((replicatesC >= 3) &
    grepl("N", opt$modules)){ 
 
   # Verbose
-  cat(paste('\n Gene expression analysis is performed with NOISeqBIO function within NOISeq.'))
-
+  cat("Gene expression analysis is performed with NOISeqBIO function within NOISeq.\n")
+  path <- file.path(opt$output_files, "Results_NOISeq")
+  dir.create(path)
   # Calculate results
   results <- analysis_NOISeq(data    = raw_filter, 
                              num_controls  = replicatesC, 
                              num_treatmnts = replicatesT, 
                              q_value = opt$q_value, 
-                             groups  = design_vector)
-
+                             groups  = design_vector, 
+                             path = path,
+                             lfc  = lfc)
   # Store results
-  all_data[['NOISeq']]                <- results[[1]]
-  all_data_normalized[['NOISeq']]     <- results[[2]]
-  all_counts_for_plotting[['NOISeq']] <- results[[3]]
+  all_data_normalized[['NOISeq']]     <- results[[1]]
+  all_counts_for_plotting[['NOISeq']] <- results[[2]]
+  package_objects[['NOISeq']] <- results[[3]]
 
   #Result Plot Visualization
   if (!is.null(all_counts_for_plotting[['NOISeq']])){
@@ -327,76 +297,34 @@ if((replicatesC >= 3) &
     final_FDR_names    <- c(final_FDR_names, 'FDR_NOISeq')
     DEG_pack_columns   <- c(DEG_pack_columns, 'NOISeq_DEG')
   }
-} 
-
-############################################################
-##                   FINAL RESULTS TABLE                  ##
-############################################################
-
-#### Preparing and creating final table
-all_genes_df <- unite_all_list_dataframes(all_counts_for_plotting, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names)
-all_genes_df <- check_deg_in_pck(all_counts_for_plotting, all_data, all_genes_df, DEG_pack_columns)
-
-DEG_counts   <- counting_trues(all_genes_df, DEG_pack_columns)
-DEG_counts   <- as.data.frame(DEG_counts)
-all_genes_df <- cbind(all_genes_df, DEG_counts)
-
-final_BIG_table <- creating_final_BIG_table(all_genes_df, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, opt)
-tag <- as.data.frame(tagging_genes(final_BIG_table, opt, DEG_counts, DEG_pack_columns))
-colnames(tag)   <- "genes_tag"
-final_BIG_table <- cbind(final_BIG_table, tag)
-final_BIG_table <- adding_filtered_transcripts(raw, raw_filter, final_BIG_table)
-
-############################################################
-##                       EXPORT RESULTS                   ##
-############################################################
-
-# Export results tables
-write_data_frames_list(dataframe_list = all_data, prefix = 'DEgenes_', paths = paths)
-write_data_frames_list(dataframe_list = all_data_normalized, prefix = 'Normalized_counts_', paths = paths)
-write_data_frames_list(dataframe_list = all_counts_for_plotting, prefix = 'allgenes_', paths = paths)
-
-# Export "BIG FINAL TABLE" 
-write.table(final_BIG_table, file=file.path(paths[["Common_results"]], "hunter_results_table.txt"), quote=F, col.names=T, sep="\t", row.names=F)
-
-
-############################################################
-##                PREVALENT RESULTS GRAPHS                ##
-############################################################
-
-if (length(all_data) > 1){
-  ########### Venn diagram ##############
-  all_package_results <- get_vector_names(all_data)
-
-  ########################
-  x_all <- calculate_intersection(all_package_results)
-
-  write_data(x_all, file.path(paths[["Common_results"]]),"Prevalent_geneIDs.txt")
-  ##############################
-
-  raw_filter_x_all_separate_lfcs <- separate_intersection_logFCs_by_sign(all_data, raw_filter, x_all, all_LFC_names)
-  write_data(raw_filter_x_all_separate_lfcs[[1]], file.path(paths[["Common_results"]]),"pos_prevalentDEGs_logFCs.txt")
-  write_data(raw_filter_x_all_separate_lfcs[[2]], file.path(paths[["Common_results"]]),"neg_prevalentDEGs_logFCs.txt")
-  intersection_data <- get_subset_for_fdr_df(all_data, x_all, all_FDR_names)
-  # plotting_FDR_values(intersection_data, "padj_prevalent_DEGs.pdf" , opt$p_val_cutoff)
-
-  all_fdr_data <- get_all_fdr_df(all_data, x_all, all_FDR_names)  
-  # plotting_FDR_values(all_fdr_data, "padj_possible_DEGs.pdf" , opt$p_val_cutoff)
-
-  all_fdr_counts_data <- get_all_fdr_df(all_counts_for_plotting, x_all, all_FDR_names)
-  # plotting_FDR_values(all_fdr_counts_data, "padj_all_genes.pdf" , 1.00)
+} else {
+  warning("NOISeq will not be performed due to too few replicates")
 }
 
-barplot_df <- creating_genenumbers_barplot(raw, raw_filter, all_data, x_all)
+#################################################################################
+##                       EXPORT FINAL RESULTS AND OTHER FILES                  ##
+#################################################################################
 
-creating_top20_table(final_BIG_table)
+# Write filtered count data
+write.table(raw_filter, file=file.path(opt$output_files, "filtered_count_data.txt"), quote=FALSE, col.names=NA, sep="\t")
 
+# Write Counts data and all DE for each  design to file as 2 column data frame
+write.table(data.frame(class = design_vector, name = c(index_control_cols, index_treatmn_cols)), 
+  file=file.path(opt$output_files, "control_treatment.txt"), row.names=FALSE, quote=FALSE, sep="\t")
+write_df_list_as_tables(all_data_normalized, prefix = 'Normalized_counts_', root = opt$output_files)
+write_df_list_as_tables(all_counts_for_plotting, prefix = 'allgenes_', root = opt$output_files)
+
+# Write main results file, normalized counts per package and DE results per package
+DE_all_genes <- unite_DEG_pack_results(all_counts_for_plotting, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, 
+  final_logFC_names, final_FDR_names, raw, opt$p_val_cutoff, opt$lfc, opt$minpack_common)
+# New structure - row names are now actually row names
+dir.create(file.path(opt$output_files, "Common_results"))
+write.table(DE_all_genes, file=file.path(opt$output_files, "Common_results", "hunter_results_table.txt"), quote=FALSE, row.names=TRUE, sep="\t")
 
 ############################################################
 ##                    GENERATE REPORT                     ##
 ############################################################
-# message(dirname(normalizePath(paths$root, "report.html")))
-outf <- paste(dirname(normalizePath(paths$root,"DEG_report.html")),"DEG_report.html",sep=.Platform$file.sep)
+outf <- paste(dirname(normalizePath(opt$output_files,"DEG_report.html")),"DEG_report.html",sep=.Platform$file.sep)
 
 rmarkdown::render(file.path(main_path_script, 'templates', 'main_report.Rmd'), 
-                  output_file = outf, intermediates_dir = paths$root)
+                  output_file = outf, intermediates_dir = opt$output_files)
