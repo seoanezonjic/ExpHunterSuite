@@ -157,148 +157,147 @@ lfc <- opt$lfc
 #####
 ################## CASE D: DESeq2
 #####
-if((replicatesC >= 2) & 
-   (replicatesT >= 2) & 
-   grepl("D",opt$modules)){
-  # Verbose
-  cat('Gene expression analysis is performed with DESeq2.\n')
-  dir.create(file.path(opt$output_files, "Results_DESeq2"))
-  # Calculate results
-  results <- analysis_DESeq2(data   = raw_filter, 
-                             num_controls  = replicatesC, 
-                             num_treatmnts = replicatesT, 
-                             p_val_cutoff  = opt$p_val_cutoff, 
-                             lfc    = lfc, 
-                             groups = design_vector)
-  # Store results
-  all_data_normalized[['DESeq2']] <- results[[1]]
-  all_counts_for_plotting[['DESeq2']] <- results[[2]]
-  package_objects[['DESeq2']] <- results[[3]]
+if(grepl("D",opt$modules)){
+  if(replicatesC >= 2 & replicatesT >= 2) {
+    # Verbose
+    cat('Gene expression analysis is performed with DESeq2.\n')
+    dir.create(file.path(opt$output_files, "Results_DESeq2"))
+    # Calculate results
+    results <- analysis_DESeq2(data   = raw_filter, 
+                               num_controls  = replicatesC, 
+                               num_treatmnts = replicatesT, 
+                               p_val_cutoff  = opt$p_val_cutoff, 
+                               lfc    = lfc, 
+                               groups = design_vector)
+    # Store results
+    all_data_normalized[['DESeq2']] <- results[[1]]
+    all_counts_for_plotting[['DESeq2']] <- results[[2]]
+    package_objects[['DESeq2']] <- results[[3]]
 
-  # Result Plot Visualization
-  if (!is.null(all_counts_for_plotting[['DESeq2']])){
-    all_FDR_names      <- c(all_FDR_names, 'padj')
-    all_LFC_names      <- c(all_LFC_names, 'log2FoldChange')
-    all_pvalue_names   <- c(all_pvalue_names, 'pvalue')
-    final_pvalue_names <- c(final_pvalue_names, 'pvalue_DESeq2')
-    final_logFC_names  <- c(final_logFC_names, 'logFC_DESeq2')
-    final_FDR_names    <- c(final_FDR_names, 'FDR_DESeq2')
-    DEG_pack_columns   <- c(DEG_pack_columns, 'DESeq2_DEG')
-  } 
-} else {
+    # Result Plot Visualization
+    if (!is.null(all_counts_for_plotting[['DESeq2']])){
+      all_FDR_names      <- c(all_FDR_names, 'padj')
+      all_LFC_names      <- c(all_LFC_names, 'log2FoldChange')
+      all_pvalue_names   <- c(all_pvalue_names, 'pvalue')
+      final_pvalue_names <- c(final_pvalue_names, 'pvalue_DESeq2')
+      final_logFC_names  <- c(final_logFC_names, 'logFC_DESeq2')
+      final_FDR_names    <- c(final_FDR_names, 'FDR_DESeq2')
+      DEG_pack_columns   <- c(DEG_pack_columns, 'DESeq2_DEG')
+    } 
+  } else {
   warning("DESeq2 will not be performed due to too few replicates")
+  }
 }
 
 #####
 ################## CASE E: edgeR (AT LEAST 2 REPLICLATES)
 #####
-if((replicatesC >= 2) & 
-   (replicatesT >= 2) & 
-   grepl("E", opt$modules)){ 
-  # Verbose point
-  cat('Gene expression analysis is performed with edgeR.\n')
-  path <- file.path(opt$output_files, "Results_edgeR")
-  dir.create(path)
-  # Calculate results
-  results <- tryCatch(
-    # CODE
-    analysis_edgeR(data   = raw_filter, 
-                   p_val_cutoff = opt$p_val_cutoff, 
-                   lfc    = lfc, 
-                   path  = path,
-                   groups = design_vector),
-    # CATCH
-    error = handling_errors, warning = handling_errors)
-  # Store results
-  all_data_normalized[['edgeR']] <- results[[1]]
-  all_counts_for_plotting[['edgeR']] <- results[[2]]
-  package_objects[['edgeR']] <- results[[3]]
+if(grepl("E", opt$modules)){ 
+  if(replicatesC >= 2 & replicatesT >= 2) {
+    # Verbose point
+    cat('Gene expression analysis is performed with edgeR.\n')
+    path <- file.path(opt$output_files, "Results_edgeR")
+    dir.create(path)
+    # Calculate results
+    results <- tryCatch(
+      # CODE
+      analysis_edgeR(data   = raw_filter, 
+                     p_val_cutoff = opt$p_val_cutoff, 
+                     lfc    = lfc, 
+                     path  = path,
+                     groups = design_vector),
+      # CATCH
+      error = handling_errors, warning = handling_errors)
+    # Store results
+    all_data_normalized[['edgeR']] <- results[[1]]
+    all_counts_for_plotting[['edgeR']] <- results[[2]]
+    package_objects[['edgeR']] <- results[[3]]
 
-  # Result Plot Visualization
-  if (!is.null(all_counts_for_plotting[['edgeR']])){
-    all_FDR_names      <- c(all_FDR_names, 'FDR')
-    all_LFC_names      <- c(all_LFC_names, 'logFC')
-    all_pvalue_names   <- c(all_pvalue_names, 'PValue')
-    final_pvalue_names <- c(final_pvalue_names, 'pvalue_edgeR')
-    final_logFC_names  <- c(final_logFC_names, 'logFC_edgeR')
-    final_FDR_names    <- c(final_FDR_names, 'FDR_edgeR')
-    DEG_pack_columns   <- c(DEG_pack_columns, 'edgeR_DEG')
-  }
-} else {
+    # Result Plot Visualization
+    if (!is.null(all_counts_for_plotting[['edgeR']])){
+      all_FDR_names      <- c(all_FDR_names, 'FDR')
+      all_LFC_names      <- c(all_LFC_names, 'logFC')
+      all_pvalue_names   <- c(all_pvalue_names, 'PValue')
+      final_pvalue_names <- c(final_pvalue_names, 'pvalue_edgeR')
+      final_logFC_names  <- c(final_logFC_names, 'logFC_edgeR')
+      final_FDR_names    <- c(final_FDR_names, 'FDR_edgeR')
+      DEG_pack_columns   <- c(DEG_pack_columns, 'edgeR_DEG')
+    }
+  } else {
   warning("edgeR will not be performed due to too few replicates")
+  }
 }
 
 #####
 ################## CASE L: limma (AT LEAST 3 REPLICATES)
 #####
-if((replicatesC >= 3) &
-   (replicatesT >= 3) &
-   grepl("L", opt$modules)){ 
+if(grepl("L", opt$modules)){ 
+  if(replicatesC >= 3 & replicatesT >= 3) {
+    # Verbose
+    cat('Gene expression analysis is performed with limma.\n')
+    dir.create(file.path(opt$output_files, "Results_limma"))
 
-  # Verbose
-  cat('Gene expression analysis is performed with limma.\n')
-  dir.create(file.path(opt$output_files, "Results_limma"))
+    # Calculate results
+    results <- analysis_limma(data = raw_filter, 
+                              num_controls  = replicatesC, 
+                              num_treatmnts = replicatesT, 
+                              p_val_cutoff  = opt$p_val_cutoff, 
+                              lfc  = lfc)
+    # Store results
+    all_data_normalized[['limma']]     <- results[[1]]
+    all_counts_for_plotting[['limma']] <- results[[2]]
 
-  # Calculate results
-  results <- analysis_limma(data = raw_filter, 
-                            num_controls  = replicatesC, 
-                            num_treatmnts = replicatesT, 
-                            p_val_cutoff  = opt$p_val_cutoff, 
-                            lfc  = lfc)
-  # Store results
-  all_data_normalized[['limma']]     <- results[[1]]
-  all_counts_for_plotting[['limma']] <- results[[2]]
-
-  # Result Plot Visualization
-  if (!is.null(all_counts_for_plotting[['limma']])){
-    all_FDR_names      <- c(all_FDR_names, 'adj.P.Val')
-    all_LFC_names      <- c(all_LFC_names, 'logFC')
-    all_pvalue_names   <- c(all_pvalue_names, 'P.Value')
-    final_pvalue_names <- c(final_pvalue_names, 'pvalue_limma')
-    final_logFC_names  <- c(final_logFC_names, 'logFC_limma')
-    final_FDR_names    <- c(final_FDR_names, 'FDR_limma')
-    DEG_pack_columns   <- c(DEG_pack_columns, 'limma_DEG')
+    # Result Plot Visualization
+    if (!is.null(all_counts_for_plotting[['limma']])){
+      all_FDR_names      <- c(all_FDR_names, 'adj.P.Val')
+      all_LFC_names      <- c(all_LFC_names, 'logFC')
+      all_pvalue_names   <- c(all_pvalue_names, 'P.Value')
+      final_pvalue_names <- c(final_pvalue_names, 'pvalue_limma')
+      final_logFC_names  <- c(final_logFC_names, 'logFC_limma')
+      final_FDR_names    <- c(final_FDR_names, 'FDR_limma')
+      DEG_pack_columns   <- c(DEG_pack_columns, 'limma_DEG')
+    }
+  } else {
+    warning("limm will not be performed due to too few replicates")
   }
-} else {
-  warning("limma will not be performed due to too few replicates")
 }
 
 #####
 ################## CASE N: NOISeq (AT LEAST 3 REPLICLATES)
 #####
-if((replicatesC >= 3) &
-   (replicatesT >= 3) &
-   grepl("N", opt$modules)){ 
+if(grepl("N", opt$modules)){ 
+    if(replicatesC >= 3 & replicatesT >= 3) {
 
-  # Verbose
-  cat("Gene expression analysis is performed with NOISeqBIO function within NOISeq.\n")
-  path <- file.path(opt$output_files, "Results_NOISeq")
-  dir.create(path)
-  # Calculate results
-  results <- analysis_NOISeq(data    = raw_filter, 
-                             num_controls  = replicatesC, 
-                             num_treatmnts = replicatesT, 
-                             q_value = opt$q_value, 
-                             groups  = design_vector, 
-                             path = path,
-                             lfc  = lfc)
-  # Store results
-  all_data_normalized[['NOISeq']]     <- results[[1]]
-  all_counts_for_plotting[['NOISeq']] <- results[[2]]
-  package_objects[['NOISeq']] <- results[[3]]
+    # Verbose
+    cat("Gene expression analysis is performed with NOISeqBIO function within NOISeq.\n")
+    path <- file.path(opt$output_files, "Results_NOISeq")
+    dir.create(path)
+    # Calculate results
+    results <- analysis_NOISeq(data    = raw_filter, 
+                               num_controls  = replicatesC, 
+                               num_treatmnts = replicatesT, 
+                               q_value = opt$q_value, 
+                               groups  = design_vector, 
+                               path = path,
+                               lfc  = lfc)
+    # Store results
+    all_data_normalized[['NOISeq']]     <- results[[1]]
+    all_counts_for_plotting[['NOISeq']] <- results[[2]]
+    package_objects[['NOISeq']] <- results[[3]]
 
-  #Result Plot Visualization
-  if (!is.null(all_counts_for_plotting[['NOISeq']])){
-    all_FDR_names      <- c(all_FDR_names, 'adj.p')
-    all_LFC_names      <- c(all_LFC_names, 'log2FC')
-    all_pvalue_names   <- c(all_pvalue_names, 'prob')
-    final_pvalue_names <- c(final_pvalue_names, 'pvalue_NOISeq')
-    final_logFC_names  <- c(final_logFC_names, 'logFC_NOISeq')
-    final_FDR_names    <- c(final_FDR_names, 'FDR_NOISeq')
-    DEG_pack_columns   <- c(DEG_pack_columns, 'NOISeq_DEG')
+    #Result Plot Visualization
+    if (!is.null(all_counts_for_plotting[['NOISeq']])){
+      all_FDR_names      <- c(all_FDR_names, 'adj.p')
+      all_LFC_names      <- c(all_LFC_names, 'log2FC')
+      all_pvalue_names   <- c(all_pvalue_names, 'prob')
+      final_pvalue_names <- c(final_pvalue_names, 'pvalue_NOISeq')
+      final_logFC_names  <- c(final_logFC_names, 'logFC_NOISeq')
+      final_FDR_names    <- c(final_FDR_names, 'FDR_NOISeq')
+      DEG_pack_columns   <- c(DEG_pack_columns, 'NOISeq_DEG')
+    }
+  } else {
+    warning("NOISeq will not be performed due to too few replicates")
   }
-} else {
-  warning("NOISeq will not be performed due to too few replicates")
 }
 
 #################################################################################
