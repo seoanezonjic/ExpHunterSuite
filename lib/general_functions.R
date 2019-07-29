@@ -9,7 +9,6 @@ handling_errors <- function(a){
 
 ########################################################
 # Functions to generate output files
-# Star
 unite_DEG_pack_results <- function(all_DE, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, raw, p_val_cutoff, lfc, minpack_common) {
   # Reorder all output by gene id so all equal
   all_DE <- lapply(all_DE, function(x) x[order(row.names(x)),])
@@ -27,6 +26,8 @@ unite_DEG_pack_results <- function(all_DE, all_FDR_names, all_LFC_names, all_pva
   for(i in 1:length(all_DE)) {
     all_DE_df[DEG_pack_columns[i]] <- all_DE_df[, final_FDR_names[i]] < p_val_cutoff & abs(all_DE_df[, final_logFC_names[i]]) >= lfc
     all_DE_df[DEG_pack_columns[i]][is.na(all_DE_df[DEG_pack_columns[i]])] <- FALSE
+    # Check: if no DE genes for package, give warning
+    if(sum(all_DE_df[, DEG_pack_columns[i]]) == 0) warning(paste("No significant", DEG_pack_columns[i] "found"))
   }
   # Get DEG_counts
   all_DE_df["DEG_counts"] <- rowSums(all_DE_df[DEG_pack_columns], na.rm = TRUE)
@@ -52,7 +53,7 @@ unite_DEG_pack_results <- function(all_DE, all_FDR_names, all_LFC_names, all_pva
   # Calculate average fold changes
   all_DE_df[, "mean_logFCs"] <- rowMeans(all_DE_df[final_logFC_names])
 
-  # Add PREVALENT_DEG tag
+  # Add PREVALENT_DEG tag if as many as minpack_common; POSSIBLE_DEG if less but > 0; NOT_DEG if == 0
   genes_tag <- ifelse(all_DE_df[, "DEG_counts"] == minpack_common, yes = "PREVALENT_DEG",
          no = ifelse(all_DE_df[, "DEG_counts"] > 0, yes = "POSSIBLE_DEG", no = "NOT_DEG")
   )

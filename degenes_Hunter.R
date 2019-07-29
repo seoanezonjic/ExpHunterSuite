@@ -258,7 +258,7 @@ if(grepl("L", opt$modules)){
       DEG_pack_columns   <- c(DEG_pack_columns, 'limma_DEG')
     }
   } else {
-    warning("limm will not be performed due to too few replicates")
+    warning("limma will not be performed due to too few replicates")
   }
 }
 
