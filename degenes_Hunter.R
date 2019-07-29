@@ -56,7 +56,7 @@ option_list <- list(
     help="Output path. Default=%default"),
   make_option(c("-p", "--p_val_cutoff"), type="double", default=0.05,
     help="Adjusted p-value cutoff for the differential expression analysis. Default=%default"),
-  make_option(c("-f", "--lfc"), type="double", default=0.5849625,
+  make_option(c("-f", "--lfc"), type="double", default=1,
     help="Minimum log2 fold change in expression. Note this is on a log2 scale, so a value of 1 would mean a 2 fold change. Default=%default"),
   make_option(c("-q", "--q_value"), type="double", default=0.95,
     help="q value for NOISeq package. Default=%default"),
