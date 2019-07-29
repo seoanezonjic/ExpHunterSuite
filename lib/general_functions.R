@@ -27,7 +27,7 @@ unite_DEG_pack_results <- function(all_DE, all_FDR_names, all_LFC_names, all_pva
     all_DE_df[DEG_pack_columns[i]] <- all_DE_df[, final_FDR_names[i]] < p_val_cutoff & abs(all_DE_df[, final_logFC_names[i]]) >= lfc
     all_DE_df[DEG_pack_columns[i]][is.na(all_DE_df[DEG_pack_columns[i]])] <- FALSE
     # Check: if no DE genes for package, give warning
-    if(sum(all_DE_df[, DEG_pack_columns[i]]) == 0) warning(paste("No significant", DEG_pack_columns[i] "found"))
+    if(sum(all_DE_df[, DEG_pack_columns[i]]) == 0) warning(paste("No significant", DEG_pack_columns[i], "found"))
   }
   # Get DEG_counts
   all_DE_df["DEG_counts"] <- rowSums(all_DE_df[DEG_pack_columns], na.rm = TRUE)
