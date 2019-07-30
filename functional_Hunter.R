@@ -73,7 +73,8 @@ opt <- parse_args(OptionParser(option_list=option_list))
 
 
 
-
+# Special IDs
+fc_colname <- "mean_logFCs"
 
 
 
@@ -296,15 +297,15 @@ write.table(reference_table, file=file.path(paths$root, "entrez_Gos.txt"), quote
 if(flags$GO){
 	# Prepare special subsets to be studied
 	if(exists("annot_table")){
-		pos_logFC_common_DEGs <- subset(common_DEGs_df, common_DEGs_df["logFC_DESeq2"] > 0)$Annot_IDs
-		neg_logFC_common_DEGs <- subset(common_DEGs_df, common_DEGs_df["logFC_DESeq2"] < 0)$Annot_IDs
-		pos_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df["logFC_DESeq2"] > 0)$Annot_IDs
-		neg_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df["logFC_DESeq2"] < 0)$Annot_IDs
+		pos_logFC_common_DEGs <- subset(common_DEGs_df, common_DEGs_df[fc_colname] > 0)$Annot_IDs
+		neg_logFC_common_DEGs <- subset(common_DEGs_df, common_DEGs_df[fc_colname] < 0)$Annot_IDs
+		pos_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df[fc_colname] > 0)$Annot_IDs
+		neg_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df[fc_colname] < 0)$Annot_IDs
 	}else{
-		pos_logFC_common_DEGs <- rownames(subset(common_DEGs_df, common_DEGs_df["logFC_DESeq2"] > 0))
-		neg_logFC_common_DEGs <- rownames(subset(common_DEGs_df, common_DEGs_df["logFC_DESeq2"] < 0))
-		pos_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df["logFC_DESeq2"] > 0))
-		neg_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df["logFC_DESeq2"] < 0))
+		pos_logFC_common_DEGs <- rownames(subset(common_DEGs_df, common_DEGs_df[fc_colname] > 0))
+		neg_logFC_common_DEGs <- rownames(subset(common_DEGs_df, common_DEGs_df[fc_colname] < 0))
+		pos_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df[fc_colname] > 0))
+		neg_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df[fc_colname] < 0))
 	}
 
 	# Prepare modules to be loaded
@@ -418,12 +419,12 @@ if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(bioma
 	# Obtain target genes
 	if(exists("annot_table")){
 		aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
-		geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+		geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
 		names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
 		names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
 	}else{
 		aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
-		geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+		geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
 		names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
 		names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
 	}
@@ -483,12 +484,12 @@ if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
 	if(!exists("geneList")){
 		if(exists("annot_table")){
 			aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
-			geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+			geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
 			names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
 			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
 		}else{
 			aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
-			geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+			geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
 			names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
 			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
 		}		
@@ -541,12 +542,12 @@ if(flags$REACT & (!is.na(biomaRt_organism_info$Reactome_ID[1]) & (keytypes == "E
 	if(!exists("geneList")){
 		if(exists("annot_table")){
 			aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
-			geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+			geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
 			names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
 			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
 		}else{
 			aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
-			geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),"logFC_DESeq2"])
+			geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
 			names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
 			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
 		}		
