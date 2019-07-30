@@ -85,7 +85,6 @@ fc_colname <- "mean_logFCs"
 #############################################
 
 # Load available organisms
-message(main_path_script)
 biomaRt_query_info <- read.table(file.path(main_path_script, "lib/biomaRt_organism_table.txt"), header=T, row.names=1, sep="\t", stringsAsFactors = FALSE, fill=NA)
 
 # Load Reference-NonRefernce models gene IDs relations
@@ -211,9 +210,6 @@ if(opt$remote){ # REMOTE MODE
 	                                            attr = organism_attr) 
 
 }else if(!is.na(biomaRt_organism_info$Bioconductor_DB[1])){ # LOCAL MODE
-	message(biomaRt_organism_info$Bioconductor_DB[1])
-	message(biomaRt_organism_info$Bioconductor_VarName[1])
-
 	# Check genetical items to be used
 	if(opt$biomaRt_filter == 'ensembl_gene_id'){
 		reference_table <- ensembl_to_entrez(ensembl_ids = reference_table[,1],
@@ -583,11 +579,10 @@ if(flags$REACT & (!is.na(biomaRt_organism_info$Reactome_ID[1]) & (keytypes == "E
 
 
 
-
+save.image("test.RData")
 ############################################################
 ##                    GENERATE REPORT                     ##
 ############################################################
-# message(dirname(normalizePath(paths$root, "report.html")))
 results_path <- paste(normalizePath(dirname(paths$root)),paths$root,sep=.Platform$file.sep)
 outf <- paste(dirname(normalizePath(paths$root,"functional_report.html")),"functional_report.html",sep=.Platform$file.sep)
 

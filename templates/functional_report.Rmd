@@ -504,6 +504,8 @@ if(go_flags$enrich_go){
 		invisible(lapply(seq_along(enrich_go)[-1],function(i){
 			enr_go@result <<- rbind(enr_go@result, enrich_go[[i]]@result)
 		}))
+		# Sort
+		enr_go@result <- enr_go@result[order(enr_go@result$p.adjust),]
 	}
 
 	# Plot
@@ -512,14 +514,14 @@ if(go_flags$enrich_go){
 		"The plot shows the functional top significative terms in ascendant order by adjusted pvalue. The color represents the associated adjusted pvalue. 
 		The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
 	)
-	go_pp  <- barplot(enr_go, showCategory=20)
+	go_pp  <- barplot(enr_go, showCategory=n_category)
 	print(go_pp)
 
 	cat("\n\n**Dotplot**\n\n",
 		"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
 		The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 	)
-	go_pp  <- dotplot(enr_go, showCategory=30)
+	go_pp  <- dotplot(enr_go, showCategory=n_category)
 	print(go_pp)
 
 	cat("\n\n**Gene-Concept Network**\n\n", 
@@ -527,26 +529,26 @@ if(go_flags$enrich_go){
 		The size of the functional terms shows the number of connected genes.\n\n"
 	)
 	enr_go_symb <- setReadable(enr_go, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-	go_pp  <- cnetplot(enr_go_symb, showCategory = 30, foldChange=geneList)
+	go_pp  <- cnetplot(enr_go_symb, showCategory=n_category, foldChange=geneList)
 	print(go_pp)
 
 	cat("\n\n**Enrich Map plot**\n\n", 
 		"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 	)
-	go_pp  <- emapplot(enr_go, showCategory = 30)
+	go_pp  <- emapplot(enr_go, showCategory=n_category)
 	print(go_pp)
 
 	cat("\n\n**Heatplot**\n\n", 
 		"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 	)
-	go_pp  <- heatplot(enr_go_symb, showCategory = 30, foldChange=geneList)
+	go_pp  <- heatplot(enr_go_symb, showCategory=n_category, foldChange=geneList)
 	print(go_pp)
 
 	cat("\n\n**Upsetplot**\n\n", 
 		"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 	)
-	go_pp <- upsetplot(enr_go, n=30)
+	go_pp <- upsetplot(enr_go, n=n_category)
 	print(go_pp)
 
 	cat("\n \n")
@@ -563,13 +565,15 @@ if(go_flags$enrich_go_gsea){
 		invisible(lapply(seq_along(enrich_go_gsea)[-1],function(i){
 			enr_go_gsea@result <<- rbind(enr_go_gsea@result, enrich_go_gsea[[i]]@result)
 		}))
+		# Sort
+		enr_go_gsea@result <- enr_go_gsea@result[order(enr_go_gsea@result$p.adjust),]
 	}
 
 	cat("\n\n**Dotplot**\n\n",
 		"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
 		The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 	)
-	go_pp <- dotplot(enr_go_gsea, showCategory=30)
+	go_pp <- dotplot(enr_go_gsea, showCategory=n_category)
 	print(go_pp)
 
 	cat("\n\n**Gene-Concept Network**\n\n", 
@@ -577,27 +581,27 @@ if(go_flags$enrich_go_gsea){
 		The size of the functional terms shows the number of connected genes.\n\n"
 	)
 	enr_go_gsea_symb <- setReadable(enr_go_gsea, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-	go_pp <- cnetplot(enr_go_gsea_symb, showCategory = 30, foldChange=geneList)
+	go_pp <- cnetplot(enr_go_gsea_symb, showCategory=n_category, foldChange=geneList)
 	print(go_pp)
 
 	cat("\n\n**Enrich Map plot**\n\n", 
 		"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 	)
-	go_pp <- emapplot(enr_go_gsea, showCategory= 30)
+	go_pp <- emapplot(enr_go_gsea, showCategory=n_category)
 	print(go_pp)
 
 	cat("\n\n**Heatplot**\n\n", 
 		"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 	)
-	go_pp <- heatplot(enr_go_gsea_symb, showCategory = 30, foldChange=geneList)
+	go_pp <- heatplot(enr_go_gsea_symb, showCategory=n_category, foldChange=geneList)
 	print(go_pp)
 
 	cat("\n\n**Ridgeplot**\n\n",
 		"Top functional terms are show in the Y axis and for each one of them a fold-change distribution is shown.
 		The distribution colours indicates the adjusted pvalue.\n\n"
 	)
-	go_pp <- ridgeplot(enr_go_gsea, showCategory = 30)
+	go_pp <- ridgeplot(enr_go_gsea, showCategory=n_category)
 	print(go_pp)
 	cat("\n \n")
 }
