@@ -47,7 +47,7 @@ PerformanceAnalytics::chart.Correlation(raw_filter[index_treatmn_cols], histogra
 #### **All vs all replicates**
 Correlation coefficients tend to be slightly higher between replicates from the same group than between replicates from different groups. If this is not the case, it may indicate mislabelling or other potential issues.
 
-```{r corr_plot_all, echo = FALSE}
+```{r corr_plot_all, echo = FALSE, fig.height=12, fig.width=12}
 PerformanceAnalytics::chart.Correlation(raw_filter, histogram=TRUE, pch=19, log="xy")
 ```
 
@@ -55,7 +55,7 @@ PerformanceAnalytics::chart.Correlation(raw_filter, histogram=TRUE, pch=19, log=
 ### **Heatmap and clustering showing correlation between replicates**
 **RED: higher correlation; BLUE: lower**
 
-```{r heatmap_corr,echo = FALSE, fig.height=15, fig.width=15}
+```{r heatmap_corr,echo = FALSE, fig.height=12, fig.width=12}
 col<- colorRampPalette(c("blue", "white", "red"))(20)
 res <- cor(raw_filter)
 heatmap(x = res, col = col, symm = TRUE, margins = rep(max(nchar(colnames(res))), 2))
@@ -142,7 +142,7 @@ plot(pgenes)
 ### **Package DEG detection stats**
 This is the Venn Diagram of all possible DE genes (DEGs) according to at least on of the DE detection packages employed:
 
-```{r Venn_d, echo = FALSE}
+```{r Venn_d, echo = FALSE, fig.height=12, fig.width=12}
 sets <- list()
 for(DEG_pack in DEG_pack_columns){
 	pack <- unlist(strsplit(DEG_pack, split='_'))[1] # Get the name of the package
