@@ -54,7 +54,7 @@ unite_DEG_pack_results <- function(all_DE, all_FDR_names, all_LFC_names, all_pva
   all_DE_df[, "mean_logFCs"] <- rowMeans(all_DE_df[final_logFC_names])
 
   # Add PREVALENT_DEG tag if as many as minpack_common; POSSIBLE_DEG if less but > 0; NOT_DEG if == 0
-  genes_tag <- ifelse(all_DE_df[, "DEG_counts"] == minpack_common, yes = "PREVALENT_DEG",
+  genes_tag <- ifelse(all_DE_df[, "DEG_counts"] >= minpack_common, yes = "PREVALENT_DEG",
          no = ifelse(all_DE_df[, "DEG_counts"] > 0, yes = "POSSIBLE_DEG", no = "NOT_DEG")
   )
   all_DE_df[, "genes_tag"] <- genes_tag
