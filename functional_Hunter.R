@@ -11,7 +11,7 @@ full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using
 main_path_script <- dirname(full.fpath)
 
 
-#Loading libraries
+#Loading libraries  
 suppressPackageStartupMessages(require(optparse))
 suppressPackageStartupMessages(require(biomaRt)) 
 suppressPackageStartupMessages(require(topGO))
@@ -54,6 +54,8 @@ option_list <- list(
     help="Type of functional analyses to be performed (G = GO [topGO], K = KEGG, g = GO [clusterProfiler], R [Reactome]). [Default=%default]"),
   make_option(c("-G", "--GO_graphs"), type="character", default=c("M"),
     help="Modules to able go enrichments (M = Molecular Function, B = Biological Process, C = Celular Components). By default Default=%default GO cathegory is performed"), # Not Checked
+  make_option(c("-A", "--analysis"), type="character", default=c("go"),
+    help="Analysis performance (g = Gene Set Enrichment Analysis, o = Over Representation Analysis). By default Default=%default analysis is performed"), # Not Checked
   make_option(c("-K", "--Kegg_organism"), type="character", default=NULL, 
     help="Indicate organism to look for in the Kegg database for doing the path enrichment"), # Not Checked
   make_option(c("-q", "--save_query"), type="logical", default=TRUE,
@@ -152,7 +154,9 @@ if(opt$List_organisms == TRUE){
 flags <- list(GO    = grepl("G", opt$functional_analysis),
               KEGG  = grepl("K", opt$functional_analysis),
               GO_cp = grepl("g", opt$functional_analysis),
-              REACT = grepl("R", opt$functional_analysis))
+              REACT = grepl("R", opt$functional_analysis),
+              GSEA  = grepl("g", opt$analysis),
+              ORA   = grepl("o", opt$analysis))
 
 
 # Load input
@@ -268,6 +272,36 @@ if(exists("annot_table")){
 union_annot_DEGs_df <- subset(reference_table, reference_table[,1] %in% union_DEGs)
 
 
+################# ADD ENTREZ IDS AND GENE SYMBOLS TO INPUT FILE #############
+# Currently only runs if we are local, have an org db available and a symbol correspondence. The ENTREZ bit should become universal even if no SYMBOL available
+
+if(opt$remote == FALSE &
+	! biomaRt_organism_info$Bioconductor_DB[1] == "" & 
+	! biomaRt_organism_info$Bioconductor_VarName_SYMBOL[1] == "") {
+
+	DEG_annot_table_Symbol <- DEG_annot_table
+	if(exists("annot_table")){
+		ENSEMBL_IDs <- unique(DEG_annot_table_Symbol$Annot_IDs)
+	}else{
+		ENSEMBL_IDs <- rownames(DEG_annot_table_Symbol)
+	}
+
+	DEG_annot_table_Symbol$Ensembl <- ENSEMBL_IDs # Necessary step for merging
+	DEG_annot_table_Symbol <- merge(DEG_annot_table_Symbol, reference_table, by.x="Ensembl", by.y="ensembl_gene_id", all.x=TRUE)
+
+	reference_table_symbol <- ensembl_to_entrez(ensembl_ids = DEG_annot_table_Symbol$entrezgene,
+										 		organism_db = biomaRt_organism_info$Bioconductor_DB[1],
+												organism_var = biomaRt_organism_info$Bioconductor_VarName_SYMBOL[1])
+	colnames(reference_table_symbol) <- c(biomaRt_organism_info[,"Attribute_entrez"], "Symbol")
+	DEG_annot_table_Symbol <- merge(DEG_annot_table_Symbol, reference_table_symbol, by.x="entrezgene", by.y="entrezgene", all.x=TRUE)
+	first_cols <- c("Ensembl", "entrezgene", "Symbol")
+
+	DEG_annot_table_Symbol <- DEG_annot_table_Symbol[c(first_cols, setdiff(names(DEG_annot_table_Symbol), first_cols))] # Reorder columns so annotated first
+	DEG_annot_table_Symbol <- DEG_annot_table_Symbol[order(DEG_annot_table_Symbol[,"combined_FDR"]),] # Reorder rows by combined FDR
+
+	# Write output here for now, until the rest of the workflow can use this object directly
+	write.table(DEG_annot_table_Symbol, file=file.path(paths$root, "DEG_results_annotated.txt"), quote=F, row.names=FALSE, sep="\t")
+}
 
 
 
@@ -278,7 +312,7 @@ union_annot_DEGs_df <- subset(reference_table, reference_table[,1] %in% union_DE
 ### EXPORT DATA
 #############################################
 write.table(DEG_annot_table, file=file.path(paths$root, "Annotated_table.txt"), quote=F, col.names=NA, sep="\t")
-write.table(reference_table, file=file.path(paths$root, "entrez_Gos.txt"), quote=F, col.names=NA, sep="\t")
+write.table(reference_table, file=file.path(paths$root, "ENSEMBL2ENTREZ.txt"), quote=F, col.names=NA, sep="\t")
 
 
 
@@ -395,20 +429,25 @@ if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(bioma
 	}
 
 
-
-	# ORA ENRICHMENTS
-	enrich_go <- lapply(modules_to_export,function(mod){
-		enrich <-  enrichGO(gene          = common_unique_entrez, #genes,
-							OrgDb         = biomaRt_organism_info$Bioconductor_DB[1], #organism,
-							keyType       = keytypes, #keyType,
-							ont           = mod, # SubOntology
-							pvalueCutoff  = opt$threshold, #pvalueCutoff,
-							pAdjustMethod = "BH") #qvalueCutoff)
-		# enrich <- as.data.frame(enrich)
-		return(enrich)
-	# })))
-	})
-
+	if(flags$ORA){
+		# ORA ENRICHMENTS
+		enrich_go <- lapply(modules_to_export,function(mod){
+			enrich <-  enrichGO(gene          = common_unique_entrez, #genes,
+								OrgDb         = biomaRt_organism_info$Bioconductor_DB[1], #organism,
+								keyType       = keytypes, #keyType,
+								ont           = mod, # SubOntology
+								pvalueCutoff  = opt$threshold, #pvalueCutoff,
+								pAdjustMethod = "BH") #qvalueCutoff)
+			# enrich <- as.data.frame(enrich)
+			return(enrich)
+		# })))
+		})
+		# Add names
+		names(enrich_go) <- modules_to_export
+		# Write results
+		write.table(as.data.frame(do.call(rbind,lapply(enrich_go,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_ora"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
+			
+	}
 	
 
 	### GSEA ENRICHMENTS
@@ -427,25 +466,23 @@ if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(bioma
 	# Sort FC
 	geneList <- sort(geneList, decreasing = TRUE)
 
-	# Enrich
-	enrich_go_gsea <- lapply(modules_to_export,function(mod){
-		enrich <- gseGO(geneList      = geneList,
-						   OrgDb        = biomaRt_organism_info$Bioconductor_DB[1],
-						   keyType       = keytypes, #keyType,
-						   ont           = mod, # SubOntology
-						   pvalueCutoff  = opt$threshold, #pvalueCutoff,
-						   pAdjustMethod = "BH")
-		return(enrich)
-	# })))
-	})
-
-	# Add names
-	names(enrich_go) <- modules_to_export
-	names(enrich_go_gsea) <- modules_to_export
-
-	# Write results
-	write.table(as.data.frame(do.call(rbind,lapply(enrich_go,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_ora"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
-	write.table(as.data.frame(do.call(rbind,lapply(enrich_go_gsea,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_gsea"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
+	if(flags$GSEA){
+		# Enrich
+		enrich_go_gsea <- lapply(modules_to_export,function(mod){
+			enrich <- gseGO(geneList      = geneList,
+							   OrgDb        = biomaRt_organism_info$Bioconductor_DB[1],
+							   keyType       = keytypes, #keyType,
+							   ont           = mod, # SubOntology
+							   pvalueCutoff  = opt$threshold, #pvalueCutoff,
+							   pAdjustMethod = "BH")
+			return(enrich)
+		# })))
+		})
+		# Add names
+		names(enrich_go_gsea) <- modules_to_export
+		# Write results
+		write.table(as.data.frame(do.call(rbind,lapply(enrich_go_gsea,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_gsea"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
+	}
 }else if(flags$GO_cp){
 	warning("Specified organism is not allowed to be used with GO (clusterProfiler) module. Please check your IDs table")
 }
@@ -468,14 +505,18 @@ if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
 	if(!opt$remote){
 		require(KEGG.db)
 	}
-
-	# Enrich
-	enrich_ora <-  enrichKEGG(gene          = common_unique_entrez, #genes,
-							  organism      = biomaRt_organism_info$KeggCode[1], #organism,
-							  keyType       = "kegg", #keyType,
-							  pvalueCutoff  = opt$threshold, #pvalueCutoff,
-							  pAdjustMethod = "BH", #pAdjustMethod,
-							  use_internal_data = !opt$remote)
+	if(flags$ORA){
+		# Enrich
+		enrich_ora <-  enrichKEGG(gene          = common_unique_entrez, #genes,
+								  organism      = biomaRt_organism_info$KeggCode[1], #organism,
+								  keyType       = "kegg", #keyType,
+								  pvalueCutoff  = opt$threshold, #pvalueCutoff,
+								  pAdjustMethod = "BH", #pAdjustMethod,
+								  use_internal_data = !opt$remote)
+		# Write output
+		write.table(enrich_ora, file=file.path(paths$root, "KEGG_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+	
+	}
 
 	if(!exists("geneList")){
 		if(exists("annot_table")){
@@ -492,19 +533,19 @@ if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
 	}
 
 	geneList <- sort(geneList, decreasing = TRUE)
+	if(flags$GSEA){
 
+		enrich_gsea <- gseKEGG(geneList     = geneList,
+							   organism     = biomaRt_organism_info$KeggCode[1],
+							   use_internal_data = !opt$remote,
+							   # nPerm        = 1000,
+							   # minGSSize    = 120,
+							   pvalueCutoff = opt$threshold,
+							   verbose      = FALSE)
+		# Write output
+		write.table(enrich_gsea, file=file.path(paths$root, "KEGG_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+	}
 
-	enrich_gsea <- gseKEGG(geneList     = geneList,
-						   organism     = biomaRt_organism_info$KeggCode[1],
-						   use_internal_data = !opt$remote,
-						   # nPerm        = 1000,
-						   # minGSSize    = 120,
-						   pvalueCutoff = opt$threshold,
-						   verbose      = FALSE)
-
-	# Write output
-	write.table(enrich_ora, file=file.path(paths$root, "KEGG_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
-	write.table(enrich_gsea, file=file.path(paths$root, "KEGG_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 }else if(flags$KEGG){
 	warning("Specified organism is not allowed to be used with KEGG module. Please check your IDs table")
 }
@@ -524,15 +565,19 @@ if(flags$REACT & (!is.na(biomaRt_organism_info$Reactome_ID[1]) & (keytypes == "E
 	# Load necessary packages
 	require(ReactomePA)
 
-	# Make enrichment (ORA)
-	enrich_react <- enrichPathway(common_unique_entrez,
-								 organism = biomaRt_organism_info$Reactome_ID[1],
-								 pAdjustMethod = "BH",
-								 # minGSSize = 10,
-								 # maxGSSize = 500, 
-								 # readable = FALSE,
- 								 pvalueCutoff = opt$threshold)
-
+	if(flags$ORA){
+		# Make enrichment (ORA)
+		enrich_react <- enrichPathway(common_unique_entrez,
+									 organism = biomaRt_organism_info$Reactome_ID[1],
+									 pAdjustMethod = "BH",
+									 # minGSSize = 10,
+									 # maxGSSize = 500, 
+									 # readable = FALSE,
+	 								 pvalueCutoff = opt$threshold)
+		# Write output
+		write.table(enrich_react, file=file.path(paths$root, "REACT_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+	
+	}
 
 	# Prepare enrichment (GSEA)
 	if(!exists("geneList")){
@@ -550,21 +595,20 @@ if(flags$REACT & (!is.na(biomaRt_organism_info$Reactome_ID[1]) & (keytypes == "E
 	}
 
 	geneList <- sort(geneList, decreasing = TRUE)
+		# Make enrichment GSEA
+	if(flags$GSEA){
+		enrich_react_gsea <- gsePathway(geneList, 
+										organism = biomaRt_organism_info$Reactome_ID[1],
+										# exponent = 1, 
+										# nPerm = 1000,
+										# minGSSize = 10, 
+										# maxGSSize = 500, 
+										pvalueCutoff = opt$threshold,
+										pAdjustMethod = "BH")
+		# Write output
+		write.table(enrich_react_gsea, file=file.path(paths$root, "REACT_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+	}
 
-	# Make enrichment GSEA
-	enrich_react_gsea <- gsePathway(geneList, 
-									organism = biomaRt_organism_info$Reactome_ID[1],
-									# exponent = 1, 
-									# nPerm = 1000,
-									# minGSSize = 10, 
-									# maxGSSize = 500, 
-									pvalueCutoff = opt$threshold,
-									pAdjustMethod = "BH")
-
-
-	# Write output
-	write.table(enrich_react, file=file.path(paths$root, "REACT_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
-	write.table(enrich_react_gsea, file=file.path(paths$root, "REACT_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 
 }else if(flags$REACT & !keytypes == "GENENAME"){
 	warning("Specified organism is not allowed to be used with Reactome module. Please check your IDs table")

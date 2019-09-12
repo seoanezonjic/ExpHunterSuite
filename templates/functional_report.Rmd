@@ -159,6 +159,8 @@ exists_enrich_df <- function(var_name,level_depth = 3){
 	}else if(typeof(df)=="S4"){
 		if(nrow(df@result) <= 0){
 			return(FALSE)
+		}else if(length(get_categories(df)) <= 1){
+			return(FALSE)
 		}
 	}else if(!is.list(df) & !typeof(df)=="S4"){
 		return(FALSE)
@@ -179,8 +181,8 @@ exists_enrich_df <- function(var_name,level_depth = 3){
 	return(TRUE)
 }
 
-
-# Prepare containers
+######################################################### GO
+# Prepare containers 
 go_flags <- list()
 go_files <- list()
 
@@ -208,6 +210,33 @@ invisible(lapply(go_enrich_vars,function(var_name){
 }))
 # Check GO section
 go_flags$GO_CL_SECTION <- any(unlist(go_flags[go_enrich_vars]))
+
+if(go_flags$GO_CL_SECTION){
+	#check GO enrichment object
+	if(go_flags$enrich_go){
+		go_main_enrich <- enrich_go
+	}else if(go_flags$enrich_go_gsea){
+		go_main_enrich <- enrich_go_gsea
+	}
+
+	perform_go_ora <- list()
+	perform_go_gsea <- list()
+
+	invisible(lapply(names(go_main_enrich),function(onto){
+		go_flags[paste0("perform_ora_go_",onto)] <<- FALSE
+		go_flags[paste0("perform_gsea_go_",onto)] <<- FALSE
+		if(go_flags$enrich_go){
+			if(nrow(enrich_go[[onto]]@result) > 0){
+				go_flags[paste0("perform_ora_go_",onto)] <<- TRUE
+			}
+		}else if(go_flags$enrich_go_gsea){
+			if(nrow(enrich_go_gsea[[onto]]@result) > 0){
+				go_flags[paste0("perform_gsea_go_",onto)] <<- TRUE
+			}
+		}
+	}))
+}
+
 
 
 
@@ -256,6 +285,7 @@ if(kegg_flags[["enrich_ora"]] | kegg_flags[["enrich_gsea"]] |
 	suppressPackageStartupMessages(require(enrichplot))
 }
 
+
 ```
 
 
@@ -285,7 +315,7 @@ if(kegg_flags[["enrich_ora"]] | kegg_flags[["enrich_gsea"]] |
 cat("## **KEGG analysis**\n")
 ```
 
-```{r kegg_ora, results='asis', echo = FALSE, eval = kegg_flags$enrich_ora, message=FALSE}
+```{r kegg_ora, results='asis', echo = FALSE, eval = kegg_flags$enrich_ora, message=FALSE, warning=FALSE}
 
 default_width <- set_default_width(enrich_obj = enrich_ora, showCategory=n_category)
 # Main label 
@@ -466,19 +496,25 @@ cat("## **GO Analysis**\n")
 ```
 
 
-```{r plot_go_cl, results='asis', echo = FALSE, eval = go_flags$GO_CL_SECTION}
+```{r plot_go_cl, results='asis', echo = FALSE, eval = go_flags$GO_CL_SECTION, message=FALSE, warning=FALSE}
 
 # Plots per sub-ontology
-invisible(lapply(names(enrich_go),function(onto){
-# for(onto in names(enrich_go)){
+invisible(lapply(names(go_main_enrich),function(onto){
+	# for(onto in names(enrich_go)){
+	
 	# Special case
-	if(nrow(enrich_go[[onto]]@result) <= 0 & nrow(enrich_go_gsea[[onto]]@result) <= 0){
+	if(go_flags$enrich_go & go_flags$enrich_go_gsea){	
+		if(nrow(enrich_go[[onto]]@result) <= 0 & nrow(enrich_go_gsea[[onto]]@result) <= 0){
+			cat(paste("### **[",onto,"] GO Analysis**<br>This sub-ontology study has been executed but **has not returned any result**\n",sep=""))
+		}
+	}else if(nrow(go_main_enrich[[onto]]@result) <= 0){
 		cat(paste("### **[",onto,"] GO Analysis**<br>This sub-ontology study has been executed but **has not returned any result**\n",sep=""))
 	}
 
 
+
 	###################################################### ORA PLOTS
-	if(nrow(enrich_go[[onto]]@result) > 0){
+	if(go_flags[[paste0("perform_ora_go_",onto)]]){
 		default_width <- set_default_width(enrich_obj = enrich_go[[onto]], showCategory=n_category)
 
 		# Add main label
@@ -537,7 +573,7 @@ invisible(lapply(names(enrich_go),function(onto){
 
 
 	###################################################### GSEA PLOTS
-	if(nrow(enrich_go_gsea[[onto]]@result) > 0){
+	if(go_flags[[paste0("perform_gsea_go_",onto)]]){
 		# Add main label
 		default_width <- set_default_width(enrich_obj = enrich_go_gsea[[onto]], showCategory=n_category)
 
@@ -574,6 +610,7 @@ invisible(lapply(names(enrich_go),function(onto){
 		go_pp <- heatplot(enrich_go_gsea_symb, showCategory=n_category, foldChange=geneList)
 		width_size <- calc_width(enrich_go_gsea_symb)
 		height_size <- calc_height(enrich_go_gsea_symb) 
+		save(enrich_go_gsea_symb, file = "enrich_go_gsea_symb.Rdata")
 		plot_in_div(go_pp, height_size, width_size)
 
 		cat("\n\n**Ridgeplot**\n\n",
@@ -706,6 +743,7 @@ if(go_flags$enrich_go_gsea){
 	go_pp <- heatplot(enr_go_gsea_symb, showCategory=n_category, foldChange=geneList)
 	width_size <- calc_width(enr_go_gsea_symb)
 	height_size <- calc_height(enr_go_gsea_symb)
+
 	plot_in_div(go_pp, height_size, width_size)
 	
 	cat("\n\n**Ridgeplot**\n\n",
@@ -810,7 +848,7 @@ if(!go_flags$GO_SECTION){
 cat("## **REACTOME analysis**\n")
 ```
 
-```{r react_ora, results='asis', echo = FALSE, eval = react_flags$enrich_react}
+```{r react_ora, results='asis', echo = FALSE, eval = react_flags$enrich_react, message=FALSE, warning=FALSE}
 default_width <- set_default_width(enrich_obj = enrich_react, showCategory=n_category)
 
 # Main label 
