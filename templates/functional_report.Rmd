@@ -157,7 +157,7 @@ exists_enrich_df <- function(var_name,level_depth = 3){
 			return(FALSE)
 		}
 	}else if(typeof(df)=="S4"){
-		if(nrow(df@result) <= 0){
+		if(nrow(df@result[which(df@result$p.adjust <= df@pvalueCutoff),]) <= 1){
 			return(FALSE)
 		}else if(length(get_categories(df)) <= 1){
 			return(FALSE)
@@ -167,7 +167,7 @@ exists_enrich_df <- function(var_name,level_depth = 3){
 	}else if(is.list(df)){
 		if(!all(unlist(lapply(df,function(set){
 				if(typeof(set)=="S4"){
-					if(nrow(set@result) > 0){
+					if(nrow(set@result[which(set@result$p.adjust <= set@pvalueCutoff),]) > 1){
 						return(TRUE)
 					}
 					return(FALSE)
@@ -209,7 +209,8 @@ invisible(lapply(go_enrich_vars,function(var_name){
 	go_flags[var_name] <<- exists_enrich_df(var_name)
 }))
 # Check GO section
-go_flags$GO_CL_SECTION <- any(unlist(go_flags[go_enrich_vars]))
+# go_flags$GO_CL_SECTION <- any(unlist(go_flags[go_enrich_vars]))
+go_flags$GO_CL_SECTION <- any(unlist(lapply(go_enrich_vars, function(var){exists(var)})))
 
 if(go_flags$GO_CL_SECTION){
 	#check GO enrichment object
@@ -217,20 +218,21 @@ if(go_flags$GO_CL_SECTION){
 		go_main_enrich <- enrich_go
 	}else if(go_flags$enrich_go_gsea){
 		go_main_enrich <- enrich_go_gsea
+	}else if(exists("enrich_go")){
+		go_main_enrich <- enrich_go	
+	}else if(exists("enrich_go_gsea")){
+		go_main_enrich <- enrich_go_gsea
 	}
-
-	perform_go_ora <- list()
-	perform_go_gsea <- list()
 
 	invisible(lapply(names(go_main_enrich),function(onto){
 		go_flags[paste0("perform_ora_go_",onto)] <<- FALSE
 		go_flags[paste0("perform_gsea_go_",onto)] <<- FALSE
 		if(go_flags$enrich_go){
-			if(nrow(enrich_go[[onto]]@result) > 0){
+			if(nrow(enrich_go[[onto]]@result) > 1){
 				go_flags[paste0("perform_ora_go_",onto)] <<- TRUE
 			}
 		}else if(go_flags$enrich_go_gsea){
-			if(nrow(enrich_go_gsea[[onto]]@result) > 0){
+			if(nrow(enrich_go_gsea[[onto]]@result) > 1){
 				go_flags[paste0("perform_gsea_go_",onto)] <<- TRUE
 			}
 		}
@@ -255,8 +257,8 @@ invisible(lapply(kegg_enrich_vars,function(var_name){
 	kegg_flags[var_name] <<- exists_enrich_df(var_name)
 }))
 
-kegg_flags$KEGG_SECTION <- any(unlist(kegg_flags))
-
+#kegg_flags$KEGG_SECTION <- any(unlist(kegg_flags))
+kegg_flags$KEGG_SECTION <- any(unlist(lapply(kegg_enrich_vars, function(var){exists(var)})))
 
 
 ####################################### REACTOME
@@ -272,7 +274,8 @@ invisible(lapply(react_enrich_vars,function(var_name){
 	react_flags[var_name] <<- exists_enrich_df(var_name)
 }))
 
-react_flags$REACT_SECTION <- any(unlist(react_flags))
+#react_flags$REACT_SECTION <- any(unlist(react_flags))
+react_flags$REACT_SECTION <- any(unlist(lapply(react_enrich_vars, function(var){exists(var)})))
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ```
 
@@ -313,6 +316,11 @@ if(kegg_flags[["enrich_ora"]] | kegg_flags[["enrich_gsea"]] |
 
 ```{r kegg_main,  results='asis', echo = FALSE, eval = kegg_flags$KEGG_SECTION}
 cat("## **KEGG analysis**\n")
+
+# Check special case
+if(!kegg_flags$enrich_ora & !kegg_flags$enrich_gsea){
+	cat(paste("This ontology study has been executed but **has not returned any result**\n",sep=""))
+}
 ```
 
 ```{r kegg_ora, results='asis', echo = FALSE, eval = kegg_flags$enrich_ora, message=FALSE, warning=FALSE}
@@ -503,17 +511,16 @@ invisible(lapply(names(go_main_enrich),function(onto){
 	# for(onto in names(enrich_go)){
 	
 	# Special case
-	if(go_flags$enrich_go & go_flags$enrich_go_gsea){	
-		if(nrow(enrich_go[[onto]]@result) <= 0 & nrow(enrich_go_gsea[[onto]]@result) <= 0){
-			cat(paste("### **[",onto,"] GO Analysis**<br>This sub-ontology study has been executed but **has not returned any result**\n",sep=""))
-		}
-	}else if(nrow(go_main_enrich[[onto]]@result) <= 0){
-		cat(paste("### **[",onto,"] GO Analysis**<br>This sub-ontology study has been executed but **has not returned any result**\n",sep=""))
+	if(!go_flags$enrich_go & !go_flags$enrich_go_gsea){	
+		cat(paste("### **[",onto,"] GO Analysis**<br>\nThis sub-ontology study has been executed but **has not returned any result**\n\n",sep=""))
 	}
+	# else if(nrow(go_main_enrich[[onto]]@result[which(go_main_enrich@result$p.adjust <= go_main_enrich@pvalueCutoff),]) <= 0){
+	# 	cat(paste("### **[",onto,"] GO Analysis**<br>This sub-ontology study has been executed but **has not returned any result**\n",sep=""))
+	# }
 
 
 
-	###################################################### ORA PLOTS
+	##################################################### ORA PLOTS
 	if(go_flags[[paste0("perform_ora_go_",onto)]]){
 		default_width <- set_default_width(enrich_obj = enrich_go[[onto]], showCategory=n_category)
 
@@ -630,7 +637,6 @@ invisible(lapply(names(go_main_enrich),function(onto){
 	}
 }))
 # }
-
 
 if(go_flags$enrich_go){
 	# message("PLOTS SETS ALL UNIFIED")
@@ -846,6 +852,11 @@ if(!go_flags$GO_SECTION){
 
 ```{r react_main,  results='asis', echo = FALSE, eval = react_flags$REACT_SECTION}
 cat("## **REACTOME analysis**\n")
+
+# Check special case
+if(!react_flags$enrich_react & !react_flags$enrich_react_gsea){
+	cat(paste("This ontology study has been executed but **has not returned any result**\n",sep=""))
+}
 ```
 
 ```{r react_ora, results='asis', echo = FALSE, eval = react_flags$enrich_react, message=FALSE, warning=FALSE}
