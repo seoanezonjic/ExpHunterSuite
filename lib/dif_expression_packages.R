@@ -91,7 +91,7 @@ analysis_limma <- function(data, num_controls, num_treatmnts, p_val_cutoff, lfc)
 	DGE_List <- calcNormFactors(DGE_List) # Calculation of the normalization factor	
 
 	design <- model.matrix(~0+ groups)
-	log2_cpm <- voom(DGE_List, design, plot=TRUE) # Converting the read counts to log2-cpm
+	log2_cpm <- voom(DGE_List, design) # Converting the read counts to log2-cpm
 	normalized_counts <- log2_cpm$E
 	# Fit and make contrast
 	fit <- lmFit(log2_cpm, design)
