@@ -256,17 +256,20 @@ A table containing the edgeR normalized counts is provided in Results\\_edgeR/No
 
 cat("### **limma Volcano plot**
 
-This is the volcano plot of log-fold changes versus log-odds (log10 of adjusted P values) of differential expression from the limma package:")
+Volcano plot of log2-fold change versus -log10 of adjusted p-values for all genes according to the analysis with limma:")
 
 ```
 
 ```{r limma_conditional_block_plot, eval='limma' %in% names(all_counts_for_plotting), echo=FALSE, warning=FALSE}
 
-limma_sig <- DE_all_genes$limma_DEG+1
-plot(x=all_counts_for_plotting[['limma']]$logFC, y=-log10(all_counts_for_plotting[['limma']]$P.Value), xlab='logFC', ylab='logOdds', col=c('blue', 'red')[limma_sig], pch=20, main= c('groupsB-groupsA'), cex.lab=1.6, cex.axis=1.5)
+limma_sig <- row.names(all_counts_for_plotting[['limma']]) %in% row.names(DE_all_genes[DE_all_genes$limma_DEG == TRUE, ]) + 1
+plot(x=all_counts_for_plotting[['limma']]$logFC, 
+	y=-log10(all_counts_for_plotting[['limma']]$adj.P.Val),
+	main= c('groupsB-groupsA'), xlab='logFC', ylab='-log10 adjusted p-value',
+	col=c('blue', 'red')[limma_sig],
+	pch=20,cex.lab=1.6, cex.axis=1.5)
 abline(v= opt$lfc, col='cyan')	
-limit.pval_limma <- -log10(max(all_counts_for_plotting[['limma']]$P.Value)) 
-abline(h=limit.pval_limma, col='green')
+abline(v= -(opt$lfc), col='cyan')	
 abline(h=-log10(opt$p_val_cutoff), col='red', lty='dashed')
 
 ```
