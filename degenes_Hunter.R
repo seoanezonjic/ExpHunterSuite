@@ -323,7 +323,7 @@ write.table(DE_all_genes, file=file.path(opt$output_files, "Common_results", "hu
 ############################################################
 ##                    GENERATE REPORT                     ##
 ############################################################
-outf <- paste(dirname(normalizePath(opt$output_files,"DEG_report.html")),"DEG_report.html",sep=.Platform$file.sep)
+outf <- file.path(opt$output_files, "DEG_report.html")
 
 rmarkdown::render(file.path(main_path_script, 'templates', 'main_report.Rmd'), 
                   output_file = outf, intermediates_dir = opt$output_files)
