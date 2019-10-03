@@ -58,14 +58,14 @@ option_list <- list(
     help="Analysis performance (g = Gene Set Enrichment Analysis, o = Over Representation Analysis). By default Default=%default analysis is performed"), # Not Checked
   make_option(c("-K", "--Kegg_organism"), type="character", default=NULL, 
     help="Indicate organism to look for in the Kegg database for doing the path enrichment"), # Not Checked
-  make_option(c("-q", "--save_query"), type="logical", default=TRUE,
-    help="Save biomaRt query. By default the biomaRt query is saved"),
+  make_option(c("-q", "--save_query"), type="logical", action = "store_true", default=FALSE,
+    help="Flag to save biomaRt query"),
   make_option(c("-L", "--List_organisms"), action="store_true", type="logical", default=FALSE, 
     help="Print all organisms available at biomaRt table and ends the program"),
   make_option(c("-o", "--output_files"), type="character", default="results",
     help="Output path. Default=%default"),
-  make_option(c("-r", "--remote"), ,type = "logical", action="store_true", default=FALSE,
-    help="Flag to activate remote query from enrichments and Genes translation"),
+  make_option(c("-r", "--remote"), ,type = "character", default="",
+    help="Flags to activate remote query from enrichments and Genes translation. Use (b) to launch biomaRt translation; (k) to use Kegg remote data base"),
   make_option(c("-T", "--threshold"), type="double", default=0.1,
     help="Enrichment p-value threshold. [Default = %default]")
 )
@@ -78,8 +78,9 @@ opt <- parse_args(OptionParser(option_list=option_list))
 # Special IDs
 fc_colname <- "mean_logFCs"
 
-
-
+# Check remote actions
+remote_actions <- list(biomart = grepl("b", opt$remote),
+              		   kegg    = grepl("k", opt$remote))
 
 
 #############################################
@@ -104,6 +105,7 @@ if(file.exists(opt$countdata_file)){
 }else{
 	exp_names <- "EXPERIMENT NAMES NOT AVAILABLE"
 }
+
 
 
 if(!is.null(opt$annot_file)){
@@ -135,7 +137,6 @@ if(opt$biomaRt_filter == "E"){
 
 
 
-
 # Check organism selected
 if(opt$List_organisms == TRUE){
   print(as.character(rownames(biomaRt_query_info)))
@@ -147,7 +148,6 @@ if(opt$List_organisms == TRUE){
 }else{ # ORGANISM AVAILABLE --> LOAD
   biomaRt_organism_info <- subset(biomaRt_query_info, rownames(biomaRt_query_info) %in% opt$model_organism)  
 }
-
 
 
 # Check which enrichments are gonna be performed
@@ -174,7 +174,10 @@ if(exists("annot_table")){
 	}))
 }
 
-
+# Verbose point
+aux <- table(DEG_annot_table$genes_tag)
+for(i in seq_along(aux)) 
+	message(paste(names(aux)[i],aux[i]))
 
 ############ CREATE FOLDERS #########3
 paths <- list()
@@ -183,16 +186,11 @@ paths$root <-opt$output_files
 
 
 
-
-
-
-
-
 #############################################
 ### PREPARE AND TRANSFORM DATA
 #############################################
 
-if(opt$remote){ # REMOTE MODE
+if(remote_actions$biomart){ # REMOTE MODE
 	############# BIOMART QUERY  #############
 
 	# Prepare organism info
@@ -228,7 +226,6 @@ if(opt$remote){ # REMOTE MODE
 }
 
 
-
 if(opt$save_query == TRUE){
   saveRDS(reference_table, file=file.path("query_results_temp"))
 } 
@@ -241,7 +238,6 @@ common_DEGs_df <- subset(DEG_annot_table, genes_tag=="PREVALENT_DEG")
 if(nrow(common_DEGs_df) == 0){
   stop('Not detected genes tagged as PREVALENT_DEG. Likely some modules of degenes_Hunter.R failed and not generated output. Please, revise the input data')
 } 
-
 
 
 # Obtain significant sbusets
@@ -260,6 +256,9 @@ if(exists("annot_table")){
 common_unique_entrez <- subset(reference_table, reference_table[,1] %in% common_DEGs)
 common_unique_entrez <- unique(common_unique_entrez[,biomaRt_organism_info[,"Attribute_entrez"]])
 
+# Verbose point
+message(paste("IDs used to enrich:",length(common_unique_entrez)))
+
 union_DEGs_df <- subset(DEG_annot_table, genes_tag=="POSSIBLE_DEG")
 union_DEGs_df <- rbind(common_DEGs_df, union_DEGs_df)
 
@@ -275,7 +274,7 @@ union_annot_DEGs_df <- subset(reference_table, reference_table[,1] %in% union_DE
 ################# ADD ENTREZ IDS AND GENE SYMBOLS TO INPUT FILE #############
 # Currently only runs if we are local, have an org db available and a symbol correspondence. The ENTREZ bit should become universal even if no SYMBOL available
 
-if(opt$remote == FALSE &
+if(!remote_actions$biomart &
 	! biomaRt_organism_info$Bioconductor_DB[1] == "" & 
 	! biomaRt_organism_info$Bioconductor_VarName_SYMBOL[1] == "") {
 
@@ -356,7 +355,7 @@ if(flags$GO){
 	# Generate output
 	if(length(modules_to_export) > 0){
 		# Check execution mode
-		if(opt$remote){ # REMOTE MODE
+		if(remote_actions$biomart){ # REMOTE MODE
 			# Prepare necessary info
 			go_attr_name <- as.character(biomaRt_organism_info[,"Attribute_GOs"])
 			# Launch GSEA analysis
@@ -409,7 +408,6 @@ if(flags$GO){
 #############################################
 ### GO ENRICHMENT (clusterProfiler)
 #############################################
-
 if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(biomaRt_organism_info$Bioconductor_VarName[1])){
 	# Load necessary packages
 	require(clusterProfiler)
@@ -502,7 +500,7 @@ if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
 
 	# Load necessary packages
 	require(clusterProfiler)
-	if(!opt$remote){
+	if(!remote_actions$kegg){
 		require(KEGG.db)
 	}
 	if(flags$ORA){
@@ -512,7 +510,7 @@ if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
 								  keyType       = "kegg", #keyType,
 								  pvalueCutoff  = opt$threshold, #pvalueCutoff,
 								  pAdjustMethod = "BH", #pAdjustMethod,
-								  use_internal_data = !opt$remote)
+								  use_internal_data = !remote_actions$kegg)
 		# Write output
 		write.table(enrich_ora, file=file.path(paths$root, "KEGG_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	
@@ -537,7 +535,7 @@ if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
 
 		enrich_gsea <- gseKEGG(geneList     = geneList,
 							   organism     = biomaRt_organism_info$KeggCode[1],
-							   use_internal_data = !opt$remote,
+							   use_internal_data = !remote_actions$kegg,
 							   # nPerm        = 1000,
 							   # minGSSize    = 120,
 							   pvalueCutoff = opt$threshold,

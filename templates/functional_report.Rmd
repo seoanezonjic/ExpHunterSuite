@@ -130,6 +130,11 @@ Some sections will not show if there are not sinficative results. Each category 
 The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.
 In the case of the GSEA method, all the genes are sorted by their fold-change and the algorithm scan which genes with similar fold-change shares a term of the selected functional category.
 
+Statistics about input results obtained from DEGenes Expression Hunter are:
+```{r table_exp_flags, echo = FALSE}
+knitr::kable(table(DEG_annot_table$genes_tag))
+```
+
 
 
 
