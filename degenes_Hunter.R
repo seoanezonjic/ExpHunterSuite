@@ -68,7 +68,9 @@ option_list <- list(
     help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N= NOISeq.).
     By default the following modules Default=%default are performed"),
   make_option(c("-c", "--minpack_common"), type="integer", default=4,
-    help="Number of minimum package to consider a gene as a 'PREVALENT' DEG")
+    help="Number of minimum package to consider a gene as a 'PREVALENT' DEG"),
+  make_option(c("-L", "--linked_samples"), type="logical", default=FALSE,
+    help="If TRUE, samples will be linked (paired) by the order they appear in the arguments Treatment_columns and Control_columns Default=%default")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
@@ -99,6 +101,10 @@ if (opt$minlibraries < 1){
 if (opt$reads == 0){
   cat("Minimum reads option is set to zero. Raw count table will not be filtered.")
 }
+if (opt$linked_samples == TRUE & (length(opt$Treatment_columns) != length(opt$Control_columns))) {
+  cat("If a paired design is used there should be equivalent numbers of treatment and control samples.")
+}
+
 # Control replicate number VS method selection
 index_control_cols <- unlist(strsplit(opt$Control_columns, ",")) 
 index_treatmn_cols <- unlist(strsplit(opt$Treatment_columns, ","))
@@ -164,11 +170,10 @@ if(grepl("D",opt$modules)){
     dir.create(file.path(opt$output_files, "Results_DESeq2"))
     # Calculate results
     results <- analysis_DESeq2(data   = raw_filter, 
-                               num_controls  = replicatesC, 
-                               num_treatmnts = replicatesT, 
                                p_val_cutoff  = opt$p_val_cutoff, 
                                lfc    = lfc, 
-                               groups = design_vector)
+                               groups = design_vector,
+                               linked_samples = opt$linked_samples)
     # Store results
     all_data_normalized[['DESeq2']] <- results[[1]]
     all_counts_for_plotting[['DESeq2']] <- results[[2]]
@@ -199,15 +204,12 @@ if(grepl("E", opt$modules)){
     path <- file.path(opt$output_files, "Results_edgeR")
     dir.create(path)
     # Calculate results
-    results <- tryCatch(
-      # CODE
-      analysis_edgeR(data   = raw_filter, 
+    results <- analysis_edgeR(data   = raw_filter, 
                      p_val_cutoff = opt$p_val_cutoff, 
-                     lfc    = lfc, 
+                     lfc   = lfc, 
                      path  = path,
-                     groups = design_vector),
-      # CATCH
-      error = handling_errors, warning = handling_errors)
+                     groups = design_vector,
+                     linked_samples = opt$linked_samples)
     # Store results
     all_data_normalized[['edgeR']] <- results[[1]]
     all_counts_for_plotting[['edgeR']] <- results[[2]]
@@ -242,7 +244,8 @@ if(grepl("L", opt$modules)){
                               num_controls  = replicatesC, 
                               num_treatmnts = replicatesT, 
                               p_val_cutoff  = opt$p_val_cutoff, 
-                              lfc  = lfc)
+                              lfc  = lfc,
+                              linked_samples = opt$linked_samples)
     # Store results
     all_data_normalized[['limma']]     <- results[[1]]
     all_counts_for_plotting[['limma']] <- results[[2]]
