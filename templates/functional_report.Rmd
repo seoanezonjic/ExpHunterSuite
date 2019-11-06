@@ -124,11 +124,13 @@ The functional categories can be:
 	+ Molecular Function
 	+ Cellular Component
 * Reactome pathways
+* Custom nomenclature
 
 All the functional categories are computed with CluterProfiler and GO caterogires are computed also with TopGo.
 Some sections will not show if there are not sinficative results. Each category is analysed using Over representation analysis (ORA) and Gene Set Analysis (GSEA).
 The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.
 In the case of the GSEA method, all the genes are sorted by their fold-change and the algorithm scan which genes with similar fold-change shares a term of the selected functional category.
+
 
 Statistics about input results obtained from DEGenes Expression Hunter are:
 ```{r table_exp_flags, echo = FALSE}
@@ -141,7 +143,7 @@ knitr::kable(table(DEG_annot_table$genes_tag))
 
 ```{r check_graphs, echo = FALSE}
 ####################################### GO
-n_category <- 20
+n_category <- 30
 # Useful_functions
 graph_file_name <- function(path = results_path, file_name, ext = "pdf"){
 	return(paste(path,.Platform$file.sep,file_name,".",ext,sep=""))
@@ -150,13 +152,7 @@ exists_graph_file <- function(path = results_path, file_name, ext = "pdf"){
 	f <- graph_file_name(path,file_name,ext)
 	return(file.exists(f))
 }
-exists_enrich_df <- function(var_name,level_depth = 3){
-	# Check if it is instantiated
-	if(!var_name %in% ls(envir = parent.frame(n = level_depth))){
-		return(FALSE)
-	}
-	# Check if is a DF with info
-	df <- get(var_name, envir = parent.frame(n = level_depth))
+check_results <- function(df){
 	if(is.data.frame(df)){
 		if(nrow(df) <= 0){
 			return(FALSE)
@@ -184,6 +180,15 @@ exists_enrich_df <- function(var_name,level_depth = 3){
 	}
 	# Everything OK
 	return(TRUE)
+}
+exists_enrich_df <- function(var_name,level_depth = 3){
+	# Check if it is instantiated
+	if(!var_name %in% ls(envir = parent.frame(n = level_depth))){
+		return(FALSE)
+	}
+	# Check if is a DF with info
+	df <- get(var_name, envir = parent.frame(n = level_depth))
+	return(check_results(df))
 }
 
 ######################################################### GO
@@ -281,17 +286,33 @@ invisible(lapply(react_enrich_vars,function(var_name){
 
 #react_flags$REACT_SECTION <- any(unlist(react_flags))
 react_flags$REACT_SECTION <- any(unlist(lapply(react_enrich_vars, function(var){exists(var)})))
+
+
+####################################### CUSTOM
+
+if(!is.null(custom_enrichments)){
+	# Prepare containers
+	custom_flags <- list()
+
+	# Check all variables
+	invisible(lapply(custom_enrichments,function(var){
+		custom_flags[var$File] <<- check_results(var$Result)
+	}))
+
+	custom_flags$CUSTOM_SECTION <- any(unlist(custom_flags))
+}else{
+	custom_flags <- list(CUSTOM_SECTION = FALSE)
+}
+
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ```
-
-
 ```{r setup_plots, echo=FALSE}
-if(kegg_flags[["enrich_ora"]] | kegg_flags[["enrich_gsea"]] |
-	go_flags[["enrich_go"]] | go_flags[["enrich_go_gsea"]] |
-	react_flags[["enrich_react"]] | react_flags[["enrich_react_gsea"]]){
+# if(kegg_flags[["enrich_ora"]] | kegg_flags[["enrich_gsea"]] |
+# 	go_flags[["enrich_go"]] | go_flags[["enrich_go_gsea"]] |
+# 	react_flags[["enrich_react"]] | react_flags[["enrich_react_gsea"]]){
 	suppressPackageStartupMessages(require(clusterProfiler))
 	suppressPackageStartupMessages(require(enrichplot))
-}
+# }
 
 
 ```
@@ -999,6 +1020,109 @@ plot_in_div(pp, width = default_width)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r custom_create, echo = FALSE, eval = !is.null(custom_enrichments)}
+out_custom <- NULL
+invisible(lapply(seq_along(custom_enrichments),function(i){
+	res <- custom_enrichments[[i]]
+	if(!custom_flags[[res$File]]){
+		header <- paste("## **",basename(res$File),"** \n\nThis CUSTOM study has been executed but **has not returned any result**\n", sep="")
+		body <- ""
+	}else{
+		header <- ""
+
+		# Prepare ORA plots
+		body <- "enr_custom <- custom_enrichments[[{{i}}]]$Result
+				default_width <- set_default_width(enrich_obj = enr_custom, showCategory=n_category)
+				
+				# Header
+				cat(paste('\n## **',basename(custom_enrichments[[{{i}}]]$File),'**\n',sep=''))
+
+				# Main label 
+				cat('\n### **Over Representation Analysis**\n',
+					'The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n')
+
+				cat(
+					'**Barplot**\n\n', 
+					'The plot shows the functional top significative terms in ascendant order by adjusted pvalue. The color represents the associated adjusted pvalue. 
+					The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n'
+				)
+				pp <- barplot(enr_custom, showCategory=n_category)
+				plot_in_div(pp, width = default_width)
+
+
+
+				cat('\n\n**Dotplot**\n\n',
+					'he plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
+					The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n'
+				)
+				pp <- dotplot(enr_custom, showCategory=n_category)
+				plot_in_div(pp, width = default_width)
+
+
+
+				cat('\n\n**Gene-Concept Network**\n\n', 
+					'The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
+					The size of the functional terms shows the number of connected genes.\n\n'
+				)
+				enr_custom <- setReadable(enr_custom, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType='ENTREZID')
+				pp <- cnetplot(enr_custom, showCategory=n_category, foldChange=geneList) +
+					  scale_color_gradient2(name = 'fold change', low = '#0000BF', high = '#bf0000', na.value = '#50EA55')
+				plot_in_div(pp, width = default_width)
+
+
+
+				cat('\n\n**Enrich Map plot**\n\n', 
+					'The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
+					The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n'
+				)
+				pp <- emapplot(enr_custom, showCategory=n_category)
+				plot_in_div(pp, width = default_width)
+
+
+
+				cat('\n\n**Heatplot**\n\n', 
+					'Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n'
+				)
+				pp <- heatplot(enr_custom, showCategory=n_category, foldChange=geneList)
+				width_size <- calc_width(enr_custom)
+				height_size <- calc_height(enr_custom)
+				plot_in_div(pp, height_size, width_size)
+					
+
+
+
+				cat('\n\n**Upsetplot**\n\n', 
+					'Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n'
+				)
+				pp <- upsetplot(enr_custom, n=n_category)
+				plot_in_div(pp, width = default_width)\n"
+	}
+
+	body <- gsub("\\{\\{i\\}\\}",i,body)
+
+
+	out_custom <<- c(out_custom,paste(knit_expand(text = paste(header,
+											 					chunks(body, options = "echo = FALSE,results='asis'"),
+											 					"\n",sep = "\n")),
+														sep = "\n"))
+}))
+```
+
+  `r paste(knit(text = paste(out_custom,collapse = "\n")),collapse = "\n")`
 
 
 

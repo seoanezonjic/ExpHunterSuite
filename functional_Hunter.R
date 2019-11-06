@@ -19,6 +19,7 @@ suppressPackageStartupMessages(require(KEGGREST))
 suppressPackageStartupMessages(require(stringr))
 suppressPackageStartupMessages(require(plyr))
 suppressPackageStartupMessages(require(knitr))
+suppressPackageStartupMessages(require(clusterProfiler))
 
 # Load custom libraries
 source(file.path(main_path_script, 'lib', 'general_functions.R'))
@@ -66,6 +67,8 @@ option_list <- list(
     help="Output path. Default=%default"),
   make_option(c("-r", "--remote"), ,type = "character", default="",
     help="Flags to activate remote query from enrichments and Genes translation. Use (b) to launch biomaRt translation; (k) to use Kegg remote data base"),
+  make_option(c("-C", "--custom"), ,type = "character", default=NULL,
+    help="Files with custom nomenclature (in GMT format) separated by commas (,)"),
   make_option(c("-T", "--threshold"), type="double", default=0.1,
     help="Enrichment p-value threshold. [Default = %default]")
 )
@@ -409,9 +412,7 @@ if(flags$GO){
 ### GO ENRICHMENT (clusterProfiler)
 #############################################
 if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(biomaRt_organism_info$Bioconductor_VarName[1])){
-	# Load necessary packages
-	require(clusterProfiler)
-	
+	# Load necessary packages	
 	modules_to_export <- c()
 	if(grepl("M", opt$GO_graphs)){
 		modules_to_export <- "MF"
@@ -499,7 +500,6 @@ if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(bioma
 if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
 
 	# Load necessary packages
-	require(clusterProfiler)
 	if(!remote_actions$kegg){
 		require(KEGG.db)
 	}
@@ -613,6 +613,52 @@ if(flags$REACT & (!is.na(biomaRt_organism_info$Reactome_ID[1]) & (keytypes == "E
 }else if(flags$REACT){
 	warning("Reactome module can not be used with GENENAME identifiers")
 }
+
+
+
+
+#############################################
+### CUSTOM ENRICHMENT
+#############################################
+if(!is.null(opt$custom)){
+	if(!exists("geneList")){
+		if(exists("annot_table")){
+			aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
+			geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
+			names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
+			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+		}else{
+			aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
+			geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
+			names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
+			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+		}		
+	}
+
+	geneList <- sort(geneList, decreasing = TRUE)
+
+	# Obtain custom files
+	custom_files <- unlist(strsplit(opt$custom,","))
+	# Per each file, launch enrichment
+	custom_enrichments <- lapply(custom_files,function(f){
+		# Load info
+		c_terms <- unlist(read.table(file = f, sep = "\n", header = FALSE, stringsAsFactors = FALSE))
+		# Split all
+		c_terms <- as.data.frame(do.call(rbind,lapply(c_terms,function(GeneTerms){
+			aux <- unlist(strsplit(GeneTerms,","))
+			return(data.frame(Term = tail(aux,-2),
+							  Gene = rep(aux[1],length(aux)-2),
+							  stringsAsFactors = FALSE))
+		})))
+		enr <- enricher(common_unique_entrez, pvalueCutoff = opt$threshold, TERM2GENE = c_terms)
+		# Return
+		return(list(File = f,
+					Result = enr))
+	})
+}else{
+	custom_enrichments <- NULL
+}
+
 
 
 
