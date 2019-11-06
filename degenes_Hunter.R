@@ -74,13 +74,6 @@ option_list <- list(
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
-active_modules <- nchar(opt$modules)
-if(opt$minpack_common > active_modules){
-	opt$minpack_common <- active_modules
-	warning("The number of active modules is lower than the thresold for tag PREVALENT DEG. The thresold is set to the number of active modules.")
-}
-
-
 ############################################################
 ##                       CHECK INPUTS                     ##
 ############################################################
@@ -102,8 +95,23 @@ if (opt$reads == 0){
   cat("Minimum reads option is set to zero. Raw count table will not be filtered.")
 }
 if (opt$linked_samples == TRUE & (length(opt$Treatment_columns) != length(opt$Control_columns))) {
-  cat("If a paired design is used there should be equivalent numbers of treatment and control samples.")
+  cat("If a linked (paired) design is used there should be equivalent numbers of treatment and control samples.")
 }
+if (opt$linked_samples == TRUE & grepl("N", opt$modules) & nchar(opt$modules) == 1) {
+  stop(cat("You cannot run a linked (paired) experimental design analysis with NOISeq only."))
+  opt$modules <- gsub("N", "", opt$modules)
+}
+if (opt$linked_samples == TRUE & grepl("N", opt$modules) & nchar(opt$modules) > 1) {
+  warning("As you are using a linked (paired) experiment design, NOISeq will not be run.")
+  opt$modules <- gsub("N", "", opt$modules)
+}
+
+active_modules <- nchar(opt$modules)
+if(opt$minpack_common > active_modules){
+  opt$minpack_common <- active_modules
+  warning("The number of active modules is lower than the thresold for tag PREVALENT DEG. The thresold is set to the number of active modules.")
+}
+
 
 # Control replicate number VS method selection
 index_control_cols <- unlist(strsplit(opt$Control_columns, ",")) 
