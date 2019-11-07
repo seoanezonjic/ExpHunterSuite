@@ -620,7 +620,7 @@ if(flags$REACT & (!is.na(biomaRt_organism_info$Reactome_ID[1]) & (keytypes == "E
 #############################################
 ### CUSTOM ENRICHMENT
 #############################################
-if(!is.null(opt$custom)){
+if(!is.null(opt$custom) & nchar(opt$custom)>0){
 	if(!exists("geneList")){
 		if(exists("annot_table")){
 			aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
