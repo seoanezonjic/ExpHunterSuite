@@ -645,9 +645,9 @@ if(!is.null(opt$custom) & nchar(opt$custom)>0){
 		c_terms <- unlist(read.table(file = f, sep = "\n", header = FALSE, stringsAsFactors = FALSE))
 		# Split all
 		c_terms <- as.data.frame(do.call(rbind,lapply(c_terms,function(GeneTerms){
-			aux <- unlist(strsplit(GeneTerms,","))
-			return(data.frame(Term = tail(aux,-2),
-							  Gene = rep(aux[1],length(aux)-2),
+			aux <- unlist(strsplit(GeneTerms,"\t"))
+			return(data.frame(Term = rep(aux[1],length(aux)-2),
+							  Gene = tail(aux,-2),
 							  stringsAsFactors = FALSE))
 		})))
 		enr <- enricher(common_unique_entrez, pvalueCutoff = opt$threshold, TERM2GENE = c_terms)
