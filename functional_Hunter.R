@@ -620,48 +620,48 @@ if(flags$REACT & (!is.na(biomaRt_organism_info$Reactome_ID[1]) & (keytypes == "E
 #############################################
 ### CUSTOM ENRICHMENT
 #############################################
-if(!is.null(opt$custom) & nchar(opt$custom)>0){
-	if(!exists("geneList")){
-		if(exists("annot_table")){
-			aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
-			geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
-			names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
-			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
-		}else{
-			aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
-			geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
-			names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
-			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
-		}		
+if(!is.null(opt$custom)) {
+	if(nchar(opt$custom)>0) {
+		if(!exists("geneList")){
+			if(exists("annot_table")){
+				aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
+				geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
+				names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
+				names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+			}else{
+				aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
+				geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
+				names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
+				names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+			}		
+		}
+
+		geneList <- sort(geneList, decreasing = TRUE)
+
+		# Obtain custom files
+		custom_files <- unlist(strsplit(opt$custom,","))
+		# Per each file, launch enrichment
+		custom_enrichments <- lapply(custom_files,function(f){
+			# Load info
+			c_terms <- unlist(read.table(file = f, sep = "\n", header = FALSE, stringsAsFactors = FALSE))
+			# Split all
+			c_terms <- as.data.frame(do.call(rbind,lapply(c_terms,function(GeneTerms){
+				aux <- unlist(strsplit(GeneTerms,"\t"))
+				return(data.frame(Term = rep(aux[1],length(aux)-2),
+								  Gene = tail(aux,-2),
+								  stringsAsFactors = FALSE))
+			})))
+			enr <- enricher(common_unique_entrez, pvalueCutoff = opt$threshold, TERM2GENE = c_terms)
+			# Return
+			return(list(File = f,
+						Result = enr))
+		})
+	}else{
+		custom_enrichments <- NULL
 	}
-
-	geneList <- sort(geneList, decreasing = TRUE)
-
-	# Obtain custom files
-	custom_files <- unlist(strsplit(opt$custom,","))
-	# Per each file, launch enrichment
-	custom_enrichments <- lapply(custom_files,function(f){
-		# Load info
-		c_terms <- unlist(read.table(file = f, sep = "\n", header = FALSE, stringsAsFactors = FALSE))
-		# Split all
-		c_terms <- as.data.frame(do.call(rbind,lapply(c_terms,function(GeneTerms){
-			aux <- unlist(strsplit(GeneTerms,"\t"))
-			return(data.frame(Term = rep(aux[1],length(aux)-2),
-							  Gene = tail(aux,-2),
-							  stringsAsFactors = FALSE))
-		})))
-		enr <- enricher(common_unique_entrez, pvalueCutoff = opt$threshold, TERM2GENE = c_terms)
-		# Return
-		return(list(File = f,
-					Result = enr))
-	})
 }else{
 	custom_enrichments <- NULL
 }
-
-
-
-
 
 ############################################################
 ############################################################

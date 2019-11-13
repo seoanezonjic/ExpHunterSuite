@@ -1016,23 +1016,9 @@ plot_in_div(pp, width = default_width)
 
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```{r create_out_custom, echo = FALSE}
+out_custom <- ""
+```
 
 ```{r custom_create, echo = FALSE, eval = !is.null(custom_enrichments)}
 out_custom <- NULL
