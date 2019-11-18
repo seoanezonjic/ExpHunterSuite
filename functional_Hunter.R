@@ -652,6 +652,8 @@ if(!is.null(opt$custom)) {
 								  stringsAsFactors = FALSE))
 			})))
 			enr <- enricher(common_unique_entrez, pvalueCutoff = opt$threshold, TERM2GENE = c_terms)
+			# Store results
+			write.table(enr, file=file.path(paths$root, paste0(basename(f),"_ora_results")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")			
 			# Return
 			return(list(File = f,
 						Result = enr))
@@ -667,7 +669,7 @@ if(!is.null(opt$custom)) {
 ############################################################
 ############################################################
 # REMOVE THIS WHEN DEVELOP/TEST PHASE ENDS
-save.image("test.RData")
+# save.image("test.RData")
 
 
 ############################################################
