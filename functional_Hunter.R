@@ -110,6 +110,7 @@ if(file.exists(opt$countdata_file)){
 }
 
 
+DEG_annot_table <- read.table(opt$input_hunter_file, header=T, row.names=1, sep="\t", stringsAsFactors = FALSE)
 
 if(!is.null(opt$annot_file)){
   annot_table <- read.table(opt$annot_file, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "")
@@ -117,7 +118,8 @@ if(!is.null(opt$annot_file)){
 }else if(!file.exists(opt$countdata_file)){
     stop('Count file not exists, check the PATH given to the -c flag')
 }else{
-  reference_table <- count_data
+  reference_table <- DEG_annot_table
+  reference_table[,1] <- row.names(DEG_annot_table)
 }
 
 
@@ -217,10 +219,14 @@ if(remote_actions$biomart){ # REMOTE MODE
 }else if(!is.na(biomaRt_organism_info$Bioconductor_DB[1])){ # LOCAL MODE
 	# Check genetical items to be used
 	if(opt$biomaRt_filter == 'ensembl_gene_id'){
+		cat("test here\n")
 		reference_table <- ensembl_to_entrez(ensembl_ids = reference_table[,1],
 											 organism_db = biomaRt_organism_info$Bioconductor_DB[1],
 											 organism_var = biomaRt_organism_info$Bioconductor_VarName[1])
+		cat("test finished\n")
+
 		colnames(reference_table) <- c("ensembl_gene_id", biomaRt_organism_info[,"Attribute_entrez"])
+
 	}else if(opt$biomaRt_filter == 'refseq_peptide'){
 		stop(paste("This genes type (",opt$biomaRt_filter,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
 	}
