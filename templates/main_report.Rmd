@@ -93,11 +93,18 @@ require(DESeq2)
 coldata_df <- data.frame(cond = design_vector,
                            each = colnames(raw_filter),
                            row.names = colnames(raw_filter))
-# rownames(coldata_df) <- colnames(raw_filter)
+
 dds <- DESeqDataSetFromMatrix(countData = raw_filter, colData = coldata_df, design = ~ cond)
 rld <- rlog(dds, blind=FALSE)
 
-plotPCA(rld, intgroup=c("cond", "each"))
+pcaData <- plotPCA(rld, intgroup=c("cond"), returnData = TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(x = PC1, y = PC2, color = name, shape = cond)) +
+  geom_point(size =3) +
+  xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+  ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+  coord_fixed()
+
 ```
 
 The samples are shown in the 2D plane and distributed by their first two principal components. This type of plot is useful for visualizing the overall effect of experimental covariates and batch effects. It is also useful for identifying outlier samples. Control and treatment samples respectively may cluster together.
