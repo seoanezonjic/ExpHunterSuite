@@ -141,7 +141,10 @@ raw[is.na(raw)] <- 0
 ############################################################
 # Prepare filtered set
 if(opt$reads != 0){
-  keep_cmp <- rowSums(edgeR::cpm(raw) > opt$reads) >= opt$minlibraries # genes with cpm greater than --reads value for at least --minlibrariess samples
+  # genes with cpm greater than --reads value for at least --minlibrariess samples for either case or control samples
+  to_keep_control <- rowSums(edgeR::cpm(raw[index_control_cols]) > opt$reads) >= opt$minlibraries
+  to_keep_treatment <- rowSums(edgeR::cpm(raw[index_treatmn_cols]) > opt$reads) >= opt$minlibraries
+  keep_cmp <- to_keep_control | to_keep_treatment # Keep if at least minlibraries in either of them
   raw_filter <- raw[keep_cmp,] # Filter out count data frame
 }else{ # NO FILTER
   raw_filter <- raw

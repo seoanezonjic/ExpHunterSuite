@@ -367,3 +367,9 @@ chart.Correlation(df[, c("mean_logFCs", final_logFC_names)], histogram=TRUE, pch
 
 ```
 
+### **Values of options used to run DEGenesHunter**
+First column contains the option names; second column contains the given values for each option in this run.
+```{r opt_vals, echo = FALSE, warning = FALSE}
+knitr::kable(cbind(opt))
+```
+
