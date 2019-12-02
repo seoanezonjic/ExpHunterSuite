@@ -58,12 +58,6 @@ option_list <- list(
     help="Adjusted p-value cutoff for the differential expression analysis. Default=%default"),
   make_option(c("-f", "--lfc"), type="double", default=1,
     help="Minimum log2 fold change in expression. Note this is on a log2 scale, so a value of 1 would mean a 2 fold change. Default=%default"),
-  make_option(c("-q", "--q_value"), type="double", default=0.95,
-    help="q value for NOISeq package. Default=%default"),
-  make_option(c("-a", "--adjust_method"), type="character", default=c("BH"), #D = DESeq2, E = edgeR, L = limma, N = NOISeq
-    help="Method selection to adjust the combined nominal p-values. By default method Default=%default is performed"),
-  make_option(c("-n", "--name_exp"), type="character", default="experiment1",
-    help="Type the name of your experiment."),
   make_option(c("-m", "--modules"), type="character", default=c("DELN"), #D = DESeq2, E = edgeR, L = limma, N = NOISeq
     help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N= NOISeq.).
     By default the following modules Default=%default are performed"),
@@ -180,9 +174,8 @@ if(grepl("D",opt$modules)){
     cat('Gene expression analysis is performed with DESeq2.\n')
     dir.create(file.path(opt$output_files, "Results_DESeq2"))
     # Calculate results
-    results <- analysis_DESeq2(data   = raw_filter, 
-                               p_val_cutoff  = opt$p_val_cutoff, 
-                               lfc    = lfc, 
+    results <- analysis_DESeq2(data   = raw_filter,
+                               p_val_cutoff = opt$p_val_cutoff,
                                groups = design_vector,
                                linked_samples = opt$linked_samples)
     # Store results
@@ -216,11 +209,9 @@ if(grepl("E", opt$modules)){
     dir.create(path)
     # Calculate results
     results <- analysis_edgeR(data   = raw_filter, 
-                     p_val_cutoff = opt$p_val_cutoff, 
-                     lfc   = lfc, 
-                     path  = path,
-                     groups = design_vector,
-                     linked_samples = opt$linked_samples)
+                              path  = path,
+                              groups = design_vector,
+                              linked_samples = opt$linked_samples)
     # Store results
     all_data_normalized[['edgeR']] <- results[[1]]
     all_counts_for_plotting[['edgeR']] <- results[[2]]
@@ -252,10 +243,7 @@ if(grepl("L", opt$modules)){
 
     # Calculate results
     results <- analysis_limma(data = raw_filter, 
-                              num_controls  = replicatesC, 
-                              num_treatmnts = replicatesT, 
-                              p_val_cutoff  = opt$p_val_cutoff, 
-                              lfc  = lfc,
+                              groups=design_vector, 
                               linked_samples = opt$linked_samples)
     # Store results
     all_data_normalized[['limma']]     <- results[[1]]
@@ -287,10 +275,10 @@ if(grepl("N", opt$modules)){
     path <- file.path(opt$output_files, "Results_NOISeq")
     dir.create(path)
     # Calculate results
+    q_value <- 1-opt$p_val_cutoff # Differential expression threshold for creating plot
     results <- analysis_NOISeq(data    = raw_filter, 
                                num_controls  = replicatesC, 
                                num_treatmnts = replicatesT, 
-                               q_value = opt$q_value, 
                                groups  = design_vector, 
                                path = path,
                                lfc  = lfc)

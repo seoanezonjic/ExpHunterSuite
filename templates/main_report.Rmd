@@ -241,7 +241,7 @@ This is the MA plot from DESeq2 package:")
 ```
 
 ```{r DESeq2_conditional_block_plot, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE}
-	plotMA(package_objects[['DESeq2']], cex.lab=1.6, cex.axis=1.5)
+	plotMA(package_objects[['DESeq2']][['de_deseq2']], cex.lab=1.6, cex.axis=1.5)
 ```
 
 ```{r DESeq2_conditional_block_text, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
@@ -324,7 +324,7 @@ This is the summary plot for (M,D) values (black) and the differentially express
 
 ```{r NOISeq_conditional_block_plot, eval='NOISeq' %in% names(all_counts_for_plotting), echo=FALSE, warning=FALSE, message=FALSE, results='hide',}
 
-DE.plot(package_objects[['NOISeq']], q = opt$q_value, graphic = 'MD', cex.lab=1.4, cex.axis=1.4)
+DE.plot(package_objects[['NOISeq']], q = q_value, graphic = 'MD', cex.lab=1.4, cex.axis=1.4)
 
 ```
 
