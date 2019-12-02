@@ -26,13 +26,6 @@ source(file.path(main_path_script, 'lib', 'general_functions.R'))
 source(file.path(main_path_script, 'lib', 'functional_analysis_library.R'))
 
 
-
-
-
-
-
-
-
 #############################################
 ### MAIN 
 #############################################
@@ -41,14 +34,13 @@ source(file.path(main_path_script, 'lib', 'functional_analysis_library.R'))
 #------------------------------------------------
 
 option_list <- list(
-  make_option(c("-i", "--input_hunter_file"), type="character", default="hunter_DE_results/Common_results/hunter_results_table.txt",
-    help="DEgenes Hunter's differential expression analysis output file"), # Not Checked 
-  make_option(c("-c", "--countdata_file"), type="character", default="hunter_DE_results/filtered_count_data.txt",
-    help="Filtered count data file"), # Not Checked
-  make_option(c("-a", "--annot_file"), type="character",
-    help="Two column file with annotations for functional analysis of a non-model organism. First column must be a gene ensembl id or a refseq id from a model organism. This id must be a orthologue of the gene id of the second column, that is the custom id from a non-model organism (whose functional analysis is desired)"),
+  make_option(c("-i", "--input_hunter_folder"), type="character",
+    help="DEgenes Hunter's differential expression analysis output folder"), 
   make_option(c("-m", "--model_organism"), type="character",
     help="Ortologue Species"),
+  make_option(c("-a", "--annot_file"), type="character",
+  	help="Two column file with annotations for functional analysis of a non-model organism. First column must be a gene ensembl id or a refseq id from a model organism. This id mus
+t be a orthologue of the gene id of the second column, that is the custom id from a non-model organism (whose functional analysis is desired)"),
   make_option(c("-t", "--biomaRt_filter"), type="character", default="E",
     help="ID types. ENSEMBL (E) Refseq_peptide (R), TAIR/Arabidopsis (T), Gene Names (G) Gene SYMBOLS (S). [Default:%default]"),      	
   make_option(c("-f", "--functional_analysis"), type="character", default="GK",
@@ -74,10 +66,6 @@ option_list <- list(
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
-
-
-
-
 # Special IDs
 fc_colname <- "mean_logFCs"
 
@@ -85,43 +73,29 @@ fc_colname <- "mean_logFCs"
 remote_actions <- list(biomart = grepl("b", opt$remote),
               		   kegg    = grepl("k", opt$remote))
 
-
 #############################################
 ### LOAD AND PARSE 
 #############################################
 
 # Load available organisms
-biomaRt_query_info <- read.table(file.path(main_path_script, "lib/biomaRt_organism_table.txt"), header=T, row.names=1, sep="\t", stringsAsFactors = FALSE, fill=NA)
+biomaRt_query_info <- read.table(file.path(main_path_script, "lib", "biomaRt_organism_table.txt"), header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA)
 
 # Load Reference-NonRefernce models gene IDs relations
-if(file.exists(opt$countdata_file)){
-	count_data <- read.table(opt$countdata_file, header=TRUE, row.names=NULL, sep="\t", stringsAsFactors = FALSE)
-	# exp_names <- colnames(count_data)[-1]
-	dir <- dirname(opt$countdata_file)
-	if(file.exists(file.path(dir,"control_treatment.txt"))){
-		experiments <- read.table(file = file.path(dir,"control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
-		exp_names <- paste("[Control]",experiments[which(experiments[,1] == "C"),2],sep=" ")
-		exp_names <- c(exp_names,paste("[Treatment]",experiments[which(experiments[,1] == "T"),2],sep=" "))
-	}else{
-		exp_names <- "EXPERIMENT NAMES NOT AVAILABLE"		
-	}
-}else{
-	exp_names <- "EXPERIMENT NAMES NOT AVAILABLE"
-}
+if(! file.exists(opt$input_hunter_folder)) stop("No input degenes_Hunter folder")
 
+DEG_annot_table <- read.table(file.path(opt$input_hunter_folder, "Common_results", "hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE)
 
-DEG_annot_table <- read.table(opt$input_hunter_file, header=T, row.names=1, sep="\t", stringsAsFactors = FALSE)
+experiments <- read.table(file.path(opt$input_hunter_folder, "control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
+exp_names <- paste("[Control]",experiments[which(experiments[,1] == "C"),2],sep=" ")
+exp_names <- c(exp_names,paste("[Treatment]",experiments[which(experiments[,1] == "T"),2],sep=" "))
 
 if(!is.null(opt$annot_file)){
   annot_table <- read.table(opt$annot_file, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "")
   reference_table <- annot_table
-}else if(!file.exists(opt$countdata_file)){
-    stop('Count file not exists, check the PATH given to the -c flag')
 }else{
   reference_table <- DEG_annot_table
   reference_table[,1] <- row.names(DEG_annot_table)
 }
-
 
 # Prepare ID type
 if(opt$biomaRt_filter == "E"){
@@ -139,8 +113,6 @@ if(opt$biomaRt_filter == "E"){
 }else{
   stop(paste("Given ID type (",opt$biomaRt_filter,") is not allowed.",sep=""))
 }
-
-
 
 # Check organism selected
 if(opt$List_organisms == TRUE){
@@ -163,9 +135,6 @@ flags <- list(GO    = grepl("G", opt$functional_analysis),
               GSEA  = grepl("g", opt$analysis),
               ORA   = grepl("o", opt$analysis))
 
-
-# Load input
-DEG_annot_table <- read.table(opt$input_hunter_file, header=T, row.names=1, sep="\t", stringsAsFactors = FALSE)
 # Special case
 if(exists("annot_table")){
 	DEG_annot_table$Annot_IDs <- unlist(lapply(rownames(DEG_annot_table),function(id){
@@ -311,22 +280,11 @@ if(!remote_actions$biomart &
 	write.table(DEG_annot_table_Symbol, file=file.path(paths$root, "DEG_results_annotated.txt"), quote=F, row.names=FALSE, sep="\t")
 }
 
-
-
-
-
-
 #############################################
 ### EXPORT DATA
 #############################################
 write.table(DEG_annot_table, file=file.path(paths$root, "Annotated_table.txt"), quote=F, col.names=NA, sep="\t")
 write.table(reference_table, file=file.path(paths$root, "ENSEMBL2ENTREZ.txt"), quote=F, col.names=NA, sep="\t")
-
-
-
-
-
-
 
 
 #############################################
