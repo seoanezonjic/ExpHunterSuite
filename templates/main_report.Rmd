@@ -323,8 +323,8 @@ This is the summary plot for (M,D) values (black) and the differentially express
 ```
 
 ```{r NOISeq_conditional_block_plot, eval='NOISeq' %in% names(all_counts_for_plotting), echo=FALSE, warning=FALSE, message=FALSE, results='hide',}
-
-DE.plot(package_objects[['NOISeq']], q = q_value, graphic = 'MD', cex.lab=1.4, cex.axis=1.4)
+    q_value <- 1-opt$p_val_cutoff # Differential expression threshold for creating plot
+	DE.plot(package_objects[['NOISeq']], q = q_value, graphic = 'MD', cex.lab=1.4, cex.axis=1.4)
 
 ```
 

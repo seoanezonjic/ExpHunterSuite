@@ -275,7 +275,6 @@ if(grepl("N", opt$modules)){
     path <- file.path(opt$output_files, "Results_NOISeq")
     dir.create(path)
     # Calculate results
-    q_value <- 1-opt$p_val_cutoff # Differential expression threshold for creating plot
     results <- analysis_NOISeq(data    = raw_filter, 
                                num_controls  = replicatesC, 
                                num_treatmnts = replicatesT, 

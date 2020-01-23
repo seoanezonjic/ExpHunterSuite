@@ -92,7 +92,7 @@ analysis_limma <- function(data, groups, linked_samples){
 	return(list(normalized_counts, todos_limma))
 }
 
-analysis_NOISeq <- function(data, num_controls, num_treatmnts, q_value, groups, lfc, path){
+analysis_NOISeq <- function(data, num_controls, num_treatmnts, groups, lfc, path){
 	require(NOISeq)
 	# Experimental design
 	groups_val <- c(rep("A", num_controls), rep("B", num_treatmnts)) 
@@ -102,10 +102,6 @@ analysis_NOISeq <- function(data, num_controls, num_treatmnts, q_value, groups, 
 
 	all_NOISeq <- noiseqbio(mydata, k = 0.5, norm = "tmm", factor="Tissue", lc = 1, r = 50, adj = 1.5, plot = FALSE,
 	a0per = 0.9, random.seed = 12345, filter = 1, cv.cutoff = 500, cpm = 1)
-
-	pdf(file.path(path, "ExpressionPlot_NOISeq.pdf"))
-		DE.plot(all_NOISeq, q = q_value, graphic = "MD", cex.lab=1.4, cex.axis=1.4)
-	dev.off()
 
 	normalized_counts <- tmm(assayData(mydata)$exprs, long = 1000, lc = 1) # Getting normalized counts
 	expres_diff_all <- as.data.frame(all_NOISeq@results)
