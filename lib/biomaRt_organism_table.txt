@@ -49,7 +49,7 @@ Medicago	plants_mart	mtruncatula_eg_gene	mtr	go_accession	entrezgene	plants.ense
 Meleagris	ENSEMBL_MART_ENSEMBL	mgallopavo_gene_ensembl	mgp	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide				
 Microcebus	ENSEMBL_MART_ENSEMBL	mmurinus_gene_ensembl	NotInKEGG	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide				
 Monodelphis	ENSEMBL_MART_ENSEMBL	mdomestica_gene_ensembl	mdo	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide				
-Mouse	ENSEMBL_MART_ENSEMBL	mmusculus_gene_ensembl	mmu	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide	org.Mm.eg.db	org.Mm.egENSEMBL2EG	mouse	
+Mouse	ENSEMBL_MART_ENSEMBL	mmusculus_gene_ensembl	mmu	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide	org.Mm.eg.db	org.Mm.egENSEMBL2EG	mouse	org.Mm.egSYMBOL
 Musa	plants_mart	macuminata_eg_gene	mus	go_accession	entrezgene	plants.ensembl.org	ensembl_gene_id	refseq_peptide				
 Mustela	ENSEMBL_MART_ENSEMBL	mfuro_gene_ensembl	NotInKEGG	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide				
 Myotis	ENSEMBL_MART_ENSEMBL	mlucifugus_gene_ensembl	NotInKEGG	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide				
@@ -107,6 +107,6 @@ Worm	ENSEMBL_MART_ENSEMBL	celegans_gene_ensembl	cel	go_id	entrezgene_id	www.ense
 Xenopus	ENSEMBL_MART_ENSEMBL	xtropicalis_gene_ensembl	xtr	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide				
 Xiphophorus	ENSEMBL_GENE_ENSEMBL	xmaculatus_gene_ensembl	xma	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide				
 Yeast	ENSEMBL_MART_ENSEMBL	scerevisiae_gene_ensembl	sce	go_id	entrezgene	www.ensembl.org	ensembl_gene_id	refseq_peptide	org.Sc.sgdCHR		yeast	
-Zebrafish	ENSEMBL_MART_ENSEMBL	drerio_gene_ensembl	dre	go_id	entrezgene_id	www.ensembl.org	ensembl_gene_id	refseq_peptide	org.Dr.eg.db	org.Dr.egENSEMBL2EG	zebrafish	
+Zebrafish	ENSEMBL_MART_ENSEMBL	drerio_gene_ensembl	dre	go_id	entrezgene_id	www.ensembl.org	ensembl_gene_id	refseq_peptide	org.Dr.eg.db	org.Dr.egENSEMBL2EG	zebrafish	org.Dr.egSYMBOL
 Zea	plants_mart	zmays_eg_gene	zma	go_accession	entrezgene	plants.ensembl.org	ensembl_gene_id	refseq_peptide				
 Anopheles									org.Ag.eg.db	org.Ag.egENSEMBL2EG		
