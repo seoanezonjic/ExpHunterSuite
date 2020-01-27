@@ -63,9 +63,13 @@ option_list <- list(
     By default the following modules Default=%default are performed"),
   make_option(c("-c", "--minpack_common"), type="integer", default=4,
     help="Number of minimum package to consider a gene as a 'PREVALENT' DEG"),
-  make_option(c("-L", "--linked_samples"), type="logical", default=FALSE,
-    help="If TRUE, samples will be linked (paired) by the order they appear in the arguments Treatment_columns and Control_columns Default=%default")
-)
+  make_option(c("-t", "--target_file"), type="character", default=NULL,
+    help="Sample descriptions: one column must be named treat and contain values of Treat or Ctrl. This file will take precedent over the -T and -C sample flags."),
+  make_option(c("-v", "--model_variables"), type="character", default="",
+    help="Variables to include in the model. Must be comma separated and each variable must be a column in the target_file, or the model can be specified precisely if the custom_model flag is TRUE"),
+  make_option(c("-M", "--custom_model"), type="logical", default="FALSE",
+    help="If true, text in the model_variables variable will be passed directly to the model construction")
+ )
 opt <- parse_args(OptionParser(option_list=option_list))
 
 ############################################################
@@ -76,27 +80,18 @@ opt <- parse_args(OptionParser(option_list=option_list))
 if (is.null(opt$input_file)){
   stop(cat("No file with RNA-seq counts is provided.\nPlease use -i to submit file"))
 }
-if (is.null(opt$Control_columns)){
-  stop(cat("No control samples are indicated.\nPlease select column names of the count table with -C"))
-}
-if (is.null(opt$Treatment_columns)){
-  stop(cat("No treatment samples are indicated.\nPlease select column names of the count table with -T"))
-}
 if (opt$minlibraries < 1){
   stop(cat("Minimum library number to check minimum read counts cannot be less than 1.\nIf you want to avoid filtering, set --reads to 0."))
 }
 if (opt$reads == 0){
   cat("Minimum reads option is set to zero. Raw count table will not be filtered.")
 }
-if (opt$linked_samples == TRUE & (length(opt$Treatment_columns) != length(opt$Control_columns))) {
-  cat("If a linked (paired) design is used there should be equivalent numbers of treatment and control samples.")
+
+if (opt$model_variables != "" & grepl("N", opt$modules) & nchar(opt$modules) == 1) {
+  stop(cat("You cannot run an experimental design that uses the model_variables option with NOISeq only."))
 }
-if (opt$linked_samples == TRUE & grepl("N", opt$modules) & nchar(opt$modules) == 1) {
-  stop(cat("You cannot run a linked (paired) experimental design analysis with NOISeq only."))
-  opt$modules <- gsub("N", "", opt$modules)
-}
-if (opt$linked_samples == TRUE & grepl("N", opt$modules) & nchar(opt$modules) > 1) {
-  warning("As you are using a linked (paired) experiment design, NOISeq will not be run.")
+if (opt$model_variables != "" & grepl("N", opt$modules) & nchar(opt$modules) > 1) {
+  warning("NOISeq will not be run as you have an experimental design that uses the model_variables option.")
   opt$modules <- gsub("N", "", opt$modules)
 }
 
@@ -106,15 +101,21 @@ if(opt$minpack_common > active_modules){
   warning("The number of active modules is lower than the thresold for tag PREVALENT DEG. The thresold is set to the number of active modules.")
 }
 
-
-# Control replicate number VS method selection
-index_control_cols <- unlist(strsplit(opt$Control_columns, ",")) 
-index_treatmn_cols <- unlist(strsplit(opt$Treatment_columns, ","))
-replicatesC <- length(index_control_cols)
-replicatesT <- length(index_treatmn_cols)
-
-# Check if there are enough replicates for specified method
-if((replicatesC < 2) | (replicatesT < 2)) stop('At least two replicates per class (i.e. treatment and control) are required\n')
+# Check either C and T columns or target file.
+if( (is.null(opt$Treatment_columns) | is.null(opt$Control_columns)) & is.null(opt$target_file)) {
+  stop(cat("You must include either the names of the control and treatment columns or a target file with a treat column."))
+}
+# In the case of -C/-T AND -t target - give a warning
+if( (!is.null(opt$Treatment_columns) | !is.null(opt$Control_columns)) & !is.null(opt$target_file)) {
+  warning("You have included at least one -C/-T option as well as a -t option for a target file. The target file will take precedence for assigning samples labels as treatment or control.")
+}
+# If no -t check there is no -v value
+if( is.null(opt$target_file) & opt$model_variables != "") {
+  stop(cat("You should not include a -v value if you do not have a target table file."))
+}
+if(opt$custom_model == TRUE & opt$model_variables == "") {
+  stop(cat("If you wish to use a custom model you must provide a value for the model_variables option."))
+}
 
 ############################################################
 ##                         I/O DATA                       ##
@@ -122,6 +123,33 @@ if((replicatesC < 2) | (replicatesT < 2)) stop('At least two replicates per clas
 
 # Create output folder 
 dir.create(opt$output_files)
+
+# Load target file if it exists, otherwise use the -C and -T flags. Note target takes precedence over target.
+if(! is.null(opt$target_file)) {
+  target <- read.table(opt$target_file, header=TRUE, sep="\t", colClasses = "factor")
+  # Check there is a column named treat
+  if(! "treat" %in% colnames(target)) {
+    stop(cat("No column named treat in the target file.\nPlease resubmit"))
+  }
+  index_control_cols <- as.character(subset(target, treat == "Ctrl", select = sample, drop=TRUE))
+  index_treatmn_cols <- as.character(subset(target, treat == "Treat", select = sample, drop=TRUE))
+  replicatesC <- length(index_control_cols)
+  replicatesT <- length(index_treatmn_cols)
+} else {
+  index_control_cols <- unlist(strsplit(opt$Control_columns, ",")) 
+  index_treatmn_cols <- unlist(strsplit(opt$Treatment_columns, ","))
+  replicatesC <- length(index_control_cols)
+  replicatesT <- length(index_treatmn_cols)
+  # Create the target data frame needed in the calls to the DE detection methods
+  target <- data.frame(sample=c(index_control_cols, index_treatmn_cols), 
+    treat=c(rep("Ctrl", length(index_control_cols)), rep("Treat", length(index_treatmn_cols))))
+}
+
+replicatesC <- length(index_control_cols)
+replicatesT <- length(index_treatmn_cols)
+
+# Check if there are enough replicates for specified method
+if((replicatesC < 2) | (replicatesT < 2)) stop('At least two replicates per class (i.e. treatment and control) are required\n')
 
 # Load raw count data
 raw <- read.table(opt$input_file, header=TRUE, row.names=1, sep="\t")
@@ -146,6 +174,24 @@ if(opt$reads != 0){
 
 # Defining contrast - Experimental design
 design_vector <- c(rep("C", replicatesC), rep("T", replicatesT))
+
+
+############################################################
+##                      MODEL TEXT                        ##
+############################################################
+
+# Prepare model text
+if(opt$model_variables != "") {
+  if(opt$custom_model == TRUE) {
+    model_formula_text <- opt$model_variables
+  } else {
+    model_variables_unlist <- unlist(strsplit(opt$model_variables, ","))
+    model_formula_text <- paste("~", paste(model_variables_unlist, "+", collapse=" "), "treat")
+  }
+} else {
+  model_formula_text <- "~ treat"
+}
+cat("Model text for gene expression analysis is:", model_formula_text, "\n")
 
 ############################################################
 ##                       D.EXP ANALYSIS                   ##
@@ -176,8 +222,8 @@ if(grepl("D",opt$modules)){
     # Calculate results
     results <- analysis_DESeq2(data   = raw_filter,
                                p_val_cutoff = opt$p_val_cutoff,
-                               groups = design_vector,
-                               linked_samples = opt$linked_samples)
+                               target = target,
+                               model_formula_text = model_formula_text)
     # Store results
     all_data_normalized[['DESeq2']] <- results[[1]]
     all_counts_for_plotting[['DESeq2']] <- results[[2]]
@@ -208,10 +254,9 @@ if(grepl("E", opt$modules)){
     path <- file.path(opt$output_files, "Results_edgeR")
     dir.create(path)
     # Calculate results
-    results <- analysis_edgeR(data   = raw_filter, 
-                              path  = path,
-                              groups = design_vector,
-                              linked_samples = opt$linked_samples)
+    results <- analysis_edgeR(data   = raw_filter,
+                              target = target,
+                              model_formula_text = model_formula_text)
     # Store results
     all_data_normalized[['edgeR']] <- results[[1]]
     all_counts_for_plotting[['edgeR']] <- results[[2]]
@@ -242,9 +287,9 @@ if(grepl("L", opt$modules)){
     dir.create(file.path(opt$output_files, "Results_limma"))
 
     # Calculate results
-    results <- analysis_limma(data = raw_filter, 
-                              groups=design_vector, 
-                              linked_samples = opt$linked_samples)
+    results <- analysis_limma(data   = raw_filter,
+                              target = target,
+                              model_formula_text = model_formula_text)
     # Store results
     all_data_normalized[['limma']]     <- results[[1]]
     all_counts_for_plotting[['limma']] <- results[[2]]
@@ -276,11 +321,7 @@ if(grepl("N", opt$modules)){
     dir.create(path)
     # Calculate results
     results <- analysis_NOISeq(data    = raw_filter, 
-                               num_controls  = replicatesC, 
-                               num_treatmnts = replicatesT, 
-                               groups  = design_vector, 
-                               path = path,
-                               lfc  = lfc)
+                               target = target)
     # Store results
     all_data_normalized[['NOISeq']]     <- results[[1]]
     all_counts_for_plotting[['NOISeq']] <- results[[2]]
