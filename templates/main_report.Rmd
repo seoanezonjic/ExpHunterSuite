@@ -77,15 +77,15 @@ PerformanceAnalytics::chart.Correlation(raw_filter, histogram=TRUE, pch=19, log=
 
 
 ### **Heatmap and clustering showing correlation between replicates**
-**RED: higher correlation; BLUE: lower**
+**BROWN: higher correlation; YELLOW: lower**
 
 ```{r heatmap_corr,echo = FALSE, fig.height=12, fig.width=12}
-col<- colorRampPalette(c("blue", "white", "red"))(20)
+col<- colorRampPalette(c("#FFFFCC", "#FD8D3C", "#800026"))(20)
 res <- cor(raw_filter)
-heatmap(x = res, col = col, symm = TRUE, margins = rep(max(nchar(colnames(res))), 2))
+heatmap.2(x = res, col = col, symm = TRUE, margins = rep(max(nchar(colnames(res))), 2), scale = "none", trace = "none")
 ```
 
-### **Principal Component Analysis **
+### **Principal Component Analysis**
 This is a PCA plot of the count values following rlog normalization from the DESeq2 package:
 
 ```{r pca_plot, echo = FALSE}
@@ -136,6 +136,23 @@ to_plot <- boxplot(all_data_normalized[[1]],
 					notch=TRUE, 
 					col=(c(rep("gold",replicatesC),rep("darkgreen",replicatesT))))
 ```
+
+
+```{r DESeq2_all_norm_head, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+
+cat("### **Samples differences by all counts normalized**:
+		
+All counts were normalizated by DESeq2 algorithm. This count were scaled by log10 and plotted in a heatmap.")
+```
+
+```{r heatmap_all_norm_plot, echo = FALSE, fig.height=12, fig.width=12}
+	deseq_normalized_data <- all_data_normalized[['DESeq2']]
+	deseq_normalized_data_mtx <- log10(data.matrix(deseq_normalized_data) + 1)
+
+	plot <- heatmap.2(deseq_normalized_data_mtx, col = col, labRow = FALSE, dendrogram = "column", trace = "none", srtCol=45,  adjCol = c(1,1))
+	
+```
+
 
 ## **DEgenes Hunter results**
 
@@ -232,7 +249,45 @@ The complete results of the DEgenes Hunter differential expression analysis can 
 
 Various plots specific to each package are shown below:
 
-```{r DESeq2_conditional_block_head, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r DESeq2_conditional_block_ELS_head, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+
+cat("### **DESeq2 normalization effects**:
+
+This plot compares the effective library size with raw library size")
+```
+
+```{r DESeq2_conditional_block_ELS_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE}
+	deseq_object <- package_objects[['DESeq2']]
+	
+	effective_lib_size <- sizeFactors(package_objects[['DESeq2']][['DESeq2_dataset']])
+	sums <- colSums(raw_filter)
+	norm_bias <- data.frame(sums = sums, 
+							eff_lib_size = effective_lib_size,
+							Treat = design_vector)
+	rownames(norm_bias) <- names(sums)
+
+	plot <- ggplot(norm_bias, aes(x = sums, y = eff_lib_size, group = Treat)) + 
+		geom_point(aes(shape = Treat, color = Treat, size = 8)) +
+		geom_smooth(method = "lm", fill = NA, aes(color = Treat))+
+		xlab("Library size (N reads)") +
+        ylab("Effective library size \n(DESeq2 normalization factor)") +
+		theme_classic() +
+		theme(axis.text = element_text(size= 10), 
+			axis.title = 	element_text(size = 8, face = "bold"),
+			legend.title = element_text(size = 8, face = "bold")) +
+		guides(size = FALSE)
+
+	print(plot)
+  
+```
+
+```{r DESeq2_conditional_block_ELS_text, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+
+cat("The effective library size is the factor used by DESeq2 normalizatioin algorithm for eahc sample. The effective library size must be dependent of raw library size.")
+```
+
+
+```{r DESeq2_conditional_block_ma_head, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
 
 cat("### **DESeq2 MA plot**:
 
@@ -240,11 +295,11 @@ This is the MA plot from DESeq2 package:")
 
 ```
 
-```{r DESeq2_conditional_block_plot, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE}
+```{r DESeq2_conditional_block_ma_plot, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE}
 	plotMA(package_objects[['DESeq2']][['de_deseq2']], cex.lab=1.6, cex.axis=1.5)
 ```
 
-```{r DESeq2_conditional_block_text, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r DESeq2_conditional_block_ma_text, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
 
 	
 cat("In DESeq2, the MA-plot (log ratio versus abundance) shows the log2 fold changes are attributable to a given variable over the mean of normalized counts. Points will be colored red if the adjusted Pvalue is less than 0.1. Points which fall out of the window are plotted as open triangles pointing either up or down.
@@ -253,6 +308,25 @@ A table containing the DESeq2 DEGs is provided: in Results\\_DESeq2/DEgenes\\_DE
 
 A table containing the DESeq2 normalized counts is provided in Results\\_DESeq2/Normalized\\_counts\\_DESEq2.txt")
 
+```
+
+```{r DESeq2_only_prev_norm_head, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+
+cat("### **Differences between samples by PREVALENT DEGs normalized counts**:
+		
+Counts of prevalent DEGs were normalizated by DESeq2 algorithm. This count were scaled by log10 and plotted in a heatmap.")
+```
+
+```{r DESeq2_only_prev_norm_plot, echo = FALSE, fig.height=12, fig.width=12}
+
+	prevalent_genes_check <- DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG")
+	DE_prevalent_genes <- rownames(DE_all_genes[prevalent_genes_check,])
+	deseq_prevalent_normalized <- deseq_normalized_data[rownames(deseq_normalized_data) %in% DE_prevalent_genes,]  
+
+	deseq_normalized_data_mtx <- log10(data.matrix(deseq_prevalent_normalized) + 1)
+
+	plot <- heatmap.2(deseq_normalized_data_mtx, col = col, labRow = FALSE, dendrogram = "column", trace = "none", srtCol=45,  adjCol = c(1,1))
+	
 ```
 
 
@@ -284,7 +358,6 @@ A table containing the edgeR normalized counts is provided in Results\\_edgeR/No
 
 ```{r limma_conditional_block_head, eval='limma' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
 
-
 cat("### **limma Volcano plot**
 
 Volcano plot of log2-fold change versus -log10 of adjusted p-values for all genes according to the analysis with limma:")
@@ -306,7 +379,6 @@ abline(h=-log10(opt$p_val_cutoff), col='red', lty='dashed')
 ```
 
 ```{r limma_conditional_block_text, eval='limma' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
-
 
 cat("A table containing the limma DEGs is provided in Results\\_limma/DEgenes\\_limma.txt")
 
