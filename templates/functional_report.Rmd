@@ -114,7 +114,7 @@ Specifically, in this experiment set, known experiment labels are:
 `r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
 
 
-## **General description **
+## **General description**
 This report contains all the functional information that was requested by the options when functional_Hunter.R was executed.
 The functional categories can be:
 
@@ -1111,7 +1111,7 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
   `r paste(knit(text = paste(out_custom,collapse = "\n")),collapse = "\n")`
 
 
-### **Values of options used to run Functional Hunter**
+## **Values of options used to run Functional Hunter**
 First column contains the option names; second column contains the given values for each option in this run.
 ```{r opt_vals, echo = FALSE}
 knitr::kable(cbind(opt))
