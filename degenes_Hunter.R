@@ -107,8 +107,6 @@ if(opt$minpack_common > active_modules){
   warning("The number of active modules is lower than the thresold for tag PREVALENT DEG. The thresold is set to the number of active modules.")
 }
 
-
-
 # Check either C and T columns or target file.
 if( (is.null(opt$Treatment_columns) | is.null(opt$Control_columns)) & is.null(opt$target_file)) {
   stop(cat("You must include either the names of the control and treatment columns or a target file with a treat column."))
@@ -384,7 +382,7 @@ DE_all_genes <- unite_DEG_pack_results(all_counts_for_plotting, all_FDR_names, a
   final_logFC_names, final_FDR_names, raw, opt$p_val_cutoff, opt$lfc, opt$minpack_common)
 
 if(grepl("W", opt$modules) & grepl("D", opt$modules)) {
-  DE_all_genes <- merge(DE_all_genes, results_WGCNA, by.x=0, by.y="ENSEMBL_ID")
+  DE_all_genes <- transform(merge(DE_all_genes, results_WGCNA, by.x=0, by.y="ENSEMBL_ID"), row.names=Row.names, Row.names=NULL)
 }
 
 # New structure - row names are now actually row names
