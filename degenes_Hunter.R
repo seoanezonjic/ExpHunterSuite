@@ -355,6 +355,9 @@ if(grepl("W", opt$modules)) {
   if(grepl("D", opt$modules)){ 
     cat('Correlation analysis is performed with WGCNA\n')
     dir.create(file.path(opt$output_files, "Results_WGCNA"))
+    DESeq2_counts <- counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE)
+    save(DESeq2_counts, file= file.path(opt$output_files, "DESeq2_counts.Rdata"))
+
       results_WGCNA <- analysis_WGCNA(data   = counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE),
                                 path = file.path(opt$output_files, "Results_WGCNA")
       )
@@ -392,7 +395,6 @@ write.table(DE_all_genes, file=file.path(opt$output_files, "Common_results", "hu
 ############################################################
 ##                    GENERATE REPORT                     ##
 ############################################################
-outf <- paste(dirname(normalizePath(opt$output_files,"DEG_report.html")),"DEG_report.html",sep=.Platform$file.sep)
-
+outf <- file.path(normalizePath(opt$output_files),"DEG_report.html")
 rmarkdown::render(file.path(main_path_script, 'templates', 'main_report.Rmd'), 
                   output_file = outf, intermediates_dir = opt$output_files)
