@@ -82,7 +82,6 @@ PerformanceAnalytics::chart.Correlation(raw_filter, histogram=TRUE, pch=19, log=
 ```{r heatmap_corr,echo = FALSE, fig.height=12, fig.width=12}
 col<- colorRampPalette(c("#FFFFCC", "#FD8D3C", "#800026"))(20)
 res <- cor(raw_filter)
-Heatmap()
 heatmap.2(x = res, col = col, symm = TRUE, margins = rep(max(nchar(colnames(res))), 2), scale = "none", trace = "none")
 ```
 
