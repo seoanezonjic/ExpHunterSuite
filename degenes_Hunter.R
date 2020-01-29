@@ -27,6 +27,7 @@ suppressPackageStartupMessages(library(FSA))
 suppressPackageStartupMessages(require(rmarkdown))
 suppressPackageStartupMessages(require(reshape2))
 suppressPackageStartupMessages(require(PerformanceAnalytics))
+suppressPackageStartupMessages(require(WGCNA))
 
 # Obtain this script directory
 full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using source
@@ -38,6 +39,8 @@ main_path_script <- dirname(full.fpath)
 source(file.path(main_path_script, 'lib', 'general_functions.R'))
 source(file.path(main_path_script, 'lib', 'dif_expression_packages.R'))
 source(file.path(main_path_script, 'lib', 'qc_and_benchmarking_functions.R'))
+source(file.path(main_path_script, 'lib', 'correlation_packages.R'))
+
 
 # Prepare command line input 
 option_list <- list(
@@ -58,8 +61,8 @@ option_list <- list(
     help="Adjusted p-value cutoff for the differential expression analysis. Default=%default"),
   make_option(c("-f", "--lfc"), type="double", default=1,
     help="Minimum log2 fold change in expression. Note this is on a log2 scale, so a value of 1 would mean a 2 fold change. Default=%default"),
-  make_option(c("-m", "--modules"), type="character", default=c("DELN"), #D = DESeq2, E = edgeR, L = limma, N = NOISeq
-    help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N= NOISeq.).
+  make_option(c("-m", "--modules"), type="character", default=c("DELNW"), #D = DESeq2, E = edgeR, L = limma, N = NOISeq W = WGCNA.
+    help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N = NOISeq, W = WGCNA.).
     By default the following modules Default=%default are performed"),
   make_option(c("-c", "--minpack_common"), type="integer", default=4,
     help="Number of minimum package to consider a gene as a 'PREVALENT' DEG"),
@@ -96,10 +99,15 @@ if (opt$model_variables != "" & grepl("N", opt$modules) & nchar(opt$modules) > 1
 }
 
 active_modules <- nchar(opt$modules)
+if(grepl("W", opt$modules)) {
+  active_modules <- active_modules - 1
+}
 if(opt$minpack_common > active_modules){
   opt$minpack_common <- active_modules
   warning("The number of active modules is lower than the thresold for tag PREVALENT DEG. The thresold is set to the number of active modules.")
 }
+
+
 
 # Check either C and T columns or target file.
 if( (is.null(opt$Treatment_columns) | is.null(opt$Control_columns)) & is.null(opt$target_file)) {
@@ -342,6 +350,22 @@ if(grepl("N", opt$modules)){
   }
 }
 
+##################################################################
+##                       CORRELATION ANALYSIS                   ##
+##################################################################
+if(grepl("W", opt$modules)) {
+  if(grepl("D", opt$modules)){ 
+    cat('Correlation analysis is performed with WGCNA\n')
+    dir.create(file.path(opt$output_files, "Results_WGCNA"))
+      results_WGCNA <- analysis_WGCNA(data   = counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE),
+                                path = file.path(opt$output_files, "Results_WGCNA")
+      )
+  } else {
+    warning("WGCNA will not be performed as it requires a DESeq2 object")
+  }
+}
+
+
 #################################################################################
 ##                       EXPORT FINAL RESULTS AND OTHER FILES                  ##
 #################################################################################
@@ -358,6 +382,11 @@ write_df_list_as_tables(all_counts_for_plotting, prefix = 'allgenes_', root = op
 # Write main results file, normalized counts per package and DE results per package
 DE_all_genes <- unite_DEG_pack_results(all_counts_for_plotting, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, 
   final_logFC_names, final_FDR_names, raw, opt$p_val_cutoff, opt$lfc, opt$minpack_common)
+
+if(grepl("W", opt$modules) & grepl("D", opt$modules)) {
+  DE_all_genes <- merge(DE_all_genes, results_WGCNA, by.x=0, by.y="ENSEMBL_ID")
+}
+
 # New structure - row names are now actually row names
 dir.create(file.path(opt$output_files, "Common_results"))
 write.table(DE_all_genes, file=file.path(opt$output_files, "Common_results", "hunter_results_table.txt"), quote=FALSE, row.names=TRUE, sep="\t")
@@ -365,7 +394,7 @@ write.table(DE_all_genes, file=file.path(opt$output_files, "Common_results", "hu
 ############################################################
 ##                    GENERATE REPORT                     ##
 ############################################################
-outf <- file.path(opt$output_files, "DEG_report.html")
+outf <- paste(dirname(normalizePath(opt$output_files,"DEG_report.html")),"DEG_report.html",sep=.Platform$file.sep)
 
 rmarkdown::render(file.path(main_path_script, 'templates', 'main_report.Rmd'), 
                   output_file = outf, intermediates_dir = opt$output_files)
