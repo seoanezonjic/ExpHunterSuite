@@ -25,10 +25,18 @@ analysis_WGCNA <- function(data, path) {
 		text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
 	dev.off()
 
-	pow <- 12
+	# Calculate Power automatically
+	sft_mfs_r2 <- -sign(sft$fitIndices[,3])*sft$fitIndices[,2]
+	min_pow_ind <- min(which(sft_mfs_r2 > 0.9))
+	if(min_pow_ind == Inf) {
+		warning("Could not obtain a valid power (beta) value for WGCNA")
+		return("NO_POWER_VALUE")
+	}
+	pow <- sft$fitIndices[min_pow_ind, "Power"]
+	# pow <- 12
 	cor <- WGCNA::cor # TO CORRECT FUNCTION OVERRIDE DUE TO OTHER PACKAGES
 
-	net = blockwiseModules(data, power = pow,
+	net <- blockwiseModules(data, power = pow,
 			maxBlockSize = 5000, # Increase to memory limit in order to obtain more realistic results
                        TOMType = "unsigned", minModuleSize = 30,
                        reassignThreshold = 0, mergeCutHeight = 0.25,

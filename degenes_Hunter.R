@@ -358,9 +358,9 @@ if(grepl("W", opt$modules)) {
     DESeq2_counts <- counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE)
     save(DESeq2_counts, file= file.path(opt$output_files, "DESeq2_counts.Rdata"))
 
-      results_WGCNA <- analysis_WGCNA(data   = counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE),
+    results_WGCNA <- analysis_WGCNA(data   = counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE),
                                 path = file.path(opt$output_files, "Results_WGCNA")
-      )
+    )
   } else {
     warning("WGCNA will not be performed as it requires a DESeq2 object")
   }
@@ -384,7 +384,8 @@ write_df_list_as_tables(all_counts_for_plotting, prefix = 'allgenes_', root = op
 DE_all_genes <- unite_DEG_pack_results(all_counts_for_plotting, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, 
   final_logFC_names, final_FDR_names, raw, opt$p_val_cutoff, opt$lfc, opt$minpack_common)
 
-if(grepl("W", opt$modules) & grepl("D", opt$modules)) {
+# Check WGCNA was run and it returned proper results
+if(grepl("W", opt$modules) & grepl("D", opt$modules) & results_WGCNA != "NO_POWER_VALUE") {
   DE_all_genes <- transform(merge(DE_all_genes, results_WGCNA, by.x=0, by.y="ENSEMBL_ID"), row.names=Row.names, Row.names=NULL)
 }
 
