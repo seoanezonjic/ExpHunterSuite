@@ -371,27 +371,70 @@ if(flags$GO){
 
 
 
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+##                                                                                                                   ##
+##                                               NORMALIZED ENRICHMENTS                                              ##                                                     
+##                                                                                                                   ##
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+# Prepare executions
+if(any(flags[c("GO_cp","KEGG","REACT")])){
+	###################
+	## GENERAL
+	if(flags$GSEA){
+		if(exists("annot_table")){
+			aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
+			geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
+			names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
+			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+		}else{
+			aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
+			geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
+			names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
+			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+		}
+		# Sort FC
+		geneList <- sort(geneList, decreasing = TRUE)
+	}
+
+	###################
+	## GO
+	if(flags$GO_cp){
+		# Load necessary packages	
+		modules_to_export <- c()
+		if(grepl("M", opt$GO_graphs)){
+			modules_to_export <- "MF"
+		}
+		if(grepl("B", opt$GO_graphs)){
+			modules_to_export <- c(modules_to_export,"BP")
+		}
+		if(grepl("C", opt$GO_graphs)){
+			modules_to_export <- c(modules_to_export,"CC")
+		}
+		if(length(modules_to_export) == 0){
+			warning("Any GO sub-ontology have been selected. Use -G input command")
+		}
+	}
+
+
+	###################
+	## KEGG
+	if(flags$KEGG & !remote_actions$kegg){
+		require(KEGG.db)
+	}
+
+	###################
+	## REACTOME
+	if(flags$REACT){
+		require(ReactomePA)
+	}
+}
+
 
 #############################################
 ### GO ENRICHMENT (clusterProfiler)
 #############################################
 if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(biomaRt_organism_info$Bioconductor_VarName[1])){
-	# Load necessary packages	
-	modules_to_export <- c()
-	if(grepl("M", opt$GO_graphs)){
-		modules_to_export <- "MF"
-	}
-	if(grepl("B", opt$GO_graphs)){
-		modules_to_export <- c(modules_to_export,"BP")
-	}
-	if(grepl("C", opt$GO_graphs)){
-		modules_to_export <- c(modules_to_export,"CC")
-	}
-	if(length(modules_to_export) == 0){
-		warning("Any GO sub-ontology have been selected. Use -G input command")
-	}
-
-
 	if(flags$ORA){
 		# ORA ENRICHMENTS
 		enrich_go <- lapply(modules_to_export,function(mod){
@@ -414,21 +457,6 @@ if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(bioma
 	
 
 	### GSEA ENRICHMENTS
-	# Obtain target genes
-	if(exists("annot_table")){
-		aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
-		geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
-		names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
-		names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
-	}else{
-		aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
-		geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
-		names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
-		names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
-	}
-	# Sort FC
-	geneList <- sort(geneList, decreasing = TRUE)
-
 	if(flags$GSEA){
 		# Enrich
 		enrich_go_gsea <- lapply(modules_to_export,function(mod){
@@ -462,11 +490,6 @@ if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(bioma
 #############################################
 
 if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
-
-	# Load necessary packages
-	if(!remote_actions$kegg){
-		require(KEGG.db)
-	}
 	if(flags$ORA){
 		# Enrich
 		enrich_ora <-  enrichKEGG(gene          = common_unique_entrez, #genes,
@@ -480,21 +503,7 @@ if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
 	
 	}
 
-	if(!exists("geneList")){
-		if(exists("annot_table")){
-			aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
-			geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
-			names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
-			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
-		}else{
-			aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
-			geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
-			names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
-			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
-		}		
-	}
-
-	geneList <- sort(geneList, decreasing = TRUE)
+	# Launch GSEA
 	if(flags$GSEA){
 
 		enrich_gsea <- gseKEGG(geneList     = geneList,
@@ -524,9 +533,6 @@ if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
 #############################################
 
 if(flags$REACT & (!is.na(biomaRt_organism_info$Reactome_ID[1]) & (keytypes == "ENTREZID"))){
-	# Load necessary packages
-	require(ReactomePA)
-
 	if(flags$ORA){
 		# Make enrichment (ORA)
 		enrich_react <- enrichPathway(common_unique_entrez,
@@ -541,23 +547,7 @@ if(flags$REACT & (!is.na(biomaRt_organism_info$Reactome_ID[1]) & (keytypes == "E
 	
 	}
 
-	# Prepare enrichment (GSEA)
-	if(!exists("geneList")){
-		if(exists("annot_table")){
-			aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
-			geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
-			names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
-			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
-		}else{
-			aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
-			geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
-			names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
-			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
-		}		
-	}
-
-	geneList <- sort(geneList, decreasing = TRUE)
-		# Make enrichment GSEA
+	# Make enrichment GSEA
 	if(flags$GSEA){
 		enrich_react_gsea <- gsePathway(geneList, 
 										organism = biomaRt_organism_info$Reactome_ID[1],
@@ -586,22 +576,6 @@ if(flags$REACT & (!is.na(biomaRt_organism_info$Reactome_ID[1]) & (keytypes == "E
 #############################################
 if(!is.null(opt$custom)) {
 	if(nchar(opt$custom)>0) {
-		if(!exists("geneList")){
-			if(exists("annot_table")){
-				aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
-				geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
-				names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
-				names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
-			}else{
-				aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
-				geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
-				names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
-				names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
-			}		
-		}
-
-		geneList <- sort(geneList, decreasing = TRUE)
-
 		# Obtain custom files
 		custom_files <- unlist(strsplit(opt$custom,","))
 		# Per each file, launch enrichment
