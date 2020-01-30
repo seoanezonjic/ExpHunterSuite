@@ -1,0 +1,9 @@
+There are three ways to specify the groupings for the different types of samples and other variables to include in the DE model design. In increasing level of complexity, these are:
+
+1) Specifying the names of the columns in the counts matrix to use as treatment (case) and control samples using  -T and -C, respectively. In this scenario, you can only perform a pairwise analysis.
+
+2) Specifying the names of the columns in the counts matrix to use as treatment (case) and control samples, using the target file (-t). This file should include as a minimum a column named sample, containing sample names, and a sample named treat, indicating whether a sample is treatment (specified as Treat in the target file) or control (specified as Ctrl in the target file). The user can also specify additional variables to include (additively) in the DE expression model, these should be specified using the -v argument, as a comma separated list of variables.
+
+3) Specifying the names of the columns in the counts matrix to use as treatment (case) and control samples, using the target file as described above. However, instead of specifying the additional variables, the user can specify a specific exactly what model to use, using standard R model formulae. For example, "~ treat" will result in a simple pairwise analysis. The allows the user to include complex model designs including interactions if they so wish. This is controlled by the -M, --custom_model flag being true (FALSE by default)... if this is true, the text in -v will be taken literally.
+
+If you specify -T and -C, as well as a target with -t, the target will take precedence.  
