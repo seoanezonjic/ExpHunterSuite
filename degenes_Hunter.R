@@ -71,7 +71,11 @@ option_list <- list(
   make_option(c("-v", "--model_variables"), type="character", default="",
     help="Variables to include in the model. Must be comma separated and each variable must be a column in the target_file, or the model can be specified precisely if the custom_model flag is TRUE"),
   make_option(c("-M", "--custom_model"), type="logical", default="FALSE",
-    help="If true, text in the model_variables variable will be passed directly to the model construction")
+    help="If true, text in the model_variables variable will be passed directly to the model construction"),
+  make_option(c("-S", "--string_factors"), type="character", default="",
+    help="Columns in the target file to be used as categorical factors for the correlation analysis"),
+  make_option(c("-N", "--numeric_factors"), type="character", default="",
+    help="Columns in the target file to be used as numeric (continuous) factors for the correlation analysis")
  )
 opt <- parse_args(OptionParser(option_list=option_list))
 
@@ -121,6 +125,10 @@ if( is.null(opt$target_file) & opt$model_variables != "") {
 }
 if(opt$custom_model == TRUE & opt$model_variables == "") {
   stop(cat("If you wish to use a custom model you must provide a value for the model_variables option."))
+}
+# If factors are specified but WGCNA not selected, throw a warning.
+if((opt$string_factors != "" | opt$numeric_factors != "") & !grepl("W", opt$modules)) {
+  stop(cat("If you wish to use factors for the correlation analysis you must also run WGCNA."))
 }
 
 ############################################################
@@ -361,6 +369,9 @@ if(grepl("W", opt$modules)) {
     results_WGCNA <- analysis_WGCNA(data   = counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE),
                                 path = file.path(opt$output_files, "Results_WGCNA")
     )
+    if(results_WGCNA == "NO_POWER_VALUE") {
+      opt$modules <- gsub("W", "", opt$modules)
+    }
   } else {
     warning("WGCNA will not be performed as it requires a DESeq2 object")
   }
@@ -385,7 +396,7 @@ DE_all_genes <- unite_DEG_pack_results(all_counts_for_plotting, all_FDR_names, a
   final_logFC_names, final_FDR_names, raw, opt$p_val_cutoff, opt$lfc, opt$minpack_common)
 
 # Check WGCNA was run and it returned proper results
-if(grepl("W", opt$modules) & grepl("D", opt$modules) & results_WGCNA != "NO_POWER_VALUE") {
+if(grepl("W", opt$modules) & grepl("D", opt$modules)) {
   DE_all_genes <- transform(merge(DE_all_genes, results_WGCNA, by.x=0, by.y="ENSEMBL_ID"), row.names=Row.names, Row.names=NULL)
 }
 
