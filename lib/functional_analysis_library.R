@@ -118,60 +118,6 @@ ensembl_to_entrez <- function(ensembl_ids,organism_db, organism_var){
 
 
 
-# human_ENSEMBL_to_GO <- function(ensembl_ids,sub_ontology){
-#     require(org.Hs.eg.db)
-#     require(topGO)
-
-#     # Translate ENSEMBL to Entrex IDs
-#     ensembl2entrez <- as.list(org.Hs.egENSEMBL2EG[mappedkeys(org.Hs.egENSEMBL2EG)])
-
-#     # Obtain related GO terms
-#     go2entrez <- annFUN.org(sub_ontology, mapping = "org.Hs.eg.db")
-#     entrez2go <- as.data.frame(do.call(rbind,lapply(seq_along(go2entrez),function(i){
-#         go_term <- names(go2entrez)[i]
-#         genes <- go2entrez[[i]]
-#         return(data.frame(Gene = genes, GO = rep(go_term,length(genes)), stringsAsFactors = FALSE))    
-#     })))
-
-#     # Revert GO-Entrex to GO-ENSEMBL
-#     ensembl2go <- as.data.frame(do.call(rbind,lapply(ensembl_ids,function(ensembl){
-#         # Obtain related entrez genes
-#         genes <- ensembl2entrez[ensembl]
-#         if(length(genes) == 0){
-#             return(data.frame())
-#         }
-#         # Obtain related go
-#         info <- as.data.frame(do.call(rbind,lapply(genes,function(gene){
-#             go_terms <- entrez2go$GO[which(entrez2go$Gene == gene)]
-#             # Return info
-#             return(data.frame(Gene = rep(ensembl,length(go_terms)), 
-#                               GO = go_terms, 
-#                               Entrez = rep(gene,length(go_terms)), stringsAsFactors = FALSE))
-#         })))
-#         return(info)  
-#     })))
-
-#     # Add wanted names
-#     colnames(ensembl2go) <- c("ensembl_gene_id", "go_id", "entrezgene")
-
-#     # Return info
-#     return(ensembl2go)
-# }
-
-
-
-
-# getting_information_with_BiomaRt <- function(orthologues, id_type, mart, dataset, host, attr){
-#     require(biomaRt)
-#     # Load
-#     ensembl <- useMart(mart,dataset=dataset, host=host)
-#     query <- getBM(attributes = attr, filters = id_type, values = orthologues, mart = ensembl)
-# }
-
-
-
-
-
 #' @param entrez_targets
 #' @param entrez_universe
 #' @param sub_ontology
@@ -191,19 +137,10 @@ perform_GSEA_analysis_local <- function(entrez_targets,entrez_universe,sub_ontol
   
   if(length(levels(geneList)) == 2){ # launch analysis
     TopGOobject <- new("topGOdata", ontology = sub_ontology, allGenes = geneList, annot = annFUN.org, mapping = organism)
-    # Prepare metrics
-    # classic <- new("classicCount", testStatistic = GOFisherTest, name = "Fisher_Test")
-    # KS <- new("classicScore", testStatistic = GOKSTest, name = "KS tests")
-    # KS_elim <- new("elimScore", testStatistic = GOKSTest, name = "KS tests")
-    # # Perform metrics
-    # results_fisher  <- getSigGroups(TopGOobject, classic)
-    # results_KS      <- getSigGroups(TopGOobject,KS)
-    # results_KS_elim <- getSigGroups(TopGOobject,KS_elim)
     # # Possible option 2
     results_fisher  <- runTest(TopGOobject, algorithm = "classic", statistic = "fisher") 
     results_KS      <- runTest(TopGOobject, algorithm = "classic", statistic = "ks")
     results_KS_elim <- runTest(TopGOobject, algorithm = "elim", statistic = "ks")
-
 
     # Create results table
     all_results_table <- GenTable(TopGOobject, 
@@ -306,130 +243,6 @@ getting_number_geneIDs <- function(mart, dataset, host, biomaRt_filter){
     total_genes <- length(genenames)
     return(total_genes)
 }
-
-
-# #### OBSOLETE
-# find_interesting_pathways <- function(biomaRt_organism_info, genes_of_interest, filter_name){
-#     # Load necessary packages
-#     require(KEGGREST)
-
-#     # Prepare containers
-#     pathway_pval <- list()
-#     complete_pathway_df <- NULL
-#     EC_number <- character(0)
-#     path_name <- character(0)
-#     entrez_ID <- character(0)
-
-#     pathway_list <- keggList("pathway", as.character(biomaRt_organism_info[,"KeggCode"]))
-#     pathway_codes <- sub("path:", "", names(pathway_list))
-
-#     total_genes <- getting_number_geneIDs(mart = as.character(biomaRt_organism_info[,"Mart"]),
-#                                           dataset = as.character(biomaRt_organism_info[,"Dataset"]), 
-#                                           host = organism_host, 
-#                                           biomaRt_filter = filter_name)
-#     total_pathways <- length(pathway_codes)
-
-#     for(i in c(1:total_pathways)){
-#         left <- total_pathways - i
-#         range <- 9
-#         if(left < range){
-#             range <- left
-#         }
-#         query_genespathway <- keggGet(pathway_codes[c(i:i+range)])
-
-#         for(i in 1:10){ #Processing package retrieved from kegg
-#             genes_in_pathway <- query_genespathway[[1]]$GENE[c(TRUE, FALSE)]
-#             pVal_for_pathway <- calculate_pvalue(genes_in_pathway, genes_of_interest, total_genes)
-#             if(pVal_for_pathway < 0.1){                
-#                 path_name <- query_genespathway[[1]]$ENTRY
-#                 EC_list <- keggGet(path_name)[[1]]$GENE
-#                 if (!is.null(EC_list)){
-#                     number_genes <- c(1:length(genes_in_pathway))
-#                     even_number_v <- number_genes[number_genes%%2==0]
-#                     odd_number_v <- number_genes[number_genes%%2!=0]
-#                     real_genes_number <- length(number_genes)/2
-#                     if (length(even_number_v != 0)){
-#                         for (i in c(1:real_genes_number)){
-#                             line_EC <- as.vector(unlist(EC_list[[even_number_v[i]]]))
-#                             EC_number <- str_match(line_EC, "(EC\\:[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)")
-#                             EC_number <- EC_number[1]
-#                             if (length(EC_number) != 0){
-#                                 entrez_ID <- unlist(EC_list[[odd_number_v[i]]])
-#                                 complete_pathway_df <- rbind(complete_pathway_df, data.frame(pathway = path_name, 
-#                                 entrez = entrez_ID, EC = EC_number, row.names = NULL))
-#                             } 
-#                         }
-#                     }
-#                 }
-#             }
-#         }
-#     } 
-#     return(complete_pathway_df)
-# }
-# 
-# 
-# 
-# visualizing_KEGG_pathways <- function(name, pathway_id_EC){
-#     kegg_info <- pathway_id_EC 
-
-#     report = paste('<html>',
-#             '<head>',
-#             '<title>Pathway table</title>',
-#             '<style>',
-#             'azul {color:rgb(255,0,0);}',
-#             '</style>',
-#             '</head>',
-#             '<body bgcolor="#FFFFFF">',
-#             '<center>',
-#             '<table border="2" cellspacing="0" cellpadding="2">',
-#             '<tr><th>PATHWAY</th></tr>',
-#             sep="\n")
-#     #table row generating
-
-#     curret_pathway <- ''
-#     current_entrez <- c()
-#     current_ec <- c()
-#     for (i in 1:nrow(kegg_info)) {  
-#             record = kegg_info[i,]
-#             if(record$pathway != curret_pathway ||  i == nrow(kegg_info)){
-#                     # Add row to report table
-#                     if(i > 1){
-#                             pathway_name <- '' 
-#                             row_table <- paste('<tr><td><a href="http://www.kegg.jp/kegg-bin/show_pathway?',
-#                                                     curret_pathway,
-#                                                     '/default%3d',
-#                                                     'red',
-#                                                     '/',
-#                                                     paste(unique(current_ec), collapse='%09/,'),
-#                                                     '">',
-#                                                     curret_pathway,
-#                                                     '</a></td></tr>',
-#                                                     sep='')
-
-#                             report <- paste(report, row_table, sep="\n")
-#                     }
-#                     # Reset pathway to new path
-#                     current_entrez <- c(record$entrez)
-#                     current_ec  <- c(record$EC)
-#             }else{
-#                     current_entrez <- c(current_entrez, as.character(record$entrez)) #Fields are factor so we use as.character
-#                     current_ec <- c(current_ec, as.character(record$EC))
-#             }
-#             curret_pathway <- record$pathway
-#     }
-
-
-#     #footer html
-#     report = paste(report, '</table>',
-#             '</center>',
-#             '</body>',
-#             '</html>',
-#             sep="\n")
-
-#     write(report, file = file.path(paths, name), sep='')
-# }
-
-
 
 
 generate_FA_report <- function(){
