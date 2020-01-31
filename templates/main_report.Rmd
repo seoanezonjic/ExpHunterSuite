@@ -412,6 +412,16 @@ A table containing the NOISeq normalized counts is provided in Results\\_NOISeq/
 )
 ```
 
+```{r WGCNA_conditional_block_plot, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE}
+	knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor']][1:10,])
+	knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor_p']][1:10,])
+	knitr::kable(results_WGCNA[['package_objects']][['gene_module_cor']][1:10,])
+	knitr::kable(results_WGCNA[['package_objects']][['gene_module_cor_p']][1:10,])
+	knitr::kable(results_WGCNA[['package_objects']][['module_trait_cor']])
+	knitr::kable(results_WGCNA[['package_objects']][['module_trait_cor_p']])
+
+```
+
 ## **Detailed package results comparation**
 This is an advanced section in order to compare the output of the packages used to perform data analysis. The data shown here does not necessarilly have any biological implication. 
 

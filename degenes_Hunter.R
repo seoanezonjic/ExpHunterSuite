@@ -127,8 +127,8 @@ if(opt$custom_model == TRUE & opt$model_variables == "") {
   stop(cat("If you wish to use a custom model you must provide a value for the model_variables option."))
 }
 # If factors are specified but WGCNA not selected, throw a warning.
-if((opt$string_factors != "" | opt$numeric_factors != "") & !grepl("W", opt$modules)) {
-  stop(cat("If you wish to use factors for the correlation analysis you must also run WGCNA."))
+if((opt$string_factors != "" | opt$numeric_factors != "") & (!grepl("W", opt$modules) | is.null(opt$target_file))) {
+  warning("If you wish to use factors for the correlation analysis you must also run WGCNA and include a target file. The -S and -N options will be ignored")
 }
 
 ############################################################
@@ -159,6 +159,34 @@ if(! is.null(opt$target_file)) {
     treat=c(rep("Ctrl", length(index_control_cols)), rep("Treat", length(index_treatmn_cols))))
 }
 
+# Check that the appropriate factor columns can be found in the target file and makes a data frame with the specified factor
+if(exists("target") & grepl("W", opt$modules)) {
+  if(opt$string_factors != "") {
+    string_factors <- unlist(strsplit(opt$string_factors, ","))
+    string_factors_index <- colnames(target) %in% string_factors 
+    if(TRUE %in% string_factors_index) {
+      target_string_factors <- target[string_factors_index]
+    } else {
+      stop(cat("Factors specified with the --string_factors option cannot be found in the target file.\nPlease resubmit."))
+    }
+  } else {
+    target_string_factors <- ""
+  }
+  if(opt$numeric_factors != "") {
+    numeric_factors <- unlist(strsplit(opt$numeric_factors, ","))
+    numeric_factors_index <- colnames(target) %in% numeric_factors
+    if(TRUE %in% numeric_factors_index) {
+      target_numeric_factors <- target[numeric_factors_index]
+      # Ensure the factors are numeric
+      target_numeric_factors <- sapply(target_numeric_factors, as.numeric)
+    } else {
+      stop(cat("Factors specified with the --numeric_factors option cannot be found in the target file.\nPlease resubmit."))
+    }
+  } else {
+    target_numeric_factors <- ""
+  }
+}
+
 replicatesC <- length(index_control_cols)
 replicatesT <- length(index_treatmn_cols)
 
@@ -182,7 +210,7 @@ if(opt$reads != 0){
   to_keep_treatment <- rowSums(edgeR::cpm(raw[index_treatmn_cols]) > opt$reads) >= opt$minlibraries
   keep_cmp <- to_keep_control | to_keep_treatment # Keep if at least minlibraries in either of them
   raw_filter <- raw[keep_cmp,] # Filter out count data frame
-}else{ # NO FILTER
+} else { # NO FILTER
   raw_filter <- raw
 }
 
@@ -205,7 +233,7 @@ if(opt$model_variables != "") {
 } else {
   model_formula_text <- "~ treat"
 }
-cat("Model text for gene expression analysis is:", model_formula_text, "\n")
+cat("Model for gene expression analysis is:", model_formula_text, "\n")
 
 ############################################################
 ##                       D.EXP ANALYSIS                   ##
@@ -360,18 +388,22 @@ if(grepl("N", opt$modules)){
 ##                       CORRELATION ANALYSIS                   ##
 ##################################################################
 if(grepl("W", opt$modules)) {
-  if(grepl("D", opt$modules)){ 
+  if(grepl("D", opt$modules)) { 
     cat('Correlation analysis is performed with WGCNA\n')
+    path <- file.path(opt$output_files, "Results_WGCNA")
     dir.create(file.path(opt$output_files, "Results_WGCNA"))
+    # Uses DESeq2 object - hence check
     DESeq2_counts <- counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE)
-    save(DESeq2_counts, file= file.path(opt$output_files, "DESeq2_counts.Rdata"))
 
-    results_WGCNA <- analysis_WGCNA(data   = counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE),
-                                path = file.path(opt$output_files, "Results_WGCNA")
+    results_WGCNA <- analysis_WGCNA(data=DESeq2_counts,
+                                    path=path,
+                                    target_numeric_factors=target_numeric_factors,
+                                    target_string_factors=target_string_factors
     )
-    if(results_WGCNA == "NO_POWER_VALUE") {
+    if(results_WGCNA[1] == "NO_POWER_VALUE") {
       opt$modules <- gsub("W", "", opt$modules)
     }
+    head(results_WGCNA[['gene_cluster_info']])
   } else {
     warning("WGCNA will not be performed as it requires a DESeq2 object")
   }
@@ -397,7 +429,7 @@ DE_all_genes <- unite_DEG_pack_results(all_counts_for_plotting, all_FDR_names, a
 
 # Check WGCNA was run and it returned proper results
 if(grepl("W", opt$modules) & grepl("D", opt$modules)) {
-  DE_all_genes <- transform(merge(DE_all_genes, results_WGCNA, by.x=0, by.y="ENSEMBL_ID"), row.names=Row.names, Row.names=NULL)
+  DE_all_genes <- transform(merge(DE_all_genes, results_WGCNA[['gene_cluster_info']], by.x=0, by.y="ENSEMBL_ID"), row.names=Row.names, Row.names=NULL)
 }
 
 # New structure - row names are now actually row names
@@ -408,5 +440,6 @@ write.table(DE_all_genes, file=file.path(opt$output_files, "Common_results", "hu
 ##                    GENERATE REPORT                     ##
 ############################################################
 outf <- file.path(normalizePath(opt$output_files),"DEG_report.html")
+cat(grepl("W", opt$modules), "\n")
 rmarkdown::render(file.path(main_path_script, 'templates', 'main_report.Rmd'), 
                   output_file = outf, intermediates_dir = opt$output_files)

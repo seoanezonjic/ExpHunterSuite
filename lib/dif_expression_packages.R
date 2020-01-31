@@ -5,7 +5,6 @@
 # DESeq2
 #-----------------------------------------------
 analysis_DESeq2 <- function(data, p_val_cutoff, target, model_formula_text){
-	cat(model_formula_text, "\n")
 	dds <- DESeqDataSetFromMatrix(countData = data,
 								  colData = target,
                                   design = formula(model_formula_text))
