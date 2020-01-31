@@ -435,16 +435,16 @@ if(any(flags[c("GO_cp","KEGG","REACT")])){
 ### GO ENRICHMENT (clusterProfiler)
 #############################################
 if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(biomaRt_organism_info$Bioconductor_VarName[1])){
+	message("Performing GO enrichments")
 	if(flags$ORA){
 		# ORA ENRICHMENTS
 		enrich_go <- lapply(modules_to_export,function(mod){
-			enrich <-  enrichGO(gene          = common_unique_entrez, #genes,
-								OrgDb         = biomaRt_organism_info$Bioconductor_DB[1], #organism,
-								keyType       = keytypes, #keyType,
-								ont           = mod, # SubOntology
-								pvalueCutoff  = opt$threshold, #pvalueCutoff,
-								pAdjustMethod = "BH") #qvalueCutoff)
-			# enrich <- as.data.frame(enrich)
+			enrich <- enrichment_ORA(genes = common_unique_entrez,
+									 organism = biomaRt_organism_info$Bioconductor_DB[1],
+									 keyType = keytypes,
+									 pvalueCutoff = opt$threshold,
+									 pAdjustMethod = "BH",
+									 ont = paste0("GO_",mod))
 			return(enrich)
 		# })))
 		})
@@ -460,12 +460,12 @@ if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(bioma
 	if(flags$GSEA){
 		# Enrich
 		enrich_go_gsea <- lapply(modules_to_export,function(mod){
-			enrich <- gseGO(geneList      = geneList,
-							   OrgDb        = biomaRt_organism_info$Bioconductor_DB[1],
-							   keyType       = keytypes, #keyType,
-							   ont           = mod, # SubOntology
-							   pvalueCutoff  = opt$threshold, #pvalueCutoff,
-							   pAdjustMethod = "BH")
+			enrich <- enrichment_GSEA(geneList = geneList,
+									  organism = biomaRt_organism_info$Bioconductor_DB[1],
+									  keyType = keytypes,
+									  pvalueCutoff = opt$threshold,
+									  pAdjustMethod = "BH",
+									  ont = paste0("GO_",mod))
 			return(enrich)
 		# })))
 		})
@@ -490,14 +490,16 @@ if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(bioma
 #############################################
 
 if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
+	message("Performing KEGG enrichments")
 	if(flags$ORA){
 		# Enrich
-		enrich_ora <-  enrichKEGG(gene          = common_unique_entrez, #genes,
-								  organism      = biomaRt_organism_info$KeggCode[1], #organism,
-								  keyType       = "kegg", #keyType,
-								  pvalueCutoff  = opt$threshold, #pvalueCutoff,
-								  pAdjustMethod = "BH", #pAdjustMethod,
-								  use_internal_data = !remote_actions$kegg)
+		enrich_ora <- enrichment_ORA(genes = common_unique_entrez,
+									 organism = biomaRt_organism_info$KeggCode[1],
+									 keyType = "kegg",
+									 pvalueCutoff = opt$threshold,
+									 pAdjustMethod = "BH",
+									 ont = "KEGG",
+									 useInternal = !remote_actions$kegg)
 		# Write output
 		write.table(enrich_ora, file=file.path(paths$root, "KEGG_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	
@@ -505,14 +507,11 @@ if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
 
 	# Launch GSEA
 	if(flags$GSEA){
-
-		enrich_gsea <- gseKEGG(geneList     = geneList,
-							   organism     = biomaRt_organism_info$KeggCode[1],
-							   use_internal_data = !remote_actions$kegg,
-							   # nPerm        = 1000,
-							   # minGSSize    = 120,
-							   pvalueCutoff = opt$threshold,
-							   verbose      = FALSE)
+		enrich_gsea <- enrichment_GSEA(geneList = geneList,
+									  organism = biomaRt_organism_info$KeggCode[1],
+									  pvalueCutoff = opt$threshold,
+									  ont = "KEGG",
+									  useInternal = !remote_actions$kegg)
 		# Write output
 		write.table(enrich_gsea, file=file.path(paths$root, "KEGG_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
@@ -533,30 +532,26 @@ if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
 #############################################
 
 if(flags$REACT & (!is.na(biomaRt_organism_info$Reactome_ID[1]) & (keytypes == "ENTREZID"))){
+	message("Performing Reactome enrichments")
 	if(flags$ORA){
 		# Make enrichment (ORA)
-		enrich_react <- enrichPathway(common_unique_entrez,
-									 organism = biomaRt_organism_info$Reactome_ID[1],
-									 pAdjustMethod = "BH",
-									 # minGSSize = 10,
-									 # maxGSSize = 500, 
-									 # readable = FALSE,
-	 								 pvalueCutoff = opt$threshold)
-		# Write output
+		enrich_react <- enrichment_ORA(genes = common_unique_entrez,
+								 organism = biomaRt_organism_info$Reactome_ID[1],
+								 keyType = "ENTREZID",
+								 pvalueCutoff = opt$threshold,
+								 pAdjustMethod = "BH",
+								 ont = "REACT")		# Write output
 		write.table(enrich_react, file=file.path(paths$root, "REACT_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	
 	}
 
 	# Make enrichment GSEA
 	if(flags$GSEA){
-		enrich_react_gsea <- gsePathway(geneList, 
-										organism = biomaRt_organism_info$Reactome_ID[1],
-										# exponent = 1, 
-										# nPerm = 1000,
-										# minGSSize = 10, 
-										# maxGSSize = 500, 
-										pvalueCutoff = opt$threshold,
-										pAdjustMethod = "BH")
+		enrich_react_gsea <- enrichment_GSEA(geneList = geneList,
+											 organism = biomaRt_organism_info$Reactome_ID[1],
+											 pvalueCutoff = opt$threshold,
+											 pAdjustMethod = "BH",
+											 ont = "REACT")		# Write output
 		# Write output
 		write.table(enrich_react_gsea, file=file.path(paths$root, "REACT_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
@@ -609,6 +604,7 @@ if(!is.null(opt$custom)) {
 # REMOVE THIS WHEN DEVELOP/TEST PHASE ENDS
 # save.image("test.RData")
 
+message("RENDERING REPORT ...")
 
 ############################################################
 ##                    GENERATE REPORT                     ##
