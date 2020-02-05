@@ -39,8 +39,7 @@ option_list <- list(
   make_option(c("-m", "--model_organism"), type="character",
     help="Ortologue Species"),
   make_option(c("-a", "--annot_file"), type="character",
-  	help="Two column file with annotations for functional analysis of a non-model organism. First column must be a gene ensembl id or a refseq id from a model organism. This id mus
-t be a orthologue of the gene id of the second column, that is the custom id from a non-model organism (whose functional analysis is desired)"),
+  	help="Two column file with annotations for functional analysis of a non-model organism. First column must be a gene ensembl id or a refseq id from a model organism. This id must be a orthologue of the gene id of the second column, that is the custom id from a non-model organism (whose functional analysis is desired)"),
   make_option(c("-t", "--biomaRt_filter"), type="character", default="E",
     help="ID types. ENSEMBL (E) Refseq_peptide (R), TAIR/Arabidopsis (T), Gene Names (G) Gene SYMBOLS (S). [Default:%default]"),      	
   make_option(c("-f", "--functional_analysis"), type="character", default="GK",
@@ -133,7 +132,8 @@ flags <- list(GO    = grepl("G", opt$functional_analysis),
               GO_cp = grepl("g", opt$functional_analysis),
               REACT = grepl("R", opt$functional_analysis),
               GSEA  = grepl("g", opt$analysis),
-              ORA   = grepl("o", opt$analysis))
+              ORA   = grepl("o", opt$analysis),
+              Clustered = "Cluster_ID" %in% colnames(DEG_annot_table))
 
 # Special case
 if(exists("annot_table")){
@@ -378,7 +378,11 @@ if(flags$GO){
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
 # Prepare executions
-if(any(flags[c("GO_cp","KEGG","REACT")])){
+if(any(unlist(flags[c("GO_cp","KEGG","REACT")]))){
+	options(stringsAsFactors=FALSE)
+	ora_config <- data.frame(Onto = character(),Organism = character(),KeyType = character(), stringsAsFactors = FALSE)
+	gsea_config <- data.frame(Onto = character(),Organism = character(),KeyType = character(),UseInternal = logical(), stringsAsFactors = FALSE)
+
 	###################
 	## GENERAL
 	if(flags$GSEA){
@@ -400,41 +404,173 @@ if(any(flags[c("GO_cp","KEGG","REACT")])){
 	###################
 	## GO
 	if(flags$GO_cp){
-		# Load necessary packages	
-		modules_to_export <- c()
-		if(grepl("M", opt$GO_graphs)){
-			modules_to_export <- "MF"
-		}
-		if(grepl("B", opt$GO_graphs)){
-			modules_to_export <- c(modules_to_export,"BP")
-		}
-		if(grepl("C", opt$GO_graphs)){
-			modules_to_export <- c(modules_to_export,"CC")
-		}
-		if(length(modules_to_export) == 0){
-			warning("Any GO sub-ontology have been selected. Use -G input command")
+		# Check
+		if(is.na(biomaRt_organism_info$Bioconductor_DB[1]) | is.na(biomaRt_organism_info$Bioconductor_VarName[1])){
+			flags$GO_cp <- FALSE
+			warning("Specified organism is not allowed to be used with GO (clusterProfiler) module. Please check your IDs table")
+		}else{
+			# Load necessary packages	
+			modules_to_export <- c()
+			if(grepl("M", opt$GO_graphs)){
+				modules_to_export <- "MF"
+			}
+			if(grepl("B", opt$GO_graphs)){
+				modules_to_export <- c(modules_to_export,"BP")
+			}
+			if(grepl("C", opt$GO_graphs)){
+				modules_to_export <- c(modules_to_export,"CC")
+			}
+			if(length(modules_to_export) == 0){
+				warning("Any GO sub-ontology have been selected. Use -G input command")
+			}
+			# Add execution info
+			if(flags$Clustered){
+				if(flags$ORA){ 
+					invisible(lapply(modules_to_export,function(mod){ora_config <<- rbind(ora_config,list(Onto=paste0("GO_",mod),Organism=biomaRt_organism_info$Bioconductor_DB[1],KeyType=keytypes))}))
+				}
+				if(flags$GSEA){
+					invisible(lapply(modules_to_export,function(mod){gsea_config <<- rbind(gsea_config,list(Onto=paste0("GO_",mod),Organism=biomaRt_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))}))					
+				}
+			}			
 		}
 	}
 
 
 	###################
 	## KEGG
-	if(flags$KEGG & !remote_actions$kegg){
-		require(KEGG.db)
+	if(flags$KEGG){ 
+		if(is.na(biomaRt_organism_info$KeggCode[1])){
+			flags$KEGG <- FALSE
+			warning("Specified organism is not allowed to be used with KEGG module. Please check your IDs table")
+		}else{
+			if(!remote_actions$kegg){
+				require(KEGG.db)
+			}
+			if(flags$Clustered){
+				if(flags$ORA) ora_config <- rbind(ora_config,list(Onto="KEGG",Organism=biomaRt_organism_info$KeggCode[1],KeyType="kegg"))
+				if(flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="KEGG",Organism=biomaRt_organism_info$KeggCode[1],KeyType="ENTREZID",UseInternal=!remote_actions$kegg))
+			}
+		}
 	}
 
 	###################
 	## REACTOME
 	if(flags$REACT){
-		require(ReactomePA)
+		if(keytypes == "GENENAME"){
+			flags$REACT <- FALSE
+			warning("Reactome module can not be used with GENENAME identifiers")
+		}else if(is.na(biomaRt_organism_info$Reactome_ID[1]) | (keytypes != "ENTREZID")){
+			flags$REACT <- FALSE
+			warning("Specified organism is not allowed to be used with Reactome module. Please check your IDs table")
+		}else{
+			require(ReactomePA)
+			if(flags$Clustered){
+				if(flags$ORA) ora_config <- rbind(ora_config,list(Onto="REACT",Organism=biomaRt_organism_info$Reactome_ID[1],KeyType="ENTREZID"))				
+				if(flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="REACT",Organism=biomaRt_organism_info$Reactome_ID[1],KeyType="ENTREZID",UseInternal=FALSE))				
+			}
+		}
 	}
 }
 
 
 #############################################
+### Clustered enrichments
+#############################################
+if(flags$Clustered){
+	cls <- unique(DEG_annot_table$Cluster_ID)
+	clgenes <- lapply(cls,function(cl){unique(rownames(DEG_annot_table[which(DEG_annot_table$genes_tag == "PREVALENT_DEG" & DEG_annot_table$Cluster_ID == cl),]))}) # Find
+	clgenes <- lapply(clgenes,function(genes){reference_table$entrezgene[which(reference_table$ensembl_gene_id %in% genes)]}) # Translate
+	if(flags$ORA){
+		message("Performing ORA enrichments")
+		enrichments_ORA <- lapply(seq(nrow(ora_config)),function(i){
+			# Perform per each cluster
+			enr <- lapply(clgenes,function(genes){
+				# Check
+				if(length(genes) <= 0) return(NULL)
+				# Enrich
+				curr_enr <- enrichment_ORA(genes = genes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = ora_config$Onto[i])
+				# Check
+				if(is.null(curr_enr)) return(NULL)
+				if(nrow(curr_enr) <= 0) return(NULL)
+				# Return
+				return(curr_enr)
+			})
+			return(list(Call = ora_config[i,],Enrichments = enr))
+		})
+		# Write output
+		invisible(lapply(enrichments_ORA,function(entry){
+			# Concat
+			df <- as.data.frame(do.call(rbind,lapply(seq_along(entry$Enrichments),function(i){
+				if(is.null(entry$Enrichments[[i]])) return(NULL)
+				enr_df <- as.data.frame(entry$Enrichments[[i]])
+				return(cbind(list(Cluster_ID=rep(i,nrow(enr_df))),enr_df))
+			})))
+			# Write table
+			write.table(df, file=file.path(paths$root, paste0(entry$Call$Onto[1],"_cls_ora")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+		}))
+
+	}
+	if(flags$GSEA){
+		message("Performing GSEA enrichments")
+		if(exists("annot_table")){
+			aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
+			geneListCL <- lapply(cls, function(cl){
+				glist <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"] & DEG_annot_table$Cluster_ID == cl),fc_colname])
+				names(glist) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"] & DEG_annot_table$Cluster_ID == cl)]
+				names(glist) <- aux[match(names(glist),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+				glist <- sort(glist, decreasing = TRUE)
+				return(glist)
+			})
+		}else{
+			aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
+			geneListCL <- lapply(cls,function(cl){
+				glist <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"] & DEG_annot_table$Cluster_ID == cl),fc_colname])
+				names(glist) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"] & DEG_annot_table$Cluster_ID == cl)]
+				names(glist) <- aux[match(names(glist),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+				glist <- sort(glist, decreasing = TRUE)
+				return(glist)
+			})
+		}
+		enrichments_GSEA <- lapply(seq(nrow(gsea_config)),function(i){
+			# Perform per each cluster
+			enr <- lapply(geneListCL,function(genes){
+				# Check
+				if(length(genes) <= 0) return(NULL)
+				# Enrich
+				curr_enr <- enrichment_GSEA(geneList = genes,organism = gsea_config$Organism[i],keyType = gsea_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = gsea_config$Onto[i], useInternal = gsea_config$UseInternal[i])
+				# Check
+				if(is.null(curr_enr)) return(NULL)
+				if(nrow(curr_enr) <= 0) return(NULL)
+				# Return
+				return(curr_enr)
+			})
+			return(list(Call = gsea_config[i,],Enrichments = enr))
+		})
+		# Write output
+		invisible(lapply(enrichments_GSEA,function(entry){
+			# Concat
+			df <- as.data.frame(do.call(rbind,lapply(seq_along(entry$Enrichments),function(i){
+				if(is.null(entry$Enrichments[[i]])) return(NULL)
+				enr_df <- as.data.frame(entry$Enrichments[[i]])
+				return(cbind(list(Cluster_ID=rep(i,nrow(enr_df))),enr_df))
+			})))
+			# Write table
+			write.table(df, file=file.path(paths$root, paste0(entry$Call$Onto[1],"_cls_gsea")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+		}))
+	}
+	save.image("/mnt/home/users/bio_267_uma/jabato/projects/degeneshunter_refactor/test_clusterscorr/TEST.RData")
+}
+
+###########################################################################################################################
+##                                                                                                                       ##
+##                                                        NOT CLUSTERED                                                  ##
+##                                                                                                                       ##
+###########################################################################################################################
+
+#############################################
 ### GO ENRICHMENT (clusterProfiler)
 #############################################
-if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(biomaRt_organism_info$Bioconductor_VarName[1])){
+if(flags$GO_cp){
 	message("Performing GO enrichments")
 	###########
 	### ORA ENRICHMENTS
@@ -462,16 +598,13 @@ if(flags$GO_cp & !is.na(biomaRt_organism_info$Bioconductor_DB[1]) & !is.na(bioma
 		# Write results
 		write.table(as.data.frame(do.call(rbind,lapply(enrich_go_gsea,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_gsea"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
 	}
-}else if(flags$GO_cp){
-	warning("Specified organism is not allowed to be used with GO (clusterProfiler) module. Please check your IDs table")
 }
-
 
 #############################################
 ### KEGG ENRICHMENT
 #############################################
 
-if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
+if(flags$KEGG){
 	message("Performing KEGG enrichments")
 	if(flags$ORA){
 		# Enrich
@@ -485,8 +618,6 @@ if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
 		# Write output
 		write.table(enrich_gsea, file=file.path(paths$root, "KEGG_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
-}else if(flags$KEGG){
-	warning("Specified organism is not allowed to be used with KEGG module. Please check your IDs table")
 }
 
 
@@ -494,7 +625,7 @@ if(flags$KEGG & !is.na(biomaRt_organism_info$KeggCode[1])){
 ### REACTOME ENRICHMENT
 #############################################
 
-if(flags$REACT & (!is.na(biomaRt_organism_info$Reactome_ID[1]) & (keytypes == "ENTREZID"))){
+if(flags$REACT){
 	message("Performing Reactome enrichments")
 	if(flags$ORA){
 		# Make enrichment (ORA)
@@ -509,11 +640,12 @@ if(flags$REACT & (!is.na(biomaRt_organism_info$Reactome_ID[1]) & (keytypes == "E
 		# Write output
 		write.table(enrich_react_gsea, file=file.path(paths$root, "REACT_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
-}else if(flags$REACT & !keytypes == "GENENAME"){
-	warning("Specified organism is not allowed to be used with Reactome module. Please check your IDs table")
-}else if(flags$REACT){
-	warning("Reactome module can not be used with GENENAME identifiers")
 }
+
+
+
+
+
 
 
 
@@ -550,6 +682,14 @@ if(!is.null(opt$custom)) {
 	custom_enrichments <- NULL
 }
 
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+##                                                                                                                   ##
+##                                                 RENDERING REPORTS                                                 ##                                                     
+##                                                                                                                   ##
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+
 ############################################################
 ############################################################
 ############################################################
@@ -562,7 +702,11 @@ message("RENDERING REPORT ...")
 ##                    GENERATE REPORT                     ##
 ############################################################
 results_path <- paste(normalizePath(dirname(paths$root)),paths$root,sep=.Platform$file.sep)
+message("\tRendering regular report")
 outf <- paste(dirname(normalizePath(paths$root,"functional_report.html")),"functional_report.html",sep=.Platform$file.sep)
 
 rmarkdown::render(file.path(main_path_script, 'templates', 'functional_report.Rmd'), 
-                  output_file = outf, intermediates_dir = paths$root)
+                  output_file = outf, intermediates_dir = paths$root)	
+if(flags$Clustered){ # Clustered
+	message("\tRendering clustered report")
+}
