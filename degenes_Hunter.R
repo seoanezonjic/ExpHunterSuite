@@ -75,6 +75,8 @@ option_list <- list(
   make_option(c("-S", "--string_factors"), type="character", default="",
     help="Columns in the target file to be used as categorical factors for the correlation analysis"),
   make_option(c("-N", "--numeric_factors"), type="character", default="",
+    help="Columns in the target file to be used as numeric (continuous) factors for the correlation analysis"),
+  make_option(c("-w", "--WGCNA_memory"), type="integer", default=5000,
     help="Columns in the target file to be used as numeric (continuous) factors for the correlation analysis")
  )
 opt <- parse_args(OptionParser(option_list=option_list))
@@ -159,7 +161,7 @@ if(! is.null(opt$target_file)) {
     treat=c(rep("Ctrl", length(index_control_cols)), rep("Treat", length(index_treatmn_cols))))
 }
 
-# Check that the appropriate factor columns can be found in the target file and makes a data frame with the specified factor
+# FOR WGCNA: Check that the appropriate factor columns can be found in the target file and makes a data frame with the specified factor
 if(exists("target") & grepl("W", opt$modules)) {
   if(opt$string_factors != "") {
     string_factors <- unlist(strsplit(opt$string_factors, ","))
@@ -170,7 +172,7 @@ if(exists("target") & grepl("W", opt$modules)) {
       stop(cat("Factors specified with the --string_factors option cannot be found in the target file.\nPlease resubmit."))
     }
   } else {
-    target_string_factors <- ""
+    target_string_factors <- target["treat"] # We checkd this already in load target file code
   }
   if(opt$numeric_factors != "") {
     numeric_factors <- unlist(strsplit(opt$numeric_factors, ","))
@@ -398,12 +400,13 @@ if(grepl("W", opt$modules)) {
     results_WGCNA <- analysis_WGCNA(data=DESeq2_counts,
                                     path=path,
                                     target_numeric_factors=target_numeric_factors,
-                                    target_string_factors=target_string_factors
+                                    target_string_factors=target_string_factors,
+                                    WGCNA_memory=opt$WGCNA_memory
     )
-    if(results_WGCNA[1] == "NO_POWER_VALUE") {
+    if(length(results_WGCNA) == 1) {
+      warning("WGCNA was unable to generate a suitable power value and was therefore not run")
       opt$modules <- gsub("W", "", opt$modules)
     }
-    head(results_WGCNA[['gene_cluster_info']])
   } else {
     warning("WGCNA will not be performed as it requires a DESeq2 object")
   }
@@ -440,6 +443,5 @@ write.table(DE_all_genes, file=file.path(opt$output_files, "Common_results", "hu
 ##                    GENERATE REPORT                     ##
 ############################################################
 outf <- file.path(normalizePath(opt$output_files),"DEG_report.html")
-cat(grepl("W", opt$modules), "\n")
 rmarkdown::render(file.path(main_path_script, 'templates', 'main_report.Rmd'), 
                   output_file = outf, intermediates_dir = opt$output_files)

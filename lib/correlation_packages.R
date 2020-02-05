@@ -1,4 +1,4 @@
-analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_factors) {
+analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_factors, WGCNA_memory) {
 	data <- t(data)#[, 1:500]
 
 	####################################################################
@@ -7,10 +7,10 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 
 	trait <- data.frame(row.names=rownames(data))
 
-	if(target_numeric_factors != "") {
+	if(is.data.frame(target_numeric_factors)) {
 		trait <- data.frame(trait, target_numeric_factors)
 	}
-	if(target_string_factors != "") {
+	if(is.data.frame(target_string_factors)) {
 		# Code to convert the string factors to numeric (1 vs. 0 for each category)
 		binarized_string_factors <- lapply(names(target_string_factors), function(factor_name) {
   			string_factor <- target_string_factors[[factor_name]]
@@ -22,30 +22,6 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 		})
 		trait <- data.frame(trait, binarized_string_factors)
 	}
-
-	# # Second option - special treatment for pairwise factors
-
-	# if(target_string_factors != "") {
-	# # Code to add the string factors
-	# 	cat("string factors\n")
-	# 	print(target_string_factors)
-	# 	binarized_string_factors <- lapply(names(target_string_factors), function(factor_name) {
-	# 		string_factor <- target_string_factors[[factor_name]]
-	# 		if(length(levels(string_factor)) == 2) {
-	# 			binarized_table <- binarizeCategoricalVariable(string_factor,
-	# 				includePairwise = TRUE,
-	# 				includeLevelVsAll = FALSE)
-	# 			colnames(binarized_table) <- paste(factor_name, levels(string_factor)[1], "vs", levels(string_factor)[2], sep="_")
-	# 		} else {
-	# 			binarized_table <- binarizeCategoricalVariable(string_factor,
-	# 				includePairwise = FALSE,
-	# 				includeLevelVsAll = TRUE)
-	# 			colnames(binarized_table) <- paste(factor_name, levels(string_factor),sep="_")
-	# 		}
-	# 	 	return(binarized_table)
-	# 	})
-	# 	trait <- data.frame(trait, binarized_string_factors)
-	# }
 
 	###################################################################
 	## CLUSTER DATA
@@ -64,9 +40,10 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	## THRESHOLDING - EFFECTS OF BETA ON TOPOLOGY AND AUTO SELECTION
 	####################################################################
 
-	powers = c(c(1:10), seq(from = 12, to=20, by=2))
-	# Call the network topology analysis function
-	sft = pickSoftThreshold(data, powerVector = powers, verbose = 5)
+	powers <- c(c(1:10), seq(from = 12, to=20, by=2))
+
+ 	sft <- pickSoftThreshold(data, powerVector = powers, verbose = 5)
+
 	pdf(file.path(path, "thresholding.pdf"))
 		par(mfrow = c(1,2));
 		cex1 = 0.9;
@@ -87,8 +64,23 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 
 	# Calculate Power automatically
 	sft_mfs_r2 <- -sign(sft$fitIndices[,3])*sft$fitIndices[,2]
-	min_pow_ind <- min(which(sft_mfs_r2 > 0.9))
-	if(min_pow_ind == Inf) {
+	min_pow_ind <- which(sft_mfs_r2 > 0.9)[1] # First time the value passes 0.9
+	save(sft_mfs_r2, file=file.path(path, "sft_mfs_r2.RData"))
+	in_advance <- 2
+	if(is.na(min_pow_ind)) {
+		# Plan B to calculate power
+		for(i in 1:(length(sft_mfs_r2)-in_advance)) {
+			vals <- sft_mfs_r2[i:(i+in_advance)]
+			diffs <- abs(diff(vals))
+			cat(i, " ", diffs, "\n")
+			# Condition to meet if the 
+			if(sum(diffs < 0.01) == in_advance & sft_mfs_r2[i] > 0.8) {
+			min_pow_ind <- i
+	   		break
+			}
+		}
+	}
+	if(is.na(min_pow_ind)) {
 		warning("Could not obtain a valid power (beta) value for WGCNA")
 		return("NO_POWER_VALUE")
 	}
@@ -102,24 +94,28 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	# Have to improve this as generating fork.
 	tom_file_base <- "generatedTOM"
 	if(length(list.files(path=path, pattern=paste0(tom_file_base, ".*\\.RData"))) > 0) {
-		net <- blockwiseModules(data, power = pow,
-		maxBlockSize = 5000, # Increase to memory limit in order to obtain more realistic results
-		TOMType = "unsigned", minModuleSize = 30,
-		reassignThreshold = 0, mergeCutHeight = 0.25,
-		numericLabels = TRUE, pamRespectsDendro = FALSE,
-		loadTOM = TRUE,	
-		saveTOMFileBase = file.path(path, tom_file_base), 
-		verbose = 5)
+		cat("We have already generated TOM\n")
+		loadTOM_TF <- TRUE
+		saveTOM_TF <- FALSE
 	} else {
-		net <- blockwiseModules(data, power = pow,
-		maxBlockSize = 5000, # Increase to memory limit in order to obtain more realistic results
-		TOMType = "unsigned", minModuleSize = 30,
-		reassignThreshold = 0, mergeCutHeight = 0.25,
-		numericLabels = TRUE, pamRespectsDendro = FALSE,
-		saveTOMs = TRUE,
-		saveTOMFileBase = file.path(path, tom_file_base), 
-		verbose = 5)
+		cat("We have not yet generated TOM\n")
+		loadTOM_TF <- FALSE
+		saveTOM_TF <- TRUE
 	}
+	#cat("System time of blockwise process\n")
+	#print(system.time(
+	net <- blockwiseModules(data, power = pow,
+	maxBlockSize = WGCNA_memory, # Increase to memory limit in order to obtain more realistic results
+	TOMType = "unsigned", minModuleSize = 30,
+	reassignThreshold = 0, mergeCutHeight = 0.25,
+	numericLabels = TRUE, pamRespectsDendro = FALSE,
+	loadTOM = loadTOM_TF,	
+	saveTOM = saveTOM_TF,
+	saveTOMFileBase = file.path(path, tom_file_base), 
+	verbose = 5)
+	#))
+
+	# print(net)
 
 	moduleColors = labels2colors(net$colors)
 	# Plot the dendrogram and the module colors underneath
@@ -138,7 +134,6 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	MEs = moduleEigengenes(data, net$colors)$eigengenes
 	MEs_colors = moduleEigengenes(data, moduleColors)$eigengenes
 
-	# MEs = orderMEs(MEs0)
 	moduleTraitCor = cor(MEs_colors, trait, use = "p")
 	moduleTraitPvalue = corPvalueStudent(moduleTraitCor, nSamples)
  
