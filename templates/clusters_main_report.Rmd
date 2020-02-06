@@ -30,6 +30,7 @@ output:
 
 ```{r config, include = FALSE}
 n_category <- 30
+base_width <- 30
 
 
 # Load necessary packages
@@ -151,15 +152,10 @@ names(executed) <- all_posible
 knitr::kable(data.frame(Executed = unlist(executed)))
 ```
 
-```{r kegg_main,  results='asis', echo = FALSE, eval = executed$Executed["KEGG"]}
+```{r kegg_main,  results='asis', echo = FALSE, eval = executed[["KEGG"]]}
 cat("## **KEGG analysis**\n")
 ```
-```{r kegg_ora, results='asis', echo=FALSE, eval = executed$Executed["KEGG"] & exists("enrichments_ORA")}
-
-# default_width <- set_default_width(enrich_obj = enrichments_ORA$KEGG, showCategory=n_category)
-longer_category <- max(nchar(enrichments_ORA$KEGG@compareClusterResult$Description))
-if(longer_category > 30) default_width <- longer_ca12 + 0.04 * longer_category
-
+```{r kegg_ora, results='asis', echo=FALSE, eval = executed[["KEGG"]] & exists("enrichments_ORA")}
 
 cat("### **Over Representation Analysis**\n",
 	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
@@ -170,7 +166,77 @@ cat(
 	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 )
 pp <- dotplot(enrichments_ORA$KEGG, showCategory=n_category)
-if(longer_category > 30){plot_in_div(pp, width = default_width)
-}else{plot(pp)}
+plot(pp)
+```
+
+
+
+```{r reac_main,  results='asis', echo = FALSE, eval = executed[["REACT"]]}
+cat("## **Reactome analysis**\n")
+```
+```{r reac_ora, results='asis', echo=FALSE, eval = executed[["REACT"]] & exists("enrichments_ORA")}
+
+cat("### **Over Representation Analysis**\n",
+	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+
+cat(
+	"**Dotplot**\n\n", 
+	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
+	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+)
+pp <- dotplot(enrichments_ORA$REACT, showCategory=n_category)
+plot(pp)
+
+```
+
+
+
+
+```{r go_main,  results='asis', echo = FALSE, eval = any(executed[["GO_BP"]],executed[["GO_MF"]],executed[["GO_CC"]])}
+cat("## **Gene Ontology (GO) analysis**\n")
+```
+
+```{r go_bp_ora, results='asis', echo=FALSE, eval = all(executed[["GO_BP"]],exists("enrichments_ORA"))}
+
+cat("### **[BP] Over Representation Analysis**\n",
+	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+
+cat(
+	"**Dotplot**\n\n", 
+	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
+	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+)
+pp <- dotplot(enrichments_ORA$GO_BP, showCategory=n_category)
+plot(pp)
+
+```
+
+```{r go_mf_ora, results='asis', echo=FALSE, eval = all(executed[["GO_MF"]],exists("enrichments_ORA"))}
+
+cat("### **[MF] Over Representation Analysis**\n",
+	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+
+cat(
+	"**Dotplot**\n\n", 
+	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
+	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+)
+pp <- dotplot(enrichments_ORA$GO_MF, showCategory=n_category)
+plot(pp)
+
+```
+
+```{r go_cc_ora, results='asis', echo=FALSE, eval = all(executed[["GO_CC"]],exists("enrichments_ORA"))}
+
+cat("### **[CC] Over Representation Analysis**\n",
+	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+
+cat(
+	"**Dotplot**\n\n", 
+	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
+	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+)
+pp <- dotplot(enrichments_ORA$GO_CC, showCategory=n_category)
+plot(pp)
 
 ```
