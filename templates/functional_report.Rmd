@@ -32,6 +32,7 @@ output:
  
 # Load necessary packages
 require(ggplot2)
+require(knitr)
 
 # Prepare recursive text
 chunks <- function(code, options = ""){paste(paste("```{r ",options,"}",sep = ""),code,"```",sep="\n")}
@@ -141,7 +142,7 @@ knitr::kable(table(DEG_annot_table$genes_tag))
 
 
 
-```{r check_graphs, echo = FALSE}
+```{r check_graphs_setup, echo = FALSE}
 ####################################### GO
 n_category <- 30
 # Useful_functions
@@ -190,7 +191,8 @@ exists_enrich_df <- function(var_name,level_depth = 3){
 	df <- get(var_name, envir = parent.frame(n = level_depth))
 	return(check_results(df))
 }
-
+```
+```{r check_graphs_go, echo = FALSE}
 ######################################################### GO
 # Prepare containers 
 go_flags <- list()
@@ -249,11 +251,8 @@ if(go_flags$GO_CL_SECTION){
 	}))
 }
 
-
-
-
-
-
+```
+```{r check_graphs_kegg, echo = FALSE}
 ####################################### KEGG
 
 # Prepare containers
@@ -270,7 +269,8 @@ invisible(lapply(kegg_enrich_vars,function(var_name){
 #kegg_flags$KEGG_SECTION <- any(unlist(kegg_flags))
 kegg_flags$KEGG_SECTION <- any(unlist(lapply(kegg_enrich_vars, function(var){exists(var)})))
 
-
+```
+```{r check_graphs_react, echo = FALSE}
 ####################################### REACTOME
 
 # Prepare containers
@@ -287,7 +287,8 @@ invisible(lapply(react_enrich_vars,function(var_name){
 #react_flags$REACT_SECTION <- any(unlist(react_flags))
 react_flags$REACT_SECTION <- any(unlist(lapply(react_enrich_vars, function(var){exists(var)})))
 
-
+```
+```{r check_graphs_custom, echo = FALSE}
 ####################################### CUSTOM
 
 if(!is.null(custom_enrichments)){
