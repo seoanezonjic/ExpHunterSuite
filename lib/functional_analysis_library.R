@@ -384,7 +384,7 @@ require(clusterProfiler)
 #' @param useInternal :: used only for KEGG enrichment, activate internal data usage mode
 #' @return enrichment performed
 #' @import clusterProfiler, KEGG.db, ReactomePA
-enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE){
+enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff){
   require(clusterProfiler)
   if(useInternal)
     require(KEGG.db)
@@ -407,7 +407,8 @@ enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCuto
                                  keyType       = keyType,
                                  ont           = go_subonto,
                                  pvalueCutoff  = pvalueCutoff,
-                                 pAdjustMethod = pAdjustMethod) 
+                                 pAdjustMethod = pAdjustMethod,
+                                 qvalueCutoff  = qvalueCutoff) 
   }else if(ont == "KEGG"){
     enrichment <- compareCluster(geneClusters  = genes, 
                                  fun           = "enrichKEGG",
@@ -415,13 +416,15 @@ enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCuto
                                  keyType       = keyType,
                                  pvalueCutoff  = pvalueCutoff,
                                  pAdjustMethod = pAdjustMethod,
-                                 use_internal_data = useInternal)
+                                 use_internal_data = useInternal,
+                                 qvalueCutoff  = qvalueCutoff)
   }else if(ont == "REACT"){
     enrichment <- compareCluster(geneClusters  = genes, 
                                  fun           = "enrichPathway",
                                  organism      = organism,
                                  pAdjustMethod = pAdjustMethod,
-                                 pvalueCutoff  = pvalueCutoff)
+                                 pvalueCutoff  = pvalueCutoff,
+                                 qvalueCutoff  = qvalueCutoff)
   }else{
     stop("Error, ontology specified is not supported to be enriched")
   }
