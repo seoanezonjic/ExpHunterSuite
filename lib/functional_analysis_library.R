@@ -371,3 +371,61 @@ require(clusterProfiler)
   # Return enrichment
   return(enrichment)
 }
+
+
+
+#'
+#' @param genes :: 
+#' @param organism :: 
+#' @param keyType :: 
+#' @param pvalueCutoff :: 
+#' @param pAdjustMethod :: 
+#' @param ont :: ontology to be used. Allowed [GO_MF,GO_CC,GO_BP,KEGG,REACT]
+#' @param useInternal :: used only for KEGG enrichment, activate internal data usage mode
+#' @return enrichment performed
+#' @import clusterProfiler, KEGG.db, ReactomePA
+enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE){
+  require(clusterProfiler)
+  if(useInternal)
+    require(KEGG.db)
+  require(ReactomePA)
+  # Check
+  if(is.numeric(ont)){
+    stop("Ontology specified is a number, not a string")
+  }
+  # Parse onto
+  if(grepl("GO",ont)){
+    aux = unlist(strsplit(ont,"_"))
+    ont = aux[1]
+    go_subonto = aux[2]
+  }
+  # Check ontology 
+  if(ont == "GO"){
+    enrichment <- compareCluster(geneClusters  = genes, 
+                                 fun           = "enrichGO",
+                                 OrgDb         = organism,
+                                 keyType       = keyType,
+                                 ont           = go_subonto,
+                                 pvalueCutoff  = pvalueCutoff,
+                                 pAdjustMethod = pAdjustMethod) 
+  }else if(ont == "KEGG"){
+    enrichment <- compareCluster(geneClusters  = genes, 
+                                 fun           = "enrichKEGG",
+                                 organism      = organism,
+                                 keyType       = keyType,
+                                 pvalueCutoff  = pvalueCutoff,
+                                 pAdjustMethod = pAdjustMethod,
+                                 use_internal_data = useInternal)
+  }else if(ont == "REACT"){
+    enrichment <- compareCluster(geneClusters  = genes, 
+                                 fun           = "enrichPathway",
+                                 organism      = organism,
+                                 pAdjustMethod = pAdjustMethod,
+                                 pvalueCutoff  = pvalueCutoff)
+  }else{
+    stop("Error, ontology specified is not supported to be enriched")
+  }
+
+  # Return enrichment
+  return(enrichment)
+}

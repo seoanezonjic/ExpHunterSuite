@@ -380,7 +380,7 @@ if(flags$GO){
 # Prepare executions
 if(any(unlist(flags[c("GO_cp","KEGG","REACT")]))){
 	options(stringsAsFactors=FALSE)
-	ora_config <- data.frame(Onto = character(),Organism = character(),KeyType = character(), stringsAsFactors = FALSE)
+	ora_config <- data.frame(Fun = character(),Onto = character(),Organism = character(),KeyType = character(), stringsAsFactors = FALSE)
 	gsea_config <- data.frame(Onto = character(),Organism = character(),KeyType = character(),UseInternal = logical(), stringsAsFactors = FALSE)
 
 	###################
@@ -426,7 +426,7 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]))){
 			# Add execution info
 			if(flags$Clustered){
 				if(flags$ORA){ 
-					invisible(lapply(modules_to_export,function(mod){ora_config <<- rbind(ora_config,list(Onto=paste0("GO_",mod),Organism=biomaRt_organism_info$Bioconductor_DB[1],KeyType=keytypes))}))
+					invisible(lapply(modules_to_export,function(mod){ora_config <<- rbind(ora_config,list(Fun = "enrichGO",Onto=paste0("GO_",mod),Organism=biomaRt_organism_info$Bioconductor_DB[1],KeyType=keytypes))}))
 				}
 				if(flags$GSEA){
 					invisible(lapply(modules_to_export,function(mod){gsea_config <<- rbind(gsea_config,list(Onto=paste0("GO_",mod),Organism=biomaRt_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))}))					
@@ -447,7 +447,7 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]))){
 				require(KEGG.db)
 			}
 			if(flags$Clustered){
-				if(flags$ORA) ora_config <- rbind(ora_config,list(Onto="KEGG",Organism=biomaRt_organism_info$KeggCode[1],KeyType="kegg"))
+				if(flags$ORA) ora_config <- rbind(ora_config,list(Fun = "enrichKEGG",Onto="KEGG",Organism=biomaRt_organism_info$KeggCode[1],KeyType="kegg"))
 				if(flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="KEGG",Organism=biomaRt_organism_info$KeggCode[1],KeyType="ENTREZID",UseInternal=!remote_actions$kegg))
 			}
 		}
@@ -465,7 +465,7 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]))){
 		}else{
 			require(ReactomePA)
 			if(flags$Clustered){
-				if(flags$ORA) ora_config <- rbind(ora_config,list(Onto="REACT",Organism=biomaRt_organism_info$Reactome_ID[1],KeyType="ENTREZID"))				
+				if(flags$ORA) ora_config <- rbind(ora_config,list(Fun = "enrichPathway",Onto="REACT",Organism=biomaRt_organism_info$Reactome_ID[1],KeyType="ENTREZID"))				
 				if(flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="REACT",Organism=biomaRt_organism_info$Reactome_ID[1],KeyType="ENTREZID",UseInternal=FALSE))				
 			}
 		}
@@ -480,33 +480,39 @@ if(flags$Clustered){
 	cls <- unique(DEG_annot_table$Cluster_ID)
 	clgenes <- lapply(cls,function(cl){unique(rownames(DEG_annot_table[which(DEG_annot_table$genes_tag == "PREVALENT_DEG" & DEG_annot_table$Cluster_ID == cl),]))}) # Find
 	clgenes <- lapply(clgenes,function(genes){reference_table$entrezgene[which(reference_table$ensembl_gene_id %in% genes)]}) # Translate
+	names(clgenes) <- cls
 	if(flags$ORA){
 		message("Performing ORA enrichments")
 		enrichments_ORA <- lapply(seq(nrow(ora_config)),function(i){
+			message(paste0("Itter :: ",i))
 			# Perform per each cluster
-			enr <- lapply(clgenes,function(genes){
-				# Check
-				if(length(genes) <= 0) return(NULL)
-				# Enrich
-				curr_enr <- enrichment_ORA(genes = genes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = ora_config$Onto[i])
-				# Check
-				if(is.null(curr_enr)) return(NULL)
-				if(nrow(curr_enr) <= 0) return(NULL)
-				# Return
-				return(curr_enr)
-			})
-			return(list(Call = ora_config[i,],Enrichments = enr))
+			enr <- enrichment_clusters_ORA(genes = clgenes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = ora_config$Onto[i])
+		# 	enr <- lapply(clgenes,function(genes){
+		# 		# Check
+		# 		if(length(genes) <= 0) return(NULL)
+		# 		# Enrich
+		# 		curr_enr <- enrichment_ORA(genes = genes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = ora_config$Onto[i])
+		# 		# Check
+		# 		if(is.null(curr_enr)) return(NULL)
+		# 		if(nrow(curr_enr) <= 0) return(NULL)
+		# 		# Return
+		# 		return(curr_enr)
+		# 	})
+		# 	return(list(Call = ora_config[i,],Enrichments = enr))
 		})
+		names(enrichments_ORA) <- ora_config$Onto
+save.image("TEST.RData")
 		# Write output
-		invisible(lapply(enrichments_ORA,function(entry){
+		invisible(lapply(seq_along(enrichments_ORA),function(i){
 			# Concat
-			df <- as.data.frame(do.call(rbind,lapply(seq_along(entry$Enrichments),function(i){
-				if(is.null(entry$Enrichments[[i]])) return(NULL)
-				enr_df <- as.data.frame(entry$Enrichments[[i]])
-				return(cbind(list(Cluster_ID=rep(i,nrow(enr_df))),enr_df))
-			})))
+			df <- clusterProfiler:::fortify.compareClusterResult(enrichments_ORA[[i]])
+			# df <- as.data.frame(do.call(rbind,lapply(seq_along(entry$Enrichments),function(i){
+			# 	if(is.null(entry$Enrichments[[i]])) return(NULL)
+			# 	enr_df <- as.data.frame(entry$Enrichments[[i]])
+			# 	return(cbind(list(Cluster_ID=rep(i,nrow(enr_df))),enr_df))
+			# })))
 			# Write table
-			write.table(df, file=file.path(paths$root, paste0(entry$Call$Onto[1],"_cls_ora")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+			write.table(df, file=file.path(paths$root, paste0(ora_config$Onto[i],"_cls_ora")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 		}))
 
 	}
@@ -531,6 +537,7 @@ if(flags$Clustered){
 				return(glist)
 			})
 		}
+		names(geneListCL) <- cls
 		enrichments_GSEA <- lapply(seq(nrow(gsea_config)),function(i){
 			# Perform per each cluster
 			enr <- lapply(geneListCL,function(genes){
@@ -546,6 +553,7 @@ if(flags$Clustered){
 			})
 			return(list(Call = gsea_config[i,],Enrichments = enr))
 		})
+		names(enrichments_GSEA) <- gsea_config$Onto
 		# Write output
 		invisible(lapply(enrichments_GSEA,function(entry){
 			# Concat
@@ -558,7 +566,6 @@ if(flags$Clustered){
 			write.table(df, file=file.path(paths$root, paste0(entry$Call$Onto[1],"_cls_gsea")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 		}))
 	}
-	save.image("/mnt/home/users/bio_267_uma/jabato/projects/degeneshunter_refactor/test_clusterscorr/TEST.RData")
 }
 
 ###########################################################################################################################
@@ -694,7 +701,7 @@ if(!is.null(opt$custom)) {
 ############################################################
 ############################################################
 # REMOVE THIS WHEN DEVELOP/TEST PHASE ENDS
-# save.image("test.RData")
+save.image("test.RData")
 
 message("RENDERING REPORT ...")
 
@@ -709,4 +716,6 @@ rmarkdown::render(file.path(main_path_script, 'templates', 'functional_report.Rm
                   output_file = outf, intermediates_dir = paths$root)	
 if(flags$Clustered){ # Clustered
 	message("\tRendering clustered report")
+	outf_cls <- paste(dirname(normalizePath(paths$root,"clusters_func_report.html")),"clusters_func_report.html",sep=.Platform$file.sep)
+	rmarkdown::render(file.path(main_path_script, 'templates', 'clusters_main_report.Rmd'),output_file = outf_cls, intermediates_dir = paths$root)
 }
