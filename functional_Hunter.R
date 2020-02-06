@@ -501,7 +501,6 @@ if(flags$Clustered){
 		# 	return(list(Call = ora_config[i,],Enrichments = enr))
 		})
 		names(enrichments_ORA) <- ora_config$Onto
-save.image("TEST.RData")
 		# Write output
 		invisible(lapply(seq_along(enrichments_ORA),function(i){
 			# Concat
@@ -701,7 +700,7 @@ if(!is.null(opt$custom)) {
 ############################################################
 ############################################################
 # REMOVE THIS WHEN DEVELOP/TEST PHASE ENDS
-save.image("test.RData")
+# save.image("test.RData")
 
 message("RENDERING REPORT ...")
 
