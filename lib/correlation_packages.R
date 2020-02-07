@@ -1,47 +1,11 @@
-analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_factors, WGCNA_memory) {
+analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_factors, WGCNA_memory, cor_only) {
 	data <- t(data)#[, 1:500]
-
-	####################################################################
-	## PROCESS TRAIT DATA
-	####################################################################
-
-	trait <- data.frame(row.names=rownames(data))
-
-	if(is.data.frame(target_numeric_factors)) {
-		trait <- data.frame(trait, target_numeric_factors)
-	}
-	if(is.data.frame(target_string_factors)) {
-		# Code to convert the string factors to numeric (1 vs. 0 for each category)
-		binarized_string_factors <- lapply(names(target_string_factors), function(factor_name) {
-  			string_factor <- target_string_factors[[factor_name]]
-  			binarized_table <- binarizeCategoricalVariable(string_factor,
-								includePairwise = FALSE,
-								includeLevelVsAll = TRUE)
-		colnames(binarized_table) <- paste(factor_name, levels(string_factor),sep="_")
-  		return(binarized_table)
-		})
-		trait <- data.frame(trait, binarized_string_factors)
-	}
-
-	###################################################################
-	## CLUSTER DATA
-	###################################################################
-	sampleTree2 = hclust(dist(data), method = "average")
-	# Convert traits to a color representation: white means low, red means high, grey means missing entry
-	traitColors = numbers2colors(trait, signed = FALSE);
-	# Plots the sample dendrogram and the colors underneath.
-	pdf(file.path(path, 'count_trait_data_comparation.pdf'))
-		plotDendroAndColors(sampleTree2, traitColors,
-			groupLabels = names(trait), 
-			main = "Sample dendrogram and trait heatmap")
-	dev.off()
 
 	####################################################################
 	## THRESHOLDING - EFFECTS OF BETA ON TOPOLOGY AND AUTO SELECTION
 	####################################################################
 
-	powers <- c(c(1:10), seq(from = 12, to=20, by=2))
-
+	powers <- c(c(1:10), seq(from = 12, to=40, by=2))
  	sft <- pickSoftThreshold(data, powerVector = powers, verbose = 5)
 
 	pdf(file.path(path, "thresholding.pdf"))
@@ -65,15 +29,13 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	# Calculate Power automatically
 	sft_mfs_r2 <- -sign(sft$fitIndices[,3])*sft$fitIndices[,2]
 	min_pow_ind <- which(sft_mfs_r2 > 0.9)[1] # First time the value passes 0.9
-	save(sft_mfs_r2, file=file.path(path, "sft_mfs_r2.RData"))
 	in_advance <- 2
 	if(is.na(min_pow_ind)) {
 		# Plan B to calculate power
 		for(i in 1:(length(sft_mfs_r2)-in_advance)) {
 			vals <- sft_mfs_r2[i:(i+in_advance)]
 			diffs <- abs(diff(vals))
-			cat(i, " ", diffs, "\n")
-			# Condition to meet if the 
+			# Condition to meet
 			if(sum(diffs < 0.01) == in_advance & sft_mfs_r2[i] > 0.8) {
 			min_pow_ind <- i
 	   		break
@@ -94,16 +56,13 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	# Have to improve this as generating fork.
 	tom_file_base <- "generatedTOM"
 	if(length(list.files(path=path, pattern=paste0(tom_file_base, ".*\\.RData"))) > 0) {
-		cat("We have already generated TOM\n")
 		loadTOM_TF <- TRUE
 		saveTOM_TF <- FALSE
 	} else {
-		cat("We have not yet generated TOM\n")
 		loadTOM_TF <- FALSE
 		saveTOM_TF <- TRUE
 	}
-	#cat("System time of blockwise process\n")
-	#print(system.time(
+
 	net <- blockwiseModules(data, power = pow,
 	maxBlockSize = WGCNA_memory, # Increase to memory limit in order to obtain more realistic results
 	TOMType = "unsigned", minModuleSize = 30,
@@ -113,11 +72,9 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	saveTOM = saveTOM_TF,
 	saveTOMFileBase = file.path(path, tom_file_base), 
 	verbose = 5)
-	#))
-
-	# print(net)
 
 	moduleColors = labels2colors(net$colors)
+
 	# Plot the dendrogram and the module colors underneath
 	pdf(file.path(path, 'wcgnaModules.pdf'))
 		plotDendroAndColors(net$dendrograms[[1]], moduleColors[net$blockGenes[[1]]],
@@ -125,6 +82,49 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
                     dendroLabels = FALSE, hang = 0.03,
                     addGuide = TRUE, guideHang = 0.05)
 	dev.off()
+
+	if(cor_only == TRUE) {
+		return("cor_only")
+	}
+
+	####################################################################
+	## PROCESS TRAIT DATA
+	####################################################################
+
+	trait <- data.frame(row.names=rownames(data))
+
+	if(is.data.frame(target_numeric_factors)) {
+		trait <- data.frame(trait, target_numeric_factors)
+	}
+	if(is.data.frame(target_string_factors)) {
+		# Code to convert the string factors to numeric (1 vs. 0 for each category)
+		binarized_string_factors <- lapply(names(target_string_factors), function(factor_name) {
+  			string_factor <- target_string_factors[[factor_name]]
+  			binarized_table <- binarizeCategoricalVariable(string_factor,
+  								minCount = 2,
+								includePairwise = FALSE,
+								includeLevelVsAll = TRUE)
+		colnames(binarized_table) <- paste(factor_name, levels(string_factor),sep="_")
+  		return(binarized_table)
+		})
+		trait <- data.frame(trait, binarized_string_factors)
+	}
+
+	###################################################################
+	## CLUSTER DATA
+	###################################################################
+	sampleTree2 = hclust(dist(data), method = "average")
+
+	# Convert traits to a color representation: white means low, red means high, grey means missing entry
+	traitColors = numbers2colors(trait, signed = FALSE);
+
+	# Plots the sample dendrogram and the colors underneath.
+	pdf(file.path(path, 'count_trait_data_comparation.pdf'))
+		plotDendroAndColors(sampleTree2, traitColors,
+			groupLabels = names(trait), 
+			main = "Sample dendrogram and trait heatmap")
+	dev.off()
+
 
 	####################################################################
 	## CLUSTER MODULES WITH TRAITS AND PRODUCE HEATMAP
@@ -139,9 +139,7 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
  
 	textMatrix =  paste(signif(moduleTraitCor, 2), "\n(",
 	                    signif(moduleTraitPvalue, 1), ")", sep = "")
-	save(textMatrix, file="textMatrix1.RData")
 	dim(textMatrix) = dim(moduleTraitCor)
-	save(textMatrix, file="textMatrix2.RData")
 	# Display the correlation values within a heatmap plot
 	pdf(file.path(path, 'heatmap.pdf'))
 		par(mar = c(6, 10, 3, 3));

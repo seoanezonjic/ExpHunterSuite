@@ -73,11 +73,13 @@ option_list <- list(
   make_option(c("-M", "--custom_model"), type="logical", default="FALSE",
     help="If true, text in the model_variables variable will be passed directly to the model construction"),
   make_option(c("-S", "--string_factors"), type="character", default="",
-    help="Columns in the target file to be used as categorical factors for the correlation analysis"),
+    help="Columns in the target file to be used as categorical factors for the correlation analysis. If more than one to be used, should be comma separated"),
   make_option(c("-N", "--numeric_factors"), type="character", default="",
-    help="Columns in the target file to be used as numeric (continuous) factors for the correlation analysis"),
-  make_option(c("-w", "--WGCNA_memory"), type="integer", default=5000,
-    help="Columns in the target file to be used as numeric (continuous) factors for the correlation analysis")
+    help="Columns in the target file to be used as numeric (continuous) factors for the correlation analysis. If more than one to be used, should be comma separated"),
+  make_option(c("-b", "--WGCNA_memory"), type="integer", default=5000,
+    help="Maximum block size value, to be passed to the blockwiseModules function of WGCNA as the maxBlockSize argument"),
+  make_option(c("-w", "--WGCNA_all"), type="logical", default=TRUE,
+    help="Run WGCNA for treated only, control only, and both as 3 separate runs. Needed if using PCIT. If false, WGCNA runs once, on the table including treament and control")
  )
 opt <- parse_args(OptionParser(option_list=option_list))
 
@@ -166,6 +168,7 @@ if(exists("target") & grepl("W", opt$modules)) {
   if(opt$string_factors != "") {
     string_factors <- unlist(strsplit(opt$string_factors, ","))
     string_factors_index <- colnames(target) %in% string_factors 
+
     if(TRUE %in% string_factors_index) {
       target_string_factors <- target[string_factors_index]
     } else {
@@ -393,15 +396,51 @@ if(grepl("W", opt$modules)) {
   if(grepl("D", opt$modules)) { 
     cat('Correlation analysis is performed with WGCNA\n')
     path <- file.path(opt$output_files, "Results_WGCNA")
-    dir.create(file.path(opt$output_files, "Results_WGCNA"))
-    # Uses DESeq2 object - hence check
+    dir.create(path)
+
     DESeq2_counts <- counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE)
 
+    if(opt$WGCNA_all == TRUE) {
+
+      WGCNA_treatment_path <- file.path(path, "Treatment_only_data")
+      dir.create(WGCNA_treatment_path)
+      DESeq2_counts_treatment <- DESeq2_counts[, index_treatmn_cols]
+
+      cat('Performing WGCNA correlation analysis for treated samples\n')
+      results_WGCNA_treatment <- analysis_WGCNA(data=DESeq2_counts_treatment,
+                     path=WGCNA_treatment_path,
+                     target_numeric_factors=target_numeric_factors,
+                     target_string_factors=target_string_factors,
+                     WGCNA_memory=opt$WGCNA_memory,
+                     cor_only=TRUE
+      )
+
+      WGCNA_control_path <- file.path(path, "Control_only_data")
+      dir.create(WGCNA_control_path)
+      DESeq2_counts_control <- DESeq2_counts[, index_control_cols]
+      
+      cat('Performing WGCNA correlation analysis for control samples\n')
+      results_WGCNA_control <- analysis_WGCNA(data=DESeq2_counts_control,
+                     path=WGCNA_control_path,
+                     target_numeric_factors=target_numeric_factors,
+                     target_string_factors=target_string_factors,
+                     WGCNA_memory=opt$WGCNA_memory,
+                     cor_only=TRUE
+      )
+    }
+    # Need to improve the control, probably by removing PCIT
+    if(results_WGCNA_treatment == "NO_POWER_VALUE" | results_WGCNA_control == "NO_POWER_VALUE") {
+      warning("WGCNA was unable to generate a suitable power value for at least one of the partial datasets")
+    }
+
+
+    cat('Performing WGCNA correlation analysis for control samples\n')
     results_WGCNA <- analysis_WGCNA(data=DESeq2_counts,
                                     path=path,
                                     target_numeric_factors=target_numeric_factors,
                                     target_string_factors=target_string_factors,
-                                    WGCNA_memory=opt$WGCNA_memory
+                                    WGCNA_memory=opt$WGCNA_memory,
+                                    cor_only=FALSE
     )
     if(length(results_WGCNA) == 1) {
       warning("WGCNA was unable to generate a suitable power value and was therefore not run")
