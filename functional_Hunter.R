@@ -546,11 +546,13 @@ if(flags$Clustered){
 			# Return
 			return(enr)
 		})
+		save.image("TEST.RData")
 		names(enrichments_GSEA) <- gsea_config$Onto
 		# Write output
 		invisible(lapply(seq_along(enrichments_GSEA),function(i){
 			# Concat
-			df <- clusterProfiler:::fortify.compareClusterResult(enrichments_GSEA[[i]])
+			# df <- clusterProfiler:::fortify.compareClusterResult(enrichments_GSEA[[i]])
+			df <- enrichments_GSEA[[i]]@compareClusterResult
 			# Write table
 			write.table(df, file=file.path(paths$root, paste0(gsea_config$Onto[i],"_cls_gsea")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 		}))
