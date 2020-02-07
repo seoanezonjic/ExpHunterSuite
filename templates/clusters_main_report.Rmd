@@ -46,6 +46,12 @@ render <- function(text){paste(knit(text = paste(text,collapse = "\n")),collapse
 # Prepare all HPO reports container
 out <- NULL
 
+# Check executed modules
+all_posible <- c("GO_BP","GO_CC","GO_MF","KEGG","REACT")
+if(exists("enrichments_ORA")){ executed <- as.list(all_posible %in% names(enrichments_ORA))
+}else{ executed <- as.list(all_posible %in% names(enrichments_GSEA))}
+names(executed) <- all_posible
+
 # Prepare resize function
 #################################################################################
 ############### Resizing plot functions
@@ -132,23 +138,33 @@ Some sections will not show if there are not sinficative results. Each category 
 The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.
 In the case of the GSEA method, all the genes are sorted by their fold-change and the algorithm scan which genes with similar fold-change shares a term of the selected functional category.
 
-Clusters defined (rows) into input data and their genes amount labeled with expression analysis (columns) are:
+Clusters defined (rows) into input data and their genes amount labeled with expression analysis (columns) and enriched terms of each module (columns at the end) are:
 ```{r cls_table, echo = FALSE}
+# Obtains genes info
 cls_counts <- ddply(DEG_annot_table, .(DEG_annot_table$genes_tag,DEG_annot_table$Cluster_ID), nrow)
 names(cls_counts) <- c("Gene_Tag","Cluster_ID","Freq")
-cls_genes_summary <- matrix(0,nrow = length(unique(cls_counts$Cluster_ID)),ncol = length(unique(cls_counts$Gene_Tag)))
+# Prepare columns
+aux <- unique(cls_counts$Gene_Tag)
+if(exists("enrichments_ORA")) aux <- c(aux,paste(names(executed)[which(unlist(executed))],"(ORA)"))
+if(exists("enrichments_GSEA")) aux <- c(aux,paste(names(executed)[which(unlist(executed))],"(GSEA)"))
+# Prepare freqs
+cls_genes_summary <- matrix(0,nrow = length(unique(cls_counts$Cluster_ID)),ncol = length(aux))
 rownames(cls_genes_summary) <- unique(cls_counts$Cluster_ID)
-colnames(cls_genes_summary) <- unique(cls_counts$Gene_Tag)
+colnames(cls_genes_summary) <- aux
 invisible(lapply(seq(nrow(cls_counts)),function(i){cls_genes_summary[which(rownames(cls_genes_summary) == cls_counts$Cluster_ID[i]),which(colnames(cls_genes_summary) == cls_counts$Gene_Tag[i])] <<- cls_counts$Freq[i]}))
+# Obtain info for executed modules
+invisible(lapply(names(executed)[which(unlist(executed))],function(mod){
+	invisible(lapply(rownames(cls_genes_summary),function(cl){
+		if(exists("enrichments_ORA")) cls_genes_summary[cl,paste(mod,"(ORA)")] <<- length(which(enrichments_ORA[[mod]]@compareClusterResult$Cluster == cl))
+		if(exists("enrichments_GSEA")) cls_genes_summary[cl,paste(mod,"(GSEA)")] <<- length(which(enrichments_GSEA[[mod]]@compareClusterResult$Cluster == cl))
+	}))
+}))
+# Render
 knitr::kable(cls_genes_summary)
 ```
 
 And executed modules have been:
 ```{r executed_modules, echo = FALSE}
-all_posible <- c("GO_BP","GO_CC","GO_MF","KEGG","REACT")
-if(exists("enrichments_ORA")){ executed <- as.list(all_posible %in% names(enrichments_ORA))
-}else{ executed <- as.list(all_posible %in% names(enrichments_GSEA))}
-names(executed) <- all_posible
 knitr::kable(data.frame(Executed = unlist(executed)))
 ```
 
@@ -162,11 +178,20 @@ cat("### **Over Representation Analysis**\n",
 
 cat(
 	"**Dotplot**\n\n", 
-	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
-	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+	"WRITE THIS TEXT >>>>.\n\n"
 )
 pp <- dotplot(enrichments_ORA$KEGG, showCategory=n_category)
 plot(pp)
+
+
+cat(
+	"**Heatmap**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- ggplot(enrichments_ORA$KEGG@compareClusterResult, aes(x = Cluster, y = Description, fill = p.adjust)) + geom_tile()
+plot(pp)
+
 ```
 
 
@@ -181,10 +206,17 @@ cat("### **Over Representation Analysis**\n",
 
 cat(
 	"**Dotplot**\n\n", 
-	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
-	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+	"WRITE THIS TEXT >>>>.\n\n"
 )
 pp <- dotplot(enrichments_ORA$REACT, showCategory=n_category)
+plot(pp)
+
+cat(
+	"**Heatmap**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- ggplot(enrichments_ORA$REACT@compareClusterResult, aes(x = Cluster, y = Description, fill = p.adjust)) + geom_tile()
 plot(pp)
 
 ```
@@ -203,11 +235,19 @@ cat("### **[BP] Over Representation Analysis**\n",
 
 cat(
 	"**Dotplot**\n\n", 
-	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
-	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+	"WRITE THIS TEXT >>>>.\n\n"
 )
 pp <- dotplot(enrichments_ORA$GO_BP, showCategory=n_category)
 plot(pp)
+
+cat(
+	"**Heatmap**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- ggplot(enrichments_ORA$GO_BP@compareClusterResult, aes(x = Cluster, y = Description, fill = p.adjust)) + geom_tile()
+plot(pp)
+
 
 ```
 
@@ -218,11 +258,20 @@ cat("### **[MF] Over Representation Analysis**\n",
 
 cat(
 	"**Dotplot**\n\n", 
-	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
-	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+	"WRITE THIS TEXT >>>>.\n\n"
 )
 pp <- dotplot(enrichments_ORA$GO_MF, showCategory=n_category)
 plot(pp)
+
+cat(
+	"**Heatmap**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- ggplot(enrichments_ORA$GO_MF@compareClusterResult, aes(x = Cluster, y = Description, fill = p.adjust)) + geom_tile()
+plot(pp)
+
+
 
 ```
 
@@ -233,10 +282,19 @@ cat("### **[CC] Over Representation Analysis**\n",
 
 cat(
 	"**Dotplot**\n\n", 
-	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
-	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+	"WRITE THIS TEXT >>>>.\n\n"
 )
 pp <- dotplot(enrichments_ORA$GO_CC, showCategory=n_category)
 plot(pp)
+
+
+cat(
+	"**Heatmap**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- ggplot(enrichments_ORA$GO_CC@compareClusterResult, aes(x = Cluster, y = Description, fill = p.adjust)) + geom_tile()
+plot(pp)
+
 
 ```

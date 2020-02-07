@@ -61,7 +61,10 @@ option_list <- list(
   make_option(c("-C", "--custom"), ,type = "character", default=NULL,
     help="Files with custom nomenclature (in GMT format) separated by commas (,)"),
   make_option(c("-T", "--threshold"), type="double", default=0.1,
-    help="Enrichment p-value threshold. [Default = %default]")
+    help="Enrichment p-value threshold. [Default = %default]"),
+  make_option(c("-Q", "--qthreshold"), type="double", default=0.2,  # Currently only used in CLUSTERED enrichments
+    help="Enrichment q-value threshold. [Default = %default]")
+
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
@@ -200,7 +203,7 @@ if(remote_actions$biomart){ # REMOTE MODE
 		stop(paste("This genes type (",opt$biomaRt_filter,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
 	}
 }else{
-	error("Specified organism are not availvable to be studiend in LOCAL model. Please try REMOTE mode")
+	error("Specified organism are not available to be studiend in LOCAL model. Please try REMOTE mode")
 }
 
 
@@ -478,38 +481,26 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]))){
 #############################################
 if(flags$Clustered){
 	cls <- unique(DEG_annot_table$Cluster_ID)
-	clgenes <- lapply(cls,function(cl){unique(rownames(DEG_annot_table[which(DEG_annot_table$genes_tag == "PREVALENT_DEG" & DEG_annot_table$Cluster_ID == cl),]))}) # Find
+	# Check
+	if(any(c(0,"grey") %in% cls)){
+		cls <- cls[-(cls %in% c(0,"grey"))]
+	}else{
+		warning("Cluster Zero/Grey not found")
+	}
+	clgenes <- lapply(cls,function(cl){unique(rownames(DEG_annot_table[which(DEG_annot_table$Cluster_ID == cl),]))}) # Find
 	clgenes <- lapply(clgenes,function(genes){reference_table$entrezgene[which(reference_table$ensembl_gene_id %in% genes)]}) # Translate
 	names(clgenes) <- cls
 	if(flags$ORA){
 		message("Performing ORA enrichments")
 		enrichments_ORA <- lapply(seq(nrow(ora_config)),function(i){
-			message(paste0("Itter :: ",i))
 			# Perform per each cluster
-			enr <- enrichment_clusters_ORA(genes = clgenes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = ora_config$Onto[i])
-		# 	enr <- lapply(clgenes,function(genes){
-		# 		# Check
-		# 		if(length(genes) <= 0) return(NULL)
-		# 		# Enrich
-		# 		curr_enr <- enrichment_ORA(genes = genes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = ora_config$Onto[i])
-		# 		# Check
-		# 		if(is.null(curr_enr)) return(NULL)
-		# 		if(nrow(curr_enr) <= 0) return(NULL)
-		# 		# Return
-		# 		return(curr_enr)
-		# 	})
-		# 	return(list(Call = ora_config[i,],Enrichments = enr))
+			enr <- enrichment_clusters_ORA(genes = clgenes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = ora_config$Onto[i],qvalueCutoff = opt$qthreshold)
 		})
 		names(enrichments_ORA) <- ora_config$Onto
 		# Write output
 		invisible(lapply(seq_along(enrichments_ORA),function(i){
 			# Concat
 			df <- clusterProfiler:::fortify.compareClusterResult(enrichments_ORA[[i]])
-			# df <- as.data.frame(do.call(rbind,lapply(seq_along(entry$Enrichments),function(i){
-			# 	if(is.null(entry$Enrichments[[i]])) return(NULL)
-			# 	enr_df <- as.data.frame(entry$Enrichments[[i]])
-			# 	return(cbind(list(Cluster_ID=rep(i,nrow(enr_df))),enr_df))
-			# })))
 			# Write table
 			write.table(df, file=file.path(paths$root, paste0(ora_config$Onto[i],"_cls_ora")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 		}))
@@ -550,20 +541,29 @@ if(flags$Clustered){
 				# Return
 				return(curr_enr)
 			})
-			return(list(Call = gsea_config[i,],Enrichments = enr))
+			# Merge all results
+			enr <- merge_result(enr)
+			# Return
+			return(enr)
 		})
 		names(enrichments_GSEA) <- gsea_config$Onto
 		# Write output
-		invisible(lapply(enrichments_GSEA,function(entry){
+		invisible(lapply(seq_along(enrichments_GSEA),function(i){
 			# Concat
-			df <- as.data.frame(do.call(rbind,lapply(seq_along(entry$Enrichments),function(i){
-				if(is.null(entry$Enrichments[[i]])) return(NULL)
-				enr_df <- as.data.frame(entry$Enrichments[[i]])
-				return(cbind(list(Cluster_ID=rep(i,nrow(enr_df))),enr_df))
-			})))
+			df <- clusterProfiler:::fortify.compareClusterResult(enrichments_GSEA[[i]])
 			# Write table
-			write.table(df, file=file.path(paths$root, paste0(entry$Call$Onto[1],"_cls_gsea")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+			write.table(df, file=file.path(paths$root, paste0(gsea_config$Onto[i],"_cls_gsea")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 		}))
+		# invisible(lapply(enrichments_GSEA,function(entry){
+		# 	# Concat
+		# 	df <- as.data.frame(do.call(rbind,lapply(seq_along(entry$Enrichments),function(i){
+		# 		if(is.null(entry$Enrichments[[i]])) return(NULL)
+		# 		enr_df <- as.data.frame(entry$Enrichments[[i]])
+		# 		return(cbind(list(Cluster_ID=rep(i,nrow(enr_df))),enr_df))
+		# 	})))
+		# 	# Write table
+		# 	write.table(df, file=file.path(paths$root, paste0(entry$Call$Onto[1],"_cls_gsea")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+		# }))
 	}
 }
 
@@ -700,7 +700,7 @@ if(!is.null(opt$custom)) {
 ############################################################
 ############################################################
 # REMOVE THIS WHEN DEVELOP/TEST PHASE ENDS
-# save.image("test.RData")
+save.image("test.RData")
 
 message("RENDERING REPORT ...")
 
