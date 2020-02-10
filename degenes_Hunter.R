@@ -28,6 +28,8 @@ suppressPackageStartupMessages(require(rmarkdown))
 suppressPackageStartupMessages(require(reshape2))
 suppressPackageStartupMessages(require(PerformanceAnalytics))
 suppressPackageStartupMessages(require(WGCNA))
+suppressPackageStartupMessages(require(PCIT))
+
 
 # Obtain this script directory
 full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using source
@@ -392,6 +394,14 @@ if(grepl("N", opt$modules)){
 ##################################################################
 ##                       CORRELATION ANALYSIS                   ##
 ##################################################################
+#####
+################## CASE W: WGCNA
+#####
+
+    DESeq2_counts <- counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE)
+    DESeq2_counts_treatment <- DESeq2_counts[, index_treatmn_cols]
+    DESeq2_counts_control <- DESeq2_counts[, index_control_cols]
+
 if(grepl("W", opt$modules)) {
   if(grepl("D", opt$modules)) { 
     cat('Correlation analysis is performed with WGCNA\n')
@@ -451,6 +461,13 @@ if(grepl("W", opt$modules)) {
   }
 }
 
+#####
+################## CASE P: PCIT
+#####
+
+if(grepl("P", opt$modules)) {
+  metrics_WGCNA <- analysis_diff_correlation(DESeq2_counts, DESeq2_counts_control, DESeq2_counts_treatment, PCIT_filter=FALSE)
+}
 
 #################################################################################
 ##                       EXPORT FINAL RESULTS AND OTHER FILES                  ##
