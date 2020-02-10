@@ -398,7 +398,7 @@ geneList <- sort(geneList, decreasing = TRUE)
 # Prepare executions
 if(any(unlist(flags[c("GO_cp","KEGG","REACT")]))){
 	options(stringsAsFactors=FALSE)
-	ora_config <- data.frame(Fun = character(),Onto = character(),Organism = character(),KeyType = character(), stringsAsFactors = FALSE)
+	ora_config <- data.frame(Fun = character(),Onto = character(),Organism = character(),KeyType = character(), UseInternal = logical(), stringsAsFactors = FALSE)
 	gsea_config <- data.frame(Onto = character(),Organism = character(),KeyType = character(),UseInternal = logical(), stringsAsFactors = FALSE)
 
 	###################
@@ -426,7 +426,7 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]))){
 			# Add execution info
 			if(flags$Clustered){
 				if(flags$ORA){ 
-					invisible(lapply(modules_to_export,function(mod){ora_config <<- rbind(ora_config,list(Fun = "enrichGO",Onto=paste0("GO_",mod),Organism=biomaRt_organism_info$Bioconductor_DB[1],KeyType=keytypes))}))
+					invisible(lapply(modules_to_export,function(mod){ora_config <<- rbind(ora_config,list(Fun = "enrichGO",Onto=paste0("GO_",mod),Organism=biomaRt_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))}))
 				}
 				if(flags$GSEA){
 					invisible(lapply(modules_to_export,function(mod){gsea_config <<- rbind(gsea_config,list(Onto=paste0("GO_",mod),Organism=biomaRt_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))}))					
@@ -447,7 +447,7 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]))){
 				require(KEGG.db)
 			}
 			if(flags$Clustered){
-				if(flags$ORA) ora_config <- rbind(ora_config,list(Fun = "enrichKEGG",Onto="KEGG",Organism=biomaRt_organism_info$KeggCode[1],KeyType="kegg"))
+				if(flags$ORA) ora_config <- rbind(ora_config,list(Fun = "enrichKEGG",Onto="KEGG",Organism=biomaRt_organism_info$KeggCode[1],KeyType="kegg",UseInternal=!remote_actions$kegg))
 				if(flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="KEGG",Organism=biomaRt_organism_info$KeggCode[1],KeyType="ENTREZID",UseInternal=!remote_actions$kegg))
 			}
 		}
@@ -465,7 +465,7 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]))){
 		}else{
 			require(ReactomePA)
 			if(flags$Clustered){
-				if(flags$ORA) ora_config <- rbind(ora_config,list(Fun = "enrichPathway",Onto="REACT",Organism=biomaRt_organism_info$Reactome_ID[1],KeyType="ENTREZID"))				
+				if(flags$ORA) ora_config <- rbind(ora_config,list(Fun = "enrichPathway",Onto="REACT",Organism=biomaRt_organism_info$Reactome_ID[1],KeyType="ENTREZID",UseInternal=FALSE))				
 				if(flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="REACT",Organism=biomaRt_organism_info$Reactome_ID[1],KeyType="ENTREZID",UseInternal=FALSE))				
 			}
 		}
@@ -491,7 +491,7 @@ if(flags$Clustered){
 		message("Performing ORA enrichments")
 		enrichments_ORA <- lapply(seq(nrow(ora_config)),function(i){
 			# Perform per each cluster
-			enr <- enrichment_clusters_ORA(genes = clgenes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = ora_config$Onto[i],qvalueCutoff = opt$qthreshold)
+			enr <- enrichment_clusters_ORA(genes = clgenes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = ora_config$Onto[i],qvalueCutoff = opt$qthreshold, useInternal = ora_config$UseInternal[i])
 		})
 		names(enrichments_ORA) <- ora_config$Onto
 		# Write output
