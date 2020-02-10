@@ -169,8 +169,16 @@ check_results <- function(df){
 	}else if(is.list(df)){
 		if(!all(unlist(lapply(df,function(set){
 				if(typeof(set)=="S4"){
-					if(nrow(set@result[which(set@result$p.adjust <= set@pvalueCutoff),]) > 1){
-						return(TRUE)
+					if("pvalueCutoff" %in% slotNames(set)){
+						if(nrow(set@result[which(set@result$p.adjust <= set@pvalueCutoff),]) > 1){
+							return(TRUE)
+						}
+					}else if("params" %in% slotNames(set)){
+						if(nrow(set@result[which(set@result$p.adjust <= set@params$pvalueCutoff),]) > 1){
+							return(TRUE)
+						}
+					}else{
+						return(FALSE)
 					}
 					return(FALSE)
 				}
