@@ -709,8 +709,7 @@ results_path <- paste(normalizePath(dirname(paths$root)),paths$root,sep=.Platfor
 message("\tRendering regular report")
 outf <- paste(dirname(normalizePath(paths$root,"functional_report.html")),"functional_report.html",sep=.Platform$file.sep)
 
-rmarkdown::render(file.path(main_path_script, 'templates', 'functional_report.Rmd'), 
-                  output_file = outf, intermediates_dir = paths$root)	
+rmarkdown::render(file.path(main_path_script, 'templates', 'functional_report.Rmd'), output_file = outf, intermediates_dir = paths$root)	
 if(flags$Clustered){ # Clustered
 	message("\tRendering clustered report")
 	outf_cls <- paste(dirname(normalizePath(paths$root,"clusters_func_report.html")),"clusters_func_report.html",sep=.Platform$file.sep)

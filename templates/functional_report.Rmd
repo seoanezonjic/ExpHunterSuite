@@ -159,31 +159,34 @@ check_results <- function(df){
 			return(FALSE)
 		}
 	}else if(typeof(df)=="S4"){
-		if(nrow(df@result[which(df@result$p.adjust <= df@pvalueCutoff),]) <= 1){
-			return(FALSE)
-		}else if(length(get_categories(df)) <= 1){
+		if("pvalueCutoff" %in% slotNames(df)){
+			if(nrow(df@result[which(df@result$p.adjust <= df@pvalueCutoff),]) < 1){
+				return(FALSE)
+			}
+		}else if(length(get_categories(df)) < 1){
 			return(FALSE)
 		}
+		return(TRUE)
 	}else if(!is.list(df) & !typeof(df)=="S4"){
 		return(FALSE)
 	}else if(is.list(df)){
 		if(!all(unlist(lapply(df,function(set){
-				if(typeof(set)=="S4"){
-					if("pvalueCutoff" %in% slotNames(set)){
-						if(nrow(set@result[which(set@result$p.adjust <= set@pvalueCutoff),]) > 1){
-							return(TRUE)
-						}
-					}else if("params" %in% slotNames(set)){
-						if(nrow(set@result[which(set@result$p.adjust <= set@params$pvalueCutoff),]) > 1){
-							return(TRUE)
-						}
-					}else{
-						return(FALSE)
+			if(typeof(set)=="S4"){
+				if("pvalueCutoff" %in% slotNames(set)){
+					if(nrow(set@result[which(set@result$p.adjust <= set@pvalueCutoff),]) >= 1){
+						return(TRUE)
 					}
+				}else if("params" %in% slotNames(set)){
+					if(nrow(set@result[which(set@result$p.adjust <= set@params$pvalueCutoff),]) >= 1){
+						return(TRUE)
+					}
+				}else{
 					return(FALSE)
 				}
-				return(TRUE)
-			})))){
+				return(FALSE)
+			}
+			return(TRUE)
+		})))){ # IF
 			return(FALSE)
 		}
 	}
@@ -416,14 +419,13 @@ height_size <- calc_height(enrich_ora_symb)
 plot_in_div(pp, height_size, width_size)
 
 
-cat("\n\n**Upsetplot**\n\n", 
-	"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
-)
-
-
-pp <- upsetplot(enrich_ora, n=n_category)
-plot_in_div(pp, width = default_width)
-
+if(length(get_categories(enrich_ora))>=2){ # Needs, at least, two categories
+	cat("\n\n**Upsetplot**\n\n", 
+		"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
+	)
+	pp <- upsetplot(enrich_ora, n=n_category)
+	plot_in_div(pp, width = default_width)
+}
 ```
 
 
