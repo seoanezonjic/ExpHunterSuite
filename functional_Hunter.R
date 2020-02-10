@@ -379,30 +379,27 @@ if(flags$GO){
 ##                                               NORMALIZED ENRICHMENTS                                              ##                                                     
 ##                                                                                                                   ##
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+# Calcualte geneList
+if(exists("annot_table")){
+	aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
+	geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
+	names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
+	names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+}else{
+	aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
+	geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
+	names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
+	names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+}
+# Sort FC
+geneList <- sort(geneList, decreasing = TRUE)
+
 
 # Prepare executions
 if(any(unlist(flags[c("GO_cp","KEGG","REACT")]))){
 	options(stringsAsFactors=FALSE)
 	ora_config <- data.frame(Fun = character(),Onto = character(),Organism = character(),KeyType = character(), stringsAsFactors = FALSE)
 	gsea_config <- data.frame(Onto = character(),Organism = character(),KeyType = character(),UseInternal = logical(), stringsAsFactors = FALSE)
-
-	###################
-	## GENERAL
-	if(flags$GSEA){
-		if(exists("annot_table")){
-			aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
-			geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
-			names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
-			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
-		}else{
-			aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
-			geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
-			names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
-			names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
-		}
-		# Sort FC
-		geneList <- sort(geneList, decreasing = TRUE)
-	}
 
 	###################
 	## GO
@@ -546,7 +543,6 @@ if(flags$Clustered){
 			# Return
 			return(enr)
 		})
-		save.image("TEST.RData")
 		names(enrichments_GSEA) <- gsea_config$Onto
 		# Write output
 		invisible(lapply(seq_along(enrichments_GSEA),function(i){
@@ -702,7 +698,7 @@ if(!is.null(opt$custom)) {
 ############################################################
 ############################################################
 # REMOVE THIS WHEN DEVELOP/TEST PHASE ENDS
-save.image("test.RData")
+# save.image("test.RData")
 
 message("RENDERING REPORT ...")
 
