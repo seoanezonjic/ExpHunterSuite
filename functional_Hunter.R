@@ -580,7 +580,7 @@ if(flags$GO_cp){
 	### ORA ENRICHMENTS
 	if(flags$ORA){
 		enrich_go <- lapply(modules_to_export,function(mod){
-			enrich <- enrichment_ORA(genes = common_unique_entrez,organism = biomaRt_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = paste0("GO_",mod))
+			enrich <- enrichment_ORA(genes = common_unique_entrez,organism = biomaRt_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = paste0("GO_",mod), qvalueCutoff = opt$qthreshold)
 			return(enrich)
 		})
 		# Add names
@@ -612,7 +612,7 @@ if(flags$KEGG){
 	message("Performing KEGG enrichments")
 	if(flags$ORA){
 		# Enrich
-		enrich_ora <- enrichment_ORA(genes = common_unique_entrez,organism = biomaRt_organism_info$KeggCode[1],keyType = "kegg",pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = "KEGG",useInternal = !remote_actions$kegg)
+		enrich_ora <- enrichment_ORA(genes = common_unique_entrez,organism = biomaRt_organism_info$KeggCode[1],keyType = "kegg",pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = "KEGG",useInternal = !remote_actions$kegg, qvalueCutoff = opt$qthreshold)
 		# Write output
 		write.table(enrich_ora, file=file.path(paths$root, "KEGG_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
@@ -633,7 +633,7 @@ if(flags$REACT){
 	message("Performing Reactome enrichments")
 	if(flags$ORA){
 		# Make enrichment (ORA)
-		enrich_react <- enrichment_ORA(genes = common_unique_entrez,organism = biomaRt_organism_info$Reactome_ID[1],keyType = "ENTREZID",pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = "REACT")		
+		enrich_react <- enrichment_ORA(genes = common_unique_entrez,organism = biomaRt_organism_info$Reactome_ID[1],keyType = "ENTREZID",pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = "REACT", qvalueCutoff = opt$qthreshold)		
 		# Write output
 		write.table(enrich_react, file=file.path(paths$root, "REACT_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
 	}

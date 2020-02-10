@@ -268,9 +268,10 @@ generate_FA_report <- function(){
 #' @param pAdjustMethod :: 
 #' @param ont :: ontology to be used. Allowed [GO_MF,GO_CC,GO_BP,KEGG,REACT]
 #' @param useInternal :: used only for KEGG enrichment, activate internal data usage mode
+#' @param qvalueCutoff :: 
 #' @return enrichment performed
 #' @import clusterProfiler, KEGG.db, ReactomePA
-enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE){
+enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff = 0.2){
   require(clusterProfiler)
   if(useInternal)
     require(KEGG.db)
@@ -292,19 +293,22 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
                            keyType       = keyType,
                            ont           = go_subonto,
                            pvalueCutoff  = pvalueCutoff,
-                           pAdjustMethod = pAdjustMethod) 
+                           pAdjustMethod = pAdjustMethod,
+                           qvalueCutoff  = qvalueCutoff) 
   }else if(ont == "KEGG"){
     enrichment <- enrichKEGG(gene          = genes,
                              organism      = organism,
                              keyType       = keyType,
                              pvalueCutoff  = pvalueCutoff,
                              pAdjustMethod = pAdjustMethod,
-                             use_internal_data = useInternal)
+                             use_internal_data = useInternal,
+                             qvalueCutoff  = qvalueCutoff)
   }else if(ont == "REACT"){
     enrichment <- enrichPathway(genes,
                                 organism = organism,
                                 pAdjustMethod = pAdjustMethod,
-                                pvalueCutoff = pvalueCutoff)
+                                pvalueCutoff = pvalueCutoff,
+                                qvalueCutoff  = qvalueCutoff)
   }else{
     stop("Error, ontology specified is not supported to be enriched")
   }
@@ -382,6 +386,7 @@ require(clusterProfiler)
 #' @param pAdjustMethod :: 
 #' @param ont :: ontology to be used. Allowed [GO_MF,GO_CC,GO_BP,KEGG,REACT]
 #' @param useInternal :: used only for KEGG enrichment, activate internal data usage mode
+#' @param qvalueCutoff :: 
 #' @return enrichment performed
 #' @import clusterProfiler, KEGG.db, ReactomePA
 enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff){
