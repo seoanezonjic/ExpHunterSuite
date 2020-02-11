@@ -416,18 +416,34 @@ A table containing the NOISeq normalized counts is provided in Results\\_NOISeq/
 ```{r WGCNA_conditional_block_head, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
 cat("### **WGCNA Results**
 
-Various tables of results for WGCNA. Will shortly be changed for some heatplots and more informative graphics:"
+Various tables of results for WGCNA. Will shortly be changed for some heatplots and more informative graphics:
+
+In total there was a number of ", max(unique(results_WGCNA$gene_cluster_info$MM_Cluster_ID)) ,"clusters."
+
 
 )
 ```
 
-```{r WGCNA_conditional_block_plot, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE}
+
+```{r WGCNA_conditional_block_plot, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=12, fig.width=15}
+	df <- table(results_WGCNA$gene_cluster_info$MM_Cluster_ID)
+	ggplot(as.data.frame(df), aes(Var1, Freq)) + 
+    geom_bar(stat="identity") + labs(x = "Cluster ID (0 = unclustered)", y = "Frequency", main="Number of Genes per Cluster")
+
+    replayPlot(results_WGCNA[['plot_objects']][['trait_vs_module_heatmap']])
+
+
 	knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor']][1:10,])
 	knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor_p']][1:10,])
 	knitr::kable(results_WGCNA[['package_objects']][['gene_module_cor']][1:10,])
 	knitr::kable(results_WGCNA[['package_objects']][['gene_module_cor_p']][1:10,])
 	knitr::kable(results_WGCNA[['package_objects']][['module_trait_cor']])
 	knitr::kable(results_WGCNA[['package_objects']][['module_trait_cor_p']])
+
+	#plot(results_WGCNA$plot_objects)
+
+	replayPlot(results_WGCNA[['plot_objects']][['trait_and_module_dendogram']])
+    replayPlot(results_WGCNA[['plot_objects']][['trait_and_module_heatmap']])
 
 ```
 

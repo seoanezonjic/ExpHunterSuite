@@ -84,6 +84,10 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
                     addGuide = TRUE, guideHang = 0.05)
 	dev.off()
 
+	MEs <- moduleEigengenes(data, net$colors)$eigengenes
+
+	write.table(MEs, file=file.path(path, "eigen_values_per_samples.txt"), sep="\t")
+
 	if(cor_only == TRUE) {
 		return("cor_only")
 	}
@@ -131,9 +135,13 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	## CLUSTER MODULES WITH TRAITS AND PRODUCE HEATMAP
 	####################################################################
 
-	nSamples = nrow(data);
-	MEs = moduleEigengenes(data, net$colors)$eigengenes
-	MEs_colors = moduleEigengenes(data, moduleColors)$eigengenes
+	#save(data, net, trait, moduleColors, file="~/test.RData")
+
+
+	nSamples <- nrow(data)
+	MEs_colors <- MEs <- moduleEigengenes(data, net$colors)$eigengenes
+	ME_numeric <- as.numeric(gsub("ME", "", colnames(MEs)))
+	colnames(MEs_colors) <- paste0("ME", labels2colors(ME_numeric))
 
 	moduleTraitCor = cor(MEs_colors, trait, use = "p")
 	moduleTraitPvalue = corPvalueStudent(moduleTraitCor, nSamples)
@@ -156,22 +164,42 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	               cex.text = 0.5,
 	               zlim = c(-1,1),
 	               main = paste("Module-trait relationships"))
-		p1 <- recordPlot()
+		trait_vs_module_heatmap <- recordPlot()
 	dev.off()
 
+	####################################################################
+	# Produce dendogram and heatmap
+	####################################################################
+
+	#ME_s <- moduleEigengenes(data, labels2colors(net$colors))$eigengenes
+	ME_traits = orderMEs(cbind(MEs_colors, trait))
+
+	pdf(file.path(path, 'eigengenes_dendogram.pdf'))
+		dev.control(displaylist="enable")
+		plotEigengeneNetworks(ME_traits, "Eigengene dendrogram", marDendro = c(0,4,2,0),
+                      plotHeatmaps = FALSE)
+		trait_and_module_dendogram <- recordPlot()
+	dev.off()
+	
+	pdf(file.path(path, 'eigengenes_heatmap.pdf'))
+		dev.control(displaylist="enable")
+		plotEigengeneNetworks(ME_traits, "Eigengene adjacency heatmap", marHeatmap = c(12,12,2,2),
+                      plotDendrograms = FALSE, xLabelsAngle = 90)
+		trait_and_module_heatmap <- recordPlot()
+	dev.off()
 
 	####################################################################
 	## Produce Tables
 	####################################################################
 	# Report tables: 
-	# Genes per module
+	# Genes per module 
 	gene_module_cor <- as.data.frame(cor(data, MEs, use = "p"));
 	gene_module_cor_p <- as.data.frame(corPvalueStudent(as.matrix(gene_module_cor), nSamples));
 	colnames(gene_module_cor_p) = colnames(gene_module_cor) <- gsub("ME", "Cluster_", colnames(gene_module_cor_p) )
 	# Genes per trait
 	gene_trait_cor <- as.data.frame(cor(data, trait, use = "p"));
 	gene_trait_cor_p <- as.data.frame(corPvalueStudent(as.matrix(gene_trait_cor), nSamples));
-	# Module per trait
+	# Module per trait (also produced above for the plot - should give smae results.)
 	module_trait_cor = cor(MEs, trait, use = "p")
 	module_trait_cor_p <- corPvalueStudent(module_trait_cor, nSamples)
 	row.names(module_trait_cor) = row.names(module_trait_cor_p) <- gsub("ME", "Cluster_", row.names(module_trait_cor_p))
@@ -186,7 +214,9 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 			package_objects=list(gene_module_cor=gene_module_cor, gene_module_cor_p=gene_module_cor_p,
 				gene_trait_cor=gene_trait_cor, gene_trait_cor_p=gene_trait_cor_p, 
 				module_trait_cor=module_trait_cor, module_trait_cor_p=module_trait_cor_p),
-			plot_objects=p1
+			plot_objects=list(trait_vs_module_heatmap = trait_vs_module_heatmap, 
+				trait_and_module_dendogram = trait_and_module_dendogram, 
+				trait_and_module_heatmap = trait_and_module_heatmap)
 			)
 		)
 }
