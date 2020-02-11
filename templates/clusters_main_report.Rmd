@@ -298,3 +298,52 @@ plot(pp)
 
 
 ```
+
+
+
+
+```{r create_out_custom, echo = FALSE}
+out_custom <- ""
+```
+
+```{r custom_create, echo = FALSE, eval = exists("custom_cls_ORA")}
+out_custom <- NULL
+invisible(lapply(seq_along(custom_cls_ORA),function(i){
+	# Take results
+	res <- custom_cls_ORA[[i]]
+	cname <- names(custom_cls_ORA)[i]
+	# Check and generate info
+	if(is.null(res)){
+		header <- paste("## **",cname,"** \n\nThis CUSTOM study has been executed but **has not returned any result**\n", sep="")
+		body <- ""
+	}else{
+		header <- ""
+
+		body <- "res <- custom_cls_ORA[[{{i}}]]
+				cname <- names(custom_cls_ORA)[{{i}}]
+				cat('### **{{cname}} -  Over Representation Analysis**\n',
+				'The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n')
+				cat(
+					'**Dotplot**\n\n', 
+					'WRITE THIS TEXT >>>>.\n\n'
+				)
+				pp <- dotplot(res, showCategory=n_category)
+				plot(pp)
+				cat(
+					'**Heatmap**\n\n', 
+					'WRITE THIS TEXT >>>>.\n\n'
+				)
+
+				pp <- ggplot(res@compareClusterResult, aes(x = Cluster, y = Description, fill = p.adjust)) + geom_tile()
+				plot(pp)"
+
+	}
+	out_custom <<- c(out_custom,paste(knit_expand(text = paste(header,
+										 					chunks(body, options = "echo = FALSE,results='asis'"),
+										 					"\n",sep = "\n")),
+													sep = "\n"))
+}))
+
+```
+
+`r paste(knit(text = paste(out_custom,collapse = "\n")),collapse = "\n")`

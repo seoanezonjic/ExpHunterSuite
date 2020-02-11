@@ -396,7 +396,7 @@ geneList <- sort(geneList, decreasing = TRUE)
 
 
 # Prepare executions
-if(any(unlist(flags[c("GO_cp","KEGG","REACT")]))){
+if(any(unlist(flags[c("GO_cp","KEGG","REACT")]),!is.null(opt$custom))){
 	options(stringsAsFactors=FALSE)
 	ora_config <- data.frame(Fun = character(),Onto = character(),Organism = character(),KeyType = character(), UseInternal = logical(), stringsAsFactors = FALSE)
 	gsea_config <- data.frame(Onto = character(),Organism = character(),KeyType = character(),UseInternal = logical(), stringsAsFactors = FALSE)
@@ -469,6 +469,35 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]))){
 				if(flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="REACT",Organism=biomaRt_organism_info$Reactome_ID[1],KeyType="ENTREZID",UseInternal=FALSE))				
 			}
 		}
+	}
+
+
+	###################
+	## CUSTOM
+	# Prepare custom enrichments
+	if(!is.null(opt$custom)) {
+		if(nchar(opt$custom)>0) {
+			# Obtain custom files
+			custom_files <- unlist(strsplit(opt$custom,","))
+			# Per each file, launch enrichment
+			custom_sets <- lapply(custom_files,function(f){
+				# Load info
+				c_terms <- unlist(read.table(file = f, sep = "\n", header = FALSE, stringsAsFactors = FALSE))
+				# Split all
+				c_terms <- as.data.frame(do.call(rbind,lapply(c_terms,function(GeneTerms){
+					aux <- unlist(strsplit(GeneTerms,"\t"))
+					return(data.frame(Term = rep(aux[1],length(aux)-2),
+									  Gene = tail(aux,-2),
+									  stringsAsFactors = FALSE))
+				})))
+				return(c_terms)
+			})
+			names(custom_sets) <- custom_files
+		}else{
+			custom_sets <- NULL
+		}
+	}else{
+		custom_sets <- NULL
 	}
 }
 
@@ -552,16 +581,26 @@ if(flags$Clustered){
 			# Write table
 			write.table(df, file=file.path(paths$root, paste0(gsea_config$Onto[i],"_cls_gsea")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 		}))
-		# invisible(lapply(enrichments_GSEA,function(entry){
-		# 	# Concat
-		# 	df <- as.data.frame(do.call(rbind,lapply(seq_along(entry$Enrichments),function(i){
-		# 		if(is.null(entry$Enrichments[[i]])) return(NULL)
-		# 		enr_df <- as.data.frame(entry$Enrichments[[i]])
-		# 		return(cbind(list(Cluster_ID=rep(i,nrow(enr_df))),enr_df))
-		# 	})))
-		# 	# Write table
-		# 	write.table(df, file=file.path(paths$root, paste0(entry$Call$Onto[1],"_cls_gsea")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
-		# }))
+	}
+
+
+	## CUSTOM
+	if(!is.null(custom_sets)){
+		# Execute ORA per each set
+		custom_cls_ORA <- lapply(seq_along(custom_sets),function(i){
+			cs_set <- custom_sets[[i]]
+			# Enrich
+			cs_enr <- lapply(clgenes,function(genesset){
+				enricher(genesset, pvalueCutoff = opt$threshold, TERM2GENE = cs_set)
+			})
+			names(cs_enr) <- names(clgenes)
+			# Concat
+			cs_enr <- merge_result(cs_enr)
+			# Store results
+			write.table(cs_enr, file=file.path(paths$root, paste0(names(custom_sets)[i],"_cls_ORA")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+			return(cs_enr)
+		})
+		names(custom_cls_ORA) <- names(custom_sets)
 	}
 }
 
