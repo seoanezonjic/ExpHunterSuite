@@ -412,6 +412,15 @@ A table containing the NOISeq normalized counts is provided in Results\\_NOISeq/
 )
 ```
 
+
+```{r WGCNA_conditional_block_head, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
+cat("### **WGCNA Results**
+
+Various tables of results for WGCNA. Will shortly be changed for some heatplots and more informative graphics:"
+
+)
+```
+
 ```{r WGCNA_conditional_block_plot, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE}
 	knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor']][1:10,])
 	knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor_p']][1:10,])
@@ -419,6 +428,36 @@ A table containing the NOISeq normalized counts is provided in Results\\_NOISeq/
 	knitr::kable(results_WGCNA[['package_objects']][['gene_module_cor_p']][1:10,])
 	knitr::kable(results_WGCNA[['package_objects']][['module_trait_cor']])
 	knitr::kable(results_WGCNA[['package_objects']][['module_trait_cor_p']])
+
+```
+
+```{r PCIT_conditional_block_head, eval=grepl("P", opt$modules), echo=FALSE, results='asis'}
+cat("### **PCIT Results**
+
+Plots of some of the various metrics computed in the PCIT implementation. Better explanation and more plots to be added at a later date:"
+
+)
+```
+
+```{r PCIT_conditional_block_plot, eval=grepl("P", opt$modules), echo=FALSE, warning=FALSE, message=FALSE}
+		ggplot(metrics_WGCNA, aes(x=ctrl_cn)) +
+                  geom_density()
+        ggplot(metrics_WGCNA, aes(x=treat_cn)) +
+                  geom_density()
+        ggplot(metrics_WGCNA, aes(x=diff_cn)) +
+                geom_density()
+        ggplot(metrics_WGCNA, aes(x=diffK)) +
+                geom_density()
+        ggplot(metrics_WGCNA, aes(x=de)) +
+                geom_density()
+        ggplot(metrics_WGCNA, aes(x=de, y=diffK)) +
+                geom_point()
+        ggplot(metrics_WGCNA, aes(x=pif)) +
+                geom_density()
+        ggplot(metrics_WGCNA, aes(x=rif)) +
+                geom_density()
+        ggplot(metrics_WGCNA, aes(x=de, y=rif)) +
+                geom_point()
 
 ```
 

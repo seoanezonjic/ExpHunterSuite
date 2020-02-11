@@ -28,6 +28,8 @@ suppressPackageStartupMessages(require(rmarkdown))
 suppressPackageStartupMessages(require(reshape2))
 suppressPackageStartupMessages(require(PerformanceAnalytics))
 suppressPackageStartupMessages(require(WGCNA))
+suppressPackageStartupMessages(require(PCIT))
+
 
 # Obtain this script directory
 full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using source
@@ -40,6 +42,8 @@ source(file.path(main_path_script, 'lib', 'general_functions.R'))
 source(file.path(main_path_script, 'lib', 'dif_expression_packages.R'))
 source(file.path(main_path_script, 'lib', 'qc_and_benchmarking_functions.R'))
 source(file.path(main_path_script, 'lib', 'correlation_packages.R'))
+source(file.path(main_path_script, 'lib', 'correlation_packages_PCIT.R'))
+
 
 
 # Prepare command line input 
@@ -62,7 +66,7 @@ option_list <- list(
   make_option(c("-f", "--lfc"), type="double", default=1,
     help="Minimum log2 fold change in expression. Note this is on a log2 scale, so a value of 1 would mean a 2 fold change. Default=%default"),
   make_option(c("-m", "--modules"), type="character", default=c("DELNW"), #D = DESeq2, E = edgeR, L = limma, N = NOISeq W = WGCNA.
-    help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N = NOISeq, W = WGCNA.).
+    help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N = NOISeq, W = WGCNA, P = PCIT.).
     By default the following modules Default=%default are performed"),
   make_option(c("-c", "--minpack_common"), type="integer", default=4,
     help="Number of minimum package to consider a gene as a 'PREVALENT' DEG"),
@@ -392,6 +396,14 @@ if(grepl("N", opt$modules)){
 ##################################################################
 ##                       CORRELATION ANALYSIS                   ##
 ##################################################################
+#####
+################## CASE W: WGCNA
+#####
+
+    DESeq2_counts <- counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE)
+    DESeq2_counts_treatment <- DESeq2_counts[, index_treatmn_cols]
+    DESeq2_counts_control <- DESeq2_counts[, index_control_cols]
+
 if(grepl("W", opt$modules)) {
   if(grepl("D", opt$modules)) { 
     cat('Correlation analysis is performed with WGCNA\n')
@@ -429,12 +441,12 @@ if(grepl("W", opt$modules)) {
       )
     }
     # Need to improve the control, probably by removing PCIT
-    if(results_WGCNA_treatment == "NO_POWER_VALUE" | results_WGCNA_control == "NO_POWER_VALUE") {
-      warning("WGCNA was unable to generate a suitable power value for at least one of the partial datasets")
-    }
+    # if(results_WGCNA_treatment == "NO_POWER_VALUE" | results_WGCNA_control == "NO_POWER_VALUE") {
+    #   warning("WGCNA was unable to generate a suitable power value for at least one of the partial datasets")
+    # }
 
 
-    cat('Performing WGCNA correlation analysis for control samples\n')
+    cat('Performing WGCNA correlation analysis for all samples\n')
     results_WGCNA <- analysis_WGCNA(data=DESeq2_counts,
                                     path=path,
                                     target_numeric_factors=target_numeric_factors,
@@ -443,7 +455,7 @@ if(grepl("W", opt$modules)) {
                                     cor_only=FALSE
     )
     if(length(results_WGCNA) == 1) {
-      warning("WGCNA was unable to generate a suitable power value and was therefore not run")
+      warning("Something went wrong with WGCNA on the full dataset")
       opt$modules <- gsub("W", "", opt$modules)
     }
   } else {
@@ -451,6 +463,13 @@ if(grepl("W", opt$modules)) {
   }
 }
 
+#####
+################## CASE P: PCIT
+#####
+
+if(grepl("P", opt$modules)) {
+  metrics_WGCNA <- analysis_diff_correlation(DESeq2_counts, DESeq2_counts_control, DESeq2_counts_treatment, PCIT_filter=FALSE)
+}
 
 #################################################################################
 ##                       EXPORT FINAL RESULTS AND OTHER FILES                  ##

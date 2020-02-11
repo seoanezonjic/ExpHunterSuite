@@ -5,7 +5,7 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	## THRESHOLDING - EFFECTS OF BETA ON TOPOLOGY AND AUTO SELECTION
 	####################################################################
 
-	powers <- c(c(1:10), seq(from = 12, to=40, by=2))
+	powers <- c(c(1:10), seq(from = 12, to=30, by=2))
  	sft <- pickSoftThreshold(data, powerVector = powers, verbose = 5)
 
 	pdf(file.path(path, "thresholding.pdf"))
@@ -29,6 +29,7 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	# Calculate Power automatically
 	sft_mfs_r2 <- -sign(sft$fitIndices[,3])*sft$fitIndices[,2]
 	min_pow_ind <- which(sft_mfs_r2 > 0.9)[1] # First time the value passes 0.9
+
 	in_advance <- 2
 	if(is.na(min_pow_ind)) {
 		# Plan B to calculate power
@@ -37,14 +38,14 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 			diffs <- abs(diff(vals))
 			# Condition to meet
 			if(sum(diffs < 0.01) == in_advance & sft_mfs_r2[i] > 0.8) {
-			min_pow_ind <- i
-	   		break
+			  min_pow_ind <- i
+	   		  break
 			}
 		}
 	}
 	if(is.na(min_pow_ind)) {
-		warning("Could not obtain a valid power (beta) value for WGCNA")
-		return("NO_POWER_VALUE")
+		warning("Could not obtain a valid power (beta) value for WGCNA, so the default of 30 will be used - proceed with caution")
+		min_pow_ind <- length(sft_mfs_r2) # assumes 30 will be the largest testable power
 	}
 	pow <- sft$fitIndices[min_pow_ind, "Power"]
 	cor <- WGCNA::cor # TO CORRECT FUNCTION OVERRIDE DUE TO OTHER PACKAGES
@@ -97,7 +98,7 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 		trait <- data.frame(trait, target_numeric_factors)
 	}
 	if(is.data.frame(target_string_factors)) {
-		# Code to convert the string factors to numeric (1 vs. 0 for each category)
+		# Code to convert the string factors to numeric (1 vs. 0 for each category). NOTE YOU NEED A MINIMUM COUNT OF 2 FOR EACH CATEGORY IN THE FACTORS
 		binarized_string_factors <- lapply(names(target_string_factors), function(factor_name) {
   			string_factor <- target_string_factors[[factor_name]]
   			binarized_table <- binarizeCategoricalVariable(string_factor,
@@ -142,6 +143,7 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	dim(textMatrix) = dim(moduleTraitCor)
 	# Display the correlation values within a heatmap plot
 	pdf(file.path(path, 'heatmap.pdf'))
+		dev.control(displaylist="enable")
 		par(mar = c(6, 10, 3, 3));
 		labeledHeatmap(Matrix = moduleTraitCor,
 	               xLabels = names(trait),
@@ -154,7 +156,9 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	               cex.text = 0.5,
 	               zlim = c(-1,1),
 	               main = paste("Module-trait relationships"))
+		p1 <- recordPlot()
 	dev.off()
+
 
 	####################################################################
 	## Produce Tables
@@ -181,7 +185,8 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 				MM_min_cor_pval=MM_min_cor_pval, MM_Cluster_ID=MM_Cluster_ID),
 			package_objects=list(gene_module_cor=gene_module_cor, gene_module_cor_p=gene_module_cor_p,
 				gene_trait_cor=gene_trait_cor, gene_trait_cor_p=gene_trait_cor_p, 
-				module_trait_cor=module_trait_cor, module_trait_cor_p=module_trait_cor_p)
+				module_trait_cor=module_trait_cor, module_trait_cor_p=module_trait_cor_p),
+			plot_objects=p1
 			)
 		)
 }
