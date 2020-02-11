@@ -42,6 +42,8 @@ source(file.path(main_path_script, 'lib', 'general_functions.R'))
 source(file.path(main_path_script, 'lib', 'dif_expression_packages.R'))
 source(file.path(main_path_script, 'lib', 'qc_and_benchmarking_functions.R'))
 source(file.path(main_path_script, 'lib', 'correlation_packages.R'))
+source(file.path(main_path_script, 'lib', 'correlation_packages_PCIT.R'))
+
 
 
 # Prepare command line input 
@@ -64,7 +66,7 @@ option_list <- list(
   make_option(c("-f", "--lfc"), type="double", default=1,
     help="Minimum log2 fold change in expression. Note this is on a log2 scale, so a value of 1 would mean a 2 fold change. Default=%default"),
   make_option(c("-m", "--modules"), type="character", default=c("DELNW"), #D = DESeq2, E = edgeR, L = limma, N = NOISeq W = WGCNA.
-    help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N = NOISeq, W = WGCNA.).
+    help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N = NOISeq, W = WGCNA, P = PCIT.).
     By default the following modules Default=%default are performed"),
   make_option(c("-c", "--minpack_common"), type="integer", default=4,
     help="Number of minimum package to consider a gene as a 'PREVALENT' DEG"),
@@ -439,12 +441,12 @@ if(grepl("W", opt$modules)) {
       )
     }
     # Need to improve the control, probably by removing PCIT
-    if(results_WGCNA_treatment == "NO_POWER_VALUE" | results_WGCNA_control == "NO_POWER_VALUE") {
-      warning("WGCNA was unable to generate a suitable power value for at least one of the partial datasets")
-    }
+    # if(results_WGCNA_treatment == "NO_POWER_VALUE" | results_WGCNA_control == "NO_POWER_VALUE") {
+    #   warning("WGCNA was unable to generate a suitable power value for at least one of the partial datasets")
+    # }
 
 
-    cat('Performing WGCNA correlation analysis for control samples\n')
+    cat('Performing WGCNA correlation analysis for all samples\n')
     results_WGCNA <- analysis_WGCNA(data=DESeq2_counts,
                                     path=path,
                                     target_numeric_factors=target_numeric_factors,
@@ -452,8 +454,9 @@ if(grepl("W", opt$modules)) {
                                     WGCNA_memory=opt$WGCNA_memory,
                                     cor_only=FALSE
     )
+    save(results_WGCNA, file="~/test.RData")
     if(length(results_WGCNA) == 1) {
-      warning("WGCNA was unable to generate a suitable power value and was therefore not run")
+      warning("Something went wrong with WGCNA on the full dataset")
       opt$modules <- gsub("W", "", opt$modules)
     }
   } else {
