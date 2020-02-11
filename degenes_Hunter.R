@@ -454,7 +454,6 @@ if(grepl("W", opt$modules)) {
                                     WGCNA_memory=opt$WGCNA_memory,
                                     cor_only=FALSE
     )
-    save(results_WGCNA, file="~/test.RData")
     if(length(results_WGCNA) == 1) {
       warning("Something went wrong with WGCNA on the full dataset")
       opt$modules <- gsub("W", "", opt$modules)
