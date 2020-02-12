@@ -192,6 +192,14 @@ cat(
 pp <- ggplot(enrichments_ORA$KEGG@compareClusterResult, aes(x = Cluster, y = Description, fill = p.adjust)) + geom_tile()
 plot(pp)
 
+cat(
+	"**CNetplot**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- cnetplot(enrichments_ORA$KEGG, showCategory = n_category)
+plot(pp)
+
 ```
 
 
@@ -217,6 +225,14 @@ cat(
 )
 
 pp <- ggplot(enrichments_ORA$REACT@compareClusterResult, aes(x = Cluster, y = Description, fill = p.adjust)) + geom_tile()
+plot(pp)
+
+cat(
+	"**CNetplot**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- cnetplot(enrichments_ORA$REACT, showCategory = n_category)
 plot(pp)
 
 ```
@@ -248,6 +264,14 @@ cat(
 pp <- ggplot(enrichments_ORA$GO_BP@compareClusterResult, aes(x = Cluster, y = Description, fill = p.adjust)) + geom_tile()
 plot(pp)
 
+cat(
+	"**CNetplot**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- cnetplot(enrichments_ORA$GO_BP, showCategory = n_category)
+plot(pp)
+
 
 ```
 
@@ -271,6 +295,13 @@ cat(
 pp <- ggplot(enrichments_ORA$GO_MF@compareClusterResult, aes(x = Cluster, y = Description, fill = p.adjust)) + geom_tile()
 plot(pp)
 
+cat(
+	"**CNetplot**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- cnetplot(enrichments_ORA$GO_MF, showCategory = n_category)
+plot(pp)
 
 
 ```
@@ -296,6 +327,13 @@ cat(
 pp <- ggplot(enrichments_ORA$GO_CC@compareClusterResult, aes(x = Cluster, y = Description, fill = p.adjust)) + geom_tile()
 plot(pp)
 
+cat(
+	"**CNetplot**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- cnetplot(enrichments_ORA$GO_CC, showCategory = n_category)
+plot(pp)
 
 ```
 
@@ -314,7 +352,7 @@ invisible(lapply(seq_along(custom_cls_ORA),function(i){
 	cname <- names(custom_cls_ORA)[i]
 	# Check and generate info
 	if(is.null(res)){
-		header <- paste("## **",cname,"** \n\nThis CUSTOM study has been executed but **has not returned any result**\n", sep="")
+		header <- "## **{{cname}}** \n\nThis CUSTOM study has been executed but **has not returned any result**\n"
 		body <- ""
 	}else{
 		header <- ""
@@ -335,7 +373,16 @@ invisible(lapply(seq_along(custom_cls_ORA),function(i){
 				)
 
 				pp <- ggplot(res@compareClusterResult, aes(x = Cluster, y = Description, fill = p.adjust)) + geom_tile()
-				plot(pp)"
+				plot(pp)
+
+				cat(
+					'**CNetplot**\n\n', 
+					'WRITE THIS TEXT >>>>.\n\n'
+				)
+
+				pp <- cnetplot(res, showCategory = n_category)
+				plot(pp)
+		"
 
 	}
 	out_custom <<- c(out_custom,paste(knit_expand(text = paste(header,
