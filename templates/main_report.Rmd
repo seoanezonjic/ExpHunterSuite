@@ -433,12 +433,12 @@ In total there was a number of ", max(unique(results_WGCNA$gene_cluster_info$MM_
     replayPlot(results_WGCNA[['plot_objects']][['trait_vs_module_heatmap']])
 
 
-	knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor']][1:10,])
-	knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor_p']][1:10,])
-	knitr::kable(results_WGCNA[['package_objects']][['gene_module_cor']][1:10,])
-	knitr::kable(results_WGCNA[['package_objects']][['gene_module_cor_p']][1:10,])
-	knitr::kable(results_WGCNA[['package_objects']][['module_trait_cor']])
-	knitr::kable(results_WGCNA[['package_objects']][['module_trait_cor_p']])
+	# knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor']][1:10,])
+	# knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor_p']][1:10,])
+	# knitr::kable(results_WGCNA[['package_objects']][['gene_module_cor']][1:10,])
+	# knitr::kable(results_WGCNA[['package_objects']][['gene_module_cor_p']][1:10,])
+	# knitr::kable(results_WGCNA[['package_objects']][['module_trait_cor']])
+	# knitr::kable(results_WGCNA[['package_objects']][['module_trait_cor_p']])
 
 	#plot(results_WGCNA$plot_objects)
 
@@ -456,24 +456,70 @@ Plots of some of the various metrics computed in the PCIT implementation. Better
 ```
 
 ```{r PCIT_conditional_block_plot, eval=grepl("P", opt$modules), echo=FALSE, warning=FALSE, message=FALSE}
-		ggplot(metrics_WGCNA, aes(x=ctrl_cn)) +
-                  geom_density()
-        ggplot(metrics_WGCNA, aes(x=treat_cn)) +
-                  geom_density()
-        ggplot(metrics_WGCNA, aes(x=diff_cn)) +
-                geom_density()
-        ggplot(metrics_WGCNA, aes(x=diffK)) +
-                geom_density()
-        ggplot(metrics_WGCNA, aes(x=de)) +
-                geom_density()
-        ggplot(metrics_WGCNA, aes(x=de, y=diffK)) +
-                geom_point()
-        ggplot(metrics_WGCNA, aes(x=pif)) +
-                geom_density()
-        ggplot(metrics_WGCNA, aes(x=rif)) +
-                geom_density()
-        ggplot(metrics_WGCNA, aes(x=de, y=rif)) +
-                geom_point()
+    ggplot(metrics_pcit, aes(x=ctrl_cn)) +
+              geom_density()
+    ggplot(metrics_pcit, aes(x=treat_cn)) +
+              geom_density()
+    ggplot(metrics_pcit, aes(x=diff_cn)) +
+            geom_density()
+    ggplot(metrics_pcit, aes(x=diffK)) +
+            geom_density()
+
+    av_de <- ggplot(metrics_pcit, aes(x=average, y=de)) +
+            geom_point()
+    av_de <- ggExtra::ggMarginal(
+      av_de,
+      type = 'density',
+      margins = 'both',
+      size = 5,
+      colour = '#000000',
+      fill = '#A6A39E'
+    )
+
+    de_diffK <- ggplot(metrics_pcit, aes(x=de, y=diffK)) +
+            geom_point()
+    de_diffK <- ggExtra::ggMarginal(
+      de_diffK,
+      type = 'density',
+      margins = 'both',
+      size = 5,
+      colour = '#000000',
+      fill = '#A6A39E'
+    )
+
+    de_pif <- ggplot(metrics_pcit, aes(x=de, y=pif)) +
+            geom_point()
+    de_pif <- ggExtra::ggMarginal(
+      de_pif,
+      type = 'density',
+      margins = 'both',
+      size = 5,
+      colour = '#000000',
+      fill = '#A6A39E'
+    )
+
+    de_rif1 <- ggplot(metrics_pcit, aes(x=de, y=rif1)) +
+            geom_point()
+    de_rif1 <- ggExtra::ggMarginal(
+      de_rif1,
+      type = 'density',
+      margins = 'both',
+      size = 5,
+      colour = '#000000',
+      fill = '#A6A39E'
+    )
+
+    de_rif2 <- ggplot(metrics_pcit, aes(x=de, y=rif2)) +
+            geom_point()
+    de_rif2 <- ggExtra::ggMarginal(
+      de_rif2,
+      type = 'density',
+      margins = 'both',
+      size = 5,
+      colour = '#000000',
+      fill = '#A6A39E'
+    )
+    gridExtra::grid.arrange(av_de, de_diffK, de_pif, de_rif1, de_rif2)
 
 ```
 

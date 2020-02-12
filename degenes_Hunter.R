@@ -114,6 +114,10 @@ active_modules <- nchar(opt$modules)
 if(grepl("W", opt$modules)) {
   active_modules <- active_modules - 1
 }
+if(grepl("P", opt$modules)) {
+  active_modules <- active_modules - 1
+}
+
 if(opt$minpack_common > active_modules){
   opt$minpack_common <- active_modules
   warning("The number of active modules is lower than the thresold for tag PREVALENT DEG. The thresold is set to the number of active modules.")
@@ -416,7 +420,6 @@ if(grepl("W", opt$modules)) {
 
       WGCNA_treatment_path <- file.path(path, "Treatment_only_data")
       dir.create(WGCNA_treatment_path)
-      DESeq2_counts_treatment <- DESeq2_counts[, index_treatmn_cols]
 
       cat('Performing WGCNA correlation analysis for treated samples\n')
       results_WGCNA_treatment <- analysis_WGCNA(data=DESeq2_counts_treatment,
@@ -429,7 +432,7 @@ if(grepl("W", opt$modules)) {
 
       WGCNA_control_path <- file.path(path, "Control_only_data")
       dir.create(WGCNA_control_path)
-      DESeq2_counts_control <- DESeq2_counts[, index_control_cols]
+
       
       cat('Performing WGCNA correlation analysis for control samples\n')
       results_WGCNA_control <- analysis_WGCNA(data=DESeq2_counts_control,
@@ -463,14 +466,6 @@ if(grepl("W", opt$modules)) {
   }
 }
 
-#####
-################## CASE P: PCIT
-#####
-
-if(grepl("P", opt$modules)) {
-  metrics_WGCNA <- analysis_diff_correlation(DESeq2_counts, DESeq2_counts_control, DESeq2_counts_treatment, PCIT_filter=FALSE)
-}
-
 #################################################################################
 ##                       EXPORT FINAL RESULTS AND OTHER FILES                  ##
 #################################################################################
@@ -487,6 +482,17 @@ write_df_list_as_tables(all_counts_for_plotting, prefix = 'allgenes_', root = op
 # Write main results file, normalized counts per package and DE results per package
 DE_all_genes <- unite_DEG_pack_results(all_counts_for_plotting, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, 
   final_logFC_names, final_FDR_names, raw, opt$p_val_cutoff, opt$lfc, opt$minpack_common)
+
+#####
+################## CASE P: PCIT
+#####
+
+if(grepl("P", opt$modules)) {
+  metrics_pcit <- analysis_diff_correlation(DE_all_genes, DESeq2_counts, DESeq2_counts_control, DESeq2_counts_treatment, PCIT_filter=FALSE)
+  DE_all_genes <- transform(merge(DE_all_genes, metrics_pcit, by.x=0, by.y=0), row.names=Row.names, Row.names=NULL)
+}
+
+#################################################################################
 
 # Check WGCNA was run and it returned proper results
 if(grepl("W", opt$modules) & grepl("D", opt$modules)) {
