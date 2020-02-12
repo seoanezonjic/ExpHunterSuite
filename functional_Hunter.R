@@ -737,7 +737,7 @@ if(!is.null(opt$custom)) {
 ############################################################
 ############################################################
 # REMOVE THIS WHEN DEVELOP/TEST PHASE ENDS
-# save.image("test.RData")
+save.image("test.RData")
 
 message("RENDERING REPORT ...")
 
