@@ -15,7 +15,11 @@ analysis_diff_correlation <- function(all_genes_stats, data, control, treat, PCI
 	treat <- log(treat, 2)
 
 	average <- apply(data, 1, mean) # Ai in https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
+	treat_average <- apply(treat, 1, mean) # Ai in https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
+	control_average <- apply(control, 1, mean) # Ai in https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
 	metrics$average <- average
+	metrics$treat_average <- treat_average
+	metrics$control_average <- control_average
 	metrics$pif <- average * metrics$de
 
 
@@ -35,8 +39,8 @@ analysis_diff_correlation <- function(all_genes_stats, data, control, treat, PCI
 		message('Using POSSIBLE_DEG instead PREVALENT_DEG')
 		prevalent_gene_stats <- all_genes_stats[all_genes_stats$genes_tag == 'POSSIBLE_DEG', ]
 	}
-	metrics$rif1 <- scale(get_rif1(metrics, prevalent_gene_stats, dw)) # Regulatory Impact Factor (RIF):  https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
-	metrics$rif2 <- metrics$rif1 # Regulatory Impact Factor (RIF):  https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
+	metrics$rif1 <- scale(get_rif(1, metrics, prevalent_gene_stats, dw, control, treat)) # Regulatory Impact Factor (RIF):  https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
+	metrics$rif2 <- scale(get_rif(2, metrics, prevalent_gene_stats, dw, control, treat)) # Regulatory Impact Factor (RIF):  https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
 
 	#Differential hubbing (differential conectivity): https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
 	metrics$ctrl_cn <- apply(control,1,function(x) length(which(abs(x) > 0.8)))
@@ -49,9 +53,14 @@ analysis_diff_correlation <- function(all_genes_stats, data, control, treat, PCI
 	return(metrics)
 }
 
-get_rif1 <- function(metrics, deg_stats, dw){
+get_rif <- function(rif_version, metrics, deg_stats, dw, control_r, treat_r){
 	genes <- row.names(metrics)
-	rif <- unlist(lapply(genes, compute_rif1, data=metrics, deg_stats=deg_stats, dw=dw))
+	rif <- NULL
+	if(rif_version == 1){
+		rif <- unlist(lapply(genes, compute_rif1, data=metrics, deg_stats=deg_stats, dw=dw))
+	}else if(rif_version == 2){
+		rif <- unlist(lapply(genes, compute_rif2, data=metrics, deg_stats=deg_stats, control_r=control_r, treat_r=treat_r))
+	}
 	return(rif)
 }
 
@@ -63,6 +72,17 @@ compute_rif1 <- function(g, data, deg_stats, dw){ #eq 4
 	# A posterior paper, saids that the two measures are very different.
 	deg_pif <- data[row.names(deg_stats),"pif" ]
 	rif <- sum(deg_pif * dw[row.names(deg_stats), g]^2)/length(deg_pif)
+	return(rif)
+}
+
+compute_rif2 <- function(g, data, deg_stats, control_r, treat_r){ #eq 5
+	#adapted: It will be computed for all genes and not only TF. Also, all genes DW will be take into account instead of only significant DE genes
+	# When implemented significant RNAseq DEgenes change to DE only.
+	# Also, implement eq 5 and perform the mean between two eqs. 
+	# A posterior paper, saids that the two measures are very different.
+	rif_treat <- (data[row.names(deg_stats),"treat_average" ] * treat_r[row.names(deg_stats), g])^2
+	rif_control <- (data[row.names(deg_stats),"control_average" ] * control_r[row.names(deg_stats), g])^2
+	rif <- sum(rif_control - rif_treat)/length(rif_treat)
 	return(rif)
 }
 

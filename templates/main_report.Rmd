@@ -519,7 +519,18 @@ Plots of some of the various metrics computed in the PCIT implementation. Better
       colour = '#000000',
       fill = '#A6A39E'
     )
-    gridExtra::grid.arrange(av_de, de_diffK, de_pif, de_rif1, de_rif2)
+
+    rif1_rif2 <- ggplot(metrics_pcit, aes(x=rif1, y=rif2)) +
+            geom_point()
+    rif1_rif2 <- ggExtra::ggMarginal(
+      rif1_rif2,
+      type = 'density',
+      margins = 'both',
+      size = 5,
+      colour = '#000000',
+      fill = '#A6A39E'
+    )
+    gridExtra::grid.arrange(av_de, de_diffK, de_pif, de_rif1, de_rif2, rif1_rif2)
 
 ```
 
