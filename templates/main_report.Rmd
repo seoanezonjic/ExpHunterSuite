@@ -426,6 +426,9 @@ In total there was a number of ", max(unique(results_WGCNA$gene_cluster_info$MM_
 
 
 ```{r WGCNA_conditional_block_plot, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=12, fig.width=15}
+
+    replayPlot(results_WGCNA[['plot_objects']][['power_threshold_effects']])
+
 	df <- table(results_WGCNA$gene_cluster_info$MM_Cluster_ID)
 	ggplot(as.data.frame(df), aes(Var1, Freq)) + 
     geom_bar(stat="identity") + labs(x = "Cluster ID (0 = unclustered)", y = "Frequency", main="Number of Genes per Cluster")

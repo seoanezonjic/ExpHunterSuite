@@ -10,7 +10,7 @@
 ############################################################
 ##                      SETUP PROGRAM                     ##
 ############################################################
-
+options(warn=1)
 # Loading libraries
 suppressPackageStartupMessages(library(ggplot2)) 
 suppressPackageStartupMessages(library(limma))
