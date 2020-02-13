@@ -7,11 +7,11 @@ analysis_diff_correlation <- function(all_genes_stats, data, control, treat, PCI
 	metrics <- all_genes_stats['logFC_DESeq2']
 	names(metrics) <- 'de'
 	nonZeroVal <- 10^-5
-	data[data == 0] <- nonZeroVal
+	data[data == 0] <- replicate(sum(data == 0), jitter(nonZeroVal))
 	data <- log(data, 2)
-	control[control == 0] <- nonZeroVal
+	control[control == 0] <- replicate(sum(control == 0), jitter(nonZeroVal))
 	control <- log(control, 2)
-	treat[treat == 0] <- nonZeroVal
+	treat[treat == 0] <- replicate(sum(treat == 0), jitter(nonZeroVal))
 	treat <- log(treat, 2)
 
 	average <- apply(data, 1, mean) # Ai in https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
@@ -22,9 +22,8 @@ analysis_diff_correlation <- function(all_genes_stats, data, control, treat, PCI
 	metrics$control_average <- control_average
 	metrics$pif <- average * metrics$de
 
-
-	control <- cor(t(control)) # Compute correlations
-	treat <- cor(t(treat)) # Compute correlations
+	control <- stats::cor(t(control)) # Compute correlations
+	treat <- stats::cor(t(treat)) # Compute correlations
 
 	if(PCIT_filter == TRUE) {
 		control <- do_pcit(control)
@@ -41,7 +40,6 @@ analysis_diff_correlation <- function(all_genes_stats, data, control, treat, PCI
 	}
 	metrics$rif1 <- scale(get_rif(1, metrics, prevalent_gene_stats, dw, control, treat)) # Regulatory Impact Factor (RIF):  https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
 	metrics$rif2 <- scale(get_rif(2, metrics, prevalent_gene_stats, dw, control, treat)) # Regulatory Impact Factor (RIF):  https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
-
 	#Differential hubbing (differential conectivity): https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
 	metrics$ctrl_cn <- apply(control,1,function(x) length(which(abs(x) > 0.8)))
 	metrics$treat_cn <- apply(treat,1,function(x) length(which(abs(x) > 0.8)))
