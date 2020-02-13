@@ -33,6 +33,8 @@ output:
 # Load necessary packages
 require(ggplot2)
 require(knitr)
+require(clusterProfiler)
+require(enrichplot)
 
 # Prepare recursive text
 chunks <- function(code, options = ""){paste(paste("```{r ",options,"}",sep = ""),code,"```",sep="\n")}
