@@ -62,11 +62,13 @@ option_list <- list(
     help="Files with custom nomenclature (in GMT format) separated by commas (,)"),
   make_option(c("-T", "--threshold"), type="double", default=0.1,
     help="Enrichment p-value threshold. [Default = %default]"),
-  make_option(c("-Q", "--qthreshold"), type="double", default=0.2,  # Currently only used in CLUSTERED enrichments
-    help="Enrichment q-value threshold. [Default = %default]")
-
+  make_option(c("-Q", "--qthreshold"), type="double", default=0.2,
+    help="Enrichment q-value threshold. [Default = %default]"),
+  make_option(c("--debug"), type="logical", default=FALSE, action = "store_true",
+    help="Activate debug mode, which stores RData sessions at different points of the pipeline")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
+
 
 # Special IDs
 fc_colname <- "mean_logFCs"
@@ -161,7 +163,14 @@ paths <- list()
 dir.create(opt$output_files)
 paths$root <-opt$output_files
 
-
+######################### DEBUG POINT
+if(opt$debug){
+	# Define only once
+	debug_file <- file.path(paths$root, paste(c("FHunter_Debug_Session_",format(Sys.Date(),format = "%Y%m%d"),".RData"),collapse = ""))
+	# Store session
+	debug_point <- "Data loaded"
+	save.image(debug_file)
+}
 
 #############################################
 ### PREPARE AND TRANSFORM DATA
@@ -191,11 +200,9 @@ if(remote_actions$biomart){ # REMOTE MODE
 }else if(!is.na(biomaRt_organism_info$Bioconductor_DB[1])){ # LOCAL MODE
 	# Check genetical items to be used
 	if(opt$biomaRt_filter == 'ensembl_gene_id'){
-		cat("test here\n")
 		reference_table <- ensembl_to_entrez(ensembl_ids = reference_table[,1],
 											 organism_db = biomaRt_organism_info$Bioconductor_DB[1],
 											 organism_var = biomaRt_organism_info$Bioconductor_VarName[1])
-		cat("test finished\n")
 
 		colnames(reference_table) <- c("ensembl_gene_id", biomaRt_organism_info[,"Attribute_entrez"])
 
@@ -210,6 +217,14 @@ if(remote_actions$biomart){ # REMOTE MODE
 if(opt$save_query == TRUE){
   saveRDS(reference_table, file=file.path("query_results_temp"))
 } 
+
+
+######################### DEBUG POINT
+if(opt$debug){
+	# Store session
+	debug_point <- "Data extended"
+	save.image(debug_file)
+}
 
 ################# PREPROCESSING INPUT DATA FOR FUNCTIONAL ANALYSIS #############
 # Obtain prevalent items
@@ -372,6 +387,14 @@ if(flags$GO){
 	}
 }
 
+
+
+######################### DEBUG POINT
+if(opt$debug){
+	# Store session
+	debug_point <- "Top_GO executed"
+	save.image(debug_file)
+}
 
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
@@ -602,7 +625,16 @@ if(flags$Clustered){
 		})
 		names(custom_cls_ORA) <- names(custom_sets)
 	}
+
+	######################### DEBUG POINT
+	if(opt$debug){
+		# Store session
+		debug_point <- "Clusters  enriched"
+		save.image(debug_file)
+	}
 }
+
+
 
 ###########################################################################################################################
 ##                                                                                                                       ##
@@ -642,6 +674,8 @@ if(flags$GO_cp){
 		write.table(as.data.frame(do.call(rbind,lapply(enrich_go_gsea,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_gsea"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
 	}
 }
+
+
 
 #############################################
 ### KEGG ENRICHMENT
@@ -686,6 +720,12 @@ if(flags$REACT){
 }
 
 
+######################### DEBUG POINT
+if(opt$debug){
+	# Store session
+	debug_point <- "Regular enrichments executed"
+	save.image(debug_file)
+}
 
 
 
@@ -726,18 +766,21 @@ if(!is.null(opt$custom)) {
 }
 
 
+######################### DEBUG POINT
+if(opt$debug){
+	# Store session
+	debug_point <- "All enrichments executed"
+	save.image(debug_file)
+}
+
+
+
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ##                                                                                                                   ##
 ##                                                 RENDERING REPORTS                                                 ##                                                     
 ##                                                                                                                   ##
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
-
-############################################################
-############################################################
-############################################################
-# REMOVE THIS WHEN DEVELOP/TEST PHASE ENDS
-save.image("test.RData")
 
 message("RENDERING REPORT ...")
 
