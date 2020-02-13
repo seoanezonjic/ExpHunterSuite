@@ -226,7 +226,6 @@ if(opt$reads != 0){
 } else { # NO FILTER
   raw_filter <- raw
 }
-
 # Defining contrast - Experimental design
 design_vector <- c(rep("C", replicatesC), rep("T", replicatesT))
 
@@ -414,13 +413,12 @@ if(grepl("W", opt$modules)) {
     path <- file.path(opt$output_files, "Results_WGCNA")
     dir.create(path)
 
-    DESeq2_counts <- counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE)
-
     if(opt$WGCNA_all == TRUE) {
 
       WGCNA_treatment_path <- file.path(path, "Treatment_only_data")
       dir.create(WGCNA_treatment_path)
 
+      ..minNSamples <- 3
       cat('Performing WGCNA correlation analysis for treated samples\n')
       results_WGCNA_treatment <- analysis_WGCNA(data=DESeq2_counts_treatment,
                      path=WGCNA_treatment_path,
@@ -488,7 +486,7 @@ DE_all_genes <- unite_DEG_pack_results(all_counts_for_plotting, all_FDR_names, a
 #####
 
 if(grepl("P", opt$modules)) {
-  metrics_pcit <- analysis_diff_correlation(DE_all_genes, DESeq2_counts, DESeq2_counts_control, DESeq2_counts_treatment, PCIT_filter=FALSE)
+  metrics_pcit <- analysis_diff_correlation(DE_all_genes[DE_all_genes$genes_tag != 'FILTERED_OUT',], DESeq2_counts, DESeq2_counts_control, DESeq2_counts_treatment, PCIT_filter=FALSE)
   DE_all_genes <- transform(merge(DE_all_genes, metrics_pcit, by.x=0, by.y=0), row.names=Row.names, Row.names=NULL)
 }
 

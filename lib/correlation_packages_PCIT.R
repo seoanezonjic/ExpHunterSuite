@@ -4,14 +4,14 @@ analysis_diff_correlation <- function(all_genes_stats, data, control, treat, PCI
 	#sum_control <- apply(control,1,sum)
 	#sum_treat <- apply(treat,1,sum)
 	#metrics <-data.frame(de=(sum_control - sum_treat)/10)
+	nonZeroVal <- 10^-5
+	if(sum(data==0) > 0) data[data == 0] <- replicate(sum(data == 0), jitter(nonZeroVal))
+	if(sum(control==0) > 0) control[control == 0] <- replicate(sum(control == 0), jitter(nonZeroVal))
+	if(sum(treat==0) > 0) treat[treat == 0] <- replicate(sum(treat == 0), jitter(nonZeroVal))
 	metrics <- all_genes_stats['logFC_DESeq2']
 	names(metrics) <- 'de'
-	nonZeroVal <- 10^-5
-	data[data == 0] <- replicate(sum(data == 0), jitter(nonZeroVal))
 	data <- log(data, 2)
-	control[control == 0] <- replicate(sum(control == 0), jitter(nonZeroVal))
 	control <- log(control, 2)
-	treat[treat == 0] <- replicate(sum(treat == 0), jitter(nonZeroVal))
 	treat <- log(treat, 2)
 
 	average <- apply(data, 1, mean) # Ai in https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
