@@ -1,0 +1,168 @@
+---
+author: "Fernando Moreno Jabato"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+    fig_width: 12
+---
+
+<style type='text/css'>
+    body .main-container {
+        max-width: 90%;
+    }
+
+    .plot_real_size {
+    	overflow: scroll;
+  	}
+
+    .plot_real_size img{
+    	max-width: none;
+    	max-height: none;
+    }
+
+    embed {
+   		width: 800px;
+  		height: 800px;
+  }   
+</style>
+
+```{r config, include = FALSE}
+ 
+# Load necessary packages
+require(ggplot2)
+require(knitr)
+
+# Prepare recursive text
+chunks <- function(code, options = ""){paste(paste("```{r ",options,"}",sep = ""),code,"```",sep="\n")}
+render <- function(text){paste(knit(text = paste(text,collapse = "\n")),collapse = "\n")}
+
+# Prepare all HPO reports container
+out <- NULL
+
+# Prepare resize function
+#################################################################################
+############### Resizing plot functions
+###############################################################################
+resize <- function(g, fig_height=5, fig_width=12) {
+  g_deparsed <- paste0(deparse(function() {g}), collapse = '')
+  sub_chunk <- paste0("\n```{r sub_chunk_", floor(runif(1) * 10000), ", fig.height=", fig_height, ", fig.width=", fig_width, ", echo=FALSE}", "\n(", g_deparsed, ")()\n```\n\n\n")
+  cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk), quiet = TRUE))
+}
+
+plot_in_div <- function(plot, height = 7, width = 12) {
+  cat('\n<div class="plot_real_size">\n')
+  resize(plot, height, width)
+  cat('\n</div>\n')
+}
+
+get_plot_df <- function(enrich_obj, showCategory = 30) {
+  geneSets <- enrichplot:::extract_geneSets(enrich_obj, enrichplot:::update_n(enrich_obj, showCategory))
+  geneSets <- enrichplot:::list2df(geneSets)
+  return(geneSets)
+}
+get_categories <- function(enrich_obj, showCategory = 30){
+  categories <- get_plot_df(enrich_obj, showCategory)$categoryID
+  return(unique(categories))
+}
+get_genes <- function(enrich_obj, showCategory = 30){
+  genes <- get_plot_df(enrich_obj, showCategory)$Gene
+  return(unique(genes))
+}
+
+calc_width <- function(enrich_obj, showCategory = 30, category_character_size = 0.08, genename_size = 0.12, legend_size = 1){
+  width_size <- (legend_size + (category_character_size * max(nchar(as.character(get_categories(enrich_obj, showCategory))))) + (genename_size * length(get_genes(enrich_obj, showCategory))))
+  return(width_size)
+}
+calc_height <- function(enrich_obj, showCategory = 30, min_size = 0.3, gene_character_size = 0.08, category_name_size = 0.15){
+  height_size <- (min_size +(gene_character_size* max(nchar(as.character(get_genes(enrich_obj, showCategory))))) + (category_name_size * length(get_categories(enrich_obj, showCategory))))
+  return(height_size)
+}
+
+set_default_width <- function(enrich_obj, default = 12, showCategory = 30, threshold = 30, character_size = 0.04){
+	longer_category <- max(nchar(as.character(get_categories(enrich_obj, showCategory))))
+	if(longer_category > threshold){
+		default_width <- default + character_size * longer_category
+	}else{
+		default_width <- default
+	}
+	return(default_width)
+}
+#############################################################################
+############### END
+#############################################################################
+```
+
+
+
+
+# **DEgenes Hunter - SPECIFIC CLUSTER - Functional analysis report** 
+
+
+## **Used data in this analysis**
+Specifically, in this experiment set, known experiment labels are:
+
+```{r add_exp_names, echo = FALSE}
+	# Obtain experiments names
+	# dir <- dirname(opt$countdata_file)
+	# experiments <- read.table(file = file.path(dir,"control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
+	# exp_names <- experiments[which(experiments[,1] == "T"),2]
+
+	out <- unlist(lapply(exp_names,function(names){paste("* ",names,sep="")}))
+```
+
+`r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
+
+
+## **General description**
+This report contains all the functional information that was requested by the options when functional_Hunter.R was executed.
+The functional categories can be:
+
+* KEGG pathways
+* GO:
+	+ Biological Process
+	+ Molecular Function
+	+ Cellular Component
+* Reactome pathways
+* Custom nomenclature
+
+All the functional categories are computed with CluterProfiler and GO caterogires are computed also with TopGo.
+Some sections will not show if there are not sinficative results. Each category is analysed using Over representation analysis (ORA) and Gene Set Analysis (GSEA).
+The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.
+In the case of the GSEA method, all the genes are sorted by their fold-change and the algorithm scan which genes with similar fold-change shares a term of the selected functional category.
+
+
+Statistics about input results obtained from DEGenes Expression Hunter are:
+```{r table_exp_flags, echo = FALSE}
+knitr::kable(table(DEG_annot_table$genes_tag))
+```
+
+
+```{r explore_genes, echo = FALSE}
+# Find target genes
+cl_i_genes <- clgenes[[as.character(cl)]]
+tgt_indx <- which(norm_counts$Gene %in% cl_i_genes)
+sub_norm <- norm_counts[tgt_indx,]
+sub_norm$CNorm <- (sub_norm$Count - min(sub_norm$Count)) / (max(sub_norm$Count) - min(sub_norm$Count))
+# Print
+pp <- ggplot(sub_norm,aes(x = Sample, y = Count, group = Gene)) + 
+	  geom_line() 
+plot(pp)
+
+pp <- ggplot(sub_norm,aes(x = Sample, y = CNorm, group = Gene)) + 
+	  geom_line() 
+plot(pp)
+
+pp <- ggplot(norm_counts_gnorm[tgt_indx,],aes(x = Sample, y = Count, group = Gene)) + 
+	  geom_line(alpha = 0.05) 
+plot(pp)
+
+```
+
+
+
+
+
+
+

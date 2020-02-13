@@ -77,6 +77,24 @@ fc_colname <- "mean_logFCs"
 remote_actions <- list(biomart = grepl("b", opt$remote),
               		   kegg    = grepl("k", opt$remote))
 
+############ CREATE FOLDERS #########3
+paths <- list()
+dir.create(opt$output_files)
+paths$root <-opt$output_files
+
+
+if(opt$debug){
+	# Define only once
+	debug_file <- file.path(paths$root, paste(c("FHunter_Debug_Session_",format(Sys.Date(),format = "%Y%m%d"),".RData"),collapse = ""))
+	# Store session
+	debug_point <- function(file, message = "Debug point"){
+		debug_message <<- message
+		save.image(file)
+	}
+}
+
+
+
 #############################################
 ### LOAD AND PARSE 
 #############################################
@@ -92,6 +110,8 @@ DEG_annot_table <- read.table(file.path(opt$input_hunter_folder, "Common_results
 experiments <- read.table(file.path(opt$input_hunter_folder, "control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
 exp_names <- paste("[Control]",experiments[which(experiments[,1] == "C"),2],sep=" ")
 exp_names <- c(exp_names,paste("[Treatment]",experiments[which(experiments[,1] == "T"),2],sep=" "))
+
+
 
 if(!is.null(opt$annot_file)){
   annot_table <- read.table(opt$annot_file, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "")
@@ -140,6 +160,7 @@ flags <- list(GO    = grepl("G", opt$functional_analysis),
               ORA   = grepl("o", opt$analysis),
               Clustered = "Cluster_ID" %in% colnames(DEG_annot_table))
 
+
 # Special case
 if(exists("annot_table")){
 	DEG_annot_table$Annot_IDs <- unlist(lapply(rownames(DEG_annot_table),function(id){
@@ -158,19 +179,9 @@ aux <- table(DEG_annot_table$genes_tag)
 for(i in seq_along(aux)) 
 	message(paste(names(aux)[i],aux[i]))
 
-############ CREATE FOLDERS #########3
-paths <- list()
-dir.create(opt$output_files)
-paths$root <-opt$output_files
-
 ######################### DEBUG POINT
-if(opt$debug){
-	# Define only once
-	debug_file <- file.path(paths$root, paste(c("FHunter_Debug_Session_",format(Sys.Date(),format = "%Y%m%d"),".RData"),collapse = ""))
-	# Store session
-	debug_point <- "Data loaded"
-	save.image(debug_file)
-}
+if(opt$debug) debug_point(debug_file,"Data loaded")
+
 
 #############################################
 ### PREPARE AND TRANSFORM DATA
@@ -219,12 +230,35 @@ if(opt$save_query == TRUE){
 } 
 
 
-######################### DEBUG POINT
-if(opt$debug){
-	# Store session
-	debug_point <- "Data extended"
-	save.image(debug_file)
+# Load Normalized correlation data
+if(flags$Clustered){
+	# Load
+	norm_counts_raw <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_DESeq2", "Normalized_counts_DESeq2.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
+	# Translate genes
+	if(exists("reference_table")){
+		aux <- unlist(lapply(rownames(norm_counts_raw),function(id){reference_table$entrezgene[which(reference_table$ensembl_gene_id == id)][1]}))
+		aux_indx <- which(is.na(aux))
+		if(length(aux_indx)>0) aux[aux_indx] <- rownames(norm_counts_raw)[aux_indx]
+		rownames(norm_counts_raw) <- aux
+	}
+	# Normalize
+	norm_counts_raw_gnorm <- norm_counts_raw
+	invisible(lapply(seq_along(norm_counts_raw[,1]),function(i){
+		m <- min(norm_counts_raw[i,])
+		M <- max(norm_counts_raw[i,])
+		dff <- M - m
+		norm_counts_raw_gnorm[i,] <<- (norm_counts_raw[i,] - m) / dff
+	}))
+	# Modify to plot better later
+	norm_counts <- as.data.frame(as.table(norm_counts_raw))
+	colnames(norm_counts) <- c("Gene","Sample","Count")
+	norm_counts_gnorm <- as.data.frame(as.table(norm_counts_raw_gnorm))
+	colnames(norm_counts_gnorm) <- c("Gene","Sample","Count")
 }
+
+
+######################### DEBUG POINT
+if(opt$debug) debug_point(debug_file,"Data extended")
 
 ################# PREPROCESSING INPUT DATA FOR FUNCTIONAL ANALYSIS #############
 # Obtain prevalent items
@@ -390,11 +424,7 @@ if(flags$GO){
 
 
 ######################### DEBUG POINT
-if(opt$debug){
-	# Store session
-	debug_point <- "Top_GO executed"
-	save.image(debug_file)
-}
+if(opt$debug) debug_point(debug_file,"TopGO executed")
 
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
@@ -627,11 +657,7 @@ if(flags$Clustered){
 	}
 
 	######################### DEBUG POINT
-	if(opt$debug){
-		# Store session
-		debug_point <- "Clusters  enriched"
-		save.image(debug_file)
-	}
+	if(opt$debug) debug_point(debug_file,"Clusters enriched")
 }
 
 
@@ -721,11 +747,7 @@ if(flags$REACT){
 
 
 ######################### DEBUG POINT
-if(opt$debug){
-	# Store session
-	debug_point <- "Regular enrichments executed"
-	save.image(debug_file)
-}
+if(opt$debug) debug_point(debug_file,"Regular enrichments executed")
 
 
 
@@ -767,12 +789,7 @@ if(!is.null(opt$custom)) {
 
 
 ######################### DEBUG POINT
-if(opt$debug){
-	# Store session
-	debug_point <- "All enrichments executed"
-	save.image(debug_file)
-}
-
+if(opt$debug) debug_point(debug_file,"All enrichments executed")
 
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
@@ -796,4 +813,13 @@ if(flags$Clustered){ # Clustered
 	message("\tRendering clustered report")
 	outf_cls <- paste(dirname(normalizePath(paths$root,"clusters_func_report.html")),"clusters_func_report.html",sep=.Platform$file.sep)
 	rmarkdown::render(file.path(main_path_script, 'templates', 'clusters_main_report.Rmd'),output_file = outf_cls, intermediates_dir = paths$root)
+
+	message("Renderong specific clusters reports")
+	invisible(lapply(cls,function(cl){
+		# Take output name
+		aux <- paste0("cl_func_",cl,".html")
+		outf_cls_i <- file.path(paths$root, aux)
+		# Generate report
+		rmarkdown::render(file.path(main_path_script, 'templates', 'cl_func_report.Rmd'),output_file = outf_cls_i, intermediates_dir = paths$root)
+	}))
 }
