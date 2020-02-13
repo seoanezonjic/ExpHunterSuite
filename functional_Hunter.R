@@ -597,7 +597,7 @@ if(flags$Clustered){
 			# Concat
 			cs_enr <- merge_result(cs_enr)
 			# Store results
-			write.table(cs_enr, file=file.path(paths$root, paste0(names(custom_sets)[i],"_cls_ORA")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+			write.table(cs_enr, file=file.path(paths$root, paste0(basename(names(custom_sets)[i]),"_cls_ORA")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 			return(cs_enr)
 		})
 		names(custom_cls_ORA) <- names(custom_sets)
