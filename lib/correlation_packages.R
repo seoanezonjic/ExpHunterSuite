@@ -109,11 +109,11 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 		binarized_string_factors <- lapply(names(target_string_factors), function(factor_name) {
   			string_factor <- target_string_factors[[factor_name]]
   			binarized_table <- binarizeCategoricalVariable(string_factor,
-  								minCount = 2,
+  								minCount = 1,
 								includePairwise = FALSE,
 								includeLevelVsAll = TRUE)
-		colnames(binarized_table) <- paste(factor_name, levels(string_factor),sep="_")
-  		return(binarized_table)
+			colnames(binarized_table) <- paste(factor_name, levels(string_factor),sep="_")
+  			return(binarized_table)
 		})
 		trait <- data.frame(trait, binarized_string_factors)
 	}

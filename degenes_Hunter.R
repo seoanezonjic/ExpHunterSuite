@@ -418,7 +418,6 @@ if(grepl("W", opt$modules)) {
       WGCNA_treatment_path <- file.path(path, "Treatment_only_data")
       dir.create(WGCNA_treatment_path)
 
-      ..minNSamples <- 3
       cat('Performing WGCNA correlation analysis for treated samples\n')
       results_WGCNA_treatment <- analysis_WGCNA(data=DESeq2_counts_treatment,
                      path=WGCNA_treatment_path,
