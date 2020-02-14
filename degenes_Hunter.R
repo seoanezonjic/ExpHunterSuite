@@ -82,6 +82,12 @@ option_list <- list(
     help="Columns in the target file to be used as numeric (continuous) factors for the correlation analysis. If more than one to be used, should be comma separated"),
   make_option(c("-b", "--WGCNA_memory"), type="integer", default=5000,
     help="Maximum block size value, to be passed to the blockwiseModules function of WGCNA as the maxBlockSize argument"),
+  make_option("--WGCNA_deepsplit", type="integer", default=2,
+    help="This option control the module building process and is defined as 1,2,3 and 4 values. 1 for rough clustering and 4 for accurate clustering "),
+  make_option("--WGCNA_detectcutHeight", type="double", default=0.995,
+    help="Cut height to split modules"),
+  make_option("--WGCNA_mergecutHeight", type="double", default=0.25,
+    help="Value to merge two similar modules: Maximum dissimilarity (i.e., 1-correlation) "),
   make_option(c("-w", "--WGCNA_all"), type="logical", default=TRUE,
     help="Run WGCNA for treated only, control only, and both as 3 separate runs. Needed if using PCIT. If false, WGCNA runs once, on the table including treament and control")
  )
@@ -424,6 +430,9 @@ if(grepl("W", opt$modules)) {
                      target_numeric_factors=target_numeric_factors,
                      target_string_factors=target_string_factors,
                      WGCNA_memory=opt$WGCNA_memory,
+                     WGCNA_deepsplit=opt$WGCNA_deepsplit,
+                     WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
+                     WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
                      cor_only=TRUE
       )
 
@@ -437,6 +446,9 @@ if(grepl("W", opt$modules)) {
                      target_numeric_factors=target_numeric_factors,
                      target_string_factors=target_string_factors,
                      WGCNA_memory=opt$WGCNA_memory,
+                     WGCNA_deepsplit=opt$WGCNA_deepsplit,
+                     WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
+                     WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,                    
                      cor_only=TRUE
       )
     }
@@ -448,11 +460,14 @@ if(grepl("W", opt$modules)) {
 
     cat('Performing WGCNA correlation analysis for all samples\n')
     results_WGCNA <- analysis_WGCNA(data=DESeq2_counts,
-                                    path=path,
-                                    target_numeric_factors=target_numeric_factors,
-                                    target_string_factors=target_string_factors,
-                                    WGCNA_memory=opt$WGCNA_memory,
-                                    cor_only=FALSE
+                                   path=path,
+                                   target_numeric_factors=target_numeric_factors,
+                                   target_string_factors=target_string_factors,
+                                   WGCNA_memory=opt$WGCNA_memory,
+                                   WGCNA_deepsplit=opt$WGCNA_deepsplit,
+                                   WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
+                                   WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,                                    
+                                   cor_only=FALSE
     )
     if(length(results_WGCNA) == 1) {
       warning("Something went wrong with WGCNA on the full dataset")

@@ -1,4 +1,4 @@
-analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_factors, WGCNA_memory, cor_only) {
+analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_factors, WGCNA_memory, WGCNA_deepsplit, WGCNA_detectcutHeight, WGCNA_mergecutHeight, cor_only) {
 	data <- t(data)#[, 1:500]
 
 	####################################################################
@@ -70,7 +70,8 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	net <- blockwiseModules(data, power = pow,
 	maxBlockSize = WGCNA_memory, # Increase to memory limit in order to obtain more realistic results
 	TOMType = "unsigned", minModuleSize = 30,
-	reassignThreshold = 0, mergeCutHeight = 0.25,
+	deepSplit = WGCNA_deepsplit, detectCutHeight = WGCNA_detectcutHeight,
+	reassignThreshold = 0, mergeCutHeight = WGCNA_mergecutHeight,
 	numericLabels = TRUE, pamRespectsDendro = FALSE,
 	loadTOM = loadTOM_TF,	
 	saveTOM = saveTOM_TF,
