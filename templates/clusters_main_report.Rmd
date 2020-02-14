@@ -115,10 +115,7 @@ calc_width <- function(enrich_obj, showCategory = 30, category_character_size = 
   	if(width_size > 100){
 		width_size <- 50
 	}
-
-  	message(paste0("Used width of ", width_size, " inches")
-  	
-  return(width_size)
+ 	return(width_size)
 
 }
 
@@ -477,7 +474,7 @@ invisible(lapply(seq_along(custom_cls_ORA),function(i){
 				)
 
 				pp <- cnetplot(res, showCategory = n_category)
-				plot_in_div(pp, calc_height(res),calc_width(res))
+				plot_in_div(pp, calc_height(res), calc_width(res))
 
 		"
 
