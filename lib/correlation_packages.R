@@ -4,8 +4,9 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	####################################################################
 	## THRESHOLDING - EFFECTS OF BETA ON TOPOLOGY AND AUTO SELECTION
 	####################################################################
-
+	assignInNamespace(x="..minNSamples", value=3, ns="WGCNA") #Overwrite harcoded limit from 4 to 3
 	powers <- c(c(1:10), seq(from = 12, to=30, by=2))
+
  	sft <- pickSoftThreshold(data, powerVector = powers, verbose = 5)
 
 	pdf(file.path(path, "thresholding.pdf"))
