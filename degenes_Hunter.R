@@ -479,14 +479,14 @@ write_df_list_as_tables(all_counts_for_plotting, prefix = 'allgenes_', root = op
 
 # Write main results file, normalized counts per package and DE results per package
 DE_all_genes <- unite_DEG_pack_results(all_counts_for_plotting, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, 
-  final_logFC_names, final_FDR_names, raw, opt$p_val_cutoff, opt$lfc, opt$minpack_common)
+  final_logFC_names, final_FDR_names, opt$p_val_cutoff, opt$lfc, opt$minpack_common)
 
 #####
 ################## CASE P: PCIT
 #####
 
 if(grepl("P", opt$modules)) {
-  metrics_pcit <- analysis_diff_correlation(DE_all_genes[DE_all_genes$genes_tag != 'FILTERED_OUT',], DESeq2_counts, DESeq2_counts_control, DESeq2_counts_treatment, PCIT_filter=FALSE)
+  metrics_pcit <- analysis_diff_correlation(DE_all_genes, DESeq2_counts, DESeq2_counts_control, DESeq2_counts_treatment, PCIT_filter=FALSE)
   DE_all_genes <- transform(merge(DE_all_genes, metrics_pcit, by.x=0, by.y=0), row.names=Row.names, Row.names=NULL)
 }
 
@@ -496,6 +496,9 @@ if(grepl("P", opt$modules)) {
 if(grepl("W", opt$modules) & grepl("D", opt$modules)) {
   DE_all_genes <- transform(merge(DE_all_genes, results_WGCNA[['gene_cluster_info']], by.x=0, by.y="ENSEMBL_ID"), row.names=Row.names, Row.names=NULL)
 }
+
+# Add the filtered genes back
+DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
 
 # New structure - row names are now actually row names
 dir.create(file.path(opt$output_files, "Common_results"))
