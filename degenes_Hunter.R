@@ -10,7 +10,7 @@
 ############################################################
 ##                      SETUP PROGRAM                     ##
 ############################################################
-
+options(warn=1)
 # Loading libraries
 suppressPackageStartupMessages(library(ggplot2)) 
 suppressPackageStartupMessages(library(limma))
@@ -226,7 +226,6 @@ if(opt$reads != 0){
 } else { # NO FILTER
   raw_filter <- raw
 }
-
 # Defining contrast - Experimental design
 design_vector <- c(rep("C", replicatesC), rep("T", replicatesT))
 
@@ -414,13 +413,12 @@ if(grepl("W", opt$modules)) {
     path <- file.path(opt$output_files, "Results_WGCNA")
     dir.create(path)
 
-    DESeq2_counts <- counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE)
-
     if(opt$WGCNA_all == TRUE) {
 
       WGCNA_treatment_path <- file.path(path, "Treatment_only_data")
       dir.create(WGCNA_treatment_path)
 
+      ..minNSamples <- 3
       cat('Performing WGCNA correlation analysis for treated samples\n')
       results_WGCNA_treatment <- analysis_WGCNA(data=DESeq2_counts_treatment,
                      path=WGCNA_treatment_path,
@@ -481,7 +479,7 @@ write_df_list_as_tables(all_counts_for_plotting, prefix = 'allgenes_', root = op
 
 # Write main results file, normalized counts per package and DE results per package
 DE_all_genes <- unite_DEG_pack_results(all_counts_for_plotting, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, 
-  final_logFC_names, final_FDR_names, raw, opt$p_val_cutoff, opt$lfc, opt$minpack_common)
+  final_logFC_names, final_FDR_names, opt$p_val_cutoff, opt$lfc, opt$minpack_common)
 
 #####
 ################## CASE P: PCIT
@@ -498,6 +496,9 @@ if(grepl("P", opt$modules)) {
 if(grepl("W", opt$modules) & grepl("D", opt$modules)) {
   DE_all_genes <- transform(merge(DE_all_genes, results_WGCNA[['gene_cluster_info']], by.x=0, by.y="ENSEMBL_ID"), row.names=Row.names, Row.names=NULL)
 }
+
+# Add the filtered genes back
+DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
 
 # New structure - row names are now actually row names
 dir.create(file.path(opt$output_files, "Common_results"))

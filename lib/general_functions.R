@@ -9,7 +9,7 @@ handling_errors <- function(a){
 
 ########################################################
 # Functions to generate output files
-unite_DEG_pack_results <- function(all_DE, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, raw, p_val_cutoff, lfc, minpack_common) {
+unite_DEG_pack_results <- function(all_DE, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, p_val_cutoff, lfc, minpack_common) {
   # Reorder all output by gene id so all equal
   all_DE <- lapply(all_DE, function(x) x[order(row.names(x)),])
   gene_ids <- row.names(all_DE[[1]])
@@ -59,7 +59,10 @@ unite_DEG_pack_results <- function(all_DE, all_FDR_names, all_LFC_names, all_pva
   )
   all_DE_df[, "genes_tag"] <- genes_tag
 
-  # Add filtered transcripts
+  return(all_DE_df)
+}
+
+add_filtered_genes <- function(all_DE_df, raw) {
   filtered_genes <- row.names(raw)[! row.names(raw) %in% row.names(all_DE_df)]
   filtered_df <- as.data.frame(matrix(NA, ncol = ncol(all_DE_df), nrow = length(filtered_genes)))
   colnames(filtered_df) <- colnames(all_DE_df)
@@ -77,3 +80,5 @@ write_df_list_as_tables <- function(df_list, prefix, root) {
     file=file.path(root, paste0("Results_", pack), paste0(prefix, pack, '.txt')), quote=FALSE, col.names = NA, sep="\t")
   })
 }
+
+

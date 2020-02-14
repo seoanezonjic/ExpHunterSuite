@@ -157,12 +157,14 @@ All counts were normalizated by DESeq2 algorithm. This count were scaled by log1
 ## **DEgenes Hunter results**
 
 ### **Gene classification by DEgenes Hunter**
-DEgenes Hunter uses multiple DE detection packages to analyse genes in the input count table and labels them accordingly:
+DEgenes Hunter uses multiple DE detection packages to analyse all genes in the input count table and labels them accordingly:
 
 * **Filtered out:** Genes discarded during the filtering process as showing no or very low expression.
-* **Prevalent DEGs:** Genes considered as differentially expressed (DE) by at least `r opt$minpack_common` packages, as specified by the `minpack_common` argument.
-* **All possible DEGs:** Genes considered DE by at least one of the DE detection packages.
-* **Not DEGs:** Genes not considered DE in any package.
+* **Prevalent DEG:** Genes considered as differentially expressed (DE) by at least `r opt$minpack_common` packages, as specified by the `minpack_common` argument.
+* **Possible DEG:** Genes considered DE by at least one of the DE detection packages.
+* **Not DEG:** Genes not considered DE in any package.
+
+This barplot shows the total number of genes passing each stage of analysis - from the total number of genes in the input table of counts, to the genes surviving the expression filter, to the genes detected as DE by one package, to the genes detected by at least `r opt$minpack_common` packages.
 
 ```{r qc,echo = FALSE}
 # Create genes barplot
@@ -172,7 +174,7 @@ barplot_df <- data.frame(total=c(
 		sum(DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG", "POSSIBLE_DEG")),
 		sum(DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG"))
 		),
-	  gene_type=c("Raw counts", "Filtered raw counts", "All possible DEGs", "Prevalent DEGs")
+	  gene_type=c("Total genes", "Genes passing expression filter", "DEGs considered possible or prevalent", "Prevalent DEGs")
 	)
 	barplot_df[,"gene_type"] <- factor(barplot_df[,"gene_type"], levels = barplot_df[,"gene_type"][order(barplot_df[,"total"])]) # Reorder to plot from most to least
 
@@ -426,6 +428,9 @@ In total there was a number of ", max(unique(results_WGCNA$gene_cluster_info$MM_
 
 
 ```{r WGCNA_conditional_block_plot, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=12, fig.width=15}
+
+    replayPlot(results_WGCNA[['plot_objects']][['power_threshold_effects']])
+
 	df <- table(results_WGCNA$gene_cluster_info$MM_Cluster_ID)
 	ggplot(as.data.frame(df), aes(Var1, Freq)) + 
     geom_bar(stat="identity") + labs(x = "Cluster ID (0 = unclustered)", y = "Frequency", main="Number of Genes per Cluster")

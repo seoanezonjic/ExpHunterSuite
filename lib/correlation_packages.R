@@ -4,11 +4,13 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	####################################################################
 	## THRESHOLDING - EFFECTS OF BETA ON TOPOLOGY AND AUTO SELECTION
 	####################################################################
-
+	assignInNamespace(x="..minNSamples", value=3, ns="WGCNA") #Overwrite harcoded limit from 4 to 3
 	powers <- c(c(1:10), seq(from = 12, to=30, by=2))
+
  	sft <- pickSoftThreshold(data, powerVector = powers, verbose = 5)
 
 	pdf(file.path(path, "thresholding.pdf"))
+		dev.control(displaylist="enable")
 		par(mfrow = c(1,2));
 		cex1 = 0.9;
 		# Scale-free topology fit index as a function of the soft-thresholding power
@@ -24,6 +26,7 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 		     xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n",
 		     main = paste("Mean connectivity"))
 		text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
+		power_threshold_effects <- recordPlot()
 	dev.off()
 
 	# Calculate Power automatically
@@ -86,7 +89,7 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 
 	MEs <- moduleEigengenes(data, net$colors)$eigengenes
 
-	write.table(MEs, file=file.path(path, "eigen_values_per_samples.txt"), sep="\t")
+	write.table(MEs, file=file.path(path, "eigen_values_per_samples.txt"), sep="\t", quote=FALSE)
 
 	if(cor_only == TRUE) {
 		return("cor_only")
@@ -216,7 +219,8 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 				module_trait_cor=module_trait_cor, module_trait_cor_p=module_trait_cor_p),
 			plot_objects=list(trait_vs_module_heatmap = trait_vs_module_heatmap, 
 				trait_and_module_dendogram = trait_and_module_dendogram, 
-				trait_and_module_heatmap = trait_and_module_heatmap)
+				trait_and_module_heatmap = trait_and_module_heatmap,
+				power_threshold_effects = power_threshold_effects)
 			)
 		)
 }
