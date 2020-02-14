@@ -109,8 +109,17 @@ calc_width <- function(enrich_obj, showCategory = 30, category_character_size = 
     	warning("Not valid enrich object")
 	}
 
-  width_size <- (legend_size + (category_character_size * max(nchar(as.character(get_categories(enrich_obj, showCategory))))) + (character_width * longer_x_element))
+	width_size <- (legend_size + (category_character_size * max(nchar(as.character(get_categories(enrich_obj, showCategory))))) + (character_width * longer_x_element))
+	cat(paste0("Real width is ", width_size, " inches"))
+
+  	if(width_size > 100){
+		width_size <- 50
+	}
+
+  	message(paste0("Used width of ", width_size, " inches")
+  	
   return(width_size)
+
 }
 
 calc_height <- function(enrich_obj, showCategory = NA, min_size = 7, gene_character_size = 3, category_name_size = 0.1){
@@ -129,10 +138,14 @@ calc_height <- function(enrich_obj, showCategory = NA, min_size = 7, gene_charac
 
 	}
   	height_size <- (gene_character_size* plot_area_elements) + (category_name_size * categories)
-
-  if(height_size < min_size){
-  	height_size <- min_size
-  } 
+  #	height_size <- height_size * 0.5
+  	# cat(paste0("Real height is ", height_size, " inches"))
+	if(height_size < min_size){
+		height_size <- min_size
+	} else if(height_size > 100){
+		height_size <- 50
+	}
+  	# message(paste0("Used width of ", height_size, " inches"))
 
   return(height_size)
 }
@@ -226,7 +239,7 @@ knitr::kable(data.frame(Executed = unlist(executed)))
 ```{r kegg_main,  results='asis', echo = FALSE, eval = executed[["KEGG"]]}
 cat("## **KEGG analysis**\n")
 ```
-```{r kegg_ora, results='asis', echo=FALSE, eval = executed[["KEGG"]] & exists("enrichments_ORA")}
+```{r kegg_ora, results='asis', echo=FALSE, eval = executed[["KEGG"]] & exists("enrichments_ORA"), message = FALSE}
 
 cat("### **Over Representation Analysis**\n",
 	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
@@ -235,6 +248,7 @@ cat(
 	"**Dotplot**\n\n", 
 	"WRITE THIS TEXT >>>>.\n\n"
 )
+message("Printing dotplot")
 cat(length(get_categories(enrichments_ORA$KEGG)))
 pp <- dotplot(enrichments_ORA$KEGG, showCategory=n_category) 
 pp <- set_standard_size(pp)
@@ -247,6 +261,7 @@ cat(
 	"**Heatmap**\n\n", 
 	"WRITE THIS TEXT >>>>.\n\n"
 )
+message("Printing heatplot")
 
 pp <- clusters_heatplot(enrichments_ORA$KEGG@compareClusterResult)  
 pp <- set_standard_size(pp)
@@ -257,9 +272,12 @@ cat(
 	"**CNetplot**\n\n", 
 	"WRITE THIS TEXT >>>>.\n\n"
 )
+message("Printing cnetplot")
 
 pp <- cnetplot(enrichments_ORA$KEGG, showCategory = n_category)
-plot_in_div(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$KEGG), calc_width(enrichments_ORA$KEGG))
+message("Ploting ended")
+
 
 ```
 
@@ -300,7 +318,7 @@ cat(
 )
 
 pp <- cnetplot(enrichments_ORA$REACT, showCategory = n_category)
-plot_in_div(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$REACT),calc_width(enrichments_ORA$REACT))
 
 ```
 
@@ -343,7 +361,7 @@ cat(
 )
 
 pp <- cnetplot(enrichments_ORA$GO_BP, showCategory = n_category)
-plot_in_div(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_BP),calc_width(enrichments_ORA$GO_BP))
 
 
 ```
@@ -366,17 +384,16 @@ cat(
 	"WRITE THIS TEXT >>>>.\n\n"
 )
 
-pp <- ggplot(enrichments_ORA$GO_MF@compareClusterResult, aes(x = Cluster, y = Description, fill = p.adjust)) + geom_tile()
-plot(pp)
+pp <- clusters_heatplot(enrichments_ORA$GO_MF@compareClusterResult) 
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_MF),calc_width(enrichments_ORA$GO_MF))
 
 cat(
 	"**CNetplot**\n\n", 
 	"WRITE THIS TEXT >>>>.\n\n"
 )
-pp <- clusters_heatplot(enrichments_ORA$GO_MF@compareClusterResult) 
-pp <- set_standard_size(pp)
+pp <- cnetplot(enrichments_ORA$GO_MF, showCategory = n_category)
 plot_in_div(pp, calc_height(enrichments_ORA$GO_MF),calc_width(enrichments_ORA$GO_MF))
-
 
 ```
 
@@ -389,7 +406,6 @@ cat(
 	"**Dotplot**\n\n", 
 	"WRITE THIS TEXT >>>>.\n\n"
 )
-cat(length(get_categories(enrichments_ORA$GO_CC)))
 
 pp <- dotplot(enrichments_ORA$GO_CC, showCategory=n_category)  
 pp <- set_standard_size(pp)
@@ -411,7 +427,7 @@ cat(
 )
 
 pp <- cnetplot(enrichments_ORA$GO_CC, showCategory = n_category)
-plot_in_div(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_CC),calc_width(enrichments_ORA$GO_CC))
 
 ```
 
@@ -461,7 +477,7 @@ invisible(lapply(seq_along(custom_cls_ORA),function(i){
 				)
 
 				pp <- cnetplot(res, showCategory = n_category)
-				plot_in_div(pp)
+				plot_in_div(pp, calc_height(res),calc_width(res))
 
 		"
 
