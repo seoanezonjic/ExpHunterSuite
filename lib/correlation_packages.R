@@ -9,26 +9,6 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 
  	sft <- pickSoftThreshold(data, powerVector = powers, verbose = 5)
 
-	pdf(file.path(path, "thresholding.pdf"))
-		dev.control(displaylist="enable")
-		par(mfrow = c(1,2));
-		cex1 = 0.9;
-		# Scale-free topology fit index as a function of the soft-thresholding power
-		plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
-		     xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit,signed R^2",type="n",
-		     main = paste("Scale independence"));
-		text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
-		     labels=powers,cex=cex1,col="red");
-		# this line corresponds to using an R^2 cut-off of h
-		abline(h=0.90,col="red")
-		# Mean connectivity as a function of the soft-thresholding power
-		plot(sft$fitIndices[,1], sft$fitIndices[,5],
-		     xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n",
-		     main = paste("Mean connectivity"))
-		text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
-		power_threshold_effects <- recordPlot()
-	dev.off()
-
 	# Calculate Power automatically
 	sft_mfs_r2 <- -sign(sft$fitIndices[,3])*sft$fitIndices[,2]
 	min_pow_ind <- which(sft_mfs_r2 > 0.9)[1] # First time the value passes 0.9
@@ -52,6 +32,31 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	}
 	pow <- sft$fitIndices[min_pow_ind, "Power"]
 	cor <- WGCNA::cor # TO CORRECT FUNCTION OVERRIDE DUE TO OTHER PACKAGES
+
+	pdf(file.path(path, "thresholding.pdf"))
+		dev.control(displaylist="enable")
+		par(mfrow = c(1,2));
+		cex1 = 0.9;
+		# Scale-free topology fit index as a function of the soft-thresholding power
+		plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
+		     xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit,signed R^2",type="n",
+		     main = paste("Scale independence"));
+		text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
+		     labels=powers,cex=cex1,col="red");
+		# this line corresponds to using an R^2 cut-off of h
+		abline(h=0.90, col="red")
+		abline(h=0.80, col="red", lty="dashed")
+		abline(v=pow, col="black", lty="dotted")
+
+		# Mean connectivity as a function of the soft-thresholding power
+		plot(sft$fitIndices[,1], sft$fitIndices[,5],
+		     xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n",
+		     main = paste("Mean connectivity"))
+		text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
+		abline(v=pow, col="black", lty="dotted")
+
+		power_threshold_effects <- recordPlot()
+	dev.off()
 
 	####################################################################
 	## CLUSTER SAMPLES TO GENERATE MODULES
@@ -139,9 +144,6 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	## CLUSTER MODULES WITH TRAITS AND PRODUCE HEATMAP
 	####################################################################
 
-	#save(data, net, trait, moduleColors, file="~/test.RData")
-
-
 	nSamples <- nrow(data)
 	MEs_colors <- MEs <- moduleEigengenes(data, net$colors)$eigengenes
 	ME_numeric <- as.numeric(gsub("ME", "", colnames(MEs)))
@@ -174,23 +176,26 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	####################################################################
 	# Produce dendogram and heatmap
 	####################################################################
-
 	#ME_s <- moduleEigengenes(data, labels2colors(net$colors))$eigengenes
-	ME_traits = orderMEs(cbind(MEs_colors, trait))
+	ME_color_traits <- orderMEs(cbind(MEs_colors, trait))
+
+	pdf(file.path(path, 'eigengenes_heatmap.pdf'))
+		dev.control(displaylist="enable")
+		plotEigengeneNetworks(ME_color_traits, "Eigengene adjacency heatmap", marHeatmap = c(12,12,2,2),
+                      plotDendrograms = FALSE, xLabelsAngle = 90)
+		trait_and_module_heatmap <- recordPlot()
+	dev.off()
+
+	ME_numeric_traits <- orderMEs(cbind(MEs, trait))
 
 	pdf(file.path(path, 'eigengenes_dendogram.pdf'))
 		dev.control(displaylist="enable")
-		plotEigengeneNetworks(ME_traits, "Eigengene dendrogram", marDendro = c(0,4,2,0),
+		plotEigengeneNetworks(ME_numeric_traits, "Eigengene dendrogram", marDendro = c(0,4,2,0),
                       plotHeatmaps = FALSE)
 		trait_and_module_dendogram <- recordPlot()
 	dev.off()
 	
-	pdf(file.path(path, 'eigengenes_heatmap.pdf'))
-		dev.control(displaylist="enable")
-		plotEigengeneNetworks(ME_traits, "Eigengene adjacency heatmap", marHeatmap = c(12,12,2,2),
-                      plotDendrograms = FALSE, xLabelsAngle = 90)
-		trait_and_module_heatmap <- recordPlot()
-	dev.off()
+
 
 	####################################################################
 	## Produce Tables
@@ -218,8 +223,9 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 			package_objects=list(gene_module_cor=gene_module_cor, gene_module_cor_p=gene_module_cor_p,
 				gene_trait_cor=gene_trait_cor, gene_trait_cor_p=gene_trait_cor_p, 
 				module_trait_cor=module_trait_cor, module_trait_cor_p=module_trait_cor_p),
-			plot_objects=list(trait_vs_module_heatmap = trait_vs_module_heatmap, 
-				trait_and_module_dendogram = trait_and_module_dendogram, 
+			plot_objects=list(sorted_colours = labels2colors(ME_numeric),
+				trait_vs_module_heatmap = trait_vs_module_heatmap,
+				trait_and_module_dendogram = trait_and_module_dendogram,
 				trait_and_module_heatmap = trait_and_module_heatmap,
 				power_threshold_effects = power_threshold_effects)
 			)
