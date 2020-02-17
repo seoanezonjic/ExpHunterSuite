@@ -92,6 +92,7 @@ option_list <- list(
     help="Run WGCNA for treated only, control only, and both as 3 separate runs. Needed if using PCIT. If false, WGCNA runs once, on the table including treament and control")
  )
 opt <- parse_args(OptionParser(option_list=option_list))
+opt_orig <- opt
 
 ############################################################
 ##                       CHECK INPUTS                     ##

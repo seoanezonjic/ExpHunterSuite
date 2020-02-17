@@ -418,30 +418,53 @@ A table containing the NOISeq normalized counts is provided in Results\\_NOISeq/
 ```{r WGCNA_conditional_block_head, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
 cat("### **WGCNA Results**
 
-WGCNA was run to look for m of coexpressed genes
+WGCNA was run to look for modules (clusters) of coexpressed genes. These modules were then compared with the sample factors to look for correlation. 
+If no sample factors were specified, this comparison was performed with treatment/control labels.
 
-In total there was a number of ", max(unique(results_WGCNA$gene_cluster_info$MM_Cluster_ID)) ,"clusters."
-
+The following graphic shows the power value chosen for building clusters. The power is chosen by looking at the characteristics of the network produced."
 
 )
 ```
 
 
-```{r WGCNA_conditional_block_plot, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=12, fig.width=15}
+```{r WGCNA_conditional_block_plot_power_choice, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
 
     replayPlot(results_WGCNA[['plot_objects']][['power_threshold_effects']])
 
+```
 
+```{r WGCNA_conditional_block_head_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
+cat("In total there were ", max(unique(results_WGCNA$gene_cluster_info$MM_Cluster_ID)) , "clusters. 
+	The following plot shows the number of genes per cluster:"
+)
+```
+
+```{r WGCNA_conditional_block_plot_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
 	genes_per_cluster <- table(results_WGCNA$gene_cluster_info$MM_Cluster_ID)
 	col_clusters_barplot <- results_WGCNA[['plot_objects']][['sorted_colours']]
-	names(col_clusters_barplot) <- names(genes_per_cluster)
 
-	# save(results_WGCNA, df, file="~/test.RData")
+	names(col_clusters_barplot) <- names(genes_per_cluster)
 	ggplot(as.data.frame(genes_per_cluster), aes(Var1, Freq, fill=Var1)) + 
     geom_bar(stat="identity") + scale_fill_manual(name = "Cluster ID", values=col_clusters_barplot) + 
     labs(x = "Cluster ID (0 = unclustered)", y = "Frequency", main="Number of Genes per Cluster")
 
-    
+ ```
+
+
+```{r WGCNA_conditional_block_head_factors, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
+
+	cat("The following plots show the correlation between the different modules and specified factors. This is done using eigengenes, 
+which can be broadly thought of as the average expression pattern for the genes in a given cluster. MEn refers to the eigengene for cluster n.
+
+The first plot shows the correlation between clusters and factors directly. The second plot clusters these clusters along with the factors. 
+The third shows the correlation for all combinations of clusters and factors."
+
+)
+
+```
+
+```{r WGCNA_conditional_block_plot_factors, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
+
     replayPlot(results_WGCNA[['plot_objects']][['trait_vs_module_heatmap']])
 
 	# knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor']][1:10,])
@@ -578,6 +601,6 @@ chart.Correlation(df[, c("mean_logFCs", final_logFC_names)], histogram=TRUE, pch
 ### **Values of options used to run DEGenesHunter**
 First column contains the option names; second column contains the given values for each option in this run.
 ```{r opt_vals, echo = FALSE, warning = FALSE}
-knitr::kable(cbind(opt))
+knitr::kable(cbind(opt_orig))
 ```
 
