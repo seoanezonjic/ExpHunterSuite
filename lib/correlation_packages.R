@@ -1,5 +1,6 @@
 analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_factors, WGCNA_memory, WGCNA_deepsplit, WGCNA_detectcutHeight, WGCNA_mergecutHeight, WGCNA_min_genes_cluster, cor_only) {
 	data <- t(data)#[, 1:500]
+	nSamples <- nrow(data)
 
 	####################################################################
 	## THRESHOLDING - EFFECTS OF BETA ON TOPOLOGY AND AUTO SELECTION
@@ -26,6 +27,7 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 			}
 		}
 	}
+
 	if(is.na(min_pow_ind)) {
 		warning("Could not obtain a valid power (beta) value for WGCNA, so the default of 30 will be used - proceed with caution")
 		min_pow_ind <- length(sft_mfs_r2) # assumes 30 will be the largest testable power
@@ -95,6 +97,12 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 
 	MEs <- moduleEigengenes(data, net$colors)$eigengenes
 
+	gene_module_cor <- as.data.frame(cor(data, MEs, use = "p"));
+	gene_module_cor_p <- as.data.frame(corPvalueStudent(as.matrix(gene_module_cor), nSamples));
+	colnames(gene_module_cor_p) = colnames(gene_module_cor) <- gsub("ME", "Cluster_", colnames(gene_module_cor_p) )
+
+	write.table(gene_module_cor, file=file.path(path, "gene_MM.txt"), sep="\t", quote=FALSE)
+	write.table(gene_module_cor_p, file=file.path(path, "gene_MM_p_val.txt"), sep="\t", quote=FALSE)
 	write.table(MEs, file=file.path(path, "eigen_values_per_samples.txt"), sep="\t", quote=FALSE)
 
 	if(cor_only == TRUE) {
@@ -144,7 +152,6 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	## CLUSTER MODULES WITH TRAITS AND PRODUCE HEATMAP
 	####################################################################
 
-	nSamples <- nrow(data)
 	MEs_colors <- MEs <- moduleEigengenes(data, net$colors)$eigengenes
 	ME_numeric <- as.numeric(gsub("ME", "", colnames(MEs)))
 	colnames(MEs_colors) <- paste0("ME", labels2colors(ME_numeric))
@@ -213,9 +220,17 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	module_trait_cor_p <- corPvalueStudent(module_trait_cor, nSamples)
 	row.names(module_trait_cor) = row.names(module_trait_cor_p) <- gsub("ME", "Cluster_", row.names(module_trait_cor_p))
 	# Extra text to add to big table
+
+	# save(list = ls(all.names = TRUE), file = "~/test.RData", envir = environment())
+
 	MM_Cluster_ID <- apply(gene_module_cor_p, 1, function(x) which(x == min(x))) - 1 # Get order the change to -1 as we are 0 indexed for the Cluster IDs
 	MM_min_cor_pval <- apply(gene_module_cor_p, 1, function(x) min(x))
 	cluster_ID<- net$colors
+
+
+
+	# NEW - get the p value for the cluster id, not the lowest p-value
+	# cluster_cor_pval <- sapply(names(cluster_ID), function(x) gene_module_cor_p[x,cluster_ID[x]+1])
 
 	return(list(
 			gene_cluster_info=data.frame(ENSEMBL_ID = names(cluster_ID), Cluster_ID = as.numeric(cluster_ID),
