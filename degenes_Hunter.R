@@ -84,6 +84,8 @@ option_list <- list(
     help="Maximum block size value, to be passed to the blockwiseModules function of WGCNA as the maxBlockSize argument"),
   make_option("--WGCNA_deepsplit", type="integer", default=2,
     help="This option control the module building process and is defined as 1,2,3 and 4 values. 1 for rough clustering and 4 for accurate clustering "),
+  make_option("--WGCNA_min_genes_cluster", type="integer", default=20,
+    help="Mnimum number of genes to keep a cluster"),  
   make_option("--WGCNA_detectcutHeight", type="double", default=0.995,
     help="Cut height to split modules"),
   make_option("--WGCNA_mergecutHeight", type="double", default=0.25,
@@ -434,6 +436,7 @@ if(grepl("W", opt$modules)) {
                      WGCNA_deepsplit=opt$WGCNA_deepsplit,
                      WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
                      WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
+                     WGCNA_min_genes_cluster=opt$WGCNA_min_genes_cluster,
                      cor_only=TRUE
       )
 
@@ -449,7 +452,8 @@ if(grepl("W", opt$modules)) {
                      WGCNA_memory=opt$WGCNA_memory,
                      WGCNA_deepsplit=opt$WGCNA_deepsplit,
                      WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
-                     WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,                    
+                     WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
+                     WGCNA_min_genes_cluster=opt$WGCNA_min_genes_cluster,                    
                      cor_only=TRUE
       )
     }
@@ -467,7 +471,8 @@ if(grepl("W", opt$modules)) {
                                    WGCNA_memory=opt$WGCNA_memory,
                                    WGCNA_deepsplit=opt$WGCNA_deepsplit,
                                    WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
-                                   WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,                                    
+                                   WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
+                                   WGCNA_min_genes_cluster=opt$WGCNA_min_genes_cluster,
                                    cor_only=FALSE
     )
     if(length(results_WGCNA) == 1) {
