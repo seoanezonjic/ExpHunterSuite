@@ -1,0 +1,154 @@
+```{r "{{cl}}_{{cat}}_ora_enrichResults_config", include = FALSE}
+# ###########################################
+# ################# READ ME #################
+# ###########################################
+#
+# This template assumes that the following variables exists
+# => biomaRt_organism_info$Bioconductor_DB[1] :: organism database to translate genes
+# => cl :: cluster to be checked
+# => cat :: category to be checked
+#
+# This templates include the following chunk names:
+# => <cl>_<cat>_ora_enrichmentsResult
+# => <cl>_<cat>_oraEnrich
+ 
+# Load necessary packages
+require(ggplot2)
+require(knitr)
+require(clusterProfiler)
+require(enrichplot)
+
+# Prepare recursive text
+chunks <- function(code, options = ""){paste(paste("```{r ",options,"}",sep = ""),code,"```",sep="\n")}
+render <- function(text){paste(knit(text = paste(text,collapse = "\n")),collapse = "\n")}
+
+# Prepare all HPO reports container
+out <- NULL
+n_category <- 30
+
+# Prepare resize function
+#################################################################################
+############### Resizing plot functions
+###############################################################################
+resize <- function(g, fig_height=5, fig_width=12) {
+  g_deparsed <- paste0(deparse(function() {g}), collapse = '')
+  sub_chunk <- paste0("\n```{r sub_chunk_", floor(runif(1) * 10000), ", fig.height=", fig_height, ", fig.width=", fig_width, ", echo=FALSE}", "\n(", g_deparsed, ")()\n```\n\n\n")
+  cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk), quiet = TRUE))
+}
+
+plot_in_div <- function(plot, height = 7, width = 12) {
+  cat('\n<div class="plot_real_size">\n')
+  resize(plot, height, width)
+  cat('\n</div>\n')
+}
+
+get_plot_df <- function(enrich_obj, showCategory = 30) {
+  geneSets <- enrichplot:::extract_geneSets(enrich_obj, enrichplot:::update_n(enrich_obj, showCategory))
+  geneSets <- enrichplot:::list2df(geneSets)
+  return(geneSets)
+}
+get_categories <- function(enrich_obj, showCategory = 30){
+  categories <- get_plot_df(enrich_obj, showCategory)$categoryID
+  return(unique(categories))
+}
+get_genes <- function(enrich_obj, showCategory = 30){
+  genes <- get_plot_df(enrich_obj, showCategory)$Gene
+  return(unique(genes))
+}
+
+calc_width <- function(enrich_obj, showCategory = 30, category_character_size = 0.08, genename_size = 0.12, legend_size = 1){
+  width_size <- (legend_size + (category_character_size * max(nchar(as.character(get_categories(enrich_obj, showCategory))))) + (genename_size * length(get_genes(enrich_obj, showCategory))))
+  return(width_size)
+}
+calc_height <- function(enrich_obj, showCategory = 30, min_size = 0.3, gene_character_size = 0.08, category_name_size = 0.15){
+  height_size <- (min_size +(gene_character_size* max(nchar(as.character(get_genes(enrich_obj, showCategory))))) + (category_name_size * length(get_categories(enrich_obj, showCategory))))
+  return(height_size)
+}
+
+set_default_width <- function(enrich_obj, default = 12, showCategory = 30, threshold = 30, character_size = 0.04){
+	longer_category <- max(nchar(as.character(get_categories(enrich_obj, showCategory))))
+	if(longer_category > threshold){
+		default_width <- default + character_size * longer_category
+	}else{
+		default_width <- default
+	}
+	return(default_width)
+}
+#############################################################################
+############### END
+#############################################################################
+```
+
+
+
+```{r "{{cl}}_{{cat}}_oraEnrich", results='asis', echo = FALSE, message=FALSE, warning=FALSE}
+
+cat("## **{{cat}} enrichment results**\n")
+
+default_width <- set_default_width(enrich_obj = enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
+# Main label 
+cat("### **{{cat}} - Over Representation Analysis**\n",
+	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+
+cat(
+	"**Barplot**\n\n", 
+	"The plot shows the functional top significative terms in ascendant order by adjusted pvalue. The color represents the associated adjusted pvalue. 
+	The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
+)
+pp <- barplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
+plot_in_div(pp, width = default_width)
+
+
+
+
+cat("\n\n**Dotplot**\n\n",
+	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
+	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+)
+pp <- dotplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
+plot_in_div(pp, width = default_width)
+
+
+
+cat("\n\n**Gene-Concept Network**\n\n", 
+	"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
+	The size of the functional terms shows the number of connected genes.\n\n"
+)
+enrichments_ORA_symb <- setReadable(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+pp <- cnetplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList) +
+	  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+plot_in_div(pp, width = default_width)
+
+
+
+cat("\n\n**Enrich Map plot**\n\n", 
+	"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
+	The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
+)
+pp <- emapplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
+plot_in_div(pp, width = default_width)
+
+
+
+cat("\n\n**Heatplot**\n\n", 
+	"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
+)
+
+pp <- heatplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList)
+width_size <- calc_width(enrichments_ORA_symb)
+height_size <- calc_height(enrichments_ORA_symb) 
+
+plot_in_div(pp, height_size, width_size)
+
+
+if(length(get_categories(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2){ # Needs, at least, two categories
+	cat("\n\n**Upsetplot**\n\n", 
+		"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
+	)
+	pp <- upsetplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], n=n_category)
+	plot_in_div(pp, width = default_width)
+}
+```
+
+
+
