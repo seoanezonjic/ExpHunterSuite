@@ -434,13 +434,13 @@ The following graphic shows the power value chosen for building clusters. The po
 ```
 
 ```{r WGCNA_conditional_block_head_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
-cat("In total there were ", max(unique(results_WGCNA$gene_cluster_info$MM_Cluster_ID)) , "clusters. 
+cat("In total there were ", max(unique(results_WGCNA$gene_cluster_info$Cluster_ID)) , "clusters. 
 	The following plot shows the number of genes per cluster:"
 )
 ```
 
 ```{r WGCNA_conditional_block_plot_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
-	genes_per_cluster <- table(results_WGCNA$gene_cluster_info$MM_Cluster_ID)
+	genes_per_cluster <- table(results_WGCNA$gene_cluster_info$Cluster_ID)
 	col_clusters_barplot <- results_WGCNA[['plot_objects']][['sorted_colours']]
 
 	names(col_clusters_barplot) <- names(genes_per_cluster)
@@ -456,12 +456,24 @@ cat("In total there were ", max(unique(results_WGCNA$gene_cluster_info$MM_Cluste
 	cat("The following plots show the correlation between the different modules and specified factors. This is done using eigengenes, 
 which can be broadly thought of as the average expression pattern for the genes in a given cluster. MEn refers to the eigengene for cluster n.
 
-The first plot shows the correlation between clusters and factors directly. The second plot clusters these clusters along with the factors. 
+The first plot shows the correlation between clusters (eigen genes) and factors directly. The second plot clusters these eigengenes along with the factors. 
 The third shows the correlation for all combinations of clusters and factors."
-
 )
 
 ```
+
+
+```{r WGCNA_conditional_block_head_MMs, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
+	cat("The following plot 
+		Finally, there is a plot that shows, for each gene, the cluster ID ascertained by WGCNA, vs. the cluster whose eigen gene has the highest correlation.")
+
+```
+
+```{r WGCNA_conditional_block_plot_MMs, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
+	print(results_WGCNA[['plot_objects']][['cluster_vs_MM']])
+```
+
+
 
 ```{r WGCNA_conditional_block_plot_factors, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
 

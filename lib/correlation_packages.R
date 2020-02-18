@@ -222,27 +222,32 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	# Extra text to add to big table
 
 	# save(list = ls(all.names = TRUE), file = "~/test.RData", envir = environment())
-
-	MM_Cluster_ID <- apply(gene_module_cor_p, 1, function(x) which(x == min(x))) - 1 # Get order the change to -1 as we are 0 indexed for the Cluster IDs
-	MM_min_cor_pval <- apply(gene_module_cor_p, 1, function(x) min(x))
 	cluster_ID<- net$colors
 
+	Cluster_MM <- sapply(names(cluster_ID), function(x) gene_module_cor[x, cluster_ID[x]+1]) # Get the MM value
+	Cluster_MM_pval <- sapply(names(cluster_ID), function(x) gene_module_cor_p[x, cluster_ID[x]+1]) # Get the MM value
 
+	# Plot cluster ID vs. ID of cluster with lowest MM p-value for each gene
+	MM_Cluster_ID <- apply(gene_module_cor_p, 1, function(x) which(x == min(x))) - 1 # Cluster ID with minimum MM p value
+	cluster_vs_MM <- ggplot(as.data.frame(cbind(cluster_ID, MM_Cluster_ID)), aes(x = cluster_ID ,y = MM_Cluster_ID)) + geom_count() + 
+		scale_x_continuous("Cluster ID", labels = function(x) paste0("Cluster_", x)) + 
+		scale_y_continuous("Cluster with highest MM value", labels = function(x) paste0("Cluster_", x))
 
 	# NEW - get the p value for the cluster id, not the lowest p-value
 	# cluster_cor_pval <- sapply(names(cluster_ID), function(x) gene_module_cor_p[x,cluster_ID[x]+1])
 
 	return(list(
-			gene_cluster_info=data.frame(ENSEMBL_ID = names(cluster_ID), Cluster_ID = as.numeric(cluster_ID),
-				MM_min_cor_pval=MM_min_cor_pval, MM_Cluster_ID=MM_Cluster_ID),
-			package_objects=list(gene_module_cor=gene_module_cor, gene_module_cor_p=gene_module_cor_p,
-				gene_trait_cor=gene_trait_cor, gene_trait_cor_p=gene_trait_cor_p, 
-				module_trait_cor=module_trait_cor, module_trait_cor_p=module_trait_cor_p),
+			gene_cluster_info = data.frame(ENSEMBL_ID = names(cluster_ID), Cluster_ID = as.numeric(cluster_ID),
+				 Cluster_MM = Cluster_MM, Cluster_MM_pval = Cluster_MM_pval),
+			package_objects=list(gene_module_cor = gene_module_cor, gene_module_cor_p = gene_module_cor_p,
+				gene_trait_cor = gene_trait_cor, gene_trait_cor_p = gene_trait_cor_p, 
+				module_trait_cor = module_trait_cor, module_trait_cor_p = module_trait_cor_p),
 			plot_objects=list(sorted_colours = labels2colors(ME_numeric),
 				trait_vs_module_heatmap = trait_vs_module_heatmap,
 				trait_and_module_dendogram = trait_and_module_dendogram,
 				trait_and_module_heatmap = trait_and_module_heatmap,
-				power_threshold_effects = power_threshold_effects)
+				power_threshold_effects = power_threshold_effects,
+				cluster_vs_MM = cluster_vs_MM)
 			)
 		)
 }
