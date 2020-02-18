@@ -60,6 +60,8 @@ option_list <- list(
     help="Flags to activate remote query from enrichments and Genes translation. Use (b) to launch biomaRt translation; (k) to use Kegg remote data base"),
   make_option(c("-C", "--custom"), ,type = "character", default=NULL,
     help="Files with custom nomenclature (in GMT format) separated by commas (,)"),
+  make_option(c("-c", "--cores"), ,type = "numeric", default=1,
+    help="Cores to be used to parallelize clusters enrichments. Default : %default"),
   make_option(c("-T", "--threshold"), type="double", default=0.1,
     help="Enrichment p-value threshold. [Default = %default]"),
   make_option(c("-Q", "--qthreshold"), type="double", default=0.2,
@@ -106,6 +108,10 @@ biomaRt_query_info <- read.table(file.path(main_path_script, "lib", "biomaRt_org
 if(! file.exists(opt$input_hunter_folder)) stop("No input degenes_Hunter folder")
 
 DEG_annot_table <- read.table(file.path(opt$input_hunter_folder, "Common_results", "hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE)
+aux <- which(DEG_annot_table$genes_tag == "FILTERED_OUT") 
+if(length(aux) > 0){
+	DEG_annot_table <- DEG_annot_table[-aux,]
+}
 
 experiments <- read.table(file.path(opt$input_hunter_folder, "control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
 exp_names <- paste("[Control]",experiments[which(experiments[,1] == "C"),2],sep=" ")
@@ -573,7 +579,9 @@ if(flags$Clustered){
 		message("Performing ORA enrichments")
 		enrichments_ORA <- lapply(seq(nrow(ora_config)),function(i){
 			# Perform per each cluster
-			enr <- enrichment_clusters_ORA(genes = clgenes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = ora_config$Onto[i],qvalueCutoff = opt$qthreshold, useInternal = ora_config$UseInternal[i])
+			enr <- enrichment_clusters_ORA(genes = clgenes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = ora_config$Onto[i],qvalueCutoff = opt$qthreshold, useInternal = ora_config$UseInternal[i], mc.cores = opt$cores)
+			enr <- merge_result(enr)
+			return(enr)
 		})
 		names(enrichments_ORA) <- ora_config$Onto
 		# Write output

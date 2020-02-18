@@ -138,30 +138,11 @@ Statistics about input results obtained from DEGenes Expression Hunter are:
 knitr::kable(table(DEG_annot_table$genes_tag))
 ```
 
-
-```{r explore_genes, echo = FALSE}
-# Find target genes
-cl_i_genes <- clgenes[[as.character(cl)]]
-tgt_indx <- which(norm_counts$Gene %in% cl_i_genes)
-sub_norm <- norm_counts[tgt_indx,]
-sub_norm$CNorm <- (sub_norm$Count - min(sub_norm$Count)) / (max(sub_norm$Count) - min(sub_norm$Count))
-# Print
-pp <- ggplot(sub_norm,aes(x = Sample, y = Count, group = Gene)) + 
-	  geom_line() 
-plot(pp)
-
-pp <- ggplot(sub_norm,aes(x = Sample, y = CNorm, group = Gene)) + 
-	  geom_line() 
-plot(pp)
-
-pp <- ggplot(norm_counts_gnorm[tgt_indx,],aes(x = Sample, y = Count, group = Gene)) + 
-	  geom_line(alpha = 0.05) 
-plot(pp)
-
+```{r load_correlation_stats, echo = FALSE}
+curr_out <- knit_expand("partial/corr_cl_stats.Rmd")
 ```
 
-
-
+`r paste(knit(text = curr_out), collapse = '\n')`
 
 
 

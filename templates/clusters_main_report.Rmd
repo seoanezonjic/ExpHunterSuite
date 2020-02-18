@@ -220,6 +220,7 @@ invisible(lapply(seq(nrow(cls_counts)),function(i){cls_genes_summary[which(rowna
 # Obtain info for executed modules
 invisible(lapply(names(executed)[which(unlist(executed))],function(mod){
 	invisible(lapply(rownames(cls_genes_summary),function(cl){
+		message(cl)
 		if(exists("enrichments_ORA")) cls_genes_summary[cl,paste(mod,"(ORA)")] <<- length(which(enrichments_ORA[[mod]]@compareClusterResult$Cluster == cl))
 		if(exists("enrichments_GSEA")) cls_genes_summary[cl,paste(mod,"(GSEA)")] <<- length(which(enrichments_GSEA[[mod]]@compareClusterResult$Cluster == cl))
 	}))

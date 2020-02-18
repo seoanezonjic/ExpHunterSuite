@@ -269,13 +269,10 @@ generate_FA_report <- function(){
 #' @param ont :: ontology to be used. Allowed [GO_MF,GO_CC,GO_BP,KEGG,REACT]
 #' @param useInternal :: used only for KEGG enrichment, activate internal data usage mode
 #' @param qvalueCutoff :: 
+#' @param ENRICH_DATA :: 
 #' @return enrichment performed
 #' @import clusterProfiler, KEGG.db, ReactomePA
-enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff = 0.2){
-  require(clusterProfiler)
-  if(useInternal)
-    require(KEGG.db)
-  require(ReactomePA)
+enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff = 0.2,ENRICH_DATA = NULL){
   # Check
   if(is.numeric(ont)){
     stop("Ontology specified is a number, not a string")
@@ -286,29 +283,63 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
     ont = aux[1]
     go_subonto = aux[2]
   }
+  # Take enrichment function
+  if(ont == "GO"){
+    require(clusterProfiler)
+    enr_fun <- clusterProfiler::enrichGO
+    patter_to_remove <- "GO_DATA *<-"
+  }else if(ont == "KEGG"){
+    require(clusterProfiler)
+    if(useInternal) require(KEGG.db)
+    enr_fun <- clusterProfiler::enrichKEGG
+    patter_to_remove <- "KEGG_DATA *<-"
+  }else if(ont == "REACT"){
+    require(ReactomePA)
+    enr_fun <- ReactomePA::enrichPathway
+    patter_to_remove <- "Reactome_DATA *<-"
+  }
+
+  # Substitute if proceed
+  if(!is.null(ENRICH_DATA)){
+    # Find not necessary task into code
+    line_to_remove <- grep(patter_to_remove,body(enr_fun))
+    # Check
+    if(length(line_to_remove) == 0){ # Warning, task not found
+      warning("ern_fun: Can not find annot task to be removed. Regular version will be used.")
+    }else{ # Remove task from code
+      if(ont == "GO"){
+        body(enr_fun)[[line_to_remove]] <- substitute(GO_DATA <- parent.frame()$ENRICH_DATA)      
+      }else if(ont == "KEGG"){
+        body(enr_fun)[[line_to_remove]] <- substitute(KEGG_DATA <- parent.frame()$ENRICH_DATA)      
+      }else if(ont == "REACT"){
+        body(enr_fun)[[line_to_remove]] <- substitute(Reactome_DATA <- parent.frame()$ENRICH_DATA)              
+      }
+    }
+  }
+
   # Check ontology 
   if(ont == "GO"){
-    enrichment <- enrichGO(gene          = genes,
-                           OrgDb         = organism,
-                           keyType       = keyType,
-                           ont           = go_subonto,
-                           pvalueCutoff  = pvalueCutoff,
-                           pAdjustMethod = pAdjustMethod,
-                           qvalueCutoff  = qvalueCutoff) 
+    enrichment <- enr_fun(gene          = genes,
+                          OrgDb         = organism,
+                          keyType       = keyType,
+                          ont           = go_subonto,
+                          pvalueCutoff  = pvalueCutoff,
+                          pAdjustMethod = pAdjustMethod,
+                          qvalueCutoff  = qvalueCutoff) 
   }else if(ont == "KEGG"){
-    enrichment <- enrichKEGG(gene          = genes,
-                             organism      = organism,
-                             keyType       = keyType,
-                             pvalueCutoff  = pvalueCutoff,
-                             pAdjustMethod = pAdjustMethod,
-                             use_internal_data = useInternal,
-                             qvalueCutoff  = qvalueCutoff)
+    enrichment <- enr_fun(gene          = genes,
+                          organism      = organism,
+                          keyType       = keyType,
+                          pvalueCutoff  = pvalueCutoff,
+                          pAdjustMethod = pAdjustMethod,
+                          use_internal_data = useInternal,
+                          qvalueCutoff  = qvalueCutoff)
   }else if(ont == "REACT"){
-    enrichment <- enrichPathway(genes,
-                                organism = organism,
-                                pAdjustMethod = pAdjustMethod,
-                                pvalueCutoff = pvalueCutoff,
-                                qvalueCutoff  = qvalueCutoff)
+    enrichment <- enr_fun(gene          = genes,
+                          organism      = organism,
+                          pAdjustMethod = pAdjustMethod,
+                          pvalueCutoff  = pvalueCutoff,
+                          qvalueCutoff  = qvalueCutoff)
   }else{
     stop("Error, ontology specified is not supported to be enriched")
   }
@@ -387,52 +418,51 @@ require(clusterProfiler)
 #' @param ont :: ontology to be used. Allowed [GO_MF,GO_CC,GO_BP,KEGG,REACT]
 #' @param useInternal :: used only for KEGG enrichment, activate internal data usage mode
 #' @param qvalueCutoff :: 
+#' @param ENRICH_DATA :: 
+#' @param mc.cores :: 
 #' @return enrichment performed
-#' @import clusterProfiler, KEGG.db, ReactomePA
-enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff){
-  require(clusterProfiler)
-  if(useInternal)
-    require(KEGG.db)
-  require(ReactomePA)
-  # Check
-  if(is.numeric(ont)){
-    stop("Ontology specified is a number, not a string")
-  }
+#' @import clusterProfiler, KEGG.db, ReactomePA, parallel
+enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, mc.cores = 1){
   # Parse onto
+  src_ont = ont
   if(grepl("GO",ont)){
     aux = unlist(strsplit(ont,"_"))
     ont = aux[1]
     go_subonto = aux[2]
   }
-  # Check ontology 
-  if(ont == "GO"){
-    enrichment <- compareCluster(geneClusters  = genes, 
-                                 fun           = "enrichGO",
-                                 OrgDb         = organism,
-                                 keyType       = keyType,
-                                 ont           = go_subonto,
-                                 pvalueCutoff  = pvalueCutoff,
-                                 pAdjustMethod = pAdjustMethod,
-                                 qvalueCutoff  = qvalueCutoff) 
-  }else if(ont == "KEGG"){
-    enrichment <- compareCluster(geneClusters  = genes, 
-                                 fun           = "enrichKEGG",
-                                 organism      = organism,
-                                 keyType       = keyType,
-                                 pvalueCutoff  = pvalueCutoff,
-                                 pAdjustMethod = pAdjustMethod,
-                                 use_internal_data = useInternal,
-                                 qvalueCutoff  = qvalueCutoff)
-  }else if(ont == "REACT"){
-    enrichment <- compareCluster(geneClusters  = genes, 
-                                 fun           = "enrichPathway",
-                                 organism      = organism,
-                                 pAdjustMethod = pAdjustMethod,
-                                 pvalueCutoff  = pvalueCutoff,
-                                 qvalueCutoff  = qvalueCutoff)
-  }else{
-    stop("Error, ontology specified is not supported to be enriched")
+
+  # Prepare set
+  if(is.null(ENRICH_DATA) & length(genes) > 1){
+    if(ont == "GO"){
+      require(clusterProfiler)
+      ENRICH_DATA <- clusterProfiler:::get_GO_data(organism, go_subonto, keyType)
+    }else if(ont == "KEGG"){
+      require(clusterProfiler)
+      ENRICH_DATA <- clusterProfiler:::get_data_from_KEGG_db(clusterProfiler:::organismMapper(organism))
+    }else if(ont == "REACT"){
+      require(ReactomePA)
+      ENRICH_DATA <- ReactomePA:::get_Reactome_DATA(organism)
+    }
   }
+
+  require(parallel)
+  # Enrich per gene_set
+  enrichment <- mclapply(genes,function(setg){
+    # Obtain enrichment 
+    enr <- enrichment_ORA(genes         = setg,
+                          organism      = organism,
+                          keyType       = keyType,
+                          pvalueCutoff  = pvalueCutoff,
+                          pAdjustMethod = pAdjustMethod,
+                          ont           = src_ont,
+                          useInternal   = useInternal, 
+                          qvalueCutoff  = qvalueCutoff,
+                          ENRICH_DATA   = ENRICH_DATA)
+    # Return
+    return(enr)
+  },mc.cores = mc.cores)
+
+  names(enrichment) <- names(genes)
 
   # Return enrichment
   return(enrichment)

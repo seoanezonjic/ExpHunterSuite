@@ -79,7 +79,7 @@ get_categories <- function(enrich_obj, showCategory = n_category){
 }
 
 
-get_clusters <- function(compareCluster_obj){
+get_clusters <- function(compareCluster_obj){ # TODO: what's happening here?
     all_clusters <- enrichments_ORA$REACT@compareClusterResult$Cluster
     return(unique(all_clusters))
 }
@@ -106,7 +106,7 @@ calc_width <- function(enrich_obj, showCategory = 30, category_character_size = 
 		width_size <- 50
 	}
 
-  	message(paste0("Used width of ", width_size, " inches")
+  	message(paste0("Used width of ", width_size, " inches"))
   	
   return(width_size)
 
