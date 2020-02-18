@@ -577,13 +577,14 @@ if(flags$Clustered){
 	names(clgenes) <- cls
 	if(flags$ORA){
 		message("Performing ORA enrichments")
-		enrichments_ORA <- lapply(seq(nrow(ora_config)),function(i){
+		enrichments_ORA_expanded <- lapply(seq(nrow(ora_config)),function(i){
 			# Perform per each cluster
 			enr <- enrichment_clusters_ORA(genes = clgenes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = ora_config$Onto[i],qvalueCutoff = opt$qthreshold, useInternal = ora_config$UseInternal[i], mc.cores = opt$cores)
-			enr <- merge_result(enr)
+			# enr <- merge_result(enr)
 			return(enr)
 		})
-		names(enrichments_ORA) <- ora_config$Onto
+		names(enrichments_ORA_expanded) <- ora_config$Onto
+		enrichments_ORA <- lapply(enrichments_ORA_expanded,function(enrCL){merge_result(enrCL)})
 		# Write output
 		invisible(lapply(seq_along(enrichments_ORA),function(i){
 			# Concat
