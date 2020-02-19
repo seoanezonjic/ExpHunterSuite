@@ -200,7 +200,7 @@ if(exists("target") & grepl("W", opt$modules)) {
     if(TRUE %in% numeric_factors_index) {
       target_numeric_factors <- target[numeric_factors_index]
       # Ensure the factors are numeric
-      target_numeric_factors <- sapply(target_numeric_factors, as.numeric)
+      invisible(lapply(seq(ncol(target_numeric_factors)), function(i){target_numeric_factors[,i] <<- as.numeric(target_numeric_factors[,i])}))
     } else {
       stop(cat("Factors specified with the --numeric_factors option cannot be found in the target file.\nPlease resubmit."))
     }
