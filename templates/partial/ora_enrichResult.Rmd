@@ -83,8 +83,6 @@ set_default_width <- function(enrich_obj, default = 12, showCategory = 30, thres
 
 ```{r "{{cl}}_{{cat}}_oraEnrich", results='asis', echo = FALSE, message=FALSE, warning=FALSE}
 
-cat("## **{{cat}} enrichment results**\n")
-
 default_width <- set_default_width(enrich_obj = enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
 # Main label 
 cat("### **{{cat}} - Over Representation Analysis**\n",
@@ -110,15 +108,16 @@ plot_in_div(pp, width = default_width)
 
 
 
-cat("\n\n**Gene-Concept Network**\n\n", 
-	"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
-	The size of the functional terms shows the number of connected genes.\n\n"
-)
-enrichments_ORA_symb <- setReadable(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-pp <- cnetplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList) +
-	  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-plot_in_div(pp, width = default_width)
-
+if(length(get_categories(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2){ # Needs, at least, two categories
+	cat("\n\n**Gene-Concept Network**\n\n", 
+		"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
+		The size of the functional terms shows the number of connected genes.\n\n"
+	)
+	enrichments_ORA_symb <- setReadable(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+	pp <- cnetplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList) +
+		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+	plot_in_div(pp, width = default_width)
+}
 
 
 cat("\n\n**Enrich Map plot**\n\n", 
