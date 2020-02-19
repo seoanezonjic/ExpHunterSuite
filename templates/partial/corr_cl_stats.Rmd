@@ -19,13 +19,18 @@ require(ggplot2)
 
 
 ```{r "{{cl}}_explore_genes", echo = FALSE}
+# Load genes expressions
 cl_i_genes <- clgenes[[as.character({{cl}})]]
 tgt_indx <- which(norm_counts$Gene %in% cl_i_genes)
-pp <- ggplot(norm_counts_gnorm[tgt_indx,],aes(x = Sample, y = Count, group = Gene)) + 
-	  geom_line(alpha = 0.05) +
+# Prepare regular cluster info
+cl_profile <- cl_eigvalues_gnorm[grepl(paste(c("ME",{{cl}},"$"),collapse=""),cl_eigvalues_gnorm$Cluster_ID),]
+# Plot
+pp <- ggplot(mapping = aes(x = Sample)) + 
+	  geom_line(data = norm_counts_gnorm[tgt_indx,], alpha = 0.05, mapping = aes(y = Count, group = Gene)) +
+	  geom_line(data = cl_profile, mapping = aes(y = Count, group = Cluster_ID), color = "blue") +
+	  scale_y_continuous(sec.axis = sec_axis(~.*2-1, name = "Cluster-Sample correlation")) +
       theme(axis.text.x = element_text(angle = 30, hjust = 1))
 plot(pp)
-
 ```
 
 

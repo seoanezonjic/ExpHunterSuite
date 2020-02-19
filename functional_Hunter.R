@@ -238,7 +238,8 @@ if(opt$save_query == TRUE){
 
 # Load Normalized correlation data
 if(flags$Clustered){
-	# Load
+	####
+	# LOAD NORMALIZED COUNTS
 	norm_counts_raw <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_DESeq2", "Normalized_counts_DESeq2.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
 	# Translate genes
 	if(exists("reference_table")){
@@ -260,6 +261,29 @@ if(flags$Clustered){
 	colnames(norm_counts) <- c("Gene","Sample","Count")
 	norm_counts_gnorm <- as.data.frame(as.table(norm_counts_raw_gnorm))
 	colnames(norm_counts_gnorm) <- c("Gene","Sample","Count")
+	# norm_counts_gnorm <- cbind(norm_counts_gnorm,list(Type = rep("Regular",nrow(norm_counts_gnorm))))
+
+	####
+	# LOAD WGCNA clusters representative profiles
+	cl_eigvalues <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_WGCNA", "eigen_values_per_samples.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
+	cl_eigvalues <- as.data.frame(as.table(cl_eigvalues),stringsAsFactors = FALSE)
+	colnames(cl_eigvalues) <- c("Sample","Cluster_ID","Count") 
+	cl_eigvalues_gnorm <- cl_eigvalues
+	cl_eigvalues_gnorm$Count <- (cl_eigvalues_gnorm$Count + 1) / 2 
+	# Substitute clusters names
+	# colnames(cl_eigvalues) <- gsub("ME","",colnames(cl_eigvalues))
+	# Normalize
+	# cl_eigvalues_gnorm <- cl_eigvalues
+	# invisible(lapply(seq_along(cl_eigvalues[1,]),function(j){
+	# 	m <- min(cl_eigvalues[,j])
+	# 	M <- max(cl_eigvalues[,j])
+	# 	dff <- M - m
+	# 	cl_eigvalues_gnorm[,j] <<- (cl_eigvalues[,j] - m) / dff
+	# }))
+	# cl_eigvalues_gnorm <- as.data.frame(as.table(cl_eigvalues_gnorm))
+	# colnames(cl_eigvalues_gnorm) <- c("Sample","Gene","Count") # In this case, GENE == CLUSTER_ID; used gene name to avoid concat in future
+	# cl_eigvalues_gnorm <- cl_eigvalues_gnorm[,c("Gene","Sample","Count")]
+	# cl_eigvalues_gnorm <- cbind(cl_eigvalues_gnorm,list(Type = rep("Cluster",nrow(cl_eigvalues_gnorm))))	
 }
 
 
