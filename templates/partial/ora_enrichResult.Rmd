@@ -84,31 +84,31 @@ set_default_width <- function(enrich_obj, default = 12, showCategory = 30, thres
 ```{r "{{cl}}_{{cat}}_oraEnrich", results='asis', echo = FALSE, message=FALSE, warning=FALSE}
 
 default_width <- set_default_width(enrich_obj = enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
-# Main label 
-cat("### **{{cat}} - Over Representation Analysis**\n",
-	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
-
-cat(
-	"**Barplot**\n\n", 
-	"The plot shows the functional top significative terms in ascendant order by adjusted pvalue. The color represents the associated adjusted pvalue. 
-	The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
-)
-pp <- barplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
-plot_in_div(pp, width = default_width)
-
-
-
-
-cat("\n\n**Dotplot**\n\n",
-	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
-	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
-)
-pp <- dotplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
-plot_in_div(pp, width = default_width)
-
-
-
 if(length(get_categories(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2){ # Needs, at least, two categories
+	# Main label 
+	cat("### **{{cat}} - Over Representation Analysis**\n",
+		"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+
+	cat(
+		"**Barplot**\n\n", 
+		"The plot shows the functional top significative terms in ascendant order by adjusted pvalue. The color represents the associated adjusted pvalue. 
+		The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
+	)
+	pp <- barplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
+	plot_in_div(pp, width = default_width)
+
+
+
+
+	cat("\n\n**Dotplot**\n\n",
+		"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
+		The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+	)
+	pp <- dotplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
+	plot_in_div(pp, width = default_width)
+
+
+
 	cat("\n\n**Gene-Concept Network**\n\n", 
 		"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 		The size of the functional terms shows the number of connected genes.\n\n"
@@ -117,35 +117,35 @@ if(length(get_categories(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2)
 	pp <- cnetplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList) +
 		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
 	plot_in_div(pp, width = default_width)
-}
 
 
-cat("\n\n**Enrich Map plot**\n\n", 
-	"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
-	The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
-)
-pp <- emapplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
-plot_in_div(pp, width = default_width)
+	cat("\n\n**Enrich Map plot**\n\n", 
+		"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
+		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
+	)
+	pp <- emapplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
+	plot_in_div(pp, width = default_width)
 
 
 
-cat("\n\n**Heatplot**\n\n", 
-	"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
-)
+	cat("\n\n**Heatplot**\n\n", 
+		"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
+	)
 
-pp <- heatplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList)
-width_size <- calc_width(enrichments_ORA_symb)
-height_size <- calc_height(enrichments_ORA_symb) 
+	pp <- heatplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList)
+	width_size <- calc_width(enrichments_ORA_symb)
+	height_size <- calc_height(enrichments_ORA_symb) 
+	plot_in_div(pp, height_size, width_size)
 
-plot_in_div(pp, height_size, width_size)
-
-
-if(length(get_categories(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2){ # Needs, at least, two categories
 	cat("\n\n**Upsetplot**\n\n", 
 		"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 	)
 	pp <- upsetplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], n=n_category)
 	plot_in_div(pp, width = default_width)
+}else{
+	# Main label 
+	cat("### **{{cat}} - Over Representation Analysis**\n",
+		"After execute ORA enrichment, **any significative term have been found**")
 }
 ```
 
