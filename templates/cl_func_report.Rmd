@@ -135,7 +135,9 @@ In the case of the GSEA method, all the genes are sorted by their fold-change an
 
 Statistics about input results obtained from DEGenes Expression Hunter are:
 ```{r table_exp_flags, echo = FALSE}
-knitr::kable(table(DEG_annot_table$genes_tag))
+cl_table <- as.data.frame(table(DEG_annot_table$genes_tag[which(DEG_annot_table$Cluster_ID == cl)]))
+names(cl_table) <- c("Gene_tag","Genes")
+knitr::kable(cl_table)
 ```
 
 ```{r load_correlation_stats, echo = FALSE}
