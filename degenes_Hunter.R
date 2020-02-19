@@ -161,7 +161,7 @@ dir.create(opt$output_files)
 
 # Load target file if it exists, otherwise use the -C and -T flags. Note target takes precedence over target.
 if(! is.null(opt$target_file)) {
-  target <- read.table(opt$target_file, header=TRUE, sep="\t", colClasses = "factor", stringsAsFactors=FALSE)
+  target <- read.table(opt$target_file, header=TRUE, sep="\t")#, colClasses = "factor", stringsAsFactors=FALSE)
   # Check there is a column named treat
   if(! "treat" %in% colnames(target)) {
     stop(cat("No column named treat in the target file.\nPlease resubmit"))
