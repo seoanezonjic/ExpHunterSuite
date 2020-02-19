@@ -223,9 +223,8 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 
 	# save(list = ls(all.names = TRUE), file = "~/test.RData", envir = environment())
 	cluster_ID<- net$colors
-
-	Cluster_MM <- sapply(names(cluster_ID), function(x) gene_module_cor[x, cluster_ID[x]+1]) # Get the MM value
-	Cluster_MM_pval <- sapply(names(cluster_ID), function(x) gene_module_cor_p[x, cluster_ID[x]+1]) # Get the MM value
+	Cluster_MM <- sapply(names(cluster_ID), function(x) gene_module_cor[x, paste0("Cluster_", cluster_ID[x])]) 
+	Cluster_MM_pval <- sapply(names(cluster_ID), function(x) gene_module_cor_p[x, paste0("Cluster_", cluster_ID[x])]) # Get the MM value
 
 	# Plot cluster ID vs. ID of cluster with lowest MM p-value for each gene
 	MM_Cluster_ID <- apply(gene_module_cor_p, 1, function(x) which(x == min(x))) - 1 # Cluster ID with minimum MM p value

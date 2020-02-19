@@ -188,6 +188,7 @@ if(exists("target") & grepl("W", opt$modules)) {
 
     if(TRUE %in% string_factors_index) {
       target_string_factors <- target[string_factors_index]
+      target_string_factors <-  data.frame(sapply(target_string_factors, as.factor))
     } else {
       stop(cat("Factors specified with the --string_factors option cannot be found in the target file.\nPlease resubmit."))
     }
