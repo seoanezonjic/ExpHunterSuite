@@ -616,7 +616,7 @@ if(flags$Clustered){
 			})
 		}
 		names(geneListCL) <- cls
-		enrichments_GSEA <- lapply(seq(nrow(gsea_config)),function(i){
+		enrichments_GSEA_expanded <- lapply(seq(nrow(gsea_config)),function(i){
 			# Perform per each cluster
 			enr <- lapply(geneListCL,function(genes){
 				# Check
@@ -629,11 +629,13 @@ if(flags$Clustered){
 				# Return
 				return(curr_enr)
 			})
-			# Merge all results
-			enr <- merge_result(enr)
+			# # Merge all results
+			# enr <- merge_result(enr)
 			# Return
 			return(enr)
 		})
+		names(enrichments_GSEA_expanded) <- gsea_config$Onto
+		enrichments_GSEA <- lapply(enrichments_GSEA_expanded,function(enrCL){merge_result(enrCL)})
 		names(enrichments_GSEA) <- gsea_config$Onto
 		# Write output
 		invisible(lapply(seq_along(enrichments_GSEA),function(i){
