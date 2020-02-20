@@ -161,7 +161,7 @@ dir.create(opt$output_files)
 
 # Load target file if it exists, otherwise use the -C and -T flags. Note target takes precedence over target.
 if(! is.null(opt$target_file)) {
-  target <- read.table(opt$target_file, header=TRUE, sep="\t", colClasses = "factor")
+  target <- read.table(opt$target_file, header=TRUE, sep="\t")#, colClasses = "factor", stringsAsFactors=FALSE)
   # Check there is a column named treat
   if(! "treat" %in% colnames(target)) {
     stop(cat("No column named treat in the target file.\nPlease resubmit"))
@@ -188,6 +188,7 @@ if(exists("target") & grepl("W", opt$modules)) {
 
     if(TRUE %in% string_factors_index) {
       target_string_factors <- target[string_factors_index]
+      target_string_factors <-  data.frame(sapply(target_string_factors, as.factor))
     } else {
       stop(cat("Factors specified with the --string_factors option cannot be found in the target file.\nPlease resubmit."))
     }
@@ -200,7 +201,7 @@ if(exists("target") & grepl("W", opt$modules)) {
     if(TRUE %in% numeric_factors_index) {
       target_numeric_factors <- target[numeric_factors_index]
       # Ensure the factors are numeric
-      invisible(lapply(seq(ncol(target_numeric_factors)), function(i){target_numeric_factors[,i] <<- as.numeric(target_numeric_factors[,i])}))
+      #invisible(lapply(seq(ncol(target_numeric_factors)), function(i){target_numeric_factors[,i] <<- as.numeric(target_numeric_factors[,i])}))
     } else {
       stop(cat("Factors specified with the --numeric_factors option cannot be found in the target file.\nPlease resubmit."))
     }

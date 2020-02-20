@@ -74,11 +74,13 @@ add_filtered_genes <- function(all_DE_df, raw) {
 }
 
 write_df_list_as_tables <- function(df_list, prefix, root) {
-  lapply(1:length(df_list), function(i) {
-  pack <- names(df_list)[i]
-  write.table(df_list[[pack]],
-    file=file.path(root, paste0("Results_", pack), paste0(prefix, pack, '.txt')), quote=FALSE, col.names = NA, sep="\t")
-  })
+  invisible(
+    lapply(1:length(df_list), function(i) {
+      pack <- names(df_list)[i]
+      write.table(df_list[[pack]],
+      file=file.path(root, paste0("Results_", pack), paste0(prefix, pack, '.txt')), quote=FALSE, col.names = NA, sep="\t")
+    })
+  )
 }
 
 

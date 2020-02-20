@@ -464,8 +464,8 @@ The third shows the correlation for all combinations of clusters and factors."
 
 
 ```{r WGCNA_conditional_block_head_MMs, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
-	cat("The following plot 
-		Finally, there is a plot that shows, for each gene, the cluster ID ascertained by WGCNA, vs. the cluster whose eigen gene has the highest correlation.")
+
+	cat("Finally, there is a plot that shows, for each gene, the cluster ID ascertained by WGCNA, vs. the cluster whose eigen gene has the highest correlation.")
 
 ```
 

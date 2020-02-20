@@ -219,13 +219,17 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	module_trait_cor = cor(MEs, trait, use = "p")
 	module_trait_cor_p <- corPvalueStudent(module_trait_cor, nSamples)
 	row.names(module_trait_cor) = row.names(module_trait_cor_p) <- gsub("ME", "Cluster_", row.names(module_trait_cor_p))
-	# Extra text to add to big table
+
+	write.table(trait, file=file.path(path, "sample_trait.txt"), sep="\t", quote=FALSE)
+	write.table(gene_trait_cor, file=file.path(path, "gene_trait.txt"), sep="\t", quote=FALSE)
+	write.table(gene_trait_cor_p, file=file.path(path, "gene_trait_p_val.txt"), sep="\t", quote=FALSE)
+	write.table(module_trait_cor, file=file.path(path, "module_trait.txt"), sep="\t", quote=FALSE)
+	write.table(module_trait_cor_p, file=file.path(path, "module_trait_p_val.txt"), sep="\t", quote=FALSE)
 
 	# save(list = ls(all.names = TRUE), file = "~/test.RData", envir = environment())
 	cluster_ID<- net$colors
-
-	Cluster_MM <- sapply(names(cluster_ID), function(x) gene_module_cor[x, cluster_ID[x]+1]) # Get the MM value
-	Cluster_MM_pval <- sapply(names(cluster_ID), function(x) gene_module_cor_p[x, cluster_ID[x]+1]) # Get the MM value
+	Cluster_MM <- sapply(names(cluster_ID), function(x) gene_module_cor[x, paste0("Cluster_", cluster_ID[x])]) 
+	Cluster_MM_pval <- sapply(names(cluster_ID), function(x) gene_module_cor_p[x, paste0("Cluster_", cluster_ID[x])]) # Get the MM value
 
 	# Plot cluster ID vs. ID of cluster with lowest MM p-value for each gene
 	MM_Cluster_ID <- apply(gene_module_cor_p, 1, function(x) which(x == min(x))) - 1 # Cluster ID with minimum MM p value
