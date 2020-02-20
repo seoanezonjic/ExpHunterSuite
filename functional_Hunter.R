@@ -836,24 +836,22 @@ message("RENDERING REPORT ...")
 ############################################################
 ##                    GENERATE REPORT                     ##
 ############################################################
-results_path <- paste(normalizePath(dirname(paths$root)),paths$root,sep=.Platform$file.sep)
+results_path <- normalizePath(paths$root)
 
 if(flags$Clustered){ # Clustered
-	message("Renderong specific clusters reports")
+	message("Rendering specific cluster reports")
 	invisible(lapply(cls,function(cl){
 		# Take output name
 		aux <- paste0("cl_func_",cl,".html")
-		outf_cls_i <- file.path(paths$root, aux)
+		outf_cls_i <- file.path(results_path, aux)
 		# Generate report
-		rmarkdown::render(file.path(main_path_script, 'templates', 'cl_func_report.Rmd'),output_file = outf_cls_i, intermediates_dir = paths$root)
+		rmarkdown::render(file.path(main_path_script, 'templates', 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
 	}))
 	message("\tRendering clustered report")
-	outf_cls <- paste(dirname(normalizePath(paths$root,"clusters_func_report.html")),"clusters_func_report.html",sep=.Platform$file.sep)
-	rmarkdown::render(file.path(main_path_script, 'templates', 'clusters_main_report.Rmd'),output_file = outf_cls, intermediates_dir = paths$root)
-
+	outf_cls <- file.path(results_path, "clusters_func_report.html")
+	rmarkdown::render(file.path(main_path_script, 'templates', 'clusters_main_report.Rmd'),output_file = outf_cls, intermediates_dir = results_path)
 }
-
-
 message("\tRendering regular report")
-outf <- paste(dirname(normalizePath(paths$root,"functional_report.html")),"functional_report.html",sep=.Platform$file.sep)
-rmarkdown::render(file.path(main_path_script, 'templates', 'functional_report.Rmd'), output_file = outf, intermediates_dir = paths$root)	
+outf <- file.path(results_path, "functional_report.html")
+print(outf)
+rmarkdown::render(file.path(main_path_script, 'templates', 'functional_report.Rmd'), output_file = outf, intermediates_dir = results_path)	
