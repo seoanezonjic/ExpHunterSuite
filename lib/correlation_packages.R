@@ -1,4 +1,5 @@
-analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_factors, WGCNA_memory, WGCNA_deepsplit, WGCNA_detectcutHeight, WGCNA_mergecutHeight, WGCNA_min_genes_cluster, cor_only) {
+analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_factors, WGCNA_memory, WGCNA_deepsplit, WGCNA_detectcutHeight, WGCNA_mergecutHeight, WGCNA_min_genes_cluster, cor_only, blockwiseNetworkType, blockwiseTOMType) {
+
 	data <- t(data)#[, 1:500]
 	nSamples <- nrow(data)
 
@@ -76,14 +77,16 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 
 	net <- blockwiseModules(data, power = pow,
 	maxBlockSize = WGCNA_memory, # Increase to memory limit in order to obtain more realistic results
-	TOMType = "unsigned", minModuleSize = WGCNA_min_genes_cluster,
+	minModuleSize = WGCNA_min_genes_cluster,
 	deepSplit = WGCNA_deepsplit, detectCutHeight = WGCNA_detectcutHeight,
 	reassignThreshold = 0, mergeCutHeight = WGCNA_mergecutHeight,
 	numericLabels = TRUE, pamRespectsDendro = FALSE,
 	loadTOM = loadTOM_TF,	
 	saveTOM = saveTOM_TF,
 	saveTOMFileBase = file.path(path, tom_file_base), 
-	verbose = 5)
+	verbose = 5, 
+	networkType = blockwiseNetworkType,
+	TOMType = blockwiseTOMType)
 
 	moduleColors = labels2colors(net$colors)
 

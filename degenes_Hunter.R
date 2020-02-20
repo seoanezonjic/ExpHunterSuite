@@ -91,7 +91,11 @@ option_list <- list(
   make_option("--WGCNA_mergecutHeight", type="double", default=0.25,
     help="Value to merge two similar modules: Maximum dissimilarity (i.e., 1-correlation) "),
   make_option(c("-w", "--WGCNA_all"), type="logical", default=TRUE,
-    help="Run WGCNA for treated only, control only, and both as 3 separate runs. Needed if using PCIT. If false, WGCNA runs once, on the table including treament and control")
+    help="Run WGCNA for treated only, control only, and both as 3 separate runs. Needed if using PCIT. If false, WGCNA runs once, on the table including treament and control"),
+  make_option(c("--WGCNA_blockwiseNetworkType"), type="character", default="signed",
+    help="NetworkType option to be passed to blockwiseModules function"),
+  make_option(c("--WGCNA_blockwiseTOMType"), type="character", default="signed",
+    help="TOMType option to be passed to blockwiseModules function")
  )
 opt <- parse_args(OptionParser(option_list=option_list))
 opt_orig <- opt
@@ -438,7 +442,9 @@ if(grepl("W", opt$modules)) {
                      WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
                      WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
                      WGCNA_min_genes_cluster=opt$WGCNA_min_genes_cluster,
-                     cor_only=TRUE
+                     cor_only=TRUE, 
+                     blockwiseNetworkType = opt$WGCNA_blockwiseNetworkType, 
+                     blockwiseTOMType = opt$WGCNA_blockwiseTOMType
       )
 
       WGCNA_control_path <- file.path(path, "Control_only_data")
@@ -455,7 +461,9 @@ if(grepl("W", opt$modules)) {
                      WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
                      WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
                      WGCNA_min_genes_cluster=opt$WGCNA_min_genes_cluster,                    
-                     cor_only=TRUE
+                     cor_only=TRUE, 
+                     blockwiseNetworkType = opt$WGCNA_blockwiseNetworkType, 
+                     blockwiseTOMType = opt$WGCNA_blockwiseTOMType
       )
     }
     # Need to improve the control, probably by removing PCIT
@@ -474,7 +482,9 @@ if(grepl("W", opt$modules)) {
                                    WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
                                    WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
                                    WGCNA_min_genes_cluster=opt$WGCNA_min_genes_cluster,
-                                   cor_only=FALSE
+                                   cor_only=FALSE, 
+                                   blockwiseNetworkType = opt$WGCNA_blockwiseNetworkType, 
+                                   blockwiseTOMType = opt$WGCNA_blockwiseTOMType
     )
     if(length(results_WGCNA) == 1) {
       warning("Something went wrong with WGCNA on the full dataset")
