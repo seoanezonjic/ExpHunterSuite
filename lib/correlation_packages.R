@@ -219,7 +219,12 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	module_trait_cor = cor(MEs, trait, use = "p")
 	module_trait_cor_p <- corPvalueStudent(module_trait_cor, nSamples)
 	row.names(module_trait_cor) = row.names(module_trait_cor_p) <- gsub("ME", "Cluster_", row.names(module_trait_cor_p))
-	# Extra text to add to big table
+
+	write.table(trait, file=file.path(path, "sample_trait.txt"), sep="\t", quote=FALSE)
+	write.table(gene_trait_cor, file=file.path(path, "gene_trait.txt"), sep="\t", quote=FALSE)
+	write.table(gene_trait_cor_p, file=file.path(path, "gene_trait_p_val.txt"), sep="\t", quote=FALSE)
+	write.table(module_trait_cor, file=file.path(path, "module_trait.txt"), sep="\t", quote=FALSE)
+	write.table(module_trait_cor_p, file=file.path(path, "module_trait_p_val.txt"), sep="\t", quote=FALSE)
 
 	# save(list = ls(all.names = TRUE), file = "~/test.RData", envir = environment())
 	cluster_ID<- net$colors
