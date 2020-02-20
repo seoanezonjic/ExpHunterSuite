@@ -853,5 +853,4 @@ if(flags$Clustered){ # Clustered
 }
 message("\tRendering regular report")
 outf <- file.path(results_path, "functional_report.html")
-print(outf)
-rmarkdown::render(file.path(main_path_script, 'templates', 'functional_report.Rmd'), output_file = outf, intermediates_dir = results_path)	
+rmarkdown::render(file.path(main_path_script, 'templates', 'functional_report.Rmd'), output_file = outf, intermediates_dir = results_path)
