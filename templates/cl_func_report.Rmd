@@ -97,7 +97,7 @@ set_default_width <- function(enrich_obj, default = 12, showCategory = 30, thres
 
 
 
-# **DEgenes Hunter - SPECIFIC CLUSTER - Functional analysis report** 
+# **DEgenes Hunter - CLUSTER `r cl` - Functional analysis report** 
 
 
 ## **Used data in this analysis**
