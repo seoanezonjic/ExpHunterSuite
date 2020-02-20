@@ -264,26 +264,23 @@ if(flags$Clustered){
 	# norm_counts_gnorm <- cbind(norm_counts_gnorm,list(Type = rep("Regular",nrow(norm_counts_gnorm))))
 
 	####
-	# LOAD WGCNA clusters representative profiles
+	# LOAD WGCNA clusters representative profiles with samples
 	cl_eigvalues <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_WGCNA", "eigen_values_per_samples.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
 	cl_eigvalues <- as.data.frame(as.table(cl_eigvalues),stringsAsFactors = FALSE)
 	colnames(cl_eigvalues) <- c("Sample","Cluster_ID","Count") 
 	cl_eigvalues_gnorm <- cl_eigvalues
 	cl_eigvalues_gnorm$Count <- (cl_eigvalues_gnorm$Count + 1) / 2 
-	# Substitute clusters names
-	# colnames(cl_eigvalues) <- gsub("ME","",colnames(cl_eigvalues))
-	# Normalize
-	# cl_eigvalues_gnorm <- cl_eigvalues
-	# invisible(lapply(seq_along(cl_eigvalues[1,]),function(j){
-	# 	m <- min(cl_eigvalues[,j])
-	# 	M <- max(cl_eigvalues[,j])
-	# 	dff <- M - m
-	# 	cl_eigvalues_gnorm[,j] <<- (cl_eigvalues[,j] - m) / dff
-	# }))
-	# cl_eigvalues_gnorm <- as.data.frame(as.table(cl_eigvalues_gnorm))
-	# colnames(cl_eigvalues_gnorm) <- c("Sample","Gene","Count") # In this case, GENE == CLUSTER_ID; used gene name to avoid concat in future
-	# cl_eigvalues_gnorm <- cl_eigvalues_gnorm[,c("Gene","Sample","Count")]
-	# cl_eigvalues_gnorm <- cbind(cl_eigvalues_gnorm,list(Type = rep("Cluster",nrow(cl_eigvalues_gnorm))))	
+	
+	####
+	# LOAD WGCNA - PVal (Cluster - Trait)
+	wgcna_pval_cl_trait <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_WGCNA", "module_trait_p_val.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
+	wgcna_corr_cl_trait <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_WGCNA", "module_trait.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
+	####
+	# LOAD WGCNA - Correlation (Sample - Trait)
+	wgcna_count_sample_trait <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_WGCNA", "sample_trait.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
+	wgcna_count_sample_trait_gnorm <- as.data.frame(do.call(cbind,lapply(seq(ncol(wgcna_count_sample_trait)),function(j){
+		(wgcna_count_sample_trait[,j] - min(wgcna_count_sample_trait[,j],na.rm = TRUE)) / (max(wgcna_count_sample_trait[,j],na.rm = TRUE) - min(wgcna_count_sample_trait[,j],na.rm = TRUE))
+	})))
 }
 
 

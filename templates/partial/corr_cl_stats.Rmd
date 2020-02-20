@@ -33,6 +33,49 @@ pp <- ggplot(mapping = aes(x = Sample)) +
 plot(pp)
 ```
 
+```{r "{{cl}}_wgcna_corr", echo = FALSE, results = 'asis'}
+# Take pval of Cluster-Treats
+clpvals <- wgcna_pval_cl_trait[{{cl}},]
+clcorrs <- wgcna_corr_cl_trait[{{cl}},]
+# Filter
+clpvals <- clpvals[clpvals <= 0.01]
+if(length(clpvals) > 0){
+	cat("After apply a threshold of 0.01 over cluster correlation with Traits following relationships have been signifcant observed:")
+	clcorrs <- clcorrs[names(clpvals)]
+	# Transform
+	clpvals <- as.data.frame(as.table(clpvals))
+	colnames(clpvals) <- c("Trait","Cl_Trait_Pval")
+	clcorrs <- as.data.frame(as.table(clcorrs))
+	colnames(clcorrs) <- c("Trait","Cl_Trait_Corr")
+	# Merge
+	cltraits <- merge(x = clcorrs, y = clpvals, by = "Trait", all = TRUE)
+	# Plot Cluster correlations
+	pp <- ggplot(cltraits,aes(x = Trait, y = Cl_Trait_Corr, color = Cl_Trait_Pval)) + 
+		  geom_point() +
+		  geom_hline(yintercept = 0) + 
+		  ylim(c(-1,1))
+	plot(pp)
+
+	# Prepare Sample-Trait correlations
+	smtraits <- as.matrix(wgcna_count_sample_trait_gnorm[,cltraits$Trait])
+	rownames(smtraits) <- rownames(wgcna_count_sample_trait_gnorm)
+	colnames(smtraits) <- cltraits$Trait
+	smtraits <- as.data.frame(as.table(smtraits))
+	colnames(smtraits) <- c("Sample","Trait","Correlation")
+	colnames(cl_profile) <- colnames(smtraits)
+	cl_profile$Trait <- rep(paste0("Cluster_",{{cl}}),nrow(cl_profile))
+	smtraits <- rbind(smtraits,cl_profile)
+
+	pp <- ggplot(smtraits, aes(x = Sample, y = Correlation, group = Trait, color = Trait)) +
+		  geom_point(na.rm = TRUE) +
+		  geom_line(na.rm = TRUE) +
+          theme(axis.text.x = element_text(angle = 30, hjust = 1)) + 
+		  ylim(c(-1,1))
+	plot(pp)
+}else{
+	cat("After apply a threshold of 0.001 over cluster correlation with Traits **any correlation have been tagged as significant**")
+}
+```
 
 
 
