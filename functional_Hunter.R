@@ -589,7 +589,7 @@ if(flags$Clustered){
 	cls <- unique(DEG_annot_table$Cluster_ID)
 	# Check
 	if(any(c(0,"grey") %in% cls)){
-		cls <- cls[-(cls %in% c(0,"grey"))]
+		cls <- cls[!cls %in% c(0,"grey")]
 	}else{
 		warning("Cluster Zero/Grey not found")
 	}
