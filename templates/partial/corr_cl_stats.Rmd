@@ -27,7 +27,7 @@ cl_profile <- cl_eigvalues_gnorm[grepl(paste(c("ME",{{cl}},"$"),collapse=""),cl_
 # Plot
 pp <- ggplot(mapping = aes(x = Sample)) + 
 	  geom_line(data = norm_counts_gnorm[tgt_indx,], alpha = 0.05, mapping = aes(y = Count, group = Gene)) +
-	  geom_line(data = cl_profile, mapping = aes(y = Count, group = Cluster_ID), color = "blue") +
+	  geom_line(data = cl_profile, mapping = aes(y = Count, group = Cluster_ID), color = "blue", linetype = "dashed", size = 0.5) +
 	  scale_y_continuous(sec.axis = sec_axis(~.*2-1, name = "Cluster-Sample correlation")) +
       theme(axis.text.x = element_text(angle = 30, hjust = 1))
 plot(pp)
@@ -53,6 +53,7 @@ if(length(clpvals) > 0){
 	pp <- ggplot(cltraits,aes(x = Trait, y = Cl_Trait_Corr, color = Cl_Trait_Pval)) + 
 		  geom_point() +
 		  geom_hline(yintercept = 0) + 
+		  theme(axis.text.x = element_text(angle = 30, hjust = 1)) + 
 		  ylim(c(-1,1))
 	plot(pp)
 
@@ -64,13 +65,14 @@ if(length(clpvals) > 0){
 	colnames(smtraits) <- c("Sample","Trait","Correlation")
 	colnames(cl_profile) <- colnames(smtraits)
 	cl_profile$Trait <- rep(paste0("Cluster_",{{cl}}),nrow(cl_profile))
-	smtraits <- rbind(smtraits,cl_profile)
+	# smtraits <- rbind(smtraits,cl_profile)
 
 	pp <- ggplot(smtraits, aes(x = Sample, y = Correlation, group = Trait, color = Trait)) +
 		  geom_point(na.rm = TRUE) +
 		  geom_line(na.rm = TRUE) +
-          theme(axis.text.x = element_text(angle = 30, hjust = 1)) + 
-		  ylim(c(-1,1))
+		  geom_line(data = cl_profile, linetype = "dashed", size = 0.5, color = "blue") +
+		  # ylim(c(-1,1)) +
+          theme(axis.text.x = element_text(angle = 30, hjust = 1))
 	plot(pp)
 }else{
 	cat("After apply a threshold of 0.001 over cluster correlation with Traits **any correlation have been tagged as significant**")
