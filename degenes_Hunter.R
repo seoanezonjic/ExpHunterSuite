@@ -54,7 +54,7 @@ option_list <- list(
     help="Control columns. Please indicate column names of control samples separated by commas"),
   make_option(c("-T", "--Treatment_columns"), type="character", default=NULL,
     help="Treatment columns. Please indicate column names of treatment samples separated by commas"),  
-  make_option(c("-r", "--reads"), type="integer", default=2,
+  make_option(c("-r", "--reads"), type="numeric", default=2,
     help="Used in filtering. Reads (counts per million mapped reads) per gene per sample must be higher than this value to count towards the --minlibraries value. Default=%default.
     0 = No filtering"),
   make_option(c("-l", "--minlibraries"), type="integer", default=2,
