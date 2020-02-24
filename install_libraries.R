@@ -4,26 +4,16 @@
 ####################### LIBRARY INSTALLING SCRIPT for DEgenes Hunter #################################
 ######################################################################################################
 
-############## Installing latest version of Bioconductor #####################
-install.packages("BiocManager")
-BiocManager::install(version = "3.10")
-library('BiocManager')
 
-####################  LIBRARIES FOR DIFFERENTIAL EXPRESSION ANALYSIS SCRIPT (degenes_Hunter.R) ############
-print("Installing libraries for differential expression analysis script")
+print("Installing libraries from CRAN")
+packages_list <-c("FSA","ggplot2","VennDiagram","gplots","optparse","stringr","plyr","reshape2","PerformanceAnalytics", "BiocManager", "PCIT")
+installed <- library()$results[,1]
+packages_list <- setdiff(packages_list, installed)
+install.packages(packages_list, repos='https://cloud.r-project.org')
 
-## PACKAGES IN CRAN
-install.packages(c("FSA","ggplot2","VennDiagram","gplots","optparse","stringr","plyr","reshape2","PerformanceAnalytics"))
+print("Installing libraries from Bioconductor")
+packages_list_biocond <- c("limma", "edgeR", "DESeq2", "NOISeq", "biomaRt", "topGO", "KEGGREST", "clusterProfiler", "Rgraphviz", "org.Hs.eg.db")
+BiocManager::install()
+packages_list_biocond <- setdiff(packages_list_biocond, installed)
+BiocManager::install(packages_list_biocond)
 
-## PACKAGES IN BIOCONDUCTOR
-BiocManager::install(c("limma", "edgeR", "DESeq2", "NOISeq"))
-
-####################  LIBRARIES required specifically by the FUNCTIONAL ANALYSIS SCRIPT (functional_Hunter.R) ############
-print("Installing additional libraries for functional analysis script")
-
-## PACKAGES IN BIOCONDUCTOR
-BiocManager::install(c("biomaRt", "topGO", "KEGGREST", "clusterProfiler", "Rgraphviz"))
-
-################## Annotation Databases for functional analysis
-## PACKAGES IN BIOCONDUCTOR
-BiocManager::install(c("org.Hs.eg.db")
