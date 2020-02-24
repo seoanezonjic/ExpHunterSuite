@@ -187,16 +187,14 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	####################################################################
 	# Produce dendogram and heatmap
 	####################################################################
-	ME_color_traits <- orderMEs(cbind(MEs_colors, trait))
+	ME_numeric_traits <- orderMEs(cbind(MEs, trait))
 
 	pdf(file.path(path, 'eigengenes_heatmap.pdf'))
 		dev.control(displaylist="enable")
-		plotEigengeneNetworks(ME_color_traits, "Eigengene adjacency heatmap", marHeatmap = c(12,12,2,2),
-                      plotDendrograms = FALSE, xLabelsAngle = 30)
+		plotEigengeneNetworks(ME_numeric_traits, "Eigengene adjacency heatmap", marHeatmap = c(12,12,2,2),
+                      plotDendrograms = FALSE, xLabelsAngle = 30, plotAdjacency=FALSE)
 		trait_and_module_heatmap <- recordPlot()
 	dev.off()
-
-	ME_numeric_traits <- orderMEs(cbind(MEs, trait))
 
 	pdf(file.path(path, 'eigengenes_dendogram.pdf'))
 		dev.control(displaylist="enable")
