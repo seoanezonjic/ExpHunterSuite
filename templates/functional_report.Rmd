@@ -210,7 +210,40 @@ knitr::kable(cl_table)
 # knitr::kable(table(DEG_annot_table$genes_tag))
 ```
 
+```{r table_top_genes, echo = FALSE, eval = exists("DEG_annot_table_Symbol"), results = 'asis'}
 
+# Prepare data
+targetcols <- c("rif1","rif2","diffK","diff_cn")
+targetindexes <- lapply(targetcols,function(tcol){
+	# Sort column
+	csorted <- sort(DEG_annot_table_Symbol[,tcol], decreasing = TRUE)
+	# Take tops
+	top15 <- head(csorted,15)
+	bot15 <- tail(csorted,15)
+	# Find
+	topindx <- which(DEG_annot_table_Symbol[,tcol] %in% top15)
+	botindx <- which(DEG_annot_table_Symbol[,tcol] %in% bot15)
+	# Retrun
+	return(list(top = topindx, bot = botindx))
+})
+topindx <- unique(unlist(lapply(seq_along(targetindexes),function(i){targetindexes[[i]]$top})))
+botindx <- unique(unlist(lapply(seq_along(targetindexes),function(i){targetindexes[[i]]$bot})))
+# Take targets
+topgenes <- DEG_annot_table_Symbol[topindx,c("Symbol",targetcols,colnames(DEG_annot_table_Symbol)[1])]
+botgenes <- DEG_annot_table_Symbol[botindx,c("Symbol",targetcols,colnames(DEG_annot_table_Symbol)[1])]
+# Sort
+
+# Message
+cat(paste(c("Table of signifcant genes taking into account variables showd into table. 15Top of best (",nrow(topgenes)," items) and worst (",nrow(botgenes)," items) are being shown in two different tables"), collapse = ""))
+```
+```{r render_topgenes, echo = FALSE, eval = exists("DEG_annot_table_Symbol")}
+# Render
+knitr::kable(topgenes)
+```
+```{r render_botgenes, echo = FALSE, eval = exists("DEG_annot_table_Symbol")}
+# Render
+knitr::kable(botgenes)
+```
 
 
 
