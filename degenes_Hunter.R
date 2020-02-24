@@ -99,6 +99,8 @@ option_list <- list(
  )
 opt <- parse_args(OptionParser(option_list=option_list))
 opt_orig <- opt
+write.table(cbind(opt), file=file.path(opt$output_files, "opt_input_values.txt"), sep="\t", col.names =FALSE, quote = FALSE)
+
 
 ############################################################
 ##                       CHECK INPUTS                     ##
