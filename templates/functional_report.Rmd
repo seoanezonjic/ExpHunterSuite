@@ -35,6 +35,8 @@ require(ggplot2)
 require(knitr)
 require(clusterProfiler)
 require(enrichplot)
+require(DT)
+
 
 # Prepare recursive text
 chunks <- function(code, options = ""){paste(paste("```{r ",options,"}",sep = ""),code,"```",sep="\n")}
@@ -234,15 +236,21 @@ botgenes <- DEG_annot_table_Symbol[botindx,c("Symbol",targetcols,colnames(DEG_an
 # Sort
 
 # Message
-cat(paste(c("Table of signifcant genes taking into account variables showd into table. 15Top of best (",nrow(topgenes)," items) and worst (",nrow(botgenes)," items) are being shown in two different tables"), collapse = ""))
+cat("## **Top genes**\n")
+cat(paste(c("Table of signifcant genes. Variables taken into account are being shown into table (except gene symbols/ID). 15Top of best (",nrow(topgenes)," items) and worst (",nrow(botgenes)," items) are being shown in two different tables\n"), collapse = ""))
+
 ```
-```{r render_topgenes, echo = FALSE, eval = exists("DEG_annot_table_Symbol")}
+```{r render_topgenes, echo = FALSE, eval = exists("DEG_annot_table_Symbol"), results = 'asis'}
+cat("\n### **Top positive**\n")
 # Render
-knitr::kable(topgenes)
+datatable(topgenes)
+# knitr::kable(topgenes)
 ```
-```{r render_botgenes, echo = FALSE, eval = exists("DEG_annot_table_Symbol")}
+```{r render_botgenes, echo = FALSE, eval = exists("DEG_annot_table_Symbol"), results = 'asis'}
+cat("\n### **Top negative**\n")
 # Render
-knitr::kable(botgenes)
+datatable(botgenes)
+# knitr::kable(botgenes)
 ```
 
 
