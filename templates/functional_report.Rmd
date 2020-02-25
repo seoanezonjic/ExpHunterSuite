@@ -212,7 +212,7 @@ knitr::kable(cl_table)
 # knitr::kable(table(DEG_annot_table$genes_tag))
 ```
 
-```{r table_top_genes, echo = FALSE, eval = exists("DEG_annot_table_Symbol"), results = 'asis'}
+```{r table_top_genes, echo = FALSE, eval = flags$Clustered, results = 'asis'}
 
 # Prepare regular data
 targetcols <- c("rif1","rif2","diffK","diff_cn")
@@ -280,7 +280,7 @@ cat("## **Top genes**\n")
 cat(paste(c("Table of signifcant genes. Variables taken into account are being shown into table (except gene symbols/ID). 15Top of best (",nrow(topgenes)," items) and worst (",nrow(botgenes)," items) are being shown in two different tables\n"), collapse = ""))
 
 ```
-```{r render_topgenes, echo = FALSE, eval = exists("DEG_annot_table_Symbol"), results = 'asis'}
+```{r render_topgenes, echo = FALSE, eval = flags$Clustered, results = 'asis'}
 cat("\n### **Top positive**\n")
 # Render
 datatable(topgenes, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
@@ -290,7 +290,7 @@ datatable(topgenes, filter = 'top', rownames = FALSE, extensions = c('Buttons','
                         buttons = c('copy', 'csv', 'excel')
                     ))
 ```
-```{r render_botgenes, echo = FALSE, eval = exists("DEG_annot_table_Symbol"), results = 'asis'}
+```{r render_botgenes, echo = FALSE, eval = flags$Clustered, results = 'asis'}
 cat("\n### **Top negative**\n")
 # Render
 datatable(botgenes, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
