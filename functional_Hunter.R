@@ -283,7 +283,7 @@ if(flags$Clustered){
 	})))
 	####
 	# LOAD DEGenesHunter expression execution config
-	DEGenesHunter_expression_opt <- read.table(file.path(opt$input_hunter_folder, "Common_results", "opt_input_values.txt"), header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+	DEGenesHunter_expression_opt <- read.table(file.path(opt$input_hunter_folder, "opt_input_values.txt"), header = FALSE, stringsAsFactors = FALSE, sep = "\t")
 	degh_exp_threshold <- DEGenesHunter_expression_opt[which(DEGenesHunter_expression_opt[,1] == "p_val_cutoff"),2]
 }
 
