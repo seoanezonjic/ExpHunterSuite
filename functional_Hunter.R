@@ -113,6 +113,12 @@ if(length(aux) > 0){
 	DEG_annot_table <- DEG_annot_table[-aux,]
 }
 
+####
+# LOAD DEGenesHunter expression execution config
+DEGenesHunter_expression_opt <- read.table(file.path(opt$input_hunter_folder, "opt_input_values.txt"), header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+degh_exp_threshold <- as.numeric(DEGenesHunter_expression_opt[which(DEGenesHunter_expression_opt[,1] == "p_val_cutoff"),2])
+
+
 experiments <- read.table(file.path(opt$input_hunter_folder, "control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
 exp_names <- paste("[Control]",experiments[which(experiments[,1] == "C"),2],sep=" ")
 exp_names <- c(exp_names,paste("[Treatment]",experiments[which(experiments[,1] == "T"),2],sep=" "))
@@ -281,10 +287,6 @@ if(flags$Clustered){
 	wgcna_count_sample_trait_gnorm <- as.data.frame(do.call(cbind,lapply(seq(ncol(wgcna_count_sample_trait)),function(j){
 		(wgcna_count_sample_trait[,j] - min(wgcna_count_sample_trait[,j],na.rm = TRUE)) / (max(wgcna_count_sample_trait[,j],na.rm = TRUE) - min(wgcna_count_sample_trait[,j],na.rm = TRUE))
 	})))
-	####
-	# LOAD DEGenesHunter expression execution config
-	DEGenesHunter_expression_opt <- read.table(file.path(opt$input_hunter_folder, "opt_input_values.txt"), header = FALSE, stringsAsFactors = FALSE, sep = "\t")
-	degh_exp_threshold <- DEGenesHunter_expression_opt[which(DEGenesHunter_expression_opt[,1] == "p_val_cutoff"),2]
 }
 
 
