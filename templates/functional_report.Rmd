@@ -243,14 +243,21 @@ cat(paste(c("Table of signifcant genes. Variables taken into account are being s
 ```{r render_topgenes, echo = FALSE, eval = exists("DEG_annot_table_Symbol"), results = 'asis'}
 cat("\n### **Top positive**\n")
 # Render
-datatable(topgenes)
-# knitr::kable(topgenes)
+datatable(topgenes, filter = 'top', rownames = FALSE, extensions = 'Buttons',
+                    options = list(
+                    	dom = 'lftBip',
+                        buttons = c('copy', 'csv', 'excel')
+                    ))
 ```
 ```{r render_botgenes, echo = FALSE, eval = exists("DEG_annot_table_Symbol"), results = 'asis'}
 cat("\n### **Top negative**\n")
 # Render
-datatable(botgenes)
-# knitr::kable(botgenes)
+datatable(botgenes, filter = 'top', rownames = FALSE, extensions = 'Buttons',
+                    options = list(
+                    	dom = 'lftBip',
+                        buttons = c('copy', 'csv', 'excel')
+                    ))
+
 ```
 
 
