@@ -166,6 +166,18 @@ set_standard_size <- function(pp){
         theme(axis.text.y = element_text(size = 10, face = 'bold'), axis.title = element_blank()) 
 	return(pp)
 }
+
+
+plot_enrResult_DT <- function(ER){
+	toshow <- fortify(ER)[,!colnames(ER@compareClusterResult) %in% c("pvalue","qvalue")]
+	toshow$Cluster <- gsub("[\n,\t,\r]{0,1}\\(.*\\)","",toshow$Cluster)
+	datatable(toshow, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+	                    options = list(
+	                    	colReorder = TRUE,
+	                    	dom = 'lftBip',
+	                        buttons = c('copy', 'csv', 'excel')
+	))
+}
 #############################################################################
 ############### END
 #############################################################################
@@ -221,8 +233,8 @@ invisible(lapply(seq(nrow(cls_counts)),function(i){cls_genes_summary[which(rowna
 # Obtain info for executed modules
 invisible(lapply(names(executed)[which(unlist(executed))],function(mod){
 	invisible(lapply(rownames(cls_genes_summary),function(cl){
-		if(exists("enrichments_ORA")) cls_genes_summary[cl,paste(mod,"(ORA)")] <<- length(which(enrichments_ORA[[mod]]@compareClusterResult$Cluster == cl))
-		if(exists("enrichments_GSEA")) cls_genes_summary[cl,paste(mod,"(GSEA)")] <<- length(which(enrichments_GSEA[[mod]]@compareClusterResult$Cluster == cl))
+		if(exists("enrichments_ORA")) cls_genes_summary[cl,paste(mod,"(ORA)")] <<- length(which(grepl(paste0("^",cl),fortify(enrichments_ORA[[mod]])$Cluster)))
+		if(exists("enrichments_GSEA")) cls_genes_summary[cl,paste(mod,"(GSEA)")] <<- length(which(grepl(paste0("^",cl),fortify(enrichments_GSEA[[mod]])$Cluster)))
 	}))
 }))
 # Render
@@ -237,6 +249,16 @@ datatable(cls_genes_summary, filter = 'top', rownames = FALSE, extensions = c('B
                     	dom = 'lftBip',
                         buttons = c('copy', 'csv', 'excel')
 ))
+# Render Gene-Cluster-Tag table
+to_show <- DEG_annot_table_Symbol[,c("Cluster_ID","Symbol","genes_tag",colnames(DEG_annot_table_Symbol)[1])]
+to_show$Cluster_ID <- as.character(to_show$Cluster_ID)
+datatable(to_show, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+                    options = list(
+                    	colReorder = TRUE,
+                    	dom = 'lftBip',
+                        buttons = c('copy', 'csv', 'excel')
+))
+
 ```
 
 And executed modules have been:
@@ -251,6 +273,9 @@ cat("## **KEGG analysis**\n")
 
 cat("### **Over Representation Analysis**\n",
 	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+
+plot_enrResult_DT(enrichments_ORA$KEGG)
+
 
 cat(
 	"**Dotplot**\n\n", 
@@ -299,6 +324,9 @@ cat("## **Reactome analysis**\n")
 cat("### **Over Representation Analysis**\n",
 	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
 
+plot_enrResult_DT(enrichments_ORA$REACT)
+
+
 cat(
 	"**Dotplot**\n\n", 
 	"WRITE THIS TEXT >>>>.\n\n"
@@ -342,6 +370,9 @@ cat("## **Gene Ontology (GO) analysis**\n")
 cat("### **[BP] Over Representation Analysis**\n",
 	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
 
+plot_enrResult_DT(enrichments_ORA$GO_BP)
+
+
 cat(
 	"**Dotplot**\n\n", 
 	"WRITE THIS TEXT >>>>.\n\n"
@@ -379,6 +410,9 @@ plot_in_div(pp, calc_height(enrichments_ORA$GO_BP),calc_width(enrichments_ORA$GO
 cat("### **[MF] Over Representation Analysis**\n",
 	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
 
+plot_enrResult_DT(enrichments_ORA$GO_MF)
+
+
 cat(
 	"**Dotplot**\n\n", 
 	"WRITE THIS TEXT >>>>.\n\n"
@@ -409,6 +443,9 @@ plot_in_div(pp, calc_height(enrichments_ORA$GO_MF),calc_width(enrichments_ORA$GO
 
 cat("### **[CC] Over Representation Analysis**\n",
 	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+
+plot_enrResult_DT(enrichments_ORA$GO_CC)
+
 
 cat(
 	"**Dotplot**\n\n", 
@@ -463,6 +500,9 @@ invisible(lapply(seq_along(custom_cls_ORA),function(i){
 				cname <- names(custom_cls_ORA)[{{i}}]
 				cat('### **{{cname}} -  Over Representation Analysis**\n',
 				'The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n')
+				
+				plot_enrResult_DT(res)
+
 				cat(
 					'**Dotplot**\n\n', 
 					'WRITE THIS TEXT >>>>.\n\n'
