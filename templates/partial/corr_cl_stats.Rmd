@@ -8,6 +8,10 @@
 # => cl :: cluster ID to be used
 # => norm_counts :: a data frame with columns Gene (character), Sample (character) and Count (numeric) 
 # => norm_counts_gnorm :: a data frame with columns Gene (character), Sample (character) and Count (numeric) 
+# => cl_eigvalues_gnorm ::
+# => wgcna_pval_cl_trait ::
+# => wgcna_corr_cl_trait ::
+# => wgcna_count_sample_trait_gnorm ::
 #
 # This templates include the following chunk names:
 # => <cl>_corr_stats_config
