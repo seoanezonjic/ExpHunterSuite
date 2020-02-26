@@ -39,8 +39,8 @@ plot(pp)
 
 ```{r "{{cl}}_wgcna_corr", echo = FALSE, results = 'asis'}
 # Take pval of Cluster-Treats
-clpvals <- wgcna_pval_cl_trait[{{cl}},]
-clcorrs <- wgcna_corr_cl_trait[{{cl}},]
+clpvals <- wgcna_pval_cl_trait[paste0("Cluster_",{{cl}}),]
+clcorrs <- wgcna_corr_cl_trait[paste0("Cluster_",{{cl}}),]
 # Filter
 clpvals <- clpvals[clpvals <= 0.01]
 if(length(clpvals) > 0){
@@ -79,7 +79,7 @@ if(length(clpvals) > 0){
           theme(axis.text.x = element_text(angle = 30, hjust = 1))
 	plot(pp)
 }else{
-	cat("After apply a threshold of 0.001 over cluster correlation with Traits **any correlation have been tagged as significant**")
+	cat("After apply a threshold of 0.01 over cluster correlation with Traits **any correlation have been tagged as significant**")
 }
 ```
 
