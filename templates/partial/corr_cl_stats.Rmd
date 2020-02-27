@@ -65,7 +65,7 @@ plot(pp)
 ```{r "{{cl}}_wgcna_corr_pl2", echo = FALSE, results = 'asis', eval = length(clpvals) > 0}
 cat("\nTEXTHERE:\n")
 # Prepare Sample-Trait correlations
-smtraits <- as.matrix(wgcna_count_sample_trait_gnorm[,cltraits$Trait])
+smtraits <- as.matrix(wgcna_count_sample_trait_gnorm[,as.character(cltraits$Trait)])
 rownames(smtraits) <- rownames(wgcna_count_sample_trait_gnorm)
 colnames(smtraits) <- cltraits$Trait
 smtraits <- as.data.frame(as.table(smtraits))
