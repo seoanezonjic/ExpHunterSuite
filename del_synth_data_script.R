@@ -15,92 +15,54 @@ suppressPackageStartupMessages(library(TCC))
 #------------------------------------------------
 
 option_list <- list(
-  make_option(c("-R", "--replicates"), type="integer", default=3,
-    help="Replicates number of treatment group"),
-  make_option(c("-n", "--number_DEGs"), type="integer", default=20000,
-    help="Number of DEGs. Default=%default"),
-  make_option(c("-f", "--fraction_DEGs"), type="double", default=0.2,
-    help="Number of DEGs. Default=%default"),
-  make_option(c("-c", "--FC_groupC"), type="integer", default=3,
-    help="Fold Change value groupC. Default=%default"),
-  make_option(c("-t", "--FC_groupT"), type="integer", default=3,
-    help="Fold Change value groupT. Default=%default"),
-  make_option(c("-a", "--DEG_assign_groupC"), type="double", default=0.5, 
-    help="q value for NOISeq package. Default=%default"),
-  make_option(c("-F", "--Filt_nonDEGs"), action="store_true",type="logical", default=FALSE,
-    help="Flag to execute special non-DEG filtering"), 
-  make_option(c("-e", "--name_exp"), type="character", default="experiment1",
-    help="Type the name of your experiment."),
+  make_option(c("-r", "--replicates"), type="integer", default=3,
+    help="Number of replicates for control/treatment group. Default : %default"),
+  make_option(c("-n", "--ngenes"), type="integer", default=20000,
+    help="Number of genes. Default : %default"),
+  make_option(c("-d", "--DEGs_proportion"), type="double", default=0.2,
+    help="Proportion of differentially expressed genes (DEGs). Default : %default"),
+  make_option(c("-c", "--FC_control"), type="integer", default=1,
+    help="Fold Change value for control group. Note: values different of 1 provokes that this group is not a control. Default : %default"),
+  make_option(c("-t", "--FC_treat"), type="integer", default=3,
+    help="Fold Change value for treatment group. Default : %default"),
+  make_option(c("-T", "--P_treat"), type="double", default=1,
+    help="Proportion of DEGs that will be up-regulated in treatment group. Rest will be up-regulated at control, making control not to be a real control if !=1. Default : %default"),
+#   make_option(c("-F", "--Filt_nonDEGs"), action="store_true",type="logical", default=FALSE,
+#     help="Flag to execute special non-DEG filtering"), 
+#   make_option(c("-e", "--name_exp"), type="character", default="experiment1",
+#     help="Type the name of your experiment."),
   make_option(c("-o", "--outfile"), type="character",
     help="Output file basenames. A *_scount_ttc and *_predv files will be generated")
 )
+
+
+
 opt <- parse_args(OptionParser(option_list=option_list))
-
-
 
 ###### CREATING SIMULATION READ COUNTS ######################
 
-# Simulate
-tcc_object <- simulateReadCounts(Ngene      = opt$number_DEGs, 
-                                 PDEG       = opt$fraction_DEGs,
-                                 DEG.assign = c(opt$DEG_assign_groupC, 1-opt$DEG_assign_groupC),
-                                 DEG.foldchange = c(opt$FC_groupC, opt$FC_groupT),
+########### Verbose point
+tcc_object <- simulateReadCounts(Ngene      = opt$ngenes, 
+                                 PDEG       = opt$DEGs_proportion,
+                                 DEG.assign = c(1-opt$P_treat, opt$P_treat),
+                                 DEG.foldchange = c(opt$FC_control, opt$FC_treat),
                                  replicates = rep(opt$replicates, 2))
 
 # Obtain necessary objects
-tcc_counts <- tcc_object$count
-names(tcc_object$simulation$trueDEG) <- rownames(tcc_counts)
+names(tcc_object$simulation$trueDEG) <- rownames(tcc_object$count)
 prediction_vector <- tcc_object$simulation$trueDEG
 
-
-# Special case
-if(opt$Filt_nonDEGs){ 
-  # print("iniciando filtrado non-degs")
-  message("Stating non-degs filtering")
-  tcc_sim <- tcc_object$simulation$trueDEG
-  truedegs_vector <- tcc_sim>=1
-  degnames <- tcc_sim[c(truedegs_vector)]
-  degs <- subset(tcc_counts, rownames(tcc_counts) %in% names(degnames))
-  number_degs <- nrow(degs)
-
-  notdegs_vector <- tcc_sim==0
-  notdegnames <- tcc_sim[c(notdegs_vector)]
-  notdegs_df <- subset(tcc_counts, rownames(tcc_counts) %in% names(notdegnames))
-  notdegs_sample <- notdegs_df[sample(nrow(notdegs_df), number_degs), ]
-
-  tcc_counts <- rbind(degs, notdegs_sample)
-  #prediction_vector <- prediction_vector[nrow(tcc_final_counts)]
-  # rows_counts <- rownames(tcc_counts)
-}
-
-# Set row counts
-# rows_counts <- rownames(tcc_counts)
-
 # Prepare final prediction vector format
-prediction_vector <- replace(prediction_vector, prediction_vector ==1, "DEG")
-prediction_vector <- replace(prediction_vector, prediction_vector ==2, "DEG")
-prediction_vector <- replace(prediction_vector, prediction_vector ==0, "NOTDEG")
-# prediction_vector <- prediction_vector[intersect(names(prediction_vector), rows_counts)] 
-prediction_vector <- prediction_vector[intersect(names(prediction_vector), rownames(tcc_counts))] 
-
-
-# (FMJ) WTF is that shit Isabel?
+prediction_vector <- replace(prediction_vector, prediction_vector >= 1, "DEG")
+prediction_vector <- replace(prediction_vector, prediction_vector == 0, "NOTDEG")
+prediction_vector <- prediction_vector[intersect(names(prediction_vector), rownames(tcc_object$count))] 
 prediction_vector <- as.data.frame(prediction_vector)
-colnames(prediction_vector) <- "prediction"
-
-rownames_vector <- rownames(prediction_vector)
-rownames(prediction_vector) <- NULL
-prediction_table <- data.frame(Row.names=rownames_vector, prediction=prediction_vector[,"prediction"])
-
-
-
-# Store final prediction table 
-
-
+prediction_vector <- cbind(rownames(prediction_vector),prediction_vector)
+colnames(prediction_vector) <- c("Gene","Prediction")
 
 # Write output
-write.table(as.data.frame(tcc_counts), file=paste(opt$outfile,"_scount_ttc",sep=""), quote=F, col.names=NA, sep="\t")
-write.table(prediction_table, file=paste(opt$outfile,"_predv",sep=""), quote=F, col.names=T, sep="\t", row.names=F)
+write.table(tcc_object$count, file=paste0(opt$outfile,"_scount_ttc"), quote = FALSE, col.names = TRUE, sep = "\t")
+write.table(prediction_vector, file=paste0(opt$outfile,"_predv"), quote = FALSE, col.names = TRUE, sep = "\t", row.names = FALSE)
 
 
 
