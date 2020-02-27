@@ -74,7 +74,9 @@ option_list <- list(
     help="Sample descriptions: one column must be named treat and contain values of Treat or Ctrl. This file will take precedent over the -T and -C sample flags."),
   make_option(c("-v", "--model_variables"), type="character", default="",
     help="Variables to include in the model. Must be comma separated and each variable must be a column in the target_file, or the model can be specified precisely if the custom_model flag is TRUE"),
-  make_option(c("-M", "--custom_model"), type="logical", default="FALSE",
+  make_option(c("-n", "--numerics_as_factors"), type="logical", default=TRUE,
+    help="If TRUE, numeric variables in the target file specified in the DEG model be treated as distinct factors, i.e. categories. If FALSE, they will be considered as numeric and their values will be taken into account in the DEG model."),
+  make_option(c("-M", "--custom_model"), type="logical", default=FALSE,
     help="If true, text in the model_variables variable will be passed directly to the model construction"),
   make_option(c("-S", "--string_factors"), type="character", default="",
     help="Columns in the target file to be used as categorical factors for the correlation analysis. If more than one to be used, should be comma separated"),
@@ -99,8 +101,6 @@ option_list <- list(
  )
 opt <- parse_args(OptionParser(option_list=option_list))
 opt_orig <- opt
-write.table(cbind(opt), file=file.path(opt$output_files, "opt_input_values.txt"), sep="\t", col.names =FALSE, quote = FALSE)
-
 
 ############################################################
 ##                       CHECK INPUTS                     ##
@@ -162,8 +162,9 @@ if((opt$string_factors != "" | opt$numeric_factors != "") & (!grepl("W", opt$mod
 ##                         I/O DATA                       ##
 ############################################################
 
-# Create output folder 
+# Create output folder & write original opt
 dir.create(opt$output_files)
+write.table(cbind(opt_orig), file=file.path(opt$output_files, "opt_input_values.txt"), sep="\t", col.names =FALSE, quote = FALSE)
 
 # Load target file if it exists, otherwise use the -C and -T flags. Note target takes precedence over target.
 if(! is.null(opt$target_file)) {
@@ -214,6 +215,11 @@ if(exists("target") & grepl("W", opt$modules)) {
   } else {
     target_numeric_factors <- ""
   }
+}
+
+# Now coerce the targets to factors for the multifactorial analysis
+if(opt$numerics_as_factors == TRUE) {
+  target <-  data.frame(sapply(target, as.factor))
 }
 
 replicatesC <- length(index_control_cols)
