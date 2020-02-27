@@ -287,6 +287,7 @@ if(flags$Clustered){
 	wgcna_count_sample_trait_gnorm <- as.data.frame(do.call(cbind,lapply(seq(ncol(wgcna_count_sample_trait)),function(j){
 		(wgcna_count_sample_trait[,j] - min(wgcna_count_sample_trait[,j],na.rm = TRUE)) / (max(wgcna_count_sample_trait[,j],na.rm = TRUE) - min(wgcna_count_sample_trait[,j],na.rm = TRUE))
 	})))
+	colnames(wgcna_count_sample_trait_gnorm) <- colnames(wgcna_count_sample_trait)
 }
 
 
