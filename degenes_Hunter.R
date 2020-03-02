@@ -59,6 +59,8 @@ option_list <- list(
     0 = No filtering"),
   make_option(c("-l", "--minlibraries"), type="integer", default=2,
     help="For each gene, the minimum number of samples that must have more than --reads. Default=%default"),
+  make_option(c("-F", "--filter_type"), type="character", default="separate",
+    help="Should filtering be done taking into account treatment and control samples separately (value=separate), or accross all samples (global). Default=%default"),
   make_option(c("-o", "--output_files"), type="character", default="hunter_DE_results",
     help="Output path. Default=%default"),
   make_option(c("-p", "--p_val_cutoff"), type="double", default=0.05,
@@ -240,11 +242,19 @@ raw[is.na(raw)] <- 0
 ############################################################
 # Prepare filtered set
 if(opt$reads != 0){
-  # genes with cpm greater than --reads value for at least --minlibrariess samples for either case or control samples
-  to_keep_control <- rowSums(edgeR::cpm(raw[index_control_cols]) > opt$reads) >= opt$minlibraries
-  to_keep_treatment <- rowSums(edgeR::cpm(raw[index_treatmn_cols]) > opt$reads) >= opt$minlibraries
-  keep_cmp <- to_keep_control | to_keep_treatment # Keep if at least minlibraries in either of them
-  raw_filter <- raw[keep_cmp,] # Filter out count data frame
+  if (opt$filter_type == "separate") {
+    # genes with cpm greater than --reads value for at least --minlibrariess samples for either case or control samples
+    to_keep_control <- rowSums(edgeR::cpm(raw[index_control_cols]) > opt$reads) >= opt$minlibraries
+    to_keep_treatment <- rowSums(edgeR::cpm(raw[index_treatmn_cols]) > opt$reads) >= opt$minlibraries
+    keep_cmp <- to_keep_control | to_keep_treatment # Keep if at least minlibraries in either of them
+    raw_filter <- raw[keep_cmp,] # Filter out count data frame
+  } else if (opt$filter_type == "global") {
+    keep_cmp <- rowSums(edgeR::cpm(raw) > opt$reads) >= opt$minlibraries # genes with cpm greater than --reads value for at least --minlibrariess samples
+    raw_filter <- raw[keep_cmp,] # Filter out count data frame
+  } else {
+    warning("Unrecognized minimum read filter type. No filter will be used")
+    raw_filter <- raw
+  }
 } else { # NO FILTER
   raw_filter <- raw
 }
