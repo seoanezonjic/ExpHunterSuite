@@ -26,7 +26,7 @@ option_list <- list(
   make_option(c("-t", "--FC_treat"), type="integer", default=3,
     help="Fold Change value for treatment group. Default : %default"),
   make_option(c("-T", "--P_treat"), type="double", default=1,
-    help="Proportion of DEGs that will be up-regulated in treatment group. Rest will be up-regulated at control, making control not to be a real control if !=1. Default : %default"),
+    help="Proportion of DEGs that will be up-regulated in treatment group. Rest will be up-regulated at control, making control not to be a real control if !={1,-1}. Default : %default"),
 #   make_option(c("-F", "--Filt_nonDEGs"), action="store_true",type="logical", default=FALSE,
 #     help="Flag to execute special non-DEG filtering"), 
 #   make_option(c("-e", "--name_exp"), type="character", default="experiment1",
@@ -49,6 +49,7 @@ tcc_object <- simulateReadCounts(Ngene      = opt$ngenes,
                                  replicates = rep(opt$replicates, 2))
 
 # Obtain necessary objects
+colnames(tcc_object$count) <- gsub("G2","Treat",gsub("G1","Ctrl",colnames(tcc_object$count)))
 names(tcc_object$simulation$trueDEG) <- rownames(tcc_object$count)
 prediction_vector <- tcc_object$simulation$trueDEG
 
