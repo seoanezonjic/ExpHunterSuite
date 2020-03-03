@@ -43,6 +43,7 @@ source(file.path(main_path_script, 'lib', 'dif_expression_packages.R'))
 source(file.path(main_path_script, 'lib', 'qc_and_benchmarking_functions.R'))
 source(file.path(main_path_script, 'lib', 'correlation_packages.R'))
 source(file.path(main_path_script, 'lib', 'correlation_packages_PCIT.R'))
+source(file.path(main_path_script, 'lib', 'plotting_functions.R'))
 
 
 
@@ -97,7 +98,9 @@ option_list <- list(
   make_option(c("--WGCNA_blockwiseNetworkType"), type="character", default="signed",
     help="NetworkType option to be passed to blockwiseModules function"),
   make_option(c("--WGCNA_blockwiseTOMType"), type="character", default="signed",
-    help="TOMType option to be passed to blockwiseModules function")
+    help="TOMType option to be passed to blockwiseModules function"),
+   make_option(c("--debug"), type="logical", default=FALSE, action = "store_true",
+    help="Activate debug mode, which stores RData sessions at different points of the pipeline")
  )
 opt <- parse_args(OptionParser(option_list=option_list))
 opt_orig <- opt
@@ -156,6 +159,17 @@ if(opt$custom_model == TRUE & opt$model_variables == "") {
 # If factors are specified but WGCNA not selected, throw a warning.
 if((opt$string_factors != "" | opt$numeric_factors != "") & (!grepl("W", opt$modules) | is.null(opt$target_file))) {
   warning("If you wish to use factors for the correlation analysis you must also run WGCNA and include a target file. The -S and -N options will be ignored")
+}
+
+if(opt$debug){
+
+  # Define only once
+  debug_file <- file.path(normalizePath(opt$output_files), paste(c("DHunter_Debug_Session_",format(Sys.Date(),format = "%Y%m%d"),".RData"),collapse = ""))
+  # Store session
+  debug_point <- function(file, message = "Debug point"){
+    debug_message <<- message
+    save.image(file)
+  }
 }
 
 ############################################################
@@ -502,6 +516,10 @@ if(grepl("W", opt$modules)) {
     warning("WGCNA will not be performed as it requires a DESeq2 object")
   }
 }
+
+
+if(opt$debug) debug_point(debug_file,"Full analysis performed")
+
 
 #################################################################################
 ##                       EXPORT FINAL RESULTS AND OTHER FILES                  ##
