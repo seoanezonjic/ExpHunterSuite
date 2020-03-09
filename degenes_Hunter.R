@@ -28,7 +28,7 @@ suppressPackageStartupMessages(require(rmarkdown))
 suppressPackageStartupMessages(require(reshape2))
 suppressPackageStartupMessages(require(PerformanceAnalytics))
 suppressPackageStartupMessages(require(WGCNA))
-suppressPackageStartupMessages(require(PCIT))
+#suppressPackageStartupMessages(require(PCIT))
 
 
 # Obtain this script directory
