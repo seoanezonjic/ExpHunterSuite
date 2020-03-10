@@ -8,10 +8,25 @@ output:
     fig_width: 12
 ---
 
-<style>
+<style type='text/css'>
     body .main-container {
         max-width: 90%;
+
     }
+
+    .plot_real_size {
+    	overflow: scroll;
+  		max-height: 600px;
+  	}
+
+    .plot_real_size img{
+    	max-width: none;
+    	max-height: none;
+    }
+
+    embed {
+   
+  }   
 </style>
 
 # **DEgenes Hunter - Differential expression analysis report**
@@ -469,15 +484,18 @@ The third shows the correlation for all combinations of clusters and factors."
 
 ```
 
-```{r WGCNA_conditional_block_plot_MMs, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
-	print(results_WGCNA[['plot_objects']][['cluster_vs_MM']])
+```{r WGCNA_conditional_block_plot_MMs, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15, results="asis"}
+	pp<- results_WGCNA[['plot_objects']][['cluster_vs_MM']]
+	plot_in_div(pp)
 ```
 
 
 
-```{r WGCNA_conditional_block_plot_factors, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
+```{r WGCNA_conditional_block_plot_factors, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15, results = 'asis'}
+	cluster_count <- get_clusters_count(results_WGCNA)
+	features_count <- get_features_count(results_WGCNA)
 
-    replayPlot(results_WGCNA[['plot_objects']][['trait_vs_module_heatmap']])
+    plot_in_div(replayPlot(results_WGCNA[['plot_objects']][['trait_vs_module_heatmap']]), calc_height_clusters(cluster_count), calc_width_clusters(features_count))
 
 	# knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor']][1:10,])
 	# knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor_p']][1:10,])
@@ -488,8 +506,11 @@ The third shows the correlation for all combinations of clusters and factors."
 
 	#plot(results_WGCNA$plot_objects)
 
-	replayPlot(results_WGCNA[['plot_objects']][['trait_and_module_dendogram']])
-    replayPlot(results_WGCNA[['plot_objects']][['trait_and_module_heatmap']])
+	plot_in_div(replayPlot(results_WGCNA[['plot_objects']][['trait_and_module_dendogram']]),
+		fig_width=calc_width_clusters((features_count + cluster_count), multiplier = 0.15))
+    plot_in_div(replayPlot(results_WGCNA[['plot_objects']][['trait_and_module_heatmap']]),
+    	calc_height_clusters(features_count + cluster_count),
+    	calc_width_clusters(features_count + cluster_count))
 
 ```
 

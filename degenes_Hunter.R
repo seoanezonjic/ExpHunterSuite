@@ -43,7 +43,7 @@ source(file.path(main_path_script, 'lib', 'dif_expression_packages.R'))
 source(file.path(main_path_script, 'lib', 'qc_and_benchmarking_functions.R'))
 source(file.path(main_path_script, 'lib', 'correlation_packages.R'))
 source(file.path(main_path_script, 'lib', 'correlation_packages_PCIT.R'))
-#source(file.path(main_path_script, 'lib', 'plotting_functions.R'))
+source(file.path(main_path_script, 'lib', 'plotting_functions.R'))
 
 
 
