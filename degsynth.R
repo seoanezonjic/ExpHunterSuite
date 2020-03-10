@@ -155,7 +155,8 @@ fcfunc <- function(means,fcmin=1.4, fcmax=3, meanlog = 1, sdlog = 0.8){
 
 # Load count table if proceed
 if(is.null(opt$inputfile)){
-
+	bcount <- NULL
+	group <- NULL
 }else{
 	bcount <- read.table(file = opt$inputfile, row.names = 1, header = TRUE, sep = "\t")
 	if(is.null(opt$group)){
