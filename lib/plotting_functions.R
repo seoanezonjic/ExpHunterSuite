@@ -8,7 +8,6 @@ resize <- function(g, fig_height=5, fig_width=12) {
 }
 
 plot_in_div <- function(g, fig_height=7, fig_width=12) {
-  cat('\n2222222222222222222222\n')
   cat('\n<div class="plot_real_size">\n')
   g_deparsed <- paste0(deparse(function() {g}), collapse = '')
   sub_chunk <- paste0("\n```{r sub_chunk_", floor(runif(1) * 10000), ", fig.height=", fig_height, ", fig.width=", fig_width, ", echo=FALSE}", "\n(", g_deparsed, ")()\n```\n\n\n") 
