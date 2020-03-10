@@ -528,7 +528,6 @@ if(grepl("W", opt$modules)) {
 }
 
 
-if(opt$debug) debug_point(debug_file,"Full analysis performed")
 
 
 #################################################################################
@@ -570,6 +569,10 @@ DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
 # New structure - row names are now actually row names
 dir.create(file.path(opt$output_files, "Common_results"))
 write.table(DE_all_genes, file=file.path(opt$output_files, "Common_results", "hunter_results_table.txt"), quote=FALSE, row.names=TRUE, sep="\t")
+
+####################### DEBUG POINT #############################
+if(opt$debug) debug_point(debug_file,"Full analysis performed")
+#################################################################
 
 ############################################################
 ##                    GENERATE REPORT                     ##
