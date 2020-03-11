@@ -19,6 +19,8 @@
  
 # Load necessary packages
 require(ggplot2)
+n_category <- 30
+
 ```
 
 

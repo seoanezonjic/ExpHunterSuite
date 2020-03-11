@@ -24,6 +24,7 @@ suppressPackageStartupMessages(require(clusterProfiler))
 # Load custom libraries
 source(file.path(main_path_script, 'lib', 'general_functions.R'))
 source(file.path(main_path_script, 'lib', 'functional_analysis_library.R'))
+source(file.path(main_path_script, 'lib', 'plotting_functions.R'))
 
 
 #############################################

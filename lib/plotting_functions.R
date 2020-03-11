@@ -38,7 +38,8 @@ get_features_count <- function(results_WGCNA){
 }
 
 
-get_categories <- function(enrich_obj, showCategory = n_category){
+get_categories <- function(enrich_obj, showCategory = 30){
+  if(is.null(enrich_obj)) return(NULL)
   enrich_obj_class <- class(enrich_obj)[1]
   if(enrich_obj_class == "enrichResult"){
       categories <- get_plot_df(enrich_obj, showCategory)$categoryID
@@ -48,11 +49,6 @@ get_categories <- function(enrich_obj, showCategory = n_category){
       warning("Not valid enrich object")
     }
     return(unique(categories))
-}
-
-get_clusters <- function(compareCluster_obj){ # TODO: what's happening here?
-    all_clusters <- enrichments_ORA$REACT@compareClusterResult$Cluster
-    return(unique(all_clusters))
 }
 
 get_genes <- function(enrich_obj, showCategory = 30){
