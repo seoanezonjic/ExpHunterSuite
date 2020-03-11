@@ -495,7 +495,7 @@ The third shows the correlation for all combinations of clusters and factors."
 	cluster_count <- get_clusters_count(results_WGCNA)
 	features_count <- get_features_count(results_WGCNA)
 
-    plot_in_div(replayPlot(results_WGCNA[['plot_objects']][['trait_vs_module_heatmap']]), calc_height_clusters(cluster_count), calc_width_clusters(features_count))
+  #  plot_in_div(replayPlot(results_WGCNA[['plot_objects']][['trait_vs_module_heatmap']]), calc_height_clusters(cluster_count), calc_width_clusters(features_count))
 
 	# knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor']][1:10,])
 	# knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor_p']][1:10,])
