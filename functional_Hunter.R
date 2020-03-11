@@ -616,7 +616,7 @@ if(flags$Clustered){
 		# Write output
 		invisible(lapply(seq_along(enrichments_ORA),function(i){
 			# Concat
-			df <- clusterProfiler:::fortify.compareClusterResult(enrichments_ORA[[i]])
+			df <- enrichplot:::fortify.compareClusterResult(enrichments_ORA[[i]])
 			# Write table
 			write.table(df, file=file.path(paths$root, paste0(ora_config$Onto[i],"_cls_ora")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 		}))
