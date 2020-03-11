@@ -37,6 +37,10 @@ get_features_count <- function(results_WGCNA){
   return(trait_count)
 }
 
+get_clusters <- function(compareCluster_obj){ # TODO: what's happening here?
+    all_clusters <- enrichments_ORA$REACT@compareClusterResult$Cluster
+    return(unique(all_clusters))
+}
 
 get_categories <- function(enrich_obj, showCategory = 30){
   if(is.null(enrich_obj)) return(NULL)
