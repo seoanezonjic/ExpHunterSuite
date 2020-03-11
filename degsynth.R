@@ -182,8 +182,8 @@ simul <- STC(Ngene      = opt$ngenes,
 			 group      = group, 
 			 PDEG       = c(posdeg,negdeg))
 prediction_vector <- simul$trueDEG
-prediction_vector <- replace(prediction_vector, prediction_vector != 0, "DEG")
-prediction_vector <- replace(prediction_vector, prediction_vector == 0, "NOTDEG")
+prediction_vector <- replace(prediction_vector, prediction_vector != 0, "TRUE")
+prediction_vector <- replace(prediction_vector, prediction_vector == 0, "FALSE")
 prediction_vector <- as.data.frame(prediction_vector)
 prediction_vector <- cbind(rownames(prediction_vector),prediction_vector)
 colnames(prediction_vector) <- c("Gene","Prediction")
