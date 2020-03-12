@@ -420,7 +420,7 @@ cat(
 	The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
 )
 pp <- barplot(enrich_ora, showCategory=n_category)
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -430,7 +430,7 @@ cat("\n\n**Dotplot**\n\n",
 	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 )
 pp <- dotplot(enrich_ora, showCategory=n_category)
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -441,7 +441,7 @@ cat("\n\n**Gene-Concept Network**\n\n",
 enrich_ora_symb <- setReadable(enrich_ora, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 pp <- cnetplot(enrich_ora_symb, showCategory=n_category, foldChange=geneList) +
 	  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -450,7 +450,7 @@ cat("\n\n**Enrich Map plot**\n\n",
 	The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 )
 pp <- emapplot(enrich_ora, showCategory=n_category)
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -470,7 +470,7 @@ if(length(get_categories(enrich_ora))>=2){ # Needs, at least, two categories
 		"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 	)
 	pp <- upsetplot(enrich_ora, n=n_category)
-	plot_in_div(pp, width = default_width)
+	plot_in_div(pp, fig_width = default_width)
 }
 ```
 
@@ -493,7 +493,7 @@ cat("\n\n**Dotplot**\n\n",
 	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 )
 pp <- dotplot(enrich_gsea, showCategory=n_category)
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 cat("\n\n**Gene-Concept Network**\n\n", 
@@ -503,7 +503,7 @@ cat("\n\n**Gene-Concept Network**\n\n",
 enrich_gsea_symb <- setReadable(enrich_gsea, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 pp <- cnetplot(enrich_gsea_symb, showCategory=n_category, foldChange=geneList) +
 	  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 cat("\n\n**Enrich Map plot**\n\n", 
@@ -511,7 +511,7 @@ cat("\n\n**Enrich Map plot**\n\n",
 	The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 )
 pp <- emapplot(enrich_gsea, showCategory=n_category)
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 cat("\n\n**Heatplot**\n\n", 
@@ -529,7 +529,7 @@ cat("\n\n**Ridgeplot**\n\n",
 	The distribution colours indicates the adjusted pvalue.\n\n"
 )
 pp <- ridgeplot(enrich_gsea, showCategory=n_category)
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 cat("\n\n**Rank plot**\n\n", 
@@ -538,7 +538,7 @@ cat("\n\n**Rank plot**\n\n",
 )
 pp <- gseaplot2(enrich_gsea, geneSetID=ifelse(nrow(enrich_gsea@result) < 4, seq(nrow(enrich_gsea@result)), 1:4), title = enrich_gsea$Description[1], pvalue_table = TRUE)
 
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 ```
@@ -618,7 +618,7 @@ invisible(lapply(names(go_main_enrich),function(onto){
 			The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
 		)
 		go_pp <- barplot(enrich_go[[onto]], showCategory=n_category)
-		plot_in_div(go_pp, width = default_width)
+		plot_in_div(go_pp, fig_width = default_width)
 
 		
 		cat("\n\n**Dotplot**\n\n",
@@ -626,7 +626,7 @@ invisible(lapply(names(go_main_enrich),function(onto){
 			The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 		)
 		go_pp <- dotplot(enrich_go[[onto]], showCategory=n_category)
-		plot_in_div(go_pp, width = default_width)
+		plot_in_div(go_pp, fig_width = default_width)
 
 		cat("\n\n**Gene-Concept Network**\n\n", 
 			"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
@@ -635,14 +635,14 @@ invisible(lapply(names(go_main_enrich),function(onto){
 		enrich_go_ora_symb <- setReadable(enrich_go[[onto]], OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 		go_pp <- cnetplot(enrich_go_ora_symb, showCategory=n_category, foldChange=geneList) +
 				 scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-		plot_in_div(go_pp, width = default_width)
+		plot_in_div(go_pp, fig_width = default_width)
 
 		cat("\n\n**Enrich Map plot**\n\n", 
 			"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 			The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 		)
 		go_pp <- emapplot(enrich_go[[onto]], showCategory=n_category)
-		plot_in_div(go_pp, width = default_width)
+		plot_in_div(go_pp, fig_width = default_width)
 
 		cat("\n\n**Heatplot**\n\n", 
 			"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
@@ -656,7 +656,7 @@ invisible(lapply(names(go_main_enrich),function(onto){
 			"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 		)
 		go_pp <- upsetplot(enrich_go[[onto]], n=n_category)
-		plot_in_div(go_pp, width = default_width)
+		plot_in_div(go_pp, fig_width = default_width)
 		cat("\n \n")
 	}
 
@@ -676,7 +676,7 @@ invisible(lapply(names(go_main_enrich),function(onto){
 			The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 		)
 		go_pp <- dotplot(enrich_go_gsea[[onto]], showCategory=n_category)
-		plot_in_div(go_pp, width = default_width)
+		plot_in_div(go_pp, fig_width = default_width)
 
 		cat("\n\n**Gene-Concept Network**\n\n", 
 			"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
@@ -685,14 +685,14 @@ invisible(lapply(names(go_main_enrich),function(onto){
 		enrich_go_gsea_symb <- setReadable(enrich_go_gsea[[onto]], OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 		go_pp <- cnetplot(enrich_go_gsea_symb, showCategory=n_category, foldChange=geneList) +
 				  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-		plot_in_div(go_pp, width = default_width)
+		plot_in_div(go_pp, fig_width = default_width)
 
 		cat("\n\n**Enrich Map plot**\n\n", 
 			"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 			The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 		)
 		go_pp <- emapplot(enrich_go_gsea[[onto]], showCategory=n_category)
-		plot_in_div(go_pp, width = default_width)
+		plot_in_div(go_pp, fig_width = default_width)
 
 		cat("\n\n**Heatplot**\n\n", 
 			"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
@@ -708,14 +708,14 @@ invisible(lapply(names(go_main_enrich),function(onto){
 			The distribution colours indicates the adjusted pvalue.\n\n"
 		)
 		go_pp <- ridgeplot(enrich_go_gsea[[onto]], showCategory=n_category)
-		plot_in_div(go_pp, width = default_width)
+		plot_in_div(go_pp, fig_width = default_width)
 
 		cat("\n\n**Rank plot**\n\n", 
 			"The enrichment score evolution trought the ranked genes by fold-change are show for the top functional terms. 
 			Y axis shows the enrichment score and the X axis shows the genes ranked by fold-change.\n\n"
 		)
 		go_pp <- gseaplot2(enrich_go_gsea[[onto]], geneSetID=ifelse(nrow(enrich_go_gsea[[onto]]@result) < 4, seq(nrow(enrich_go_gsea[[onto]]@result)), 1:4), pvalue_table = TRUE) 
-		plot_in_div(go_pp, width = default_width)
+		plot_in_div(go_pp, fig_width = default_width)
 		cat("\n \n")
 	}
 }))
@@ -744,14 +744,14 @@ if(go_flags$enrich_go){
 		The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
 	)
 	go_pp  <- barplot(enr_go, showCategory=n_category)
-	plot_in_div(go_pp, width = default_width)
+	plot_in_div(go_pp, fig_width = default_width)
 
 	cat("\n\n**Dotplot**\n\n",
 		"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
 		The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 	)
 	go_pp  <- dotplot(enr_go, showCategory=n_category)
-	plot_in_div(go_pp, width = default_width)
+	plot_in_div(go_pp, fig_width = default_width)
 
 	cat("\n\n**Gene-Concept Network**\n\n", 
 		"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
@@ -760,14 +760,14 @@ if(go_flags$enrich_go){
 	enr_go_symb <- setReadable(enr_go, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 	go_pp  <- cnetplot(enr_go_symb, showCategory=n_category, foldChange=geneList) +
 			  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-	plot_in_div(go_pp, width = default_width)
+	plot_in_div(go_pp, fig_width = default_width)
 
 	cat("\n\n**Enrich Map plot**\n\n", 
 		"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 	)
 	go_pp  <- emapplot(enr_go, showCategory=n_category)
-	plot_in_div(go_pp, width = default_width)
+	plot_in_div(go_pp, fig_width = default_width)
 
 	cat("\n\n**Heatplot**\n\n", 
 		"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
@@ -781,7 +781,7 @@ if(go_flags$enrich_go){
 		"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 	)
 	go_pp <- upsetplot(enr_go, n=n_category)
-	plot_in_div(go_pp, width = default_width)
+	plot_in_div(go_pp, fig_width = default_width)
 
 	cat("\n \n")
 }
@@ -808,7 +808,7 @@ if(go_flags$enrich_go_gsea){
 		The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 	)
 	go_pp <- dotplot(enr_go_gsea, showCategory=n_category)
-	plot_in_div(go_pp, width = default_width)
+	plot_in_div(go_pp, fig_width = default_width)
 
 	cat("\n\n**Gene-Concept Network**\n\n", 
 		"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
@@ -817,14 +817,14 @@ if(go_flags$enrich_go_gsea){
 	enr_go_gsea_symb <- setReadable(enr_go_gsea, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 	go_pp <- cnetplot(enr_go_gsea_symb, showCategory=n_category, foldChange=geneList) +
 			  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-	plot_in_div(go_pp, width = default_width)
+	plot_in_div(go_pp, fig_width = default_width)
 
 	cat("\n\n**Enrich Map plot**\n\n", 
 		"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 	)
 	go_pp <- emapplot(enr_go_gsea, showCategory=n_category)
-	plot_in_div(go_pp, width = default_width)
+	plot_in_div(go_pp, fig_width = default_width)
 
 	cat("\n\n**Heatplot**\n\n", 
 		"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
@@ -840,7 +840,7 @@ if(go_flags$enrich_go_gsea){
 		The distribution colours indicates the adjusted pvalue.\n\n"
 	)
 	go_pp <- ridgeplot(enr_go_gsea, showCategory=n_category)
-	plot_in_div(go_pp, width = default_width)
+	plot_in_div(go_pp, fig_width = default_width)
 	cat("\n \n")
 }
 
@@ -955,7 +955,7 @@ cat(
 	The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
 )
 pp <- barplot(enrich_react, showCategory=n_category)
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -964,7 +964,7 @@ cat("\n\n**Dotplot**\n\n",
 	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 )
 pp <- dotplot(enrich_react, showCategory=n_category)
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -975,7 +975,7 @@ cat("\n\n**Gene-Concept Network**\n\n",
 enrich_react_symb <- setReadable(enrich_react, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 pp <- cnetplot(enrich_react_symb, showCategory=n_category, foldChange=geneList) +
 	  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -984,7 +984,7 @@ cat("\n\n**Enrich Map plot**\n\n",
 	The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 )
 pp <- emapplot(enrich_react, showCategory=n_category)
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -1003,7 +1003,7 @@ cat("\n\n**Upsetplot**\n\n",
 	"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 )
 pp <- upsetplot(enrich_react, n=n_category)
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 ```
 
@@ -1025,7 +1025,7 @@ cat("\n\n**Dotplot**\n\n",
 	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 )
 pp <- dotplot(enrich_react_gsea, showCategory=n_category)
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 cat("\n\n**Gene-Concept Network**\n\n", 
@@ -1035,7 +1035,7 @@ cat("\n\n**Gene-Concept Network**\n\n",
 enrich_react_gsea_symb <- setReadable(enrich_react_gsea, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 pp <- cnetplot(enrich_react_gsea_symb, showCategory=n_category, foldChange=geneList) +
 	  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 cat("\n\n**Enrich Map plot**\n\n", 
@@ -1043,7 +1043,7 @@ cat("\n\n**Enrich Map plot**\n\n",
 	The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 )
 pp <- emapplot(enrich_react_gsea, showCategory=n_category)
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 cat("\n\n**Heatplot**\n\n", 
@@ -1060,7 +1060,7 @@ cat("\n\n**Ridgeplot**\n\n",
 	The distribution colours indicates the adjusted pvalue.\n\n"
 )
 pp <- ridgeplot(enrich_react_gsea, showCategory=n_category)
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 cat("\n\n**Rank plot**\n\n", 
@@ -1068,7 +1068,7 @@ cat("\n\n**Rank plot**\n\n",
 	Y axis shows the enrichment score and the X axis shows the genes ranked by fold-change.\n\n"
 )
 pp <- gseaplot2(enrich_react_gsea, geneSetID=ifelse(nrow(enrich_react_gsea@result) < 4, seq(nrow(enrich_react_gsea@result)), 1:4), title = enrich_react_gsea$Description[1], pvalue_table = TRUE)
-plot_in_div(pp, width = default_width)
+plot_in_div(pp, fig_width = default_width)
 
 
 ```
@@ -1104,7 +1104,7 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 					The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n'
 				)
 				pp <- barplot(enr_custom, showCategory=n_category)
-				plot_in_div(pp, width = default_width)
+				plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -1113,7 +1113,7 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 					The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n'
 				)
 				pp <- dotplot(enr_custom, showCategory=n_category)
-				plot_in_div(pp, width = default_width)
+				plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -1124,7 +1124,7 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 				enr_custom <- setReadable(enr_custom, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType='ENTREZID')
 				pp <- cnetplot(enr_custom, showCategory=n_category, foldChange=geneList) +
 					  scale_color_gradient2(name = 'fold change', low = '#0000BF', high = '#bf0000', na.value = '#50EA55')
-				plot_in_div(pp, width = default_width)
+				plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -1133,7 +1133,7 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 					The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n'
 				)
 				pp <- emapplot(enr_custom, showCategory=n_category)
-				plot_in_div(pp, width = default_width)
+				plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -1152,7 +1152,7 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 					'Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n'
 				)
 				pp <- upsetplot(enr_custom, n=n_category)
-				plot_in_div(pp, width = default_width)\n"
+				plot_in_div(pp, fig_width = default_width)\n"
 	}
 
 	body <- gsub("\\{\\{i\\}\\}",i,body)
