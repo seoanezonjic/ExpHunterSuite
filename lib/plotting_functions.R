@@ -38,7 +38,7 @@ get_features_count <- function(results_WGCNA){
 }
 
 get_clusters <- function(compareCluster_obj){ # TODO: what's happening here?
-    all_clusters <- enrichments_ORA$REACT@compareClusterResult$Cluster
+    all_clusters <- compareCluster_obj@compareClusterResult$Cluster
     return(unique(all_clusters))
 }
 
