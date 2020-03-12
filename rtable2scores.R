@@ -92,7 +92,7 @@ score_center <- 0.5
 # Calculate scores for each set
 scores <- as.data.frame(do.call(cbind,lapply(seq_along(pck_names),function(i){
 	# Check
-	if(any(dgh_res[,fc_cols[i]] > opt$logFC_max)) dgh_res[dgh_res[,fc_cols[i]] > opt$logFC_max & !is.na(dgh_res[,fc_cols[i]]),] <- opt$logFC_max
+	if(any(dgh_res[,fc_cols[i]] > opt$logFC_max, na.rm = TRUE)) dgh_res[(dgh_res[,fc_cols[i]] > opt$logFC_max & !is.na(dgh_res[,fc_cols[i]])),] <- opt$logFC_max
 	# Apply rescale to score
 	scrs <- accordion_range(dgh_res[,fc_cols[i]],score_min,score_max,score_center,opt$logFC_threshold)
 	# Adjust
