@@ -68,7 +68,9 @@ option_list <- list(
   make_option(c("-Q", "--qthreshold"), type="double", default=0.2,
     help="Enrichment q-value threshold. [Default = %default]"),
   make_option(c("--debug"), type="logical", default=FALSE, action = "store_true",
-    help="Activate debug mode, which stores RData sessions at different points of the pipeline")
+    help="Activate debug mode, which stores RData sessions at different points of the pipeline"),
+  make_option(c("--Debug"), type="character", default=NULL,
+    help="Activate debug mode and uses given filename")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
@@ -86,15 +88,23 @@ dir.create(opt$output_files)
 paths$root <-opt$output_files
 
 
+if(!is.null(opt$Debug)){
+	opt$debug <- TRUE
+	debug_file <- file.path(paths$root,paste0(opt$Debug,".RData"))
+}
+
 if(opt$debug){
 	# Define only once
-	debug_file <- file.path(paths$root, paste(c("FHunter_Debug_Session_",format(Sys.Date(),format = "%Y%m%d"),".RData"),collapse = ""))
+	if(is.null(opt$Debug)) debug_file <- file.path(paths$root, paste(c("FHunter_Debug_Session_",format(Sys.Date(),format = "%Y%m%d"),".RData"),collapse = ""))
 	# Store session
 	debug_point <- function(file, message = "Debug point"){
 		debug_message <<- message
 		save.image(file)
 	}
 }
+
+######################### DEBUG POINT
+if(opt$debug) debug_point(debug_file,"Start point")
 
 
 
