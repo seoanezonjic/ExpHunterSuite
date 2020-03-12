@@ -97,7 +97,9 @@ scores <- as.data.frame(do.call(cbind,lapply(seq_along(pck_names),function(i){
 	scrs <- accordion_range(dgh_res[,fc_cols[i]],score_min,score_max,score_center,opt$logFC_threshold)
 	# Adjust
 	scrs <- scrs - (dgh_res[,pv_cols[i]] > opt$pval_threshold & dgh_res[,fc_cols[i]] < opt$logFC_threshold)*score_center
+	if(any(is.na(scrs))) scrs[is.na(scrs)] <- score_min # NA -> discarded
 	if(any(scrs < score_min)) scrs[scrs < score_min] <- score_min
+
 	# Return
 	aux <- data.frame(Scores = scrs)
 	colnames(aux) <- pck_names[i]
