@@ -260,11 +260,11 @@ if(opt$reads != 0){
     # genes with cpm greater than --reads value for at least --minlibrariess samples for either case or control samples
     to_keep_control <- rowSums(edgeR::cpm(raw[index_control_cols]) > opt$reads) >= opt$minlibraries
     to_keep_treatment <- rowSums(edgeR::cpm(raw[index_treatmn_cols]) > opt$reads) >= opt$minlibraries
-    keep_cmp <- to_keep_control | to_keep_treatment # Keep if at least minlibraries in either of them
-    raw_filter <- raw[keep_cmp,] # Filter out count data frame
+    keep_cpm <- to_keep_control | to_keep_treatment # Keep if at least minlibraries in either of them
+    raw_filter <- raw[keep_cpm,] # Filter out count data frame
   } else if (opt$filter_type == "global") {
-    keep_cmp <- rowSums(edgeR::cpm(raw) > opt$reads) >= opt$minlibraries # genes with cpm greater than --reads value for at least --minlibrariess samples
-    raw_filter <- raw[keep_cmp,] # Filter out count data frame
+    keep_cpm <- rowSums(edgeR::cpm(raw) > opt$reads) >= opt$minlibraries # genes with cpm greater than --reads value for at least --minlibrariess samples
+    raw_filter <- raw[keep_cpm,] # Filter out count data frame
   } else {
     warning("Unrecognized minimum read filter type. No filter will be used")
     raw_filter <- raw
