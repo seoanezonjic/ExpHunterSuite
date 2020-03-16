@@ -332,19 +332,21 @@ A table containing the DESeq2 normalized counts is provided in Results\\_DESeq2/
 cat("### **Differences between samples by PREVALENT DEGs normalized counts**:
 		
 Counts of prevalent DEGs were normalizated by DESeq2 algorithm. This count were scaled by log10 and plotted in a heatmap.")
+
+
 ```
 
 ```{r DESeq2_only_prev_norm_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo = FALSE, fig.height=12, fig.width=12}
 	
 		DE_prevalent_genes <- rownames(DE_all_genes[DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG"),])
 
-	if(length(DE_prevalent_genes) > 0){
+	if(length(DE_prevalent_genes) > 1){
 		deseq_prevalent_normalized <- deseq_normalized_data[rownames(deseq_normalized_data) %in% DE_prevalent_genes,]  
 		deseq_normalized_data_mtx <- log10(data.matrix(deseq_prevalent_normalized) + 1)
 		plot <- heatmap.2(deseq_normalized_data_mtx, col = col, labRow = FALSE, dendrogram = "column", trace = "none", srtCol=45,  adjCol = c(1,1))
 
 	}else{
-cat("No genes with prevalent differential expression were found")
+cat("Lower than 2 prevalent differential expression were found")
 	}
 	
 ```
