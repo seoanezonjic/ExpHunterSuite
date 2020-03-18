@@ -97,14 +97,13 @@ PerformanceAnalytics::chart.Correlation(raw_filter, histogram=TRUE, pch=19, log=
 ```{r heatmap_corr,echo = FALSE, fig.height=12, fig.width=12}
 col<- colorRampPalette(c("#FFFFCC", "#FD8D3C", "#800026"))(20)
 res <- cor(raw_filter)
-heatmap.2(x = res, col = col, symm = TRUE, margins = rep(max(nchar(colnames(res))), 2), scale = "none", trace = "none")
+gplots::heatmap.2(x = res, col = col, symm = TRUE, margins = rep(max(nchar(colnames(res))), 2), scale = "none", trace = "none")
 ```
 
 ### **Principal Component Analysis**
 This is a PCA plot of the count values following rlog normalization from the DESeq2 package:
 
 ```{r pca_plot, echo = FALSE}
-require(DESeq2)
 coldata_df <- data.frame(cond = design_vector,
                            each = colnames(raw_filter),
                            row.names = colnames(raw_filter))
