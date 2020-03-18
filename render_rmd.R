@@ -34,10 +34,10 @@ actual_opt <- parse_args(OptionParser(option_list=option_list))
 
 ### load enviroment
 load(actual_opt$input)
-### load template
 full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using source
                error=function(e) # works when using R CMD
               normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', commandArgs())], '='))[2]))
+### load template
 DEGhunter_templates <- file.path(dirname(full.fpath), "/", "templates")
 
 print(c(DEGhunter_templates, actual_opt$template, full.fpath))
