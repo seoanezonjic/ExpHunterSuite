@@ -11,7 +11,7 @@ suppressPackageStartupMessages(library(optparse))
 
 option_list <- list(
   make_option(c("-i", "--inputfile"), type="character", default = NULL,
-    help="DEGenesHunter expression resulta table file"),
+    help="DEGenesHunter expression results table file"),
   make_option(c("-f", "--logFC_threshold"), type="double", default=1,
     help="Log Fold Change threshold. Default : %default"),
   make_option(c("-F", "--logFC_max"), type="double", default=NULL,
@@ -79,6 +79,11 @@ aux <- fc_cols %in% colnames(dgh_res)
 pck_names <- pck_names[aux]
 fc_cols <- fc_cols[aux]
 pv_cols <- pv_cols[aux]
+
+# Prepare negative FCs
+invisible(lapply(fc_cols,function(fc){
+	dgh_res[,fc] <<- abs(dgh_res[,fc])
+}))
 
 # Config new sclae
 score_min <- 0
