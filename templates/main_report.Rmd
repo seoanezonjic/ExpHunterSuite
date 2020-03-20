@@ -507,11 +507,11 @@ The third shows the correlation for all combinations of clusters and factors."
 
 	#plot(results_WGCNA$plot_objects)
 
-	plot_in_div(replayPlot(results_WGCNA[['plot_objects']][['trait_and_module_dendogram']]),
-		fig_width=calc_width_clusters((features_count + cluster_count), multiplier = 0.15))
-    plot_in_div(replayPlot(results_WGCNA[['plot_objects']][['trait_and_module_heatmap']]),
-    	calc_height_clusters(features_count + cluster_count),
-    	calc_width_clusters(features_count + cluster_count))
+#	plot_in_div(replayPlot(results_WGCNA[['plot_objects']][['trait_and_module_dendogram']]),
+#		fig_width=calc_width_clusters((features_count + cluster_count), multiplier = 0.15))
+ #   plot_in_div(replayPlot(results_WGCNA[['plot_objects']][['trait_and_module_heatmap']]),
+  #  	calc_height_clusters(features_count + cluster_count),
+   # 	calc_width_clusters(features_count + cluster_count))
 
 ```
 
