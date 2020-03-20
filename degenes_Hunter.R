@@ -205,21 +205,29 @@ if(! is.null(opt$target_file)) {
 
 # FOR WGCNA: Check that the appropriate factor columns can be found in the target file and makes a data frame with the specified factor
 if(exists("target") & grepl("W", opt$modules)) {
-  if(opt$string_factors != "") {
-    string_factors <- unlist(strsplit(opt$string_factors, ","))
-    string_factors_index <- colnames(target) %in% string_factors 
-
-    if(TRUE %in% string_factors_index) {
-      target_string_factors <- target[string_factors_index]
-      target_string_factors <-  data.frame(sapply(target_string_factors, as.factor))
-    } else {
-      stop(cat("Factors specified with the --string_factors option cannot be found in the target file.\nPlease resubmit."))
-    }
+  if(opt$string_factors == "") {
+    string_factors <- "treat"
   } else {
-    target_string_factors <- target["treat"] # We checkd this already in load target file code
+    string_factors <- paste0("treat,", opt$string_factors)
   }
+  string_factors <- unlist(strsplit(string_factors, ","))
+  string_factors <- unique(string_factors) # In case we duplicate treat
+
+  if(! all(string_factors %in% colnames(target))) {
+    warning("Some factors specified with the --string_factors option cannot be found in the target file.")
+  }
+  string_factors_index <- colnames(target) %in% string_factors 
+
+  target_string_factors <- target[string_factors_index]
+  target_string_factors <-  data.frame(sapply(target_string_factors, as.factor))
+
   if(opt$numeric_factors != "") {
     numeric_factors <- unlist(strsplit(opt$numeric_factors, ","))
+
+    if(! all(numeric_factors %in% colnames(target))) {
+      warning("Some factors specified with the --numeric_factors option cannot be found in the target file.")
+    }
+
     numeric_factors_index <- colnames(target) %in% numeric_factors
     if(TRUE %in% numeric_factors_index) {
       target_numeric_factors <- target[numeric_factors_index]
