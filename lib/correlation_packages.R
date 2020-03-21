@@ -1,3 +1,19 @@
+analysis_diffcoexp <- function(data, path, target) {
+
+	dds <- DESeqDataSetFromMatrix(countData = data, colData = target["treat"], design = ~ treat)
+	rld <- rlog(dds, blind=FALSE)
+	mat_counts <- assay(rld)
+	treat <- mat_counts[,target$treat=="Treat"]
+	control <- mat_counts[,target$treat=="Ctrl"]
+
+	allowWGCNAThreads()
+	res <- diffcoexp(exprs.1 = control, exprs.2 = treat, r.method = "spearman", q.dcgth=1)
+
+	write.table(res$DCLs, file=file.path(path, "DCLs.txt"), sep="\t", quote=FALSE, row.names=FALSE)
+	write.table(res$DCGs, file=file.path(path, "DCGs.txt"), sep="\t", quote=FALSE, row.names=FALSE)
+	return(res)
+}
+
 analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_factors, WGCNA_memory, WGCNA_deepsplit, WGCNA_detectcutHeight, WGCNA_mergecutHeight, WGCNA_min_genes_cluster, cor_only, blockwiseNetworkType, blockwiseTOMType) {
 
 	data <- t(data)#[, 1:500]

@@ -28,6 +28,8 @@ suppressPackageStartupMessages(require(rmarkdown))
 suppressPackageStartupMessages(require(reshape2))
 suppressPackageStartupMessages(require(PerformanceAnalytics))
 suppressPackageStartupMessages(require(WGCNA))
+suppressPackageStartupMessages(require(diffcoexp))
+
 #suppressPackageStartupMessages(require(PCIT))
 
 
@@ -69,7 +71,7 @@ option_list <- list(
   make_option(c("-f", "--lfc"), type="double", default=1,
     help="Minimum log2 fold change in expression. Note this is on a log2 scale, so a value of 1 would mean a 2 fold change. Default=%default"),
   make_option(c("-m", "--modules"), type="character", default=c("DELNW"), #D = DESeq2, E = edgeR, L = limma, N = NOISeq W = WGCNA.
-    help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N = NOISeq, W = WGCNA, P = PCIT.).
+    help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N = NOISeq, W = WGCNA, P = PCIT, X = diffcoexp.).
     By default the following modules Default=%default are performed"),
   make_option(c("-c", "--minpack_common"), type="integer", default=4,
     help="Number of minimum package to consider a gene as a 'PREVALENT' DEG"),
@@ -135,6 +137,9 @@ if(grepl("W", opt$modules)) {
   active_modules <- active_modules - 1
 }
 if(grepl("P", opt$modules)) {
+  active_modules <- active_modules - 1
+}
+if(grepl("X", opt$modules)) {
   active_modules <- active_modules - 1
 }
 
@@ -347,6 +352,12 @@ if(grepl("D",opt$modules)){
       final_FDR_names    <- c(final_FDR_names, 'FDR_DESeq2')
       DEG_pack_columns   <- c(DEG_pack_columns, 'DESeq2_DEG')
     } 
+
+    # Will be useful for WGCNA and perhaps PCIT
+    DESeq2_counts <- counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE)
+    DESeq2_counts_treatment <- DESeq2_counts[, index_treatmn_cols]
+    DESeq2_counts_control <- DESeq2_counts[, index_control_cols]
+
   } else {
   warning("DESeq2 will not be performed due to too few replicates")
   }
@@ -457,9 +468,7 @@ if(grepl("N", opt$modules)){
 ################## CASE W: WGCNA
 #####
 
-    DESeq2_counts <- counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE)
-    DESeq2_counts_treatment <- DESeq2_counts[, index_treatmn_cols]
-    DESeq2_counts_control <- DESeq2_counts[, index_control_cols]
+
 
 if(grepl("W", opt$modules)) {
   if(grepl("D", opt$modules)) { 
@@ -535,8 +544,18 @@ if(grepl("W", opt$modules)) {
   }
 }
 
+#####
+################## CASE X: diffcoexp
+#####
+if(grepl("X", opt$modules)) {
+  cat('Correlation analysis is performed with diffcoexp\n')
+  path <- file.path(opt$output_files, "Results_diffcoexp")
+  dir.create(path)
 
-
+  results_diffcoexp <- analysis_diffcoexp(data = raw_filter,
+                                       path = path,
+                                       target = target)
+}
 
 #################################################################################
 ##                       EXPORT FINAL RESULTS AND OTHER FILES                  ##
@@ -571,6 +590,11 @@ if(grepl("W", opt$modules) & grepl("D", opt$modules)) {
   DE_all_genes <- transform(merge(DE_all_genes, results_WGCNA[['gene_cluster_info']], by.x=0, by.y="ENSEMBL_ID"), row.names=Row.names, Row.names=NULL)
 }
 
+if(grepl("X", opt$modules)) {
+  #results_diffcoexp
+  DE_all_genes$DCG <- row.names(DE_all_genes) %in% results_diffcoexp$DCGs$Gene[results_diffcoexp$DCGs$q < 1]
+  DE_all_genes$DCL <- row.names(DE_all_genes) %in% results_diffcoexp$DCLs$Gene.1 | row.names(DE_all_genes) %in% results_diffcoexp$DCLs$Gene.2
+}
 # Add the filtered genes back
 DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
 
