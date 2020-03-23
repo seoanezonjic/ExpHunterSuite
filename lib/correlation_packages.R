@@ -178,9 +178,21 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	colnames(moduleTraitCor_df) <- c("Module","Trait","Correlation")
 	moduleTraitCor_df$Text_correlation <- textMatrix_df[["Freq"]]
 	####################################################################
-	# Produce dendogram and heatmap
+	# Produce trait AND module correlations and p-values
 	####################################################################
 	ME_numeric_traits <- orderMEs(cbind(MEs, trait))
+
+	trait_and_module_cor <- cor(ME_numeric_traits, use = "p")
+	#write.table(trait_and_module_cor, file=file.path(path, "trait_and_module_cor.txt"), sep="\t", quote=FALSE)
+	trait_and_module_cor_p <- corPvalueStudent(trait_and_module_cor, nSamples)
+	#write.table(trait_and_module_cor_p, file=file.path(path, "trait_and_module_cor_p.txt"), sep="\t", quote=FALSE)
+	trait_module_cor_val <- as.data.frame(as.table(trait_and_module_cor))
+	trait_module_p_val <- as.data.frame(as.table(trait_and_module_cor_p))
+
+	trait_module_all_vals <- data.frame(trait_module_cor_val, trait_module_p_val[,3])
+	names(trait_module_all_vals) <- c("A", "B", "correlation", "p-value")
+	write.table(trait_module_all_vals, file=file.path(path, "trait_and_module_all_vals.txt"), sep="\t", quote=FALSE, row.names=FALSE)
+	# write.table(trait_and_module_cor, file=file.path(path, "trait_module_all_vals2.txt"), sep="\t", quote=FALSE)
 
 	####################################################################
 	## Produce Tables
