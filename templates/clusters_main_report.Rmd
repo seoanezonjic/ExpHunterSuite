@@ -234,13 +234,13 @@ pp <- set_standard_size(pp)
 plot_in_div(pp, calc_height(enrichments_ORA$REACT),calc_width(enrichments_ORA$REACT))
 
 
-cat(
-	"**CNetplot**\n\n", 
-	"WRITE THIS TEXT >>>>.\n\n"
-)
+# cat(
+# 	"**CNetplot**\n\n", 
+# 	"WRITE THIS TEXT >>>>.\n\n"
+# )
 
-pp <- cnetplot(enrichments_ORA$REACT, showCategory = n_category)
-plot_in_div(pp, calc_height(enrichments_ORA$REACT),calc_width(enrichments_ORA$REACT))
+# pp <- cnetplot(enrichments_ORA$REACT, showCategory = n_category)
+# plot_in_div(pp, calc_height(enrichments_ORA$REACT),calc_width(enrichments_ORA$REACT))
 
 ```
 

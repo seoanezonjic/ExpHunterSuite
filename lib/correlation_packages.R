@@ -154,18 +154,6 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	###################################################################
 	## CLUSTER DATA
 	###################################################################
-	sampleTree2 = hclust(dist(data), method = "average")
-
-	# Convert traits to a color representation: white means low, red means high, grey means missing entry
-	traitColors = numbers2colors(trait, signed = FALSE);
-
-	# Plots the sample dendrogram and the colors underneath.
-	pdf(file.path(path, 'count_trait_data_comparation.pdf'))
-		plotDendroAndColors(sampleTree2, traitColors,
-			groupLabels = names(trait), 
-			main = "Sample dendrogram and trait heatmap")
-	dev.off()
-
 
 	####################################################################
 	## CLUSTER MODULES WITH TRAITS AND PRODUCE HEATMAP
@@ -181,45 +169,18 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	textMatrix =  paste(signif(moduleTraitCor, 2), "\n(",
 	                    signif(moduleTraitPvalue, 1), ")", sep = "")
 	dim(textMatrix) = dim(moduleTraitCor)
-	# Display the correlation values within a heatmap plot
-	pdf(file.path(path, 'heatmap.pdf'))
-		dev.control(displaylist="enable")
-		par(mar = c(6, 10, 3, 3));
-		labeledHeatmap(Matrix = moduleTraitCor,
-	               xLabels = names(trait),
-	               yLabels = names(MEs_colors),
-	               ySymbols = names(MEs),
-	               colorLabels = FALSE,
-	               colors = blueWhiteRed(50),
-	               textMatrix = textMatrix,
-	               setStdMargins = FALSE,
-	               cex.text = 0.5,
-	               zlim = c(-1,1),
-	               main = paste("Module-trait relationships"),
-	               xLabelsAngle=30)
-		trait_vs_module_heatmap <- recordPlot()
-	dev.off()
-
+	colnames(moduleTraitCor) <- names(trait)
+	rownames(moduleTraitCor) <- names(MEs)
+	moduleTraitCor_df <- as.data.frame(as.table(moduleTraitCor))
+	colnames(textMatrix) <- names(trait)
+	rownames(textMatrix) <- names(MEs)
+	textMatrix_df <- as.data.frame(as.table(textMatrix))
+	colnames(moduleTraitCor_df) <- c("Module","Trait","Correlation")
+	moduleTraitCor_df$Text_correlation <- textMatrix_df[["Freq"]]
 	####################################################################
 	# Produce dendogram and heatmap
 	####################################################################
 	ME_numeric_traits <- orderMEs(cbind(MEs, trait))
-
-	pdf(file.path(path, 'eigengenes_heatmap.pdf'))
-		dev.control(displaylist="enable")
-		plotEigengeneNetworks(ME_numeric_traits, "Eigengene adjacency heatmap", marHeatmap = c(12,12,2,2),
-                      plotDendrograms = FALSE, xLabelsAngle = 30, plotAdjacency=FALSE)
-		trait_and_module_heatmap <- recordPlot()
-	dev.off()
-
-	pdf(file.path(path, 'eigengenes_dendogram.pdf'))
-		dev.control(displaylist="enable")
-		plotEigengeneNetworks(ME_numeric_traits, "Eigengene dendrogram", marDendro = c(0,4,2,0),
-                      plotHeatmaps = FALSE)
-		trait_and_module_dendogram <- recordPlot()
-	dev.off()
-	
-
 
 	####################################################################
 	## Produce Tables
@@ -243,7 +204,6 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	write.table(module_trait_cor, file=file.path(path, "module_trait.txt"), sep="\t", quote=FALSE)
 	write.table(module_trait_cor_p, file=file.path(path, "module_trait_p_val.txt"), sep="\t", quote=FALSE)
 
-	# save(list = ls(all.names = TRUE), file = "~/test.RData", envir = environment())
 	cluster_ID<- net$colors
 	Cluster_MM <- sapply(names(cluster_ID), function(x) gene_module_cor[x, paste0("Cluster_", cluster_ID[x])]) 
 	Cluster_MM_pval <- sapply(names(cluster_ID), function(x) gene_module_cor_p[x, paste0("Cluster_", cluster_ID[x])]) # Get the MM value
@@ -263,10 +223,9 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 			package_objects=list(gene_module_cor = gene_module_cor, gene_module_cor_p = gene_module_cor_p,
 				gene_trait_cor = gene_trait_cor, gene_trait_cor_p = gene_trait_cor_p, 
 				module_trait_cor = module_trait_cor, module_trait_cor_p = module_trait_cor_p),
-			plot_objects=list(sorted_colours = labels2colors(ME_numeric),
-				trait_vs_module_heatmap = trait_vs_module_heatmap,
-				trait_and_module_dendogram = trait_and_module_dendogram,
-				trait_and_module_heatmap = trait_and_module_heatmap,
+				plot_objects=list(sorted_colours = labels2colors(ME_numeric),
+				trait_vs_module = moduleTraitCor_df,
+				trait_and_module = ME_numeric_traits,
 				power_threshold_effects = power_threshold_effects,
 				cluster_vs_MM = cluster_vs_MM)
 			)

@@ -432,7 +432,7 @@ A table containing the NOISeq normalized counts is provided in Results\\_NOISeq/
 
 
 ```{r WGCNA_conditional_block_head, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
-cat("### **WGCNA Results**
+cat("## **WGCNA Results**
 
 WGCNA was run to look for modules (clusters) of coexpressed genes. These modules were then compared with the sample factors to look for correlation. 
 If no sample factors were specified, this comparison was performed with treatment/control labels.
@@ -443,75 +443,57 @@ The following graphic shows the power value chosen for building clusters. The po
 ```
 
 
-```{r WGCNA_conditional_block_plot_power_choice, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
-
-    replayPlot(results_WGCNA[['plot_objects']][['power_threshold_effects']])
-
-```
-
 ```{r WGCNA_conditional_block_head_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
 cat("In total there were ", max(unique(results_WGCNA$gene_cluster_info$Cluster_ID)) , "clusters. 
 	The following plot shows the number of genes per cluster:"
 )
 ```
 
-```{r WGCNA_conditional_block_plot_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
-	genes_per_cluster <- table(results_WGCNA$gene_cluster_info$Cluster_ID)
-	col_clusters_barplot <- results_WGCNA[['plot_objects']][['sorted_colours']]
-
-	names(col_clusters_barplot) <- names(genes_per_cluster)
-	ggplot(as.data.frame(genes_per_cluster), aes(Var1, Freq, fill=Var1)) + 
-    geom_bar(stat="identity") + scale_fill_manual(name = "Cluster ID", values=col_clusters_barplot) + 
-    labs(x = "Cluster ID (0 = unclustered)", y = "Frequency", main="Number of Genes per Cluster")
-
- ```
-
-
 ```{r WGCNA_conditional_block_head_factors, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
 
 	cat("The following plots show the correlation between the different modules and specified factors. This is done using eigengenes, 
-which can be broadly thought of as the average expression pattern for the genes in a given cluster. MEn refers to the eigengene for cluster n.
-
-The first plot shows the correlation between clusters (eigen genes) and factors directly. The second plot clusters these eigengenes along with the factors. 
-The third shows the correlation for all combinations of clusters and factors."
+which can be broadly thought of as the average expression pattern for the genes in a given cluster. MEn refers to the eigengene for cluster n."
 )
 
 ```
 
-
-```{r WGCNA_conditional_block_head_MMs, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
-
-	cat("Finally, there is a plot that shows, for each gene, the cluster ID ascertained by WGCNA, vs. the cluster whose eigen gene has the highest correlation.")
-
-```
-
-```{r WGCNA_conditional_block_plot_MMs, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15, results="asis"}
-	pp<- results_WGCNA[['plot_objects']][['cluster_vs_MM']]
-	plot_in_div(pp)
-```
-
-
-
 ```{r WGCNA_conditional_block_plot_factors, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15, results = 'asis'}
+cat("### **Cluster assignment vs lower module membership (MM) **")
+
+cat("\nThis plot shows, for each gene, the cluster ID ascertained by WGCNA, vs. the cluster whose eigen gene has the highest correlation (module membership/MM).")
+
+	plot_in_div(results_WGCNA[['plot_objects']][['cluster_vs_MM']])
 	cluster_count <- get_clusters_count(results_WGCNA)
 	features_count <- get_features_count(results_WGCNA)
+	
+cat("### **Cluster vs. factors correlation**
 
-#   plot_in_div(replayPlot(results_WGCNA[['plot_objects']][['trait_vs_module_heatmap']]), calc_height_clusters(cluster_count), calc_width_clusters(features_count))
+This plot shows the correlation between clusters (eigen genes) and factors directly.")
 
-	# knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor']][1:10,])
-	# knitr::kable(results_WGCNA[['package_objects']][['gene_trait_cor_p']][1:10,])
-	# knitr::kable(results_WGCNA[['package_objects']][['gene_module_cor']][1:10,])
-	# knitr::kable(results_WGCNA[['package_objects']][['gene_module_cor_p']][1:10,])
-	# knitr::kable(results_WGCNA[['package_objects']][['module_trait_cor']])
-	# knitr::kable(results_WGCNA[['package_objects']][['module_trait_cor_p']])
+	pp <- gg_heatmap(data =  results_WGCNA[['plot_objects']][['trait_vs_module']], 
+						x_axis = "Trait",
+						y_axis= "Module",
+						fill = "Correlation",
+						text_plot= "Text_correlation")
+	plot_in_div(pp, fig_height= (5 + (0.8 * cluster_count)), fig_width=(3 + (features_count * 0.8)), cex = 0.5)
 
-	#plot(results_WGCNA$plot_objects)
+cat("### **Eigen values clustering**	
 
-#	plot_in_div(replayPlot(results_WGCNA[['plot_objects']][['trait_and_module_dendogram']]),
-#		fig_width=calc_width_clusters((features_count + cluster_count), multiplier = 0.15))
- #   plot_in_div(replayPlot(results_WGCNA[['plot_objects']][['trait_and_module_heatmap']]),
-  #  	calc_height_clusters(features_count + cluster_count),
-   # 	calc_width_clusters(features_count + cluster_count))
+The second plot clusters these eigengenes along with the factors.") 
+	
+	plot_in_div(plotEigengeneNetworks(results_WGCNA[['plot_objects']][['trait_and_module']], "Eigengene dendrogram", marDendro = c(0,4,2,0), plotHeatmaps = FALSE),
+		fig_width= 4+ calc_width_clusters((features_count + cluster_count), multiplier = 0.15),  min_size = 5)
+
+cat("### **Correlation between all clusters and factors**")
+	correlation <- cor(results_WGCNA[['plot_objects']][['trait_and_module']], use = "p")
+	correlation_df <- as.data.frame(correlation)
+	pp <- gg_heatmap(data_table = correlation_df, 
+    						fill = "Correlation",
+    						labs = FALSE,
+    						input = "matrix",
+    						x_angle = 25)
+	cor_elements <- features_count + cluster_count
+	plot_in_div(pp,	5 + (cor_elements *0.2), 5 + (cor_elements *0.2))
 
 ```
 

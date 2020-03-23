@@ -16,10 +16,15 @@ suppressPackageStartupMessages(require(rmarkdown))
 suppressPackageStartupMessages(require(reshape2))
 suppressPackageStartupMessages(require(PerformanceAnalytics))
 suppressPackageStartupMessages(require(WGCNA))
-suppressPackageStartupMessages(require(biomaRt)) 
-suppressPackageStartupMessages(require(topGO))
-suppressPackageStartupMessages(require(KEGGREST))
-suppressPackageStartupMessages(require(clusterProfiler))
+
+
+full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using source
+               error=function(e) # works when using R CMD
+              normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', commandArgs())], '='))[2]))
+
+
+print(file.path(dirname(full.fpath), 'lib', 'plotting_functions.R'))
+source(file.path(dirname(full.fpath), 'lib', 'plotting_functions.R'))
 
 
 option_list <- list(
@@ -32,15 +37,18 @@ option_list <- list(
   )
 actual_opt <- parse_args(OptionParser(option_list=option_list))
 
-### load enviroment
+if(actual_opt$template == "functional_report"){
+  suppressPackageStartupMessages(require(topGO))
+  suppressPackageStartupMessages(require(biomaRt)) 
+  suppressPackageStartupMessages(require(KEGGREST))
+  suppressPackageStartupMessages(require(clusterProfiler))
+}
 load(actual_opt$input)
-full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using source
-               error=function(e) # works when using R CMD
-              normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', commandArgs())], '='))[2]))
+### load enviroment
+
 ### load template
 DEGhunter_templates <- file.path(dirname(full.fpath), "/", "templates")
 
-print(c(DEGhunter_templates, actual_opt$template, full.fpath))
 ### Render
 rmarkdown::render(
 	normalizePath(file.path(DEGhunter_templates, paste0(actual_opt$template, ".Rmd"))), 
