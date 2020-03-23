@@ -7,14 +7,24 @@ resize <- function(g, fig_height=5, fig_width=12) {
   cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk), quiet = TRUE))
 }
 
-plot_in_div <- function(g, fig_height=7, fig_width=12) {
+plot_in_div <- function(g, fig_height=7, fig_width=12, ## height and width in inches
+  cex = 1, #size multiplier
+  max_size = 50, # max size for plots in inches
+  min_size = 10) {
   cat('\n<div class="plot_real_size">\n')
-  if(fig_height > 50){
-	fig_height <- 50
-	}
-  if(fig_width > 50){
-	fig_wigth <- 50
-	}
+  fig_height <- fig_height * cex
+  fig_width <- fig_width * cex
+
+  if(fig_height > max_size){
+    fig_height <- max_size
+	}else if(fig_height < min_size){
+    fig_height <- min_size
+  }
+  if(fig_width > max_size){
+    fig_width <- max_size
+	}else if(fig_width < min_size){
+    fig_width <- min_size  
+  }
   g_deparsed <- paste0(deparse(function() {g}), collapse = '')
   sub_chunk <- paste0("\n```{r sub_chunk_", floor(runif(1) * 10000), ", fig.height=", fig_height, ", fig.width=", fig_width, ", echo=FALSE}", "\n(", g_deparsed, ")()\n```\n\n\n") 
   cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk), quiet = TRUE))
@@ -132,6 +142,49 @@ set_standard_size <- function(pp){
   pp <- pp + theme_light() + 
         theme(axis.text.y = element_text(size = 10, face = 'bold'), axis.title = element_blank()) 
   return(pp)
+}
+
+gg_heatmap <- function(data_table, 
+  input = "", 
+  traspose = FALSE, 
+  y_axis= "y_axis",
+  x_axis = "x_axis", 
+  fill = "Freq",
+  text_plot = NULL,
+  labs = TRUE,
+  x_angle = 25,
+#  dendro = NULL,
+  col = c("#0000D5","#FFFFFF","#D50000"),
+  na_col = "grey50"){
+
+    if(traspose){
+      data_table <- t(data_table)
+    }
+    if(input == "matrix"){
+      data_table <- as.data.frame(as.table(as.matrix(data_table)))
+      colnames(data_table) <- c(y_axis,x_axis,fill)
+    }
+
+#    save(list = ls(all.names = TRUE), file = "~/test/ggtest.RData", envir = environment())
+    pp <- ggplot(data_table, aes_string(x = x_axis, y = y_axis, fill = fill)) +
+    geom_tile(show.legend = TRUE) +
+    theme(axis.text.x = element_text(angle = x_angle, face = "bold", hjust = 1),axis.text.y = element_text(face = "bold")) +
+    scale_fill_gradient2(
+    low = col[1],
+    high = col[3],
+    mid= col[2],
+    na.value = na_col,
+    guide = "colourbar",
+    aesthetics = "fill")
+    if(!labs){
+      pp <- pp + theme(
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())
+    }
+    if(!is.null(text_plot)){
+      pp <- pp + geom_text(aes_string(label=text_plot), size = 2.5) 
+    }
+    return(pp)
 }
 
 
