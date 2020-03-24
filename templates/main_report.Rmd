@@ -442,11 +442,25 @@ The following graphic shows the power value chosen for building clusters. The po
 )
 ```
 
+```{r WGCNA_conditional_block_plot_power_choice, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
+    replayPlot(results_WGCNA[['plot_objects']][['power_threshold_effects']])
+```
+
+
 
 ```{r WGCNA_conditional_block_head_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
 cat("In total there were ", max(unique(results_WGCNA$gene_cluster_info$Cluster_ID)) , "clusters. 
 	The following plot shows the number of genes per cluster:"
 )
+```
+
+```{r WGCNA_conditional_block_plot_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
+	genes_per_cluster <- table(results_WGCNA$gene_cluster_info$Cluster_ID)
+	col_clusters_barplot <- results_WGCNA[['plot_objects']][['sorted_colours']]
+	names(col_clusters_barplot) <- names(genes_per_cluster)
+	ggplot(as.data.frame(genes_per_cluster), aes(Var1, Freq, fill=Var1)) + 
+    geom_bar(stat="identity") + scale_fill_manual(name = "Cluster ID", values=col_clusters_barplot) + 
+    labs(x = "Cluster ID (0 = unclustered)", y = "Frequency", main="Number of Genes per Cluster")
 ```
 
 ```{r WGCNA_conditional_block_head_factors, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
