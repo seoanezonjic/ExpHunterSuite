@@ -83,4 +83,26 @@ write_df_list_as_tables <- function(df_list, prefix, root) {
   )
 }
 
+debug_point <- function(file, message = "Debug point"){
+    debug_message <<- message
+    save.image(file)
+}
+
+
+save_times <- function(time_control, output="times_control.txt", plot_name = "time_control.pdf"){
+ spent_times <- list()
+    invisible(lapply(seq(2,length(time_control)), function(time_control_i){
+      spent_times[[names(time_control)[time_control_i]]] <<- as.numeric(unlist(time_control[time_control_i]) - unlist(time_control[time_control_i - 1]))
+    }))
+    spent_times_df <- do.call(rbind.data.frame, spent_times)
+    colnames(spent_times_df) <- c("time")
+    spent_times_df$control <- names(spent_times)
+    pp <- ggplot(spent_times_df, aes(x= control, y = time)) +
+    geom_bar(stat = "identity") +
+    theme(axis.text.x=element_text(angle = 25, hjust=1))
+    pdf(file.path(dirname(output), plot_name))    
+      plot(pp)
+    dev.off()
+    write.table(spent_times_df, file=output, quote=FALSE, row.names=FALSE, sep="\t")
+}
 

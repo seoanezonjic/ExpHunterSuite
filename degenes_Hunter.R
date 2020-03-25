@@ -52,7 +52,6 @@ source(file.path(main_path_script, 'lib', 'correlation_packages_PCIT.R'))
 source(file.path(main_path_script, 'lib', 'plotting_functions.R'))
 
 
-
 # Prepare command line input 
 option_list <- list(
   make_option(c("-i", "--input_file"), type="character", default=NULL,
@@ -107,8 +106,10 @@ option_list <- list(
     help="NetworkType option to be passed to blockwiseModules function"),
   make_option(c("--WGCNA_blockwiseTOMType"), type="character", default="signed",
     help="TOMType option to be passed to blockwiseModules function"),
-   make_option(c("--debug"), type="logical", default=FALSE, action = "store_true",
-    help="Activate debug mode, which stores RData sessions at different points of the pipeline")
+  make_option(c("--debug"), type="logical", default=FALSE, action = "store_true",
+    help="Activate debug mode, which stores RData sessions at different points of the pipeline"),
+  make_option(c("--Debug"), type="character", default=NULL,
+    help="Activate debug mode and uses given filename. File must have '.RData' extension")
  )
 opt <- parse_args(OptionParser(option_list=option_list))
 opt_orig <- opt
@@ -116,6 +117,8 @@ opt_orig <- opt
 ############################################################
 ##                       CHECK INPUTS                     ##
 ############################################################
+
+
 
 # Check inputs not allowed values
 if (is.null(opt$input_file)){
@@ -172,15 +175,22 @@ if((opt$string_factors != "" | opt$numeric_factors != "") & (!grepl("W", opt$mod
   warning("If you wish to use factors for the correlation analysis you must also run WGCNA and include a target file. The -S and -N options will be ignored")
 }
 
-if(opt$debug){
+if(!is.null(opt$Debug)){
+  opt$debug <- TRUE
+  debug_file <- file.path(opt$Debug)
+}
 
+if(opt$debug){
   # Define only once
-  debug_file <- file.path(normalizePath(opt$output_files), paste(c("DHunter_Debug_Session_",format(Sys.Date(),format = "%Y%m%d"),".RData"),collapse = ""))
-  # Store session
-  debug_point <- function(file, message = "Debug point"){
-    debug_message <<- message
-    save.image(file)
+  if(is.null(opt$Debug)){
+    debug_file <- file.path(paths$root, debug_files, paste(c("FHunter_Debug_Session_",format(Sys.Date(),format = "%Y%m%d"),".RData"),collapse = ""))
   }
+  debug_dir <- dirname(debug_file)
+  dir.create(debug_dir, recursive = T)
+  debug_dir <- normalizePath(debug_dir)
+  # Store session
+  time_control <- list(start = Sys.time())
+  debug_point(debug_file,"Start point")
 }
 
 ############################################################
@@ -309,6 +319,15 @@ if(opt$model_variables != "") {
   model_formula_text <- "~ treat"
 }
 cat("Model for gene expression analysis is:", model_formula_text, "\n")
+
+
+####################### DEBUG POINT #############################
+if(opt$debug){
+  time_control$initialize <- Sys.time()
+  debug_point(debug_file,"Initialize performed")
+}
+#################################################################
+
 
 ############################################################
 ##                       D.EXP ANALYSIS                   ##
@@ -465,7 +484,15 @@ if(grepl("N", opt$modules)){
   }
 }
 
+
+####################### DEBUG POINT #############################
+if(opt$debug){
+  time_control$dea_packages <- Sys.time()
+  debug_point(debug_file,"DEA analysis performed")
+}
 ##################################################################
+
+#################################################################
 ##                       CORRELATION ANALYSIS                   ##
 ##################################################################
 #####
@@ -546,6 +573,12 @@ if(grepl("W", opt$modules)) {
   } else {
     warning("WGCNA will not be performed as it requires a DESeq2 object")
   }
+####################### DEBUG POINT #############################
+  if(opt$debug){
+    time_control$wgcna <- Sys.time()
+    debug_point(debug_file,"WGCNA analysis performed")
+  }
+#################################################################
 }
 
 #####
@@ -559,6 +592,12 @@ if(grepl("X", opt$modules)) {
   results_diffcoexp <- analysis_diffcoexp(data = raw_filter,
                                        path = path,
                                        target = target)
+####################### DEBUG POINT #############################
+  if(opt$debug){
+    time_control$diffcoexp <- Sys.time()
+    debug_point(debug_file,"Diffcoexp analysis performed")
+#################################################################
+  }
 }
 
 #################################################################################
@@ -605,10 +644,13 @@ DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
 # New structure - row names are now actually row names
 dir.create(file.path(opt$output_files, "Common_results"))
 write.table(DE_all_genes, file=file.path(opt$output_files, "Common_results", "hunter_results_table.txt"), quote=FALSE, row.names=TRUE, sep="\t")
-
 ####################### DEBUG POINT #############################
-if(opt$debug) debug_point(debug_file,"Full analysis performed")
+if(opt$debug){
+  time_control$write_output_tables <- Sys.time()
+  debug_point(debug_file,"Full analysis performed")
+}
 #################################################################
+
 
 ############################################################
 ##                    GENERATE REPORT                     ##
@@ -616,3 +658,12 @@ if(opt$debug) debug_point(debug_file,"Full analysis performed")
 outf <- file.path(normalizePath(opt$output_files),"DEG_report.html")
 rmarkdown::render(file.path(main_path_script, 'templates', 'main_report.Rmd'), 
                   output_file = outf, intermediates_dir = opt$output_files)
+
+
+if(opt$debug){
+####################### DEBUG POINT #############################
+    time_control$render_main_report <- Sys.time()
+    debug_point(debug_file,"Report printed")
+#################################################################
+    save_times(time_control, output = file.path(debug_dir, "degenes_hunter_time_control.txt"), plot_name = "DH_times_control.pdf")
+}
