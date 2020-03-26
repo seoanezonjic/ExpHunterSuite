@@ -280,13 +280,13 @@ pp <- set_standard_size(pp)
 plot_in_div(pp, calc_height(enrichments_ORA$GO_BP),calc_width(enrichments_ORA$GO_BP))
 
 
-cat(
-	"**CNetplot**\n\n", 
-	"WRITE THIS TEXT >>>>.\n\n"
-)
+# cat(
+# 	"**CNetplot**\n\n", 
+# 	"WRITE THIS TEXT >>>>.\n\n"
+# )
 
-pp <- cnetplot(enrichments_ORA$GO_BP, showCategory = n_category)
-plot_in_div(pp, calc_height(enrichments_ORA$GO_BP),calc_width(enrichments_ORA$GO_BP))
+# pp <- cnetplot(enrichments_ORA$GO_BP, showCategory = n_category)
+# plot_in_div(pp, calc_height(enrichments_ORA$GO_BP),calc_width(enrichments_ORA$GO_BP))
 
 
 ```
@@ -316,12 +316,12 @@ pp <- clusters_heatplot(enrichments_ORA$GO_MF@compareClusterResult)
 pp <- set_standard_size(pp)
 plot_in_div(pp, calc_height(enrichments_ORA$GO_MF),calc_width(enrichments_ORA$GO_MF))
 
-cat(
-	"**CNetplot**\n\n", 
-	"WRITE THIS TEXT >>>>.\n\n"
-)
-pp <- cnetplot(enrichments_ORA$GO_MF, showCategory = n_category)
-plot_in_div(pp, calc_height(enrichments_ORA$GO_MF),calc_width(enrichments_ORA$GO_MF))
+# cat(
+# 	"**CNetplot**\n\n", 
+# 	"WRITE THIS TEXT >>>>.\n\n"
+# )
+# pp <- cnetplot(enrichments_ORA$GO_MF, showCategory = n_category)
+# plot_in_div(pp, calc_height(enrichments_ORA$GO_MF),calc_width(enrichments_ORA$GO_MF))
 
 ```
 
@@ -352,13 +352,13 @@ pp <- clusters_heatplot(enrichments_ORA$GO_CC@compareClusterResult)
 pp <- set_standard_size(pp)
 plot_in_div(pp, calc_height(enrichments_ORA$GO_CC),calc_width(enrichments_ORA$GO_CC))
 
-cat(
-	"**CNetplot**\n\n", 
-	"WRITE THIS TEXT >>>>.\n\n"
-)
+# cat(
+# 	"**CNetplot**\n\n", 
+# 	"WRITE THIS TEXT >>>>.\n\n"
+# )
 
-pp <- cnetplot(enrichments_ORA$GO_CC, showCategory = n_category)
-plot_in_div(pp, calc_height(enrichments_ORA$GO_CC),calc_width(enrichments_ORA$GO_CC))
+# pp <- cnetplot(enrichments_ORA$GO_CC, showCategory = n_category)
+# plot_in_div(pp, calc_height(enrichments_ORA$GO_CC),calc_width(enrichments_ORA$GO_CC))
 
 ```
 
@@ -405,13 +405,13 @@ invisible(lapply(seq_along(custom_cls_ORA),function(i){
 				pp <- clusters_heatplot(res@compareClusterResult) 
 				pp <- set_standard_size(pp)
 				plot_in_div(pp, calc_height(res),calc_width(res))
-				cat(
-					'**CNetplot**\n\n', 
-					'WRITE THIS TEXT >>>>.\n\n'
-				)
+				# cat(
+				# 	'**CNetplot**\n\n', 
+				# 	'WRITE THIS TEXT >>>>.\n\n'
+				# )
 
-				pp <- cnetplot(res, showCategory = n_category)
-				plot_in_div(pp, calc_height(res), calc_width(res))
+				# pp <- cnetplot(res, showCategory = n_category)
+				# plot_in_div(pp, calc_height(res), calc_width(res))
 
 		"
 
