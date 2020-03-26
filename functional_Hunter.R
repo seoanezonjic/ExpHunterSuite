@@ -687,20 +687,25 @@ if(flags$Clustered){
 	## CUSTOM
 	if(!is.null(custom_sets)){
 		# Execute ORA per each set
-		custom_cls_ORA <- lapply(seq_along(custom_sets),function(i){
+		custom_cls_ORA_expanded <- lapply(seq_along(custom_sets),function(i){
 			cs_set <- custom_sets[[i]]
 			# Enrich
-			cs_enr <- lapply(clgenes,function(genesset){
+			cs_enr <- mclapply(clgenes,function(genesset){
 				enricher(genesset, pvalueCutoff = opt$threshold, TERM2GENE = cs_set)
-			})
+			},mc.cores = opt$cores)
 			names(cs_enr) <- names(clgenes)
-			# Concat
-			cs_enr <- merge_result(cs_enr)
-			# Store results
-			write.table(cs_enr, file=file.path(paths$root, paste0(basename(names(custom_sets)[i]),"_cls_ORA")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+			# Return
 			return(cs_enr)
 		})
-		names(custom_cls_ORA) <- names(custom_sets)
+		names(custom_cls_ORA_expanded) <- names(custom_sets)
+		custom_cls_ORA <- lapply(custom_cls_ORA_expanded,function(enrCL){merge_result(enrCL)})
+
+		invisible(lapply(seq_along(custom_cls_ORA),function(i){
+			# Concat
+			df <- enrichplot:::fortify.compareClusterResult(custom_cls_ORA[[i]])
+			# Write table
+			write.table(df, file=file.path(paths$root, paste0(basename(names(custom_sets)[i]),"_cls_ORA")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+		}))
 	}
 
 ####################### DEBUG POINT #############################
