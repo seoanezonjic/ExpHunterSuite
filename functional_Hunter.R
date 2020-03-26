@@ -10,7 +10,6 @@ full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using
               normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', commandArgs())], '='))[2]))
 main_path_script <- dirname(full.fpath)
 
-
 #Loading libraries  
 suppressPackageStartupMessages(require(optparse))
 suppressPackageStartupMessages(require(biomaRt)) 
@@ -25,7 +24,6 @@ suppressPackageStartupMessages(require(clusterProfiler))
 source(file.path(main_path_script, 'lib', 'general_functions.R'))
 source(file.path(main_path_script, 'lib', 'functional_analysis_library.R'))
 source(file.path(main_path_script, 'lib', 'plotting_functions.R'))
-
 
 #############################################
 ### MAIN 
@@ -70,10 +68,9 @@ option_list <- list(
   make_option(c("--debug"), type="logical", default=FALSE, action = "store_true",
     help="Activate debug mode, which stores RData sessions at different points of the pipeline"),
   make_option(c("--Debug"), type="character", default=NULL,
-    help="Activate debug mode and uses given filename")
+    help="Activate debug mode and uses given filename. File must have '.RData' extension")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
-
 
 # Special IDs
 fc_colname <- "mean_logFCs"
@@ -87,26 +84,25 @@ paths <- list()
 dir.create(opt$output_files)
 paths$root <-opt$output_files
 
-
 if(!is.null(opt$Debug)){
 	opt$debug <- TRUE
-	debug_file <- file.path(paths$root,paste0(opt$Debug,".RData"))
+	debug_file <- file.path(opt$Debug)
 }
 
 if(opt$debug){
 	# Define only once
-	if(is.null(opt$Debug)) debug_file <- file.path(paths$root, paste(c("FHunter_Debug_Session_",format(Sys.Date(),format = "%Y%m%d"),".RData"),collapse = ""))
-	# Store session
-	debug_point <- function(file, message = "Debug point"){
-		debug_message <<- message
-		save.image(file)
+	if(is.null(opt$Debug)){
+		debug_file <- file.path(paths$root, debug_files, paste(c("FHunter_Debug_Session_",format(Sys.Date(),format = "%Y%m%d"),".RData"),collapse = ""))
 	}
+	debug_dir <- dirname(debug_file)
+	dir.create(debug_dir, recursive = T)
+	debug_dir <- normalizePath(debug_dir)
+	# Store session
+####################### DEBUG POINT #############################
+	time_control <- list(start = Sys.time())
+	debug_point(debug_file,"Start point")
+#################################################################
 }
-
-######################### DEBUG POINT
-if(opt$debug) debug_point(debug_file,"Start point")
-
-
 
 #############################################
 ### LOAD AND PARSE 
@@ -129,11 +125,9 @@ if(length(aux) > 0){
 DEGenesHunter_expression_opt <- read.table(file.path(opt$input_hunter_folder, "opt_input_values.txt"), header = FALSE, stringsAsFactors = FALSE, sep = "\t")
 degh_exp_threshold <- as.numeric(DEGenesHunter_expression_opt[which(DEGenesHunter_expression_opt[,1] == "p_val_cutoff"),2])
 
-
 experiments <- read.table(file.path(opt$input_hunter_folder, "control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
 exp_names <- paste("[Control]",experiments[which(experiments[,1] == "C"),2],sep=" ")
 exp_names <- c(exp_names,paste("[Treatment]",experiments[which(experiments[,1] == "T"),2],sep=" "))
-
 
 
 if(!is.null(opt$annot_file)){
@@ -202,9 +196,12 @@ aux <- table(DEG_annot_table$genes_tag)
 for(i in seq_along(aux)) 
 	message(paste(names(aux)[i],aux[i]))
 
-######################### DEBUG POINT
-if(opt$debug) debug_point(debug_file,"Data loaded")
-
+####################### DEBUG POINT #############################
+if(opt$debug){
+	time_control$load_data <- Sys.time()
+	debug_point(debug_file,"Data loaded")
+}
+#################################################################
 
 #############################################
 ### PREPARE AND TRANSFORM DATA
@@ -247,11 +244,9 @@ if(remote_actions$biomart){ # REMOTE MODE
 	error("Specified organism are not available to be studiend in LOCAL model. Please try REMOTE mode")
 }
 
-
 if(opt$save_query == TRUE){
   saveRDS(reference_table, file=file.path("query_results_temp"))
 } 
-
 
 # Load Normalized correlation data
 if(flags$Clustered){
@@ -301,9 +296,12 @@ if(flags$Clustered){
 	colnames(wgcna_count_sample_trait_gnorm) <- colnames(wgcna_count_sample_trait)
 }
 
-
-######################### DEBUG POINT
-if(opt$debug) debug_point(debug_file,"Data extended")
+####################### DEBUG POINT #############################
+if(opt$debug){
+	time_control$data_extended <- Sys.time()
+	debug_point(debug_file,"Data extended")
+}
+#################################################################
 
 ################# PREPROCESSING INPUT DATA FOR FUNCTIONAL ANALYSIS #############
 # Obtain prevalent items
@@ -313,7 +311,6 @@ common_DEGs_df <- subset(DEG_annot_table, genes_tag=="PREVALENT_DEG")
 if(nrow(common_DEGs_df) == 0){
   stop('Not detected genes tagged as PREVALENT_DEG. Likely some modules of degenes_Hunter.R failed and not generated output. Please, revise the input data')
 } 
-
 
 # Obtain significant sbusets
 #  > common_DEGs_df : subset of DEGenes Hunter annotation file with PREVALENT_DEG flag
@@ -345,13 +342,12 @@ if(exists("annot_table")){
 
 union_annot_DEGs_df <- subset(reference_table, reference_table[,1] %in% union_DEGs)
 
-
 ################# ADD ENTREZ IDS AND GENE SYMBOLS TO INPUT FILE #############
 # Currently only runs if we are local, have an org db available and a symbol correspondence. The ENTREZ bit should become universal even if no SYMBOL available
 
 if(!remote_actions$biomart &
 	! biomaRt_organism_info$Bioconductor_DB[1] == "" & 
-	! biomaRt_organism_info$Bioconductor_VarName_SYMBOL[1] == "") {
+	! biomaRt_organism_info$Bioconductor_VarName_SYMBOL[1] == ""){
 
 	DEG_annot_table_Symbol <- DEG_annot_table
 	if(exists("annot_table")){
@@ -466,11 +462,12 @@ if(flags$GO){
 	}
 }
 
-
-
-######################### DEBUG POINT
-if(opt$debug) debug_point(debug_file,"TopGO executed")
-
+####################### DEBUG POINT #############################
+if(opt$debug){
+	time_control$TopGO <- Sys.time()
+	debug_point(debug_file,"TopGO executed")
+}
+#################################################################
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ##                                                                                                                   ##
@@ -706,8 +703,13 @@ if(flags$Clustered){
 		names(custom_cls_ORA) <- names(custom_sets)
 	}
 
-	######################### DEBUG POINT
-	if(opt$debug) debug_point(debug_file,"Clusters enriched")
+####################### DEBUG POINT #############################
+	if(opt$debug){
+		time_control$cluster_enrichment <- Sys.time()
+		debug_point(debug_file,"Clusters enriched")
+	}
+#################################################################
+
 }
 
 
@@ -795,14 +797,12 @@ if(flags$REACT){
 	}
 }
 
-
-######################### DEBUG POINT
-if(opt$debug) debug_point(debug_file,"Regular enrichments executed")
-
-
-
-
-
+####################### DEBUG POINT #############################
+if(opt$debug){
+	time_control$regular_enrichments <- Sys.time()
+	debug_point(debug_file,"Regular enrichments executed")
+}
+#################################################################
 
 
 #############################################
@@ -837,9 +837,13 @@ if(!is.null(opt$custom)) {
 	custom_enrichments <- NULL
 }
 
+####################### DEBUG POINT #############################
+if(opt$debug){
+	time_control$custom_enrichments <- Sys.time()
+	debug_point(debug_file,"All enrichments executed")
+}
+#################################################################
 
-######################### DEBUG POINT
-if(opt$debug) debug_point(debug_file,"All enrichments executed")
 
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
@@ -864,11 +868,25 @@ if(flags$Clustered){ # Clustered
 		outf_cls_i <- file.path(results_path, aux)
 		# Generate report
 		rmarkdown::render(file.path(main_path_script, 'templates', 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
+		if(opt$debug){
+			time_control[[paste0("cl_func_",cl)]] <<- Sys.time()
+		}	
 	}))
 	message("\tRendering clustered report")
 	outf_cls <- file.path(results_path, "clusters_func_report.html")
 	rmarkdown::render(file.path(main_path_script, 'templates', 'clusters_main_report.Rmd'),output_file = outf_cls, intermediates_dir = results_path)
+	if(opt$debug){
+		time_control$render_cluster_main_report <- Sys.time()
+	}
 }
 message("\tRendering regular report")
 outf <- file.path(results_path, "functional_report.html")
 rmarkdown::render(file.path(main_path_script, 'templates', 'functional_report.Rmd'), output_file = outf, intermediates_dir = results_path)
+
+if(opt$debug){
+####################### DEBUG POINT #############################
+    time_control$render_main_report <- Sys.time()
+    debug_point(debug_file,"Report printed")
+#################################################################
+    save_times(time_control, output = file.path(debug_dir, "function_hunter_time_control.txt"), plot_name = "FH_times_control.pdf")
+}
