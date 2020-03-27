@@ -405,6 +405,10 @@ invisible(lapply(seq_along(custom_cls_ORA),function(i){
 				pp <- clusters_heatplot(res@compareClusterResult) 
 				pp <- set_standard_size(pp)
 				plot_in_div(pp, calc_height(res),calc_width(res))
+
+		"
+
+	}
 				# cat(
 				# 	'**CNetplot**\n\n', 
 				# 	'WRITE THIS TEXT >>>>.\n\n'
@@ -412,10 +416,6 @@ invisible(lapply(seq_along(custom_cls_ORA),function(i){
 
 				# pp <- cnetplot(res, showCategory = n_category)
 				# plot_in_div(pp, calc_height(res), calc_width(res))
-
-		"
-
-	}
 	out_custom <<- c(out_custom,paste(knit_expand(text = paste(header,
 										 					chunks(body, options = "echo = FALSE,results='asis'"),
 										 					"\n",sep = "\n")),
