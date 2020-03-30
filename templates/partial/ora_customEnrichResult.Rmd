@@ -30,6 +30,7 @@ out <- NULL
 
 
 ```{r "{{cl}}_{{cat}}_oraEnrich", results='asis', echo = FALSE, message=FALSE, warning=FALSE}
+
 n_category <- 30
 default_width <- set_default_width(enrich_obj = custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
 if(length(get_categories(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2){ # Needs, at least, two categories
@@ -63,9 +64,14 @@ if(length(get_categories(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2){
 		The size of the functional terms shows the number of connected genes.\n\n"
 	)
 	enrichments_ORA_symb <- setReadable(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]], OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-	pp <- cnetplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList) +
-		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-	plot_in_div(pp, fig_width = default_width)
+	
+	if(length(get_genes(enrichments_ORA_symb)) <= 150){
+		pp <- cnetplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList) +
+			  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+		plot_in_div(pp, fig_width = default_width)
+	}else{
+		cat("\n\nCnetplot is not readable because more than 150 genes has been enriched in this nomenclature, so is not printed\n\n")
+	}
 
 
 	cat("\n\n**Enrich Map plot**\n\n", 
@@ -89,13 +95,18 @@ if(length(get_categories(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2){
 	cat("\n\n**Upsetplot**\n\n", 
 		"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 	)
-	pp <- upsetplot(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]], n=n_category)
-	plot_in_div(pp, fig_width = default_width)
+	if(length(get_categories(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2){ # Needs, at least, two categories
+		pp <- upsetplot(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]], n=n_category)
+		plot_in_div(pp, fig_width = default_width)
+	}else{
+		cat('\n\nGenes has been enriched in less than 2 categories, so Upsetplot cannot be printed\n\n')
+	}
 }else{
 	# Main label 
 	cat("### **{{cat}} - Over Representation Analysis**\n",
 		"After execute ORA enrichment, **any significative term have been found**")
 }
+
 ```
 
 

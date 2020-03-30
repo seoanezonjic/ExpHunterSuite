@@ -30,7 +30,7 @@ plot_in_div <- function(g, fig_height=7, fig_width=12, ## height and width in in
   cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk), quiet = TRUE))
   cat('\n</div>\n')
 }
-
+ 
 get_plot_df <- function(enrich_obj, showCategory = 30) {
   geneSets <- enrichplot:::extract_geneSets(enrich_obj, enrichplot:::update_n(enrich_obj, showCategory))
   geneSets <- enrichplot:::list2df(geneSets)

@@ -439,11 +439,14 @@ cat("\n\n**Gene-Concept Network**\n\n",
 	The size of the functional terms shows the number of connected genes.\n\n"
 )
 enrich_ora_symb <- setReadable(enrich_ora, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-pp <- cnetplot(enrich_ora_symb, showCategory=n_category, foldChange=geneList) +
-	  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-plot_in_div(pp, fig_width = default_width)
 
-
+if(length(get_genes(enrich_ora_symb)) <= 200){
+	pp <- cnetplot(enrich_ora_symb, showCategory=n_category, foldChange=geneList) +
+		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+	plot_in_div(pp, fig_width = default_width)
+}else
+	cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
+}
 
 cat("\n\n**Enrich Map plot**\n\n", 
 	"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
@@ -465,12 +468,14 @@ height_size <- calc_height(enrich_ora_symb)
 plot_in_div(pp, height_size, width_size)
 
 
+cat("\n\n**Upsetplot**\n\n", 
+	"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
+)
 if(length(get_categories(enrich_ora))>=2){ # Needs, at least, two categories
-	cat("\n\n**Upsetplot**\n\n", 
-		"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
-	)
 	pp <- upsetplot(enrich_ora, n=n_category)
 	plot_in_div(pp, fig_width = default_width)
+}else{
+	cat("\n\nGenes has been enriched in less than 2 categories, so Upsetplot cannot be printed\n\n")
 }
 ```
 
@@ -501,10 +506,13 @@ cat("\n\n**Gene-Concept Network**\n\n",
 	The size of the functional terms shows the number of connected genes.\n\n"
 )
 enrich_gsea_symb <- setReadable(enrich_gsea, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-pp <- cnetplot(enrich_gsea_symb, showCategory=n_category, foldChange=geneList) +
-	  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-plot_in_div(pp, fig_width = default_width)
-
+if(length(get_genes(enrich_gsea_symb)) <= 200){
+	pp <- cnetplot(enrich_gsea_symb, showCategory=n_category, foldChange=geneList) +
+		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+	plot_in_div(pp, fig_width = default_width)
+}else
+	cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
+}
 
 cat("\n\n**Enrich Map plot**\n\n", 
 	"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
@@ -633,9 +641,14 @@ invisible(lapply(names(go_main_enrich),function(onto){
 			The size of the functional terms shows the number of connected genes.\n\n"
 		)
 		enrich_go_ora_symb <- setReadable(enrich_go[[onto]], OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-		go_pp <- cnetplot(enrich_go_ora_symb, showCategory=n_category, foldChange=geneList) +
-				 scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-		plot_in_div(go_pp, fig_width = default_width)
+
+		if(length(get_genes(enrich_go_ora_symb)) <= 200){
+			go_pp <- cnetplot(enrich_go_ora_symb, showCategory=n_category, foldChange=geneList) +
+					 scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+			plot_in_div(go_pp, fig_width = default_width)
+		}else
+			cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
+		}
 
 		cat("\n\n**Enrich Map plot**\n\n", 
 			"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
@@ -655,9 +668,13 @@ invisible(lapply(names(go_main_enrich),function(onto){
 		cat("\n\n**Upsetplot**\n\n", 
 			"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 		)
-		go_pp <- upsetplot(enrich_go[[onto]], n=n_category)
-		plot_in_div(go_pp, fig_width = default_width)
-		cat("\n \n")
+		if(length(get_categories(enrich_go[[onto]]))>=2){ # Needs, at least, two categories
+			go_pp <- upsetplot(enrich_go[[onto]], n=n_category)
+			plot_in_div(go_pp, fig_width = default_width)
+			cat("\n \n")
+		}else{
+			cat("\n\nGenes has been enriched in less than 2 categories, so Upsetplot cannot be printed\n\n")
+		}
 	}
 
 
@@ -683,9 +700,14 @@ invisible(lapply(names(go_main_enrich),function(onto){
 			The size of the functional terms shows the number of connected genes.\n\n"
 		)
 		enrich_go_gsea_symb <- setReadable(enrich_go_gsea[[onto]], OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-		go_pp <- cnetplot(enrich_go_gsea_symb, showCategory=n_category, foldChange=geneList) +
-				  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-		plot_in_div(go_pp, fig_width = default_width)
+
+		if(length(get_genes(enrich_go_gsea_symb)) <= 200){
+			go_pp <- cnetplot(enrich_go_gsea_symb, showCategory=n_category, foldChange=geneList) +
+					  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+			plot_in_div(go_pp, fig_width = default_width)
+		}else
+			cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
+		}
 
 		cat("\n\n**Enrich Map plot**\n\n", 
 			"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
@@ -758,10 +780,14 @@ if(go_flags$enrich_go){
 		The size of the functional terms shows the number of connected genes.\n\n"
 	)
 	enr_go_symb <- setReadable(enr_go, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-	go_pp  <- cnetplot(enr_go_symb, showCategory=n_category, foldChange=geneList) +
-			  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-	plot_in_div(go_pp, fig_width = default_width)
-
+	if(length(get_genes(enrich_go_symb)) <= 200){
+		go_pp  <- cnetplot(enr_go_symb, showCategory=n_category, foldChange=geneList) +
+				  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+		plot_in_div(go_pp, fig_width = default_width)
+	}else
+		cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
+	}
+	
 	cat("\n\n**Enrich Map plot**\n\n", 
 		"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
@@ -780,9 +806,12 @@ if(go_flags$enrich_go){
 	cat("\n\n**Upsetplot**\n\n", 
 		"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 	)
-	go_pp <- upsetplot(enr_go, n=n_category)
-	plot_in_div(go_pp, fig_width = default_width)
-
+	if(length(get_categories(enr_go))>=2){ # Needs, at least, two categories
+		go_pp <- upsetplot(enr_go, n=n_category)
+		plot_in_div(go_pp, fig_width = default_width)
+	}else{
+		cat("\n\nGenes has been enriched in less than 2 categories, so Upsetplot cannot be printed\n\n")
+	}
 	cat("\n \n")
 }
 
@@ -815,10 +844,13 @@ if(go_flags$enrich_go_gsea){
 		The size of the functional terms shows the number of connected genes.\n\n"
 	)
 	enr_go_gsea_symb <- setReadable(enr_go_gsea, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-	go_pp <- cnetplot(enr_go_gsea_symb, showCategory=n_category, foldChange=geneList) +
-			  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-	plot_in_div(go_pp, fig_width = default_width)
-
+	if(length(get_genes(enr_go_gsea_symb)) <= 200){
+		go_pp <- cnetplot(enr_go_gsea_symb, showCategory=n_category, foldChange=geneList) +
+				  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+		plot_in_div(go_pp, fig_width = default_width)
+	}else
+		cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
+	}
 	cat("\n\n**Enrich Map plot**\n\n", 
 		"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
@@ -846,22 +878,6 @@ if(go_flags$enrich_go_gsea){
 
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -923,16 +939,6 @@ if(!go_flags$GO_SECTION){
 
 
 
-
-
-
-
-
-
-
-
-
-
 ```{r react_main,  results='asis', echo = FALSE, eval = react_flags$REACT_SECTION}
 cat("## **REACTOME analysis**\n")
 
@@ -973,9 +979,13 @@ cat("\n\n**Gene-Concept Network**\n\n",
 	The size of the functional terms shows the number of connected genes.\n\n"
 )
 enrich_react_symb <- setReadable(enrich_react, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-pp <- cnetplot(enrich_react_symb, showCategory=n_category, foldChange=geneList) +
-	  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-plot_in_div(pp, fig_width = default_width)
+if(length(get_genes(enrich_react_symb)) <= 200){
+	pp <- cnetplot(enrich_react_symb, showCategory=n_category, foldChange=geneList) +
+		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+	plot_in_div(pp, fig_width = default_width)
+}else{
+	cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
+}
 
 
 
@@ -1002,9 +1012,13 @@ plot_in_div(pp, height_size, width_size)
 cat("\n\n**Upsetplot**\n\n", 
 	"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 )
-pp <- upsetplot(enrich_react, n=n_category)
-plot_in_div(pp, fig_width = default_width)
+if(length(get_categories(enrich_react))>=2){ # Needs, at least, two categories
 
+	pp <- upsetplot(enrich_react, n=n_category)
+	plot_in_div(pp, fig_width = default_width)
+}else{
+		cat("\n\nGenes has been enriched in less than 2 categories, so Upsetplot cannot be printed\n\n")
+	}
 ```
 
 
@@ -1033,10 +1047,13 @@ cat("\n\n**Gene-Concept Network**\n\n",
 	The size of the functional terms shows the number of connected genes.\n\n"
 )
 enrich_react_gsea_symb <- setReadable(enrich_react_gsea, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-pp <- cnetplot(enrich_react_gsea_symb, showCategory=n_category, foldChange=geneList) +
-	  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-plot_in_div(pp, fig_width = default_width)
-
+if(length(get_genes(enrich_react_gsea_symb)) <= 200){
+	pp <- cnetplot(enrich_react_gsea_symb, showCategory=n_category, foldChange=geneList) +
+		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+	plot_in_div(pp, fig_width = default_width)
+}else {
+	cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
+}
 
 cat("\n\n**Enrich Map plot**\n\n", 
 	"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
@@ -1122,10 +1139,13 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 					The size of the functional terms shows the number of connected genes.\n\n'
 				)
 				enr_custom <- setReadable(enr_custom, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType='ENTREZID')
-				pp <- cnetplot(enr_custom, showCategory=n_category, foldChange=geneList) +
-					  scale_color_gradient2(name = 'fold change', low = '#0000BF', high = '#bf0000', na.value = '#50EA55')
-				plot_in_div(pp, fig_width = default_width)
-
+				if(length(get_genes(enr_custom)) <= 200){
+					pp <- cnetplot(enr_custom, showCategory=n_category, foldChange=geneList) +
+						  scale_color_gradient2(name = 'fold change', low = '#0000BF', high = '#bf0000', na.value = '#50EA55')
+					plot_in_div(pp, fig_width = default_width)
+				}else{
+					cat('\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n')
+				}
 
 
 				cat('\n\n**Enrich Map plot**\n\n', 
@@ -1145,14 +1165,18 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 				height_size <- calc_height(enr_custom)
 				plot_in_div(pp, height_size, width_size)
 					
-
-
-
 				cat('\n\n**Upsetplot**\n\n', 
 					'Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n'
 				)
-				pp <- upsetplot(enr_custom, n=n_category)
-				plot_in_div(pp, fig_width = default_width)\n"
+				if(length(get_categories(enr_custom))>=2){ # Needs, at least, two categories
+					pp <- upsetplot(enr_custom, n=n_category)
+					plot_in_div(pp, fig_width = default_width)\n
+				}else{
+					cat('\n\nGenes has been enriched in less than 2 categories, so Upsetplot cannot be printed\n\n')
+				}
+
+
+				"
 	}
 
 	body <- gsub("\\{\\{i\\}\\}",i,body)
