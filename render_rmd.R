@@ -58,6 +58,11 @@ load(actual_opt$input)
 ### load template
 DEGhunter_templates <- file.path(dirname(script_path), "/", "templates")
 
+
+if(actual_opt$template == "functional_report"){
+  results_path = dirname(actual_opt$output)
+}
+
 ### Render
 rmarkdown::render(
 	normalizePath(file.path(DEGhunter_templates, paste0(actual_opt$template, ".Rmd"))), 

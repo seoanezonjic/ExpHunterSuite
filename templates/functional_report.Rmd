@@ -195,6 +195,7 @@ n_category <- 30
 graph_file_name <- function(path = results_path, file_name, ext = "pdf"){
 	return(paste(path,.Platform$file.sep,file_name,".",ext,sep=""))
 }
+
 exists_graph_file <- function(path = results_path, file_name, ext = "pdf"){
 	f <- graph_file_name(path,file_name,ext)
 	return(file.exists(f))
@@ -444,7 +445,7 @@ if(length(get_genes(enrich_ora_symb)) <= 200){
 	pp <- cnetplot(enrich_ora_symb, showCategory=n_category, foldChange=geneList) +
 		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
 	plot_in_div(pp, fig_width = default_width)
-}else
+}else{
 	cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
 }
 
@@ -510,7 +511,7 @@ if(length(get_genes(enrich_gsea_symb)) <= 200){
 	pp <- cnetplot(enrich_gsea_symb, showCategory=n_category, foldChange=geneList) +
 		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
 	plot_in_div(pp, fig_width = default_width)
-}else
+}else{
 	cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
 }
 
@@ -646,7 +647,7 @@ invisible(lapply(names(go_main_enrich),function(onto){
 			go_pp <- cnetplot(enrich_go_ora_symb, showCategory=n_category, foldChange=geneList) +
 					 scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
 			plot_in_div(go_pp, fig_width = default_width)
-		}else
+		}else{
 			cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
 		}
 
@@ -705,7 +706,7 @@ invisible(lapply(names(go_main_enrich),function(onto){
 			go_pp <- cnetplot(enrich_go_gsea_symb, showCategory=n_category, foldChange=geneList) +
 					  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
 			plot_in_div(go_pp, fig_width = default_width)
-		}else
+		}else{
 			cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
 		}
 
@@ -780,11 +781,11 @@ if(go_flags$enrich_go){
 		The size of the functional terms shows the number of connected genes.\n\n"
 	)
 	enr_go_symb <- setReadable(enr_go, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-	if(length(get_genes(enrich_go_symb)) <= 200){
+	if(length(get_genes(enr_go_symb)) <= 200){
 		go_pp  <- cnetplot(enr_go_symb, showCategory=n_category, foldChange=geneList) +
 				  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
 		plot_in_div(go_pp, fig_width = default_width)
-	}else
+	}else{
 		cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
 	}
 	
@@ -848,7 +849,7 @@ if(go_flags$enrich_go_gsea){
 		go_pp <- cnetplot(enr_go_gsea_symb, showCategory=n_category, foldChange=geneList) +
 				  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
 		plot_in_div(go_pp, fig_width = default_width)
-	}else
+	}else{
 		cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
 	}
 	cat("\n\n**Enrich Map plot**\n\n", 
