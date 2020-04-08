@@ -46,7 +46,7 @@ if(actual_opt$template == "functional_report"){
 
 
 if(is.null(actual_opt$output)){
-  actual_opt$output <- paste0("./", actual_opt$template)
+  actual_opt$output <- file.path("./", actual_opt$template)
 }
 if(!grepl(".html", actual_opt$output)){
   actual_opt$output <- paste0(actual_opt$output, ".html")
@@ -56,16 +56,19 @@ load(actual_opt$input)
 ### load enviroment
 
 ### load template
-DEGhunter_templates <- file.path(dirname(script_path), "/", "templates")
+DEGhunter_templates <- file.path(dirname(script_path), "templates")
 
 
 if(actual_opt$template == "functional_report"){
   results_path = dirname(actual_opt$output)
 }
 
+print("test")
+template <- normalizePath(file.path(DEGhunter_templates, paste0(actual_opt$template, ".Rmd")))
+out_file <- file.path(actual_opt$output)
+temp_dir <- file.path(normalizePath(dirname(actual_opt$output)), "tmp")
 ### Render
-rmarkdown::render(
-	normalizePath(file.path(DEGhunter_templates, paste0(actual_opt$template, ".Rmd"))), 
-	output_file = file.path(actual_opt$output),
-	intermediates_dir = file.path(normalizePath(dirname(actual_opt$output)), "tmp")
+rmarkdown::render(template, 
+	output_file = out_file,
+	intermediates_dir = temp_dir
 	)

@@ -115,9 +115,19 @@ pcaData <- plotPCA(rld, intgroup=c("cond"), returnData = TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
 ggplot(pcaData, aes(x = PC1, y = PC2, color = name, shape = cond)) +
   geom_point(size =3) +
+  geom_text(aes(label=name),hjust=0, vjust=0) +
   xlab(paste0("PC1: ", percentVar[1], "% variance")) +
   ylab(paste0("PC2: ", percentVar[2], "% variance")) +
-  coord_fixed()
+  coord_fixed() +
+  theme(legend.position = "none")
+
+ggplot(pcaData, aes(x = PC1, y = PC2, color = name, shape = cond)) +
+  geom_point(size =3) +
+  theme(legend.position = "bottom") +
+  xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+  ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+  coord_fixed() 
+
 
 ```
 
@@ -491,26 +501,27 @@ This plot shows the correlation between clusters (eigen genes) and factors direc
 						text_plot= "Text_correlation")
 	plot_in_div(pp, fig_height= (5 + (0.8 * cluster_count)), fig_width=(3 + (features_count * 0.8)), cex = 0.5)
 
-cat("### **Eigen values clustering**	
+cat("### **WGCNA Eigen values clustering**	
 
-The second plot clusters these eigengenes along with the factors.") 
+WGCNA dendogram showing distances between these eigengenes along with the factors. Distances has been calculated using **signed** correlation so more near elements, more positive correlation between elements.
+
+") 
 	
 	plot_in_div(plotEigengeneNetworks(results_WGCNA[['plot_objects']][['trait_and_module']], "Eigengene dendrogram", marDendro = c(0,4,2,0), plotHeatmaps = FALSE),
 		fig_width= 4+ calc_width_clusters((features_count + cluster_count), multiplier = 0.15),  min_size = 5)
 
-cat("TEST GRAPH: DENDOGRAN USING SAME OPTIONS AS WGCNA DEFAULTS")
-	corME <- cor(results_WGCNA[['plot_objects']][['trait_and_module']], use="p")
-	disME <- as.dist(1-corME)
-	clust = fastcluster::hclust(disME, method = "average")
-    #plot(clust, sub="", xlab="", ylab="", ylim=c(0,1))
-	plot_in_div(plot(clust, sub="", xlab="", ylab="", ylim=c(0,1)),
-	fig_width= 4+ calc_width_clusters((features_count + cluster_count), multiplier = 0.15),  min_size = 5)
+cat("### **Eigen values clustering (Absolute correlation)**
 
-cat("TEST GRAPH: DENDOGRAN USING ABSOLUTE CORRELATION VALUES TO BUILD DISTANCE MATRIX")
+WGCNA like dendogram showing distances between these eigengenes along with the factors. Distances has been calculated using **absolute** correlation so more near elements, more absolute correlation between elements.
+
+")
+
+	corME <- cor(results_WGCNA[['plot_objects']][['trait_and_module']], use="p")
 	disME_abs <- as.dist(1-abs(corME))
 	clust_abs = fastcluster::hclust(disME_abs, method = "average")
+
 	plot_in_div(plot(clust_abs, sub="", xlab="", ylab="", ylim=c(0,1)),
-	fig_width= 4+ calc_width_clusters((features_count + cluster_count), multiplier = 0.15),  min_size = 5)
+		fig_width= 4+ calc_width_clusters((features_count + cluster_count), multiplier = 0.15),  min_size = 5)
 
 
 cat("### **Correlation between all clusters and factors**")
