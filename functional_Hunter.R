@@ -307,10 +307,10 @@ if(opt$debug){
 # Obtain prevalent items
 common_DEGs_df <- subset(DEG_annot_table, genes_tag=="PREVALENT_DEG")
 
-# Check
-if(nrow(common_DEGs_df) == 0){
-  stop('Not detected genes tagged as PREVALENT_DEG. Likely some modules of degenes_Hunter.R failed and not generated output. Please, revise the input data')
-} 
+# Check (this check is deprecated because WGCNA does not need PREVALENT tags)
+# if(nrow(common_DEGs_df) == 0){
+#   stop('Not detected genes tagged as PREVALENT_DEG. Likely some modules of degenes_Hunter.R failed and not generated output. Please, revise the input data')
+# } 
 
 # Obtain significant sbusets
 #  > common_DEGs_df : subset of DEGenes Hunter annotation file with PREVALENT_DEG flag
@@ -347,7 +347,8 @@ union_annot_DEGs_df <- subset(reference_table, reference_table[,1] %in% union_DE
 
 if(!remote_actions$biomart &
 	! biomaRt_organism_info$Bioconductor_DB[1] == "" & 
-	! biomaRt_organism_info$Bioconductor_VarName_SYMBOL[1] == ""){
+	! biomaRt_organism_info$Bioconductor_VarName_SYMBOL[1] == "" &
+	nrow(common_DEGs_df) > 0){
 
 	DEG_annot_table_Symbol <- DEG_annot_table
 	if(exists("annot_table")){
