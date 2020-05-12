@@ -347,12 +347,11 @@ union_annot_DEGs_df <- subset(reference_table, reference_table[,1] %in% union_DE
 
 if(!remote_actions$biomart &
 	! biomaRt_organism_info$Bioconductor_DB[1] == "" & 
-	! biomaRt_organism_info$Bioconductor_VarName_SYMBOL[1] == "" &
-	nrow(common_DEGs_df) > 0){
+	! biomaRt_organism_info$Bioconductor_VarName_SYMBOL[1] == ""){
 
 	DEG_annot_table_Symbol <- DEG_annot_table
 	if(exists("annot_table")){
-		ENSEMBL_IDs <- unique(DEG_annot_table_Symbol$Annot_IDs)
+		ENSEMBL_IDs <- DEG_annot_table_Symbol$Annot_IDs
 	}else{
 		ENSEMBL_IDs <- rownames(DEG_annot_table_Symbol)
 	}
@@ -364,11 +363,14 @@ if(!remote_actions$biomart &
 										 		organism_db = biomaRt_organism_info$Bioconductor_DB[1],
 												organism_var = biomaRt_organism_info$Bioconductor_VarName_SYMBOL[1])
 	colnames(reference_table_symbol) <- c(biomaRt_organism_info[,"Attribute_entrez"], "Symbol")
-	DEG_annot_table_Symbol <- merge(DEG_annot_table_Symbol, reference_table_symbol, by.x="entrezgene", by.y="entrezgene", all.x=TRUE)
-	first_cols <- c("Ensembl", "entrezgene", "Symbol")
+	DEG_annot_table_Symbol <- merge(DEG_annot_table_Symbol, reference_table_symbol, by.x="entrezgene_id", by.y="entrezgene_id", all.x=TRUE)
+	first_cols <- c("Ensembl", "entrezgene_id", "Symbol")
 
 	DEG_annot_table_Symbol <- DEG_annot_table_Symbol[c(first_cols, setdiff(names(DEG_annot_table_Symbol), first_cols))] # Reorder columns so annotated first
 	DEG_annot_table_Symbol <- DEG_annot_table_Symbol[order(DEG_annot_table_Symbol[,"combined_FDR"]),] # Reorder rows by combined FDR
+	aux <- colnames(DEG_annot_table_Symbol)# rename
+	aux[which(aux == "entrezgene_id")] <- "entrezgene"
+	colnames(DEG_annot_table_Symbol) <- aux
 
 	# Write output here for now, until the rest of the workflow can use this object directly
 	write.table(DEG_annot_table_Symbol, file=file.path(paths$root, "DEG_results_annotated.txt"), quote=F, row.names=FALSE, sep="\t")
