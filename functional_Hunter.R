@@ -131,11 +131,17 @@ exp_names <- c(exp_names,paste("[Treatment]",experiments[which(experiments[,1] =
 
 
 if(!is.null(opt$annot_file)){
-  annot_table <- read.table(opt$annot_file, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "")
-  reference_table <- annot_table
+  annot_table <- read.table(opt$annot_file, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "") # Load
+  # translate
+  # rownames(DEG_annot_table) <- unlist(lapply(rownames(DEG_annot_table),function(id){
+  # 	if(id %in% annot_table[,2]){
+  # 		return(annot_table[which(annot_table[,2] == id)[1],1])
+  # 	}
+  # 	return(id) # Not found
+  # }))
 }else{
-  reference_table <- DEG_annot_table
-  reference_table[,1] <- row.names(DEG_annot_table)
+  annot_table <- DEG_annot_table
+  annot_table[,1] <- row.names(DEG_annot_table)
 }
 
 # Prepare ID type
@@ -221,7 +227,7 @@ if(remote_actions$biomart){ # REMOTE MODE
 	)
 
 	# Obtain references from biomart
-	reference_table <- obtain_info_from_biomaRt(orthologues = as.character(reference_table[,1]),
+	reference_table <- obtain_info_from_biomaRt(orthologues = as.character(annot_table[,1]),
 	                                            id_type = opt$biomaRt_filter, 
 	                                            mart = organism_mart,
 	                                            dataset = organism_dataset, 
@@ -231,11 +237,12 @@ if(remote_actions$biomart){ # REMOTE MODE
 }else if(!is.na(biomaRt_organism_info$Bioconductor_DB[1])){ # LOCAL MODE
 	# Check genetical items to be used
 	if(opt$biomaRt_filter == 'ensembl_gene_id'){
-		reference_table <- ensembl_to_entrez(ensembl_ids = reference_table[,1],
+		reference_table <- ensembl_to_entrez(ensembl_ids = annot_table[,1],
 											 organism_db = biomaRt_organism_info$Bioconductor_DB[1],
 											 organism_var = biomaRt_organism_info$Bioconductor_VarName[1])
 
-		colnames(reference_table) <- c("ensembl_gene_id", biomaRt_organism_info[,"Attribute_entrez"])
+		# colnames(reference_table) <- c("ensembl_gene_id", biomaRt_organism_info[,"Attribute_entrez"])
+		colnames(reference_table) <- c("ensembl_gene_id", "entrezgene") # Fix names
 
 	}else if(opt$biomaRt_filter == 'refseq_peptide'){
 		stop(paste("This genes type (",opt$biomaRt_filter,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
@@ -326,7 +333,7 @@ if(exists("annot_table")){
 }
 
 common_unique_entrez <- subset(reference_table, reference_table[,1] %in% common_DEGs)
-common_unique_entrez <- unique(common_unique_entrez[,biomaRt_organism_info[,"Attribute_entrez"]])
+common_unique_entrez <- unique(common_unique_entrez$entrezgene)
 
 # Verbose point
 message(paste("IDs used to enrich:",length(common_unique_entrez)))
@@ -362,15 +369,12 @@ if(!remote_actions$biomart &
 	reference_table_symbol <- ensembl_to_entrez(ensembl_ids = DEG_annot_table_Symbol$entrezgene,
 										 		organism_db = biomaRt_organism_info$Bioconductor_DB[1],
 												organism_var = biomaRt_organism_info$Bioconductor_VarName_SYMBOL[1])
-	colnames(reference_table_symbol) <- c(biomaRt_organism_info[,"Attribute_entrez"], "Symbol")
-	DEG_annot_table_Symbol <- merge(DEG_annot_table_Symbol, reference_table_symbol, by.x="entrezgene_id", by.y="entrezgene_id", all.x=TRUE)
-	first_cols <- c("Ensembl", "entrezgene_id", "Symbol")
+	colnames(reference_table_symbol) <- c("entrezgene", "Symbol")
+	DEG_annot_table_Symbol <- merge(DEG_annot_table_Symbol, reference_table_symbol, by.x="entrezgene", by.y="entrezgene", all.x=TRUE)
+	first_cols <- c("Ensembl", "entrezgene", "Symbol")
 
 	DEG_annot_table_Symbol <- DEG_annot_table_Symbol[c(first_cols, setdiff(names(DEG_annot_table_Symbol), first_cols))] # Reorder columns so annotated first
 	DEG_annot_table_Symbol <- DEG_annot_table_Symbol[order(DEG_annot_table_Symbol[,"combined_FDR"]),] # Reorder rows by combined FDR
-	aux <- colnames(DEG_annot_table_Symbol)# rename
-	aux[which(aux == "entrezgene_id")] <- "entrezgene"
-	colnames(DEG_annot_table_Symbol) <- aux
 
 	# Write output here for now, until the rest of the workflow can use this object directly
 	write.table(DEG_annot_table_Symbol, file=file.path(paths$root, "DEG_results_annotated.txt"), quote=F, row.names=FALSE, sep="\t")
@@ -611,7 +615,15 @@ if(flags$Clustered){
 	}else{
 		warning("Cluster Zero/Grey not found")
 	}
-	clgenes <- lapply(cls,function(cl){unique(rownames(DEG_annot_table[which(DEG_annot_table$Cluster_ID == cl),]))}) # Find
+
+	clgenes <- lapply(cls,function(cl){ # Find
+		indx <- which(DEG_annot_table$Cluster_ID == cl)
+		if(exists("annot_table")){
+			unique(DEG_annot_table$Annot_IDs[indx])
+		}else{
+			unique(rownames(DEG_annot_table[indx,]))			
+		}
+	}) 
 	clgenes <- lapply(clgenes,function(genes){reference_table$entrezgene[which(reference_table$ensembl_gene_id %in% genes)]}) # Translate
 	names(clgenes) <- cls
 	if(flags$ORA){
