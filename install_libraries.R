@@ -6,7 +6,7 @@
 
 install.packages("BiocManager", repos='https://cloud.r-project.org')
 print("Installing libraries from Bioconductor")
-packages_list_biocond <- c("KEGG.db", "ReactomePA","preprocessCore","impute","limma", "edgeR", "DESeq2", "NOISeq", "biomaRt", "topGO", "KEGGREST", "clusterProfiler", "Rgraphviz", "org.Hs.eg.db")
+packages_list_biocond <- c("KEGG.db", "ReactomePA","preprocessCore","impute","limma", "edgeR", "DESeq2", "NOISeq", "biomaRt", "topGO", "KEGGREST", "clusterProfiler", "Rgraphviz", "org.Hs.eg.db", "diffcoexp")
 BiocManager::install()
 installed <- library()$results[,1]
 packages_list_biocond <- setdiff(packages_list_biocond, installed)
