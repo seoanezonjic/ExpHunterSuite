@@ -14,7 +14,7 @@ BiocManager::install(packages_list_biocond)
 
 
 print("Installing libraries from CRAN")
-packages_list <-c("DT","FSA","ggplot2","VennDiagram","gplots","optparse","stringr","plyr","reshape2","PerformanceAnalytics", "PCIT")
+packages_list <-c("DT","FSA","ggplot2","VennDiagram","gplots","optparse","stringr","plyr","reshape2","PerformanceAnalytics", "WGCNA")
 installed <- library()$results[,1]
 packages_list <- setdiff(packages_list, installed)
 install.packages(packages_list, repos='https://cloud.r-project.org')
