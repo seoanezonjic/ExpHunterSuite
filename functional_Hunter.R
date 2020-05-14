@@ -486,12 +486,12 @@ if(exists("annot_table")){
 	aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
 	geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
 	names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
-	names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+	names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
 }else{
 	aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
 	geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
 	names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
-	names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+	names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
 }
 # Sort FC
 geneList <- sort(geneList, decreasing = TRUE)
@@ -652,7 +652,7 @@ if(flags$Clustered){
 			geneListCL <- lapply(cls, function(cl){
 				glist <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"] & DEG_annot_table$Cluster_ID == cl),fc_colname])
 				names(glist) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"] & DEG_annot_table$Cluster_ID == cl)]
-				names(glist) <- aux[match(names(glist),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+				names(glist) <- aux[match(names(glist),aux[,"ensembl_gene_id"]),"entrezgene"]
 				glist <- sort(glist, decreasing = TRUE)
 				return(glist)
 			})
@@ -661,7 +661,7 @@ if(flags$Clustered){
 			geneListCL <- lapply(cls,function(cl){
 				glist <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"] & DEG_annot_table$Cluster_ID == cl),fc_colname])
 				names(glist) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"] & DEG_annot_table$Cluster_ID == cl)]
-				names(glist) <- aux[match(names(glist),aux[,"ensembl_gene_id"]),biomaRt_organism_info[,"Attribute_entrez"]]
+				names(glist) <- aux[match(names(glist),aux[,"ensembl_gene_id"]),"entrezgene"]
 				glist <- sort(glist, decreasing = TRUE)
 				return(glist)
 			})
