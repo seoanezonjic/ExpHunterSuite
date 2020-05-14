@@ -27,7 +27,8 @@ pval_thr_forFeatures <- 0.05
 
 ```{r "{{cl}}_explore_genes", echo = FALSE}
 # Load genes expressions
-cl_i_genes <- clgenes[[as.character({{cl}})]]
+cl_i_genes <- unique(DEG_annot_table$Annot_IDs[which(DEG_annot_table$Cluster_ID == {{cl}})])
+# cl_i_genes <- clgenes[[as.character({{cl}})]]
 tgt_indx <- which(norm_counts$Gene %in% cl_i_genes)
 # Prepare regular cluster info
 cl_profile <- cl_eigvalues_gnorm[grepl(paste(c("ME",{{cl}},"$"),collapse=""),cl_eigvalues_gnorm$Cluster_ID),]
