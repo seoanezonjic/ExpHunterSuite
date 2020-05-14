@@ -153,6 +153,8 @@ gg_heatmap <- function(data_table,
   text_plot = NULL,
   labs = TRUE,
   x_angle = 25,
+  text_size = 2.5,
+  text_colour = "black",
 #  dendro = NULL,
   col = c("#0000D5","#FFFFFF","#D50000"),
   na_col = "grey50"){
@@ -168,6 +170,8 @@ gg_heatmap <- function(data_table,
 #    save(list = ls(all.names = TRUE), file = "~/test/ggtest.RData", envir = environment())
     pp <- ggplot(data_table, aes_string(x = x_axis, y = y_axis, fill = fill)) +
     geom_tile(show.legend = TRUE) +
+    theme_minimal() +
+    theme(panel.grid.major = element_blank())+
     theme(axis.text.x = element_text(angle = x_angle, face = "bold", hjust = 1),axis.text.y = element_text(face = "bold")) +
     scale_fill_gradient2(
     low = col[1],
@@ -182,7 +186,7 @@ gg_heatmap <- function(data_table,
         axis.title.y = element_blank())
     }
     if(!is.null(text_plot)){
-      pp <- pp + geom_text(aes_string(label=text_plot), size = 2.5) 
+      pp <- pp + geom_text(aes_string(label=text_plot), colour = text_colour, size = text_size) 
     }
     return(pp)
 }
