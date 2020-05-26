@@ -23,7 +23,7 @@ Included:
 		* dif_expression_packages.R
 		* qc_and_benchmarking_functions.R
 		* functional_analysis_library.R
-	* Table with all organisms provided: biomaRt_organism_table.txt
+	* Table with all organisms provided: organism_table.txt
 	* This README
 	* Example data set (example_count_data.txt)
 	* Example output of a differential analysis report dumped out by DEgenes Hunter (example_DE_report.pdf)

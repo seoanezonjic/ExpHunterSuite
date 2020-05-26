@@ -439,7 +439,7 @@ cat("\n\n**Gene-Concept Network**\n\n",
 	"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 	The size of the functional terms shows the number of connected genes.\n\n"
 )
-enrich_ora_symb <- setReadable(enrich_ora, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+enrich_ora_symb <- setReadable(enrich_ora, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 
 if(length(get_genes(enrich_ora_symb)) <= 200){
 	pp <- cnetplot(enrich_ora_symb, showCategory=n_category, foldChange=geneList) +
@@ -506,7 +506,7 @@ cat("\n\n**Gene-Concept Network**\n\n",
 	"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 	The size of the functional terms shows the number of connected genes.\n\n"
 )
-enrich_gsea_symb <- setReadable(enrich_gsea, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+enrich_gsea_symb <- setReadable(enrich_gsea, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 if(length(get_genes(enrich_gsea_symb)) <= 200){
 	pp <- cnetplot(enrich_gsea_symb, showCategory=n_category, foldChange=geneList) +
 		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
@@ -641,7 +641,7 @@ invisible(lapply(names(go_main_enrich),function(onto){
 			"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 			The size of the functional terms shows the number of connected genes.\n\n"
 		)
-		enrich_go_ora_symb <- setReadable(enrich_go[[onto]], OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+		enrich_go_ora_symb <- setReadable(enrich_go[[onto]], OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 
 		if(length(get_genes(enrich_go_ora_symb)) <= 200){
 			go_pp <- cnetplot(enrich_go_ora_symb, showCategory=n_category, foldChange=geneList) +
@@ -700,7 +700,7 @@ invisible(lapply(names(go_main_enrich),function(onto){
 			"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 			The size of the functional terms shows the number of connected genes.\n\n"
 		)
-		enrich_go_gsea_symb <- setReadable(enrich_go_gsea[[onto]], OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+		enrich_go_gsea_symb <- setReadable(enrich_go_gsea[[onto]], OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 
 		if(length(get_genes(enrich_go_gsea_symb)) <= 200){
 			go_pp <- cnetplot(enrich_go_gsea_symb, showCategory=n_category, foldChange=geneList) +
@@ -780,7 +780,7 @@ if(go_flags$enrich_go){
 		"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 		The size of the functional terms shows the number of connected genes.\n\n"
 	)
-	enr_go_symb <- setReadable(enr_go, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+	enr_go_symb <- setReadable(enr_go, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 	if(length(get_genes(enr_go_symb)) <= 200){
 		go_pp  <- cnetplot(enr_go_symb, showCategory=n_category, foldChange=geneList) +
 				  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
@@ -844,7 +844,7 @@ if(go_flags$enrich_go_gsea){
 		"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 		The size of the functional terms shows the number of connected genes.\n\n"
 	)
-	enr_go_gsea_symb <- setReadable(enr_go_gsea, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+	enr_go_gsea_symb <- setReadable(enr_go_gsea, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 	if(length(get_genes(enr_go_gsea_symb)) <= 200){
 		go_pp <- cnetplot(enr_go_gsea_symb, showCategory=n_category, foldChange=geneList) +
 				  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
@@ -979,7 +979,7 @@ cat("\n\n**Gene-Concept Network**\n\n",
 	"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 	The size of the functional terms shows the number of connected genes.\n\n"
 )
-enrich_react_symb <- setReadable(enrich_react, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+enrich_react_symb <- setReadable(enrich_react, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 if(length(get_genes(enrich_react_symb)) <= 200){
 	pp <- cnetplot(enrich_react_symb, showCategory=n_category, foldChange=geneList) +
 		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
@@ -1047,7 +1047,7 @@ cat("\n\n**Gene-Concept Network**\n\n",
 	"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 	The size of the functional terms shows the number of connected genes.\n\n"
 )
-enrich_react_gsea_symb <- setReadable(enrich_react_gsea, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+enrich_react_gsea_symb <- setReadable(enrich_react_gsea, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 if(length(get_genes(enrich_react_gsea_symb)) <= 200){
 	pp <- cnetplot(enrich_react_gsea_symb, showCategory=n_category, foldChange=geneList) +
 		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
@@ -1139,7 +1139,7 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 					'The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 					The size of the functional terms shows the number of connected genes.\n\n'
 				)
-				enr_custom <- setReadable(enr_custom, OrgDb = biomaRt_organism_info$Bioconductor_DB[1], keyType='ENTREZID')
+				enr_custom <- setReadable(enr_custom, OrgDb = current_organism_info$Bioconductor_DB[1], keyType='ENTREZID')
 				if(length(get_genes(enr_custom)) <= 200){
 					pp <- cnetplot(enr_custom, showCategory=n_category, foldChange=geneList) +
 						  scale_color_gradient2(name = 'fold change', low = '#0000BF', high = '#bf0000', na.value = '#50EA55')
