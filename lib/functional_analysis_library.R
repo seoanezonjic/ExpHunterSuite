@@ -11,6 +11,23 @@ defining_functional_hunter_subfolders <- function(opt){
   }
 }
 
+translate_id <- function(ids_to_translate, annot_table){ 
+#This function translates unknown transcripts IDs to known gen IDs
+#ids_to_translate: unknown gene IDs
+#annot_table: DF, KNOWN gene IG on first column and UNKNOWN on second
+#ONE unknown ID can correspond to MANY Known IDs  
+ save(list = ls(all.names = TRUE), file = "test.RData", envir = environment())
+
+  translated_ids <- unlist(lapply(ids_to_translate, function(id){
+    indx <- which(annot_table[,2] == id)
+    if(length(indx) == 0){
+      return(NA)
+    }else{
+      return(annot_table[indx[1],1])
+    }
+  }))
+  return(translated_ids)
+}
 
 obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, attr){
     require(biomaRt)
