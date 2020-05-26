@@ -10,53 +10,39 @@ full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using
               normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', commandArgs())], '='))[2]))
 main_path_script <- dirname(full.fpath)
 
-#Loading libraries  
+#############################################
+### OPTIONS
+#############################################
+#Loading optparse  
 suppressPackageStartupMessages(require(optparse))
-suppressPackageStartupMessages(require(biomaRt)) 
-suppressPackageStartupMessages(require(topGO))
-suppressPackageStartupMessages(require(KEGGREST))
-suppressPackageStartupMessages(require(stringr))
-suppressPackageStartupMessages(require(plyr))
-suppressPackageStartupMessages(require(knitr))
-suppressPackageStartupMessages(require(clusterProfiler))
-
-# Load custom libraries
-source(file.path(main_path_script, 'lib', 'general_functions.R'))
-source(file.path(main_path_script, 'lib', 'functional_analysis_library.R'))
-source(file.path(main_path_script, 'lib', 'plotting_functions.R'))
-
-#############################################
-### MAIN 
-#############################################
-
 # Parse command line
 #------------------------------------------------
 
 option_list <- list(
   make_option(c("-i", "--input_hunter_folder"), type="character",
-    help="DEgenes Hunter's differential expression analysis output folder"), 
+    help="DEgenes Hunter differential expression analysis output folder"), 
   make_option(c("-m", "--model_organism"), type="character",
-    help="Ortologue Species"),
-  make_option(c("-a", "--annot_file"), type="character",
-  	help="Two column file with annotations for functional analysis of a non-model organism. First column must be a gene ensembl id or a refseq id from a model organism. This id must be a orthologue of the gene id of the second column, that is the custom id from a non-model organism (whose functional analysis is desired)"),
-  make_option(c("-t", "--biomaRt_filter"), type="character", default="E",
-    help="ID types. ENSEMBL (E) Refseq_peptide (R), TAIR/Arabidopsis (T), Gene Names (G) Gene SYMBOLS (S). [Default:%default]"),      	
-  make_option(c("-f", "--functional_analysis"), type="character", default="GK",
-    help="Type of functional analyses to be performed (G = GO [topGO], K = KEGG, g = GO [clusterProfiler], R [Reactome]). [Default=%default]"),
-  make_option(c("-G", "--GO_graphs"), type="character", default=c("M"),
-    help="Modules to able go enrichments (M = Molecular Function, B = Biological Process, C = Celular Components). By default Default=%default GO cathegory is performed"), # Not Checked
-  make_option(c("-A", "--analysis"), type="character", default=c("go"),
-    help="Analysis performance (g = Gene Set Enrichment Analysis, o = Over Representation Analysis). By default Default=%default analysis is performed"), # Not Checked
-  make_option(c("-K", "--Kegg_organism"), type="character", default=NULL, 
-    help="Indicate organism to look for in the Kegg database for doing the path enrichment"), # Not Checked
-  make_option(c("-q", "--save_query"), type="logical", action = "store_true", default=FALSE,
-    help="Flag to save biomaRt query"),
+    help="Species to use for functional enrichment. You can see all available species running functional_Hunter.R -L"),
   make_option(c("-L", "--List_organisms"), action="store_true", type="logical", default=FALSE, 
-    help="Print all organisms available at biomaRt table and ends the program"),
-  make_option(c("-o", "--output_files"), type="character", default="results",
-    help="Output path. Default=%default"),
+    help="Print all organisms available and ends the program"),
+  make_option(c("-a", "--annot_file"), type="character",
+  	help="If the species used does not exist in organism_table.txt, please add a two-column file mapping orthologue ENSEBL gene ids from a model organism (first column) to the original IDs (second column)."),
+  make_option(c("-t", "--input_gene_id"), type="character", default="E",
+    help="Input gene ID type. ENSEMBL (E), TAIR/Arabidopsis (T), Gene Names (G) Gene SYMBOLS (S). [Default:%default]"),      	
+  make_option(c("-f", "--func_annot_db"), type="character", default="gKR",
+    help="Functional annotation database and enrichment method(s) to use (topGO: G = GO | clusterProfiler: K = KEGG, g = GO, R = Reactome). [Default=%default]"),
+  make_option(c("-G", "--GO_subont"), type="character", default=c("BMC"),
+    help="GO sub-ontologies to use for functional analysis (M = Molecular Function, B = Biological Process, C = Celular Component). Default=%default"), # Not Checked
+  make_option(c("-A", "--analysis_type"), type="character", default=c("go"),
+    help="Analysis performance (g = Gene Set Enrichment Analysis, o = Over Representation Analysis). Default=%default"), # Not Checked
+  # make_option(c("-K", "--Kegg_organism"), type="character", default=NULL, 
+  #   help="Indicate organism to look for in the Kegg database for doing the path enrichment"), # Not Checked
   make_option(c("-r", "--remote"), ,type = "character", default="",
     help="Flags to activate remote query from enrichments and Genes translation. Use (b) to launch biomaRt translation; (k) to use Kegg remote data base"),
+  make_option(c("-q", "--save_query"), type="logical", action = "store_true", default=FALSE,
+    help="Flag to save biomaRt query. Require remote mode"), 
+  make_option(c("-o", "--output_files"), type="character", default="results",
+    help="Output path. Default=%default"),
   make_option(c("-C", "--custom"), ,type = "character", default=NULL,
     help="Files with custom nomenclature (in GMT format) separated by commas (,)"),
   make_option(c("-c", "--cores"), ,type = "numeric", default=1,
@@ -71,6 +57,26 @@ option_list <- list(
     help="Activate debug mode and uses given filename. File must have '.RData' extension")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
+
+#############################################
+### LOAD LIBRARIES
+#############################################
+suppressPackageStartupMessages(require(optparse))
+suppressPackageStartupMessages(require(biomaRt)) 
+suppressPackageStartupMessages(require(topGO))
+suppressPackageStartupMessages(require(KEGGREST))
+suppressPackageStartupMessages(require(stringr))
+suppressPackageStartupMessages(require(plyr))
+suppressPackageStartupMessages(require(knitr))
+suppressPackageStartupMessages(require(clusterProfiler))
+# source custom functions
+source(file.path(main_path_script, 'lib', 'general_functions.R'))
+source(file.path(main_path_script, 'lib', 'functional_analysis_library.R'))
+source(file.path(main_path_script, 'lib', 'plotting_functions.R'))
+
+#############################################
+### MAIN 
+#############################################
 
 # Special IDs
 fc_colname <- "mean_logFCs"
@@ -109,7 +115,7 @@ if(opt$debug){
 #############################################
 
 # Load available organisms
-biomaRt_query_info <- read.table(file.path(main_path_script, "lib", "biomaRt_organism_table.txt"), header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA)
+all_organisms_info <- read.table(file.path(main_path_script, "lib", "organism_table.txt"), header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA)
 
 # Load Reference-NonRefernce models gene IDs relations
 if(! file.exists(opt$input_hunter_folder)) stop("No input degenes_Hunter folder")
@@ -145,42 +151,42 @@ if(!is.null(opt$annot_file)){
 }
 
 # Prepare ID type
-if(opt$biomaRt_filter == "E"){
-  opt$biomaRt_filter <- 'ensembl_gene_id'
+if(opt$input_gene_id == "E"){
+  opt$input_gene_id <- 'ensembl_gene_id'
   keytypes <- "ENTREZID"
-}else if(opt$biomaRt_filter == "R"){
-  opt$biomaRt_filter <- 'refseq_peptide'
+}else if(opt$input_gene_id == "R"){
+  opt$input_gene_id <- 'refseq_peptide'
   keytypes <- "ENTREZID"
-}else if(opt$biomaRt_filter == "T"){
-  opt$biomaRt_filter <- ''
+}else if(opt$input_gene_id == "T"){
+  opt$input_gene_id <- ''
   keytypes <- "TAIR"
-}else if(opt$biomaRt_filter == "G"){
-  opt$biomaRt_filter <- ''
+}else if(opt$input_gene_id == "G"){
+  opt$input_gene_id <- ''
   keytypes <- "GENENAME"
 }else{
-  stop(paste("Given ID type (",opt$biomaRt_filter,") is not allowed.",sep=""))
+  stop(paste("Given ID type (",opt$input_gene_id,") is not allowed.",sep=""))
 }
 
 # Check organism selected
 if(opt$List_organisms == TRUE){
-  print(as.character(rownames(biomaRt_query_info)))
+  print(as.character(rownames(all_organisms_info)))
   stop('program ends')
 }else if(is.null(opt$model_organism)){
   stop('No model organism indicated. Please indicate the model organism using parameter -m. Use -L to list all model organisms available')
-# }else if(!opt$organisms %in% rownames(biomaRt_query_info)){
+# }else if(!opt$organisms %in% rownames(all_organisms_info)){
 #   stop("Organism selected is not available. Use -L to display available organims list")
 }else{ # ORGANISM AVAILABLE --> LOAD
-  biomaRt_organism_info <- subset(biomaRt_query_info, rownames(biomaRt_query_info) %in% opt$model_organism)  
+  current_organism_info <- subset(all_organisms_info, rownames(all_organisms_info) %in% opt$model_organism)  
 }
 
 
 # Check which enrichments are gonna be performed
-flags <- list(GO    = grepl("G", opt$functional_analysis),
-              KEGG  = grepl("K", opt$functional_analysis),
-              GO_cp = grepl("g", opt$functional_analysis),
-              REACT = grepl("R", opt$functional_analysis),
-              GSEA  = grepl("g", opt$analysis),
-              ORA   = grepl("o", opt$analysis),
+flags <- list(GO    = grepl("G", opt$func_annot_db),
+              KEGG  = grepl("K", opt$func_annot_db),
+              GO_cp = grepl("g", opt$func_annot_db),
+              REACT = grepl("R", opt$func_annot_db),
+              GSEA  = grepl("g", opt$analysis_type),
+              ORA   = grepl("o", opt$analysis_type),
               Clustered = "Cluster_ID" %in% colnames(DEG_annot_table))
 
 
@@ -217,35 +223,35 @@ if(remote_actions$biomart){ # REMOTE MODE
 	############# BIOMART QUERY  #############
 
 	# Prepare organism info
-	organism_mart <- as.character(biomaRt_organism_info[,"Mart"])
-	organism_dataset <- as.character(biomaRt_organism_info[,"Dataset"])
-	organism_host <- as.character(biomaRt_organism_info[,"biomaRt_Host"])
+	organism_mart <- as.character(current_organism_info[,"Mart"])
+	organism_dataset <- as.character(current_organism_info[,"Dataset"])
+	organism_host <- as.character(current_organism_info[,"biomaRt_Host"])
 	organism_attr <- c(
-	  opt$biomaRt_filter, 
-	  as.character(biomaRt_organism_info[,"Attribute_GOs"]),
-	  as.character(biomaRt_organism_info[,"Attribute_entrez"])
+	  opt$input_gene_id, 
+	  as.character(current_organism_info[,"Attribute_GOs"]),
+	  as.character(current_organism_info[,"Attribute_entrez"])
 	)
 
 	# Obtain references from biomart
 	reference_table <- obtain_info_from_biomaRt(orthologues = as.character(annot_table[,1]),
-	                                            id_type = opt$biomaRt_filter, 
+	                                            id_type = opt$input_gene_id, 
 	                                            mart = organism_mart,
 	                                            dataset = organism_dataset, 
 	                                            host = organism_host, 
 	                                            attr = organism_attr) 
 
-}else if(!is.na(biomaRt_organism_info$Bioconductor_DB[1])){ # LOCAL MODE
+}else if(!is.na(current_organism_info$Bioconductor_DB[1])){ # LOCAL MODE
 	# Check genetical items to be used
-	if(opt$biomaRt_filter == 'ensembl_gene_id'){
+	if(opt$input_gene_id == 'ensembl_gene_id'){
 		reference_table <- ensembl_to_entrez(ensembl_ids = annot_table[,1],
-											 organism_db = biomaRt_organism_info$Bioconductor_DB[1],
-											 organism_var = biomaRt_organism_info$Bioconductor_VarName[1])
+											 organism_db = current_organism_info$Bioconductor_DB[1],
+											 organism_var = current_organism_info$Bioconductor_VarName[1])
 
-		# colnames(reference_table) <- c("ensembl_gene_id", biomaRt_organism_info[,"Attribute_entrez"])
+		# colnames(reference_table) <- c("ensembl_gene_id", current_organism_info[,"Attribute_entrez"])
 		colnames(reference_table) <- c("ensembl_gene_id", "entrezgene") # Fix names
 
-	}else if(opt$biomaRt_filter == 'refseq_peptide'){
-		stop(paste("This genes type (",opt$biomaRt_filter,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
+	}else if(opt$input_gene_id == 'refseq_peptide'){
+		stop(paste("This genes type (",opt$input_gene_id,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
 	}
 }else{
 	error("Specified organism are not available to be studiend in LOCAL model. Please try REMOTE mode")
@@ -254,6 +260,7 @@ if(remote_actions$biomart){ # REMOTE MODE
 if(opt$save_query == TRUE){
   saveRDS(reference_table, file=file.path("query_results_temp"))
 } 
+
 
 # Load Normalized correlation data
 if(flags$Clustered){
@@ -353,8 +360,8 @@ union_annot_DEGs_df <- subset(reference_table, reference_table[,1] %in% union_DE
 # Currently only runs if we are local, have an org db available and a symbol correspondence. The ENTREZ bit should become universal even if no SYMBOL available
 
 if(!remote_actions$biomart &
-	! biomaRt_organism_info$Bioconductor_DB[1] == "" & 
-	! biomaRt_organism_info$Bioconductor_VarName_SYMBOL[1] == ""){
+	! current_organism_info$Bioconductor_DB[1] == "" & 
+	! current_organism_info$Bioconductor_VarName_SYMBOL[1] == ""){
 
 	DEG_annot_table_Symbol <- DEG_annot_table
 	if(exists("annot_table")){
@@ -367,8 +374,8 @@ if(!remote_actions$biomart &
 	DEG_annot_table_Symbol <- merge(DEG_annot_table_Symbol, reference_table, by.x="Ensembl", by.y="ensembl_gene_id", all.x=TRUE)
 
 	reference_table_symbol <- ensembl_to_entrez(ensembl_ids = DEG_annot_table_Symbol$entrezgene,
-										 		organism_db = biomaRt_organism_info$Bioconductor_DB[1],
-												organism_var = biomaRt_organism_info$Bioconductor_VarName_SYMBOL[1])
+										 		organism_db = current_organism_info$Bioconductor_DB[1],
+												organism_var = current_organism_info$Bioconductor_VarName_SYMBOL[1])
 	colnames(reference_table_symbol) <- c("entrezgene", "Symbol")
 	DEG_annot_table_Symbol <- merge(DEG_annot_table_Symbol, reference_table_symbol, by.x="entrezgene", by.y="entrezgene", all.x=TRUE)
 	first_cols <- c("Ensembl", "entrezgene", "Symbol")
@@ -406,13 +413,13 @@ if(flags$GO){
 
 	# Prepare modules to be loaded
 	modules_to_export <- c()
-	if(grepl("M", opt$GO_graphs)){
+	if(grepl("M", opt$GO_subont)){
 		modules_to_export <- "MF"
 	}
-	if(grepl("B", opt$GO_graphs)){
+	if(grepl("B", opt$GO_subont)){
 		modules_to_export <- c(modules_to_export,"BP")
 	}
-	if(grepl("C", opt$GO_graphs)){
+	if(grepl("C", opt$GO_subont)){
 		modules_to_export <- c(modules_to_export,"CC")
 	}
 	if(length(modules_to_export) == 0){
@@ -424,29 +431,29 @@ if(flags$GO){
 		# Check execution mode
 		if(remote_actions$biomart){ # REMOTE MODE
 			# Prepare necessary info
-			go_attr_name <- as.character(biomaRt_organism_info[,"Attribute_GOs"])
+			go_attr_name <- as.character(current_organism_info[,"Attribute_GOs"])
 			# Launch GSEA analysis
 			invisible(lapply(modules_to_export,function(mod){
 				# Common
-				perform_GSEA_analysis(go_attr_name, common_DEGs, union_annot_DEGs_df, mod, paste("GOgraph_preval_",mod,".pdf",sep=""),opt$biomaRt_filter)
-				perform_GSEA_analysis(go_attr_name, pos_logFC_common_DEGs, union_annot_DEGs_df, mod, paste("GOgraph_preval_overex_",mod,".pdf",sep=""),opt$biomaRt_filter)
-				perform_GSEA_analysis(go_attr_name, neg_logFC_common_DEGs, union_annot_DEGs_df, mod, paste("GOgraph_preval_underex_",mod,".pdf",sep=""),opt$biomaRt_filter)
+				perform_GSEA_analysis(go_attr_name, common_DEGs, union_annot_DEGs_df, mod, paste("GOgraph_preval_",mod,".pdf",sep=""),opt$input_gene_id)
+				perform_GSEA_analysis(go_attr_name, pos_logFC_common_DEGs, union_annot_DEGs_df, mod, paste("GOgraph_preval_overex_",mod,".pdf",sep=""),opt$input_gene_id)
+				perform_GSEA_analysis(go_attr_name, neg_logFC_common_DEGs, union_annot_DEGs_df, mod, paste("GOgraph_preval_underex_",mod,".pdf",sep=""),opt$input_gene_id)
 				# Union
-				perform_GSEA_analysis(go_attr_name, union_DEGs, reference_table, mod, paste("GOgraph_allpos_",mod,".pdf",sep=""),opt$biomaRt_filter)
-				perform_GSEA_analysis(go_attr_name, pos_logFC_union_DEGs, reference_table, mod, paste("GOgraph_allpos_overex_",mod,".pdf",sep=""),opt$biomaRt_filter)
-				perform_GSEA_analysis(go_attr_name, neg_logFC_union_DEGs, reference_table, mod, paste("GOgraph_allpos_underex_",mod,".pdf",sep=""),opt$biomaRt_filter)    				
+				perform_GSEA_analysis(go_attr_name, union_DEGs, reference_table, mod, paste("GOgraph_allpos_",mod,".pdf",sep=""),opt$input_gene_id)
+				perform_GSEA_analysis(go_attr_name, pos_logFC_union_DEGs, reference_table, mod, paste("GOgraph_allpos_overex_",mod,".pdf",sep=""),opt$input_gene_id)
+				perform_GSEA_analysis(go_attr_name, neg_logFC_union_DEGs, reference_table, mod, paste("GOgraph_allpos_underex_",mod,".pdf",sep=""),opt$input_gene_id)    				
 			}))
 		}else{ # LOCAL MODE
-			if(opt$biomaRt_filter == 'ensembl_gene_id'){
+			if(opt$input_gene_id == 'ensembl_gene_id'){
 				# Transform ENSEMBL ids to Entrez ids
-				entrez_common_DEGs <- ensembl_to_entrez(common_DEGs,biomaRt_organism_info$Bioconductor_DB[1],biomaRt_organism_info$Bioconductor_VarName[1]) 
-				entrez_pos_logFC_common_DEGs <- ensembl_to_entrez(pos_logFC_common_DEGs,biomaRt_organism_info$Bioconductor_DB[1],biomaRt_organism_info$Bioconductor_VarName[1])
-				entrez_neg_logFC_common_DEGs <- ensembl_to_entrez(neg_logFC_common_DEGs,biomaRt_organism_info$Bioconductor_DB[1],biomaRt_organism_info$Bioconductor_VarName[1])
-				entrez_union_DEGs <- ensembl_to_entrez(union_DEGs,biomaRt_organism_info$Bioconductor_DB[1],biomaRt_organism_info$Bioconductor_VarName[1])
-				entrez_pos_logFC_union_DEGs <- ensembl_to_entrez(pos_logFC_union_DEGs,biomaRt_organism_info$Bioconductor_DB[1],biomaRt_organism_info$Bioconductor_VarName[1])
-				entrez_neg_logFC_union_DEGs <- ensembl_to_entrez(neg_logFC_union_DEGs,biomaRt_organism_info$Bioconductor_DB[1],biomaRt_organism_info$Bioconductor_VarName[1])
-			}else if(opt$biomaRt_filter == 'refseq_peptide'){
-				stop(paste("This genes type (",opt$biomaRt_filter,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
+				entrez_common_DEGs <- ensembl_to_entrez(common_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1]) 
+				entrez_pos_logFC_common_DEGs <- ensembl_to_entrez(pos_logFC_common_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+				entrez_neg_logFC_common_DEGs <- ensembl_to_entrez(neg_logFC_common_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+				entrez_union_DEGs <- ensembl_to_entrez(union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+				entrez_pos_logFC_union_DEGs <- ensembl_to_entrez(pos_logFC_union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+				entrez_neg_logFC_union_DEGs <- ensembl_to_entrez(neg_logFC_union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+			}else if(opt$input_gene_id == 'refseq_peptide'){
+				stop(paste("This genes type (",opt$input_gene_id,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
 			}else{
 				stop("Unchecked biomart filter type")
 			}
@@ -457,13 +464,13 @@ if(flags$GO){
 			# Launch GSEA analysis
 			invisible(lapply(modules_to_export,function(mod){
 				# Common
-				perform_GSEA_analysis_local(entrez_common_DEGs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_preval",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
-				perform_GSEA_analysis_local(entrez_pos_logFC_common_DEGs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_preval_overex",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
-				perform_GSEA_analysis_local(entrez_neg_logFC_common_DEGs$ENTREZ, reference_ids_common,mod, file.path(paths$root, paste("GO_preval_underex",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_common_DEGs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_preval",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_pos_logFC_common_DEGs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_preval_overex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_neg_logFC_common_DEGs$ENTREZ, reference_ids_common,mod, file.path(paths$root, paste("GO_preval_underex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
 				# Union
-				perform_GSEA_analysis_local(entrez_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
-				perform_GSEA_analysis_local(entrez_pos_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos_overex",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])
-				perform_GSEA_analysis_local(entrez_neg_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos_underex",mod,sep="_")),biomaRt_organism_info$Bioconductor_DB[1])    
+				perform_GSEA_analysis_local(entrez_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_pos_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos_overex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_neg_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos_underex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])    
 			}))
 		} # END LOCAL/REMOTE IF
 	}
@@ -507,19 +514,19 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]),!is.null(opt$custom))){
 	## GO
 	if(flags$GO_cp){
 		# Check
-		if(is.na(biomaRt_organism_info$Bioconductor_DB[1]) | is.na(biomaRt_organism_info$Bioconductor_VarName[1])){
+		if(is.na(current_organism_info$Bioconductor_DB[1]) | is.na(current_organism_info$Bioconductor_VarName[1])){
 			flags$GO_cp <- FALSE
 			warning("Specified organism is not allowed to be used with GO (clusterProfiler) module. Please check your IDs table")
 		}else{
 			# Load necessary packages	
 			modules_to_export <- c()
-			if(grepl("M", opt$GO_graphs)){
+			if(grepl("M", opt$GO_subont)){
 				modules_to_export <- "MF"
 			}
-			if(grepl("B", opt$GO_graphs)){
+			if(grepl("B", opt$GO_subont)){
 				modules_to_export <- c(modules_to_export,"BP")
 			}
-			if(grepl("C", opt$GO_graphs)){
+			if(grepl("C", opt$GO_subont)){
 				modules_to_export <- c(modules_to_export,"CC")
 			}
 			if(length(modules_to_export) == 0){
@@ -528,10 +535,10 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]),!is.null(opt$custom))){
 			# Add execution info
 			if(flags$Clustered){
 				if(flags$ORA){ 
-					invisible(lapply(modules_to_export,function(mod){ora_config <<- rbind(ora_config,list(Fun = "enrichGO",Onto=paste0("GO_",mod),Organism=biomaRt_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))}))
+					invisible(lapply(modules_to_export,function(mod){ora_config <<- rbind(ora_config,list(Fun = "enrichGO",Onto=paste0("GO_",mod),Organism=current_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))}))
 				}
 				if(flags$GSEA){
-					invisible(lapply(modules_to_export,function(mod){gsea_config <<- rbind(gsea_config,list(Onto=paste0("GO_",mod),Organism=biomaRt_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))}))					
+					invisible(lapply(modules_to_export,function(mod){gsea_config <<- rbind(gsea_config,list(Onto=paste0("GO_",mod),Organism=current_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))}))					
 				}
 			}			
 		}
@@ -541,7 +548,7 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]),!is.null(opt$custom))){
 	###################
 	## KEGG
 	if(flags$KEGG){ 
-		if(is.na(biomaRt_organism_info$KeggCode[1])){
+		if(is.na(current_organism_info$KeggCode[1])){
 			flags$KEGG <- FALSE
 			warning("Specified organism is not allowed to be used with KEGG module. Please check your IDs table")
 		}else{
@@ -549,8 +556,8 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]),!is.null(opt$custom))){
 				require(KEGG.db)
 			}
 			if(flags$Clustered){
-				if(flags$ORA) ora_config <- rbind(ora_config,list(Fun = "enrichKEGG",Onto="KEGG",Organism=biomaRt_organism_info$KeggCode[1],KeyType="kegg",UseInternal=!remote_actions$kegg))
-				if(flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="KEGG",Organism=biomaRt_organism_info$KeggCode[1],KeyType="ENTREZID",UseInternal=!remote_actions$kegg))
+				if(flags$ORA) ora_config <- rbind(ora_config,list(Fun = "enrichKEGG",Onto="KEGG",Organism=current_organism_info$KeggCode[1],KeyType="kegg",UseInternal=!remote_actions$kegg))
+				if(flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="KEGG",Organism=current_organism_info$KeggCode[1],KeyType="ENTREZID",UseInternal=!remote_actions$kegg))
 			}
 		}
 	}
@@ -561,14 +568,14 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]),!is.null(opt$custom))){
 		if(keytypes == "GENENAME"){
 			flags$REACT <- FALSE
 			warning("Reactome module can not be used with GENENAME identifiers")
-		}else if(is.na(biomaRt_organism_info$Reactome_ID[1]) | (keytypes != "ENTREZID")){
+		}else if(is.na(current_organism_info$Reactome_ID[1]) | (keytypes != "ENTREZID")){
 			flags$REACT <- FALSE
 			warning("Specified organism is not allowed to be used with Reactome module. Please check your IDs table")
 		}else{
 			require(ReactomePA)
 			if(flags$Clustered){
-				if(flags$ORA) ora_config <- rbind(ora_config,list(Fun = "enrichPathway",Onto="REACT",Organism=biomaRt_organism_info$Reactome_ID[1],KeyType="ENTREZID",UseInternal=FALSE))				
-				if(flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="REACT",Organism=biomaRt_organism_info$Reactome_ID[1],KeyType="ENTREZID",UseInternal=FALSE))				
+				if(flags$ORA) ora_config <- rbind(ora_config,list(Fun = "enrichPathway",Onto="REACT",Organism=current_organism_info$Reactome_ID[1],KeyType="ENTREZID",UseInternal=FALSE))				
+				if(flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="REACT",Organism=current_organism_info$Reactome_ID[1],KeyType="ENTREZID",UseInternal=FALSE))				
 			}
 		}
 	}
@@ -749,7 +756,7 @@ if(flags$GO_cp){
 	### ORA ENRICHMENTS
 	if(flags$ORA){
 		enrich_go <- lapply(modules_to_export,function(mod){
-			enrich <- enrichment_ORA(genes = common_unique_entrez,organism = biomaRt_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = paste0("GO_",mod), qvalueCutoff = opt$qthreshold)
+			enrich <- enrichment_ORA(genes = common_unique_entrez,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = paste0("GO_",mod), qvalueCutoff = opt$qthreshold)
 			return(enrich)
 		})
 		# Add names
@@ -763,7 +770,7 @@ if(flags$GO_cp){
 	if(flags$GSEA){
 		# Enrich
 		enrich_go_gsea <- lapply(modules_to_export,function(mod){
-			enrich <- enrichment_GSEA(geneList = geneList,organism = biomaRt_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = paste0("GO_",mod))
+			enrich <- enrichment_GSEA(geneList = geneList,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = paste0("GO_",mod))
 			return(enrich)
 		})
 		# Add names
@@ -783,13 +790,13 @@ if(flags$KEGG){
 	message("Performing KEGG enrichments")
 	if(flags$ORA){
 		# Enrich
-		enrich_ora <- enrichment_ORA(genes = common_unique_entrez,organism = biomaRt_organism_info$KeggCode[1],keyType = "kegg",pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = "KEGG",useInternal = !remote_actions$kegg, qvalueCutoff = opt$qthreshold)
+		enrich_ora <- enrichment_ORA(genes = common_unique_entrez,organism = current_organism_info$KeggCode[1],keyType = "kegg",pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = "KEGG",useInternal = !remote_actions$kegg, qvalueCutoff = opt$qthreshold)
 		# Write output
 		write.table(enrich_ora, file=file.path(paths$root, "KEGG_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
 	# Launch GSEA
 	if(flags$GSEA){
-		enrich_gsea <- enrichment_GSEA(geneList = geneList,organism = biomaRt_organism_info$KeggCode[1],pvalueCutoff = opt$threshold,ont = "KEGG",useInternal = !remote_actions$kegg)
+		enrich_gsea <- enrichment_GSEA(geneList = geneList,organism = current_organism_info$KeggCode[1],pvalueCutoff = opt$threshold,ont = "KEGG",useInternal = !remote_actions$kegg)
 		# Write output
 		write.table(enrich_gsea, file=file.path(paths$root, "KEGG_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
@@ -804,14 +811,14 @@ if(flags$REACT){
 	message("Performing Reactome enrichments")
 	if(flags$ORA){
 		# Make enrichment (ORA)
-		enrich_react <- enrichment_ORA(genes = common_unique_entrez,organism = biomaRt_organism_info$Reactome_ID[1],keyType = "ENTREZID",pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = "REACT", qvalueCutoff = opt$qthreshold)		
+		enrich_react <- enrichment_ORA(genes = common_unique_entrez,organism = current_organism_info$Reactome_ID[1],keyType = "ENTREZID",pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = "REACT", qvalueCutoff = opt$qthreshold)		
 		# Write output
 		write.table(enrich_react, file=file.path(paths$root, "REACT_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
 	}
 
 	# Make enrichment GSEA
 	if(flags$GSEA){
-		enrich_react_gsea <- enrichment_GSEA(geneList = geneList, organism = biomaRt_organism_info$Reactome_ID[1], pvalueCutoff = opt$threshold, pAdjustMethod = "BH", ont = "REACT")
+		enrich_react_gsea <- enrichment_GSEA(geneList = geneList, organism = current_organism_info$Reactome_ID[1], pvalueCutoff = opt$threshold, pAdjustMethod = "BH", ont = "REACT")
 		# Write output
 		write.table(enrich_react_gsea, file=file.path(paths$root, "REACT_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
