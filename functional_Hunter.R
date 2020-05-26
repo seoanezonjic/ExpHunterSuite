@@ -26,15 +26,15 @@ option_list <- list(
   make_option(c("-L", "--List_organisms"), action="store_true", type="logical", default=FALSE, 
     help="Print all organisms available and ends the program"),
   make_option(c("-a", "--annot_file"), type="character",
-  	help="If the species used does not exist in organism_table.txt, please add a two-column file mapping orthologue ENSEBL gene ids from a model organism (first column) to the original IDs (second column)."),
+  	help="If the species used does not exist in organism_table.txt, please add a two-column file mapping orthologue ENSEMBL gene ids from a model organism (first column) to the original IDs (second column)."),
   make_option(c("-t", "--input_gene_id"), type="character", default="E",
     help="Input gene ID type. ENSEMBL (E), TAIR/Arabidopsis (T), Gene Names (G) Gene SYMBOLS (S). [Default:%default]"),      	
   make_option(c("-f", "--func_annot_db"), type="character", default="gKR",
     help="Functional annotation database and enrichment method(s) to use (topGO: G = GO | clusterProfiler: K = KEGG, g = GO, R = Reactome). [Default=%default]"),
-  make_option(c("-C", "--custom"), ,type = "character", default=NULL,
-    help="Files with custom functional annotation database (in GMT format) separated by commas (,)"),
   make_option(c("-G", "--GO_subont"), type="character", default=c("BMC"),
     help="GO sub-ontologies to use for functional analysis (M = Molecular Function, B = Biological Process, C = Celular Component). Default=%default"), # Not Checked
+  make_option(c("-C", "--custom"), ,type = "character", default=NULL,
+    help="Files with custom functional annotation database (in GMT format) separated by commas (,)"),
   make_option(c("-A", "--analysis_type"), type="character", default=c("go"),
     help="Analysis performance (g = Gene Set Enrichment Analysis, o = Over Representation Analysis). Default=%default"), # Not Checked
   # make_option(c("-K", "--Kegg_organism"), type="character", default=NULL, 
@@ -77,6 +77,8 @@ source(file.path(main_path_script, 'lib', 'plotting_functions.R'))
 #############################################
 ### MAIN 
 #############################################
+# Load Reference-NonRefernce models gene IDs relations
+if(! file.exists(opt$input_hunter_folder)) stop("No input degenes_Hunter folder")
 
 # Special IDs
 fc_colname <- "mean_logFCs"
@@ -117,13 +119,12 @@ if(opt$debug){
 # Load available organisms
 all_organisms_info <- read.table(file.path(main_path_script, "lib", "organism_table.txt"), header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA)
 
-# Load Reference-NonRefernce models gene IDs relations
-if(! file.exists(opt$input_hunter_folder)) stop("No input degenes_Hunter folder")
-
-DEG_annot_table <- read.table(file.path(opt$input_hunter_folder, "Common_results", "hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE)
-aux <- which(DEG_annot_table$genes_tag == "FILTERED_OUT") 
+# Load DEGH_results
+#DEGH_results => DEgenes Hunter results table and modifications
+DEGH_results <- read.table(file.path(opt$input_hunter_folder, "Common_results", "hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE)
+aux <- which(DEGH_results$genes_tag == "FILTERED_OUT") 
 if(length(aux) > 0){
-	DEG_annot_table <- DEG_annot_table[-aux,]
+	DEGH_results <- DEGH_results[-aux,]
 }
 
 ####
@@ -137,19 +138,15 @@ exp_names <- c(exp_names,paste("[Treatment]",experiments[which(experiments[,1] =
 
 
 if(!is.null(opt$annot_file)){
-  annot_table <- read.table(opt$annot_file, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "") # Load
-  # translate
-  # rownames(DEG_annot_table) <- unlist(lapply(rownames(DEG_annot_table),function(id){
-  # 	if(id %in% annot_table[,2]){
-  # 		return(annot_table[which(annot_table[,2] == id)[1],1])
-  # 	}
-  # 	return(id) # Not found
-  # }))
+	annot_table <- read.table(opt$annot_file, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "") # Load
+  	DEGH_results$Annot_IDs <- translate_id(rownames(DEGH_results), annot_table)
+	valid_genes <- unique(DEGH_results$Annot_IDs[!is.na(DEGH_results$Annot_IDs)])
 }else{
-  annot_table <- DEG_annot_table
-  annot_table[,1] <- row.names(DEG_annot_table)
+	annot_table <- DEGH_results
+	annot_table[,1] <- row.names(DEGH_results)
+	DEGH_results$Annot_IDs <- rownames(DEGH_results)
+	valid_genes <- rownames(DEGH_results)
 }
-
 # Prepare ID type
 if(opt$input_gene_id == "E"){
   opt$input_gene_id <- 'ensembl_gene_id'
@@ -187,24 +184,18 @@ flags <- list(GO    = grepl("G", opt$func_annot_db),
               REACT = grepl("R", opt$func_annot_db),
               GSEA  = grepl("g", opt$analysis_type),
               ORA   = grepl("o", opt$analysis_type),
-              Clustered = "Cluster_ID" %in% colnames(DEG_annot_table))
+              Clustered = "Cluster_ID" %in% colnames(DEGH_results))
 
-
+# TODO => CHECK THAT WORKS AND REMOVE
 # Special case
-if(exists("annot_table")){
-	DEG_annot_table$Annot_IDs <- unlist(lapply(rownames(DEG_annot_table),function(id){
-		# Find model ID for non-model ID
-		indx <- which(annot_table[,2] == id)
-		if(length(indx) == 0){
-			return(id)
-		}else{
-			return(annot_table[indx[1],1])
-		}
-	}))
-}
+# if(exists("annot_table")){
+# 	DEGH_results$Annot_IDs <- translate_id(rownames(DEGH_results), annot_table)
+# } else {
+# 	DEGH_results$Annot_IDs <- rownames(DEGH_results)
+# }
 
 # Verbose point
-aux <- table(DEG_annot_table$genes_tag)
+aux <- table(DEGH_results$genes_tag)
 for(i in seq_along(aux)) 
 	message(paste(names(aux)[i],aux[i]))
 
@@ -233,7 +224,7 @@ if(remote_actions$biomart){ # REMOTE MODE
 	)
 
 	# Obtain references from biomart
-	reference_table <- obtain_info_from_biomaRt(orthologues = as.character(annot_table[,1]),
+	reference_table <- obtain_info_from_biomaRt(orthologues = as.character(valid_genes),
 	                                            id_type = opt$input_gene_id, 
 	                                            mart = organism_mart,
 	                                            dataset = organism_dataset, 
@@ -243,7 +234,7 @@ if(remote_actions$biomart){ # REMOTE MODE
 }else if(!is.na(current_organism_info$Bioconductor_DB[1])){ # LOCAL MODE
 	# Check genetical items to be used
 	if(opt$input_gene_id == 'ensembl_gene_id'){
-		reference_table <- ensembl_to_entrez(ensembl_ids = annot_table[,1],
+		reference_table <- ensembl_to_entrez(ensembl_ids = valid_genes,
 											 organism_db = current_organism_info$Bioconductor_DB[1],
 											 organism_var = current_organism_info$Bioconductor_VarName[1])
 
@@ -321,7 +312,7 @@ if(opt$debug){
 
 ################# PREPROCESSING INPUT DATA FOR FUNCTIONAL ANALYSIS #############
 # Obtain prevalent items
-common_DEGs_df <- subset(DEG_annot_table, genes_tag=="PREVALENT_DEG")
+common_DEGs_df <- subset(DEGH_results, genes_tag=="PREVALENT_DEG")
 
 # Check (this check is deprecated because WGCNA does not need PREVALENT tags)
 # if(nrow(common_DEGs_df) == 0){
@@ -347,7 +338,7 @@ common_unique_entrez <- unique(common_unique_entrez$entrezgene)
 # Verbose point
 message(paste("IDs used to enrich:",length(common_unique_entrez)))
 
-union_DEGs_df <- subset(DEG_annot_table, genes_tag=="POSSIBLE_DEG")
+union_DEGs_df <- subset(DEGH_results, genes_tag=="POSSIBLE_DEG")
 union_DEGs_df <- rbind(common_DEGs_df, union_DEGs_df)
 
 if(exists("annot_table")){
@@ -361,38 +352,38 @@ union_annot_DEGs_df <- subset(reference_table, reference_table[,1] %in% union_DE
 ################# ADD ENTREZ IDS AND GENE SYMBOLS TO INPUT FILE #############
 # Currently only runs if we are local, have an org db available and a symbol correspondence. The ENTREZ bit should become universal even if no SYMBOL available
 
-if(!remote_actions$biomart &
+if( ! remote_actions$biomart &
 	! current_organism_info$Bioconductor_DB[1] == "" & 
 	! current_organism_info$Bioconductor_VarName_SYMBOL[1] == ""){
 
-	DEG_annot_table_Symbol <- DEG_annot_table
+	DEGH_results_Symbol <- DEGH_results
 	if(exists("annot_table")){
-		ENSEMBL_IDs <- DEG_annot_table_Symbol$Annot_IDs
+		ENSEMBL_IDs <- DEGH_results_Symbol$Annot_IDs
 	}else{
-		ENSEMBL_IDs <- rownames(DEG_annot_table_Symbol)
+		ENSEMBL_IDs <- rownames(DEGH_results_Symbol)
 	}
 
-	DEG_annot_table_Symbol$Ensembl <- ENSEMBL_IDs # Necessary step for merging
-	DEG_annot_table_Symbol <- merge(DEG_annot_table_Symbol, reference_table, by.x="Ensembl", by.y="ensembl_gene_id", all.x=TRUE)
+	DEGH_results_Symbol$Ensembl <- ENSEMBL_IDs # Necessary step for merging
+	DEGH_results_Symbol <- merge(DEGH_results_Symbol, reference_table, by.x="Ensembl", by.y="ensembl_gene_id", all.x=TRUE)
 
-	reference_table_symbol <- ensembl_to_entrez(ensembl_ids = DEG_annot_table_Symbol$entrezgene,
+	reference_table_symbol <- ensembl_to_entrez(ensembl_ids = DEGH_results_Symbol$entrezgene,
 										 		organism_db = current_organism_info$Bioconductor_DB[1],
 												organism_var = current_organism_info$Bioconductor_VarName_SYMBOL[1])
 	colnames(reference_table_symbol) <- c("entrezgene", "Symbol")
-	DEG_annot_table_Symbol <- merge(DEG_annot_table_Symbol, reference_table_symbol, by.x="entrezgene", by.y="entrezgene", all.x=TRUE)
+	DEGH_results_Symbol <- merge(DEGH_results_Symbol, reference_table_symbol, by.x="entrezgene", by.y="entrezgene", all.x=TRUE)
 	first_cols <- c("Ensembl", "entrezgene", "Symbol")
 
-	DEG_annot_table_Symbol <- DEG_annot_table_Symbol[c(first_cols, setdiff(names(DEG_annot_table_Symbol), first_cols))] # Reorder columns so annotated first
-	DEG_annot_table_Symbol <- DEG_annot_table_Symbol[order(DEG_annot_table_Symbol[,"combined_FDR"]),] # Reorder rows by combined FDR
+	DEGH_results_Symbol <- DEGH_results_Symbol[c(first_cols, setdiff(names(DEGH_results_Symbol), first_cols))] # Reorder columns so annotated first
+	DEGH_results_Symbol <- DEGH_results_Symbol[order(DEGH_results_Symbol[,"combined_FDR"]),] # Reorder rows by combined FDR
 
 	# Write output here for now, until the rest of the workflow can use this object directly
-	write.table(DEG_annot_table_Symbol, file=file.path(paths$root, "DEG_results_annotated.txt"), quote=F, row.names=FALSE, sep="\t")
+	write.table(DEGH_results_Symbol, file=file.path(paths$root, "DEG_results_annotated.txt"), quote=F, row.names=FALSE, sep="\t")
 }
 
 #############################################
 ### EXPORT DATA
 #############################################
-write.table(DEG_annot_table, file=file.path(paths$root, "Annotated_table.txt"), quote=F, col.names=NA, sep="\t")
+write.table(DEGH_results, file=file.path(paths$root, "Annotated_table.txt"), quote=F, col.names=NA, sep="\t")
 write.table(reference_table, file=file.path(paths$root, "ENSEMBL2ENTREZ.txt"), quote=F, col.names=NA, sep="\t")
 
 
@@ -492,14 +483,14 @@ if(opt$debug){
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 # Calcualte geneList
 if(exists("annot_table")){
-	aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
-	geneList <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
-	names(geneList) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"])]
+	aux <- subset(reference_table, reference_table[,1] %in% DEGH_results$Annot_IDs)
+	geneList <- as.vector(DEGH_results[which(DEGH_results$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
+	names(geneList) <- DEGH_results$Annot_IDs[which(DEGH_results$Annot_IDs %in% aux[,"ensembl_gene_id"])]
 	names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
 }else{
-	aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
-	geneList <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"]),fc_colname])
-	names(geneList) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"])]
+	aux <- subset(reference_table, reference_table[,1] %in% rownames(DEGH_results))
+	geneList <- as.vector(DEGH_results[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"]),fc_colname])
+	names(geneList) <- rownames(DEGH_results)[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"])]
 	names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
 }
 # Sort FC
@@ -617,7 +608,7 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]),!is.null(opt$custom))){
 ### Clustered enrichments
 #############################################
 if(flags$Clustered){
-	cls <- unique(DEG_annot_table$Cluster_ID)
+	cls <- unique(DEGH_results$Cluster_ID)
 	# Check
 	if(any(c(0,"grey") %in% cls)){
 		cls <- cls[!cls %in% c(0,"grey")]
@@ -626,11 +617,11 @@ if(flags$Clustered){
 	}
 
 	clgenes <- lapply(cls,function(cl){ # Find
-		indx <- which(DEG_annot_table$Cluster_ID == cl)
+		indx <- which(DEGH_results$Cluster_ID == cl)
 		if(exists("annot_table")){
-			unique(DEG_annot_table$Annot_IDs[indx])
+			unique(DEGH_results$Annot_IDs[indx])
 		}else{
-			unique(rownames(DEG_annot_table[indx,]))			
+			unique(rownames(DEGH_results[indx,]))			
 		}
 	}) 
 	clgenes <- lapply(clgenes,function(genes){reference_table$entrezgene[which(reference_table$ensembl_gene_id %in% genes)]}) # Translate
@@ -657,19 +648,19 @@ if(flags$Clustered){
 	if(flags$GSEA){
 		message("Performing GSEA enrichments")
 		if(exists("annot_table")){
-			aux <- subset(reference_table, reference_table[,1] %in% DEG_annot_table$Annot_IDs)
+			aux <- subset(reference_table, reference_table[,1] %in% DEGH_results$Annot_IDs)
 			geneListCL <- lapply(cls, function(cl){
-				glist <- as.vector(DEG_annot_table[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"] & DEG_annot_table$Cluster_ID == cl),fc_colname])
-				names(glist) <- DEG_annot_table$Annot_IDs[which(DEG_annot_table$Annot_IDs %in% aux[,"ensembl_gene_id"] & DEG_annot_table$Cluster_ID == cl)]
+				glist <- as.vector(DEGH_results[which(DEGH_results$Annot_IDs %in% aux[,"ensembl_gene_id"] & DEGH_results$Cluster_ID == cl),fc_colname])
+				names(glist) <- DEGH_results$Annot_IDs[which(DEGH_results$Annot_IDs %in% aux[,"ensembl_gene_id"] & DEGH_results$Cluster_ID == cl)]
 				names(glist) <- aux[match(names(glist),aux[,"ensembl_gene_id"]),"entrezgene"]
 				glist <- sort(glist, decreasing = TRUE)
 				return(glist)
 			})
 		}else{
-			aux <- subset(reference_table, reference_table[,1] %in% rownames(DEG_annot_table))
+			aux <- subset(reference_table, reference_table[,1] %in% rownames(DEGH_results))
 			geneListCL <- lapply(cls,function(cl){
-				glist <- as.vector(DEG_annot_table[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"] & DEG_annot_table$Cluster_ID == cl),fc_colname])
-				names(glist) <- rownames(DEG_annot_table)[which(rownames(DEG_annot_table) %in% aux[,"ensembl_gene_id"] & DEG_annot_table$Cluster_ID == cl)]
+				glist <- as.vector(DEGH_results[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"] & DEGH_results$Cluster_ID == cl),fc_colname])
+				names(glist) <- rownames(DEGH_results)[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"] & DEGH_results$Cluster_ID == cl)]
 				names(glist) <- aux[match(names(glist),aux[,"ensembl_gene_id"]),"entrezgene"]
 				glist <- sort(glist, decreasing = TRUE)
 				return(glist)

@@ -89,65 +89,65 @@ In the case of the GSEA method, all the genes are sorted by their fold-change an
 
 Statistics about input results obtained from DEGenes Expression Hunter are:
 ```{r table_exp_flags, echo = FALSE}
-cl_table <- as.data.frame(table(DEG_annot_table$genes_tag))
+cl_table <- as.data.frame(table(DEGH_results$genes_tag))
 names(cl_table) <- c("Gene_tag","Genes")
 knitr::kable(cl_table)
-# knitr::kable(table(DEG_annot_table$genes_tag))
+# knitr::kable(table(DEGH_results$genes_tag))
 ```
 
 ```{r table_top_genes, echo = FALSE, results = 'asis'}
 
 # Prepare regular data
-targetcols <- intersect(c("rif1","rif2","diffK","diff_cn"),colnames(DEG_annot_table_Symbol))
+targetcols <- intersect(c("rif1","rif2","diffK","diff_cn"),colnames(DEGH_results_Symbol))
 
 targetindexes <- lapply(targetcols,function(tcol){
 	# Sort column
-	csorted <- sort(DEG_annot_table_Symbol[,tcol], decreasing = TRUE)
+	csorted <- sort(DEGH_results_Symbol[,tcol], decreasing = TRUE)
 	# Take tops
 	top15 <- head(csorted,15)
 	bot15 <- tail(csorted,15)
 	# Find
-	topindx <- which(DEG_annot_table_Symbol[,tcol] %in% top15)
-	botindx <- which(DEG_annot_table_Symbol[,tcol] %in% bot15)
+	topindx <- which(DEGH_results_Symbol[,tcol] %in% top15)
+	botindx <- which(DEGH_results_Symbol[,tcol] %in% bot15)
 	# Retrun
 	return(list(top = topindx, bot = botindx))
 })
 # Prepare pattern based data
-patterncols <- colnames(DEG_annot_table_Symbol)[grepl("^logFC",colnames(DEG_annot_table_Symbol))]
+patterncols <- colnames(DEGH_results_Symbol)[grepl("^logFC",colnames(DEGH_results_Symbol))]
 patternindexes <- lapply(patterncols,function(pcol){
 	# Filter
-	to_remove <- which(DEG_annot_table_Symbol[,gsub("logFC","FDR",pcol)] > degh_exp_threshold)
+	to_remove <- which(DEGH_results_Symbol[,gsub("logFC","FDR",pcol)] > degh_exp_threshold)
 	# Sort column
 	if(length(to_remove) > 0){
-		csorted <- sort(DEG_annot_table_Symbol[-to_remove,pcol], decreasing = TRUE)
+		csorted <- sort(DEGH_results_Symbol[-to_remove,pcol], decreasing = TRUE)
 	}else{
-		csorted <- sort(DEG_annot_table_Symbol[,pcol], decreasing = TRUE)		
+		csorted <- sort(DEGH_results_Symbol[,pcol], decreasing = TRUE)		
 	}
 	# Take tops
 	top15 <- head(csorted,15)
 	bot15 <- tail(csorted,15)
 	# Find
-	topindx <- setdiff(which(DEG_annot_table_Symbol[,pcol] %in% top15),to_remove)
-	botindx <- setdiff(which(DEG_annot_table_Symbol[,pcol] %in% bot15),to_remove)
+	topindx <- setdiff(which(DEGH_results_Symbol[,pcol] %in% top15),to_remove)
+	botindx <- setdiff(which(DEGH_results_Symbol[,pcol] %in% bot15),to_remove)
 
 	# Retrun
 	return(list(top = topindx, bot = botindx))
 })
 # Add special case
 	# Filter
-	to_remove <- which(DEG_annot_table_Symbol[,"combined_FDR"] > degh_exp_threshold)
+	to_remove <- which(DEGH_results_Symbol[,"combined_FDR"] > degh_exp_threshold)
 	# Sort column
 	if(length(to_remove) > 0){
-		csorted <- sort(DEG_annot_table_Symbol[-to_remove,"mean_logFCs"], decreasing = TRUE)
+		csorted <- sort(DEGH_results_Symbol[-to_remove,"mean_logFCs"], decreasing = TRUE)
 	}else{
-		csorted <- sort(DEG_annot_table_Symbol[,"mean_logFCs"], decreasing = TRUE)		
+		csorted <- sort(DEGH_results_Symbol[,"mean_logFCs"], decreasing = TRUE)		
 	}
 	# Take tops
 	top15 <- head(csorted,15)
 	bot15 <- tail(csorted,15)
 	# Find
-	topindx <- setdiff(which(DEG_annot_table_Symbol[,"mean_logFCs"] %in% top15),to_remove)
-	botindx <- setdiff(which(DEG_annot_table_Symbol[,"mean_logFCs"] %in% bot15),to_remove)
+	topindx <- setdiff(which(DEGH_results_Symbol[,"mean_logFCs"] %in% top15),to_remove)
+	botindx <- setdiff(which(DEGH_results_Symbol[,"mean_logFCs"] %in% bot15),to_remove)
 patternindexes[[length(patternindexes)+1]] <- list(top = topindx, bot = botindx)
 # Take data
 topindx <- unique(unlist(lapply(seq_along(targetindexes),function(i){targetindexes[[i]]$top})))
@@ -155,8 +155,8 @@ topindx <- unique(c(topindx,unlist(lapply(seq_along(patternindexes),function(i){
 botindx <- unique(unlist(lapply(seq_along(targetindexes),function(i){targetindexes[[i]]$bot})))
 botindx <- unique(c(botindx,unlist(lapply(seq_along(patternindexes),function(i){patternindexes[[i]]$bot}))))
 # Take targets
-topgenes <- DEG_annot_table_Symbol[topindx,c("Symbol",targetcols,patterncols,"mean_logFCs",colnames(DEG_annot_table_Symbol)[1])]
-botgenes <- DEG_annot_table_Symbol[botindx,c("Symbol",targetcols,patterncols,"mean_logFCs",colnames(DEG_annot_table_Symbol)[1])]
+topgenes <- DEGH_results_Symbol[topindx,c("Symbol",targetcols,patterncols,"mean_logFCs",colnames(DEGH_results_Symbol)[1])]
+botgenes <- DEGH_results_Symbol[botindx,c("Symbol",targetcols,patterncols,"mean_logFCs",colnames(DEGH_results_Symbol)[1])]
 # Sort
 
 # Message

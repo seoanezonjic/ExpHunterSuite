@@ -43,10 +43,10 @@ paths$root <-opt$output_files
 ### LOAD AND PARSE 
 #############################################
 
-DEG_annot_table <- read.table(file.path(opt$input_hunter_folder, "Common_results", "hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE)
-aux <- which(DEG_annot_table$genes_tag == "FILTERED_OUT") 
+DEGH_results <- read.table(file.path(opt$input_hunter_folder, "Common_results", "hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE)
+aux <- which(DEGH_results$genes_tag == "FILTERED_OUT") 
 if(length(aux) > 0){
-	DEG_annot_table <- DEG_annot_table[-aux,]
+	DEGH_results <- DEGH_results[-aux,]
 }
 
 
@@ -95,13 +95,13 @@ colnames(wgcna_count_sample_trait_gnorm) <- colnames(wgcna_count_sample_trait)
 
 
 # Obtain clusters
-cls <- unique(DEG_annot_table$Cluster_ID)
+cls <- unique(DEGH_results$Cluster_ID)
 if(any(c(0,"grey") %in% cls)){
 	cls <- cls[!cls %in% c(0,"grey")]
 }else{
 	warning("Cluster Zero/Grey not found")
 }
-clgenes <- lapply(cls,function(cl){unique(rownames(DEG_annot_table[which(DEG_annot_table$Cluster_ID == cl),]))}) # Find
+clgenes <- lapply(cls,function(cl){unique(rownames(DEGH_results[which(DEGH_results$Cluster_ID == cl),]))}) # Find
 names(clgenes) <- cls
 
 
