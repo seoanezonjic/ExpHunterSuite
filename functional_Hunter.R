@@ -31,6 +31,8 @@ option_list <- list(
     help="Input gene ID type. ENSEMBL (E), TAIR/Arabidopsis (T), Gene Names (G) Gene SYMBOLS (S). [Default:%default]"),      	
   make_option(c("-f", "--func_annot_db"), type="character", default="gKR",
     help="Functional annotation database and enrichment method(s) to use (topGO: G = GO | clusterProfiler: K = KEGG, g = GO, R = Reactome). [Default=%default]"),
+  make_option(c("-C", "--custom"), ,type = "character", default=NULL,
+    help="Files with custom functional annotation database (in GMT format) separated by commas (,)"),
   make_option(c("-G", "--GO_subont"), type="character", default=c("BMC"),
     help="GO sub-ontologies to use for functional analysis (M = Molecular Function, B = Biological Process, C = Celular Component). Default=%default"), # Not Checked
   make_option(c("-A", "--analysis_type"), type="character", default=c("go"),
@@ -40,21 +42,19 @@ option_list <- list(
   make_option(c("-r", "--remote"), ,type = "character", default="",
     help="Flags to activate remote query from enrichments and Genes translation. Use (b) to launch biomaRt translation; (k) to use Kegg remote data base"),
   make_option(c("-q", "--save_query"), type="logical", action = "store_true", default=FALSE,
-    help="Flag to save biomaRt query. Require remote mode"), 
-  make_option(c("-o", "--output_files"), type="character", default="results",
-    help="Output path. Default=%default"),
-  make_option(c("-C", "--custom"), ,type = "character", default=NULL,
-    help="Files with custom nomenclature (in GMT format) separated by commas (,)"),
-  make_option(c("-c", "--cores"), ,type = "numeric", default=1,
-    help="Cores to be used to parallelize clusters enrichments. Default : %default"),
-  make_option(c("-T", "--threshold"), type="double", default=0.1,
+    help="Flag to save biomaRt query."), 
+  make_option(c("-P", "--pthreshold"), type="double", default=0.1,
     help="Enrichment p-value threshold. [Default = %default]"),
   make_option(c("-Q", "--qthreshold"), type="double", default=0.2,
     help="Enrichment q-value threshold. [Default = %default]"),
   make_option(c("--debug"), type="logical", default=FALSE, action = "store_true",
     help="Activate debug mode, which stores RData sessions at different points of the pipeline"),
   make_option(c("--Debug"), type="character", default=NULL,
-    help="Activate debug mode and uses given filename. File must have '.RData' extension")
+    help="Activate debug mode and uses given filename. File must have '.RData' extension"),
+  make_option(c("-c", "--cores"), ,type = "numeric", default=1,
+    help="Cores to be used to parallelize clusters enrichments. Default : %default"),
+  make_option(c("-o", "--output_files"), type="character", default="results",
+    help="Output path. Default=%default")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
@@ -257,7 +257,9 @@ if(remote_actions$biomart){ # REMOTE MODE
 	error("Specified organism are not available to be studiend in LOCAL model. Please try REMOTE mode")
 }
 
-if(opt$save_query == TRUE){
+
+
+if(opt$save_query == TRUE){ ## TODO => CACHE IS SAVED BUT NEVER IS LOADED
   saveRDS(reference_table, file=file.path("query_results_temp"))
 } 
 
@@ -637,7 +639,7 @@ if(flags$Clustered){
 		message("Performing ORA enrichments")
 		enrichments_ORA_expanded <- lapply(seq(nrow(ora_config)),function(i){
 			# Perform per each cluster
-			enr <- enrichment_clusters_ORA(genes = clgenes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = ora_config$Onto[i],qvalueCutoff = opt$qthreshold, useInternal = ora_config$UseInternal[i], mc.cores = opt$cores)
+			enr <- enrichment_clusters_ORA(genes = clgenes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = ora_config$Onto[i],qvalueCutoff = opt$qthreshold, useInternal = ora_config$UseInternal[i], mc.cores = opt$cores)
 			# enr <- merge_result(enr)
 			return(enr)
 		})
@@ -680,7 +682,7 @@ if(flags$Clustered){
 				# Check
 				if(length(genes) <= 0) return(NULL)
 				# Enrich
-				curr_enr <- enrichment_GSEA(geneList = genes,organism = gsea_config$Organism[i],keyType = gsea_config$KeyType[i],pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = gsea_config$Onto[i], useInternal = gsea_config$UseInternal[i])
+				curr_enr <- enrichment_GSEA(geneList = genes,organism = gsea_config$Organism[i],keyType = gsea_config$KeyType[i],pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = gsea_config$Onto[i], useInternal = gsea_config$UseInternal[i])
 				# Check
 				if(is.null(curr_enr)) return(NULL)
 				if(nrow(curr_enr) <= 0) return(NULL)
@@ -713,7 +715,7 @@ if(flags$Clustered){
 			cs_set <- custom_sets[[i]]
 			# Enrich
 			cs_enr <- mclapply(clgenes,function(genesset){
-				enricher(genesset, pvalueCutoff = opt$threshold, TERM2GENE = cs_set)
+				enricher(genesset, pvalueCutoff = opt$pthreshold, TERM2GENE = cs_set)
 			},mc.cores = opt$cores)
 			names(cs_enr) <- names(clgenes)
 			# Return
@@ -756,7 +758,7 @@ if(flags$GO_cp){
 	### ORA ENRICHMENTS
 	if(flags$ORA){
 		enrich_go <- lapply(modules_to_export,function(mod){
-			enrich <- enrichment_ORA(genes = common_unique_entrez,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = paste0("GO_",mod), qvalueCutoff = opt$qthreshold)
+			enrich <- enrichment_ORA(genes = common_unique_entrez,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = paste0("GO_",mod), qvalueCutoff = opt$qthreshold)
 			return(enrich)
 		})
 		# Add names
@@ -770,7 +772,7 @@ if(flags$GO_cp){
 	if(flags$GSEA){
 		# Enrich
 		enrich_go_gsea <- lapply(modules_to_export,function(mod){
-			enrich <- enrichment_GSEA(geneList = geneList,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = paste0("GO_",mod))
+			enrich <- enrichment_GSEA(geneList = geneList,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = paste0("GO_",mod))
 			return(enrich)
 		})
 		# Add names
@@ -790,13 +792,13 @@ if(flags$KEGG){
 	message("Performing KEGG enrichments")
 	if(flags$ORA){
 		# Enrich
-		enrich_ora <- enrichment_ORA(genes = common_unique_entrez,organism = current_organism_info$KeggCode[1],keyType = "kegg",pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = "KEGG",useInternal = !remote_actions$kegg, qvalueCutoff = opt$qthreshold)
+		enrich_ora <- enrichment_ORA(genes = common_unique_entrez,organism = current_organism_info$KeggCode[1],keyType = "kegg",pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = "KEGG",useInternal = !remote_actions$kegg, qvalueCutoff = opt$qthreshold)
 		# Write output
 		write.table(enrich_ora, file=file.path(paths$root, "KEGG_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
 	# Launch GSEA
 	if(flags$GSEA){
-		enrich_gsea <- enrichment_GSEA(geneList = geneList,organism = current_organism_info$KeggCode[1],pvalueCutoff = opt$threshold,ont = "KEGG",useInternal = !remote_actions$kegg)
+		enrich_gsea <- enrichment_GSEA(geneList = geneList,organism = current_organism_info$KeggCode[1],pvalueCutoff = opt$pthreshold,ont = "KEGG",useInternal = !remote_actions$kegg)
 		# Write output
 		write.table(enrich_gsea, file=file.path(paths$root, "KEGG_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
@@ -811,14 +813,14 @@ if(flags$REACT){
 	message("Performing Reactome enrichments")
 	if(flags$ORA){
 		# Make enrichment (ORA)
-		enrich_react <- enrichment_ORA(genes = common_unique_entrez,organism = current_organism_info$Reactome_ID[1],keyType = "ENTREZID",pvalueCutoff = opt$threshold,pAdjustMethod = "BH",ont = "REACT", qvalueCutoff = opt$qthreshold)		
+		enrich_react <- enrichment_ORA(genes = common_unique_entrez,organism = current_organism_info$Reactome_ID[1],keyType = "ENTREZID",pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = "REACT", qvalueCutoff = opt$qthreshold)		
 		# Write output
 		write.table(enrich_react, file=file.path(paths$root, "REACT_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
 	}
 
 	# Make enrichment GSEA
 	if(flags$GSEA){
-		enrich_react_gsea <- enrichment_GSEA(geneList = geneList, organism = current_organism_info$Reactome_ID[1], pvalueCutoff = opt$threshold, pAdjustMethod = "BH", ont = "REACT")
+		enrich_react_gsea <- enrichment_GSEA(geneList = geneList, organism = current_organism_info$Reactome_ID[1], pvalueCutoff = opt$pthreshold, pAdjustMethod = "BH", ont = "REACT")
 		# Write output
 		write.table(enrich_react_gsea, file=file.path(paths$root, "REACT_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
@@ -850,7 +852,7 @@ if(!is.null(opt$custom)) {
 								  Gene = tail(aux,-2),
 								  stringsAsFactors = FALSE))
 			})))
-			enr <- enricher(common_unique_entrez, pvalueCutoff = opt$threshold, TERM2GENE = c_terms)
+			enr <- enricher(common_unique_entrez, pvalueCutoff = opt$pthreshold, TERM2GENE = c_terms)
 			# Store results
 			write.table(enr, file=file.path(paths$root, paste0(basename(f),"_ora_results")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")			
 			# Return
