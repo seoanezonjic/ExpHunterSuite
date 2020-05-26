@@ -126,6 +126,7 @@ aux <- which(DEGH_results$genes_tag == "FILTERED_OUT")
 if(length(aux) > 0){
 	DEGH_results <- DEGH_results[-aux,]
 }
+#TODO => ESTO ES RARO; BUSCAR UNA MANERA MEJOR DE HACERLO
 
 ####
 # LOAD DEGenesHunter expression execution config
@@ -140,13 +141,11 @@ exp_names <- c(exp_names,paste("[Treatment]",experiments[which(experiments[,1] =
 if(!is.null(opt$annot_file)){
 	annot_table <- read.table(opt$annot_file, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "") # Load
   	DEGH_results$Annot_IDs <- translate_id(rownames(DEGH_results), annot_table)
-	valid_genes <- unique(DEGH_results$Annot_IDs[!is.na(DEGH_results$Annot_IDs)])
 }else{
-	annot_table <- DEGH_results
-	annot_table[,1] <- row.names(DEGH_results)
 	DEGH_results$Annot_IDs <- rownames(DEGH_results)
-	valid_genes <- rownames(DEGH_results)
 }
+valid_genes <- unique(DEGH_results$Annot_IDs[!is.na(DEGH_results$Annot_IDs)])
+
 # Prepare ID type
 if(opt$input_gene_id == "E"){
   opt$input_gene_id <- 'ensembl_gene_id'
@@ -312,40 +311,25 @@ if(opt$debug){
 
 ################# PREPROCESSING INPUT DATA FOR FUNCTIONAL ANALYSIS #############
 # Obtain prevalent items
-common_DEGs_df <- subset(DEGH_results, genes_tag=="PREVALENT_DEG")
-
-# Check (this check is deprecated because WGCNA does not need PREVALENT tags)
-# if(nrow(common_DEGs_df) == 0){
-#   stop('Not detected genes tagged as PREVALENT_DEG. Likely some modules of degenes_Hunter.R failed and not generated output. Please, revise the input data')
-# } 
-
 # Obtain significant sbusets
-#  > common_DEGs_df : subset of DEGenes Hunter annotation file with PREVALENT_DEG flag
-#  > common_DEGs : genes identifiers included into common_DEGs_df
-#  > common_unique_entrez : list of entrez gene present into common_DEGs_df AND reference_table with filtered count data
+#  > likely_degs_df : subset of DEGenes Hunter annotation file with PREVALENT_DEG flag
+#  > likely_degs : genes identifiers included into likely_degs_df
+#  > common_unique_entrez : list of entrez gene present into likely_degs_df AND reference_table with filtered count data
 #  > union_DEGs_df : subset of DEGenes Hunter annotation file with POSSIBLE_DEG flag or PREVALENT_DEG flag
 #  > union_DEGs : genes identifiers included into union_DEGs_df
 #  > union_annot_DEGs_df : reference table subset with identifiers included into union_DEGs
-if(exists("annot_table")){
-	common_DEGs <- unique(common_DEGs_df$Annot_IDs)
-}else{
-	common_DEGs <- rownames(common_DEGs_df)	
-}
 
-common_unique_entrez <- subset(reference_table, reference_table[,1] %in% common_DEGs)
-common_unique_entrez <- unique(common_unique_entrez$entrezgene)
+likely_degs_df <- subset(DEGH_results, genes_tag=="PREVALENT_DEG")
+likely_degs <- unique(likely_degs_df[!is.na(likely_degs_df$Annot_IDs), "Annot_IDs"])
+common_unique_entrez <- reference_table[reference_table$ensembl_gene_id %in% likely_degs, "entrezgene"] %>% unique
 
 # Verbose point
 message(paste("IDs used to enrich:",length(common_unique_entrez)))
 
-union_DEGs_df <- subset(DEGH_results, genes_tag=="POSSIBLE_DEG")
-union_DEGs_df <- rbind(common_DEGs_df, union_DEGs_df)
+union_DEGs_df <- subset(DEGH_results, genes_tag %in% c("POSSIBLE_DEG", "PREVALENT_DEG"))
+union_DEGs <- unique(union_DEGs_df[!is.na(union_DEGs_df$Annot_IDs), "Annot_IDs"])
 
-if(exists("annot_table")){
-	union_DEGs <- unique(union_DEGs_df$Annot_IDs)
-}else{
-	union_DEGs <- rownames(union_DEGs_df)
-}
+######## TODO => NOS HEMOS QUEDADO AQUI
 
 union_annot_DEGs_df <- subset(reference_table, reference_table[,1] %in% union_DEGs)
 
@@ -393,13 +377,13 @@ write.table(reference_table, file=file.path(paths$root, "ENSEMBL2ENTREZ.txt"), q
 if(flags$GO){
 	# Prepare special subsets to be studied
 	if(exists("annot_table")){
-		pos_logFC_common_DEGs <- subset(common_DEGs_df, common_DEGs_df[fc_colname] > 0)$Annot_IDs
-		neg_logFC_common_DEGs <- subset(common_DEGs_df, common_DEGs_df[fc_colname] < 0)$Annot_IDs
+		pos_logFC_likely_degs <- subset(likely_degs_df, likely_degs_df[fc_colname] > 0)$Annot_IDs
+		neg_logFC_likely_degs <- subset(likely_degs_df, likely_degs_df[fc_colname] < 0)$Annot_IDs
 		pos_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df[fc_colname] > 0)$Annot_IDs
 		neg_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df[fc_colname] < 0)$Annot_IDs
 	}else{
-		pos_logFC_common_DEGs <- rownames(subset(common_DEGs_df, common_DEGs_df[fc_colname] > 0))
-		neg_logFC_common_DEGs <- rownames(subset(common_DEGs_df, common_DEGs_df[fc_colname] < 0))
+		pos_logFC_likely_degs <- rownames(subset(likely_degs_df, likely_degs_df[fc_colname] > 0))
+		neg_logFC_likely_degs <- rownames(subset(likely_degs_df, likely_degs_df[fc_colname] < 0))
 		pos_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df[fc_colname] > 0))
 		neg_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df[fc_colname] < 0))
 	}
@@ -428,9 +412,9 @@ if(flags$GO){
 			# Launch GSEA analysis
 			invisible(lapply(modules_to_export,function(mod){
 				# Common
-				perform_GSEA_analysis(go_attr_name, common_DEGs, union_annot_DEGs_df, mod, paste("GOgraph_preval_",mod,".pdf",sep=""),opt$input_gene_id)
-				perform_GSEA_analysis(go_attr_name, pos_logFC_common_DEGs, union_annot_DEGs_df, mod, paste("GOgraph_preval_overex_",mod,".pdf",sep=""),opt$input_gene_id)
-				perform_GSEA_analysis(go_attr_name, neg_logFC_common_DEGs, union_annot_DEGs_df, mod, paste("GOgraph_preval_underex_",mod,".pdf",sep=""),opt$input_gene_id)
+				perform_GSEA_analysis(go_attr_name, likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_",mod,".pdf",sep=""),opt$input_gene_id)
+				perform_GSEA_analysis(go_attr_name, pos_logFC_likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_overex_",mod,".pdf",sep=""),opt$input_gene_id)
+				perform_GSEA_analysis(go_attr_name, neg_logFC_likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_underex_",mod,".pdf",sep=""),opt$input_gene_id)
 				# Union
 				perform_GSEA_analysis(go_attr_name, union_DEGs, reference_table, mod, paste("GOgraph_allpos_",mod,".pdf",sep=""),opt$input_gene_id)
 				perform_GSEA_analysis(go_attr_name, pos_logFC_union_DEGs, reference_table, mod, paste("GOgraph_allpos_overex_",mod,".pdf",sep=""),opt$input_gene_id)
@@ -439,9 +423,9 @@ if(flags$GO){
 		}else{ # LOCAL MODE
 			if(opt$input_gene_id == 'ensembl_gene_id'){
 				# Transform ENSEMBL ids to Entrez ids
-				entrez_common_DEGs <- ensembl_to_entrez(common_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1]) 
-				entrez_pos_logFC_common_DEGs <- ensembl_to_entrez(pos_logFC_common_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
-				entrez_neg_logFC_common_DEGs <- ensembl_to_entrez(neg_logFC_common_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+				entrez_likely_degs <- ensembl_to_entrez(likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1]) 
+				entrez_pos_logFC_likely_degs <- ensembl_to_entrez(pos_logFC_likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+				entrez_neg_logFC_likely_degs <- ensembl_to_entrez(neg_logFC_likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
 				entrez_union_DEGs <- ensembl_to_entrez(union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
 				entrez_pos_logFC_union_DEGs <- ensembl_to_entrez(pos_logFC_union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
 				entrez_neg_logFC_union_DEGs <- ensembl_to_entrez(neg_logFC_union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
@@ -457,9 +441,9 @@ if(flags$GO){
 			# Launch GSEA analysis
 			invisible(lapply(modules_to_export,function(mod){
 				# Common
-				perform_GSEA_analysis_local(entrez_common_DEGs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_preval",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
-				perform_GSEA_analysis_local(entrez_pos_logFC_common_DEGs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_preval_overex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
-				perform_GSEA_analysis_local(entrez_neg_logFC_common_DEGs$ENTREZ, reference_ids_common,mod, file.path(paths$root, paste("GO_preval_underex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_likely_degs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_preval",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_pos_logFC_likely_degs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_preval_overex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
+				perform_GSEA_analysis_local(entrez_neg_logFC_likely_degs$ENTREZ, reference_ids_common,mod, file.path(paths$root, paste("GO_preval_underex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
 				# Union
 				perform_GSEA_analysis_local(entrez_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
 				perform_GSEA_analysis_local(entrez_pos_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos_overex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
