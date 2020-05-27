@@ -69,6 +69,7 @@ suppressPackageStartupMessages(require(stringr))
 suppressPackageStartupMessages(require(plyr))
 suppressPackageStartupMessages(require(knitr))
 suppressPackageStartupMessages(require(clusterProfiler))
+suppressPackageStartupMessages(require(dplyr))
 # source custom functions
 source(file.path(main_path_script, 'lib', 'general_functions.R'))
 source(file.path(main_path_script, 'lib', 'functional_analysis_library.R'))
@@ -186,7 +187,7 @@ flags <- list(GO    = grepl("G", opt$func_annot_db),
               ORA   = grepl("o", opt$analysis_type),
               Clustered = "Cluster_ID" %in% colnames(DEGH_results))
 
-# TODO => CHECK THAT WORKS AND REMOVE
+# TODO =>  REMOVE
 # Special case
 # if(exists("annot_table")){
 # 	DEGH_results$Annot_IDs <- translate_id(rownames(DEGH_results), annot_table)
@@ -196,8 +197,10 @@ flags <- list(GO    = grepl("G", opt$func_annot_db),
 
 # Verbose point
 aux <- table(DEGH_results$genes_tag)
-for(i in seq_along(aux)) 
+for(i in seq_along(aux)) {
 	message(paste(names(aux)[i],aux[i]))
+}
+
 
 ####################### DEBUG POINT #############################
 if(opt$debug){
@@ -312,8 +315,8 @@ if(opt$debug){
 ################# PREPROCESSING INPUT DATA FOR FUNCTIONAL ANALYSIS #############
 # Obtain prevalent items
 # Obtain significant sbusets
-#  > likely_degs_df : subset of DEGenes Hunter annotation file with PREVALENT_DEG flag
-#  > likely_degs : genes identifiers included into likely_degs_df
+#  > likely_degs_df : ONLY FOR SUBSETTING: subset of DEGenes Hunter annotation file with PREVALENT_DEG flag
+#  > likely_degs : USED FOR topGO. genes identifiers included into likely_degs_df
 #  > likely_degs_entrez : USED FOR ORA ENRICHMENTS:  list of entrez gene present into likely_degs_df AND reference_table with filtered count data
 #  > union_DEGs_df : subset of DEGenes Hunter annotation file with POSSIBLE_DEG flag or PREVALENT_DEG flag
 #  > union_DEGs : genes identifiers included into union_DEGs_df
@@ -328,8 +331,7 @@ message(paste("IDs used to enrich:",length(likely_degs_entrez)))
 ## TODO => ESTARIA BIEN REFLEJAR ESTA INFORMACION EN EL REPORT
 
 union_DEGs_df <- subset(DEGH_results, genes_tag %in% c("POSSIBLE_DEG", "PREVALENT_DEG"))
-union_DEGs <- unique(union_DEGs_df[!is.na(union_DEGs_df$Annot_IDs), "Annot_IDs"])
-
+union_DEGs <- union_DEGs_df[!is.na(union_DEGs_df$Annot_IDs), "Annot_IDs"] %>% unique
 union_annot_DEGs_df <- subset(reference_table, reference_table[,1] %in% union_DEGs)
 
 ################# ADD ENTREZ IDS AND GENE SYMBOLS TO INPUT FILE #############
@@ -373,43 +375,43 @@ write.table(reference_table, file=file.path(paths$root, "ENSEMBL2ENTREZ.txt"), q
 #############################################
 ### GO ENRICHMENT (topGO)
 #############################################
-if(flags$GO){
+if(flags$GO){ #TODO =>  ESTO HAY QUE TOCARLO LUEGO, POR QUE SE UTILIZA PARA UNO ENSEMBL Y OTRO ENTREZ? 
 	# Prepare special subsets to be studied
-	if(exists("annot_table")){
-		pos_logFC_likely_degs <- subset(likely_degs_df, likely_degs_df[fc_colname] > 0)$Annot_IDs
-		neg_logFC_likely_degs <- subset(likely_degs_df, likely_degs_df[fc_colname] < 0)$Annot_IDs
-		pos_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df[fc_colname] > 0)$Annot_IDs
-		neg_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df[fc_colname] < 0)$Annot_IDs
-	}else{
-		pos_logFC_likely_degs <- rownames(subset(likely_degs_df, likely_degs_df[fc_colname] > 0))
-		neg_logFC_likely_degs <- rownames(subset(likely_degs_df, likely_degs_df[fc_colname] < 0))
-		pos_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df[fc_colname] > 0))
-		neg_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df[fc_colname] < 0))
-	}
+	# if(exists("annot_table")){
+	pos_logFC_likely_degs <- subset(likely_degs_df, likely_degs_df[fc_colname] > 0)$Annot_IDs
+	neg_logFC_likely_degs <- subset(likely_degs_df, likely_degs_df[fc_colname] < 0)$Annot_IDs
+	pos_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df[fc_colname] > 0)$Annot_IDs
+	neg_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df[fc_colname] < 0)$Annot_IDs
+	# }else{
+	# 	pos_logFC_likely_degs <- rownames(subset(likely_degs_df, likely_degs_df[fc_colname] > 0))
+	# 	neg_logFC_likely_degs <- rownames(subset(likely_degs_df, likely_degs_df[fc_colname] < 0))
+	# 	pos_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df[fc_colname] > 0))
+	# 	neg_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df[fc_colname] < 0))
+	# }
 
 	# Prepare modules to be loaded
-	modules_to_export <- c()
+	GO_subontologies <- c()
 	if(grepl("M", opt$GO_subont)){
-		modules_to_export <- c(modules_to_export,"MF")
+		GO_subontologies <- c(GO_subontologies,"MF")
 	}
 	if(grepl("B", opt$GO_subont)){
-		modules_to_export <- c(modules_to_export,"BP")
+		GO_subontologies <- c(GO_subontologies,"BP")
 	}
 	if(grepl("C", opt$GO_subont)){
-		modules_to_export <- c(modules_to_export,"CC")
+		GO_subontologies <- c(GO_subontologies,"CC")
 	}
-	if(length(modules_to_export) == 0){
-		warning("Any GO sub-ontology have been selected. Use -G input command")
+	if(length(GO_subontologies) == 0){
+		warning("No GO sub-ontology have been selected. Please check -G option")
 	}
 
 	# Generate output
-	if(length(modules_to_export) > 0){
+	if(length(GO_subontologies) > 0){
 		# Check execution mode
 		if(remote_actions$biomart){ # REMOTE MODE
 			# Prepare necessary info
 			go_attr_name <- as.character(current_organism_info[,"Attribute_GOs"])
 			# Launch GSEA analysis
-			invisible(lapply(modules_to_export,function(mod){
+			invisible(lapply(GO_subontologies,function(mod){
 				# Common
 				perform_GSEA_analysis(go_attr_name, likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_",mod,".pdf",sep=""),opt$input_gene_id)
 				perform_GSEA_analysis(go_attr_name, pos_logFC_likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_overex_",mod,".pdf",sep=""),opt$input_gene_id)
@@ -438,7 +440,7 @@ if(flags$GO){
 			reference_ids_common <- unique(union_annot_DEGs_df$entrezgene)
 
 			# Launch GSEA analysis
-			invisible(lapply(modules_to_export,function(mod){
+			invisible(lapply(GO_subontologies,function(mod){
 				# Common
 				perform_GSEA_analysis_local(entrez_likely_degs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_preval",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
 				perform_GSEA_analysis_local(entrez_pos_logFC_likely_degs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_preval_overex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
@@ -464,18 +466,19 @@ if(opt$debug){
 ##                                               NORMALIZED ENRICHMENTS                                              ##                                                     
 ##                                                                                                                   ##
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-# Calcualte geneList
-if(exists("annot_table")){
+# Calculate geneList
+#geneList: A NAMED VECTOR OF logFC; USED IN GSEA AND PLOTS
+# if(exists("annot_table")){
 	aux <- subset(reference_table, reference_table[,1] %in% DEGH_results$Annot_IDs)
-	geneList <- as.vector(DEGH_results[which(DEGH_results$Annot_IDs %in% aux[,"ensembl_gene_id"]),fc_colname])
+	geneList <- as.vector(DEGH_results[which(DEGH_results$Annot_IDs %in% aux[,"ensembl_gene_id"]), fc_colname])
 	names(geneList) <- DEGH_results$Annot_IDs[which(DEGH_results$Annot_IDs %in% aux[,"ensembl_gene_id"])]
 	names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
-}else{
-	aux <- subset(reference_table, reference_table[,1] %in% rownames(DEGH_results))
-	geneList <- as.vector(DEGH_results[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"]),fc_colname])
-	names(geneList) <- rownames(DEGH_results)[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"])]
-	names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
-}
+# }else{
+# 	aux <- subset(reference_table, reference_table[,1] %in% rownames(DEGH_results))
+# 	geneList <- as.vector(DEGH_results[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"]),fc_colname])
+# 	names(geneList) <- rownames(DEGH_results)[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"])]
+# 	names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
+# }
 # Sort FC
 geneList <- sort(geneList, decreasing = TRUE)
 
@@ -495,26 +498,26 @@ if(any(unlist(flags[c("GO_cp","KEGG","REACT")]),!is.null(opt$custom))){
 			warning("Specified organism is not allowed to be used with GO (clusterProfiler) module. Please check your IDs table")
 		}else{
 			# Load necessary packages	
-			modules_to_export <- c()
+			GO_subontologies <- c()
 			if(grepl("M", opt$GO_subont)){
-				modules_to_export <- "MF"
+				GO_subontologies <- "MF"
 			}
 			if(grepl("B", opt$GO_subont)){
-				modules_to_export <- c(modules_to_export,"BP")
+				GO_subontologies <- c(GO_subontologies,"BP")
 			}
 			if(grepl("C", opt$GO_subont)){
-				modules_to_export <- c(modules_to_export,"CC")
+				GO_subontologies <- c(GO_subontologies,"CC")
 			}
-			if(length(modules_to_export) == 0){
+			if(length(GO_subontologies) == 0){
 				warning("Any GO sub-ontology have been selected. Use -G input command")
 			}
 			# Add execution info
 			if(flags$Clustered){
 				if(flags$ORA){ 
-					invisible(lapply(modules_to_export,function(mod){ora_config <<- rbind(ora_config,list(Fun = "enrichGO",Onto=paste0("GO_",mod),Organism=current_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))}))
+					invisible(lapply(GO_subontologies,function(mod){ora_config <<- rbind(ora_config,list(Fun = "enrichGO",Onto=paste0("GO_",mod),Organism=current_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))}))
 				}
 				if(flags$GSEA){
-					invisible(lapply(modules_to_export,function(mod){gsea_config <<- rbind(gsea_config,list(Onto=paste0("GO_",mod),Organism=current_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))}))					
+					invisible(lapply(GO_subontologies,function(mod){gsea_config <<- rbind(gsea_config,list(Onto=paste0("GO_",mod),Organism=current_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))}))					
 				}
 			}			
 		}
@@ -731,12 +734,12 @@ if(flags$GO_cp){
 	###########
 	### ORA ENRICHMENTS
 	if(flags$ORA){
-		enrich_go <- lapply(modules_to_export,function(mod){
+		enrich_go <- lapply(GO_subontologies,function(mod){
 			enrich <- enrichment_ORA(genes = likely_degs_entrez,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = paste0("GO_",mod), qvalueCutoff = opt$qthreshold)
 			return(enrich)
 		})
 		# Add names
-		names(enrich_go) <- modules_to_export
+		names(enrich_go) <- GO_subontologies
 		# Write results
 		write.table(as.data.frame(do.call(rbind,lapply(enrich_go,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_ora"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
@@ -745,12 +748,12 @@ if(flags$GO_cp){
 	### GSEA ENRICHMENTS
 	if(flags$GSEA){
 		# Enrich
-		enrich_go_gsea <- lapply(modules_to_export,function(mod){
+		enrich_go_gsea <- lapply(GO_subontologies,function(mod){
 			enrich <- enrichment_GSEA(geneList = geneList,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = paste0("GO_",mod))
 			return(enrich)
 		})
 		# Add names
-		names(enrich_go_gsea) <- modules_to_export
+		names(enrich_go_gsea) <- GO_subontologies
 		# Write results
 		write.table(as.data.frame(do.call(rbind,lapply(enrich_go_gsea,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_gsea"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
 	}
