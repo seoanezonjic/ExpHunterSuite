@@ -27,7 +27,7 @@ pval_thr_forFeatures <- 0.05
 
 ```{r "{{cl}}_explore_genes", echo = FALSE}
 # Load genes expressions
-cl_i_genes <- unique(DEGH_results$Annot_IDs[which(DEGH_results$Cluster_ID == {{cl}})])
+cl_i_genes <- unique(DEGH_results$input_IDs[which(DEGH_results$Cluster_ID == {{cl}})])
 # cl_i_genes <- clgenes[[as.character({{cl}})]]
 tgt_indx <- which(norm_counts$Gene %in% cl_i_genes)
 # Prepare regular cluster info

@@ -28,7 +28,7 @@ option_list <- list(
   make_option(c("-a", "--annot_file"), type="character",
   	help="If the species used does not exist in organism_table.txt, please add a two-column file mapping orthologue ENSEMBL gene ids from a model organism (first column) to the original IDs (second column)."),
   make_option(c("-t", "--input_gene_id"), type="character", default="E",
-    help="Input gene ID type. ENSEMBL (E), TAIR/Arabidopsis (T), Gene Names (G). [Default:%default]"),      	
+    help="Input gene IDs. Available IDs are: ENSEMBL (E), TAIR/Arabidopsis (T), Gene Names (G). [Default:%default]"),      	
   make_option(c("-f", "--func_annot_db"), type="character", default="gKR",
     help="Functional annotation database and enrichment method(s) to use (topGO: G = GO | clusterProfiler: K = KEGG, g = GO, R = Reactome). [Default=%default]"),
   make_option(c("-G", "--GO_subont"), type="character", default=c("BMC"),
@@ -141,11 +141,12 @@ exp_names <- c(exp_names,paste("[Treatment]",experiments[which(experiments[,1] =
 
 if(!is.null(opt$annot_file)){
 	annot_table <- read.table(opt$annot_file, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "") # Load
-  	DEGH_results$Annot_IDs <- translate_id(rownames(DEGH_results), annot_table)
+  	DEGH_results$input_IDs <- translate_id(rownames(DEGH_results), annot_table)
 }else{
-	DEGH_results$Annot_IDs <- rownames(DEGH_results)
+	DEGH_results$input_IDs <- rownames(DEGH_results)
 }
-valid_genes <- unique(DEGH_results$Annot_IDs[!is.na(DEGH_results$Annot_IDs)])
+added_cols <- c("input_IDs")
+valid_genes <- unique(DEGH_results$input_IDs[!is.na(DEGH_results$input_IDs)])
 
 # Prepare ID type
 if(opt$input_gene_id == "E"){
@@ -190,9 +191,9 @@ flags <- list(GO    = grepl("G", opt$func_annot_db),
 # TODO =>  REMOVE
 # Special case
 # if(exists("annot_table")){
-# 	DEGH_results$Annot_IDs <- translate_id(rownames(DEGH_results), annot_table)
+# 	DEGH_results$input_IDs <- translate_id(rownames(DEGH_results), annot_table)
 # } else {
-# 	DEGH_results$Annot_IDs <- rownames(DEGH_results)
+# 	DEGH_results$input_IDs <- rownames(DEGH_results)
 # }
 
 # Verbose point
@@ -227,7 +228,7 @@ if(remote_actions$biomart){ # REMOTE MODE
 	)
 
 	# Obtain references from biomart
-	reference_table <- obtain_info_from_biomaRt(orthologues = as.character(valid_genes),
+	input_to_entrezgene <- obtain_info_from_biomaRt(orthologues = as.character(valid_genes),
 	                                            id_type = opt$input_gene_id, 
 	                                            mart = organism_mart,
 	                                            dataset = organism_dataset, 
@@ -237,34 +238,31 @@ if(remote_actions$biomart){ # REMOTE MODE
 }else if(!is.na(current_organism_info$Bioconductor_DB[1])){ # LOCAL MODE
 	# Check genetical items to be used
 	if(opt$input_gene_id == 'ensembl_gene_id'){
-		reference_table <- ensembl_to_entrez(ensembl_ids = valid_genes,
+		input_to_entrezgene <- ensembl_translation(ensembl_ids = valid_genes,
 											 organism_db = current_organism_info$Bioconductor_DB[1],
 											 organism_var = current_organism_info$Bioconductor_VarName[1])
-		# colnames(reference_table) <- c("ensembl_gene_id", current_organism_info[,"Attribute_entrez"])
-		colnames(reference_table) <- c("ensembl_gene_id", "entrezgene") # Fix names
-
-	}else if(opt$input_gene_id == 'refseq_peptide'){
-		stop(paste("This genes type (",opt$input_gene_id,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
+		# colnames(input_to_entrezgene) <- c("ensembl_gene_id", current_organism_info[,"Attribute_entrez"])
+		colnames(input_to_entrezgene) <- c("ensembl_gene_id", "entrezgene") # Fix names
 	}
 }else{
 	error("Specified organism are not available to be studiend in LOCAL model. Please try REMOTE mode")
 }
 
-
-
 if(opt$save_query == TRUE){ ## TODO => CACHE IS SAVED BUT NEVER IS LOADED
-  saveRDS(reference_table, file=file.path("query_results_temp"))
+  saveRDS(input_to_entrezgene, file=file.path("query_results_temp"))
 } 
 
-
+DEGH_results$entrezgene <- input_to_entrezgene[match(DEGH_results$input_IDs, input_to_entrezgene$ensembl_gene_id), "entrezgene"]
+added_cols <- c(added_cols, "entrezgene")
+# print("it works")
 # Load Normalized correlation data
 if(flags$Clustered){
 	####
 	# LOAD NORMALIZED COUNTS
 	norm_counts_raw <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_DESeq2", "Normalized_counts_DESeq2.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
 	# Translate genes
-	if(exists("reference_table")){
-		aux <- unlist(lapply(rownames(norm_counts_raw),function(id){reference_table$entrezgene[which(reference_table$ensembl_gene_id == id)][1]}))
+	if(exists("input_to_entrezgene")){
+		aux <- unlist(lapply(rownames(norm_counts_raw),function(id){input_to_entrezgene$entrezgene[which(input_to_entrezgene$ensembl_gene_id == id)][1]}))
 		aux_indx <- which(is.na(aux))
 		if(length(aux_indx)>0) aux[aux_indx] <- rownames(norm_counts_raw)[aux_indx]
 		rownames(norm_counts_raw) <- aux
@@ -317,22 +315,22 @@ if(opt$debug){
 # Obtain significant sbusets
 #  > likely_degs_df : ONLY FOR SUBSETTING: subset of DEGenes Hunter annotation file with PREVALENT_DEG flag
 #  > likely_degs : USED FOR topGO. genes identifiers included into likely_degs_df
-#  > likely_degs_entrez : USED FOR ORA ENRICHMENTS:  list of entrez gene present into likely_degs_df AND reference_table with filtered count data
+#  > likely_degs_entrez : USED FOR ORA ENRICHMENTS:  list of entrez gene present into likely_degs_df AND input_to_entrezgene with filtered count data
 #  > union_DEGs_df : subset of DEGenes Hunter annotation file with POSSIBLE_DEG flag or PREVALENT_DEG flag
 #  > union_DEGs : genes identifiers included into union_DEGs_df
 #  > union_annot_DEGs_df : reference table subset with identifiers included into union_DEGs
 
-likely_degs_df <- subset(DEGH_results, genes_tag == "PREVALENT_DEG", !is.na(Annot_IDs))
-likely_degs <- unique(likely_degs_df$Annot_IDs)
-likely_degs_entrez <- reference_table[reference_table$ensembl_gene_id %in% likely_degs, "entrezgene"] %>% unique
+likely_degs_df <- subset(DEGH_results, genes_tag == "PREVALENT_DEG", !is.na(input_IDs))
+likely_degs <- unique(likely_degs_df$input_IDs)
+likely_degs_entrez <- unique(likely_degs_df$entrezgene)
 
 # Verbose point
 message(paste("IDs used to enrich:",length(likely_degs_entrez)))
 ## TODO => ESTARIA BIEN REFLEJAR ESTA INFORMACION EN EL REPORT
 
 union_DEGs_df <- subset(DEGH_results, genes_tag %in% c("POSSIBLE_DEG", "PREVALENT_DEG"))
-union_DEGs <- union_DEGs_df[!is.na(union_DEGs_df$Annot_IDs), "Annot_IDs"] %>% unique
-union_annot_DEGs_df <- subset(reference_table, reference_table[,1] %in% union_DEGs)
+union_DEGs <- union_DEGs_df[!is.na(union_DEGs_df$input_IDs), "input_IDs"] %>% unique
+union_annot_DEGs_df <- subset(input_to_entrezgene, input_to_entrezgene[,1] %in% union_DEGs)
 
 ################# ADD ENTREZ IDS AND GENE SYMBOLS TO INPUT FILE #############
 # Currently only runs if we are local, have an org db available and a symbol correspondence. The ENTREZ bit should become universal even if no SYMBOL available
@@ -341,35 +339,35 @@ if( ! remote_actions$biomart &
 	! current_organism_info$Bioconductor_DB[1] == "" & 
 	! current_organism_info$Bioconductor_VarName_SYMBOL[1] == ""){
 
-	DEGH_results_Symbol <- DEGH_results
-	if(exists("annot_table")){
-		ENSEMBL_IDs <- DEGH_results_Symbol$Annot_IDs
-	}else{
-		ENSEMBL_IDs <- rownames(DEGH_results_Symbol)
-	}
+	# DEGH_results <- DEGH_results
+	# if(exists("annot_table")){
+	# 	ENSEMBL_IDs <- DEGH_results$input_IDs
+	# }else{
+	# 	ENSEMBL_IDs <- rownames(DEGH_results)
+	# }
 
-	DEGH_results_Symbol$Ensembl <- ENSEMBL_IDs # Necessary step for merging
-	DEGH_results_Symbol <- merge(DEGH_results_Symbol, reference_table, by.x="Ensembl", by.y="ensembl_gene_id", all.x=TRUE)
+	# DEGH_results$Ensembl <- ENSEMBL_IDs # Necessary step for merging
+	# DEGH_results <- merge(DEGH_results, input_to_entrezgene, by.x="Ensembl", by.y="ensembl_gene_id", all.x=TRUE)
 
-	reference_table_symbol <- ensembl_to_entrez(ensembl_ids = DEGH_results_Symbol$entrezgene,
+	input_to_symbol <- ensembl_translation(ensembl_ids = DEGH_results$entrezgene,
 										 		organism_db = current_organism_info$Bioconductor_DB[1],
 												organism_var = current_organism_info$Bioconductor_VarName_SYMBOL[1])
-	colnames(reference_table_symbol) <- c("entrezgene", "Symbol")
-	DEGH_results_Symbol <- merge(DEGH_results_Symbol, reference_table_symbol, by.x="entrezgene", by.y="entrezgene", all.x=TRUE)
-	first_cols <- c("Ensembl", "entrezgene", "Symbol")
+	colnames(input_to_symbol) <- c("entrezgene", "Symbol")
+	DEGH_results <- merge(DEGH_results, input_to_symbol, by.x="entrezgene", by.y="entrezgene", all.x=TRUE)
 
-	DEGH_results_Symbol <- DEGH_results_Symbol[c(first_cols, setdiff(names(DEGH_results_Symbol), first_cols))] # Reorder columns so annotated first
-	DEGH_results_Symbol <- DEGH_results_Symbol[order(DEGH_results_Symbol[,"combined_FDR"]),] # Reorder rows by combined FDR
-
+	added_cols <- c(added_cols, "Symbol")
 	# Write output here for now, until the rest of the workflow can use this object directly
-	write.table(DEGH_results_Symbol, file=file.path(paths$root, "DEG_results_annotated.txt"), quote=F, row.names=FALSE, sep="\t")
+	# write.table(DEGH_results, file=file.path(paths$root, "DEG_results_annotated.txt"), quote=F, row.names=FALSE, sep="\t")
 }
+
 
 #############################################
 ### EXPORT DATA
 #############################################
-write.table(DEGH_results, file=file.path(paths$root, "Annotated_table.txt"), quote=F, col.names=NA, sep="\t")
-write.table(reference_table, file=file.path(paths$root, "ENSEMBL2ENTREZ.txt"), quote=F, col.names=NA, sep="\t")
+DEGH_results <- DEGH_results[c(added_cols, setdiff(names(DEGH_results), added_cols))] # Reorder columns so annotated first
+DEGH_results <- DEGH_results[order(DEGH_results[,"combined_FDR"]),] # Reorder rows by combined FDR
+write.table(DEGH_results, file=file.path(paths$root, "hunter_results_table_annotated.txt"), quote=F, col.names=NA, sep="\t")
+# write.table(input_to_entrezgene, file=file.path(paths$root, "ENSEMBL2ENTREZ.txt"), quote=F, col.names=NA, sep="\t")
 
 
 #############################################
@@ -378,10 +376,10 @@ write.table(reference_table, file=file.path(paths$root, "ENSEMBL2ENTREZ.txt"), q
 if(flags$GO){ #TODO =>  ESTO HAY QUE TOCARLO LUEGO, POR QUE SE UTILIZA PARA UNO ENSEMBL Y OTRO ENTREZ? 
 	# Prepare special subsets to be studied
 	# if(exists("annot_table")){
-	pos_logFC_likely_degs <- subset(likely_degs_df, likely_degs_df[fc_colname] > 0)$Annot_IDs
-	neg_logFC_likely_degs <- subset(likely_degs_df, likely_degs_df[fc_colname] < 0)$Annot_IDs
-	pos_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df[fc_colname] > 0)$Annot_IDs
-	neg_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df[fc_colname] < 0)$Annot_IDs
+	pos_logFC_likely_degs <- subset(likely_degs_df, likely_degs_df[fc_colname] > 0, !is.na(entrezgene) )$entrezgene
+	neg_logFC_likely_degs <- subset(likely_degs_df, likely_degs_df[fc_colname] < 0, !is.na(entrezgene))$entrezgene
+	pos_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df[fc_colname] > 0, !is.na(entrezgene))$entrezgene
+	neg_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df[fc_colname] < 0, !is.na(entrezgene))$entrezgene
 	# }else{
 	# 	pos_logFC_likely_degs <- rownames(subset(likely_degs_df, likely_degs_df[fc_colname] > 0))
 	# 	neg_logFC_likely_degs <- rownames(subset(likely_degs_df, likely_degs_df[fc_colname] < 0))
@@ -413,42 +411,42 @@ if(flags$GO){ #TODO =>  ESTO HAY QUE TOCARLO LUEGO, POR QUE SE UTILIZA PARA UNO 
 			# Launch GSEA analysis
 			invisible(lapply(GO_subontologies,function(mod){
 				# Common
-				perform_GSEA_analysis(go_attr_name, likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_",mod,".pdf",sep=""),opt$input_gene_id)
-				perform_GSEA_analysis(go_attr_name, pos_logFC_likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_overex_",mod,".pdf",sep=""),opt$input_gene_id)
-				perform_GSEA_analysis(go_attr_name, neg_logFC_likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_underex_",mod,".pdf",sep=""),opt$input_gene_id)
+				perform_topGO(go_attr_name, likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_",mod,".pdf",sep=""),opt$input_gene_id)
+				perform_topGO(go_attr_name, pos_logFC_likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_overex_",mod,".pdf",sep=""),opt$input_gene_id)
+				perform_topGO(go_attr_name, neg_logFC_likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_underex_",mod,".pdf",sep=""),opt$input_gene_id)
 				# Union
-				perform_GSEA_analysis(go_attr_name, union_DEGs, reference_table, mod, paste("GOgraph_allpos_",mod,".pdf",sep=""),opt$input_gene_id)
-				perform_GSEA_analysis(go_attr_name, pos_logFC_union_DEGs, reference_table, mod, paste("GOgraph_allpos_overex_",mod,".pdf",sep=""),opt$input_gene_id)
-				perform_GSEA_analysis(go_attr_name, neg_logFC_union_DEGs, reference_table, mod, paste("GOgraph_allpos_underex_",mod,".pdf",sep=""),opt$input_gene_id)    				
+				perform_topGO(go_attr_name, union_DEGs, input_to_entrezgene, mod, paste("GOgraph_allpos_",mod,".pdf",sep=""),opt$input_gene_id)
+				perform_topGO(go_attr_name, pos_logFC_union_DEGs, input_to_entrezgene, mod, paste("GOgraph_allpos_overex_",mod,".pdf",sep=""),opt$input_gene_id)
+				perform_topGO(go_attr_name, neg_logFC_union_DEGs, input_to_entrezgene, mod, paste("GOgraph_allpos_underex_",mod,".pdf",sep=""),opt$input_gene_id)    				
 			}))
 		}else{ # LOCAL MODE
-			if(opt$input_gene_id == 'ensembl_gene_id'){
-				# Transform ENSEMBL ids to Entrez ids
-				entrez_likely_degs <- ensembl_to_entrez(likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1]) 
-				entrez_pos_logFC_likely_degs <- ensembl_to_entrez(pos_logFC_likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
-				entrez_neg_logFC_likely_degs <- ensembl_to_entrez(neg_logFC_likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
-				entrez_union_DEGs <- ensembl_to_entrez(union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
-				entrez_pos_logFC_union_DEGs <- ensembl_to_entrez(pos_logFC_union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
-				entrez_neg_logFC_union_DEGs <- ensembl_to_entrez(neg_logFC_union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
-			}else if(opt$input_gene_id == 'refseq_peptide'){
-				stop(paste("This genes type (",opt$input_gene_id,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
-			}else{
-				stop("Unchecked biomart filter type")
-			}
+			# if(opt$input_gene_id == 'ensembl_gene_id'){
+			# 	# Transform ENSEMBL ids to Entrez ids
+			# 	entrez_likely_degs <- ensembl_translation(likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1]) 
+			# 	entrez_pos_logFC_likely_degs <- ensembl_translation(pos_logFC_likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+			# 	entrez_neg_logFC_likely_degs <- ensembl_translation(neg_logFC_likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+			# 	entrez_union_DEGs <- ensembl_translation(union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+			# 	entrez_pos_logFC_union_DEGs <- ensembl_translation(pos_logFC_union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+			# 	entrez_neg_logFC_union_DEGs <- ensembl_translation(neg_logFC_union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+			# # }else if(opt$input_gene_id == 'refseq_peptide'){
+			# # 	stop(paste("This genes type (",opt$input_gene_id,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
+			# }else{
+			# 	stop("Unchecked biomart filter type")
+			# }
 
-			reference_ids_union <- unique(reference_table$entrezgene)
-			reference_ids_common <- unique(union_annot_DEGs_df$entrezgene)
+			reference_ids_union <- unique(DEGH_results$entrezgene)
+			reference_ids_common <- unique(DEGH_results$entrezgene)
 
 			# Launch GSEA analysis
 			invisible(lapply(GO_subontologies,function(mod){
 				# Common
-				perform_GSEA_analysis_local(entrez_likely_degs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_preval",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
-				perform_GSEA_analysis_local(entrez_pos_logFC_likely_degs$ENTREZ, reference_ids_common, mod, file.path(paths$root, paste("GO_preval_overex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
-				perform_GSEA_analysis_local(entrez_neg_logFC_likely_degs$ENTREZ, reference_ids_common,mod, file.path(paths$root, paste("GO_preval_underex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
-				# Union
-				perform_GSEA_analysis_local(entrez_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
-				perform_GSEA_analysis_local(entrez_pos_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos_overex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
-				perform_GSEA_analysis_local(entrez_neg_logFC_union_DEGs$ENTREZ, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos_underex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])    
+				perform_topGO_local(likely_degs, reference_ids_common, mod, file.path(paths$root, paste("GO_preval",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
+				perform_topGO_local(pos_logFC_likely_degs, reference_ids_common, mod, file.path(paths$root, paste("GO_preval_overex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
+				perform_topGO_local(neg_logFC_likely_degs, reference_ids_common,mod, file.path(paths$root, paste("GO_preval_underex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
+				# # Union
+				perform_topGO_local(union_DEGs, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
+				perform_topGO_local(pos_logFC_union_DEGs, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos_overex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
+				perform_topGO_local(neg_logFC_union_DEGs, reference_ids_union, mod, file.path(paths$root, paste("GO_allpos_underex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])    
 			}))
 		} # END LOCAL/REMOTE IF
 	}
@@ -460,7 +458,6 @@ if(opt$debug){
 	debug_point(debug_file,"TopGO executed")
 }
 #################################################################
-
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ##                                                                                                                   ##
 ##                                               NORMALIZED ENRICHMENTS                                              ##                                                     
@@ -469,12 +466,15 @@ if(opt$debug){
 # Calculate geneList
 #geneList: A NAMED VECTOR OF logFC; USED IN GSEA AND PLOTS
 # if(exists("annot_table")){
-	aux <- subset(reference_table, reference_table[,1] %in% DEGH_results$Annot_IDs)
-	geneList <- as.vector(DEGH_results[which(DEGH_results$Annot_IDs %in% aux[,"ensembl_gene_id"]), fc_colname])
-	names(geneList) <- DEGH_results$Annot_IDs[which(DEGH_results$Annot_IDs %in% aux[,"ensembl_gene_id"])]
-	names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
+	geneList <- DEGH_results[!is.na(DEGH_results$entrezgene),  fc_colname]
+	names(geneList) <- DEGH_results[!is.na(DEGH_results$entrezgene), "entrezgene"]
+	
+	# aux <- subset(input_to_entrezgene, input_to_entrezgene[,1] %in% DEGH_results$input_IDs)
+	# geneList <- as.vector(DEGH_results[which(DEGH_results$input_IDs %in% aux[,"ensembl_gene_id"]), fc_colname])
+	# names(geneList) <- DEGH_results$input_IDs[which(DEGH_results$input_IDs %in% aux[,"ensembl_gene_id"])]
+	# names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
 # }else{
-# 	aux <- subset(reference_table, reference_table[,1] %in% rownames(DEGH_results))
+# 	aux <- subset(input_to_entrezgene, input_to_entrezgene[,1] %in% rownames(DEGH_results))
 # 	geneList <- as.vector(DEGH_results[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"]),fc_colname])
 # 	names(geneList) <- rownames(DEGH_results)[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"])]
 # 	names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
@@ -605,12 +605,12 @@ if(flags$Clustered){
 	clgenes <- lapply(cls,function(cl){ # Find
 		indx <- which(DEGH_results$Cluster_ID == cl)
 		if(exists("annot_table")){
-			unique(DEGH_results$Annot_IDs[indx])
+			unique(DEGH_results$input_IDs[indx])
 		}else{
 			unique(rownames(DEGH_results[indx,]))			
 		}
 	}) 
-	clgenes <- lapply(clgenes,function(genes){reference_table$entrezgene[which(reference_table$ensembl_gene_id %in% genes)]}) # Translate
+	clgenes <- lapply(clgenes,function(genes){input_to_entrezgene$entrezgene[which(input_to_entrezgene$ensembl_gene_id %in% genes)]}) # Translate
 	names(clgenes) <- cls
 	if(flags$ORA){
 		message("Performing ORA enrichments")
@@ -634,16 +634,16 @@ if(flags$Clustered){
 	if(flags$GSEA){
 		message("Performing GSEA enrichments")
 		if(exists("annot_table")){
-			aux <- subset(reference_table, reference_table[,1] %in% DEGH_results$Annot_IDs)
+			aux <- subset(input_to_entrezgene, input_to_entrezgene[,1] %in% DEGH_results$input_IDs)
 			geneListCL <- lapply(cls, function(cl){
-				glist <- as.vector(DEGH_results[which(DEGH_results$Annot_IDs %in% aux[,"ensembl_gene_id"] & DEGH_results$Cluster_ID == cl),fc_colname])
-				names(glist) <- DEGH_results$Annot_IDs[which(DEGH_results$Annot_IDs %in% aux[,"ensembl_gene_id"] & DEGH_results$Cluster_ID == cl)]
+				glist <- as.vector(DEGH_results[which(DEGH_results$input_IDs %in% aux[,"ensembl_gene_id"] & DEGH_results$Cluster_ID == cl),fc_colname])
+				names(glist) <- DEGH_results$input_IDs[which(DEGH_results$input_IDs %in% aux[,"ensembl_gene_id"] & DEGH_results$Cluster_ID == cl)]
 				names(glist) <- aux[match(names(glist),aux[,"ensembl_gene_id"]),"entrezgene"]
 				glist <- sort(glist, decreasing = TRUE)
 				return(glist)
 			})
 		}else{
-			aux <- subset(reference_table, reference_table[,1] %in% rownames(DEGH_results))
+			aux <- subset(input_to_entrezgene, input_to_entrezgene[,1] %in% rownames(DEGH_results))
 			geneListCL <- lapply(cls,function(cl){
 				glist <- as.vector(DEGH_results[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"] & DEGH_results$Cluster_ID == cl),fc_colname])
 				names(glist) <- rownames(DEGH_results)[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"] & DEGH_results$Cluster_ID == cl)]

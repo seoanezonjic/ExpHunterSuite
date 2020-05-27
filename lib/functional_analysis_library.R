@@ -111,25 +111,25 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
 
 
 
-ensembl_to_entrez <- function(ensembl_ids,organism_db, organism_var){
+ensembl_translation <- function(ensembl_ids,organism_db, organism_var){
     # Load necessary package
     require(organism_db, character.only = TRUE)
     # Obtain target variable
     aux_var <- get(organism_var)
     # Translate ENSEMBL to Entrex IDs
-    ensembl2entrez <- as.list(aux_var[mappedkeys(aux_var)])
+    ensembl_translation <- as.list(aux_var[mappedkeys(aux_var)])
     # Convert to dataframe
-    ensembl2entrez_df <- as.data.frame(do.call(rbind,lapply(intersect(ensembl_ids,names(ensembl2entrez)),function(ensembl){
+    ensembl_translation_df <- as.data.frame(do.call(rbind,lapply(intersect(ensembl_ids,names(ensembl_translation)),function(ensembl){
         # Obtain genes
-        genes <- ensembl2entrez[[ensembl]]            
+        genes <- ensembl_translation[[ensembl]]            
  
         if(length(genes) == 0){
             return(data.frame())
         }
         # Return info
-        return(data.frame(ENSEMBL = rep(ensembl,length(genes)),ENTREZ = genes, stringsAsFactors = FALSE))
+        return(data.frame(ENSEMBL = rep(ensembl,length(genes)), ENTREZ = genes, stringsAsFactors = FALSE))
     })))
-    return(ensembl2entrez_df)
+    return(ensembl_translation_df)
 }
 
 
@@ -138,7 +138,7 @@ ensembl_to_entrez <- function(ensembl_ids,organism_db, organism_var){
 #' @param entrez_targets
 #' @param entrez_universe
 #' @param sub_ontology
-perform_GSEA_analysis_local <- function(entrez_targets,entrez_universe,sub_ontology,outFile=NULL,organism, plot_graph = TRUE){
+perform_topGO_local <- function(entrez_targets,entrez_universe,sub_ontology,outFile=NULL,organism, plot_graph = TRUE){
   
   #! GOFisherTest
   
@@ -191,7 +191,7 @@ perform_GSEA_analysis_local <- function(entrez_targets,entrez_universe,sub_ontol
 
 
 
-perform_GSEA_analysis <- function(attr_name, interesting_genenames, DEG_annot_table, ontology, graphname,filter_name){
+perform_topGO <- function(attr_name, interesting_genenames, DEG_annot_table, ontology, graphname,filter_name){
     geneID2GO <- split(DEG_annot_table[,attr_name], DEG_annot_table[,filter_name])
     geneID2GO <- lapply(geneID2GO, unique)
     geneNames <- names(geneID2GO)

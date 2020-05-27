@@ -98,56 +98,56 @@ knitr::kable(cl_table)
 ```{r table_top_genes, echo = FALSE, results = 'asis'}
 
 # Prepare regular data
-targetcols <- intersect(c("rif1","rif2","diffK","diff_cn"),colnames(DEGH_results_Symbol))
+targetcols <- intersect(c("rif1","rif2","diffK","diff_cn"),colnames(DEGH_results))
 
 targetindexes <- lapply(targetcols,function(tcol){
 	# Sort column
-	csorted <- sort(DEGH_results_Symbol[,tcol], decreasing = TRUE)
+	csorted <- sort(DEGH_results[,tcol], decreasing = TRUE)
 	# Take tops
 	top15 <- head(csorted,15)
 	bot15 <- tail(csorted,15)
 	# Find
-	topindx <- which(DEGH_results_Symbol[,tcol] %in% top15)
-	botindx <- which(DEGH_results_Symbol[,tcol] %in% bot15)
+	topindx <- which(DEGH_results[,tcol] %in% top15)
+	botindx <- which(DEGH_results[,tcol] %in% bot15)
 	# Retrun
 	return(list(top = topindx, bot = botindx))
 })
 # Prepare pattern based data
-patterncols <- colnames(DEGH_results_Symbol)[grepl("^logFC",colnames(DEGH_results_Symbol))]
+patterncols <- colnames(DEGH_results)[grepl("^logFC",colnames(DEGH_results))]
 patternindexes <- lapply(patterncols,function(pcol){
 	# Filter
-	to_remove <- which(DEGH_results_Symbol[,gsub("logFC","FDR",pcol)] > degh_exp_threshold)
+	to_remove <- which(DEGH_results[,gsub("logFC","FDR",pcol)] > degh_exp_threshold)
 	# Sort column
 	if(length(to_remove) > 0){
-		csorted <- sort(DEGH_results_Symbol[-to_remove,pcol], decreasing = TRUE)
+		csorted <- sort(DEGH_results[-to_remove,pcol], decreasing = TRUE)
 	}else{
-		csorted <- sort(DEGH_results_Symbol[,pcol], decreasing = TRUE)		
+		csorted <- sort(DEGH_results[,pcol], decreasing = TRUE)		
 	}
 	# Take tops
 	top15 <- head(csorted,15)
 	bot15 <- tail(csorted,15)
 	# Find
-	topindx <- setdiff(which(DEGH_results_Symbol[,pcol] %in% top15),to_remove)
-	botindx <- setdiff(which(DEGH_results_Symbol[,pcol] %in% bot15),to_remove)
+	topindx <- setdiff(which(DEGH_results[,pcol] %in% top15),to_remove)
+	botindx <- setdiff(which(DEGH_results[,pcol] %in% bot15),to_remove)
 
 	# Retrun
 	return(list(top = topindx, bot = botindx))
 })
 # Add special case
 	# Filter
-	to_remove <- which(DEGH_results_Symbol[,"combined_FDR"] > degh_exp_threshold)
+	to_remove <- which(DEGH_results[,"combined_FDR"] > degh_exp_threshold)
 	# Sort column
 	if(length(to_remove) > 0){
-		csorted <- sort(DEGH_results_Symbol[-to_remove,"mean_logFCs"], decreasing = TRUE)
+		csorted <- sort(DEGH_results[-to_remove,"mean_logFCs"], decreasing = TRUE)
 	}else{
-		csorted <- sort(DEGH_results_Symbol[,"mean_logFCs"], decreasing = TRUE)		
+		csorted <- sort(DEGH_results[,"mean_logFCs"], decreasing = TRUE)		
 	}
 	# Take tops
 	top15 <- head(csorted,15)
 	bot15 <- tail(csorted,15)
 	# Find
-	topindx <- setdiff(which(DEGH_results_Symbol[,"mean_logFCs"] %in% top15),to_remove)
-	botindx <- setdiff(which(DEGH_results_Symbol[,"mean_logFCs"] %in% bot15),to_remove)
+	topindx <- setdiff(which(DEGH_results[,"mean_logFCs"] %in% top15),to_remove)
+	botindx <- setdiff(which(DEGH_results[,"mean_logFCs"] %in% bot15),to_remove)
 patternindexes[[length(patternindexes)+1]] <- list(top = topindx, bot = botindx)
 # Take data
 topindx <- unique(unlist(lapply(seq_along(targetindexes),function(i){targetindexes[[i]]$top})))
@@ -155,8 +155,8 @@ topindx <- unique(c(topindx,unlist(lapply(seq_along(patternindexes),function(i){
 botindx <- unique(unlist(lapply(seq_along(targetindexes),function(i){targetindexes[[i]]$bot})))
 botindx <- unique(c(botindx,unlist(lapply(seq_along(patternindexes),function(i){patternindexes[[i]]$bot}))))
 # Take targets
-topgenes <- DEGH_results_Symbol[topindx,c("Symbol",targetcols,patterncols,"mean_logFCs",colnames(DEGH_results_Symbol)[1])]
-botgenes <- DEGH_results_Symbol[botindx,c("Symbol",targetcols,patterncols,"mean_logFCs",colnames(DEGH_results_Symbol)[1])]
+topgenes <- DEGH_results[topindx,c("Symbol",targetcols,patterncols,"mean_logFCs",colnames(DEGH_results)[1])]
+botgenes <- DEGH_results[botindx,c("Symbol",targetcols,patterncols,"mean_logFCs",colnames(DEGH_results)[1])]
 # Sort
 
 # Message
