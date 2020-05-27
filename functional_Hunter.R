@@ -43,7 +43,7 @@ option_list <- list(
     help="Flags to activate remote query from enrichments and Genes translation. Use (b) to launch biomaRt translation; (k) to use Kegg remote data base"),
   make_option(c("-q", "--save_query"), type="logical", action = "store_true", default=FALSE,
     help="Flag to save biomaRt query."), 
-  make_option(c("-T", "--threshold"), type="double", default=0.1,
+  make_option(c("-P", "--pthreshold"), type="double", default=0.1,
     help="Enrichment p-value threshold. [Default = %default]"),
   make_option(c("-Q", "--qthreshold"), type="double", default=0.2,
     help="Enrichment q-value threshold. [Default = %default]"),
