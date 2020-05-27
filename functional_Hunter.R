@@ -28,7 +28,7 @@ option_list <- list(
   make_option(c("-a", "--annot_file"), type="character",
   	help="If the species used does not exist in organism_table.txt, please add a two-column file mapping orthologue ENSEMBL gene ids from a model organism (first column) to the original IDs (second column)."),
   make_option(c("-t", "--input_gene_id"), type="character", default="E",
-    help="Input gene ID type. ENSEMBL (E), TAIR/Arabidopsis (T), Gene Names (G) Gene SYMBOLS (S). [Default:%default]"),      	
+    help="Input gene ID type. ENSEMBL (E), TAIR/Arabidopsis (T), Gene Names (G). [Default:%default]"),      	
   make_option(c("-f", "--func_annot_db"), type="character", default="gKR",
     help="Functional annotation database and enrichment method(s) to use (topGO: G = GO | clusterProfiler: K = KEGG, g = GO, R = Reactome). [Default=%default]"),
   make_option(c("-G", "--GO_subont"), type="character", default=c("BMC"),
@@ -43,7 +43,7 @@ option_list <- list(
     help="Flags to activate remote query from enrichments and Genes translation. Use (b) to launch biomaRt translation; (k) to use Kegg remote data base"),
   make_option(c("-q", "--save_query"), type="logical", action = "store_true", default=FALSE,
     help="Flag to save biomaRt query."), 
-  make_option(c("-P", "--pthreshold"), type="double", default=0.1,
+  make_option(c("-T", "--threshold"), type="double", default=0.1,
     help="Enrichment p-value threshold. [Default = %default]"),
   make_option(c("-Q", "--qthreshold"), type="double", default=0.2,
     help="Enrichment q-value threshold. [Default = %default]"),
@@ -150,9 +150,9 @@ valid_genes <- unique(DEGH_results$Annot_IDs[!is.na(DEGH_results$Annot_IDs)])
 if(opt$input_gene_id == "E"){
   opt$input_gene_id <- 'ensembl_gene_id'
   keytypes <- "ENTREZID"
-}else if(opt$input_gene_id == "R"){
-  opt$input_gene_id <- 'refseq_peptide'
-  keytypes <- "ENTREZID"
+# }else if(opt$input_gene_id == "R"){
+#   opt$input_gene_id <- 'refseq_peptide'
+#   keytypes <- "ENTREZID"
 }else if(opt$input_gene_id == "T"){
   opt$input_gene_id <- ''
   keytypes <- "TAIR"
@@ -160,15 +160,16 @@ if(opt$input_gene_id == "E"){
   opt$input_gene_id <- ''
   keytypes <- "GENENAME"
 }else{
-  stop(paste("Given ID type (",opt$input_gene_id,") is not allowed.",sep=""))
+  stop(paste("Given ID type (",opt$input_gene_id,") is still not allowed. Please check -t option.",sep=""))
 }
 
 # Check organism selected
 if(opt$List_organisms == TRUE){
   print(as.character(rownames(all_organisms_info)))
-  stop('program ends')
+  stop('Check this list and choose one model species.')
+
 }else if(is.null(opt$model_organism)){
-  stop('No model organism indicated. Please indicate the model organism using parameter -m. Use -L to list all model organisms available')
+  stop('No model organism has been indicated indicated. Please indicate the model organism using parameter -m. Use -L to list all model organisms available')
 # }else if(!opt$organisms %in% rownames(all_organisms_info)){
 #   stop("Organism selected is not available. Use -L to display available organims list")
 }else{ # ORGANISM AVAILABLE --> LOAD
@@ -236,7 +237,6 @@ if(remote_actions$biomart){ # REMOTE MODE
 		reference_table <- ensembl_to_entrez(ensembl_ids = valid_genes,
 											 organism_db = current_organism_info$Bioconductor_DB[1],
 											 organism_var = current_organism_info$Bioconductor_VarName[1])
-
 		# colnames(reference_table) <- c("ensembl_gene_id", current_organism_info[,"Attribute_entrez"])
 		colnames(reference_table) <- c("ensembl_gene_id", "entrezgene") # Fix names
 
@@ -314,22 +314,21 @@ if(opt$debug){
 # Obtain significant sbusets
 #  > likely_degs_df : subset of DEGenes Hunter annotation file with PREVALENT_DEG flag
 #  > likely_degs : genes identifiers included into likely_degs_df
-#  > common_unique_entrez : list of entrez gene present into likely_degs_df AND reference_table with filtered count data
+#  > likely_degs_entrez : USED FOR ORA ENRICHMENTS:  list of entrez gene present into likely_degs_df AND reference_table with filtered count data
 #  > union_DEGs_df : subset of DEGenes Hunter annotation file with POSSIBLE_DEG flag or PREVALENT_DEG flag
 #  > union_DEGs : genes identifiers included into union_DEGs_df
 #  > union_annot_DEGs_df : reference table subset with identifiers included into union_DEGs
 
-likely_degs_df <- subset(DEGH_results, genes_tag=="PREVALENT_DEG")
-likely_degs <- unique(likely_degs_df[!is.na(likely_degs_df$Annot_IDs), "Annot_IDs"])
-common_unique_entrez <- reference_table[reference_table$ensembl_gene_id %in% likely_degs, "entrezgene"] %>% unique
+likely_degs_df <- subset(DEGH_results, genes_tag == "PREVALENT_DEG", !is.na(Annot_IDs))
+likely_degs <- unique(likely_degs_df$Annot_IDs)
+likely_degs_entrez <- reference_table[reference_table$ensembl_gene_id %in% likely_degs, "entrezgene"] %>% unique
 
 # Verbose point
-message(paste("IDs used to enrich:",length(common_unique_entrez)))
+message(paste("IDs used to enrich:",length(likely_degs_entrez)))
+## TODO => ESTARIA BIEN REFLEJAR ESTA INFORMACION EN EL REPORT
 
 union_DEGs_df <- subset(DEGH_results, genes_tag %in% c("POSSIBLE_DEG", "PREVALENT_DEG"))
 union_DEGs <- unique(union_DEGs_df[!is.na(union_DEGs_df$Annot_IDs), "Annot_IDs"])
-
-######## TODO => NOS HEMOS QUEDADO AQUI
 
 union_annot_DEGs_df <- subset(reference_table, reference_table[,1] %in% union_DEGs)
 
@@ -391,7 +390,7 @@ if(flags$GO){
 	# Prepare modules to be loaded
 	modules_to_export <- c()
 	if(grepl("M", opt$GO_subont)){
-		modules_to_export <- "MF"
+		modules_to_export <- c(modules_to_export,"MF")
 	}
 	if(grepl("B", opt$GO_subont)){
 		modules_to_export <- c(modules_to_export,"BP")
@@ -733,7 +732,7 @@ if(flags$GO_cp){
 	### ORA ENRICHMENTS
 	if(flags$ORA){
 		enrich_go <- lapply(modules_to_export,function(mod){
-			enrich <- enrichment_ORA(genes = common_unique_entrez,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = paste0("GO_",mod), qvalueCutoff = opt$qthreshold)
+			enrich <- enrichment_ORA(genes = likely_degs_entrez,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = paste0("GO_",mod), qvalueCutoff = opt$qthreshold)
 			return(enrich)
 		})
 		# Add names
@@ -767,7 +766,7 @@ if(flags$KEGG){
 	message("Performing KEGG enrichments")
 	if(flags$ORA){
 		# Enrich
-		enrich_ora <- enrichment_ORA(genes = common_unique_entrez,organism = current_organism_info$KeggCode[1],keyType = "kegg",pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = "KEGG",useInternal = !remote_actions$kegg, qvalueCutoff = opt$qthreshold)
+		enrich_ora <- enrichment_ORA(genes = likely_degs_entrez,organism = current_organism_info$KeggCode[1],keyType = "kegg",pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = "KEGG",useInternal = !remote_actions$kegg, qvalueCutoff = opt$qthreshold)
 		# Write output
 		write.table(enrich_ora, file=file.path(paths$root, "KEGG_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
@@ -788,7 +787,7 @@ if(flags$REACT){
 	message("Performing Reactome enrichments")
 	if(flags$ORA){
 		# Make enrichment (ORA)
-		enrich_react <- enrichment_ORA(genes = common_unique_entrez,organism = current_organism_info$Reactome_ID[1],keyType = "ENTREZID",pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = "REACT", qvalueCutoff = opt$qthreshold)		
+		enrich_react <- enrichment_ORA(genes = likely_degs_entrez,organism = current_organism_info$Reactome_ID[1],keyType = "ENTREZID",pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = "REACT", qvalueCutoff = opt$qthreshold)		
 		# Write output
 		write.table(enrich_react, file=file.path(paths$root, "REACT_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
 	}
@@ -827,7 +826,7 @@ if(!is.null(opt$custom)) {
 								  Gene = tail(aux,-2),
 								  stringsAsFactors = FALSE))
 			})))
-			enr <- enricher(common_unique_entrez, pvalueCutoff = opt$pthreshold, TERM2GENE = c_terms)
+			enr <- enricher(likely_degs_entrez, pvalueCutoff = opt$pthreshold, TERM2GENE = c_terms)
 			# Store results
 			write.table(enr, file=file.path(paths$root, paste0(basename(f),"_ora_results")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")			
 			# Return
