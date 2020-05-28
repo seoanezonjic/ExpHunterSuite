@@ -136,7 +136,7 @@ datatable(cls_genes_summary, filter = 'top', rownames = FALSE, extensions = c('B
                         buttons = c('copy', 'csv', 'excel')
 ))
 # Render Gene-Cluster-Tag table
-to_show <- DEGH_results_Symbol[,c("Cluster_ID","Symbol","genes_tag",colnames(DEGH_results_Symbol)[1])]
+to_show <- DEGH_results[,c("Cluster_ID","Symbol","genes_tag",colnames(DEGH_results)[1])]
 to_show$Cluster_ID <- as.character(to_show$Cluster_ID)
 datatable(to_show, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
                     options = list(
