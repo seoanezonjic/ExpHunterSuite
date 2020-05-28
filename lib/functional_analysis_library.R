@@ -109,27 +109,46 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
 }
 
 
+enrich_all_customs <- function(custom_files, p_val_threshold, likely_degs_entrez){
+  custom_enrichments <- lapply(custom_files, function(custom_gmt) {
+      # Load info
+      c_terms <- unlist(read.table(file = custom_gmt, sep = "\n", header = FALSE, stringsAsFactors = FALSE))
+      # Split all
+      c_terms <- as.data.frame(do.call(rbind,lapply(c_terms,function(GeneTerms) {
+        aux <- unlist(strsplit(GeneTerms,"\t"))
+        return(data.frame(Term = rep(aux[1],length(aux)-2),
+                  Gene = tail(aux,-2),
+                  stringsAsFactors = FALSE))
+      })))
+      enr <- enricher(likely_degs_entrez, pvalueCutoff = p_val_threshold, TERM2GENE = c_terms)
+      # Store results
+      write.table(enr, file=file.path(paths$root, paste0(basename(custom_gmt),"_ora_results")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")      
+      # Return
+      return(list(File = custom_gmt,
+            Result = enr))
+    })
+  return(custom_enrichments)
+}
 
-
-ensembl_translation <- function(ensembl_ids,organism_db, organism_var){
+id_translation_orgdb <- function(input_ids, organism_db, org_var_name){
     # Load necessary package
     require(organism_db, character.only = TRUE)
     # Obtain target variable
-    aux_var <- get(organism_var)
+    org_var <- get(org_var_name)
     # Translate ENSEMBL to Entrex IDs
-    ensembl_translation <- as.list(aux_var[mappedkeys(aux_var)])
+    translation_table <- as.list(org_var[mappedkeys(org_var)])
     # Convert to dataframe
-    ensembl_translation_df <- as.data.frame(do.call(rbind,lapply(intersect(ensembl_ids,names(ensembl_translation)),function(ensembl){
+    translation_table_df <- as.data.frame(do.call(rbind,lapply(intersect(input_ids, names(translation_table)),function(matches){
         # Obtain genes
-        genes <- ensembl_translation[[ensembl]]            
+        translated_ids <- translation_table[[matches]]            
  
-        if(length(genes) == 0){
+        if(length(translated_ids) == 0){
             return(data.frame())
         }
         # Return info
-        return(data.frame(ENSEMBL = rep(ensembl,length(genes)), ENTREZ = genes, stringsAsFactors = FALSE))
+        return(data.frame(input = rep(matches,length(translated_ids)), output = translated_ids, stringsAsFactors = FALSE))
     })))
-    return(ensembl_translation_df)
+    return(translation_table_df)
 }
 
 
@@ -187,6 +206,16 @@ perform_topGO_local <- function(entrez_targets,entrez_universe,sub_ontology,outF
 }
 
 
+scale_counts_table <- function(norm_counts_raw){
+  scaled_counts <- apply(norm_counts_raw, 1, function(row) {
+    minimum <- min(row)
+    maximum <- max(row)
+    difference <- maximum - minimum
+    scaled_row <- (row - minimum) / difference
+    return(scaled_row)
+  })
+  return(t(scaled_counts))
+}
 
 
 
@@ -208,7 +237,7 @@ perform_topGO <- function(attr_name, interesting_genenames, DEG_annot_table, ont
         classicKS = resultKS, elimKS = resultKS.elim,
         orderBy = "elimKS", ranksOf = "classicFisher", topNodes = length(GOdata@graph@nodes))
 
-    write.table(allRes, file=file.path(paths$root, "allResGOs.txt"), quote=F, col.names=NA, sep="\t")
+    write.table(allRes, file=file.path(paths$root, "allResGOs.txt"), quote=FALSE, col.names=NA, sep="\t")
 
     pdf(file.path(paths, graphname), w=11, h=8.5)
         showSigOfNodes(GOdata, score(resultFis), firstSigNodes = 10, useInfo = 'all')
@@ -441,6 +470,8 @@ require(clusterProfiler)
 #' @import clusterProfiler, KEGG.db, ReactomePA, parallel
 enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, mc.cores = 1){
   # Parse onto
+  save(list = ls(all.names = TRUE), file = "test.RData", envir = environment())
+
   src_ont = ont
   if(grepl("GO",ont)){
     aux = unlist(strsplit(ont,"_"))

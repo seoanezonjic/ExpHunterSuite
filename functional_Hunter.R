@@ -10,6 +10,11 @@ full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using
               normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', commandArgs())], '='))[2]))
 main_path_script <- dirname(full.fpath)
 
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+##                                                                                                                   ##
+##                                                     INITIALIZE                                                    ##                                                     
+##                                                                                                                   ##
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 #############################################
 ### OPTIONS
 #############################################
@@ -75,11 +80,18 @@ source(file.path(main_path_script, 'lib', 'general_functions.R'))
 source(file.path(main_path_script, 'lib', 'functional_analysis_library.R'))
 source(file.path(main_path_script, 'lib', 'plotting_functions.R'))
 
-#############################################
-### MAIN 
-#############################################
-# Load Reference-NonRefernce models gene IDs relations
-if(! file.exists(opt$input_hunter_folder)) stop("No input degenes_Hunter folder")
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+##                                                                                                                   ##
+##                                               MAIN                                                                ##                                                     
+##                                                                                                                   ##
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+
+
+#########################################################################################################################
+### LOAD FILES & CREATE FOLDERS 
+#########################################################################################################################
+if (! file.exists(opt$input_hunter_folder)) stop("No input degenes_Hunter folder")
 
 # Special IDs
 fc_colname <- "mean_logFCs"
@@ -93,15 +105,15 @@ paths <- list()
 dir.create(opt$output_files)
 paths$root <-opt$output_files
 
-if(!is.null(opt$Debug)){
+if (!is.null(opt$Debug)) {
 	opt$debug <- TRUE
 	debug_file <- file.path(opt$Debug)
 }
 
-if(opt$debug){
+if (opt$debug) {
 	# Define only once
-	if(is.null(opt$Debug)){
-		debug_file <- file.path(paths$root, debug_files, paste(c("FHunter_Debug_Session_",format(Sys.Date(),format = "%Y%m%d"),".RData"),collapse = ""))
+	if (is.null(opt$Debug)) {
+		debug_file <- file.path(paths$root, debug_files, paste(c("FHunter_Debug_Session_", format(Sys.Date(), format = "%Y%m%d"), ".RData"), collapse = ""))
 	}
 	debug_dir <- dirname(debug_file)
 	dir.create(debug_dir, recursive = T)
@@ -109,72 +121,71 @@ if(opt$debug){
 	# Store session
 ####################### DEBUG POINT #############################
 	time_control <- list(start = Sys.time())
-	debug_point(debug_file,"Start point")
+	debug_point(debug_file, "Start point")
 #################################################################
 }
 
-#############################################
-### LOAD AND PARSE 
-#############################################
-
 # Load available organisms
+## all_organisms_info => Table with information abaut all organism available
 all_organisms_info <- read.table(file.path(main_path_script, "lib", "organism_table.txt"), header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA)
 
 # Load DEGH_results
 #DEGH_results => DEgenes Hunter results table and modifications
 DEGH_results <- read.table(file.path(opt$input_hunter_folder, "Common_results", "hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE)
-aux <- which(DEGH_results$genes_tag == "FILTERED_OUT") 
-if(length(aux) > 0){
-	DEGH_results <- DEGH_results[-aux,]
-}
+DEGH_results <- DEGH_results[DEGH_results$genes_tag != "FILTERED_OUT", ]
+
+# aux <- which(DEGH_results$genes_tag == ) 
+# if (length(aux) > 0) {
+# 	DEGH_results <- DEGH_results[-aux, ]
+# }
 #TODO => ESTO ES RARO; BUSCAR UNA MANERA MEJOR DE HACERLO
 
 ####
 # LOAD DEGenesHunter expression execution config
 DEGenesHunter_expression_opt <- read.table(file.path(opt$input_hunter_folder, "opt_input_values.txt"), header = FALSE, stringsAsFactors = FALSE, sep = "\t")
-degh_exp_threshold <- as.numeric(DEGenesHunter_expression_opt[which(DEGenesHunter_expression_opt[,1] == "p_val_cutoff"),2])
+degh_exp_threshold <- as.numeric(DEGenesHunter_expression_opt[which(DEGenesHunter_expression_opt[,1] == "p_val_cutoff"), 2])
 
 experiments <- read.table(file.path(opt$input_hunter_folder, "control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
-exp_names <- paste("[Control]",experiments[which(experiments[,1] == "C"),2],sep=" ")
-exp_names <- c(exp_names,paste("[Treatment]",experiments[which(experiments[,1] == "T"),2],sep=" "))
+exp_names <- paste("[Control]", experiments[which(experiments[,1] == "C"), 2], sep=" ")
+exp_names <- c(exp_names, paste("[Treatment]", experiments[which(experiments[,1] == "T"), 2], sep=" "))
 
 
-if(!is.null(opt$annot_file)){
+if (!is.null(opt$annot_file)) {
 	annot_table <- read.table(opt$annot_file, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "") # Load
   	DEGH_results$input_IDs <- translate_id(rownames(DEGH_results), annot_table)
-}else{
+} else {
 	DEGH_results$input_IDs <- rownames(DEGH_results)
 }
 added_cols <- c("input_IDs")
 valid_genes <- unique(DEGH_results$input_IDs[!is.na(DEGH_results$input_IDs)])
 
 # Prepare ID type
-if(opt$input_gene_id == "E"){
+if (opt$input_gene_id == "E") {
   opt$input_gene_id <- 'ensembl_gene_id'
   keytypes <- "ENTREZID"
-# }else if(opt$input_gene_id == "R"){
+# } else if (opt$input_gene_id == "R") {
 #   opt$input_gene_id <- 'refseq_peptide'
 #   keytypes <- "ENTREZID"
-}else if(opt$input_gene_id == "T"){
+} else if (opt$input_gene_id == "T") {
   opt$input_gene_id <- ''
   keytypes <- "TAIR"
-}else if(opt$input_gene_id == "G"){
+} else if (opt$input_gene_id == "G") {
   opt$input_gene_id <- ''
   keytypes <- "GENENAME"
-}else{
+} else {
   stop(paste("Given ID type (",opt$input_gene_id,") is still not allowed. Please check -t option.",sep=""))
 }
 
 # Check organism selected
-if(opt$List_organisms == TRUE){
+if (opt$List_organisms == TRUE) {
   print(as.character(rownames(all_organisms_info)))
   stop('Check this list and choose one model species.')
 
-}else if(is.null(opt$model_organism)){
+} else if (is.null(opt$model_organism)) {
   stop('No model organism has been indicated indicated. Please indicate the model organism using parameter -m. Use -L to list all model organisms available')
-# }else if(!opt$organisms %in% rownames(all_organisms_info)){
+# } else if (!opt$organisms %in% rownames(all_organisms_info)) {
 #   stop("Organism selected is not available. Use -L to display available organims list")
-}else{ # ORGANISM AVAILABLE --> LOAD
+} else { # ORGANISM AVAILABLE --> LOAD
   current_organism_info <- subset(all_organisms_info, rownames(all_organisms_info) %in% opt$model_organism)  
 }
 
@@ -190,7 +201,7 @@ flags <- list(GO    = grepl("G", opt$func_annot_db),
 
 # TODO =>  REMOVE
 # Special case
-# if(exists("annot_table")){
+# if (exists("annot_table")) {
 # 	DEGH_results$input_IDs <- translate_id(rownames(DEGH_results), annot_table)
 # } else {
 # 	DEGH_results$input_IDs <- rownames(DEGH_results)
@@ -204,9 +215,9 @@ for(i in seq_along(aux)) {
 
 
 ####################### DEBUG POINT #############################
-if(opt$debug){
+if (opt$debug) {
 	time_control$load_data <- Sys.time()
-	debug_point(debug_file,"Data loaded")
+	debug_point(debug_file, "Data loaded")
 }
 #################################################################
 
@@ -214,7 +225,7 @@ if(opt$debug){
 ### PREPARE AND TRANSFORM DATA
 #############################################
 
-if(remote_actions$biomart){ # REMOTE MODE
+if (remote_actions$biomart) { # REMOTE MODE
 	############# BIOMART QUERY  #############
 
 	# Prepare organism info
@@ -235,20 +246,20 @@ if(remote_actions$biomart){ # REMOTE MODE
 	                                            host = organism_host, 
 	                                            attr = organism_attr) 
 
-}else if(!is.na(current_organism_info$Bioconductor_DB[1])){ # LOCAL MODE
+} else if (!is.na(current_organism_info$Bioconductor_DB[1])) { # LOCAL MODE
 	# Check genetical items to be used
-	if(opt$input_gene_id == 'ensembl_gene_id'){
-		input_to_entrezgene <- ensembl_translation(ensembl_ids = valid_genes,
+	if (opt$input_gene_id == 'ensembl_gene_id') {
+		input_to_entrezgene <- id_translation_orgdb(input_ids = valid_genes,
 											 organism_db = current_organism_info$Bioconductor_DB[1],
-											 organism_var = current_organism_info$Bioconductor_VarName[1])
+											 org_var_name = current_organism_info$Bioconductor_VarName[1])
 		# colnames(input_to_entrezgene) <- c("ensembl_gene_id", current_organism_info[,"Attribute_entrez"])
 		colnames(input_to_entrezgene) <- c("ensembl_gene_id", "entrezgene") # Fix names
 	}
-}else{
+} else {
 	error("Specified organism are not available to be studiend in LOCAL model. Please try REMOTE mode")
 }
 
-if(opt$save_query == TRUE){ ## TODO => CACHE IS SAVED BUT NEVER IS LOADED
+if (opt$save_query == TRUE) { ## TODO => CACHE IS SAVED BUT NEVER IS LOADED
   saveRDS(input_to_entrezgene, file=file.path("query_results_temp"))
 } 
 
@@ -256,30 +267,38 @@ DEGH_results$entrezgene <- input_to_entrezgene[match(DEGH_results$input_IDs, inp
 added_cols <- c(added_cols, "entrezgene")
 # print("it works")
 # Load Normalized correlation data
-if(flags$Clustered){
+if (flags$Clustered) {
 	####
 	# LOAD NORMALIZED COUNTS
-	norm_counts_raw <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_DESeq2", "Normalized_counts_DESeq2.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
+	norm_counts <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_DESeq2", "Normalized_counts_DESeq2.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
+	scaled_counts <- scale_counts_table(norm_counts)
+	scaled_counts_table <- as.data.frame(as.table(scaled_counts))
+	colnames(scaled_counts_table) <- c("Gene","Sample","Count")
+	
 	# Translate genes
-	if(exists("input_to_entrezgene")){
-		aux <- unlist(lapply(rownames(norm_counts_raw),function(id){input_to_entrezgene$entrezgene[which(input_to_entrezgene$ensembl_gene_id == id)][1]}))
-		aux_indx <- which(is.na(aux))
-		if(length(aux_indx)>0) aux[aux_indx] <- rownames(norm_counts_raw)[aux_indx]
-		rownames(norm_counts_raw) <- aux
-	}
+	# if (exists("input_to_entrezgene")) {
+
+
+	# 	aux <- unlist(lapply(rownames(norm_counts_raw),function(id) {input_to_entrezgene$entrezgene[which(input_to_entrezgene$ensembl_gene_id == id)][1]}))
+	# 	aux_indx <- which(is.na(aux))
+	# 	if (length(aux_indx)>0) aux[aux_indx] <- rownames(norm_counts_raw)[aux_indx]
+	# 	rownames(norm_counts_raw) <- aux
+	# }
+
 	# Normalize
-	norm_counts_raw_gnorm <- norm_counts_raw
-	invisible(lapply(seq_along(norm_counts_raw[,1]),function(i){
-		m <- min(norm_counts_raw[i,])
-		M <- max(norm_counts_raw[i,])
-		dff <- M - m
-		norm_counts_raw_gnorm[i,] <<- (norm_counts_raw[i,] - m) / dff
-	}))
+
+
+	# norm_counts_raw_gnorm <- norm_counts_raw
+
+	# invisible(lapply(seq_along(norm_counts_raw[,1]),function(i) {
+	# 	m <- min(norm_counts_raw[i,])
+	# 	M <- max(norm_counts_raw[i,])
+	# 	dff <- M - m
+	# 	norm_counts_raw_gnorm[i,] <<- (norm_counts_raw[i,] - m) / dff
+	# }))
 	# Modify to plot better later
-	norm_counts <- as.data.frame(as.table(norm_counts_raw))
-	colnames(norm_counts) <- c("Gene","Sample","Count")
-	norm_counts_gnorm <- as.data.frame(as.table(norm_counts_raw_gnorm))
-	colnames(norm_counts_gnorm) <- c("Gene","Sample","Count")
+	# norm_counts <- as.data.frame(as.table(norm_counts_raw))
+	# colnames(norm_counts) <- c("Gene","Sample","Count")
 	# norm_counts_gnorm <- cbind(norm_counts_gnorm,list(Type = rep("Regular",nrow(norm_counts_gnorm))))
 
 	####
@@ -297,14 +316,16 @@ if(flags$Clustered){
 	####
 	# LOAD WGCNA - Correlation (Sample - Trait)
 	wgcna_count_sample_trait <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_WGCNA", "sample_trait.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-	wgcna_count_sample_trait_gnorm <- as.data.frame(do.call(cbind,lapply(seq(ncol(wgcna_count_sample_trait)),function(j){
-		(wgcna_count_sample_trait[,j] - min(wgcna_count_sample_trait[,j],na.rm = TRUE)) / (max(wgcna_count_sample_trait[,j],na.rm = TRUE) - min(wgcna_count_sample_trait[,j],na.rm = TRUE))
+	
+	wgcna_count_sample_trait_gnorm <- as.data.frame(do.call(cbind,lapply(seq(ncol(wgcna_count_sample_trait)), function(j) {
+		wgcna_count_sample_trait[,j]
+		(wgcna_count_sample_trait[,j] - min(wgcna_count_sample_trait[,j], na.rm = TRUE)) / (max(wgcna_count_sample_trait[,j], na.rm = TRUE) - min(wgcna_count_sample_trait[,j], na.rm = TRUE))
 	})))
 	colnames(wgcna_count_sample_trait_gnorm) <- colnames(wgcna_count_sample_trait)
 }
 
 ####################### DEBUG POINT #############################
-if(opt$debug){
+if (opt$debug) {
 	time_control$data_extended <- Sys.time()
 	debug_point(debug_file,"Data extended")
 }
@@ -321,8 +342,8 @@ if(opt$debug){
 #  > union_annot_DEGs_df : reference table subset with identifiers included into union_DEGs
 
 likely_degs_df <- subset(DEGH_results, genes_tag == "PREVALENT_DEG", !is.na(input_IDs))
-likely_degs <- unique(likely_degs_df$input_IDs)
 likely_degs_entrez <- unique(likely_degs_df$entrezgene)
+# likely_degs <- unique(likely_degs_df$input_IDs)
 
 # Verbose point
 message(paste("IDs used to enrich:",length(likely_degs_entrez)))
@@ -335,52 +356,49 @@ union_annot_DEGs_df <- subset(input_to_entrezgene, input_to_entrezgene[,1] %in% 
 ################# ADD ENTREZ IDS AND GENE SYMBOLS TO INPUT FILE #############
 # Currently only runs if we are local, have an org db available and a symbol correspondence. The ENTREZ bit should become universal even if no SYMBOL available
 
-if( ! remote_actions$biomart &
+if ( ! remote_actions$biomart &
 	! current_organism_info$Bioconductor_DB[1] == "" & 
-	! current_organism_info$Bioconductor_VarName_SYMBOL[1] == ""){
+	! current_organism_info$Bioconductor_VarName_SYMBOL[1] == "") {
 
 	# DEGH_results <- DEGH_results
-	# if(exists("annot_table")){
+	# if (exists("annot_table")) {
 	# 	ENSEMBL_IDs <- DEGH_results$input_IDs
-	# }else{
+	# } else {
 	# 	ENSEMBL_IDs <- rownames(DEGH_results)
 	# }
 
 	# DEGH_results$Ensembl <- ENSEMBL_IDs # Necessary step for merging
 	# DEGH_results <- merge(DEGH_results, input_to_entrezgene, by.x="Ensembl", by.y="ensembl_gene_id", all.x=TRUE)
 
-	input_to_symbol <- ensembl_translation(ensembl_ids = DEGH_results$entrezgene,
+	input_to_symbol <- id_translation_orgdb(input_ids = unique(DEGH_results$entrezgene[!is.na(DEGH_results$entrezgene)]),
 										 		organism_db = current_organism_info$Bioconductor_DB[1],
-												organism_var = current_organism_info$Bioconductor_VarName_SYMBOL[1])
+												org_var_name = current_organism_info$Bioconductor_VarName_SYMBOL[1])
 	colnames(input_to_symbol) <- c("entrezgene", "Symbol")
-	DEGH_results <- merge(DEGH_results, input_to_symbol, by.x="entrezgene", by.y="entrezgene", all.x=TRUE)
+	
+	DEGH_results$Symbol <- input_to_symbol[match(DEGH_results$entrezgene, input_to_symbol$entrezgene), "Symbol"]
+	# DEGH_results <- merge(DEGH_results, input_to_symbol, by.x="entrezgene", by.y="entrezgene", all.x=TRUE)
 
 	added_cols <- c(added_cols, "Symbol")
 	# Write output here for now, until the rest of the workflow can use this object directly
-	# write.table(DEGH_results, file=file.path(paths$root, "DEG_results_annotated.txt"), quote=F, row.names=FALSE, sep="\t")
+	# write.table(DEGH_results, file=file.path(paths$root, "DEG_results_annotated.txt"), quote=FALSE, row.names=FALSE, sep="\t")
 }
 
 
-#############################################
-### EXPORT DATA
-#############################################
-DEGH_results <- DEGH_results[c(added_cols, setdiff(names(DEGH_results), added_cols))] # Reorder columns so annotated first
-DEGH_results <- DEGH_results[order(DEGH_results[,"combined_FDR"]),] # Reorder rows by combined FDR
-write.table(DEGH_results, file=file.path(paths$root, "hunter_results_table_annotated.txt"), quote=F, col.names=NA, sep="\t")
-# write.table(input_to_entrezgene, file=file.path(paths$root, "ENSEMBL2ENTREZ.txt"), quote=F, col.names=NA, sep="\t")
+
+# write.table(input_to_entrezgene, file=file.path(paths$root, "ENSEMBL2ENTREZ.txt"), quote=FALSE, col.names=NA, sep="\t")
 
 
 #############################################
 ### GO ENRICHMENT (topGO)
 #############################################
-if(flags$GO){ #TODO =>  ESTO HAY QUE TOCARLO LUEGO, POR QUE SE UTILIZA PARA UNO ENSEMBL Y OTRO ENTREZ? 
+if (flags$GO) { #TODO =>  ESTO HAY QUE TOCARLO LUEGO, POR QUE SE UTILIZA PARA UNO ENSEMBL Y OTRO ENTREZ? 
 	# Prepare special subsets to be studied
-	# if(exists("annot_table")){
+	# if (exists("annot_table")) {
 	pos_logFC_likely_degs <- subset(likely_degs_df, likely_degs_df[fc_colname] > 0, !is.na(entrezgene) )$entrezgene
 	neg_logFC_likely_degs <- subset(likely_degs_df, likely_degs_df[fc_colname] < 0, !is.na(entrezgene))$entrezgene
 	pos_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df[fc_colname] > 0, !is.na(entrezgene))$entrezgene
 	neg_logFC_union_DEGs <- subset(union_DEGs_df, union_DEGs_df[fc_colname] < 0, !is.na(entrezgene))$entrezgene
-	# }else{
+	# } else {
 	# 	pos_logFC_likely_degs <- rownames(subset(likely_degs_df, likely_degs_df[fc_colname] > 0))
 	# 	neg_logFC_likely_degs <- rownames(subset(likely_degs_df, likely_degs_df[fc_colname] < 0))
 	# 	pos_logFC_union_DEGs <- rownames(subset(union_DEGs_df, union_DEGs_df[fc_colname] > 0))
@@ -389,29 +407,29 @@ if(flags$GO){ #TODO =>  ESTO HAY QUE TOCARLO LUEGO, POR QUE SE UTILIZA PARA UNO 
 
 	# Prepare modules to be loaded
 	GO_subontologies <- c()
-	if(grepl("M", opt$GO_subont)){
+	if (grepl("M", opt$GO_subont)) {
 		GO_subontologies <- c(GO_subontologies,"MF")
 	}
-	if(grepl("B", opt$GO_subont)){
+	if (grepl("B", opt$GO_subont)) {
 		GO_subontologies <- c(GO_subontologies,"BP")
 	}
-	if(grepl("C", opt$GO_subont)){
+	if (grepl("C", opt$GO_subont)) {
 		GO_subontologies <- c(GO_subontologies,"CC")
 	}
-	if(length(GO_subontologies) == 0){
+	if (length(GO_subontologies) == 0) {
 		warning("No GO sub-ontology have been selected. Please check -G option")
 	}
 
 	# Generate output
-	if(length(GO_subontologies) > 0){
+	if (length(GO_subontologies) > 0) {
 		# Check execution mode
-		if(remote_actions$biomart){ # REMOTE MODE
+		if (remote_actions$biomart) { # REMOTE MODE
 			# Prepare necessary info
 			go_attr_name <- as.character(current_organism_info[,"Attribute_GOs"])
 			# Launch GSEA analysis
-			invisible(lapply(GO_subontologies,function(mod){
+			invisible(lapply(GO_subontologies,function(mod) {
 				# Common
-				perform_topGO(go_attr_name, likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_",mod,".pdf",sep=""),opt$input_gene_id)
+				perform_topGO(go_attr_name, likely_degs_entrez, union_annot_DEGs_df, mod, paste("GOgraph_preval_",mod,".pdf",sep=""),opt$input_gene_id)
 				perform_topGO(go_attr_name, pos_logFC_likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_overex_",mod,".pdf",sep=""),opt$input_gene_id)
 				perform_topGO(go_attr_name, neg_logFC_likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_underex_",mod,".pdf",sep=""),opt$input_gene_id)
 				# Union
@@ -419,18 +437,18 @@ if(flags$GO){ #TODO =>  ESTO HAY QUE TOCARLO LUEGO, POR QUE SE UTILIZA PARA UNO 
 				perform_topGO(go_attr_name, pos_logFC_union_DEGs, input_to_entrezgene, mod, paste("GOgraph_allpos_overex_",mod,".pdf",sep=""),opt$input_gene_id)
 				perform_topGO(go_attr_name, neg_logFC_union_DEGs, input_to_entrezgene, mod, paste("GOgraph_allpos_underex_",mod,".pdf",sep=""),opt$input_gene_id)    				
 			}))
-		}else{ # LOCAL MODE
-			# if(opt$input_gene_id == 'ensembl_gene_id'){
+		} else { # LOCAL MODE
+			# if (opt$input_gene_id == 'ensembl_gene_id') {
 			# 	# Transform ENSEMBL ids to Entrez ids
-			# 	entrez_likely_degs <- ensembl_translation(likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1]) 
-			# 	entrez_pos_logFC_likely_degs <- ensembl_translation(pos_logFC_likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
-			# 	entrez_neg_logFC_likely_degs <- ensembl_translation(neg_logFC_likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
-			# 	entrez_union_DEGs <- ensembl_translation(union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
-			# 	entrez_pos_logFC_union_DEGs <- ensembl_translation(pos_logFC_union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
-			# 	entrez_neg_logFC_union_DEGs <- ensembl_translation(neg_logFC_union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
-			# # }else if(opt$input_gene_id == 'refseq_peptide'){
+			# 	entrez_likely_degs <- id_translation_orgdb(likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1]) 
+			# 	entrez_pos_logFC_likely_degs <- id_translation_orgdb(pos_logFC_likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+			# 	entrez_neg_logFC_likely_degs <- id_translation_orgdb(neg_logFC_likely_degs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+			# 	entrez_union_DEGs <- id_translation_orgdb(union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+			# 	entrez_pos_logFC_union_DEGs <- id_translation_orgdb(pos_logFC_union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+			# 	entrez_neg_logFC_union_DEGs <- id_translation_orgdb(neg_logFC_union_DEGs,current_organism_info$Bioconductor_DB[1],current_organism_info$Bioconductor_VarName[1])
+			# # } else if (opt$input_gene_id == 'refseq_peptide') {
 			# # 	stop(paste("This genes type (",opt$input_gene_id,") is not allowed in local mode yet",sep="")) ##################################### NOT IMPLEMENTED
-			# }else{
+			# } else {
 			# 	stop("Unchecked biomart filter type")
 			# }
 
@@ -438,9 +456,9 @@ if(flags$GO){ #TODO =>  ESTO HAY QUE TOCARLO LUEGO, POR QUE SE UTILIZA PARA UNO 
 			reference_ids_common <- unique(DEGH_results$entrezgene)
 
 			# Launch GSEA analysis
-			invisible(lapply(GO_subontologies,function(mod){
+			invisible(lapply(GO_subontologies,function(mod) {
 				# Common
-				perform_topGO_local(likely_degs, reference_ids_common, mod, file.path(paths$root, paste("GO_preval",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
+				perform_topGO_local(likely_degs_entrez, reference_ids_common, mod, file.path(paths$root, paste("GO_preval",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
 				perform_topGO_local(pos_logFC_likely_degs, reference_ids_common, mod, file.path(paths$root, paste("GO_preval_overex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
 				perform_topGO_local(neg_logFC_likely_degs, reference_ids_common,mod, file.path(paths$root, paste("GO_preval_underex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
 				# # Union
@@ -453,7 +471,7 @@ if(flags$GO){ #TODO =>  ESTO HAY QUE TOCARLO LUEGO, POR QUE SE UTILIZA PARA UNO 
 }
 
 ####################### DEBUG POINT #############################
-if(opt$debug){
+if (opt$debug) {
 	time_control$TopGO <- Sys.time()
 	debug_point(debug_file,"TopGO executed")
 }
@@ -465,7 +483,7 @@ if(opt$debug){
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 # Calculate geneList
 #geneList: A NAMED VECTOR OF logFC; USED IN GSEA AND PLOTS
-# if(exists("annot_table")){
+# if (exists("annot_table")) {
 	geneList <- DEGH_results[!is.na(DEGH_results$entrezgene),  fc_colname]
 	names(geneList) <- DEGH_results[!is.na(DEGH_results$entrezgene), "entrezgene"]
 	
@@ -473,7 +491,7 @@ if(opt$debug){
 	# geneList <- as.vector(DEGH_results[which(DEGH_results$input_IDs %in% aux[,"ensembl_gene_id"]), fc_colname])
 	# names(geneList) <- DEGH_results$input_IDs[which(DEGH_results$input_IDs %in% aux[,"ensembl_gene_id"])]
 	# names(geneList) <- aux[match(names(geneList),aux[,"ensembl_gene_id"]),"entrezgene"]
-# }else{
+# } else {
 # 	aux <- subset(input_to_entrezgene, input_to_entrezgene[,1] %in% rownames(DEGH_results))
 # 	geneList <- as.vector(DEGH_results[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"]),fc_colname])
 # 	names(geneList) <- rownames(DEGH_results)[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"])]
@@ -484,167 +502,175 @@ geneList <- sort(geneList, decreasing = TRUE)
 
 
 # Prepare executions
-if(any(unlist(flags[c("GO_cp","KEGG","REACT")]),!is.null(opt$custom))){
-	options(stringsAsFactors=FALSE)
+if (any(unlist(flags[c("GO_cp","KEGG","REACT")]), !is.null(opt$custom))) {
+	options(stringsAsFactors = FALSE)
 	ora_config <- data.frame(Fun = character(),Onto = character(),Organism = character(),KeyType = character(), UseInternal = logical(), stringsAsFactors = FALSE)
 	gsea_config <- data.frame(Onto = character(),Organism = character(),KeyType = character(),UseInternal = logical(), stringsAsFactors = FALSE)
+}
 
-	###################
-	## GO
-	if(flags$GO_cp){
-		# Check
-		if(is.na(current_organism_info$Bioconductor_DB[1]) | is.na(current_organism_info$Bioconductor_VarName[1])){
-			flags$GO_cp <- FALSE
-			warning("Specified organism is not allowed to be used with GO (clusterProfiler) module. Please check your IDs table")
-		}else{
-			# Load necessary packages	
-			GO_subontologies <- c()
-			if(grepl("M", opt$GO_subont)){
-				GO_subontologies <- "MF"
-			}
-			if(grepl("B", opt$GO_subont)){
-				GO_subontologies <- c(GO_subontologies,"BP")
-			}
-			if(grepl("C", opt$GO_subont)){
-				GO_subontologies <- c(GO_subontologies,"CC")
-			}
-			if(length(GO_subontologies) == 0){
-				warning("Any GO sub-ontology have been selected. Use -G input command")
-			}
-			# Add execution info
-			if(flags$Clustered){
-				if(flags$ORA){ 
-					invisible(lapply(GO_subontologies,function(mod){ora_config <<- rbind(ora_config,list(Fun = "enrichGO",Onto=paste0("GO_",mod),Organism=current_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))}))
-				}
-				if(flags$GSEA){
-					invisible(lapply(GO_subontologies,function(mod){gsea_config <<- rbind(gsea_config,list(Onto=paste0("GO_",mod),Organism=current_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))}))					
-				}
-			}			
+###################
+## GO
+if (flags$GO_cp) {
+	# Check
+	if (is.na(current_organism_info$Bioconductor_DB[1]) | is.na(current_organism_info$Bioconductor_VarName[1])) {
+		flags$GO_cp <- FALSE
+		warning("Specified organism is not allowed to be used with GO (clusterProfiler) module. Please check your IDs table")
+	} else {
+		# Load necessary packages	
+		GO_subontologies <- c()
+		if (grepl("M", opt$GO_subont)) {
+			GO_subontologies <- "MF"
 		}
-	}
-
-
-	###################
-	## KEGG
-	if(flags$KEGG){ 
-		if(is.na(current_organism_info$KeggCode[1])){
-			flags$KEGG <- FALSE
-			warning("Specified organism is not allowed to be used with KEGG module. Please check your IDs table")
-		}else{
-			if(!remote_actions$kegg){
-				require(KEGG.db)
-			}
-			if(flags$Clustered){
-				if(flags$ORA) ora_config <- rbind(ora_config,list(Fun = "enrichKEGG",Onto="KEGG",Organism=current_organism_info$KeggCode[1],KeyType="kegg",UseInternal=!remote_actions$kegg))
-				if(flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="KEGG",Organism=current_organism_info$KeggCode[1],KeyType="ENTREZID",UseInternal=!remote_actions$kegg))
-			}
+		if (grepl("B", opt$GO_subont)) {
+			GO_subontologies <- c(GO_subontologies,"BP")
 		}
-	}
-
-	###################
-	## REACTOME
-	if(flags$REACT){
-		if(keytypes == "GENENAME"){
-			flags$REACT <- FALSE
-			warning("Reactome module can not be used with GENENAME identifiers")
-		}else if(is.na(current_organism_info$Reactome_ID[1]) | (keytypes != "ENTREZID")){
-			flags$REACT <- FALSE
-			warning("Specified organism is not allowed to be used with Reactome module. Please check your IDs table")
-		}else{
-			require(ReactomePA)
-			if(flags$Clustered){
-				if(flags$ORA) ora_config <- rbind(ora_config,list(Fun = "enrichPathway",Onto="REACT",Organism=current_organism_info$Reactome_ID[1],KeyType="ENTREZID",UseInternal=FALSE))				
-				if(flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="REACT",Organism=current_organism_info$Reactome_ID[1],KeyType="ENTREZID",UseInternal=FALSE))				
+		if (grepl("C", opt$GO_subont)) {
+			GO_subontologies <- c(GO_subontologies,"CC")
+		}
+		if (length(GO_subontologies) == 0) {
+			warning("Any GO sub-ontology have been selected. Use -G input command")
+		}
+		# Add execution info
+		if (flags$Clustered) {
+			if (flags$ORA) { 
+				invisible(lapply(GO_subontologies,function(mod) {
+					ora_config <<- rbind(ora_config, list(Fun = "enrichGO",Onto=paste0("GO_",mod),Organism=current_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))
+				}))
 			}
-		}
-	}
-
-
-	###################
-	## CUSTOM
-	# Prepare custom enrichments
-	if(!is.null(opt$custom)) {
-		if(nchar(opt$custom)>0) {
-			# Obtain custom files
-			custom_files <- unlist(strsplit(opt$custom,","))
-			# Per each file, launch enrichment
-			custom_sets <- lapply(custom_files,function(f){
-				# Load info
-				c_terms <- unlist(read.table(file = f, sep = "\n", header = FALSE, stringsAsFactors = FALSE))
-				# Split all
-				c_terms <- as.data.frame(do.call(rbind,lapply(c_terms,function(GeneTerms){
-					aux <- unlist(strsplit(GeneTerms,"\t"))
-					return(data.frame(Term = rep(aux[1],length(aux)-2),
-									  Gene = tail(aux,-2),
-									  stringsAsFactors = FALSE))
-				})))
-				return(c_terms)
-			})
-			names(custom_sets) <- custom_files
-		}else{
-			custom_sets <- NULL
-		}
-	}else{
-		custom_sets <- NULL
+			if (flags$GSEA) {
+				invisible(lapply(GO_subontologies,function(mod) {
+					gsea_config <<- rbind(gsea_config, list(Onto=paste0("GO_",mod),Organism=current_organism_info$Bioconductor_DB[1],KeyType=keytypes,UseInternal=FALSE))
+				}))					
+			}
+		}			
 	}
 }
+
+
+###################
+## KEGG
+if (flags$KEGG) { 
+	if (is.na(current_organism_info$KeggCode[1])) {
+		flags$KEGG <- FALSE
+		warning("Specified organism is not allowed to be used with KEGG module. Please check your IDs table")
+	} else {
+		if (!remote_actions$kegg) {
+			require(KEGG.db)
+		}
+		if (flags$Clustered) {
+			if (flags$ORA) ora_config <- rbind(ora_config, list(Fun = "enrichKEGG",Onto="KEGG",Organism=current_organism_info$KeggCode[1],KeyType="kegg",UseInternal=!remote_actions$kegg))
+			if (flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="KEGG",Organism=current_organism_info$KeggCode[1],KeyType="ENTREZID",UseInternal=!remote_actions$kegg))
+		}
+	}
+}
+
+###################
+## REACTOME
+if (flags$REACT) {
+	if (keytypes == "GENENAME") {
+		flags$REACT <- FALSE
+		warning("Reactome module can not be used with GENENAME identifiers")
+	} else if (is.na(current_organism_info$Reactome_ID[1]) | (keytypes != "ENTREZID")) {
+		flags$REACT <- FALSE
+		warning("Specified organism is not allowed to be used with Reactome module. Please check your IDs table")
+	} else {
+		require(ReactomePA)
+		if (flags$Clustered) {
+			if (flags$ORA) ora_config <- rbind(ora_config,list(Fun = "enrichPathway",Onto="REACT",Organism=current_organism_info$Reactome_ID[1],KeyType="ENTREZID",UseInternal=FALSE))				
+			if (flags$GSEA) gsea_config <- rbind(gsea_config,list(Onto="REACT",Organism=current_organism_info$Reactome_ID[1],KeyType="ENTREZID",UseInternal=FALSE))				
+		}
+	}
+}
+
+
+###################
+## CUSTOM
+# Prepare custom enrichments
+if (!is.null(opt$custom)) {
+	if (nchar(opt$custom)>0) {
+		# Obtain custom files
+		custom_files <- unlist(strsplit(opt$custom,","))
+		# Per each file, launch enrichment
+		custom_sets <- lapply(custom_files,function(f) {
+			# Load info
+			c_terms <- unlist(read.table(file = f, sep = "\n", header = FALSE, stringsAsFactors = FALSE))
+			# Split all
+			c_terms <- as.data.frame(do.call(rbind,lapply(c_terms,function(GeneTerms) {
+				aux <- unlist(strsplit(GeneTerms,"\t"))
+				return(data.frame(Term = rep(aux[1],length(aux)-2),
+								  Gene = tail(aux,-2),
+								  stringsAsFactors = FALSE))
+			})))
+			return(c_terms)
+		})
+		names(custom_sets) <- custom_files
+	} else {
+		custom_sets <- NULL
+	}
+} else {
+	custom_sets <- NULL
+}
+
 
 
 #############################################
 ### Clustered enrichments
 #############################################
-if(flags$Clustered){
+if (flags$Clustered) {
 	cls <- unique(DEGH_results$Cluster_ID)
 	# Check
-	if(any(c(0,"grey") %in% cls)){
+	if (any(c(0,"grey") %in% cls)) {
 		cls <- cls[!cls %in% c(0,"grey")]
-	}else{
+	} else {
 		warning("Cluster Zero/Grey not found")
 	}
 
-	clgenes <- lapply(cls,function(cl){ # Find
-		indx <- which(DEGH_results$Cluster_ID == cl)
-		if(exists("annot_table")){
-			unique(DEGH_results$input_IDs[indx])
-		}else{
-			unique(rownames(DEGH_results[indx,]))			
-		}
+	clgenes <- lapply(cls,function(cl) { # Find
+		unique(DEGH_results$entrezgene[which(DEGH_results$Cluster_ID == cl)])
 	}) 
-	clgenes <- lapply(clgenes,function(genes){input_to_entrezgene$entrezgene[which(input_to_entrezgene$ensembl_gene_id %in% genes)]}) # Translate
+	# clgenes <- lapply(clgenes,function(genes) {input_to_entrezgene$entrezgene[which(input_to_entrezgene$ensembl_gene_id %in% genes)]}) # Translate
 	names(clgenes) <- cls
-	if(flags$ORA){
+	if (flags$ORA) {
 		message("Performing ORA enrichments")
-		enrichments_ORA_expanded <- lapply(seq(nrow(ora_config)),function(i){
+		enrichments_ORA_expanded <- lapply(seq(nrow(ora_config)),function(i) {
 			# Perform per each cluster
-			enr <- enrichment_clusters_ORA(genes = clgenes,organism = ora_config$Organism[i],keyType = ora_config$KeyType[i],pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = ora_config$Onto[i],qvalueCutoff = opt$qthreshold, useInternal = ora_config$UseInternal[i], mc.cores = opt$cores)
+			enr <- enrichment_clusters_ORA(genes = clgenes,
+											organism = ora_config$Organism[i],
+											keyType = ora_config$KeyType[i],
+											pvalueCutoff = opt$pthreshold,
+											pAdjustMethod = "BH",
+											ont = ora_config$Onto[i],
+											qvalueCutoff = opt$qthreshold, 
+											useInternal = ora_config$UseInternal[i], 
+											mc.cores = opt$cores)
 			# enr <- merge_result(enr)
 			return(enr)
 		})
 		names(enrichments_ORA_expanded) <- ora_config$Onto
-		enrichments_ORA <- lapply(enrichments_ORA_expanded,function(enrCL){merge_result(enrCL)})
+		enrichments_ORA <- lapply(enrichments_ORA_expanded,function(enrCL) {merge_result(enrCL)})
 		# Write output
-		invisible(lapply(seq_along(enrichments_ORA),function(i){
+		invisible(lapply(seq_along(enrichments_ORA),function(i) {
 			# Concat
 			df <- enrichplot:::fortify.compareClusterResult(enrichments_ORA[[i]])
 			# Write table
-			write.table(df, file=file.path(paths$root, paste0(ora_config$Onto[i],"_cls_ora")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+			write.table(df, file=file.path(paths$root, paste0(ora_config$Onto[i],"_cls_ora")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}))
 
 	}
-	if(flags$GSEA){
+	if (flags$GSEA) {
 		message("Performing GSEA enrichments")
-		if(exists("annot_table")){
+		if (exists("annot_table")) {
 			aux <- subset(input_to_entrezgene, input_to_entrezgene[,1] %in% DEGH_results$input_IDs)
-			geneListCL <- lapply(cls, function(cl){
+			geneListCL <- lapply(cls, function(cl) {
 				glist <- as.vector(DEGH_results[which(DEGH_results$input_IDs %in% aux[,"ensembl_gene_id"] & DEGH_results$Cluster_ID == cl),fc_colname])
 				names(glist) <- DEGH_results$input_IDs[which(DEGH_results$input_IDs %in% aux[,"ensembl_gene_id"] & DEGH_results$Cluster_ID == cl)]
 				names(glist) <- aux[match(names(glist),aux[,"ensembl_gene_id"]),"entrezgene"]
 				glist <- sort(glist, decreasing = TRUE)
 				return(glist)
 			})
-		}else{
+		} else {
 			aux <- subset(input_to_entrezgene, input_to_entrezgene[,1] %in% rownames(DEGH_results))
-			geneListCL <- lapply(cls,function(cl){
+			geneListCL <- lapply(cls,function(cl) {
 				glist <- as.vector(DEGH_results[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"] & DEGH_results$Cluster_ID == cl),fc_colname])
 				names(glist) <- rownames(DEGH_results)[which(rownames(DEGH_results) %in% aux[,"ensembl_gene_id"] & DEGH_results$Cluster_ID == cl)]
 				names(glist) <- aux[match(names(glist),aux[,"ensembl_gene_id"]),"entrezgene"]
@@ -653,16 +679,16 @@ if(flags$Clustered){
 			})
 		}
 		names(geneListCL) <- cls
-		enrichments_GSEA_expanded <- lapply(seq(nrow(gsea_config)),function(i){
+		enrichments_GSEA_expanded <- lapply(seq(nrow(gsea_config)),function(i) {
 			# Perform per each cluster
-			enr <- lapply(geneListCL,function(genes){
+			enr <- lapply(geneListCL,function(genes) {
 				# Check
-				if(length(genes) <= 0) return(NULL)
+				if (length(genes) <= 0) return(NULL)
 				# Enrich
 				curr_enr <- enrichment_GSEA(geneList = genes,organism = gsea_config$Organism[i],keyType = gsea_config$KeyType[i],pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = gsea_config$Onto[i], useInternal = gsea_config$UseInternal[i])
 				# Check
-				if(is.null(curr_enr)) return(NULL)
-				if(nrow(curr_enr) <= 0) return(NULL)
+				if (is.null(curr_enr)) return(NULL)
+				if (nrow(curr_enr) <= 0) return(NULL)
 				# Return
 				return(curr_enr)
 			})
@@ -672,26 +698,26 @@ if(flags$Clustered){
 			return(enr)
 		})
 		names(enrichments_GSEA_expanded) <- gsea_config$Onto
-		enrichments_GSEA <- lapply(enrichments_GSEA_expanded,function(enrCL){merge_result(enrCL)})
+		enrichments_GSEA <- lapply(enrichments_GSEA_expanded,function(enrCL) {merge_result(enrCL)})
 		names(enrichments_GSEA) <- gsea_config$Onto
 		# Write output
-		invisible(lapply(seq_along(enrichments_GSEA),function(i){
+		invisible(lapply(seq_along(enrichments_GSEA),function(i) {
 			# Concat
 			# df <- clusterProfiler:::fortify.compareClusterResult(enrichments_GSEA[[i]])
 			df <- enrichments_GSEA[[i]]@compareClusterResult
 			# Write table
-			write.table(df, file=file.path(paths$root, paste0(gsea_config$Onto[i],"_cls_gsea")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+			write.table(df, file=file.path(paths$root, paste0(gsea_config$Onto[i],"_cls_gsea")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}))
 	}
 
 
 	## CUSTOM
-	if(!is.null(custom_sets)){
+	if (!is.null(custom_sets)) {
 		# Execute ORA per each set
-		custom_cls_ORA_expanded <- lapply(seq_along(custom_sets),function(i){
+		custom_cls_ORA_expanded <- lapply(seq_along(custom_sets),function(i) {
 			cs_set <- custom_sets[[i]]
 			# Enrich
-			cs_enr <- mclapply(clgenes,function(genesset){
+			cs_enr <- mclapply(clgenes,function(genesset) {
 				enricher(genesset, pvalueCutoff = opt$pthreshold, TERM2GENE = cs_set)
 			},mc.cores = opt$cores)
 			names(cs_enr) <- names(clgenes)
@@ -699,18 +725,18 @@ if(flags$Clustered){
 			return(cs_enr)
 		})
 		names(custom_cls_ORA_expanded) <- names(custom_sets)
-		custom_cls_ORA <- lapply(custom_cls_ORA_expanded,function(enrCL){merge_result(enrCL)})
+		custom_cls_ORA <- lapply(custom_cls_ORA_expanded,function(enrCL) {merge_result(enrCL)})
 
-		invisible(lapply(seq_along(custom_cls_ORA),function(i){
+		invisible(lapply(seq_along(custom_cls_ORA),function(i) {
 			# Concat
 			df <- enrichplot:::fortify.compareClusterResult(custom_cls_ORA[[i]])
 			# Write table
-			write.table(df, file=file.path(paths$root, paste0(basename(names(custom_sets)[i]),"_cls_ORA")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+			write.table(df, file=file.path(paths$root, paste0(basename(names(custom_sets)[i]),"_cls_ORA")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}))
 	}
 
 ####################### DEBUG POINT #############################
-	if(opt$debug){
+	if (opt$debug) {
 		time_control$cluster_enrichment <- Sys.time()
 		debug_point(debug_file,"Clusters enriched")
 	}
@@ -726,36 +752,40 @@ if(flags$Clustered){
 ##                                                                                                                       ##
 ###########################################################################################################################
 
+
+
+
 #############################################
 ### GO ENRICHMENT (clusterProfiler)
 #############################################
-if(flags$GO_cp){
+# TODO => EL UNIVERSE SE USA POR DEFECTO???
+if (flags$GO_cp) {
 	message("Performing GO enrichments")
 	###########
 	### ORA ENRICHMENTS
-	if(flags$ORA){
-		enrich_go <- lapply(GO_subontologies,function(mod){
-			enrich <- enrichment_ORA(genes = likely_degs_entrez,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = paste0("GO_",mod), qvalueCutoff = opt$qthreshold)
+	if (flags$ORA) {
+		enrich_go <- lapply(GO_subontologies,function(mod) {
+			enrich <- enrichment_ORA(genes = likely_degs_entrez, organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH", ont = paste0("GO_",mod), qvalueCutoff = opt$qthreshold)
 			return(enrich)
 		})
 		# Add names
 		names(enrich_go) <- GO_subontologies
 		# Write results
-		write.table(as.data.frame(do.call(rbind,lapply(enrich_go,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_ora"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+		write.table(as.data.frame(do.call(rbind,lapply(enrich_go,function(res) {as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_ora"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
 
 
 	### GSEA ENRICHMENTS
-	if(flags$GSEA){
+	if (flags$GSEA) {
 		# Enrich
-		enrich_go_gsea <- lapply(GO_subontologies,function(mod){
+		enrich_go_gsea <- lapply(GO_subontologies,function(mod) {
 			enrich <- enrichment_GSEA(geneList = geneList,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = paste0("GO_",mod))
 			return(enrich)
 		})
 		# Add names
 		names(enrich_go_gsea) <- GO_subontologies
 		# Write results
-		write.table(as.data.frame(do.call(rbind,lapply(enrich_go_gsea,function(res){as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_gsea"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
+		write.table(as.data.frame(do.call(rbind,lapply(enrich_go_gsea,function(res) {as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_gsea"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")	
 	}
 }
 
@@ -765,19 +795,19 @@ if(flags$GO_cp){
 ### KEGG ENRICHMENT
 #############################################
 
-if(flags$KEGG){
+if (flags$KEGG) {
 	message("Performing KEGG enrichments")
-	if(flags$ORA){
+	if (flags$ORA) {
 		# Enrich
 		enrich_ora <- enrichment_ORA(genes = likely_degs_entrez,organism = current_organism_info$KeggCode[1],keyType = "kegg",pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = "KEGG",useInternal = !remote_actions$kegg, qvalueCutoff = opt$qthreshold)
 		# Write output
-		write.table(enrich_ora, file=file.path(paths$root, "KEGG_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+		write.table(enrich_ora, file=file.path(paths$root, "KEGG_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
 	# Launch GSEA
-	if(flags$GSEA){
+	if (flags$GSEA) {
 		enrich_gsea <- enrichment_GSEA(geneList = geneList,organism = current_organism_info$KeggCode[1],pvalueCutoff = opt$pthreshold,ont = "KEGG",useInternal = !remote_actions$kegg)
 		# Write output
-		write.table(enrich_gsea, file=file.path(paths$root, "KEGG_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+		write.table(enrich_gsea, file=file.path(paths$root, "KEGG_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
 }
 
@@ -786,25 +816,25 @@ if(flags$KEGG){
 ### REACTOME ENRICHMENT
 #############################################
 
-if(flags$REACT){
+if (flags$REACT) {
 	message("Performing Reactome enrichments")
-	if(flags$ORA){
+	if (flags$ORA) {
 		# Make enrichment (ORA)
 		enrich_react <- enrichment_ORA(genes = likely_degs_entrez,organism = current_organism_info$Reactome_ID[1],keyType = "ENTREZID",pvalueCutoff = opt$pthreshold,pAdjustMethod = "BH",ont = "REACT", qvalueCutoff = opt$qthreshold)		
 		# Write output
-		write.table(enrich_react, file=file.path(paths$root, "REACT_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")	
+		write.table(enrich_react, file=file.path(paths$root, "REACT_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")	
 	}
 
 	# Make enrichment GSEA
-	if(flags$GSEA){
+	if (flags$GSEA) {
 		enrich_react_gsea <- enrichment_GSEA(geneList = geneList, organism = current_organism_info$Reactome_ID[1], pvalueCutoff = opt$pthreshold, pAdjustMethod = "BH", ont = "REACT")
 		# Write output
-		write.table(enrich_react_gsea, file=file.path(paths$root, "REACT_GSEA_results"), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")
+		write.table(enrich_react_gsea, file=file.path(paths$root, "REACT_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 	}
 }
 
 ####################### DEBUG POINT #############################
-if(opt$debug){
+if (opt$debug) {
 	time_control$regular_enrichments <- Sys.time()
 	debug_point(debug_file,"Regular enrichments executed")
 }
@@ -814,42 +844,36 @@ if(opt$debug){
 #############################################
 ### CUSTOM ENRICHMENT
 #############################################
-if(!is.null(opt$custom)) {
-	if(nchar(opt$custom)>0) {
+if (!is.null(opt$custom)) {
+	if (nchar(opt$custom)>0) {
 		# Obtain custom files
 		custom_files <- unlist(strsplit(opt$custom,","))
 		# Per each file, launch enrichment
-		custom_enrichments <- lapply(custom_files,function(f){
-			# Load info
-			c_terms <- unlist(read.table(file = f, sep = "\n", header = FALSE, stringsAsFactors = FALSE))
-			# Split all
-			c_terms <- as.data.frame(do.call(rbind,lapply(c_terms,function(GeneTerms){
-				aux <- unlist(strsplit(GeneTerms,"\t"))
-				return(data.frame(Term = rep(aux[1],length(aux)-2),
-								  Gene = tail(aux,-2),
-								  stringsAsFactors = FALSE))
-			})))
-			enr <- enricher(likely_degs_entrez, pvalueCutoff = opt$pthreshold, TERM2GENE = c_terms)
-			# Store results
-			write.table(enr, file=file.path(paths$root, paste0(basename(f),"_ora_results")), quote=F, col.names=TRUE, row.names = FALSE, sep="\t")			
-			# Return
-			return(list(File = f,
-						Result = enr))
-		})
-	}else{
+		custom_enrichments <- enrich_all_customs(custom_files = custom_files, 
+												p_val_threshold = opt$pthreshold, 
+												likely_degs_entrez = likely_degs_entrez)
+	} else {
 		custom_enrichments <- NULL
 	}
-}else{
+} else {
 	custom_enrichments <- NULL
 }
 
+
 ####################### DEBUG POINT #############################
-if(opt$debug){
+if (opt$debug) {
 	time_control$custom_enrichments <- Sys.time()
 	debug_point(debug_file,"All enrichments executed")
 }
 #################################################################
 
+
+#############################################
+### EXPORT DATA
+#############################################
+DEGH_results <- DEGH_results[c(added_cols, setdiff(names(DEGH_results), added_cols))] # Reorder columns so annotated first
+DEGH_results <- DEGH_results[order(DEGH_results[,"combined_FDR"]),] # Reorder rows by combined FDR
+write.table(DEGH_results, file=file.path(paths$root, "hunter_results_table_annotated.txt"), quote=FALSE, col.names=NA, sep="\t")
 
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
@@ -866,22 +890,23 @@ message("RENDERING REPORT ...")
 ############################################################
 results_path <- normalizePath(paths$root)
 
-if(flags$Clustered){ # Clustered
+if (flags$Clustered) { # Clustered
 	message("Rendering specific cluster reports")
-	invisible(lapply(cls,function(cl){
+	invisible(lapply(cls, function(cl) {
 		# Take output name
 		aux <- paste0("cl_func_",cl,".html")
 		outf_cls_i <- file.path(results_path, aux)
 		# Generate report
 		rmarkdown::render(file.path(main_path_script, 'templates', 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
-		if(opt$debug){
+		if (opt$debug) {
 			time_control[[paste0("cl_func_",cl)]] <<- Sys.time()
-		}	
+		}
+		
 	}))
 	message("\tRendering clustered report")
 	outf_cls <- file.path(results_path, "clusters_func_report.html")
 	rmarkdown::render(file.path(main_path_script, 'templates', 'clusters_main_report.Rmd'),output_file = outf_cls, intermediates_dir = results_path)
-	if(opt$debug){
+	if (opt$debug) {
 		time_control$render_cluster_main_report <- Sys.time()
 	}
 }
@@ -889,7 +914,7 @@ message("\tRendering regular report")
 outf <- file.path(results_path, "functional_report.html")
 rmarkdown::render(file.path(main_path_script, 'templates', 'functional_report.Rmd'), output_file = outf, intermediates_dir = results_path)
 
-if(opt$debug){
+if (opt$debug) {
 ####################### DEBUG POINT #############################
     time_control$render_main_report <- Sys.time()
     debug_point(debug_file,"Report printed")

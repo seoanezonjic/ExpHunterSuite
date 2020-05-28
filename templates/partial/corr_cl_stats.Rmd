@@ -25,16 +25,20 @@ pval_thr_forFeatures <- 0.05
 ```
 
 
-```{r "{{cl}}_explore_genes", echo = FALSE}
+```{r "{{cl}}_explore_genes", echo = FALSE, message = FALSE}
 # Load genes expressions
-cl_i_genes <- unique(DEGH_results$input_IDs[which(DEGH_results$Cluster_ID == {{cl}})])
+cl_i_genes <- unique(rownames(DEGH_results)[which(DEGH_results$Cluster_ID == {{cl}})])
 # cl_i_genes <- clgenes[[as.character({{cl}})]]
-tgt_indx <- which(norm_counts$Gene %in% cl_i_genes)
+tgt_indx <- which(scaled_counts_table$Gene %in% cl_i_genes)
 # Prepare regular cluster info
-cl_profile <- cl_eigvalues_gnorm[grepl(paste(c("ME",{{cl}},"$"),collapse=""),cl_eigvalues_gnorm$Cluster_ID),]
+cl_profile <- cl_eigvalues_gnorm[cl_eigvalues_gnorm$Cluster_ID == paste0("ME", {{cl}}),]
+# message(cl_profile)
+# cl_profile <- cl_eigvalues_gnorm[grepl(paste(c("ME",{{cl}},"$"),collapse=""), cl_eigvalues_gnorm$Cluster_ID),]
+# message(cl_profile)
+# q()
 # Plot
 pp <- ggplot(mapping = aes(x = Sample)) + 
-	  geom_line(data = norm_counts_gnorm[tgt_indx,], alpha = 0.05, mapping = aes(y = Count, group = Gene)) +
+	  geom_line(data = scaled_counts_table[tgt_indx,], alpha = 0.05, mapping = aes(y = Count, group = Gene)) +
 	  geom_line(data = cl_profile, mapping = aes(y = Count, group = Cluster_ID), color = "blue", linetype = "dashed", size = 0.5) +
 	  scale_y_continuous(sec.axis = sec_axis(~.*2-1, name = "Cluster-Sample correlation")) +
       theme(axis.text.x = element_text(angle = 30, hjust = 1))
