@@ -22,7 +22,7 @@ translate_id <- function(ids_to_translate, annot_table){
     indx <- which(annot_table[,2] == id)
     if(length(indx) == 0){
       return(NA)
-    }else{
+    } else{
       return(annot_table[indx[1],1])
     }
   }))
@@ -44,17 +44,17 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
       if(nrow(container) != length(attr)){
         warning("Current query results does not match. Will be overwritten") 
         container <- NULL
-      }else if(!all(container[,1] %in% val)){
+      } else if(!all(container[,1] %in% val)){
         warning("Current query results does not match. Will be overwritten")
         container <- NULL
-      }else if(all(val %in% container[,1])){
+      } else if(all(val %in% container[,1])){
         message("All IDs are already stored at temporal query results file. Query will not be performed")
         return(container)
-      }else if(any(val %in% container[,1])){
+      } else if(any(val %in% container[,1])){
           # Filter already calculated 
           val <- val[-which(val %in% container[,1])]
       }
-    }else{
+    } else{
         container <- NULL           
     }
 
@@ -67,7 +67,7 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
         # Check
         if(i == length(indx)){ # Last set
             end <- length(val)
-        }else{
+        } else{
             end <- indx[i+1] - 1
         }
         interval <- seq(indx[i],end)
@@ -78,7 +78,7 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
         # Store
         if(is.null(container)){
             container <- query
-        }else if(nrow(query) > 0){
+        } else if(nrow(query) > 0){
             container <- rbind(container,query)
         }
 
@@ -256,7 +256,7 @@ obtain_pathways_gene_pval <- function(raw_filter, functional_parameters){
     if(file.exists("pathway_gene_temp") & file.exists("pathway_pval_temp")){
       pathway_gene <- readRDS("pathway_gene_temp")
       pathway_pval <- readRDS("pathway_pval_temp")
-    }else {
+    } else {
       find_interesting_pathways(raw_filter, functional_parameters)
     }
     return(list(pathway_gene, pathway_pval))
@@ -334,12 +334,11 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
     require(clusterProfiler)
     enr_fun <- clusterProfiler::enrichGO
     patter_to_remove <- "GO_DATA *<-"
-  }else if(ont == "KEGG"){
+  } else if(ont == "KEGG"){
     require(clusterProfiler)
-    if(useInternal) require(KEGG.db)
     enr_fun <- clusterProfiler::enrichKEGG
     patter_to_remove <- "KEGG_DATA *<-"
-  }else if(ont == "REACT"){
+  } else if(ont == "REACT"){
     require(ReactomePA)
     enr_fun <- ReactomePA::enrichPathway
     patter_to_remove <- "Reactome_DATA *<-"
@@ -352,12 +351,12 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
     # Check
     if(length(line_to_remove) == 0){ # Warning, task not found
       warning("ern_fun: Can not find annot task to be removed. Regular version will be used.")
-    }else{ # Remove task from code
+    } else{ # Remove task from code
       if(ont == "GO"){
         body(enr_fun)[[line_to_remove]] <- substitute(GO_DATA <- parent.frame()$ENRICH_DATA)      
-      }else if(ont == "KEGG"){
+      } else if(ont == "KEGG"){
         body(enr_fun)[[line_to_remove]] <- substitute(KEGG_DATA <- parent.frame()$ENRICH_DATA)      
-      }else if(ont == "REACT"){
+      } else if(ont == "REACT"){
         body(enr_fun)[[line_to_remove]] <- substitute(Reactome_DATA <- parent.frame()$ENRICH_DATA)              
       }
     }
@@ -372,7 +371,7 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
                           pvalueCutoff  = pvalueCutoff,
                           pAdjustMethod = pAdjustMethod,
                           qvalueCutoff  = qvalueCutoff) 
-  }else if(ont == "KEGG"){
+  } else if(ont == "KEGG"){
     enrichment <- enr_fun(gene          = genes,
                           organism      = organism,
                           keyType       = keyType,
@@ -380,13 +379,13 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
                           pAdjustMethod = pAdjustMethod,
                           use_internal_data = useInternal,
                           qvalueCutoff  = qvalueCutoff)
-  }else if(ont == "REACT"){
+  } else if(ont == "REACT"){
     enrichment <- enr_fun(gene          = genes,
                           organism      = organism,
                           pAdjustMethod = pAdjustMethod,
                           pvalueCutoff  = pvalueCutoff,
                           qvalueCutoff  = qvalueCutoff)
-  }else{
+  } else{
     stop("Error, ontology specified is not supported to be enriched")
   }
 
@@ -394,6 +393,30 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
   return(enrichment)
 }
 
+
+enrich_clusters_with_gmt <- function(gmt, genes_in_modules){
+      # Enrich
+      modules_enrichment <- mclapply(genes_in_modules, function(genesset) {
+        enricher(genesset, pvalueCutoff = opt$pthreshold, TERM2GENE = gmt)
+      },mc.cores = opt$cores)
+      names(modules_enrichment) <- names(genes_in_modules)
+      # Return
+      return(modules_enrichment)
+}
+
+load_and_parse_gmt <- function(gmt_file) {
+    # Load file
+    gmt <- readLines(con = gmt_file)
+    gmt_list <- strsplit(gmt, "\t")
+    parsed_gmt <- do.call(rbind, lapply(gmt_list, function(category) {
+          category_name <- category[1]
+          genes <-category[3:length(category)]
+          parsedTerms <- data.frame(Term = category_name, Gene= genes, stringsAsFactors = FALSE)
+          return(parsedTerms)
+
+    }))
+    return(parsed_gmt)
+}
 
 #'
 #' @param genes :: 
@@ -405,7 +428,7 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
 #' @param useInternal :: used only for KEGG enrichment, activate internal data usage mode
 #' @return enrichment performed
 #' @import clusterProfiler, KEGG.db, ReactomePA
-enrichment_GSEA <- function(geneList,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE){
+enrich_GSEA <- function(geneList,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE){
 require(clusterProfiler)
   if(useInternal)
     require(KEGG.db)
@@ -428,7 +451,7 @@ require(clusterProfiler)
                         ont           = go_subonto,
                         pvalueCutoff  = pvalueCutoff,
                         pAdjustMethod = pAdjustMethod)
-  }else if(ont == "KEGG"){
+  } else if(ont == "KEGG"){
     enrichment <- gseKEGG(geneList     = geneList,
                           organism     = organism,
                           use_internal_data = useInternal,
@@ -436,7 +459,7 @@ require(clusterProfiler)
                           # minGSSize    = 120,
                           pvalueCutoff = pvalueCutoff,
                           verbose      = FALSE)
-  }else if(ont == "REACT"){
+  } else if(ont == "REACT"){
     enrichment<- gsePathway(geneList, 
                             organism = organism,
                             # exponent = 1, 
@@ -445,13 +468,36 @@ require(clusterProfiler)
                             # maxGSSize = 500, 
                             pvalueCutoff = pvalueCutoff,
                             pAdjustMethod = pAdjustMethod)
-  }else{
+  } else{
     stop("Error, ontology specified is not supported to be enriched")
   }
 
   # Return enrichment
-  return(enrichment)
+  if (nrow(enrichment) == 0){
+    return(NULL)
+  } else {
+    return(enrichment)
+  }
 }
+
+
+perform_GSEA_clusters <- function(all_clusters, organism, keyType, pvalueCutoff, pAdjustMethod = "BH", ont, useInternal){
+
+  enriched_clusters <- lapply(all_clusters, function(cl_genes) {
+        # Enrich
+        cl_GSEA <- enrich_GSEA(geneList = cl_genes,
+                      organism = organism,
+                      keyType = keyType,
+                      pvalueCutoff = pvalueCutoff,
+                      pAdjustMethod = pAdjustMethod,
+                      ont = ont, 
+                      useInternal = useInternal)
+        # Return
+        return(cl_GSEA)
+  })
+}
+
+
 
 
 
@@ -470,11 +516,10 @@ require(clusterProfiler)
 #' @import clusterProfiler, KEGG.db, ReactomePA, parallel
 enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, mc.cores = 1){
   # Parse onto
-  save(list = ls(all.names = TRUE), file = "test.RData", envir = environment())
-
+  # save(list = ls(all.names = TRUE), file = "test.RData", envir = environment())
   src_ont = ont
   if(grepl("GO",ont)){
-    aux = unlist(strsplit(ont,"_"))
+    aux = unlist(strsplit(ont, "_"))
     ont = aux[1]
     go_subonto = aux[2]
   }
@@ -484,10 +529,10 @@ enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCuto
     if(ont == "GO"){
       require(clusterProfiler)
       ENRICH_DATA <- clusterProfiler:::get_GO_data(organism, go_subonto, keyType)
-    }else if(ont == "KEGG"){
+    } else if(ont == "KEGG"){
       require(clusterProfiler)
       ENRICH_DATA <- clusterProfiler:::get_data_from_KEGG_db(clusterProfiler:::organismMapper(organism))
-    }else if(ont == "REACT"){
+    } else if(ont == "REACT"){
       require(ReactomePA)
       ENRICH_DATA <- ReactomePA:::get_Reactome_DATA(organism)
     }

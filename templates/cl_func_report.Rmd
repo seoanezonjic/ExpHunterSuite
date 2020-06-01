@@ -53,17 +53,7 @@ n_category <- 30
 ## **Used data in this analysis**
 Specifically, in this experiment set, known experiment labels are:
 
-```{r add_exp_names, echo = FALSE}
-	# Obtain experiments names
-	# dir <- dirname(opt$countdata_file)
-	# experiments <- read.table(file = file.path(dir,"control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
-	# exp_names <- experiments[which(experiments[,1] == "T"),2]
-
-	out <- unlist(lapply(exp_names,function(names){paste("* ",names,sep="")}))
-```
-
-`r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
-
+`r paste(knit(text = paste(sample_classes, collapse = "\n")), collapse = "\n")`
 
 ## **General description**
 This report contains all the functional information that was requested by the options when functional_Hunter.R was executed.

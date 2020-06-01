@@ -78,12 +78,7 @@ plot_enrResult_DT <- function(ER){
 ## **Used data in this analysis**
 Specifically, in this experiment set, known experiment labels are:
 
-```{r add_exp_names, echo = FALSE}
-	out <- unlist(lapply(exp_names,function(names){paste("* ",names,sep="")}))
-```
-
-`r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
-
+`r paste(knit(text = paste(sample_classes, collapse = "\n")), collapse = "\n")`
 
 ## **General description**
 This report contains all the functional information that was requested by the options when functional_Hunter.R was executed using a **clusterized set**.
