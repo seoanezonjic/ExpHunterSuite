@@ -16,7 +16,7 @@ translate_id <- function(ids_to_translate, annot_table){
 #ids_to_translate: unknown gene IDs
 #annot_table: DF, KNOWN gene IG on first column and UNKNOWN on second
 #ONE unknown ID can correspond to MANY Known IDs  
- save(list = ls(all.names = TRUE), file = "test.RData", envir = environment())
+ # save(list = ls(all.names = TRUE), file = "test.RData", envir = environment())
 
   translated_ids <- unlist(lapply(ids_to_translate, function(id){
     indx <- which(annot_table[,2] == id)

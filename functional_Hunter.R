@@ -42,9 +42,7 @@ option_list <- list(
     help="Files with custom functional annotation database (in GMT format) separated by commas (,)"),
   make_option(c("-A", "--analysis_type"), type="character", default=c("go"),
     help="Analysis performance (g = Gene Set Enrichment Analysis, o = Over Representation Analysis). Default=%default"), # Not Checked
-  # make_option(c("-K", "--Kegg_organism"), type="character", default=NULL, 
-  #   help="Indicate organism to look for in the Kegg database for doing the path enrichment"), # Not Checked
-  make_option(c("-r", "--remote"), ,type = "character", default="",
+   make_option(c("-r", "--remote"), ,type = "character", default="",
     help="Flags to activate remote query from enrichments and Genes translation. Use (b) to launch biomaRt translation; (k) to use Kegg remote data base"),
   make_option(c("-q", "--save_query"), type="logical", action = "store_true", default=FALSE,
     help="Flag to save biomaRt query."), 
@@ -222,6 +220,13 @@ if (flags$REACT) {
 		warning("Specified organism is not allowed to be used with Reactome module. Please check your IDs table")
 	} else {
 		require(ReactomePA)
+	}
+}
+
+if (!any(flags$GP_cp, flags$KEGG, flags$REACT)) {
+	if (!is.null(opt$custom)) {
+		flags$ORA <- FALSE
+		flags$GSEA <- FALSE 
 	}
 }
 
@@ -758,7 +763,7 @@ if (flags$WGCNA) {
 			# df <- clusterProfiler:::fortify.compareClusterResult(enrichments_GSEA[[enrichment_i]])
 			df <- enrichments_GSEA[[enrichment_i]]@compareClusterResult
 			# Write table
-			write.table(df, file=file.path(paths$root, paste0(names(enrichments_ORA[enrichment_i]),"_cls_gsea")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+			write.table(df, file=file.path(paths$root, paste0(names(enrichments_GSEA[enrichment_i]),"_cls_gsea")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}
 	}
 
@@ -768,7 +773,7 @@ if (flags$WGCNA) {
 			# Concat
 			df <- enrichplot:::fortify.compareClusterResult(custom_cls_ORA[[enrichment_i]])
 			# Write table
-			write.table(df, file=file.path(paths$root, paste0(names(enrichments_ORA[enrichment_i]),"_cls_ORA")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+			write.table(df, file=file.path(paths$root, paste0(basename(names(custom_cls_ORA[enrichment_i])),"_cls_ORA")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}
 	}
 }
@@ -805,7 +810,7 @@ if (flags$WGCNA) { # Clustered
 		aux <- paste0("cl_func_",cl,".html")
 		outf_cls_i <- file.path(results_path, aux)
 		# Generate report
-		rmarkdown::render(file.path(main_path_script, 'templates', 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
+		# rmarkdown::render(file.path(main_path_script, 'templates', 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
 		if (opt$debug) {
 			time_control[[paste0("cl_func_",cl)]] <<- Sys.time()
 		}

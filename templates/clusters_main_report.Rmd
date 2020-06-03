@@ -50,10 +50,15 @@ out <- NULL
 
 # Check executed modules
 all_posible <- c("GO_BP","GO_CC","GO_MF","KEGG","REACT")
-if(exists("enrichments_ORA")){ executed <- as.list(all_posible %in% names(enrichments_ORA))
-}else{ executed <- as.list(all_posible %in% names(enrichments_GSEA))}
+if (flags$ORA) { 
+	executed <- as.list(all_posible %in% names(enrichments_ORA))
+} else if (flags$GSEA) { 
+	executed <- as.list(all_posible %in% names(enrichments_GSEA))
+} else {
+	executed <- rep(FALSE, times = length(all_posible))
+}
 names(executed) <- all_posible
-
+q
 plot_enrResult_DT <- function(ER){
 	toshow <- fortify(ER)[,!colnames(ER@compareClusterResult) %in% c("pvalue","qvalue")]
 	toshow$Cluster <- gsub("[\n,\t,\r]{0,1}\\(.*\\)","",toshow$Cluster)
