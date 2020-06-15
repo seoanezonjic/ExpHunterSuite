@@ -64,7 +64,7 @@ opt <- parse_args(OptionParser(option_list=option_list))
 #############################################
 ### LOAD LIBRARIES
 #############################################
-suppressPackageStartupMessages(require(optparse))
+# suppressPackageStartupMessages(require(optparse))
 suppressPackageStartupMessages(require(biomaRt)) 
 suppressPackageStartupMessages(require(topGO))
 suppressPackageStartupMessages(require(KEGGREST))
