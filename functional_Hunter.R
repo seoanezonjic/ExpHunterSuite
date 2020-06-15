@@ -810,7 +810,7 @@ if (flags$WGCNA) { # Clustered
 		aux <- paste0("cl_func_",cl,".html")
 		outf_cls_i <- file.path(results_path, aux)
 		# Generate report
-		# rmarkdown::render(file.path(main_path_script, 'templates', 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
+		rmarkdown::render(file.path(main_path_script, 'templates', 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
 		if (opt$debug) {
 			time_control[[paste0("cl_func_",cl)]] <<- Sys.time()
 		}
