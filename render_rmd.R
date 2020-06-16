@@ -23,8 +23,6 @@ script_path <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when usin
               normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', commandArgs())], '='))[2]))
 
 
-# print(file.path(dirname(script_path), 'lib', 'plotting_functions.R'))
-source(file.path(dirname(script_path), 'lib', 'plotting_functions.R'))
 
 
 option_list <- list(
@@ -53,6 +51,7 @@ if(!grepl(".html", actual_opt$output)){
 }
 
 load(actual_opt$input)
+source(file.path(dirname(script_path), 'lib', 'plotting_functions.R'))
 ### load enviroment
 
 ### load template
@@ -68,7 +67,8 @@ template <- normalizePath(file.path(DEGhunter_templates, paste0(actual_opt$templ
 out_file <- file.path(actual_opt$output)
 temp_dir <- file.path(normalizePath(dirname(actual_opt$output)), "tmp")
 ### Render
-rmarkdown::render(template, 
-	output_file = out_file,
-	intermediates_dir = temp_dir
-	)
+rmarkdown::render(template,
+    output_file = out_file,
+    intermediates_dir = temp_dir,
+    # clean = FALSE
+    )

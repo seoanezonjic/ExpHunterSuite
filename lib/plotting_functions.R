@@ -26,7 +26,9 @@ plot_in_div <- function(g, fig_height=7, fig_width=12, ## height and width in in
     fig_width <- min_size  
   }
   g_deparsed <- paste0(deparse(function() {g}), collapse = '')
-  sub_chunk <- paste0("\n```{r sub_chunk_", floor(runif(1) * 10000), ", fig.height=", fig_height, ", fig.width=", fig_width, ", echo=FALSE}", "\n(", g_deparsed, ")()\n```\n\n\n") 
+  set.seed(Sys.time())
+  sub_chunk <- paste0("\n```{r sub_chunk_", sample(100000000, 1), ", fig.height=", fig_height, ", fig.width=", fig_width, ", echo=FALSE}", "\n(", g_deparsed, ")()\n```\n\n\n") 
+    # sub_chunk_", floor(runif(1) * 1000000), "
   cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk), quiet = TRUE))
   cat('\n</div>\n')
 }

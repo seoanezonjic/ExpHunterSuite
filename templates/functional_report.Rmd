@@ -458,7 +458,6 @@ height_size <- calc_height(enrich_ora_symb)
 
 plot_in_div(pp, height_size, width_size)
 
-
 cat("\n\n**Upsetplot**\n\n", 
 	"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 )
@@ -589,7 +588,8 @@ cat("## **GO Analysis**\n")
 ```{r plot_go_cl, results='asis', echo = FALSE, eval = go_flags$GO_CL_SECTION, message=FALSE, warning=FALSE}
 
 # Plots per sub-ontology
-invisible(lapply(names(go_main_enrich),function(onto){
+for (onto in names(go_main_enrich)) {
+	# names(go_main_enrich)
 	# for(onto in names(enrich_go)){
 	
 	# Special case
@@ -731,7 +731,7 @@ invisible(lapply(names(go_main_enrich),function(onto){
 		plot_in_div(go_pp, fig_width = default_width)
 		cat("\n \n")
 	}
-}))
+}
 # }
 
 if(go_flags$enrich_go){
