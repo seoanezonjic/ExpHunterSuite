@@ -207,14 +207,14 @@ perform_topGO_local <- function(entrez_targets,entrez_universe,sub_ontology,outF
 
 
 scale_counts_table <- function(norm_counts_raw){
-  scaled_counts <- apply(norm_counts_raw, 1, function(row) {
-    minimum <- min(row)
-    maximum <- max(row)
+  scaled_counts <- apply(norm_counts_raw, 2, function(column) {
+    minimum <- min(column)
+    maximum <- max(column)
     difference <- maximum - minimum
-    scaled_row <- (row - minimum) / difference
-    return(scaled_row)
+    scaled_column <- (column - minimum) / difference
+    return(scaled_column)
   })
-  return(t(scaled_counts))
+  return(scaled_counts)
 }
 
 
