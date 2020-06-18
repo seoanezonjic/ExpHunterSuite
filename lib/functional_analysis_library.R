@@ -211,7 +211,11 @@ scale_counts_table <- function(norm_counts_raw){
     minimum <- min(column)
     maximum <- max(column)
     difference <- maximum - minimum
-    scaled_column <- (column - minimum) / difference
+    if (difference == 0) { 
+      scaled_column <- column
+    } else {
+      scaled_column <- (column - minimum) / difference
+    }
     return(scaled_column)
   })
   return(scaled_counts)
