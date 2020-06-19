@@ -266,7 +266,7 @@ if (flags$WGCNA) {
 	####
 	# LOAD NORMALIZED COUNTS
 	norm_counts <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_DESeq2", "Normalized_counts_DESeq2.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-	scaled_counts <- scale_counts_table(norm_counts)
+	scaled_counts <- scale_data_matrix(data_matrix = norm_counts, transpose = TRUE)
 	scaled_counts_table <- as.data.frame(as.table(scaled_counts))
 	colnames(scaled_counts_table) <- c("Gene","Sample","Count")
 		
@@ -286,7 +286,7 @@ if (flags$WGCNA) {
 	####
 	# LOAD WGCNA - Correlation (Sample - Trait)
 	wgcna_count_sample_trait <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_WGCNA", "sample_trait.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-	wgcna_count_sample_trait <- scale_counts_table(wgcna_count_sample_trait)
+	wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait)
 }
 
 

@@ -206,8 +206,11 @@ perform_topGO_local <- function(entrez_targets,entrez_universe,sub_ontology,outF
 }
 
 
-scale_counts_table <- function(norm_counts_raw){
-  scaled_counts <- apply(norm_counts_raw, 2, function(column) {
+scale_data_matrix <- function(data_matrix, transpose = FALSE){
+  if ( transpose ) {
+    data_matrix <- t(data_matrix)
+  } 
+  scaled_counts <- apply(data_matrix, 2, function(column) {
     minimum <- min(column)
     maximum <- max(column)
     difference <- maximum - minimum
@@ -218,6 +221,9 @@ scale_counts_table <- function(norm_counts_raw){
     }
     return(scaled_column)
   })
+  if ( transpose ) {
+    scaled_counts <- t(scaled_counts)
+  } 
   return(scaled_counts)
 }
 
