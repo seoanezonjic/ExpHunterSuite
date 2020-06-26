@@ -39,6 +39,12 @@ get_plot_df <- function(enrich_obj, showCategory = 30) {
   return(geneSets)
 }
 
+check_categories <- function(enrichplot_obj, min_categories = 1) {
+  categories_count <- length(enrichplot_obj@result$Description[enrichplot_obj@result$p.adjust <= enrichplot_obj@pvalueCutoff])  
+  check <- categories_count < min_categories
+  return(check)
+}
+
 get_clusters_count <- function(results_WGCNA){
   cl_count <- length(unique(results_WGCNA[['gene_cluster_info']][['Cluster_ID']]))
   return(cl_count)

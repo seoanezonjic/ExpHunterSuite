@@ -62,10 +62,10 @@ if(actual_opt$template == "functional_report"){
   results_path = dirname(actual_opt$output)
 }
 
-print("test")
 template <- normalizePath(file.path(DEGhunter_templates, paste0(actual_opt$template, ".Rmd")))
 out_file <- file.path(actual_opt$output)
 temp_dir <- file.path(normalizePath(dirname(actual_opt$output)), "tmp")
+print(paste0("Rendering ", template, "..."))
 ### Render
 rmarkdown::render(template,
     output_file = out_file,
