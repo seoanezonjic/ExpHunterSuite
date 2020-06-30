@@ -182,63 +182,8 @@ datatable(botgenes, filter = 'top', rownames = FALSE, extensions = c('Buttons','
 ####################################### GO
 n_category <- 30
 # Useful_functions
-graph_file_name <- function(path = results_path, file_name, ext = "pdf"){
-	return(paste(path,.Platform$file.sep,file_name,".",ext,sep=""))
-}
 
-exists_graph_file <- function(path = results_path, file_name, ext = "pdf"){
-	f <- graph_file_name(path,file_name,ext)
-	return(file.exists(f))
-}
-check_results <- function(df){
-	if(is.data.frame(df)){
-		if(nrow(df) <= 0){
-			return(FALSE)
-		}
-	}else if(typeof(df)=="S4"){
-		if("pvalueCutoff" %in% slotNames(df)){
-			if(nrow(df@result[which(df@result$p.adjust <= df@pvalueCutoff),]) < 1){
-				return(FALSE)
-			}
-		}else if(length(get_categories(df)) < 1){
-			return(FALSE)
-		}
-		return(TRUE)
-	}else if(!is.list(df) & !typeof(df)=="S4"){
-		return(FALSE)
-	}else if(is.list(df)){
-		if(!all(unlist(lapply(df,function(set){
-			if(typeof(set)=="S4"){
-				if("pvalueCutoff" %in% slotNames(set)){
-					if(nrow(set@result[which(set@result$p.adjust <= set@pvalueCutoff),]) >= 1){
-						return(TRUE)
-					}
-				}else if("params" %in% slotNames(set)){
-					if(nrow(set@result[which(set@result$p.adjust <= set@params$pvalueCutoff),]) >= 1){
-						return(TRUE)
-					}
-				}else{
-					return(FALSE)
-				}
-				return(FALSE)
-			}
-			return(TRUE)
-		})))){ # IF
-			return(FALSE)
-		}
-	}
-	# Everything OK
-	return(TRUE)
-}
-exists_enrich_df <- function(var_name,level_depth = 3){
-	# Check if it is instantiated
-	if(!var_name %in% ls(envir = parent.frame(n = level_depth))){
-		return(FALSE)
-	}
-	# Check if is a DF with info
-	df <- get(var_name, envir = parent.frame(n = level_depth))
-	return(check_results(df))
-}
+
 ```
 ```{r check_graphs_go, echo = FALSE}
 ######################################################### GO
@@ -270,7 +215,7 @@ invisible(lapply(go_enrich_vars,function(var_name){
 }))
 # Check GO section
 # go_flags$GO_CL_SECTION <- any(unlist(go_flags[go_enrich_vars]))
-go_flags$GO_CL_SECTION <- any(unlist(lapply(go_enrich_vars, function(var){exists(var)})))
+go_flags$GO_CL_SECTION <- any(unlist(go_flags[go_enrich_vars]))
 
 if(go_flags$GO_CL_SECTION){
 	#check GO enrichment object
@@ -284,19 +229,13 @@ if(go_flags$GO_CL_SECTION){
 		go_main_enrich <- enrich_go_gsea
 	}
 
-	invisible(lapply(names(go_main_enrich),function(onto){
-		go_flags[paste0("perform_ora_go_",onto)] <<- FALSE
-		go_flags[paste0("perform_gsea_go_",onto)] <<- FALSE
+	for (onto in names(go_main_enrich)) {
 		if(go_flags$enrich_go){
-			if(nrow(enrich_go[[onto]]@result) > 1){
-				go_flags[paste0("perform_ora_go_",onto)] <<- TRUE
-			}
+			go_flags[paste0("perform_ora_go_",onto)] <- check_results(enrich_go[[onto]])
 		}else if(go_flags$enrich_go_gsea){
-			if(nrow(enrich_go_gsea[[onto]]@result) > 1){
-				go_flags[paste0("perform_gsea_go_",onto)] <<- TRUE
-			}
+			go_flags[paste0("perform_gsea_go_",onto)] <- check_results(enrich_go_gsea[[onto]])
 		}
-	}))
+	}
 }
 
 ```
@@ -389,7 +328,7 @@ if(!is.null(custom_enrichments)){
 
 
 
-```{r kegg_main,  results='asis', echo = FALSE, eval = kegg_flags$KEGG_SECTION}
+```{r kegg_main,  results='asis', echo = FALSE, eval = flags$KEGG}
 cat("## **KEGG analysis**\n")
 
 # Check special case
@@ -586,8 +525,12 @@ knitr::kable(kegg_df[,cols_to_show])
 
 
 
-```{r display_go_main, results='asis', echo = FALSE, eval = go_flags$GO_CL_SECTION}
+```{r display_go_main, results='asis', echo = FALSE, eval = flags$GO_cp}
 cat("## **GO Analysis**\n")
+
+if(!go_flags$GO_CL_SECTION){	
+		cat(paste("**Any sub-ontology has returned results** on this study.\n\n",sep=""))
+}
 ```
 
 
@@ -949,7 +892,7 @@ if(!go_flags$GO_SECTION){
 
 
 
-```{r react_main,  results='asis', echo = FALSE, eval = react_flags$REACT_SECTION}
+```{r react_main,  results='asis', echo = FALSE, eval = flags$REACT}
 cat("## **REACTOME analysis**\n")
 
 # Check special case

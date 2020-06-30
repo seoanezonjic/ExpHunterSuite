@@ -52,6 +52,7 @@ if(!grepl(".html", actual_opt$output)){
 
 load(actual_opt$input)
 source(file.path(dirname(script_path), 'lib', 'plotting_functions.R'))
+source(file.path(dirname(script_path), 'lib', 'functional_analysis_library.R'))
 ### load enviroment
 
 ### load template

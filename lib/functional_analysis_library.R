@@ -11,6 +11,68 @@ defining_functional_hunter_subfolders <- function(opt){
   }
 }
 
+exists_enrich_df <- function(var_name,level_depth = 3){
+  # Check if it is instantiated
+  if(!var_name %in% ls(envir = parent.frame(n = level_depth))){
+    return(FALSE)
+  }
+  # Check if is a DF with info
+  df <- get(var_name, envir = parent.frame(n = level_depth))
+  return(check_results(df))
+}
+
+graph_file_name <- function(path = results_path, file_name, ext = "pdf"){
+  return(paste(path,.Platform$file.sep,file_name,".",ext,sep=""))
+}
+
+exists_graph_file <- function(path = results_path, file_name, ext = "pdf"){
+  f <- graph_file_name(path,file_name,ext)
+  return(file.exists(f))
+}
+check_results <- function(df){
+  if(is.data.frame(df)){
+    if(nrow(df) <= 0){
+      return(FALSE)
+    }
+  }else if(typeof(df)=="S4"){
+    if("pvalueCutoff" %in% slotNames(df)){
+      if(nrow(df@result[which(df@result$p.adjust <= df@pvalueCutoff),]) < 1){
+        return(FALSE)
+      }
+    }else if(length(get_categories(df)) < 1){
+      return(FALSE)
+    }
+    return(TRUE)
+  }else if(!is.list(df) & !typeof(df)=="S4"){
+    return(FALSE)
+  }else if(is.list(df)){
+    if(!all(unlist(lapply(df,function(set){
+      if(typeof(set)=="S4"){
+        if("pvalueCutoff" %in% slotNames(set)){
+          if(nrow(set@result[which(set@result$p.adjust <= set@pvalueCutoff),]) >= 1){
+            return(TRUE)
+          }
+        }else if("params" %in% slotNames(set)){
+          if(nrow(set@result[which(set@result$p.adjust <= set@params$pvalueCutoff),]) >= 1){
+            return(TRUE)
+          }
+        }else{
+          return(FALSE)
+        }
+        return(FALSE)
+      } else if (is.null(set)) {
+        return(FALSE)
+      }
+
+      return(TRUE)
+    })))){ # IF
+      return(FALSE)
+    }
+  }
+  # Everything OK
+  return(TRUE)
+}
+
 translate_id <- function(ids_to_translate, annot_table){ 
 #This function translates unknown transcripts IDs to known gen IDs
 #ids_to_translate: unknown gene IDs
