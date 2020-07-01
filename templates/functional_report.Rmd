@@ -151,7 +151,7 @@ botgenes <- DEGH_results[botindx,c("Symbol",targetcols,patterncols,"mean_logFCs"
 
 # Message
 cat("## **Top genes**\n")
-cat(paste(c("Table of signifcant genes. Variables taken into account are being shown into table (except gene symbols/ID). 15Top of best (",nrow(topgenes)," items) and worst (",nrow(botgenes)," items) are being shown in two different tables\n"), collapse = ""))
+cat(paste(c("Table of signifcant genes. Variables taken into account are being shown into table (except gene symbols/ID). Top of positive (",nrow(topgenes)," items) and negative (",nrow(botgenes)," items) are being shown in two different tables\n"), collapse = ""))
 
 ```
 ```{r render_topgenes, echo = FALSE, results = 'asis'}
