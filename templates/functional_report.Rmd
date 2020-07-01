@@ -230,6 +230,8 @@ if(go_flags$GO_CL_SECTION){
 	}
 
 	for (onto in names(go_main_enrich)) {
+		go_flags[paste0("perform_ora_go_",onto)] <- FALSE
+		go_flags[paste0("perform_gsea_go_",onto)] <- FALSE #TODO Estas variables se tienen que inicializar como false para que no rompan las logicas posteriores. 
 		if(go_flags$enrich_go){
 			go_flags[paste0("perform_ora_go_",onto)] <- check_results(enrich_go[[onto]])
 		}else if(go_flags$enrich_go_gsea){
@@ -550,7 +552,7 @@ for (onto in names(go_main_enrich)) {
 	# }
 
 
-
+	message(go_flags)
 	##################################################### ORA PLOTS
 	if(go_flags[[paste0("perform_ora_go_",onto)]]){
 		default_width <- set_default_width(enrich_obj = enrich_go[[onto]], showCategory=n_category)
