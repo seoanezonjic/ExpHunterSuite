@@ -81,42 +81,6 @@ if(length(aux) > 0){
 	# LOAD WGCNA - Correlation (Sample - Trait)
 	wgcna_count_sample_trait <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_WGCNA", "sample_trait.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
 	wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait)
-# norm_counts_raw <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_DESeq2", "Normalized_counts_DESeq2.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-
-# # Normalize
-# norm_counts_raw_gnorm <- norm_counts_raw
-# invisible(lapply(seq_along(norm_counts_raw[,1]),function(i){
-# 	m <- min(norm_counts_raw[i,])
-# 	M <- max(norm_counts_raw[i,])
-# 	dff <- M - m
-# 	norm_counts_raw_gnorm[i,] <<- (norm_counts_raw[i,] - m) / dff
-# }))
-# # Modify to plot better later
-# norm_counts <- as.data.frame(as.table(norm_counts_raw))
-# colnames(norm_counts) <- c("Gene","Sample","Count")
-# norm_counts_gnorm <- as.data.frame(as.table(norm_counts_raw_gnorm))
-# colnames(norm_counts_gnorm) <- c("Gene","Sample","Count")
-# # norm_counts_gnorm <- cbind(norm_counts_gnorm,list(Type = rep("Regular",nrow(norm_counts_gnorm))))
-
-# ####
-# # LOAD WGCNA clusters representative profiles with samples
-# cl_eigvalues <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_WGCNA", "eigen_values_per_samples.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-# cl_eigvalues <- as.data.frame(as.table(cl_eigvalues),stringsAsFactors = FALSE)
-# colnames(cl_eigvalues) <- c("Sample","Cluster_ID","Count") 
-# cl_eigvalues_gnorm <- cl_eigvalues
-# cl_eigvalues_gnorm$Count <- (cl_eigvalues_gnorm$Count + 1) / 2 
-
-# ####
-# # LOAD WGCNA - PVal (Cluster - Trait)
-# wgcna_pval_cl_trait <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_WGCNA", "module_trait_p_val.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-# wgcna_corr_cl_trait <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_WGCNA", "module_trait.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-# ####
-# # LOAD WGCNA - Correlation (Sample - Trait)
-# wgcna_count_sample_trait <- as.matrix(read.table(file.path(opt$input_hunter_folder, "Results_WGCNA", "sample_trait.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-# wgcna_count_sample_trait_gnorm <- as.data.frame(do.call(cbind,lapply(seq(ncol(wgcna_count_sample_trait)),function(j){
-# 	(wgcna_count_sample_trait[,j] - min(wgcna_count_sample_trait[,j],na.rm = TRUE)) / (max(wgcna_count_sample_trait[,j],na.rm = TRUE) - min(wgcna_count_sample_trait[,j],na.rm = TRUE))
-# })))
-# colnames(wgcna_count_sample_trait_gnorm) <- colnames(wgcna_count_sample_trait)
 
 
 # Obtain clusters
