@@ -805,7 +805,7 @@ results_path <- normalizePath(paths$root)
 
 if (flags$WGCNA) { # Clustered
 	message("Rendering specific cluster reports")
-	invisible(lapply(cls, function(cl) {
+	invisible(mclapply(cls, function(cl) {
 		# Take output name
 		aux <- paste0("cl_func_",cl,".html")
 		outf_cls_i <- file.path(results_path, aux)
@@ -814,7 +814,8 @@ if (flags$WGCNA) { # Clustered
 		if (opt$debug) {
 			time_control[[paste0("cl_func_",cl)]] <<- Sys.time()
 		}
-	}))
+	}, mc.cores = opt$cores
+))
 
 	message("\tRendering clustered report")
 	outf_cls <- file.path(results_path, "clusters_func_report.html")
