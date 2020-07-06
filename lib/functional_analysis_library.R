@@ -584,9 +584,11 @@ perform_GSEA_clusters <- function(all_clusters, organism, keyType, pvalueCutoff,
 #' @param qvalueCutoff :: 
 #' @param ENRICH_DATA :: 
 #' @param mc.cores :: 
+#' @param mc.preschedule :: 
 #' @return enrichment performed
 #' @import clusterProfiler, KEGG.db, ReactomePA, parallel
-enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, mc.cores = 1){
+enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, mc.cores = 1, mc.preschedule
+ = TRUE){
   # Parse onto
   # save(list = ls(all.names = TRUE), file = "test.RData", envir = environment())
   src_ont = ont
@@ -625,7 +627,8 @@ enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCuto
                           ENRICH_DATA   = ENRICH_DATA)
     # Return
     return(enr)
-  },mc.cores = mc.cores)
+  }, mc.cores = mc.cores, mc.preschedule = mc.preschedule
+)
 
   names(enrichment) <- names(genes)
 
