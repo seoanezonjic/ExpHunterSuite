@@ -170,11 +170,16 @@ All counts were normalizated by DESeq2 algorithm. This count were scaled by log1
 ```
 
 ```{r heatmap_all_norm_plot, echo = FALSE, fig.height=12, fig.width=12}
-	deseq_normalized_data <- all_data_normalized[['DESeq2']]
-	deseq_normalized_data_mtx <- log10(data.matrix(deseq_normalized_data) + 1)
-
-	plot <- heatmap.2(deseq_normalized_data_mtx, col = col, labRow = FALSE, dendrogram = "column", trace = "none", srtCol=45,  adjCol = c(1,1))
 	
+		deseq_normalized_data <- all_data_normalized[['DESeq2']]
+	if (nrow(all_data_normalized[['DESeq2']]) <= 50000) { 
+		deseq_normalized_data_mtx <- log10(data.matrix(deseq_normalized_data) + 1)
+
+		plot <- heatmap.2(deseq_normalized_data_mtx, col = col, labRow = FALSE, dendrogram = "column", trace = "none", srtCol=45,  adjCol = c(1,1))
+	} else {
+		cat("\n\nThis plot can not be generated because more than 50 000 genes have passed the filters and it can cause memory problems.\n\n")
+	}
+
 ```
 
 
