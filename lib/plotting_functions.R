@@ -41,7 +41,7 @@ get_plot_df <- function(enrich_obj, showCategory = 30) {
 
 check_categories <- function(enrichplot_obj, min_categories = 1) {
   categories_count <- length(enrichplot_obj@result$Description[enrichplot_obj@result$p.adjust <= enrichplot_obj@pvalueCutoff])  
-  check <- categories_count < min_categories
+  check <- categories_count >= min_categories
   return(check)
 }
 
