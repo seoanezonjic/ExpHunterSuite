@@ -52,7 +52,7 @@ spc <- function(df){
 
 # F-measure
 fmeasure <- function(df){
-	(df$Precision * df$Recall) / (df$Precision + df$Recall)
+	2 * (df$Precision * df$Recall) / (df$Precision + df$Recall)
 }
 
 
