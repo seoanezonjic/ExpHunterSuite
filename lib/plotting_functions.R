@@ -10,7 +10,8 @@ resize <- function(g, fig_height=5, fig_width=12) {
 plot_in_div <- function(g, fig_height=7, fig_width=12, ## height and width in inches
   cex = 1, #size multiplier
   max_size = 50, # max size for plots in inches
-  min_size = 10) {
+  min_size = 10, 
+  counter = NULL) {
   cat('\n<div class="plot_real_size">\n')
   fig_height <- fig_height * cex
   fig_width <- fig_width * cex
@@ -27,10 +28,18 @@ plot_in_div <- function(g, fig_height=7, fig_width=12, ## height and width in in
   }
   g_deparsed <- paste0(deparse(function() {g}), collapse = '')
   set.seed(Sys.time())
-  sub_chunk <- paste0("\n```{r sub_chunk_", sample(100000000, 1), ", fig.height=", fig_height, ", fig.width=", fig_width, ", echo=FALSE}", "\n(", g_deparsed, ")()\n```\n\n\n") 
+  if (!is.null(counter)){
+    chunk_name <- paste0("sub_chunk_", counter)
+    # cat(paste0("\n\nplot counter =", counter, "\nchunk_name = ", chunk_name, "\n\n"))
+    counter <- counter + 1
+  } else {
+    chunk_name <- paste0("sub_chunk_", floor(runif(1) * 10000))
+  }
+  sub_chunk <- paste0("\n```{r ", chunk_name, ", fig.height=", fig_height, ", fig.width=", fig_width, ", echo=FALSE}", "\n(", g_deparsed, ")()\n```\n\n\n") 
     # sub_chunk_", floor(runif(1) * 1000000), "
   cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk), quiet = TRUE))
   cat('\n</div>\n')
+  return(counter)
 }
  
 get_plot_df <- function(enrich_obj, showCategory = 30) {
@@ -197,6 +206,13 @@ gg_heatmap <- function(data_table,
       pp <- pp + geom_text(aes_string(label=text_plot), colour = text_colour, size = text_size) 
     }
     return(pp)
+}
+
+extract_legend <- function(a.gplot){ #code taken from https://stackoverflow.com/questions/13649473/add-a-common-legend-for-combined-ggplots
+  tmp <- ggplot_gtable(ggplot_build(a.gplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
 }
 
 
