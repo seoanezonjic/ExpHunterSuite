@@ -1,8 +1,10 @@
 #!/usr/bin/env Rscript
 
-library(multiMiR)
+# library(multiMiR)
 library(optparse)
 library(data.table)
+library(dplyr)
+library(stringr)
 
 option_list <- list(
 	make_option(c("-s", "--chunk_size"), type="integer",default=100,
@@ -18,29 +20,24 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list=option_list))
 
 
-temp_dir <- file.path(opt$output, "temp")
-cache <- file.path(temp_dir, "cache.RData")
+temp_dir <- file.path(opt$output, "temp", opt$organism)
+remaining_miRNAs_file <- file.path(temp_dir, "remaining_mirnas.txt")
+log_file <- file.path(opt$output, paste0(opt$organism, "_multimir_log"))
 # print(opt)
 # print(all_organism)
 ##### Prepare data
-if(file.exists(cache) && opt$cache_mode){
-	load(cache)
+if(opt$cache_mode && file.exists(remaining_miRNAs_file)){
+	remaining_mirnas <- readLines(remaining_miRNAs_file)
 }else{
-	multimir_info <- list_multimir()
+	miRNA_info <- list_multimir("mirna")
 	# list_organism <- list(rep(0, length(all_organism)))
  # 	names(list_organism) <- all_organism
-	org_multimir <- multimir_info[multimir_info$org == opt$organism, ]
-	org_multimir_list <- unique(org_multimir$mature_mirna_id[org_multimir$mature_mirna_id != ""])
-	splitted_list <- split(org_multimir_list, ceiling(seq_along(org_multimir_list)/opt$chunk))
-	all_multimir_info <- list(
-		"splitted_list" = splitted_list,
-		"original_chunks" = length(splitted_list),
-		"remaining_chunks" = length(splitted_list)
-	)
-	
+	allmiRNAs <- miRNA_info[miRNA_info$org == opt$organism, "mature_mirna_id"] %>% unique
+	remaining_mirnas <- allmiRNAs
+		
 	if(opt$cache_mode){
 		dir.create(temp_dir, recursive=TRUE)
-		save(opt, all_multimir_info, file = cache)
+		writeLines(remaining_mirnas, con = remaining_miRNAs_file)
 	}
 }
 
@@ -50,30 +47,88 @@ org_path <- file.path(temp_dir, opt$organism)
 if(!dir.exists(org_path)){
 	dir.create(org_path, recursive = T)
 }
-remaining_chunks <- all_multimir_info[["remaining_chunks"]] 
-while(remaining_chunks != 0){
-	mirna_chunk <- all_multimir_info[["splitted_list"]][[remaining_chunks]]
-	multimir <- get_multimir(mirna = mirna_chunk, table = "all")
+
+while(length(remaining_mirnas) > 0){
+	mirna_chunk <- sample(remaining_mirnas, opt$chunk_size, replace = TRUE) %>% unique
+	print(str(mirna_chunk))
+	multimir <- multiMiR::get_multimir(mirna = mirna_chunk, table = "all", org = opt$organism, predicted.cutoff.type="n", predicted.cutoff = 1000000000, predicted.site = "all", limit = NULL)
 	multimir <- multimir@data
-	save(multimir, file = file.path(org_path, paste0("data_", remaining_chunks, ".RData")))
-	all_multimir_info[["splitted_list"]][remaining_chunks] <- NULL
-	 remaining_chunks <- remaining_chunks - 1
+	#str(multimir)
+	if(nrow(multimir) == 0) {
+		no_downloaded_mirnas <- mirna_chunk
+		multimir <- data.frame(mature_mirna_id = no_downloaded_mirnas)
+		remaining_mirnas <- remaining_mirnas[! remaining_mirnas %in% no_downloaded_mirnas]
+		cat(paste0(length(no_downloaded_mirnas), " of ", length(mirna_chunk), " miRNAs can not been found on multiMiR. ", length(remaining_mirnas), " miRNAs remaining..."), file = log_file, append=TRUE, sep = "\n")
+	} else {
+		downloaded_mirnas <- multimir[,"mature_mirna_id"] %>% unique
+		#print(downloaded_mirnas)
+		if (length(remaining_mirnas[remaining_mirnas %in% downloaded_mirnas]) == 0) {
+			remaining_mirnas <- remaining_mirnas[! remaining_mirnas %in% mirna_chunk] #esto es para cuando una query devuelve mirnas con los identificadores cambiados (actualizados o obsoletos)  
+		} else {
+			remaining_mirnas <- remaining_mirnas[! remaining_mirnas %in% downloaded_mirnas]
+		}
+		cat(paste0(length(downloaded_mirnas), " of ", length(mirna_chunk), " miRNAs has been downloaded. ", length(remaining_mirnas), " miRNAs remaining..."), file = log_file, append=TRUE, sep = "\n")
+	}
+
+	save(multimir, file = file.path(org_path, paste0("data_", length(list.files(org_path, pattern = ".RData")) + 1, ".RData")))
+	
 	if(opt$cache_mode){
-		all_multimir_info[["remaining_chunks"]] <- remaining_chunks 
-		save(opt, all_multimir_info, file = cache)
-		q()
+		writeLines(remaining_mirnas, con = remaining_miRNAs_file)
+		stop(paste("Program stopped in a controlled way. Launch it again."))
 	}
 }
-	
 
-last_chunk <- all_multimir_info[["original_chunks"]]
-
-org_mirna_targets <- lapply(seq(1, last_chunk), function(i_chunk){
-	load(file.path(org_path, paste0("data_", i_chunk, ".RData")))
-	return(multimir)
+print("Merging results...")	
+org_mirna_targets <- lapply(list.files(org_path), function(cache_file){
+	load(file.path(org_path, cache_file))
+	return(as.data.table(multimir))
 })
 
-org_mirna_targets <- rbindlist(org_mirna_targets, fill = TRUE)
+org_mirna_targets <- as.data.frame(unique(rbindlist(org_mirna_targets, fill = TRUE))) # este unique es recomendado por el autor 
+
+print("Filtering starts")
+
+org_mirna_targets <- org_mirna_targets[,c("target_ensembl", "mature_mirna_acc", "database")]
+org_mirna_targets <- org_mirna_targets[org_mirna_targets$target_ensembl != "" & org_mirna_targets$mature_mirna_acc != "" & !is.na(org_mirna_targets$database),]
+
+databases_names <- unique(org_mirna_targets$database)
+print("Paste starts")
+print(databases_names)
+
+all_pairs <- as.data.table(org_mirna_targets[, c("target_ensembl", "mature_mirna_acc")])
+all_pairs <- unique(all_pairs)
+unique_pairs <- paste0(all_pairs$target_ensembl, "_AND_", all_pairs$mature_mirna_acc)
+
+print("Unique starts")
+multimir_summary <- data.table(pairs = unique_pairs)
+
+for (db in databases_names) {
+	print(db)
+	database_pairs <- as.data.table(org_mirna_targets[org_mirna_targets$database == db, c("target_ensembl", "mature_mirna_acc")])
+	database_pairs <- unique(database_pairs)
+	database_pairs <- paste0(database_pairs$target_ensembl, "_AND_", database_pairs$mature_mirna_acc)
+	db_pairs <- multimir_summary$pairs %in% database_pairs
+	print(str(db_pairs))
+	multimir_summary[[db]] <- db_pairs
+} 
+print(str(multimir_summary))
+
+new_columns <- str_split_fixed(multimir_summary$pairs, "_AND_", n = 2)
+multimir_summary$target_ensembl <- new_columns[,1]
+multimir_summary$mature_mirna_acc <- new_columns[,2]
+all_pair2 <- multimir_summary$pairs
+multimir_summary$pairs <- NULL
+multimir_summary <- as.data.frame(multimir_summary)
+
 save(org_mirna_targets, file = file.path(opt$output, paste0(opt$organism, ".RData")))
-system(paste0("rm -r ", temp_dir))
-cat("FINISHED", file=file.path(opt$output, "finished") ,sep="\n")
+save(multimir_summary, file = file.path(opt$output, paste0("parsed_", opt$organism, ".RData")))
+#suppressPackageStartupMessages(require(mirbase.db)) 
+
+
+
+
+
+
+
+cat("FINISHED", file=file.path(opt$output, paste0(opt$organism, "_finished")), sep="\n")
+# unlink(temp_dir, recursive = TRUE, force = TRUE)

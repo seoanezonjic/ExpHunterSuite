@@ -1,0 +1,59 @@
+```{r "{{method_tag}}_cor_miRNA_config", include = FALSE, warnig = FALSE}
+# ###########################################
+# ################# READ ME #################
+# ###########################################
+#
+# This template assumes that the following variables exists
+# => current_organism_info$Bioconductor_DB[1] :: organism database to translate genes
+# => method :: method object
+# => method_name :: method name
+ 
+
+
+```
+
+
+
+```{r "{{method_tag}}_cor_miRNA_table", results='asis', echo = FALSE, message=FALSE, warning=FALSE}
+	# message(head(all_strategies_list[["{{method_name}}"]]))
+	method_table <- all_strategies[all_strategies$strategy == "{{method_name}}",]
+	method_table <- method_table[method_table$validated > 0 & method_table$predicted > 0, c("miRNAseq", "RNAseq", "correlation", "pval")]
+
+	method_table$miRNA_names <- mirna_names[match(method_table$miRNAseq, mirna_names$Accession), "TargetName"]
+
+	if (!is.null(gene_id_translation)) {
+		method_table <- merge(method_table, gene_id_translation, by.x = "RNAseq", by.y = "ensembl_gene_id", all.x = TRUE)
+	}
+
+	if (nrow(method_table) > 0) {
+		# print(message(head(method_table)))
+			datatable(method_table, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+	        	options = list(
+		        	colReorder = TRUE,
+		        	dom = 'lftBip',
+		        	buttons = c('copy', 'csv', 'excel')
+	        ))
+
+	} else {
+		cat("\n\n This method was launched but no significant miRNA-target gene relations were found in multiMiR")
+	}
+	degs <- miRNAseq$DH_results[miRNAseq$DH_results$genes_tag == opt$deg_tag, "gene_name"]
+	deg_method_table <- method_table[method_table$miRNAseq %in% degs, ]
+
+	if (nrow(deg_method_table) > 0) {
+		# print(message(head(method_table)))
+			datatable(deg_method_table, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+	        	options = list(
+		        	colReorder = TRUE,
+		        	dom = 'lftBip',
+		        	buttons = c('copy', 'csv', 'excel')
+	        ))
+
+	} else {
+		cat("\n\n This method was launched but no significant DEG miRNA-target gene relations were found in multiMiR")
+	}
+
+```
+
+
+

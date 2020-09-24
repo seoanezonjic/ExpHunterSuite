@@ -1,0 +1,152 @@
+---
+author: "José Córdoba Caballero"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+    fig_width: 12
+---
+
+<style type='text/css'>
+    body .main-container { 
+        max-width: 90%;
+    
+    }
+
+    .plot_real_size {
+      overflow: scroll;
+      max-height: 600px;
+    }
+
+    .plot_real_size img{
+      max-width: none;
+      max-height: none;
+    }
+
+    embed {
+   
+  }   
+</style>
+
+
+# **RNAseq - miRNAseq correlation report**
+
+```{r methods_comparison_violin_cor, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+
+cat("## **RNAseq and miRNAseq correlation methods comparison**")
+cat("\nThis plot shows the distributions of correlations between RNAseq and miRNAseq using diferent strategies explained above.
+  \n")
+pp <- ggplot(all_strategies, aes(x = strategy, y = correlation, fill = strategy)) +
+  geom_violin(trim = FALSE, scale = "width") + ylim(-1.000001, opt$corr_cutoff + 0.1) +
+  geom_boxplot(width=0.05)+
+  theme(axis.text.x = element_blank(), axis.title.x = element_blank()) 
+pp
+
+```
+
+```{r methods_comparison_violin_p, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+
+cat("\n\nThis plot shows the distributions of correlation P values between RNAseq and miRNAseq using diferent strategies explained above.
+  \n")
+pp <- ggplot(all_strategies, aes(x = strategy, y = pval, fill = strategy)) +
+  geom_violin(trim = FALSE, scale = "width") + ylim(-0.0001, 0.2) +
+  geom_boxplot(width=0.05)+
+  theme(axis.text.x = element_blank(), axis.title.x = element_blank()) 
+pp
+
+```
+
+```{r methods_comparison_bar, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+
+cat("\n\n This plot shows how strategies are supported by target databases\n\n")
+
+pp <- ggplot(filters_summary, aes(y = pairs, x = strategy, fill = type)) + 
+      geom_bar(stat= "identity",position=position_dodge()) +
+      theme(axis.text.x = element_text(angle = 20, hjust = 1)) + 
+      geom_text(aes(label = pairs), position = position_dodge(width=0.9), size=4)
+pp
+
+```
+
+```{r methods_comparison_intersection, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+strategies_names <- unique(all_strategies$strategy)
+common_pairs <- matrix(,nrow = length(strategies_names), ncol = length(strategies_names))
+
+colnames(common_pairs) <- strategies_names
+rownames(common_pairs) <- strategies_names
+
+for (col_strategy in strategies_names) {
+  col_pairs <- all_strategies[all_strategies$strategy == col_strategy,] %>% unite("pairs", RNAseq:miRNAseq, sep = "", na.rm = FALSE)
+  col_pairs <- col_pairs$pairs
+  for (row_strategy in strategies_names) {
+    row_pairs <- all_strategies[all_strategies$strategy == row_strategy,] %>% unite("pairs", RNAseq:miRNAseq, sep = "", na.rm = FALSE)
+    row_pairs <- row_pairs$pairs
+    common_pairs[row_strategy, col_strategy] <- length(intersect(col_pairs, row_pairs))
+  }
+}
+
+common_pairs <- as.data.frame(as.table(as.matrix(common_pairs)))
+
+names(common_pairs) <- c("x_axis", "y_axis",  "intersection")
+
+common_pairs$text <- as.character(common_pairs$intersection)
+
+pp <- gg_heatmap(data =  common_pairs, 
+            x_axis = "x_axis",
+            y_axis= "y_axis",
+            fill = "intersection",
+            text_plot= "text", 
+            labs = FALSE)
+pp
+
+```
+
+```{r methods_comparison_cor_dist, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+
+cat("\n\nOverlap between the different strategies in terms of miRNA-target gene pairs detected.\n\n")
+
+
+null_distribution <- strategies$zero$plot_obj[,c("correlation","pval")]
+distribution_legend <- c()
+plot_grid <- lapply(names(strategies), function(strategy) {
+    signif_distribution <- strategies[[strategy]]$plot_obj 
+
+    cor_distributions <- data.frame(subset = "background", correlation = strategies$zero$plot_obj$correlation, stringsAsFactors = FALSE)
+    # save(cor_distributions, signif_distribution, file = file.path(opt$output_files, "debug.RData"))
+
+    cor_distributions <- rbind(cor_distributions, data.frame(subset = "predicted", 
+                                                              correlation = signif_distribution[signif_distribution$predicted_c > 0,"correlation"]))
+    cor_distributions <- rbind(cor_distributions, data.frame(subset = "validated", 
+                                                              correlation = signif_distribution[signif_distribution$validated_c > 0,"correlation"]))
+    cor_distributions <- rbind(cor_distributions, data.frame(subset = "both", 
+                                                              correlation = signif_distribution[signif_distribution$validated_c > 0 & signif_distribution$predicted_c > 0, "correlation"]))
+    gg <- ggplot(data = cor_distributions, aes(x = correlation, color = subset, fill = subset) ) +
+          ggtitle(strategies[[strategy]]$name) +
+          geom_density(alpha = 0.2, stat = "density") + ylim(0,2) + theme(legend.position = "top")
+    return(gg)
+})
+
+distribution_legend <- extract_legend(plot_grid[[1]])
+plot_grid <- lapply(plot_grid, function(plot){ return(plot + theme(legend.position = "none")) })
+
+library(grid)
+grid.draw(distribution_legend) 
+grid.arrange(grobs = plot_grid, ncol = 3)
+
+```
+
+
+```{r render_partial_reports, echo = FALSE, warning = FALSE}
+  curr_out <- ""
+
+  curr_out <- unlist(lapply(names(strategies),function(method_tag){
+      method <- strategies[[method_tag]]
+      method_name <- method[["name"]]
+      sec_text <- paste(c("## **", method_name ," correlation method**\n"),collapse="") # Header
+      sec_text <- c(sec_text,knit_expand("partial/miRNA_cor_methods.Rmd")) # Body
+      return(sec_text)
+  }))    
+``` 
+
+`r paste(knit(text = curr_out), collapse = '\n')`
