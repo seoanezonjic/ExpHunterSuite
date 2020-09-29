@@ -8,6 +8,7 @@
 
 #Loading libraries
 suppressPackageStartupMessages(library(optparse)) 
+suppressPackageStartupMessages(library(ROCR)) 
 
 option_list <- list(
   make_option(c("-i", "--inputfile"), type="character", 
@@ -20,6 +21,8 @@ option_list <- list(
     help="Log Fold Change threshold. Default : %default"),
   make_option(c("-p", "--pval_threshold"), type="double", default=0.01,
     help="P-value threshold. Default : %default"),
+  make_option(c("-a", "--aucfile"), type="character", default=NULL,
+    help="If provided, AUC values for each method will be stored on this file"),
   make_option(c("-o", "--outfile"), type="character",
     help="Output file")
 )
@@ -63,17 +66,40 @@ fmeasure <- function(df){
 # Load hunter table
 dgh_res_raw <- read.table(file = opt$inputfile, sep = "\t", header = T, stringsAsFactors = FALSE, row.names = 1)
 
+# Load real predictions
+true_pred <- read.table(file = opt$realprediction, sep = "\t", header = T, stringsAsFactors = FALSE)
+
+# Sort
+dgh_res_raw <- dgh_res_raw[true_pred[,1],]
+
 # Prepare target columns
 pck_names <- c("DESeq2_DEG","edgeR_DEG","limma_DEG","NOISeq_DEG")
 pck_names <- pck_names[pck_names %in% colnames(dgh_res_raw)]
 dgh_res <- dgh_res_raw[,pck_names]
 dgh_res$Gene <- rownames(dgh_res)
 
+# CALCULATE AUCS
+if(!is.null(opt$aucfile)){
+	pck_fdrnames <- c("FDR_DESeq2","FDR_edgeR","FDR_limma","FDR_NOISeq", "combined_FDR")
+	dgh_fdr <- dgh_res_raw[, pck_fdrnames]
+	dgh_fdr[is.na(dgh_fdr)] <- 1
+	dgh_fdr <- 1 - dgh_fdr
+	real_df <- as.data.frame(replicate(ncol(dgh_fdr), true_pred[,2]))
+	pred <- prediction(dgh_fdr, real_df)
+	perf_auc <- performance(pred, "auc")
+	auc_vals <- data.frame(Method = gsub("_FDR","",gsub("FDR_","",colnames(dgh_fdr))), 
+						   Set = rep("All",ncol(dgh_fdr)),
+						   Measure = rep("auc", ncol(dgh_fdr)),
+						   Value = unlist(perf_auc@y.values), stringsAsFactors = FALSE) 
+	# Write
+	write.table(auc_vals, file = opt$aucfile, sep = "\t", col.names = FALSE, row.names = FALSE, quote = FALSE)	
+}
+
+
+
 # Calculate values for combined values
 dgh_res$Combined <- (abs(dgh_res_raw$mean_logFCs) >= opt$logFC_threshold) & (dgh_res_raw$combined_FDR <= opt$pval_threshold)
 
-# Load real predictions
-true_pred <- read.table(file = opt$realprediction, sep = "\t", header = T, stringsAsFactors = FALSE)
 
 # Combine into unique matrix
 preds_res <- merge(x = dgh_res, y = true_pred, by = "Gene")
