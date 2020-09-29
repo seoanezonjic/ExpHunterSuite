@@ -95,12 +95,16 @@ score_center <- 0.5
 #############################################
 
 # Calculate scores for each set
+# Score is calculated re-scalling the logFC vector appliying the following criteria:
+#   - logFC over thresholds are scalled between 0.5 and 1
+#   - logFC under thresholds are scalled between 0 and 0.1
+#   - Finally, elements which p-value and logFC are under their respective thresholds are penalized collapsing to zero
 scores <- as.data.frame(do.call(cbind,lapply(seq_along(pck_names),function(i){
-	# Check
+	# Check: collapse logFC values over maximum threshold, to maximum value
 	if(any(dgh_res[,fc_cols[i]] > opt$logFC_max, na.rm = TRUE)) dgh_res[(dgh_res[,fc_cols[i]] > opt$logFC_max & !is.na(dgh_res[,fc_cols[i]])),] <- opt$logFC_max
 	# Apply rescale to score
 	scrs <- accordion_range(dgh_res[,fc_cols[i]],score_min,score_max,score_center,opt$logFC_threshold)
-	# Adjust
+	# Adjust: if pval is bad, and logFC is bad also, penalize 
 	scrs <- scrs - (dgh_res[,pv_cols[i]] > opt$pval_threshold & dgh_res[,fc_cols[i]] < opt$logFC_threshold)*score_center
 	if(any(is.na(scrs))) scrs[is.na(scrs)] <- score_min # NA -> discarded
 	if(any(scrs < score_min)) scrs[scrs < score_min] <- score_min
