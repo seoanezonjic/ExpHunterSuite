@@ -182,7 +182,9 @@ need_translate <- TRUE
 if (opt$input_gene_id == "e"){
 	opt$input_gene_id <- 'entrezgene'
 	need_translate <- FALSE
-
+	keytypes <- "ENTREZID"
+	input_to_entrezgene <- cbind(row.names(DEGH_results), row.names(DEGH_results))
+	colnames(input_to_entrezgene) <- c("ensembl_gene_id", "entrezgene")
 } else if (opt$input_gene_id == "E") {
   opt$input_gene_id <- 'ensembl_gene_id'
   keytypes <- "ENTREZID"
@@ -369,7 +371,7 @@ if (need_translate) {
 	message(paste(opt$input_gene_id, "IDs have been translated to entrezgene"))
 } else {
 	################# ADD ENTREZ IDS TO INPUT FILE #############
-	DEGH_results$entrezgene <- DEGH_results$Input_IDs
+	DEGH_results$entrezgene <- DEGH_results$input_IDs
 }
 
 ################# ADD GENE SYMBOLS TO INPUT FILE #############
