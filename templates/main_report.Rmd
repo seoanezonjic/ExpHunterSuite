@@ -107,7 +107,7 @@ gplots::heatmap.2(x = res, col = col, symm = TRUE, margins = rep(max(nchar(colna
 ### **Principal Component Analysis**
 This is a PCA plot of the count values following rlog normalization from the DESeq2 package:
 
-```{r pca_plot, echo = FALSE}
+```{r pca_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo = FALSE}
 coldata_df <- data.frame(cond = design_vector,
                            each = colnames(raw_filter),
                            row.names = colnames(raw_filter))
@@ -133,6 +133,9 @@ ggplot(pcaData, aes(x = PC1, y = PC2, color = name, shape = cond)) +
   coord_fixed() 
 
 
+```
+```{r pca_plot_no, eval=! "DESeq2" %in% names(all_counts_for_plotting), echo = FALSE}
+cat("\n\n## DESeq2 not run so plot not shown\n\n")
 ```
 
 The samples are shown in the 2D plane and distributed by their first two principal components. This type of plot is useful for visualizing the overall effect of experimental covariates and batch effects. It is also useful for identifying outlier samples. Control and treatment samples respectively may cluster together.
@@ -173,7 +176,7 @@ cat("### **Samples differences by all counts normalized**:
 All counts were normalizated by DESeq2 algorithm. This count were scaled by log10 and plotted in a heatmap.")
 ```
 
-```{r heatmap_all_norm_plot, echo = FALSE, fig.height=12, fig.width=12}
+```{r heatmap_all_norm_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo = FALSE, fig.height=12, fig.width=12}
 	
 		deseq_normalized_data <- all_data_normalized[['DESeq2']]
 	if (nrow(all_data_normalized[['DESeq2']]) <= 50000) { 

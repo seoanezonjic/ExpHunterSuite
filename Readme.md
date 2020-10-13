@@ -177,9 +177,13 @@ Output folders tree structure:
 			* padj_all_genes.pdf
 			* top20_genes.txt
 
+## Non-canonical usage scenarios
 
+### Analysing pre-normalized data with WGCNA
 
+DEgenes Hunter requires a table of counts, which by definition must consist of integers. However, in some situtations, the user may wish to reanalyse a dataset consisting of non-integers, such as microarray data or pre-normalized data.
 
+In this situation, the user can run WGCNA using the data in the table of counts directly, without performing normalization. To do this, they must run degenes_hunter.R with the argument --WGCNA_norm_method equal to "none" and the argument --modules must include "wl", i.e. specify limmaas it will accept normalised values. However the DE results will likely not make much sense.
 
 ## FUNCTIONAL ANALYSIS with the functional_Hunter.R script
 

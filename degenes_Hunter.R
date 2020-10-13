@@ -92,6 +92,8 @@ option_list <- list(
     help="Columns in the target file to be used as numeric (continuous) factors for the correlation analysis. If more than one to be used, should be comma separated"),
   make_option(c("-b", "--WGCNA_memory"), type="integer", default=5000,
     help="Maximum block size value, to be passed to the blockwiseModules function of WGCNA as the maxBlockSize argument"),
+  make_option(c("--WGCNA_norm_method"), type="character", default="DESeq2",
+    help="Method used to normalized the table of counts for WGCNA. Must also run this method in the --modules argument. Default=%default"),
   make_option("--WGCNA_deepsplit", type="integer", default=2,
     help="This option control the module building process and is defined as 1,2,3 and 4 values. 1 for rough clustering and 4 for accurate clustering "),
   make_option("--WGCNA_min_genes_cluster", type="integer", default=20,
@@ -375,12 +377,6 @@ if(grepl("D",opt$modules)){
       final_FDR_names    <- c(final_FDR_names, 'FDR_DESeq2')
       DEG_pack_columns   <- c(DEG_pack_columns, 'DESeq2_DEG')
     } 
-
-    # Will be useful for WGCNA and perhaps PCIT
-    DESeq2_counts <- counts(package_objects[['DESeq2']][['DESeq2_dataset']], normalize=TRUE)
-    DESeq2_counts_treatment <- DESeq2_counts[, index_treatmn_cols]
-    DESeq2_counts_control <- DESeq2_counts[, index_control_cols]
-
   } else {
   warning("DESeq2 will not be performed due to too few replicates")
   }
@@ -498,80 +494,80 @@ if(opt$debug){
 #####
 ################## CASE W: WGCNA
 #####
-
-
-
 if(grepl("W", opt$modules)) {
-  if(grepl("D", opt$modules)) { 
-    cat('Correlation analysis is performed with WGCNA\n')
-    path <- file.path(opt$output_files, "Results_WGCNA")
-    dir.create(path)
+  cat('Correlation analysis is performed with WGCNA\n')
+  path <- file.path(opt$output_files, "Results_WGCNA")
+  dir.create(path)
 
-    if(opt$WGCNA_all == TRUE) {
+  if(opt$WGCNA_norm_method %in% names(all_data_normalized)) {
+    WGCNA_input <- all_data_normalized[[opt$WGCNA_norm_method]]
+  } else if(opt$WGCNA_norm_method== "none") {
+    WGCNA_input <- raw_filter
+  } else {
+    warning("To run WGCNA, you must also run the method chosen for normalization in the --modules flag")
+  }
 
-      WGCNA_treatment_path <- file.path(path, "Treatment_only_data")
-      dir.create(WGCNA_treatment_path)
+  WGCNA_input_treatment <- WGCNA_input[, index_treatmn_cols]
+  WGCNA_input_control <- WGCNA_input[, index_control_cols]
 
-      cat('Performing WGCNA correlation analysis for treated samples\n')
-      results_WGCNA_treatment <- analysis_WGCNA(data=DESeq2_counts_treatment,
-                     path=WGCNA_treatment_path,
-                     target_numeric_factors=target_numeric_factors,
-                     target_string_factors=target_string_factors,
-                     WGCNA_memory=opt$WGCNA_memory,
-                     WGCNA_deepsplit=opt$WGCNA_deepsplit,
-                     WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
-                     WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
-                     WGCNA_min_genes_cluster=opt$WGCNA_min_genes_cluster,
-                     cor_only=TRUE, 
-                     blockwiseNetworkType = opt$WGCNA_blockwiseNetworkType, 
-                     blockwiseTOMType = opt$WGCNA_blockwiseTOMType
-      )
+  if(opt$WGCNA_all == TRUE) {
+    WGCNA_treatment_path <- file.path(path, "Treatment_only_data")
+    dir.create(WGCNA_treatment_path)
 
-      WGCNA_control_path <- file.path(path, "Control_only_data")
-      dir.create(WGCNA_control_path)
+    cat('Performing WGCNA correlation analysis for treated samples\n')
+    results_WGCNA_treatment <- analysis_WGCNA(data=WGCNA_input_treatment,
+                   path=WGCNA_treatment_path,
+                   target_numeric_factors=target_numeric_factors,
+                   target_string_factors=target_string_factors,
+                   WGCNA_memory=opt$WGCNA_memory,
+                   WGCNA_deepsplit=opt$WGCNA_deepsplit,
+                   WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
+                   WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
+                   WGCNA_min_genes_cluster=opt$WGCNA_min_genes_cluster,
+                   cor_only=TRUE, 
+                   blockwiseNetworkType = opt$WGCNA_blockwiseNetworkType, 
+                   blockwiseTOMType = opt$WGCNA_blockwiseTOMType
+    )
 
-      
-      cat('Performing WGCNA correlation analysis for control samples\n')
-      results_WGCNA_control <- analysis_WGCNA(data=DESeq2_counts_control,
-                     path=WGCNA_control_path,
-                     target_numeric_factors=target_numeric_factors,
-                     target_string_factors=target_string_factors,
-                     WGCNA_memory=opt$WGCNA_memory,
-                     WGCNA_deepsplit=opt$WGCNA_deepsplit,
-                     WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
-                     WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
-                     WGCNA_min_genes_cluster=opt$WGCNA_min_genes_cluster,                    
-                     cor_only=TRUE, 
-                     blockwiseNetworkType = opt$WGCNA_blockwiseNetworkType, 
-                     blockwiseTOMType = opt$WGCNA_blockwiseTOMType
-      )
-    }
+    WGCNA_control_path <- file.path(path, "Control_only_data")
+    dir.create(WGCNA_control_path)
+
+    cat('Performing WGCNA correlation analysis for control samples\n')
+    results_WGCNA_control <- analysis_WGCNA(data=WGCNA_input_control,
+                   path=WGCNA_control_path,
+                   target_numeric_factors=target_numeric_factors,
+                   target_string_factors=target_string_factors,
+                   WGCNA_memory=opt$WGCNA_memory,
+                   WGCNA_deepsplit=opt$WGCNA_deepsplit,
+                   WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
+                   WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
+                   WGCNA_min_genes_cluster=opt$WGCNA_min_genes_cluster,                    
+                   cor_only=TRUE, 
+                   blockwiseNetworkType = opt$WGCNA_blockwiseNetworkType, 
+                   blockwiseTOMType = opt$WGCNA_blockwiseTOMType
+    )
+  }
     # Need to improve the control, probably by removing PCIT
     # if(results_WGCNA_treatment == "NO_POWER_VALUE" | results_WGCNA_control == "NO_POWER_VALUE") {
     #   warning("WGCNA was unable to generate a suitable power value for at least one of the partial datasets")
     # }
-
-
-    cat('Performing WGCNA correlation analysis for all samples\n')
-    results_WGCNA <- analysis_WGCNA(data=DESeq2_counts,
-                                   path=path,
-                                   target_numeric_factors=target_numeric_factors,
-                                   target_string_factors=target_string_factors,
-                                   WGCNA_memory=opt$WGCNA_memory,
-                                   WGCNA_deepsplit=opt$WGCNA_deepsplit,
-                                   WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
-                                   WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
-                                   WGCNA_min_genes_cluster=opt$WGCNA_min_genes_cluster,
-                                   cor_only=FALSE, 
-                                   blockwiseNetworkType = opt$WGCNA_blockwiseNetworkType, 
-                                   blockwiseTOMType = opt$WGCNA_blockwiseTOMType
-    )
-    if(length(results_WGCNA) == 1) {
-      warning("Something went wrong with WGCNA on the full dataset")
-      opt$modules <- gsub("W", "", opt$modules)
-    }
-  } else {
-    warning("WGCNA will not be performed as it requires a DESeq2 object")
+  cat('Performing WGCNA correlation analysis for all samples\n')
+  results_WGCNA <- analysis_WGCNA(data=WGCNA_input,
+                                 path=path,
+                                 target_numeric_factors=target_numeric_factors,
+                                 target_string_factors=target_string_factors,
+                                 WGCNA_memory=opt$WGCNA_memory,
+                                 WGCNA_deepsplit=opt$WGCNA_deepsplit,
+                                 WGCNA_detectcutHeight=opt$WGCNA_detectcutHeight,
+                                 WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
+                                 WGCNA_min_genes_cluster=opt$WGCNA_min_genes_cluster,
+                                 cor_only=FALSE, 
+                                 blockwiseNetworkType = opt$WGCNA_blockwiseNetworkType, 
+                                 blockwiseTOMType = opt$WGCNA_blockwiseTOMType
+  )
+  if(length(results_WGCNA) == 1) {
+    warning("Something went wrong with WGCNA on the full dataset")
+    opt$modules <- gsub("W", "", opt$modules)
   }
 ####################### DEBUG POINT #############################
   if(opt$debug){
@@ -629,7 +625,7 @@ if(grepl("P", opt$modules)) {
 #################################################################################
 
 # Check WGCNA was run and it returned proper results
-if(grepl("W", opt$modules) & grepl("D", opt$modules)) {
+if(grepl("W", opt$modules)) {
   DE_all_genes <- transform(merge(DE_all_genes, results_WGCNA[['gene_cluster_info']], by.x=0, by.y="ENSEMBL_ID"), row.names=Row.names, Row.names=NULL)
 }
 
