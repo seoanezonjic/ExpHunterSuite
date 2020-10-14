@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 
 ################### INITILAIZE
-options(scipen = 1) 
-options(digits = 2)
+options(scipen = 0.001, 
+		digits = 3)
 suppressPackageStartupMessages(library(optparse)) 
 
  
@@ -35,6 +35,8 @@ option_list <- list(
     	help="Correlation P value threshold . Default=%default"),
 	make_option(c("-c", "--corr_cutoff"), type="double", default=-0.7,
     	help="Correlation threshold . Default=%default"),
+	make_option(c("--module_membership_cutoff"), type="double", default=0.8,
+    	help="This script reject genes with lower module membership to their modules. Default=%default"),
 	make_option(c("-R", "--report"), ,type = "character", default="miRNA_RNA_comparison.html",
 	    help="Name of the html file. Default : %default"),
 	make_option(c("-t", "--translation_file"), type = "character", default = NULL,
@@ -58,6 +60,7 @@ suppressPackageStartupMessages(require(miRBaseConverter))
 suppressPackageStartupMessages(require(gridExtra))
 
 source(file.path(main_path_script, 'lib', 'plotting_functions.R')) 
+source(file.path(main_path_script, 'lib', 'general_functions.R')) 
 source(file.path(main_path_script, 'lib', 'miRNA_RNA_functions.R'))
 source(file.path(main_path_script, 'lib', 'functional_analysis_library.R'))
 
@@ -94,11 +97,11 @@ print(mem_used())
 }
 
 strategies <- list()
-strategies[["zero"]] <- correlate_profiles(RNAseq[["normalized_counts"]], miRNAseq[["normalized_counts"]])
-strategies[["zero"]]$plot_obj <- corr2plot(strategies[["zero"]])
-strategies[["zero"]][["name"]] <- "counts_RNA_vs_counts_miRNA" 
-strategies[["zero"]]$plot_obj <- add_multimir_info(strategies[["zero"]]$plot_obj, expand_miRNA = NULL , expand_RNA = NULL, multimir_summary = multimir_summary)
-print(paste0("zero"," strategy has finished"))
+strategies[["dd"]] <- correlate_profiles(RNAseq[["normalized_counts"]], miRNAseq[["normalized_counts"]])
+strategies[["dd"]]$plot_obj <- corr2plot(strategies[["dd"]])
+strategies[["dd"]][["name"]] <- "counts_RNA_vs_counts_miRNA" 
+strategies[["dd"]]$plot_obj <- add_multimir_info(strategies[["dd"]]$plot_obj, expand_miRNA = NULL , expand_RNA = NULL, multimir_summary = multimir_summary)
+print(paste0("dd"," strategy has finished"))
 
 print(gc())
 print(mem_used())
@@ -171,24 +174,104 @@ if("hE" %in% opt$aproaches){
 }
 
 all_strategies <- list()
+prec_recall <- list()
+print("TEST")
+save.image(file = file.path(opt$output_files, "debug.RData"))
 for (strategy in names(strategies)) {
+	print(strategy)
+
+	strategy_name <- strategies[[strategy]][["name"]]
 	strategies[[strategy]]$plot_obj[is.na(strategies[[strategy]]$plot_obj$predicted_c), "predicted_c"] <- 0
 	strategies[[strategy]]$plot_obj[is.na(strategies[[strategy]]$plot_obj$validated_c), "validated_c"] <- 0
-	all_strategies[[strategies[[strategy]][["name"]]]] <- as.data.table(strategies[[strategy]]$plot_obj)[correlation <= opt$corr_cutoff & pval <= opt$p_val_cutoff]
+	plot_obj <- as.data.table(strategies[[strategy]]$plot_obj)
+	print("TEST2")
+
+	significant_pairs <- (plot_obj$correlation <= opt$corr_cutoff & plot_obj$pval <= opt$p_val_cutoff)
+	if (!sum(significant_pairs) > 0 ){
+		strategies[[strategy]] <- NULL
+		next 
+	}
+	predicted_pairs <- plot_obj$predicted_c > 0
+	validated_pairs <- plot_obj$validated_c > 0
+	both_pairs <- predicted_pairs & validated_pairs
+	stats <- data.frame(stringsAsFactors = FALSE,
+						predicted = pred_stats(significant_pairs, predicted_pairs),
+						validated = pred_stats(significant_pairs, validated_pairs),
+						both = pred_stats(significant_pairs, both_pairs)
+						)
+	print("TEST3")
+
+	rownames(stats) <- c("precision", "recall", "F1")
+
+	stats <- as.data.frame(t(as.matrix(stats)))
+	stats$gold_standard <- rownames(stats)
+
+	all_strategies[[strategy_name]] <- as.data.table(plot_obj)[significant_pairs,]
+	prec_recall[[strategy_name]] <- stats
+	# str(all_strategies[[strategy_name]])
+	# str(stats)
+	print("TEST4")
+
+	gc()
 }
 
-all_strategies <- as.data.frame(rbindlist(all_strategies, use.names=TRUE, idcol="strategy"))
+print("TEST")
+
+
+all_strategies <- as.data.frame(rbindlist(all_strategies, use.names=TRUE, idcol= "strategy"))
+prec_recall <- as.data.frame(rbindlist(prec_recall, use.names = TRUE, idcol = "strategy"))
+
+
+
+all_known_miRNAs <- miRBaseConverter::getAllMiRNAs(version = "v22", type = "all", species = opt$organism)$Accession
+all_strategies$known_miRNA <- all_strategies$miRNAseq %in% all_known_miRNAs 
+print("TEST")
 
 filters_summary <- all_strategies %>%
 					group_by(strategy) %>%
-					summarize(sig_correlated = length(RNAseq),
+					summarize(known_miRNAs = sum(known_miRNA == TRUE),
+								novel_miRNAs = sum(known_miRNA == FALSE),
 								predicted = sum(predicted_c > 0),
 								validated = sum(validated_c > 0), 
 								both = sum(predicted_c > 0 & validated_c > 0))
-filters_summary <- as.data.frame(filters_summary)
+filters_summary <- as.data.frame(filters_summary, stringsAsFactors = FALSE)
 filters_summary <- reshape2::melt(filters_summary)
 names(filters_summary) <- c("strategy", "type", "pairs")
+filters_summary$type <- as.character(filters_summary$type)
+filters_summary$sdev <- rep(NA, nrow(filters_summary))
+filters_summary$p_val <- rep(NA, nrow(filters_summary))
+filters_summary$quantile <- rep(NA, nrow(filters_summary))
 
+
+#generate and merge randoms
+# str(filters_summary)
+print("TEST")
+
+filters_summary <- add_randoms(background = strategies$dd$plot_obj[strategies$dd$plot_obj$miRNAseq %in% all_known_miRNAs,], 
+								filters_summary = filters_summary)
+
+filters_summary$type <- factor(filters_summary$type, levels=c("novel_miRNAs","known_miRNAs","predicted", "predicted_random", "validated","validated_random", "both", "both_random"))
+print(filters_summary)
+
+################ PREPARE ROC DATA
+
+# roc_data <- data.frame(counts_RNA_vs_counts_miRNA = rep(NA, nrow(strategies$dd$plot_obj)), stringsAsFactors = FALSE)
+# rownames(roc_data) <- paste0(strategies$dd$plot_obj$RNAseq, strategies$dd$plot_obj$miRNAseq)
+# for (strategy in names(strategies)){
+# 	strategy_pairs <- paste0(strategies[[strategy]]$plot_obj$RNAseq, strategies[[strategy]]$plot_obj$miRNAseq)
+# 	ordered_correlations <- strategies[[strategy]]$plot_obj[match(rownames(roc_data), strategy_pairs),"correlation"]
+# 	scaled_score <- 1 - ordered_correlations
+# 	scaled_score[is.na(scaled_score)] <- 0
+# 	roc_data[[strategies[[strategy]]$name]] <- scaled_score
+# 	# scaled_score
+# }
+
+# rownames(roc_data) <- NULL
+# roc_data$predicted <- as.numeric(strategies$dd$plot_obj$predicted_c > 0)
+# roc_data$validated <- as.numeric(strategies$dd$plot_obj$validated_c > 0)
+
+# save(, roc_data, file = "/mnt/home/users/bio_267_uma/josecordoba/test/test_miRNA-RNA/test.RData")
+# q()
 ################# GET IDS TARNSALTIONS
 mirna_names <- unique(all_strategies$miRNAseq)
 mirna_names <- mirna_names[grepl("MIMAT", mirna_names)]

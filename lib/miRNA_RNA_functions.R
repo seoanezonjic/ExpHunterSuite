@@ -1,5 +1,5 @@
 ################### FUNCTIONS
-
+ 
 load_DEGH_information <- function(execution_path, translation_table = NULL, only_known = FALSE){
 	execution <- list()
 	execution[['normalized_counts']] <- as.matrix(read.table(file.path(execution_path, "Results_DESeq2/Normalized_counts_DESeq2.txt"), header=TRUE, row.names=1, sep="\t"))
@@ -7,13 +7,13 @@ load_DEGH_information <- function(execution_path, translation_table = NULL, only
 	execution[['DH_results']] <- read.table(file.path(execution_path, "Common_results/hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t")
 	execution[['DH_results']]$gene_name <- rownames(execution[['DH_results']])
 	rownames(execution[['DH_results']]) <- NULL
-	execution[["DH_results"]] <-  execution[["DH_results"]][execution[["DH_results"]]$gene_name != "id",] #Esto es un control porque en algun momento del flujo se ha insertado una columna en la matriz de conteos que no debe
-	
+	execution[["DH_results"]] <-  execution[["DH_results"]][execution[["DH_results"]]$gene_name != "id" & execution[["DH_results"]]$genes_tag != "FILTERED_OUT",] #Esto es un control porque en algun momento del flujo se ha insertado una columna en la matriz de conteos que no debe
+	# execution[["DH_results"]] execution[["DH_results"]][execution[["DH_results"]]$Cluster_ID < mm_fil]
 	execution[['Eigengene']] <- read.table(file.path(execution_path, "Results_WGCNA/eigen_values_per_samples.txt"), header=TRUE, row.names=1, sep="\t")
-	execution[['Eigengene']] <- execution[['Eigengene']] #TODO => Proponer el cambio de output del DGH
+	# execution[['Eigengene']] <- execution[['Eigengene']] #TODO => Proponer el cambio de output del DGH
 	names(execution[["Eigengene"]]) <- str_remove(names(execution[["Eigengene"]]), "ME")
-	execution[["Eigengene"]] <- as.matrix(execution[["Eigengene"]][,names(execution[["Eigengene"]]) != 0])
- 
+	execution[["Eigengene"]] <- as.matrix(execution[["Eigengene"]])
+ 	
 	if (!is.null(translation_table)) {
 	# 	#translate DH_results
 		temp_translation <- as.vector(translation_table[match(execution[['DH_results']]$gene_name, translation_table$input_ID), "mature_ID"])
@@ -124,7 +124,7 @@ add_multimir_info <- function(plot_obj, expand_miRNA = NULL , expand_RNA = NULL,
 		RNAseq <- expand_RNA  %>% select(Cluster_ID, gene_name)
 		RNAseq <- as.data.table(RNAseq)
 		colnames(RNAseq) <- c("module", "RNAseq")
-		print(head(RNAseq))
+		# print(head(RNAseq))
 		RNAseq$module <- as.character(RNAseq$module)
 
 		plot_obj <- merge(x = plot_obj, y = RNAseq, by.x = "RNAseq_mod", by.y = "module", by =.EACHI, allow.cartesian  = TRUE)
@@ -178,3 +178,98 @@ get_module_genes <- function(hunter_results, module_name, column_name){
 	colnames(module_genes) <- c("module", column_name)
 	return(module_genes)
 }
+
+add_randoms <- function(background = NULL, filters_summary = NULL, permutations = 100){
+	# str(background)
+	# str(filters_summary)
+	for (strategy_name in unique(filters_summary$strategy)) {
+		dist <- list(
+			"random_predicted_counts" = c(),
+			"random_validated_counts" = c(),
+			"random_both_counts" = c()
+		)
+		sig_pairs <- filters_summary[filters_summary$strategy == strategy_name & filters_summary$type == "known_miRNAs", "pairs"]
+		for (i in 1:permutations ){
+			random_indices <- sample(1:nrow(background), size = sig_pairs , replace = FALSE)	
+			random_strat <- background[random_indices,]
+			# save(random_strat, file = "/mnt/home/users/bio_267_uma/josecordoba/test/test_miRNA-RNA/test.RData")
+			# q() 
+			random_summary <- random_strat %>% 
+							   summarize(predicted = sum(predicted_c > 0),
+							   			validated = sum(validated_c > 0), 
+							   			both = sum(predicted_c > 0 & validated_c > 0))
+			
+			dist[["random_predicted_counts"]] <- c(dist[["random_predicted_counts"]], random_summary$predicted)
+			dist[["random_validated_counts"]] <- c(dist[["random_validated_counts"]], random_summary$validated)
+			dist[["random_both_counts"]] <- c(dist[["random_both_counts"]], random_summary$both)
+		}
+
+		# print(paste0(length(random_predicted_counts), " iterations"))
+		# predicted_pairs <- filters_summary$pairs[filters_summary$strategy == strategy_name & filters_summary$type == "predicted"]
+		# validated_pairs <- filters_summary$pairs[filters_summary$strategy == strategy_name & filters_summary$type == "validated"]
+		# both_pairs <- filters_summary$pairs[filters_summary$strategy == strategy_name & filters_summary$type == "both"]
+		random_summary <- data.frame(strategy = strategy_name,
+									type = c("predicted_random", "validated_random", "both_random"),
+									pairs = c(mean(dist[["random_predicted_counts"]]), mean(dist[["random_validated_counts"]]), mean(dist[["random_both_counts"]])),
+									sdev = c(sd(dist[["random_predicted_counts"]]), sd(dist[["random_validated_counts"]]), sd(dist[["random_both_counts"]])),
+									p_val = rep(NA, 3), #c(calc_pval(predicted_pairs, random_predicted_counts), calc_pval(validated_pairs, random_validated_counts), calc_pval(both_pairs,random_both_counts)),
+									quantile = rep(NA, 3) #c(calc_quantile(predicted_pairs, random_predicted_counts), calc_quantile(validated_pairs, random_validated_counts), calc_quantile(both_pairs,random_both_counts))
+
+									)
+		for (type in c("predicted", "validated", "both")) {
+			type_pairs <- filters_summary$pairs[filters_summary$strategy == strategy_name & filters_summary$type == type]
+			# str(type_pairs)
+			# str(dist[[paste0("random_", type, "_counts")]])
+			filters_summary[filters_summary$strategy == strategy_name & filters_summary$type == type, "p_val"] <- calc_pval(type_pairs, dist[[paste0("random_", type, "_counts")]])
+			filters_summary[filters_summary$strategy == strategy_name & filters_summary$type == type, "quantile"] <- calc_quantile(type_pairs, dist[[paste0("random_", type, "_counts")]]) 
+		}
+		# print(filters_summary)
+		# print("test")
+		# print(random_summary)
+		filters_summary <- rbind(filters_summary, random_summary)	
+	}
+	gc()
+	# save(filters_summary, file = "/mnt/home/users/bio_267_uma/josecordoba/test/test_miRNA-RNA/test.RData")
+
+	return(filters_summary)
+}
+
+calc_pval <- function(value, distribution){
+	d_mean <- mean(distribution)
+	d_sd <- sd(distribution)
+	pval <- 1 - pnorm(value, mean = d_mean, sd = d_sd)
+	return(pval)
+}
+
+calc_quantile <- function(value, distribution){
+	Fn <- ecdf(distribution)
+	quantile <- 1 - Fn(value)
+	return(quantile)
+}
+
+pred_stats <- function(predicted, condition){ #takes 2 true/false vectors and returns another vector c(precision, recall, f measure)
+	all_stats <- table(predicted, condition)
+	tpositives <- all_stats["TRUE","TRUE"]
+	fnegatives <- all_stats["FALSE","TRUE"]
+	fpositives <- all_stats["TRUE","FALSE"]
+	precision <- tpositives / (tpositives + fpositives)
+	recall <- tpositives / (tpositives + fnegatives)
+	fmeasure <- calc_f_measure(precision, recall)
+	return(c(precision, recall, fmeasure))
+}
+
+# calc_prediction <- function(){
+
+# }
+
+
+# calc_recall <- function(){}
+
+calc_f_measure <- function(precision, recall) { #precision and recall must be numeric vectors or numbers
+	f_measure <- ( 2 * precision * recall) / (precision + recall)
+	return(f_measure) 
+}
+
+# load_functional_files <- function(folder = NULL, strategies = NULL) {
+	
+# }

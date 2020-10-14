@@ -1,0 +1,146 @@
+---
+author: "José Córdoba Caballero"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+    fig_width: 12
+---
+
+<style type='text/css'>
+    body .main-container {
+        max-width: 90%;
+    }
+
+    .plot_real_size {
+    	overflow: scroll;
+  	}
+
+    .plot_real_size img{
+    	max-width: none;
+    	max-height: none;
+    }
+
+    embed {
+   		width: 800px;
+  		height: 800px;
+  }   
+</style>
+
+```{r config, include = FALSE}
+ 
+# Load necessary packages
+require(ggplot2)
+require(knitr)
+
+# Prepare recursive text
+
+# Prepare all HPO reports container
+out <- NULL
+n_category <- 30
+cl <- miRNA #this is for make compatible ora_enrichResult.Rmd 
+
+```
+
+
+
+
+# **DEgenes Hunter - miRNA `r miRNA` - Functional analysis report** 
+
+
+## **General description**
+This report contains all the functional information that was requested by the options when targets_functional.R was executed.
+The functional categories can be:
+
+* KEGG pathways
+* GO:
+	+ Biological Process
+	+ Molecular Function
+	+ Cellular Component
+* Reactome pathways
+* Custom nomenclature
+
+Some sections will not show if there are not sinficative results. Each category is analysed using Over representation analysis (ORA).
+The ORA method takes a group of significative miRNA targets and performs a hypergeometric test for each term of the selected functional category.
+
+
+```{r expression_profiles, echo = FALSE, message = FALSE, warning = FALSE, eval = !is.null(opt$RNAseq_folder) && !is.null(opt$RNAseq_folder) }
+
+# Load genes expressions
+targets <- unique(raw_data[raw_data$miRNA_names == miRNA, "RNAseq"])
+
+tgt_indx <- which(RNAseq[['normalized_counts']]$Gene %in% targets)
+# Prepare regular cluster info
+
+miRNA_id <- unique(raw_data[raw_data$miRNA_names == miRNA, "miRNAseq"])
+miRNA_mod <- miRNAseq$DH_results[miRNAseq$DH_results$gene_name == miRNA_id, "Cluster_ID"]
+save.image(file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/debug.RData")
+if (miRNA_strat == "d") {
+
+  Count <- miRNAseq[['normalized_counts']][, miRNA_id]
+  miRNA_profile <- as.data.frame(Count)
+  miRNA_profile$Sample <- rownames(miRNA_profile)
+  miRNA_profile$type <- paste0(miRNA_id, " mormalized profile")
+
+
+} else if (miRNA_strat == "h") {
+
+  Count <- hub_miRNAs[,as.character(miRNA_mod)]
+  miRNA_profile <- as.data.frame(Count)
+  miRNA_profile$Sample <- rownames(miRNA_profile)
+  miRNA_profile$type <- paste0("Hub gene of module ", miRNA_mod)
+
+} else if (miRNA_strat == "E") {
+
+  # miRNAseq$Eigengene <- as.data.frame(as.table(miRNAseq$Eigengene), stringsAsFactors = FALSE)
+  # colnames(miRNAseq$Eigengene) <- c("Sample","Cluster_ID","Count") 
+  # tgt_eigvalues_gnorm <- miRNAseq$Eigengene
+  # tgt_eigvalues_gnorm$Count <- (tgt_eigvalues_gnorm$Count + 1) / 2 
+
+  miRNA_profile <- tgt_eigvalues_gnorm[tgt_eigvalues_gnorm$Cluster_ID == miRNA_mod, c("Sample", "Count")]
+  miRNA_profile$type <- paste0("Eigengene of module ", miRNA_mod)
+
+}
+
+# cl_profile <- cl_eigvalues_gnorm[cl_eigvalues_gnorm$Cluster_ID == ,]
+# message(cl_profile)
+# cl_profile <- cl_eigvalues_gnorm[grepl(paste(c("ME",{{cl}},"$"),collapse=""), cl_eigvalues_gnorm$Cluster_ID),]
+# message(cl_profile)
+# q()
+# Plot
+
+pp <- ggplot(mapping = aes(x = Sample)) + 
+    geom_line(data = RNAseq$normalized_counts[tgt_indx, ], alpha = 0.05, mapping = aes(y = Count, group = Gene)) +
+    geom_line(data = miRNA_profile, mapping = aes(y = Count, group = type), color = "blue", linetype = "dashed", size = 0.5) +
+    # scale_y_continuous(sec.axis = sec_axis(~.*2-1, name = "miRNA-targets correlation")) +
+      theme(axis.text.x = element_text(angle = 30, hjust = 1))
+plot(pp)
+```
+
+
+```{r load_ORA_results, echo = FALSE, eval = exists("enrichments_ORA_expanded")}
+# Per each category defined, perform enrichment
+curr_out <- unlist(lapply(names(enrichments_ORA_expanded),function(cat){
+  sec_text <- paste(c("## **",cat," enrichment results**\n"),collapse="") # Header
+  sec_text <- c(sec_text,knit_expand("partial/ora_enrichResult.Rmd")) # Body
+  return(sec_text)
+}))
+```
+`r paste(knit(text = curr_out), collapse = '\n')`
+
+
+```{r load_ORA_customResults, echo = FALSE}
+curr_out <- ""
+
+if(exists("custom_cls_ORA")){
+  # Per each custom category defined, perform enrichment
+  curr_out <- unlist(lapply(names(custom_cls_ORA),function(cat){
+    sec_text <- paste(c("## **",basename(cat)," custom enrichment results**\n"),collapse="") # Header
+    sec_text <- c(sec_text,knit_expand("partial/ora_customEnrichResult.Rmd")) # Body
+    return(sec_text)
+  }))
+}
+```
+`r paste(knit(text = curr_out), collapse = '\n')`
+
