@@ -7,6 +7,10 @@ handling_errors <- function(a){
   return(list(expres_diff, normalized_counts, all_genes_df))
 }
 
+standard_error <- function(x) {
+  sd(x) / sqrt(length(x))
+}
+
 ########################################################
 # Functions to generate output files
 unite_DEG_pack_results <- function(all_DE, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, p_val_cutoff, lfc, minpack_common) {
