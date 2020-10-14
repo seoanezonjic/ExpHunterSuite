@@ -249,6 +249,16 @@ vennDiagram(intersections, circle.col = rainbow(length(sets)))
 
 ```
 
+```{r setup_logFCplots, echo = FALSE}
+var_thr <- 0.01
+```
+
+This graph shows logFC calculated (y-axis) for each package (points) and gene (x-axis). Only genes with variability over `r var_thr` will be plotted. This representation allows to user to observe the behaviour of each DE package and detect when one of them has atypical results.
+```{r logFCplots, echo = FALSE}
+plot(ht2logFCPlot(DE_all_genes, var_filter = var_thr, title = paste0("(variance threshold >= ",var_thr,")")))
+```
+
+
 ### **FDR gene-wise benchmarking**
 
 Benchmark of false positive calling (Image extracted from {"padj\_prevalent\_DEGs.pdf"} file):

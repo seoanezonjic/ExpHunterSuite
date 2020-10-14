@@ -216,7 +216,71 @@ extract_legend <- function(a.gplot){ #code taken from https://stackoverflow.com/
 }
 
 
+#' Function to generate scatter plot for each gene in a hunter table and show logFC per package
+#' taking into account the variablity between them
+#' @param ht : hunter table dataframe
+#' @param var_filter : variability threshold to show gene into this graph (low variability will be removed)
+#' @param title : plot title
+#' @param y_range : y limit to be applied. Only a number must be provided. NULL will not fix the axis
+#' @return plot ready to be rendered
+#' @require ggplot2
+#' @author Fernando Moreno Jabato <jabato(at)uma(dot)com>
+ht2logFCPlot <- function(ht,var_filter = 0.001, title = "Filtered logFC", y_range = NULL){
+  gene_names <- rownames(ht)
+  target_cols <- which(grepl("logFC_",colnames(ht)))
+  aux_pack <- gsub("logFC_","",colnames(ht))
+  df_logfc <- data.frame(Gene = character(),
+              Package = character(),
+              logFC = numeric(),
+              stringsAsFactors = FALSE)
+  invisible(lapply(target_cols,function(j){
+    df_logfc <<- rbind(df_logfc,data.frame(Gene = gene_names,
+                        Package = rep(aux_pack[j],length(gene_names)),
+                        logFC = ht[,j],
+                        stringsAsFactors = FALSE))
+  }))
+  nas <- which(is.na(df_logfc$logFC))
+  if(length(nas) > 0) df_logfc <- df_logfc[-nas,]
+  # Calculate var
+  gene_names <- unique(df_logfc$Gene)
+  vars <- unlist(lapply(seq_along(gene_names),function(i){var(df_logfc$logFC[which(df_logfc$Gene == gene_names[i])])}))
+  names(vars) <- gene_names
+  vars <- sort(vars, decreasing = T)
+  vars <- vars[vars > var_filter]
+  df_logfc$Gene <- factor(df_logfc$Gene, levels = names(vars))
+  df_logfc <- df_logfc[-which(is.na(df_logfc$Gene)),]
+  # Check special cases
+  if(!is.null(y_range)){
+    df_logfc$Type <- unlist(lapply(df_logfc$logFC,function(lgfc){ifelse(abs(lgfc) <= abs(y_range),"Regular","Outlier")}))
+    invisible(lapply(which(df_logfc$Type == "Outlier"),function(i){
+      if(df_logfc$logFC[i] < 0){
+        df_logfc$logFC[i] <<- -abs(y_range) 
+      }else{
+        df_logfc$logFC[i] <<- abs(y_range)
+      }
+    }))
+    df_logfc$Type <- factor(df_logfc$Type, levels = c("Regular","Outlier"))
+  }
 
+  # Plot
+  # Check special cases
+  if(!is.null(y_range)){
+    pp <- ggplot(df_logfc, aes(x = Gene, y = logFC, colour = Package)) + 
+        geom_point(alpha = 0.5, size = 0.4, aes(shape = Type)) +
+        scale_shape_manual(values=c(1, 6)) +
+        ylim(c(-abs(y_range),abs(y_range))) 
+  }else{
+    pp <- ggplot(df_logfc, aes(x = Gene, y = logFC, colour = Package)) + 
+        geom_point(alpha = 0.5, size = 0.4) 
+  }
+  pp <- pp + 
+    xlab(paste0("Gene (",100 - round(length(unique(df_logfc$Gene))/length(unique(rownames(ht))),4)*100,"% of genes has not significant variability)")) + 
+    ggtitle(title) + 
+    theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+  # Return
+  return(pp)
+}
 
 
 
