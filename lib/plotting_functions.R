@@ -222,10 +222,12 @@ extract_legend <- function(a.gplot){ #code taken from https://stackoverflow.com/
 #' @param var_filter : variability threshold to show gene into this graph (low variability will be removed)
 #' @param title : plot title
 #' @param y_range : y limit to be applied. Only a number must be provided. NULL will not fix the axis
+#' @param top : plots only the top N items with more variance. NULL will not filter
+#' @param alpha : transparency of dots
 #' @return plot ready to be rendered
 #' @require ggplot2
 #' @author Fernando Moreno Jabato <jabato(at)uma(dot)com>
-ht2logFCPlot <- function(ht,var_filter = 0.001, title = "Filtered logFC", y_range = NULL){
+ht2logFCPlot <- function(ht,var_filter = 0.001, title = "Filtered logFC", y_range = NULL, top = 50, alpha = 0.5){
   gene_names <- rownames(ht)
   target_cols <- which(grepl("logFC_",colnames(ht)))
   aux_pack <- gsub("logFC_","",colnames(ht))
@@ -247,6 +249,10 @@ ht2logFCPlot <- function(ht,var_filter = 0.001, title = "Filtered logFC", y_rang
   names(vars) <- gene_names
   vars <- sort(vars, decreasing = T)
   vars <- vars[vars > var_filter]
+  aux_vars <- length(vars)
+  if(!is.null(top)){
+    if(top <= length(vars)) vars <- vars[1:top]
+  }
   df_logfc$Gene <- factor(df_logfc$Gene, levels = names(vars))
   df_logfc <- df_logfc[-which(is.na(df_logfc$Gene)),]
   # Check special cases
@@ -266,22 +272,21 @@ ht2logFCPlot <- function(ht,var_filter = 0.001, title = "Filtered logFC", y_rang
   # Check special cases
   if(!is.null(y_range)){
     pp <- ggplot(df_logfc, aes(x = Gene, y = logFC, colour = Package)) + 
-        geom_point(alpha = 0.5, size = 0.4, aes(shape = Type)) +
-        scale_shape_manual(values=c(1, 6)) +
+        geom_point(alpha = alpha, aes(shape = Type)) +
+        scale_shape_manual(values=c(16, 17)) +
         ylim(c(-abs(y_range),abs(y_range))) 
   }else{
     pp <- ggplot(df_logfc, aes(x = Gene, y = logFC, colour = Package)) + 
-        geom_point(alpha = 0.5, size = 0.4) 
+        geom_point(alpha = alpha) 
   }
   pp <- pp + 
-    xlab(paste0("Gene (",100 - round(length(unique(df_logfc$Gene))/length(unique(rownames(ht))),4)*100,"% of genes has not significant variability)")) + 
+    xlab(paste0("Gene (",100 - round(aux_vars/length(unique(rownames(ht))),4)*100,"% of genes has not significant variability)")) + 
     ggtitle(title) + 
+    theme_classic() + 
     theme(axis.text.x=element_blank(),
         axis.ticks.x=element_blank())
   # Return
   return(pp)
 }
-
-
 
 
