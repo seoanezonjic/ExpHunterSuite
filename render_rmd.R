@@ -47,7 +47,7 @@ if(is.null(actual_opt$output)){
   actual_opt$output <- file.path("./", actual_opt$template)
 }
 if(!grepl(".html", actual_opt$output)){
-  actual_opt$output <- paste0(actual_opt$output, actual_opt$template, ".html")
+  actual_opt$output <- paste0(actual_opt$output, ".html")
 }
 
 load(actual_opt$input)

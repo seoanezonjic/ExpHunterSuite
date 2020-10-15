@@ -32,10 +32,23 @@ output:
 
 # **RNAseq - miRNAseq correlation report**
 
+```{r introduction, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+cat(paste0("This report summarizes results from [script_name] execution comparing ", opt$RNAseq_folder, "RNAseq data and ", opt$miRNAseq_folder, " miRNAseq data.
+ miRNAseq and RNAseq data has been correlated using different strategies and then compared with databases included in multiMiR." ))
+```
+*Strategies description
+ + counts_RNA_vs_counts_miRNA correlates normalized RNAseq counts with normalized miRNAseq counts. 
+ + Eigen_RNA_v_Eigen_miRNA correlates Eigengene profile of RNAseq coexpression modules with Eigengene profile of miRNAseq coexpression modules. 
+ + Eigen_RNA_v_Hub1_miRNA correlates Eigengene profile of RNAseq coexpression modules with hub gene profile of miRNAseq coexpression modules. 
+ + Eigen_RNA_v_counts_miRNA correlates Eigengene profile of RNAseq coexpression modules with with normalized miRNAseq counts.
+ + Hub1_RNA_v_counts_miRNA correlates hub gene profile of RNAseq coexpression modules with with normalized miRNAseq counts.
+ + Hub1_RNA_v_Eigen_miRNA correlates hub gene profile of RNAseq coexpression modules with Eigengene profile of miRNAseq coexpression modules.
+
+
 ```{r methods_comparison_violin_cor, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 
 cat("## **RNAseq and miRNAseq correlation methods comparison**")
-cat("\nThis plot shows the distributions of correlations between RNAseq and miRNAseq using diferent strategies explained above.
+cat("\nThis plot shows the distributions of correlations between RNAseq and miRNAseq using diferent strategies.
   \n")
 pp <- ggplot(all_strategies, aes(x = strategy, y = correlation, fill = strategy)) +
   geom_violin(trim = FALSE, scale = "width") + ylim(-1.000001, opt$corr_cutoff + 0.1) +
@@ -47,7 +60,7 @@ pp
 
 ```{r methods_comparison_violin_p, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 
-cat("\n\nThis plot shows the distributions of correlation P values between RNAseq and miRNAseq using diferent strategies explained above.
+cat("\n\nThis plot shows the distributions of correlation P values between RNAseq and miRNAseq using diferent strategies.
   \n")
 pp <- ggplot(all_strategies, aes(x = strategy, y = pval, fill = strategy)) +
   geom_violin(trim = FALSE, scale = "width") + ylim(-0.0001, 0.2) +
@@ -63,9 +76,35 @@ cat("\n\n This plot shows how strategies are supported by target databases\n\n")
 
 pp <- ggplot(filters_summary, aes(y = pairs, x = strategy, fill = type)) + 
       geom_bar(stat= "identity",position=position_dodge()) +
+      geom_errorbar(aes(ymin=pairs-sdev, ymax=pairs+sdev), width=.2,
+                 position=position_dodge(.9)) + 
       theme(axis.text.x = element_text(angle = 20, hjust = 1)) + 
-      geom_text(aes(label = pairs), position = position_dodge(width=0.9), size=4)
+      geom_text(aes(label = pairs), angle = 45, position = position_dodge(width=0.95), size=2, vjust = -2)
 pp
+
+filter_stats <- filters_summary[!is.na(filters_summary$p_val), c("strategy", "type", "p_val", "quantile")]
+filter_stats <- reshape(filter_stats, timevar="type", idvar="strategy", direction ="wide")
+filter_stats$targets <- rep(NA, nrow(filter_stats))
+# save(filter_stats, all_strategies, file = file.path(opt$output_files, "debug.RData") )
+for (strategy in unique(filter_stats$strategy)) {
+  prevalent_miRNAs <- miRNAseq[["DH_results"]]$gene_name[miRNAseq[["DH_results"]]$genes_tag == "PREVALENT_DEG"]
+
+  filter_stats[filter_stats$strategy == strategy, "targets"] <- length(unique(all_strategies$RNAseq[all_strategies$strategy == strategy]))
+
+  filter_stats[filter_stats$strategy == strategy, "DEGs_targets"] <- length(unique(all_strategies$RNAseq[all_strategies$strategy == strategy & all_strategies$miRNAseq %in% prevalent_miRNAs]))
+}
+
+cat("\n\n This table compare P values and Quantile of pairs discovering by strategy. Targets are unique count of genes that correlated with prevalent differential expression miRNAs\n\n")
+knitr::kable(filter_stats, digits = 3, format.args = list(scientific = TRUE))
+# datatable(filter_stats, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+#             options = list(
+#               paging = FALSE,
+#               colReorder = TRUE,
+#               dom = 'lftBip',
+#               buttons = c('copy', 'csv', 'excel')
+#           ))
+
+valid_strats <- filter_stats[filter_stats$p_val.predicted < 0.01 & filter_stats$p_val.validated < 0.01, "strategy"]
 
 ```
 
@@ -99,7 +138,7 @@ pp <- gg_heatmap(data =  common_pairs,
             text_plot= "text", 
             labs = FALSE)
 pp
-
+gc()
 ```
 
 ```{r methods_comparison_cor_dist, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
@@ -107,32 +146,99 @@ pp
 cat("\n\nOverlap between the different strategies in terms of miRNA-target gene pairs detected.\n\n")
 
 
-null_distribution <- strategies$zero$plot_obj[,c("correlation","pval")]
-distribution_legend <- c()
-plot_grid <- lapply(names(strategies), function(strategy) {
-    signif_distribution <- strategies[[strategy]]$plot_obj 
+# distribution_legend <- c()
 
-    cor_distributions <- data.frame(subset = "background", correlation = strategies$zero$plot_obj$correlation, stringsAsFactors = FALSE)
-    # save(cor_distributions, signif_distribution, file = file.path(opt$output_files, "debug.RData"))
+# plot_grid <- lapply(names(strategies), function(strategy) {
+#     signif_distribution <- strategies[[strategy]]$plot_obj 
 
-    cor_distributions <- rbind(cor_distributions, data.frame(subset = "predicted", 
-                                                              correlation = signif_distribution[signif_distribution$predicted_c > 0,"correlation"]))
-    cor_distributions <- rbind(cor_distributions, data.frame(subset = "validated", 
-                                                              correlation = signif_distribution[signif_distribution$validated_c > 0,"correlation"]))
-    cor_distributions <- rbind(cor_distributions, data.frame(subset = "both", 
-                                                              correlation = signif_distribution[signif_distribution$validated_c > 0 & signif_distribution$predicted_c > 0, "correlation"]))
-    gg <- ggplot(data = cor_distributions, aes(x = correlation, color = subset, fill = subset) ) +
-          ggtitle(strategies[[strategy]]$name) +
-          geom_density(alpha = 0.2, stat = "density") + ylim(0,2) + theme(legend.position = "top")
-    return(gg)
-})
+#     cor_distributions <- data.frame(subset = "background", correlation = strategies$dd$plot_obj$correlation, stringsAsFactors = FALSE)
+#     # save(cor_distributions, signif_distribution, file = file.path(opt$output_files, "debug.RData"))
 
-distribution_legend <- extract_legend(plot_grid[[1]])
-plot_grid <- lapply(plot_grid, function(plot){ return(plot + theme(legend.position = "none")) })
+#     cor_distributions <- rbind(cor_distributions, data.frame(subset = "predicted", 
+#                                                               correlation = signif_distribution[signif_distribution$predicted_c > 0,"correlation"]))
+#     cor_distributions <- rbind(cor_distributions, data.frame(subset = "validated", 
+#                                                               correlation = signif_distribution[signif_distribution$validated_c > 0,"correlation"]))
+#     cor_distributions <- rbind(cor_distributions, data.frame(subset = "both", 
+#                                                               correlation = signif_distribution[signif_distribution$validated_c > 0 & signif_distribution$predicted_c > 0, "correlation"]))
+#     gg <- ggplot(data = cor_distributions, aes(x = correlation, color = subset, fill = subset) ) +
+#           ggtitle(strategies[[strategy]]$name) +
+#           geom_density(alpha = 0.2, stat = "density") + ylim(0,2) + theme(legend.position = "top")
+#     cor_distributions <- NULL
+#     return(gg)
+# })
 
-library(grid)
-grid.draw(distribution_legend) 
-grid.arrange(grobs = plot_grid, ncol = 3)
+# distribution_legend <- extract_legend(plot_grid[[1]])
+# plot_grid <- lapply(plot_grid, function(plot){ return(plot + theme(legend.position = "none")) })
+
+# library(grid)
+# grid.draw(distribution_legend) 
+# grid.arrange(grobs = plot_grid, ncol = 3)
+
+```
+
+```{r roc_curve, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+#   print(valid_strats)
+#   print(roc_data)
+# save(valid_strats, roc_data, file = "/mnt/home/users/bio_267_uma/josecordoba/test/test_miRNA-RNA/test.RData")
+#     roc_predicted <- roc_data$predicted
+#     roc_data$predicted <- NULL
+#     roc_validated <- roc_data$validated
+#     roc_data$validated <- NULL
+#     roc_data <- roc_data[, valid_strats]
+
+
+#     # roc_data <- as.matrix(roc_data)
+#     cat("\n\nROC curve using multiMiR predicted relations as gold standard\n\n")
+#     pred_pred <- ROCR::prediction(roc_data, labels = matrix(roc_predicted, nrow = length(roc_predicted), ncol = ncol(roc_data)))
+#     perf_roc_pred <- ROCR::performance(pred_pred, "tpr", "fpr")
+
+#     plot(perf_roc_pred, main = "ROC")
+#     cat("\n\nPrecision-Recall curve using multiMiR predicted relations as gold standard\n\n")
+
+#     prec_rec_pred <- ROCR::performance(pred_pred, "prec", "rec")
+#     plot(prec_rec_pred, main = "PREC-REC")
+
+#     cat("\n\nROC curve using multiMiR validated relations as gold standard\n\n")
+
+#     pred_val <- ROCR::prediction(roc_data, labels = matrix(roc_validated, nrow = length(roc_validated), ncol = ncol(roc_data)))
+#     perf_roc_val <- ROCR::performance(pred_val, "tpr", "fpr")
+#     plot(perf_roc_val, main = "ROC")  
+
+#     prec_rec_val <- ROCR::performance(pred_val, "prec", "rec")
+#     plot(prec_rec_val, main = "PREC-REC")
+
+``` 
+```{r auc_table, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+    # cat("\n\nArea under the curve for different strategies using multiMiR predicted and validated pairs as gold standard\n\n")
+    # predicted_auc <- ROCR::performance(pred_pred, "auc")
+    # predicted_val <- ROCR::performance(pred_val, "auc")
+    # all_auc <- data.frame(strategy = colnames(roc_data),
+    #                       predicted_auc = unlist(predicted_auc@y.values),
+    #                       validated_auc = unlist(predicted_val@y.values)
+    #                       )
+
+    # datatable(all_auc, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+    #         options = list(
+    #           paging = FALSE,
+    #           colReorder = TRUE,
+    #           dom = 'lftBip',
+    #           buttons = c('copy', 'csv', 'excel')
+    #       ))
+```
+```{r prec_rec, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+    
+    prec_recall <- prec_recall[prec_recall$strategy %in% valid_strats,]
+    prec_recall$gold_standard <- factor(prec_recall$gold_standard, levels=c("predicted","validated","both"))
+
+    for (metric in c("precision", "recall", "F1")) {
+      gg <- ggplot(prec_recall, aes(x = strategy, y = prec_recall[,metric], fill = gold_standard))+
+      geom_bar(stat= "identity",position=position_dodge()) + 
+      ggtitle(metric)
+      cat(paste0("\n\n",metric," comparison for strategies\n\n"))
+      plot(gg)
+    }
+
+  # save.image( file = file.path(opt$output_files, "debug.RData") )
 
 ```
 
@@ -148,5 +254,8 @@ grid.arrange(grobs = plot_grid, ncol = 3)
       return(sec_text)
   }))    
 ``` 
+
+
+
 
 `r paste(knit(text = curr_out), collapse = '\n')`

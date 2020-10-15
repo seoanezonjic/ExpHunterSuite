@@ -7,6 +7,17 @@ resize <- function(g, fig_height=5, fig_width=12) {
   cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk), quiet = TRUE))
 }
 
+plot_enrResult_DT <- function(ER){
+  toshow <- fortify(ER)[,!colnames(ER@compareClusterResult) %in% c("pvalue","qvalue")]
+  toshow$Cluster <- gsub("[\n,\t,\r]{0,1}\\(.*\\)","",toshow$Cluster)
+  datatable(toshow, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+                      options = list(
+                        colReorder = TRUE,
+                        dom = 'lftBip',
+                          buttons = c('copy', 'csv', 'excel')
+  ))
+}
+
 plot_in_div <- function(g, fig_height=7, fig_width=12, ## height and width in inches
   cex = 1, #size multiplier
   max_size = 50, # max size for plots in inches

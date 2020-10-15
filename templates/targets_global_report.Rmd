@@ -1,0 +1,329 @@
+
+---
+author: "José Córdoba Caballero"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+    fig_width: 12
+---
+
+<style type='text/css'>
+    body .main-container {
+        max-width: 90%;
+
+    }
+
+    .plot_real_size {
+    	overflow: scroll;
+  		max-height: 600px;
+  	}
+
+    .plot_real_size img{
+    	max-width: none;
+    	max-height: none;
+    }
+
+    embed {
+   
+  }   
+</style>
+
+```{r config, include = FALSE}
+n_category <- 30
+base_width <- 30
+
+
+# Load necessary packages
+require(ggplot2)
+require(knitr)
+require(plyr)
+require(clusterProfiler)
+require(DT)
+
+# Prepare all HPO reports container
+out <- NULL
+
+# Check executed modules
+all_posible <- c("GO_BP","GO_CC","GO_MF","KEGG","REACT")
+executed <- as.list(all_posible %in% names(enrichments_ORA))
+
+names(executed) <- all_posible
+```
+
+```{r kegg_main,  results='asis', echo = FALSE, eval = executed[["KEGG"]]}
+cat("## **KEGG analysis**\n")
+```
+```{r kegg_ora, results='asis', echo=FALSE, eval = executed[["KEGG"]], message = FALSE}
+
+cat("### **Over Representation Analysis**\n",
+	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+
+plot_enrResult_DT(enrichments_ORA$KEGG)
+
+
+cat(
+	"**Dotplot**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+message("Printing dotplot")
+cat(length(get_categories(enrichments_ORA$KEGG)))
+pp <- dotplot(enrichments_ORA$KEGG, showCategory=n_category) 
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$KEGG), calc_width(enrichments_ORA$KEGG))
+
+
+
+
+cat(
+	"**Heatmap**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+message("Printing heatplot")
+
+pp <- clusters_heatplot(enrichments_ORA$KEGG@compareClusterResult)  
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$KEGG), calc_width(enrichments_ORA$KEGG))
+
+cat('\n\n**Enrich Map plot**\n\n', 
+	'WRITE THIS TEXT >>>>.\n\n'
+)
+
+pp <- emapplot(enrichments_ORA$KEGG, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
+plot_in_div(pp, fig_width = calc_width(enrichments_ORA$KEGG))
+
+
+
+```
+
+
+
+```{r reac_main,  results='asis', echo = FALSE, eval = executed[["REACT"]]}
+cat("## **Reactome analysis**\n")
+```
+```{r reac_ora, results='asis', echo=FALSE, eval = executed[["REACT"]]}
+
+cat("### **Over Representation Analysis**\n",
+	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+
+plot_enrResult_DT(enrichments_ORA$REACT)
+
+
+cat(
+	"**Dotplot**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+cat(length(get_categories(enrichments_ORA$REACT)))
+
+pp <- dotplot(enrichments_ORA$REACT, showCategory=n_category)  
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$REACT), calc_width(enrichments_ORA$REACT))
+
+
+cat(
+	"**Heatmap**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- clusters_heatplot(enrichments_ORA$REACT@compareClusterResult)  
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$REACT),calc_width(enrichments_ORA$REACT))
+
+cat('\n\n**Enrich Map plot**\n\n', 
+	'WRITE THIS TEXT >>>>.\n\n'
+)
+pp <- emapplot(enrichments_ORA$REACT, showCategory=n_category, pie="count", pie_scale=1.5, layout="kk")
+plot_in_div(pp, fig_width = calc_width(enrichments_ORA$REACT))
+
+
+```
+
+
+
+
+```{r go_main,  results='asis', echo = FALSE, eval = any(executed[["GO_BP"]], executed[["GO_MF"]], executed[["GO_CC"]])}
+cat("## **Gene Ontology (GO) analysis**\n")
+```
+
+```{r go_bp_ora, results='asis', echo=FALSE, eval = executed[["GO_BP"]]}
+
+cat("### **[BP] Over Representation Analysis**\n",
+	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+
+plot_enrResult_DT(enrichments_ORA$GO_BP)
+
+
+cat(
+	"**Dotplot**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+cat(length(unique(get_categories(enrichments_ORA$GO_BP, showCategory = n_category))))
+
+pp <- dotplot(enrichments_ORA$GO_BP, showCategory=n_category)  
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_BP, showCategory=n_category), calc_width(enrichments_ORA$GO_BP))
+
+
+cat(
+	"**Heatmap**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- clusters_heatplot(enrichments_ORA$REACT@compareClusterResult) 
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_BP),calc_width(enrichments_ORA$GO_BP))
+
+cat('\n\n**Enrich Map plot**\n\n', 
+	'WRITE THIS TEXT >>>>.\n\n'
+)
+pp <- emapplot(enrichments_ORA$GO_BP, showCategory=n_category, pie="count", pie_scale=1.5, layout="kk")
+plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_BP))
+
+
+```
+
+```{r go_mf_ora, results='asis', echo=FALSE, eval = executed[["GO_MF"]]}
+
+cat("### **[MF] Over Representation Analysis**\n",
+	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+
+plot_enrResult_DT(enrichments_ORA$GO_MF)
+
+
+cat(
+	"**Dotplot**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+pp <- dotplot(enrichments_ORA$GO_MF, showCategory=n_category)  
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_MF), calc_width(enrichments_ORA$GO_MF))
+
+cat(
+	"**Heatmap**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- clusters_heatplot(enrichments_ORA$GO_MF@compareClusterResult) 
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_MF), calc_width(enrichments_ORA$GO_MF))
+
+cat('\n\n**Enrich Map plot**\n\n', 
+	'WRITE THIS TEXT >>>>.\n\n'
+)
+pp <- emapplot(enrichments_ORA$GO_MF, showCategory=n_category, pie="count", pie_scale=1.5, layout="kk")
+plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_MF))
+# cat(
+# 	"**CNetplot**\n\n", 
+# 	"WRITE THIS TEXT >>>>.\n\n"
+# )
+# pp <- cnetplot(enrichments_ORA$GO_MF, showCategory = n_category)
+# plot_in_div(pp, calc_height(enrichments_ORA$GO_MF),calc_width(enrichments_ORA$GO_MF))
+
+```
+
+```{r go_cc_ora, results='asis', echo=FALSE, eval = executed[["GO_CC"]]}
+
+cat("### **[CC] Over Representation Analysis**\n",
+	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+
+plot_enrResult_DT(enrichments_ORA$GO_CC)
+
+
+cat(
+	"**Dotplot**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- dotplot(enrichments_ORA$GO_CC, showCategory=n_category)  
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_CC),calc_width(enrichments_ORA$GO_CC))
+
+
+cat(
+	"**Heatmap**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- clusters_heatplot(enrichments_ORA$GO_CC@compareClusterResult) 
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_CC),calc_width(enrichments_ORA$GO_CC))
+
+
+cat('\n\n**Enrich Map plot**\n\n', 
+	'WRITE THIS TEXT >>>>.\n\n'
+)
+pp <- emapplot(enrichments_ORA$GO_CC, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
+plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_CC))
+
+```
+
+
+
+
+```{r create_out_custom, echo = FALSE}
+out_custom <- ""
+```
+
+```{r custom_create, echo = FALSE, eval = exists("custom_targets_ORA")}
+out_custom <- NULL
+invisible(lapply(seq_along(custom_targets_ORA),function(i){
+	# Take results
+	res <- custom_targets_ORA[[i]]
+	cname <- names(custom_targets_ORA)[i]
+	# Check and generate info
+	if(is.null(res)){
+		header <- "## **{{cname}}** \n\nThis CUSTOM study has been executed but **has not returned any result**\n"
+		body <- ""
+	}else{
+		header <- ""
+
+		body <- "res <- custom_targets_ORA[[{{i}}]]
+				cname <- names(custom_targets_ORA)[{{i}}]
+				cat('### **{{cname}} -  Over Representation Analysis**\n',
+				'The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n')
+				
+				plot_enrResult_DT(res)
+
+				cat(
+					'**Dotplot**\n\n', 
+					'WRITE THIS TEXT >>>>.\n\n'
+				)
+				pp <- dotplot(res, showCategory=n_category)   
+				pp <- set_standard_size(pp)
+				plot_in_div( pp, calc_height(res),calc_width(res))
+
+				cat(
+					'**Heatmap**\n\n', 
+					'WRITE THIS TEXT >>>>.\n\n'
+				)
+
+				pp <- clusters_heatplot(res@compareClusterResult) 
+				pp <- set_standard_size(pp)
+				plot_in_div(pp, calc_height(res),calc_width(res))
+
+				cat('\n\n**Enrich Map plot**\n\n', 
+					'The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
+					The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n'
+				)
+				pp <- emapplot(res, showCategory=n_category,pie='count', pie_scale=1.5, layout='kk')
+				plot_in_div(pp, fig_width = calc_width(res))
+		"
+
+	}
+				# cat(
+				# 	'**CNetplot**\n\n', 
+				# 	'WRITE THIS TEXT >>>>.\n\n'
+				# )
+
+				# pp <- cnetplot(res, showCategory = n_category)
+				# plot_in_div(pp, calc_height(res), calc_width(res))
+	out_custom <<- c(out_custom,paste(knit_expand(text = paste(header,
+										 					chunks(body, options = "echo = FALSE,results='asis'"),
+										 					"\n",sep = "\n")),
+													sep = "\n"))
+}))
+
+```
+
+`r paste(knit(text = paste(out_custom,collapse = "\n")),collapse = "\n")`
