@@ -31,9 +31,17 @@ output:
 
 ```{r config, include = FALSE}
 
+
+
+exec_go <- FALSE
+exec_kegg <- FALSE
+exec_react <- FALSE
+
 if ("g" %in% nomenclatures) {
-  any_go <- any(unlist(lapply(names(enrich_GO), function(onto){ check_results(enrich_GO[[onto]]) })))
+  exec_go <- any(unlist(lapply(names(enrich_GO), function(onto){ check_results(enrich_GO[[onto]]) })))
 }
+
+
   
 n_category <- 30
 
@@ -45,10 +53,13 @@ cat("## **KEGG analysis**\n")
 # Check special case
 if(length(get_categories(enrich_KEGG))==0){
   cat(paste("This ontology study has been executed but **has not returned any result**\n", sep=""))
+} else {
+  exec_kegg <- TRUE
 }
+
 ```
 
-```{r kegg_ora, results='asis', echo = FALSE, eval = "K" %in% nomenclatures, message=FALSE, warning=FALSE}
+```{r kegg_ora, results='asis', echo = FALSE, eval = exec_kegg, message=FALSE, warning=FALSE}
 
 default_width <- set_default_width(enrich_obj = enrich_KEGG, showCategory=n_category)
 # Main label 
@@ -123,7 +134,7 @@ if(length(get_categories(enrich_KEGG))>=2){ # Needs, at least, two categories
 }
 ```
 
-```{r display_kegg_res, results='asis', echo = FALSE, eval = "K" %in% nomenclatures}
+```{r display_kegg_res, results='asis', echo = FALSE, eval = exec_kegg}
 
 cat("## **ClusterProfiler KEGG table**\n\n", "Detailed table with the data obtained from KEGG pathways (ORA method only). For each pathway, the identifier, link to KEGG DB with the detected genes, name, adjusted pvalue and genes (count and ids)")
 
@@ -143,13 +154,13 @@ knitr::kable(kegg_df[,cols_to_show])
 ```{r display_go_main, results='asis', echo = FALSE, eval = "g" %in% nomenclatures}
 cat("## **GO Analysis**\n")
 
-if(any_go){  
+if(exec_go){  
     cat(paste("**Any sub-ontology has returned results** on this study.\n\n",sep=""))
 }
 ```
 
 
-```{r plot_go_cl, results='asis', echo = FALSE, eval = ("g" %in% nomenclatures && any_go), message=FALSE, warning=FALSE}
+```{r plot_go_cl, results='asis', echo = FALSE, eval = exec_go, message=FALSE, warning=FALSE}
 
 # Plots per sub-ontology
 for (onto in names(enrich_GO)) {
@@ -315,10 +326,12 @@ cat("## **REACTOME analysis**\n")
 # Check special case
 if(length(get_categories(enrich_react)) == 0){
   cat(paste("This ontology study has been executed but **has not returned any result**\n",sep=""))
+} else {
+  exec_react <- TRUE
 }
 ```
 
-```{r react_ora, results='asis', echo = FALSE, eval = ("R" %in% nomenclatures && !length(get_categories(enrich_react)) == 0), message=FALSE, warning=FALSE}
+```{r react_ora, results='asis', echo = FALSE, eval = exec_react, message=FALSE, warning=FALSE}
 default_width <- set_default_width(enrich_obj = enrich_react, showCategory=n_category)
 
 # Main label 
