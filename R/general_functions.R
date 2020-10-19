@@ -13,7 +13,7 @@ standard_error <- function(x) {
 
 ########################################################
 # Functions to generate output files
-unite_DEG_pack_results <- function(all_DE, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, p_val_cutoff, lfc, minpack_common) {
+unite_DEG_pack_results <- function(DEG_pack_columns, all_DE, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, p_val_cutoff, lfc, minpack_common) {
   # Reorder all output by gene id so all equal
   all_DE <- lapply(all_DE, function(x) x[order(row.names(x)),])
   gene_ids <- row.names(all_DE[[1]])
