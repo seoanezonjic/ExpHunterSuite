@@ -71,3 +71,8 @@ analysis_NOISeq <- function(data, target){
 	# Return calculated info
 	return(list(normalized_counts, expres_diff_all, all_NOISeq))
 }
+
+# Dummy function to convert external, already processed/analysed data into an object suitable for the big table function
+analysis_external_DEA <- function(raw_data, dea_data) {
+	return(list(raw_data, dea_data, dea_data))
+}

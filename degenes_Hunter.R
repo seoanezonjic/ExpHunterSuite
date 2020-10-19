@@ -74,12 +74,14 @@ option_list <- list(
   make_option(c("-f", "--lfc"), type="double", default=1,
     help="Minimum log2 fold change in expression. Note this is on a log2 scale, so a value of 1 would mean a 2 fold change. Default=%default"),
   make_option(c("-m", "--modules"), type="character", default=c("DELNW"), #D = DESeq2, E = edgeR, L = limma, N = NOISeq W = WGCNA.
-    help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N = NOISeq, W = WGCNA, P = PCIT, X = diffcoexp.).
+    help="Differential expression packages to able/disable (D = DESeq2, E = edgeR, L = limma, N = NOISeq, W = WGCNA, P = PCIT, X = diffcoexp, F = external_DEA_file.).
     By default the following modules Default=%default are performed"),
   make_option(c("-c", "--minpack_common"), type="integer", default=4,
     help="Number of minimum package to consider a gene as a 'PREVALENT' DEG"),
   make_option(c("-t", "--target_file"), type="character", default=NULL,
     help="Sample descriptions: one column must be named treat and contain values of Treat or Ctrl. This file will take precedent over the -T and -C sample flags."),
+  make_option(c("-e", "--external_DEA_file"), type="character", default=NULL,
+    help="External data file containing preanalysed DE data. Must consist of three columns containing p-value, logFC and FDR/padjust IN THAT ORDER"),
   make_option(c("-v", "--model_variables"), type="character", default="",
     help="Variables to include in the model. Must be comma separated and each variable must be a column in the target_file, or the model can be specified precisely if the custom_model flag is TRUE"),
   make_option(c("-n", "--numerics_as_factors"), type="logical", default=TRUE,
@@ -120,8 +122,6 @@ opt_orig <- opt
 ##                       CHECK INPUTS                     ##
 ############################################################
 
-
-
 # Check inputs not allowed values
 if (is.null(opt$input_file)){
   stop(cat("No file with RNA-seq counts is provided.\nPlease use -i to submit file"))
@@ -131,6 +131,11 @@ if (opt$minlibraries < 1){
 }
 if (opt$reads == 0){
   cat("Minimum reads option is set to zero. Raw count table will not be filtered.")
+}
+
+if (exists("opt$external_DEA_file")) {
+  opt$modules <- paste0(opt$modules, "F")
+  warning("External DEA file given. Note that if the count file corresponding to the DEA is non-integer, many DE detection packages will fail.")
 }
 
 if (opt$model_variables != "" & grepl("N", opt$modules) & nchar(opt$modules) == 1) {
@@ -205,7 +210,7 @@ write.table(cbind(opt_orig), file=file.path(opt$output_files, "opt_input_values.
 
 # Load target file if it exists, otherwise use the -C and -T flags. Note target takes precedence over target.
 if(! is.null(opt$target_file)) {
-  target <- read.table(opt$target_file, header=TRUE, sep="\t")#, colClasses = "factor", stringsAsFactors=FALSE)
+  target <- read.table(opt$target_file, header=TRUE, sep="\t", check.names = FALSE)
   # Check there is a column named treat
   if(! "treat" %in% colnames(target)) {
     stop(cat("No column named treat in the target file.\nPlease resubmit"))
@@ -240,11 +245,10 @@ if(exists("target") & grepl("W", opt$modules)) {
   string_factors_index <- colnames(target) %in% string_factors 
 
   target_string_factors <- target[string_factors_index]
-  target_string_factors <-  data.frame(sapply(target_string_factors, as.factor))
+  target_string_factors <-  data.frame(sapply(target_string_factors, as.factor), stringsAsFactors=TRUE)
 
   if(opt$numeric_factors != "") {
     numeric_factors <- unlist(strsplit(opt$numeric_factors, ","))
-
     if(! all(numeric_factors %in% colnames(target))) {
       warning("Some factors specified with the --numeric_factors option cannot be found in the target file.")
     }
@@ -264,7 +268,7 @@ if(exists("target") & grepl("W", opt$modules)) {
 
 # Now coerce the targets to factors for the multifactorial analysis
 if(opt$numerics_as_factors == TRUE) {
-  target <-  data.frame(sapply(target, as.factor))
+  target <-  data.frame(sapply(target, as.factor), stringsAsFactors=TRUE)
 }
 
 replicatesC <- length(index_control_cols)
@@ -279,6 +283,12 @@ raw <- raw[c(index_control_cols,index_treatmn_cols)] #Indexing selected columns 
 
 # Substitute NA values
 raw[is.na(raw)] <- 0
+
+# Open the external data file for pre-analysed deg data
+if (grepl("F",opt$modules)) {
+  external_DEA_data <- read.table(opt$external_DEA_file, header=TRUE, sep="\t", row.names=1)
+}
+
 
 ############################################################
 ##                          FILTER                        ##
@@ -480,6 +490,32 @@ if(grepl("N", opt$modules)){
   }
 }
 
+#####
+################## CASE F: External DEG file
+#####
+if(grepl("F",opt$modules)){
+  cat('External DEA data to be processed \n')
+  dir.create(file.path(opt$output_files, "Results_external_DEA"))
+  # Calculate results
+  results <- analysis_external_DEA(raw_filter, external_DEA_data)
+  # Store results
+  all_data_normalized[['external_DEA']] <- results[[1]]
+  all_counts_for_plotting[['external_DEA']] <- results[[2]]
+  package_objects[['external_DEA']] <- results[[3]]
+
+  # Result Plot Visualization
+  if (!is.null(all_counts_for_plotting[['external_DEA']])){
+    all_pvalue_names   <- c(all_pvalue_names, names(external_DEA_data)[1])
+    all_LFC_names      <- c(all_LFC_names, names(external_DEA_data)[2])
+    all_FDR_names      <- c(all_FDR_names, names(external_DEA_data)[3])
+    final_pvalue_names <- c(final_pvalue_names, 'pvalue_external_DEA')
+    final_logFC_names  <- c(final_logFC_names, 'logFC_external_DEA')
+    final_FDR_names    <- c(final_FDR_names, 'FDR_external_DEA')
+    DEG_pack_columns   <- c(DEG_pack_columns, 'external_DEA_DEG')
+  }
+
+}
+
 
 ####################### DEBUG POINT #############################
 if(opt$debug){
@@ -494,6 +530,7 @@ if(opt$debug){
 #####
 ################## CASE W: WGCNA
 #####
+
 if(grepl("W", opt$modules)) {
   cat('Correlation analysis is performed with WGCNA\n')
   path <- file.path(opt$output_files, "Results_WGCNA")
@@ -504,7 +541,7 @@ if(grepl("W", opt$modules)) {
   } else if(opt$WGCNA_norm_method== "none") {
     WGCNA_input <- raw_filter
   } else {
-    warning("To run WGCNA, you must also run the method chosen for normalization in the --modules flag")
+    warning("To run WGCNA, you must also run the method chosen for normalization in the --modules flag, or specify none")
   }
 
   WGCNA_input_treatment <- WGCNA_input[, index_treatmn_cols]
@@ -513,7 +550,6 @@ if(grepl("W", opt$modules)) {
   if(opt$WGCNA_all == TRUE) {
     WGCNA_treatment_path <- file.path(path, "Treatment_only_data")
     dir.create(WGCNA_treatment_path)
-
     cat('Performing WGCNA correlation analysis for treated samples\n')
     results_WGCNA_treatment <- analysis_WGCNA(data=WGCNA_input_treatment,
                    path=WGCNA_treatment_path,

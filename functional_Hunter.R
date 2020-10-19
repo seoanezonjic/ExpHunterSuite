@@ -154,7 +154,16 @@ sample_classes <- apply(experiments, 1, function(x) paste0("* [", x[1], "] ", x[
 DEGH_results <- read.table(file.path(opt$input_hunter_folder, "Common_results", "hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE)
 DEGH_results <- DEGH_results[DEGH_results$genes_tag != "FILTERED_OUT", ]
 
-
+# Temporary bodge to enable funcitonal hunter to be run on externally processed data and DESeq2 not run
+if(! grepl("DESeq2", names(DEGH_results)) && grepl("external_DEA", names(DEGH_results))) {
+	names(DEGH_results) <- gsub("external_DEA", "DESeq2", names(DEGH_results))
+	# This is particularly horrible - like this to ensure it matches EXACTLY the file loaded if WGCNA
+	external_DEA_folder <- file.path(opt$input_hunter_folder, "Results_external_DEA")
+	DESeq2_dummy_folder <- file.path(opt$input_hunter_folder, "Results_DESeq2")
+	dir.create(DESeq2_dummy_folder)
+	file.copy(file.path(external_DEA_folder, "Normalized_counts_external_DEA.txt"),
+			  file.path(DESeq2_dummy_folder, "Normalized_counts_DESeq2.txt"))
+}
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ##                                                                                                                   ##

@@ -273,8 +273,8 @@ scale_data_matrix <- function(data_matrix, transpose = FALSE){
     data_matrix <- t(data_matrix)
   } 
   scaled_counts <- apply(data_matrix, 2, function(column) {
-    minimum <- min(column)
-    maximum <- max(column)
+    minimum <- min(column, na.rm=TRUE)
+    maximum <- max(column, na.rm=TRUE)
     difference <- maximum - minimum
     if (difference == 0) { 
       scaled_column <- column
