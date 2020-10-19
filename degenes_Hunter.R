@@ -151,7 +151,12 @@ if(grepl("W", opt$modules)) {
   active_modules <- active_modules - 1
 }
 if(grepl("P", opt$modules)) {
-  active_modules <- active_modules - 1
+  if (opt$WGCNA_all == FALSE) {
+    message("WGCNA only for controls an tratments is not activated (--WGCNA_all option) and is needed for PCIT analysis. Disabling PCIT execution")
+    opt$modules <- gsub("P", "", opt$modules)
+  } else {
+    active_modules <- active_modules - 1
+  }
 }
 if(grepl("X", opt$modules)) {
   active_modules <- active_modules - 1
