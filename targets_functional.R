@@ -10,7 +10,7 @@ full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using
               normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', commandArgs())], '='))[2]))
 main_path_script <- dirname(full.fpath)
 
-str_names <- list("zero" = "counts_RNA_vs_counts_miRNA",  
+str_names <- list("dd" = "counts_RNA_vs_counts_miRNA",  
 				    "EE" = "Eigen_RNA_v_Eigen_miRNA" ,
 					"Eh" = "Eigen_RNA_v_Hub1_miRNA", 
 					"Ed" = "Eigen_RNA_v_counts_miRNA", 
@@ -245,11 +245,14 @@ if (launch_expanded) {
 		miRNA_strat <- unlist(strsplit(opt$aproaches, ""))[2]
 		
 		if (miRNA_strat == "h") {
+			print(miRNA_strat)
 			# str(miRNAseq[["DH_results"]])
 			# str(miRNAseq[["normalized_counts"]])
 			hub_miRNAs <- get_hub_genes_by_MM(miRNAseq[["normalized_counts"]], miRNAseq[["DH_results"]], top = 1)
 			
 		} else if (miRNA_strat == "E") {
+			print(miRNA_strat)
+
 			miRNAseq$Eigengene <- as.data.frame(as.table(miRNAseq$Eigengene), stringsAsFactors = FALSE)
 			colnames(miRNAseq$Eigengene) <- c("Sample","Cluster_ID","Count") 
 			tgt_eigvalues_gnorm <- miRNAseq$Eigengene
