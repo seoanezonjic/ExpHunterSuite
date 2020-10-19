@@ -173,10 +173,12 @@ if("hE" %in% opt$aproaches){
 	print(mem_used()) 
 }
 
+
+all_known_miRNAs <- miRBaseConverter::getAllMiRNAs(version = "v22", type = "all", species = opt$organism)$Accession
 all_strategies <- list()
 prec_recall <- list()
 print("TEST")
-save.image(file = file.path(opt$output_files, "debug.RData"))
+# save.image(file = file.path(opt$output_files, "debug.RData"))
 for (strategy in names(strategies)) {
 	print(strategy)
 
@@ -186,7 +188,11 @@ for (strategy in names(strategies)) {
 	plot_obj <- as.data.table(strategies[[strategy]]$plot_obj)
 	print("TEST2")
 
-	significant_pairs <- (plot_obj$correlation <= opt$corr_cutoff & plot_obj$pval <= opt$p_val_cutoff)
+	significant_pairs <- (plot_obj$correlation <= opt$corr_cutoff & plot_obj$pval <= opt$p_val_cutoff )
+	print(paste0("before filtering ", sum(significant_pairs), " pairs"))
+	significant_pairs <- significant_pairs & plot_obj$miRNAseq %in% all_known_miRNAs
+
+	
 	if (!sum(significant_pairs) > 0 ){
 		strategies[[strategy]] <- NULL
 		next 
@@ -194,11 +200,22 @@ for (strategy in names(strategies)) {
 	predicted_pairs <- plot_obj$predicted_c > 0
 	validated_pairs <- plot_obj$validated_c > 0
 	both_pairs <- predicted_pairs & validated_pairs
-	stats <- data.frame(stringsAsFactors = FALSE,
-						predicted = pred_stats(significant_pairs, predicted_pairs),
-						validated = pred_stats(significant_pairs, validated_pairs),
-						both = pred_stats(significant_pairs, both_pairs)
-						)
+	print(paste0("before filtering ", sum(significant_pairs), " pairs"))
+	significant_pairs <- significant_pairs & strategies$dd$plot_obj$miRNAseq %in% multimir_summary$mature_mirna_acc & strategies$dd$plot_obj$RNAseq %in% multimir_summary$target_ensembl
+	print(paste0("after filtering ", sum(significant_pairs), " pairs"))
+
+	if (sum(significant_pairs) > 0 ){
+		 
+		stats <- data.frame(stringsAsFactors = FALSE,
+							predicted = pred_stats(significant_pairs, predicted_pairs),
+							validated = pred_stats(significant_pairs, validated_pairs),
+							both = pred_stats(significant_pairs, both_pairs)
+							)
+	} else {
+		message("No significant pairs can be used for multimir comparison in strategy:")
+		message(print(strategy))
+	}
+
 	print("TEST3")
 
 	rownames(stats) <- c("precision", "recall", "F1")
@@ -223,7 +240,6 @@ prec_recall <- as.data.frame(rbindlist(prec_recall, use.names = TRUE, idcol = "s
 
 
 
-all_known_miRNAs <- miRBaseConverter::getAllMiRNAs(version = "v22", type = "all", species = opt$organism)$Accession
 all_strategies$known_miRNA <- all_strategies$miRNAseq %in% all_known_miRNAs 
 print("TEST")
 
@@ -246,8 +262,10 @@ filters_summary$quantile <- rep(NA, nrow(filters_summary))
 #generate and merge randoms
 # str(filters_summary)
 print("TEST")
+background_pairs <- strategies$dd$plot_obj[strategies$dd$plot_obj$miRNAseq %in% all_known_miRNAs & strategies$dd$plot_obj$miRNAseq %in% multimir_summary$mature_mirna_acc & strategies$dd$plot_obj$RNAseq %in% multimir_summary$target_ensembl,]
+print(paste0("background before: ", nrow(strategies$dd$plot_obj), " background after: ", nrow(background_pairs)))
 
-filters_summary <- add_randoms(background = strategies$dd$plot_obj[strategies$dd$plot_obj$miRNAseq %in% all_known_miRNAs,], 
+filters_summary <- add_randoms(background = background_pairs, 
 								filters_summary = filters_summary)
 
 filters_summary$type <- factor(filters_summary$type, levels=c("novel_miRNAs","known_miRNAs","predicted", "predicted_random", "validated","validated_random", "both", "both_random"))
