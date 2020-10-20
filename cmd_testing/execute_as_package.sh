@@ -2,6 +2,8 @@
 
 . ~soft_bio_267/initializes/init_degenes_hunter
 
+# Rscript -e "usethis::use_package('optparse')" # To add dependencies that are not consigned by roxygen documentation
+
 cd ..
 Rscript -e "devtools::document()"
 Rscript -e "devtools::install()"

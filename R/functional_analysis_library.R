@@ -389,7 +389,7 @@ generate_FA_report <- function(){
 #' @param qvalueCutoff :: 
 #' @param ENRICH_DATA :: 
 #' @return enrichment performed
-#' @import clusterProfiler, KEGG.db, ReactomePA
+#' @import clusterProfiler KEGG.db ReactomePA
 enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff = 0.2,ENRICH_DATA = NULL){
   # Check
   if(is.numeric(ont)){
@@ -499,7 +499,7 @@ load_and_parse_gmt <- function(gmt_file) {
 #' @param ont :: ontology to be used. Allowed [GO_MF,GO_CC,GO_BP,KEGG,REACT]
 #' @param useInternal :: used only for KEGG enrichment, activate internal data usage mode
 #' @return enrichment performed
-#' @import clusterProfiler, KEGG.db, ReactomePA
+#' @import clusterProfiler KEGG.db ReactomePA
 enrich_GSEA <- function(geneList,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE){
 require(clusterProfiler)
   if(useInternal)
@@ -586,7 +586,7 @@ perform_GSEA_clusters <- function(all_clusters, organism, keyType, pvalueCutoff,
 #' @param mc.cores :: 
 #' @param mc.preschedule :: 
 #' @return enrichment performed
-#' @import clusterProfiler, KEGG.db, ReactomePA, parallel
+#' @import clusterProfiler KEGG.db ReactomePA parallel
 enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, mc.cores = 1, mc.preschedule
  = TRUE){
   # Parse onto
