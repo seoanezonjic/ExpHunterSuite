@@ -24,7 +24,6 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   suppressPackageStartupMessages(library(NOISeq))
   suppressPackageStartupMessages(library(VennDiagram))
   suppressPackageStartupMessages(library(gplots))
-  suppressPackageStartupMessages(library(optparse))
   suppressPackageStartupMessages(library(stringr))
   suppressPackageStartupMessages(library(plyr))
   suppressPackageStartupMessages(library(knitr))
