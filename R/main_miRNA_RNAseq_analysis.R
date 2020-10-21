@@ -13,8 +13,10 @@ miRNA_RNAseq_analysis <- function(
 	report,
 	translation_file,
 	template_folder = file.path(find.package('DEgenesHunter'), "templates"),
-	root_path = file.path(find.package('DEgenesHunter')) #esta variable es provisional
+	organism_table_path = file.path(find.package('DEgenesHunter'), "R", "organism_table.txt") # organism_table.txt hay que cambiarlo de sitio de cara al paquete
 	){
+
+dir.create(opt$output_files, recursive = T)
 
 time_control <- Sys.time()
 aproaches <- unlist(strsplit(aproaches, ","))
@@ -28,7 +30,7 @@ if (!is.null(translation_miRNA)) {
 
 RNAseq <- load_DEGH_information(RNAseq_folder)
 miRNAseq <- load_DEGH_information(miRNAseq_folder, translation_table =  translation_miRNA)
-organism_info <- read.table(file.path(root_path, 'R', "organism_table.txt"), header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA) # organism_table.txt hay que cambiarlo de sitio
+organism_info <- read.table(organism_table_path, header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA) 
 organism_info <- subset(organism_info, organism_info$KeggCode %in% organism)  
 
 
