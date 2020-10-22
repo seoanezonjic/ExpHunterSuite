@@ -87,9 +87,16 @@ write_df_list_as_tables <- function(df_list, prefix, root) {
   )
 }
 
-debug_point <- function(file, message = "Debug point"){
-    debug_message <<- message
-    save.image(file)
+debug_point <- function(file, message = "Debug point",envir = NULL){
+    if(is.null(envir)){
+      debug_message <<- message
+      save.image(file)
+    }else{
+      envir$debug_message <- message
+      on.exit(file.remove(file))
+      save(list = names(envir), file = file, envir = envir, precheck = FALSE)      
+      on.exit()
+    }
 }
 
 
