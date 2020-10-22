@@ -49,8 +49,8 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   template_folder <- file.path(root_path, 'inst', 'templates')
 }else{
   require('DEgenesHunter')
-  root_folder <- find.package('DEgenesHunter')
-  template_folder <- file.path(root_folder, 'templates')
+  root_path <- find.package('DEgenesHunter')
+  template_folder <- file.path(root_path, 'templates')
 }
 
 # Prepare command line input 
