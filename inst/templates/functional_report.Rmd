@@ -200,9 +200,9 @@ graph_files <- apply(expand.grid(graph_files, go_subontos), 1, paste, collapse="
 
 # Check all files
 invisible(lapply(graph_files,function(file_name){
-	if(exists_graph_file(file_name = file_name)){
+	if(exists_graph_file(path = results_path, file_name = file_name)){
 		go_flags[file_name] <<- TRUE
-		go_files[file_name] <<- graph_file_name(file_name = file_name)
+		go_files[file_name] <<- graph_file_name(path = results_path,file_name = file_name)
 	}else{
 		go_flags[file_name] <<- FALSE
 	}

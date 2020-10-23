@@ -21,11 +21,13 @@ exists_enrich_df <- function(var_name,level_depth = 3){
   return(check_results(df))
 }
 
-graph_file_name <- function(path = results_path, file_name, ext = "pdf"){
+# graph_file_name <- function(path = results_path, file_name, ext = "pdf"){
+graph_file_name <- function(path, file_name, ext = "pdf"){
   return(paste(path,.Platform$file.sep,file_name,".",ext,sep=""))
 }
 
-exists_graph_file <- function(path = results_path, file_name, ext = "pdf"){
+# exists_graph_file <- function(path = results_path, file_name, ext = "pdf"){
+exists_graph_file <- function(path, file_name, ext = "pdf"){
   f <- graph_file_name(path,file_name,ext)
   return(file.exists(f))
 }
