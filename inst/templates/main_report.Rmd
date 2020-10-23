@@ -112,25 +112,25 @@ coldata_df <- data.frame(cond = design_vector,
                            each = colnames(raw_filter),
                            row.names = colnames(raw_filter))
 
-dds <- DESeqDataSetFromMatrix(countData = raw_filter, colData = coldata_df, design = ~ cond)
-rld <- rlog(dds, blind=FALSE)
+dds <- DESeq2::DESeqDataSetFromMatrix(countData = raw_filter, colData = coldata_df, design = ~ cond)
+rld <- DESeq2::rlog(dds, blind=FALSE)
 
-pcaData <- plotPCA(rld, intgroup=c("cond"), returnData = TRUE)
+pcaData <- DESeq2::plotPCA(rld, intgroup=c("cond"), returnData = TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
-ggplot(pcaData, aes(x = PC1, y = PC2, color = name, shape = cond)) +
-  geom_point(size =3) +
-  geom_text(aes(label=name),hjust=0, vjust=0) +
-  xlab(paste0("PC1: ", percentVar[1], "% variance")) +
-  ylab(paste0("PC2: ", percentVar[2], "% variance")) +
-  coord_fixed() +
-  theme(legend.position = "none")
+ggplot2::ggplot(pcaData, ggplot2::aes(x = PC1, y = PC2, color = name, shape = cond)) +
+  ggplot2::geom_point(size =3) +
+  ggplot2::geom_text(ggplot2::aes(label=name),hjust=0, vjust=0) +
+  ggplot2::xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+  ggplot2::ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+  ggplot2::coord_fixed() +
+  ggplot2::theme(legend.position = "none")
 
-ggplot(pcaData, aes(x = PC1, y = PC2, color = name, shape = cond)) +
-  geom_point(size =3) +
-  theme(legend.position = "bottom") +
-  xlab(paste0("PC1: ", percentVar[1], "% variance")) +
-  ylab(paste0("PC2: ", percentVar[2], "% variance")) +
-  coord_fixed() 
+ggplot2::ggplot(pcaData, ggplot2::aes(x = PC1, y = PC2, color = name, shape = cond)) +
+  ggplot2::geom_point(size =3) +
+  ggplot2::theme(legend.position = "bottom") +
+  ggplot2::xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+  ggplot2::ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+  ggplot2::coord_fixed() 
 
 
 ```
@@ -182,7 +182,7 @@ All counts were normalizated by DESeq2 algorithm. This count were scaled by log1
 	if (nrow(all_data_normalized[['DESeq2']]) <= 50000) { 
 		deseq_normalized_data_mtx <- log10(data.matrix(deseq_normalized_data) + 1)
 
-		plot <- heatmap.2(deseq_normalized_data_mtx, col = col, labRow = FALSE, dendrogram = "column", trace = "none", srtCol=45,  adjCol = c(1,1))
+		plot <- gplots::heatmap.2(deseq_normalized_data_mtx, col = col, labRow = FALSE, dendrogram = "column", trace = "none", srtCol=45,  adjCol = c(1,1))
 	} else {
 		cat("\n\nThis plot can not be generated because more than 50 000 genes have passed the filters and it can cause memory problems.\n\n")
 	}
@@ -215,12 +215,12 @@ barplot_df <- data.frame(total=c(
 	barplot_df[,"gene_type"] <- factor(barplot_df[,"gene_type"], levels = barplot_df[,"gene_type"][order(barplot_df[,"total"])]) # Reorder to plot from most to least
 
 # Plot genes barplot
-pgenes <- ggplot(barplot_df, aes(gene_type, total)) +
-		  ylab("Number of genes") + 
-		  xlab("") +
-		  geom_bar(position="dodge", stat="identity", fill=c("#000034", "red", "orange", "blue"), show.legend=FALSE) + coord_flip() + 
-		  geom_text(aes(label = total, y= total + 1500))+ 
-		  theme(text = element_text(face="bold", size=10))
+pgenes <- ggplot2::ggplot(barplot_df, ggplot2::aes(gene_type, total)) +
+		  ggplot2::ylab("Number of genes") + 
+		  ggplot2::xlab("") +
+		  ggplot2::geom_bar(position="dodge", stat="identity", fill=c("#000034", "red", "orange", "blue"), show.legend=FALSE) + ggplot2::coord_flip() + 
+		  ggplot2::geom_text(ggplot2::aes(label = total, y= total + 1500))+ 
+		  ggplot2::theme(text = ggplot2::element_text(face="bold", size=10))
 
 plot(pgenes)
 ```
@@ -242,10 +242,10 @@ belonging <- matrix(as.numeric(belonging),ncol = length(sets))
 # Add set names
 colnames(belonging) <- names(sets)
 # Calculate intersections
-intersections <- vennCounts(belonging)
+intersections <- limma::vennCounts(belonging)
 intersections[1,"Counts"] <- NA
 # Plot
-vennDiagram(intersections, circle.col = rainbow(length(sets)))
+limma::vennDiagram(intersections, circle.col = grDevices::rainbow(length(sets)))
 
 ```
 
@@ -270,23 +270,23 @@ df <- DE_all_genes[DE_all_genes[, "genes_tag"] == "PREVALENT_DEG",]
 df <- df[final_FDR_names]
 
 df$gene_names <- row.names(df)
-df_melted_FDR <- melt(df, id.vars = "gene_names", measure.vars = final_FDR_names)
+df_melted_FDR <- reshape2::melt(df, id.vars = "gene_names", measure.vars = final_FDR_names)
 df_melted_FDR[,"package_name"] <- unlist(lapply(strsplit(as.character(df_melted_FDR[, "variable"]), split='_'), function(x) x[2])) # Ugly way to remove FDR_ from names
 
 if(dim(df)[1] == 0){
 	cat("No Prevalent DEGs found, Bar charts of FDR values for prevalent genes cannot be shown")
 } else { 
 
-p_seguros_Int <- ggplot(df_melted_FDR, aes(x = package_name, y = value, color = package_name)) +
-    			 geom_boxplot(outlier.colour = rgb(0, 0, 0, 0)) + 
-		         theme_bw(base_size = 30) + 
-		         geom_point(position = position_jitter(w = 0.1), color = "grey50", size = 1) + 
-		         geom_hline(aes(yintercept = opt$p_val_cutoff)) + 
-		         ylab("1 - precision (FDR)") + 
-		         theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
-		         xlab("") + 
-		         scale_colour_discrete(guide = "none") + 
-		         coord_cartesian(ylim = c(0, opt$p_val_cutoff))
+p_seguros_Int <- ggplot2::ggplot(df_melted_FDR, ggplot2::aes(x = package_name, y = value, color = package_name)) +
+    			 ggplot2::geom_boxplot(outlier.colour = grDevices::rgb(0, 0, 0, 0)) + 
+		         ggplot2::theme_bw(base_size = 30) + 
+		         ggplot2::geom_point(position = ggplot2::position_jitter(w = 0.1), color = "grey50", size = 1) + 
+		         ggplot2::geom_hline(ggplot2::aes(yintercept = opt$p_val_cutoff)) + 
+		         ggplot2::ylab("1 - precision (FDR)") + 
+		         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)) + 
+		         ggplot2::xlab("") + 
+		         ggplot2::scale_colour_discrete(guide = "none") + 
+		         ggplot2::coord_cartesian(ylim = c(0, opt$p_val_cutoff))
 plot(p_seguros_Int)
 }
 ```
@@ -307,23 +307,23 @@ This plot compares the effective library size with raw library size")
 ```{r DESeq2_conditional_block_ELS_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE}
 	deseq_object <- package_objects[['DESeq2']]
 	
-	effective_lib_size <- sizeFactors(package_objects[['DESeq2']][['DESeq2_dataset']])
+	effective_lib_size <- DESeq2::sizeFactors(package_objects[['DESeq2']][['DESeq2_dataset']])
 	sums <- colSums(raw_filter)
 	norm_bias <- data.frame(sums = sums, 
 							eff_lib_size = effective_lib_size,
 							Treat = design_vector)
 	rownames(norm_bias) <- names(sums)
 
-	plot <- ggplot(norm_bias, aes(x = sums, y = eff_lib_size, group = Treat)) + 
-		geom_point(aes(shape = Treat, color = Treat, size = 8)) +
-		geom_smooth(method = "lm", fill = NA, aes(color = Treat))+
-		xlab("Library size (N reads)") +
-        ylab("Effective library size \n(DESeq2 normalization factor)") +
-		theme_classic() +
-		theme(axis.text = element_text(size= 10), 
-			axis.title = 	element_text(size = 8, face = "bold"),
-			legend.title = element_text(size = 8, face = "bold")) +
-		guides(size = FALSE)
+	plot <- ggplot2::ggplot(norm_bias, ggplot2::aes(x = sums, y = eff_lib_size, group = Treat)) + 
+		ggplot2::geom_point(ggplot2::aes(shape = Treat, color = Treat, size = 8)) +
+		ggplot2::geom_smooth(method = "lm", fill = NA, ggplot2::aes(color = Treat))+
+		ggplot2::xlab("Library size (N reads)") +
+        ggplot2::ylab("Effective library size \n(DESeq2 normalization factor)") +
+		ggplot2::theme_classic() +
+		ggplot2::theme(axis.text = ggplot2::element_text(size= 10), 
+			axis.title = 	ggplot2::element_text(size = 8, face = "bold"),
+			legend.title = ggplot2::element_text(size = 8, face = "bold")) +
+		ggplot2::guides(size = FALSE)
 
 	print(plot)
   
@@ -344,7 +344,7 @@ This is the MA plot from DESeq2 package:")
 ```
 
 ```{r DESeq2_conditional_block_ma_plot, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE}
-	plotMA(package_objects[['DESeq2']][['de_deseq2']], cex.lab=1.6, cex.axis=1.5)
+	DESeq2::plotMA(package_objects[['DESeq2']][['de_deseq2']], cex.lab=1.6, cex.axis=1.5)
 ```
 
 ```{r DESeq2_conditional_block_ma_text, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
@@ -374,7 +374,7 @@ Counts of prevalent DEGs were normalizated by DESeq2 algorithm. This count were 
 	if(length(DE_prevalent_genes) > 1){
 		deseq_prevalent_normalized <- deseq_normalized_data[rownames(deseq_normalized_data) %in% DE_prevalent_genes,]  
 		deseq_normalized_data_mtx <- log10(data.matrix(deseq_prevalent_normalized) + 1)
-		plot <- heatmap.2(deseq_normalized_data_mtx, col = col, labRow = FALSE, dendrogram = "column", trace = "none", srtCol=45,  adjCol = c(1,1))
+		plot <- gplots::heatmap.2(deseq_normalized_data_mtx, col = col, labRow = FALSE, dendrogram = "column", trace = "none", srtCol=45,  adjCol = c(1,1))
 
 	}else{
 cat("Lower than 2 prevalent differential expression were found")
@@ -490,9 +490,9 @@ cat("In total there were ", max(unique(results_WGCNA$gene_cluster_info$Cluster_I
 	genes_per_cluster <- table(results_WGCNA$gene_cluster_info$Cluster_ID)
 	col_clusters_barplot <- results_WGCNA[['plot_objects']][['sorted_colours']]
 	names(col_clusters_barplot) <- names(genes_per_cluster)
-	ggplot(as.data.frame(genes_per_cluster), aes(Var1, Freq, fill=Var1)) + 
-    geom_bar(stat="identity") + scale_fill_manual(name = "Cluster ID", values=col_clusters_barplot) + 
-    labs(x = "Cluster ID (0 = unclustered)", y = "Frequency", main="Number of Genes per Cluster")
+	ggplot2::ggplot(as.data.frame(genes_per_cluster), ggplot2::aes(Var1, Freq, fill=Var1)) + 
+    ggplot2::geom_bar(stat="identity") + ggplot2::scale_fill_manual(name = "Cluster ID", values=col_clusters_barplot) + 
+    ggplot2::labs(x = "Cluster ID (0 = unclustered)", y = "Frequency", main="Number of Genes per Cluster")
 ```
 
 ```{r WGCNA_conditional_block_head_factors, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
@@ -527,7 +527,7 @@ cat("### **WGCNA Eigen values clustering**")
 
 cat("\nWGCNA dendogram showing distances between these eigengenes along with the factors. Distances has been calculated using **signed** correlation so more near elements, more positive correlation between elements.") 
 	
-	plot_counter <- plot_in_div(plotEigengeneNetworks(results_WGCNA[['plot_objects']][['trait_and_module']], "Eigengene dendrogram", marDendro = c(0,4,2,0), plotHeatmaps = FALSE),
+	plot_counter <- plot_in_div(WGCNA::plotEigengeneNetworks(results_WGCNA[['plot_objects']][['trait_and_module']], "Eigengene dendrogram", marDendro = c(0,4,2,0), plotHeatmaps = FALSE),
 		fig_width= 4+ calc_width_clusters((features_count + cluster_count), multiplier = 0.15),  min_size = 5, counter = plot_counter)
 
 cat("### **Eigen values clustering (Absolute correlation)**")
@@ -537,9 +537,6 @@ cat("\nWGCNA like dendogram showing distances between these eigengenes along wit
 	corME <- cor(results_WGCNA[['plot_objects']][['trait_and_module']], use="p")
 	disME_abs <- as.dist(1-abs(corME))
 	clust_abs = fastcluster::hclust(disME_abs, method = "average")
-	# pdf("/mnt/home/users/bio_267_uma/josecordoba/test/test_plot.pdf")
-	# 	plot(clust_abs, sub="", xlab="", ylab="", ylim=c(0,1))
-	# dev.off()
 	
 	plot_counter <- plot_in_div(plot(clust_abs, sub="", xlab="", ylab="", ylim=c(0,1)),
 		fig_width= 4+ calc_width_clusters((features_count + cluster_count), multiplier = 0.15),  min_size = 5, counter = plot_counter)
@@ -577,7 +574,7 @@ DCG_plot_df <-data.frame(DCG_ratio = DCGs$DCLs/DCGs$CLs,
 # Use these to vary signficance according to DCG and combiend FDR for DE
 DCG_plot_df$DCG_sig <- ifelse(DCG_plot_df$DCG_qval < 0.05, "sig", "not_sig")
 DCG_plot_df$DE_sig <- ifelse(DCG_plot_df$combined_FDR < 0.05, "sig", "not_sig")
-ggplot(DCG_plot_df, aes(x=DCG_ratio, y=mean_logFCs, colour=DCG_sig, shape=DE_sig)) + geom_point()
+ggplot2::ggplot(DCG_plot_df, ggplot2::aes(x=DCG_ratio, y=mean_logFCs, colour=DCG_sig, shape=DE_sig)) + ggplot2::geom_point()
 
 ```
 
@@ -591,17 +588,17 @@ Plots of some of the various metrics computed in the PCIT implementation. Better
 ```
 
 ```{r PCIT_conditional_block_plot, eval=grepl("P", opt$modules), echo=FALSE, warning=FALSE, message=FALSE}
-    ggplot(metrics_pcit, aes(x=ctrl_cn)) +
-              geom_density()
-    ggplot(metrics_pcit, aes(x=treat_cn)) +
-              geom_density()
-    ggplot(metrics_pcit, aes(x=diff_cn)) +
-            geom_density()
-    ggplot(metrics_pcit, aes(x=diffK)) +
-            geom_density()
+    ggplot2::ggplot(metrics_pcit, ggplot2::aes(x=ctrl_cn)) +
+              ggplot2::geom_density()
+    ggplot2::ggplot(metrics_pcit, ggplot2::aes(x=treat_cn)) +
+              ggplot2::geom_density()
+    ggplot2::ggplot(metrics_pcit, ggplot2::aes(x=diff_cn)) +
+            ggplot2::geom_density()
+    ggplot2::ggplot(metrics_pcit, ggplot2::aes(x=diffK)) +
+            ggplot2::geom_density()
 
-    av_de <- ggplot(metrics_pcit, aes(x=average, y=de)) +
-            geom_point()
+    av_de <- ggplot2::ggplot(metrics_pcit, ggplot2::aes(x=average, y=de)) +
+            ggplot2::geom_point()
     av_de <- ggExtra::ggMarginal(
       av_de,
       type = 'density',
@@ -611,8 +608,8 @@ Plots of some of the various metrics computed in the PCIT implementation. Better
       fill = '#A6A39E'
     )
 
-    de_diffK <- ggplot(metrics_pcit, aes(x=de, y=diffK)) +
-            geom_point()
+    de_diffK <- ggplot2::ggplot(metrics_pcit, ggplot2::aes(x=de, y=diffK)) +
+            ggplot2::geom_point()
     de_diffK <- ggExtra::ggMarginal(
       de_diffK,
       type = 'density',
@@ -622,8 +619,8 @@ Plots of some of the various metrics computed in the PCIT implementation. Better
       fill = '#A6A39E'
     )
 
-    de_pif <- ggplot(metrics_pcit, aes(x=de, y=pif)) +
-            geom_point()
+    de_pif <- ggplot2::ggplot(metrics_pcit, ggplot2::aes(x=de, y=pif)) +
+            ggplot2::geom_point()
     de_pif <- ggExtra::ggMarginal(
       de_pif,
       type = 'density',
@@ -633,8 +630,8 @@ Plots of some of the various metrics computed in the PCIT implementation. Better
       fill = '#A6A39E'
     )
 
-    de_rif1 <- ggplot(metrics_pcit, aes(x=de, y=rif1)) +
-            geom_point()
+    de_rif1 <- ggplot2::ggplot(metrics_pcit, ggplot2::aes(x=de, y=rif1)) +
+            ggplot2::geom_point()
     de_rif1 <- ggExtra::ggMarginal(
       de_rif1,
       type = 'density',
@@ -644,8 +641,8 @@ Plots of some of the various metrics computed in the PCIT implementation. Better
       fill = '#A6A39E'
     )
 
-    de_rif2 <- ggplot(metrics_pcit, aes(x=de, y=rif2)) +
-            geom_point()
+    de_rif2 <- ggplot2::ggplot(metrics_pcit, ggplot2::aes(x=de, y=rif2)) +
+            ggplot2::geom_point()
     de_rif2 <- ggExtra::ggMarginal(
       de_rif2,
       type = 'density',
@@ -655,8 +652,8 @@ Plots of some of the various metrics computed in the PCIT implementation. Better
       fill = '#A6A39E'
     )
 
-    rif1_rif2 <- ggplot(metrics_pcit, aes(x=rif1, y=rif2)) +
-            geom_point()
+    rif1_rif2 <- ggplot2::ggplot(metrics_pcit, ggplot2::aes(x=rif1, y=rif2)) +
+            ggplot2::geom_point()
     rif1_rif2 <- ggExtra::ggMarginal(
       rif1_rif2,
       type = 'density',
@@ -679,13 +676,13 @@ Distributions of p-values, unadjusted and adjusted for multiple testing (FDR)
 
 df <- DE_all_genes[DE_all_genes$genes_tag != "FILTERED_OUT", ]
 df$gene_names <- row.names(df)
-df_melted_pval <- melt(df, id.vars = "gene_names", measure.vars = final_FDR_names)
-df_melted_FDR <- melt(df, id.vars = "gene_names", measure.vars = final_pvalue_names)
+df_melted_pval <- reshape2::melt(df, id.vars = "gene_names", measure.vars = final_FDR_names)
+df_melted_FDR <- reshape2::melt(df, id.vars = "gene_names", measure.vars = final_pvalue_names)
 # Now plot
-ggplot(df_melted_pval, aes(x=value)) + 
-    geom_density() + facet_grid(. ~variable)
-ggplot(df_melted_FDR, aes(x=value)) + 
-    geom_density() + facet_grid(. ~variable)
+ggplot2::ggplot(df_melted_pval, ggplot2::aes(x=value)) + 
+    ggplot2::geom_density() + ggplot2::facet_grid(. ~variable)
+ggplot2::ggplot(df_melted_FDR, ggplot2::aes(x=value)) + 
+    ggplot2::geom_density() + ggplot2::facet_grid(. ~variable)
 ```
 
 ### **FDR Correlations**
@@ -693,9 +690,9 @@ Correlations of adjusted p-values, adjusted for multiple testing (FDR) and for l
 
 ```{r pval_corr, echo = FALSE, warning = FALSE, eval = length(all_counts_for_plotting) > 1}
 
-chart.Correlation(df[, c("combined_FDR", final_FDR_names)], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
-chart.Correlation(df[, final_pvalue_names], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
-chart.Correlation(df[, c("mean_logFCs", final_logFC_names)], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
+PerformanceAnalytics::chart.Correlation(df[, c("combined_FDR", final_FDR_names)], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
+PerformanceAnalytics::chart.Correlation(df[, final_pvalue_names], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
+PerformanceAnalytics::chart.Correlation(df[, c("mean_logFCs", final_logFC_names)], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
 
 ```
 

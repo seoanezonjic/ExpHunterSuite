@@ -1,4 +1,40 @@
 #! /usr/bin/env Rscript
+#' Main DEgenes Hunter Function
+#'
+#' This function allows you to perform the DEG analysis with different algorithms.
+#' @param input_file Path to gene table count table
+#' @param Control_columns
+#' @param Treatment_columns
+#' @param reads
+#' @param minlibraries
+#' @param filter_type
+#' @param output_files
+#' @param p_val_cutoff
+#' @param lfc
+#' @param modules
+#' @param minpack_common
+#' @param target_file
+#' @param external_DEA_file
+#' @param model_variables
+#' @param numerics_as_factors
+#' @param custom_model
+#' @param string_factors
+#' @param numeric_factors
+#' @param WGCNA_memory
+#' @param WGCNA_norm_method
+#' @param WGCNA_deepsplit
+#' @param WGCNA_min_genes_cluster
+#' @param WGCNA_detectcutHeight
+#' @param WGCNA_mergecutHeight
+#' @param WGCNA_all
+#' @param WGCNA_blockwiseNetworkType
+#' @param WGCNA_blockwiseTOMType
+#' @param debug
+#' @param Debug
+#' @keywords installation
+#' @export
+#' @examples
+#' main_degenes_Hunter()
 
 main_degenes_Hunter <- function(
     input_file,

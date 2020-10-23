@@ -1,7 +1,7 @@
 #' Hunter installation Function
 #'
 #' This function allows you to install scripts.
-#' @param Folder to copy Hunter scripts
+#' @param to Path to folder in which copy Hunter scripts
 #' @keywords installation
 #' @export
 #' @examples

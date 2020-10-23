@@ -163,12 +163,12 @@ set_default_width <- function(enrich_obj, default = 12, showCategory = 30, thres
 # Prepare resize function
 
 clusters_heatplot <- function(compare_cluster_obj){
-  pp <- ggplot(compare_cluster_obj, aes(x = Cluster, y = Description, fill = p.adjust)) + 
-  geom_tile() 
+  pp <- ggplot2::ggplot(compare_cluster_obj, ggplot2::aes(x = Cluster, y = Description, fill = p.adjust)) + 
+  ggplot2::geom_tile() 
 }
 set_standard_size <- function(pp){
   pp <- pp + theme_light() + 
-        theme(axis.text.y = element_text(size = 10, face = 'bold'), axis.title = element_blank()) 
+        ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10, face = 'bold'), axis.title = ggplot2::element_blank()) 
   return(pp)
 }
 
@@ -196,25 +196,26 @@ gg_heatmap <- function(data_table,
     }
 
 #    save(list = ls(all.names = TRUE), file = "~/test/ggtest.RData", envir = environment())
-    pp <- ggplot(data_table, aes_string(x = x_axis, y = y_axis, fill = fill)) +
-    geom_tile(show.legend = TRUE) +
-    theme_minimal() +
-    theme(panel.grid.major = element_blank())+
-    theme(axis.text.x = element_text(angle = x_angle, face = "bold", hjust = 1),axis.text.y = element_text(face = "bold")) +
-    scale_fill_gradient2(
-    low = col[1],
-    high = col[3],
-    mid= col[2],
-    na.value = na_col,
-    guide = "colourbar",
-    aesthetics = "fill")
+    pp <- ggplot2::ggplot(data_table, ggplot2::aes_string(x = x_axis, y = y_axis, fill = fill)) +
+    ggplot2::geom_tile(show.legend = TRUE) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(panel.grid.major = ggplot2::element_blank())+
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = x_angle, face = "bold", hjust = 1),axis.text.y = ggplot2::element_text(face = "bold")) +
+    ggplot2::scale_fill_gradient2(
+      low = col[1],
+      high = col[3],
+      mid= col[2],
+      na.value = na_col,
+      guide = "colourbar",
+      aesthetics = "fill"
+    )
     if(!labs){
-      pp <- pp + theme(
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank())
+      pp <- pp + ggplot2::theme(
+        axis.title.x = ggplot2::element_blank(),
+        axis.title.y = ggplot2::element_blank())
     }
     if(!is.null(text_plot)){
-      pp <- pp + geom_text(aes_string(label=text_plot), colour = text_colour, size = text_size) 
+      pp <- pp + ggplot2::geom_text(ggplot2::aes_string(label=text_plot), colour = text_colour, size = text_size) 
     }
     return(pp)
 }
@@ -282,20 +283,20 @@ ht2logFCPlot <- function(ht,var_filter = 0.001, title = "Filtered logFC", y_rang
   # Plot
   # Check special cases
   if(!is.null(y_range)){
-    pp <- ggplot(df_logfc, aes(x = Gene, y = logFC, colour = Package)) + 
-        geom_point(alpha = alpha, aes(shape = Type)) +
-        scale_shape_manual(values=c(16, 17)) +
-        ylim(c(-abs(y_range),abs(y_range))) 
+    pp <- ggplot2::ggplot(df_logfc, ggplot2::aes(x = Gene, y = logFC, colour = Package)) + 
+        ggplot2::geom_point(alpha = alpha, ggplot2::aes(shape = Type)) +
+        ggplot2::scale_shape_manual(values=c(16, 17)) +
+        ggplot2::ylim(c(-abs(y_range),abs(y_range))) 
   }else{
-    pp <- ggplot(df_logfc, aes(x = Gene, y = logFC, colour = Package)) + 
-        geom_point(alpha = alpha) 
+    pp <- ggplot2::ggplot(df_logfc, ggplot2::aes(x = Gene, y = logFC, colour = Package)) + 
+        ggplot2::geom_point(alpha = alpha) 
   }
   pp <- pp + 
-    xlab(paste0("Gene (",100 - round(aux_vars/length(unique(rownames(ht))),4)*100,"% of genes has not significant variability)")) + 
-    ggtitle(title) + 
-    theme_classic() + 
-    theme(axis.text.x=element_blank(),
-        axis.ticks.x=element_blank())
+    ggplot2::xlab(paste0("Gene (",100 - round(aux_vars/length(unique(rownames(ht))),4)*100,"% of genes has not significant variability)")) + 
+    ggplot2::ggtitle(title) + 
+    ggplot2::theme_classic() + 
+    ggplot2::theme(axis.text.x=ggplot2::element_blank(),
+        axis.ticks.x=ggplot2::element_blank())
   # Return
   return(pp)
 }
