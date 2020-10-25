@@ -105,7 +105,7 @@ option_list <- list(
     help="Cut height to split modules"),
   optparse::make_option("--WGCNA_mergecutHeight", type="double", default=0.25,
     help="Value to merge two similar modules: Maximum dissimilarity (i.e., 1-correlation) "),
-  optparse::make_option(c("-w", "--WGCNA_all"), type="logical", default=TRUE,
+  optparse::make_option(c("-w", "--WGCNA_all"), type="logical", default=FALSE, action = "store_true",
     help="Run WGCNA for treated only, control only, and both as 3 separate runs. Needed if using PCIT. If false, WGCNA runs once, on the table including treament and control"),
   optparse::make_option(c("--WGCNA_blockwiseNetworkType"), type="character", default="signed",
     help="NetworkType option to be passed to blockwiseModules function"),
