@@ -502,7 +502,7 @@ main_degenes_Hunter <- function(
       WGCNA_input_treatment <- WGCNA_input[, index_treatmn_cols]
       WGCNA_input_control <- WGCNA_input[, index_control_cols]
 
-      if(WGCNA_all == TRUE) {
+      if(WGCNA_all == TRUE) { #TODO => Este bloque de código es repetitivo. 
         WGCNA_treatment_path <- file.path(path, "Treatment_only_data")
         dir.create(WGCNA_treatment_path)
         cat('Performing WGCNA correlation analysis for treated samples\n')
