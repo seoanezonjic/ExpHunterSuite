@@ -86,6 +86,7 @@ pp2 <- ggplot(smtraits, aes(x = Sample, y = Correlation, group = Trait, color = 
 	  geom_point(na.rm = TRUE) +
 	  geom_line(na.rm = TRUE) +
 	  geom_line(data = cl_profile, linetype = "dashed", size = 0.5, color = "blue") +
+	  ylab("eigen gene / normalized external measures values") +
 	  # ylim(c(-1,1)) +
       theme(axis.text.x = element_text(angle = 30, hjust = 1))
 plot(pp2)
