@@ -6,7 +6,7 @@
 #' @param bcount matrix of genes counts used to simulate. If NULL, arabidopsis dataset used (not from) in TCC package will be loaded
 #' @param group columns to be used as group replicates. If NULL, all columns will be used.
 #' @return a list with COUNT) a simulated gene counts matrix with simulated genes and sample names and TRUEDEG) a vector with real up/down regulated genes
-#' @import TCC package(s)
+#' @import TCC
 #' @author Fernando Moreno Jabato <jabato(at)uma(dot)es>
 STC <- function(Ngene = 1000, PDEG = 0.2, DEG.foldchange = 2, replicates = 3, bcount = NULL, group = NULL){
     # Load & prepare base data
