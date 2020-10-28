@@ -16,25 +16,6 @@
 ############################################################
 options(warn=1)
 if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
-  # Loading libraries
-  suppressPackageStartupMessages(library(ggplot2)) 
-  suppressPackageStartupMessages(library(limma))
-  suppressPackageStartupMessages(library(edgeR))
-  suppressPackageStartupMessages(library(DESeq2)) 
-  suppressPackageStartupMessages(library(NOISeq))
-  suppressPackageStartupMessages(library(VennDiagram))
-  suppressPackageStartupMessages(library(gplots))
-  suppressPackageStartupMessages(library(stringr))
-  suppressPackageStartupMessages(library(plyr))
-  suppressPackageStartupMessages(library(knitr))
-  suppressPackageStartupMessages(library(FSA))
-  suppressPackageStartupMessages(require(rmarkdown))
-  suppressPackageStartupMessages(require(reshape2))
-  suppressPackageStartupMessages(require(PerformanceAnalytics))
-  suppressPackageStartupMessages(require(WGCNA))
-  suppressPackageStartupMessages(require(diffcoexp))
-  #suppressPackageStartupMessages(require(PCIT))
-
   # Obtain this script directory
   full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using source
                  error=function(e) # works when using R CMD

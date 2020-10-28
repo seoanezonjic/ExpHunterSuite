@@ -60,7 +60,7 @@ analysis_NOISeq <- function(data, target){
 	all_NOISeq <- NOISeq::noiseqbio(mydata, k = 0.5, norm = "tmm", factor="Tissue", lc = 1, r = 50, adj = 1.5, plot = FALSE,
 	a0per = 0.9, random.seed = 12345, filter = 1, cv.cutoff = 500, cpm = 1)
 
-	normalized_counts <- NOISeq::tmm(assayData(mydata)$exprs, long = 1000, lc = 1) # Getting normalized counts
+	normalized_counts <- NOISeq::tmm(Biobase::assayData(mydata)$exprs, long = 1000, lc = 1) # Getting normalized counts
 	expres_diff_all <- as.data.frame(all_NOISeq@results)
 
 	prob_all <- expres_diff_all$prob
