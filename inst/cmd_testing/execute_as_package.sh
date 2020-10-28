@@ -7,7 +7,7 @@
 current=`pwd`
 cd ../../
 Rscript -e "devtools::document()"
-Rscript -e "devtools::install()"
+Rscript -e "devtools::install(dependencies=FALSE)"
 
 cd $current
 mkdir install_folder
