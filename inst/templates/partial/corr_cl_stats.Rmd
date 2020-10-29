@@ -18,7 +18,7 @@
 # => <cl>_explote_genes
  
 # Load necessary packages
-require(ggplot2)
+# require(ggplot2)
 n_category <- 30
 pval_thr_forFeatures <- 0.05
 
@@ -37,11 +37,11 @@ cl_profile <- cl_eigvalues_gnorm[cl_eigvalues_gnorm$Cluster_ID == paste0("ME", {
 # message(cl_profile)
 # q()
 # Plot
-pp <- ggplot(mapping = aes(x = Sample)) + 
-	  geom_line(data = scaled_counts_table[tgt_indx,], alpha = 0.05, mapping = aes(y = Count, group = Gene)) +
-	  geom_line(data = cl_profile, mapping = aes(y = Count, group = Cluster_ID), color = "blue", linetype = "dashed", size = 0.5) +
-	  scale_y_continuous(sec.axis = sec_axis(~.*2-1, name = "Cluster-Sample correlation")) +
-      theme(axis.text.x = element_text(angle = 30, hjust = 1))
+pp <- ggplot2::ggplot(mapping = ggplot2::aes(x = Sample)) + 
+	  ggplot2::geom_line(data = scaled_counts_table[tgt_indx,], alpha = 0.05, mapping = ggplot2::aes(y = Count, group = Gene)) +
+	  ggplot2::geom_line(data = cl_profile, mapping = ggplot2::aes(y = Count, group = Cluster_ID), color = "blue", linetype = "dashed", size = 0.5) +
+	  ggplot2::scale_y_continuous(sec.axis = sec_axis(~.*2-1, name = "Cluster-Sample correlation")) +
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 30, hjust = 1))
 plot(pp)
 ```
 
@@ -63,11 +63,11 @@ colnames(clcorrs) <- c("Trait","Cl_Trait_Corr")
 # Merge
 cltraits <- merge(x = clcorrs, y = clpvals, by = "Trait", all = TRUE)
 # Plot Cluster correlations
-pp <- ggplot(cltraits,aes(x = Trait, y = Cl_Trait_Corr, color = Cl_Trait_Pval)) + 
-	  geom_point() +
-	  geom_hline(yintercept = 0) + 
-	  theme(axis.text.x = element_text(angle = 30, hjust = 1)) + 
-	  ylim(c(-1,1))
+pp <- ggplot2::ggplot(cltraits,ggplot2::aes(x = Trait, y = Cl_Trait_Corr, color = Cl_Trait_Pval)) + 
+	  ggplot2::geom_point() +
+	  ggplot2::geom_hline(yintercept = 0) + 
+	  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 30, hjust = 1)) + 
+	  ggplot2::ylim(c(-1,1))
 plot(pp)
 ```
 ```{r "{{cl}}_wgcna_corr_pl2", echo = FALSE, results = 'asis', eval = length(clpvals) > 0}
@@ -82,13 +82,13 @@ colnames(cl_profile) <- colnames(smtraits)
 cl_profile$Trait <- rep(paste0("Cluster_",{{cl}}),nrow(cl_profile))
 # smtraits <- rbind(smtraits,cl_profile)
 
-pp2 <- ggplot(smtraits, aes(x = Sample, y = Correlation, group = Trait, color = Trait)) +
-	  geom_point(na.rm = TRUE) +
-	  geom_line(na.rm = TRUE) +
-	  geom_line(data = cl_profile, linetype = "dashed", size = 0.5, color = "blue") +
-	  ylab("eigen gene / normalized external measures values") +
+pp2 <- ggplot2::ggplot(smtraits, ggplot2::aes(x = Sample, y = Correlation, group = Trait, color = Trait)) +
+	  ggplot2::geom_point(na.rm = TRUE) +
+	  ggplot2::geom_line(na.rm = TRUE) +
+	  ggplot2::geom_line(data = cl_profile, linetype = "dashed", size = 0.5, color = "blue") +
+	  ggplot2::ylab("eigen gene / normalized external measures values") +
 	  # ylim(c(-1,1)) +
-      theme(axis.text.x = element_text(angle = 30, hjust = 1))
+      ggplot2::theme(axis.text.x = element_text(angle = 30, hjust = 1))
 plot(pp2)
 ```
 ```{r "{{cl}}_wgcna_corr_plERR", echo = FALSE, results = 'asis', eval = length(clpvals) <= 0}

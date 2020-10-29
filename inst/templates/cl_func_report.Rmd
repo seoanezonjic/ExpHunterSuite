@@ -31,12 +31,12 @@ output:
 ```{r config, include = FALSE}
  
 # Load necessary packages
-require(ggplot2)
-require(knitr)
+# require(ggplot2)
+# require(knitr)
 
 # Prepare recursive text
 chunks <- function(code, options = ""){paste(paste("```{r ",options,"}",sep = ""),code,"```",sep="\n")}
-render <- function(text){paste(knit(text = paste(text,collapse = "\n")),collapse = "\n")}
+render <- function(text){paste(knitr::knit(text = paste(text,collapse = "\n")),collapse = "\n")}
 
 # Prepare all HPO reports container
 out <- NULL
@@ -53,7 +53,7 @@ n_category <- 30
 ## **Used data in this analysis**
 Specifically, in this experiment set, known experiment labels are:
 
-`r paste(knit(text = paste(sample_classes, collapse = "\n")), collapse = "\n")`
+`r paste(knitr::knit(text = paste(sample_classes, collapse = "\n")), collapse = "\n")`
 
 ## **General description**
 This report contains all the functional information that was requested by the options when functional_Hunter.R was executed.
@@ -81,7 +81,7 @@ knitr::kable(cl_table)
 ```
 
 ```{r load_correlation_stats, echo = FALSE}
-curr_out <- knit_expand("partial/corr_cl_stats.Rmd")
+curr_out <- knitr::knit_expand("partial/corr_cl_stats.Rmd")
 ```
 
 `r paste(knit(text = curr_out), collapse = '\n')`
@@ -90,7 +90,7 @@ curr_out <- knit_expand("partial/corr_cl_stats.Rmd")
 # Per each category defined, perform enrichment
 curr_out <- unlist(lapply(names(enrichments_ORA_expanded),function(cat){
   sec_text <- paste(c("## **",cat," enrichment results**\n"),collapse="") # Header
-  sec_text <- c(sec_text,knit_expand("partial/ora_enrichResult.Rmd")) # Body
+  sec_text <- c(sec_text,knitr::knit_expand("partial/ora_enrichResult.Rmd")) # Body
   return(sec_text)
 }))
 ```
@@ -104,10 +104,10 @@ if(exists("custom_cls_ORA")){
   # Per each custom category defined, perform enrichment
   curr_out <- unlist(lapply(names(custom_cls_ORA),function(cat){
     sec_text <- paste(c("## **",basename(cat)," custom enrichment results**\n"),collapse="") # Header
-    sec_text <- c(sec_text,knit_expand("partial/ora_customEnrichResult.Rmd")) # Body
+    sec_text <- c(sec_text,knitr::knit_expand("partial/ora_customEnrichResult.Rmd")) # Body
     return(sec_text)
   }))
 }
 ```
-`r paste(knit(text = curr_out), collapse = '\n')`
+`r paste(knitr::knit(text = curr_out), collapse = '\n')`
 

@@ -1,8 +1,31 @@
+#' This function allows you to perform the Functional analysis with different enrichment corpus.
+#' @param input_hunter_folder
+#' @param model_organism
+#' @param annot_file
+#' @param organisms_table
+#' @param template_folder
+#' @param List_organisms
+#' @param input_gene_id
+#' @param func_annot_db
+#' @param GO_subont
+#' @param custom
+#' @param analysis_type
+#' @param remote
+#' @param save_query
+#' @param pthreshold
+#' @param qthreshold
+#' @param debug_file
+#' @param cores
+#' @param output_files
+#' @param fc_colname
+#' @keywords 
+#' @export
+#' @examples
 functional_hunter <- function(
 	input_hunter_folder,
 	model_organism,
 	annot_file,
-	organisms_table = file.path(find.package('DEgenesHunter'), "R", "organism_table.txt"),
+	organisms_table = file.path(find.package('DEgenesHunter'), "external_data", "organism_table.txt"),
 	template_folder = file.path(find.package('DEgenesHunter'), "templates"),
 	List_organisms = FALSE,
 	input_gene_id = "E",
@@ -20,6 +43,28 @@ functional_hunter <- function(
 	fc_colname = "mean_logFCs"
 	){
 
+	if(!exists("opt")){
+		opt <- list(input_hunter_folder = input_hunter_folder,
+					model_organism = model_organism,
+					annot_file = annot_file,
+					organisms_table = organisms_table,
+					template_folder = template_folder,
+					List_organisms = List_organisms,
+					input_gene_id = input_gene_id,
+					func_annot_db = func_annot_db,
+					GO_subont = GO_subont,
+					custom = custom,
+					analysis_type = analysis_type,
+					remote = remote,
+					save_query = save_query,
+					pthreshold = pthreshold,
+					qthreshold = qthreshold,
+					debug_file = debug_file,
+					cores = cores,
+					output_files = output_files,
+					fc_colname = fc_colname)
+	}
+
 	if(!file.exists(input_hunter_folder)) 
 		stop("No input degenes_Hunter folder")
 
@@ -35,7 +80,6 @@ functional_hunter <- function(
 		debug_point(debug_file, "Start point", environment())
 	#################################################################
 	}
-
 
 
 	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
@@ -344,7 +388,7 @@ functional_hunter <- function(
 	# Verbose point
 	message(paste("IDs used in ORA:",length(likely_degs_entrez)))
 	## TODO => ESTARIA BIEN REFLEJAR ESTA INFORMACION EN EL REPORT
-
+	"%>%" <- magrittr::"%>%"
 	union_DEGs_df <- subset(DEGH_results, genes_tag %in% c("POSSIBLE_DEG", "PREVALENT_DEG"))
 	union_DEGs <- union_DEGs_df[!is.na(union_DEGs_df$input_IDs), "input_IDs"] %>% unique
 	union_annot_DEGs_df <- subset(input_to_entrezgene, input_to_entrezgene[,1] %in% union_DEGs)
@@ -636,6 +680,7 @@ functional_hunter <- function(
 	#############################################
 	### CUSTOM ENRICHMENT
 	if (!is.null(custom)) {
+		message("Performing CUSTOM enrichments")
 		# Obtain custom files
 		custom_files <- unlist(strsplit(custom,","))
 
@@ -647,7 +692,7 @@ functional_hunter <- function(
 												 likely_degs_entrez = likely_degs_entrez)
 		if (flags$WGCNA){
 			custom_cls_ORA_expanded <- lapply(all_custom_gmt, function(gmt){
-				enrich_clusters_with_gmt(gmt, clgenes)
+				enrich_clusters_with_gmt(gmt, clgenes, opt$pthreshold, opt$cores)
 			})
 		}
 		####################### DEBUG POINT #############################
@@ -668,6 +713,8 @@ functional_hunter <- function(
 	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
 	if (flags$WGCNA) {
+		message("Performing CLUSTERS enrichments")
+
 		if (flags$ORA) {
 			enrichments_ORA <- lapply(enrichments_ORA_expanded, merge_result)
 			# Write output
@@ -700,6 +747,7 @@ functional_hunter <- function(
 				write.table(df, file=file.path(output_files, paste0(basename(names(custom_cls_ORA[enrichment_i])),"_cls_ORA")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 			}
 		}
+		message("CLUSTERS enrichments finished")
 	}
 
 	DEGH_results <- DEGH_results[c(added_cols, setdiff(names(DEGH_results), added_cols))] # Reorder columns so annotated first
@@ -729,7 +777,8 @@ functional_hunter <- function(
 
 	if (flags$WGCNA) { # Clustered
 		message("Rendering specific cluster reports")
-		invisible(mclapply(cls, function(cl) {
+		# invisible(parallel::mclapply(cls, function(cl) {
+		invisible(parallel::mclapply(cls[1:3], function(cl) {
 			# Take output name
 			aux <- paste0("cl_func_",cl,".html")
 			outf_cls_i <- file.path(results_path, aux)

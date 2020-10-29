@@ -8,9 +8,9 @@ resize <- function(g, fig_height=5, fig_width=12) {
 }
 
 plot_enrResult_DT <- function(ER){
-  toshow <- fortify(ER)[,!colnames(ER@compareClusterResult) %in% c("pvalue","qvalue")]
+  toshow <- ggplot2::fortify(ER)[,!colnames(ER@compareClusterResult) %in% c("pvalue","qvalue")]
   toshow$Cluster <- gsub("[\n,\t,\r]{0,1}\\(.*\\)","",toshow$Cluster)
-  datatable(toshow, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+  DT::datatable(toshow, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
                       options = list(
                         colReorder = TRUE,
                         dom = 'lftBip',
@@ -167,7 +167,7 @@ clusters_heatplot <- function(compare_cluster_obj){
   ggplot2::geom_tile() 
 }
 set_standard_size <- function(pp){
-  pp <- pp + theme_light() + 
+  pp <- pp + ggplot2::theme_light() + 
         ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10, face = 'bold'), axis.title = ggplot2::element_blank()) 
   return(pp)
 }
@@ -221,7 +221,7 @@ gg_heatmap <- function(data_table,
 }
 
 extract_legend <- function(a.gplot){ #code taken from https://stackoverflow.com/questions/13649473/add-a-common-legend-for-combined-ggplots
-  tmp <- ggplot_gtable(ggplot_build(a.gplot))
+  tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(a.gplot))
   leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
   legend <- tmp$grobs[[leg]]
   return(legend)

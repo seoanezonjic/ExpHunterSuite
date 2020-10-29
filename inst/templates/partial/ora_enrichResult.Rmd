@@ -13,14 +13,14 @@
 # => <cl>_<cat>_oraEnrich
  
 # Load necessary packages
-require(ggplot2)
-require(knitr)
-require(clusterProfiler)
-require(enrichplot)
+# require(ggplot2)
+# require(knitr)
+# require(clusterProfiler)
+# require(enrichplot)
 
 # Prepare recursive text
 chunks <- function(code, options = ""){paste(paste("```{r ",options,"}",sep = ""),code,"```",sep="\n")}
-render <- function(text){paste(knit(text = paste(text,collapse = "\n")),collapse = "\n")}
+render <- function(text){paste(knitr::knit(text = paste(text,collapse = "\n")),collapse = "\n")}
 
 # Prepare all HPO reports container
 out <- NULL
@@ -32,8 +32,8 @@ out <- NULL
 ```{r "{{cl}}_{{cat}}_oraEnrich", results='asis', echo = FALSE, message=FALSE, warning=FALSE}
 
 n_category <- 30
-default_width <- set_default_width(enrich_obj = enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
-if(length(get_categories(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2){ # Needs, at least, two categories
+default_width <- DEgenesHunter:::set_default_width(enrich_obj = enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
+if(length(DEgenesHunter:::get_categories(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2){ # Needs, at least, two categories
 	# Main label 
 	cat("### **{{cat}} - Over Representation Analysis**\n",
 		"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n"
@@ -44,8 +44,8 @@ if(length(get_categories(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2)
 		"The plot shows the functional top significative terms in ascendant order by adjusted pvalue. The color represents the associated adjusted pvalue. 
 		The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
 	)
-	pp <- barplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
-	plot_in_div(pp, fig_width = default_width)
+	pp <- graphics::barplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
+	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -54,8 +54,8 @@ if(length(get_categories(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2)
 		"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
 		The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 	)
-	pp <- dotplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
-	plot_in_div(pp, fig_width = default_width)
+	pp <- enrichplot::dotplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
+	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -63,11 +63,11 @@ if(length(get_categories(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2)
 		"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 		The size of the functional terms shows the number of connected genes.\n\n"
 	)
-	enrichments_ORA_symb <- setReadable(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-	if(length(get_genes(enrichments_ORA_symb)) <= 150){
-		pp <- cnetplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList) +
-			  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-		plot_in_div(pp, fig_width = default_width)
+	enrichments_ORA_symb <- DOSE::setReadable(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+	if(length(DEgenesHunter:::get_genes(enrichments_ORA_symb)) <= 150){
+		pp <- enrichplot::cnetplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList) +
+			  ggplot2::scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+		DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 	}else{
 		cat("\n\nCnetplot is not readable because more than 150 genes has been enriched in this nomenclature, so is not printed\n\n")
 	
@@ -77,8 +77,8 @@ if(length(get_categories(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2)
 		"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes).
 		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 	)
-	pp <- emapplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
-	plot_in_div(pp, fig_width = default_width)
+	pp <- enrichplot::emapplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
+	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -86,17 +86,17 @@ if(length(get_categories(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2)
 		"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 	)
 
-	pp <- heatplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList)
-	width_size <- calc_width(enrichments_ORA_symb)
-	height_size <- calc_height(enrichments_ORA_symb) 
-	plot_in_div(pp, height_size, width_size)
+	pp <- enrichplot::heatplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList)
+	width_size <- DEgenesHunter:::calc_width(enrichments_ORA_symb)
+	height_size <- DEgenesHunter:::calc_height(enrichments_ORA_symb) 
+	DEgenesHunter:::plot_in_div(pp, height_size, width_size)
 
 	cat("\n\n**Upsetplot**\n\n", 
 		"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 	)
 
-	pp <- upsetplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], n=n_category)
-	plot_in_div(pp, fig_width = default_width)
+	pp <- enrichplot::upsetplot(enrichments_ORA_expanded[["{{cat}}"]][["{{cl}}"]], n=n_category)
+	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 	cat('\n\nGenes has been enriched in less than 2 categories, so Upsetplot cannot be printed\n\n')
 
 } else{

@@ -20,20 +20,20 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 	#############################################
 	### LOAD LIBRARIES
 	#############################################
-	suppressPackageStartupMessages(require(optparse))
-	suppressPackageStartupMessages(require(biomaRt)) 
-	suppressPackageStartupMessages(require(topGO))
-	suppressPackageStartupMessages(require(KEGGREST))
-	suppressPackageStartupMessages(require(stringr))
-	suppressPackageStartupMessages(require(plyr))
-	suppressPackageStartupMessages(require(knitr))
-	suppressPackageStartupMessages(require(clusterProfiler))
-	suppressPackageStartupMessages(require(dplyr))
+	# suppressPackageStartupMessages(require(optparse))
+	# suppressPackageStartupMessages(require(biomaRt)) 
+	# suppressPackageStartupMessages(require(topGO))
+	# suppressPackageStartupMessages(require(KEGGREST))
+	# suppressPackageStartupMessages(require(stringr))
+	# suppressPackageStartupMessages(require(plyr))
+	# suppressPackageStartupMessages(require(knitr))
+	# suppressPackageStartupMessages(require(clusterProfiler))
+	# suppressPackageStartupMessages(require(dplyr))
 }else{
 	require('DEgenesHunter')
 	root_path <- find.package('DEgenesHunter')
 	template_folder <- file.path(root_path, 'templates')
-	organisms_table_file <- file.path(root_path, "R", "organism_table.txt")
+	organisms_table_file <- file.path(root_path, "external_data", "organism_table.txt")
 }
 
 

@@ -38,10 +38,9 @@ require(clusterProfiler)
 require(enrichplot)
 require(DT)
 
-
 # Prepare recursive text
 chunks <- function(code, options = ""){paste(paste("```{r ",options,"}",sep = ""),code,"```",sep="\n")}
-render <- function(text){paste(knit(text = paste(text,collapse = "\n")),collapse = "\n")}
+render <- function(text){paste(knitr::knit(text = paste(text,collapse = "\n")),collapse = "\n")}
 
 # Prepare all HPO reports container
 out <- NULL
@@ -57,7 +56,7 @@ out <- NULL
 ## **Used data in this analysis**
 Specifically, in this experiment set, known experiment labels are:
 
-`r paste(knit(text = paste(sample_classes, collapse = "\n")), collapse = "\n")`
+`r paste(knitr::knit(text = paste(sample_classes, collapse = "\n")), collapse = "\n")`
 
 ## **General description**
 This report contains all the functional information that was requested by the options when functional_Hunter.R was executed.
@@ -157,7 +156,7 @@ cat(paste(c("Table of signifcant genes. Variables taken into account are being s
 ```{r render_topgenes, echo = FALSE, results = 'asis'}
 cat("\n### **Top positive**\n")
 # Render
-datatable(topgenes, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+DT::datatable(topgenes, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
                     options = list(
                     	colReorder = TRUE,
                     	dom = 'lftBip',
@@ -167,7 +166,7 @@ datatable(topgenes, filter = 'top', rownames = FALSE, extensions = c('Buttons','
 ```{r render_botgenes, echo = FALSE, results = 'asis'}
 cat("\n### **Top negative**\n")
 # Render
-datatable(botgenes, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+DT::datatable(botgenes, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
                     options = list(
                     	colReorder = TRUE,
                     	dom = 'lftBip',
@@ -200,7 +199,7 @@ graph_files <- apply(expand.grid(graph_files, go_subontos), 1, paste, collapse="
 
 # Check all files
 invisible(lapply(graph_files,function(file_name){
-	if(exists_graph_file(path = results_path, file_name = file_name)){
+	if(DEgenesHunter:::exists_graph_file(path = results_path, file_name = file_name)){
 		go_flags[file_name] <<- TRUE
 		go_files[file_name] <<- graph_file_name(path = results_path,file_name = file_name)
 	}else{
@@ -211,7 +210,7 @@ invisible(lapply(graph_files,function(file_name){
 go_flags$GO_SECTION <- any(unlist(go_flags))
 # Add CL graphs
 invisible(lapply(go_enrich_vars,function(var_name){
-	go_flags[var_name] <<- exists_enrich_df(var_name)
+	go_flags[var_name] <<- DEgenesHunter:::exists_enrich_df(var_name)
 }))
 # Check GO section
 # go_flags$GO_CL_SECTION <- any(unlist(go_flags[go_enrich_vars]))
@@ -233,9 +232,9 @@ if(go_flags$GO_CL_SECTION){
 		go_flags[paste0("perform_ora_go_",onto)] <- FALSE
 		go_flags[paste0("perform_gsea_go_",onto)] <- FALSE #TODO Estas variables se tienen que inicializar como false para que no rompan las logicas posteriores. 
 		if(go_flags$enrich_go){
-			go_flags[paste0("perform_ora_go_",onto)] <- check_results(enrich_go[[onto]])
+			go_flags[paste0("perform_ora_go_",onto)] <- DEgenesHunter:::check_results(enrich_go[[onto]])
 		}else if(go_flags$enrich_go_gsea){
-			go_flags[paste0("perform_gsea_go_",onto)] <- check_results(enrich_go_gsea[[onto]])
+			go_flags[paste0("perform_gsea_go_",onto)] <- DEgenesHunter:::check_results(enrich_go_gsea[[onto]])
 		}
 	}
 }
@@ -252,7 +251,7 @@ kegg_enrich_vars <- c("enrich_ora","enrich_gsea")
 
 # Check all variables
 invisible(lapply(kegg_enrich_vars,function(var_name){
-	kegg_flags[var_name] <<- exists_enrich_df(var_name)
+	kegg_flags[var_name] <<- DEgenesHunter:::exists_enrich_df(var_name)
 }))
 
 #kegg_flags$KEGG_SECTION <- any(unlist(kegg_flags))
@@ -270,7 +269,7 @@ react_enrich_vars <- c("enrich_react","enrich_react_gsea")
 
 # Check all variables
 invisible(lapply(react_enrich_vars,function(var_name){
-	react_flags[var_name] <<- exists_enrich_df(var_name)
+	react_flags[var_name] <<- DEgenesHunter:::exists_enrich_df(var_name)
 }))
 
 #react_flags$REACT_SECTION <- any(unlist(react_flags))
@@ -286,7 +285,7 @@ if(!is.null(custom_enrichments)){
 
 	# Check all variables
 	invisible(lapply(custom_enrichments,function(var){
-		custom_flags[var$File] <<- check_results(var$Result)
+		custom_flags[var$File] <<- DEgenesHunter:::check_results(var$Result)
 	}))
 
 	custom_flags$CUSTOM_SECTION <- any(unlist(custom_flags))
@@ -296,12 +295,12 @@ if(!is.null(custom_enrichments)){
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ```
-```{r setup_plots, echo=FALSE}
+```{r setup_plots, echo=FALSE, eval = FALSE}
 # if(kegg_flags[["enrich_ora"]] | kegg_flags[["enrich_gsea"]] |
 # 	go_flags[["enrich_go"]] | go_flags[["enrich_go_gsea"]] |
 # 	react_flags[["enrich_react"]] | react_flags[["enrich_react_gsea"]]){
-	suppressPackageStartupMessages(require(clusterProfiler))
-	suppressPackageStartupMessages(require(enrichplot))
+	# suppressPackageStartupMessages(require(clusterProfiler))
+	# suppressPackageStartupMessages(require(enrichplot))
 # }
 
 
@@ -341,7 +340,7 @@ if(!kegg_flags$enrich_ora & !kegg_flags$enrich_gsea){
 
 ```{r kegg_ora, results='asis', echo = FALSE, eval = kegg_flags$enrich_ora, message=FALSE, warning=FALSE}
 
-default_width <- set_default_width(enrich_obj = enrich_ora, showCategory=n_category)
+default_width <- DEgenesHunter:::set_default_width(enrich_obj = enrich_ora, showCategory=n_category)
 # Main label 
 cat("### **Over Representation Analysis**\n",
 	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
@@ -351,8 +350,8 @@ cat(
 	"The plot shows the functional top significative terms in ascendant order by adjusted pvalue. The color represents the associated adjusted pvalue. 
 	The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
 )
-pp <- barplot(enrich_ora, showCategory=n_category)
-plot_in_div(pp, fig_width = default_width)
+pp <- graphics::barplot(enrich_ora, showCategory=n_category)
+DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -361,8 +360,8 @@ cat("\n\n**Dotplot**\n\n",
 	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
 	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 )
-pp <- dotplot(enrich_ora, showCategory=n_category)
-plot_in_div(pp, fig_width = default_width)
+pp <- enrichplot::dotplot(enrich_ora, showCategory=n_category)
+DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -370,12 +369,12 @@ cat("\n\n**Gene-Concept Network**\n\n",
 	"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 	The size of the functional terms shows the number of connected genes.\n\n"
 )
-enrich_ora_symb <- setReadable(enrich_ora, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+enrich_ora_symb <- DOSE::setReadable(enrich_ora, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 
-if(length(get_genes(enrich_ora_symb)) <= 200){
-	pp <- cnetplot(enrich_ora_symb, showCategory=n_category, foldChange=geneList) +
-		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-	plot_in_div(pp, fig_width = default_width)
+if(length(DEgenesHunter:::get_genes(enrich_ora_symb)) <= 200){
+	pp <- enrichplot::cnetplot(enrich_ora_symb, showCategory=n_category, foldChange=geneList) +
+		  ggplot2::scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 }else{
 	cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
 }
@@ -384,9 +383,9 @@ cat("\n\n**Enrich Map plot**\n\n",
 	"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 	The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 )
-if (check_categories(enrich_ora, min_categories = 1)) {
-	pp <- emapplot(enrich_ora, showCategory=n_category)
-	plot_in_div(pp, fig_width = default_width)
+if (DEgenesHunter:::check_categories(enrich_ora, min_categories = 1)) {
+	pp <- enrichplot::emapplot(enrich_ora, showCategory=n_category)
+	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 } else {
 	cat("\nThis graph can not be plotted because only one functional category was enriched\n")
 }
@@ -396,18 +395,18 @@ cat("\n\n**Heatplot**\n\n",
 	"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 )
 
-pp <- heatplot(enrich_ora_symb, showCategory=n_category, foldChange=geneList)
-width_size <- calc_width(enrich_ora_symb)
-height_size <- calc_height(enrich_ora_symb) 
+pp <- enrichplot::heatplot(enrich_ora_symb, showCategory=n_category, foldChange=geneList)
+width_size <- DEgenesHunter:::calc_width(enrich_ora_symb)
+height_size <- DEgenesHunter:::calc_height(enrich_ora_symb) 
 
-plot_in_div(pp, height_size, width_size)
+DEgenesHunter:::plot_in_div(pp, height_size, width_size)
 
 cat("\n\n**Upsetplot**\n\n", 
 	"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 )
-if(length(get_categories(enrich_ora))>=2){ # Needs, at least, two categories
-	pp <- upsetplot(enrich_ora, n=n_category)
-	plot_in_div(pp, fig_width = default_width)
+if(length(DEgenesHunter:::get_categories(enrich_ora))>=2){ # Needs, at least, two categories
+	pp <- enrichplot::upsetplot(enrich_ora, n=n_category)
+	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 }else{
 	cat("\n\nGenes has been enriched in less than 2 categories, so Upsetplot cannot be printed\n\n")
 }
@@ -420,7 +419,7 @@ if(length(get_categories(enrich_ora))>=2){ # Needs, at least, two categories
 
 
 ```{r kegg_gsea, results='asis', echo = FALSE, eval = kegg_flags$enrich_gsea, message=FALSE}
-default_width <- set_default_width(enrich_obj = enrich_gsea, showCategory=n_category)
+default_width <- DEgenesHunter:::set_default_width(enrich_obj = enrich_gsea, showCategory=n_category)
 
 # Main label
 cat("\n\n### **Gene Set Enrichment Analysis**\n",
@@ -431,19 +430,19 @@ cat("\n\n**Dotplot**\n\n",
 	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
 	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 )
-pp <- dotplot(enrich_gsea, showCategory=n_category)
-plot_in_div(pp, fig_width = default_width)
+pp <- enrichplot::dotplot(enrich_gsea, showCategory=n_category)
+DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 cat("\n\n**Gene-Concept Network**\n\n", 
 	"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 	The size of the functional terms shows the number of connected genes.\n\n"
 )
-enrich_gsea_symb <- setReadable(enrich_gsea, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-if(length(get_genes(enrich_gsea_symb)) <= 200){
-	pp <- cnetplot(enrich_gsea_symb, showCategory=n_category, foldChange=geneList) +
-		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-	plot_in_div(pp, fig_width = default_width)
+enrich_gsea_symb <- DOSE::setReadable(enrich_gsea, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+if(length(DEgenesHunter:::get_genes(enrich_gsea_symb)) <= 200){
+	pp <- enrichplot::cnetplot(enrich_gsea_symb, showCategory=n_category, foldChange=geneList) +
+		  ggplot2::scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 }else{
 	cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
 }
@@ -452,9 +451,9 @@ cat("\n\n**Enrich Map plot**\n\n",
 	"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 	The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 )
-if (check_categories(enrich_gsea, min_categories = 1)) {
-	pp <- emapplot(enrich_gsea, showCategory=n_category)
-	plot_in_div(pp, fig_width = default_width)
+if (DEgenesHunter:::check_categories(enrich_gsea, min_categories = 1)) {
+	pp <- enrichplot::emapplot(enrich_gsea, showCategory=n_category)
+	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 } else {
 	cat("\nThis graph can not be plotted because only one functional category was enriched\n")
 }
@@ -463,27 +462,27 @@ cat("\n\n**Heatplot**\n\n",
 	"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 )
 
-pp <- heatplot(enrich_gsea_symb, showCategory=n_category, foldChange=geneList)
-width_size <- calc_width(enrich_gsea_symb)
-height_size <- calc_height(enrich_gsea_symb) 
-plot_in_div(pp, height_size, width_size)
+pp <- enrichplot::heatplot(enrich_gsea_symb, showCategory=n_category, foldChange=geneList)
+width_size <- DEgenesHunter:::calc_width(enrich_gsea_symb)
+height_size <- DEgenesHunter:::calc_height(enrich_gsea_symb) 
+DEgenesHunter:::plot_in_div(pp, height_size, width_size)
 
 
 cat("\n\n**Ridgeplot**\n\n",
 	"Top functional terms are show in the Y axis and for each one of them a fold-change distribution is shown.
 	The distribution colours indicates the adjusted pvalue.\n\n"
 )
-pp <- ridgeplot(enrich_gsea, showCategory=n_category)
-plot_in_div(pp, fig_width = default_width)
+pp <- enrichplot::ridgeplot(enrich_gsea, showCategory=n_category)
+DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 cat("\n\n**Rank plot**\n\n", 
 	"The enrichment score evolution trought the ranked genes by fold-change are show for the top functional terms. 
 	Y axis shows the enrichment score and the X axis shows the genes ranked by fold-change.\n\n"
 )
-pp <- gseaplot2(enrich_gsea, geneSetID=ifelse(nrow(enrich_gsea@result) < 4, seq(nrow(enrich_gsea@result)), 1:4), title = enrich_gsea$Description[1], pvalue_table = TRUE)
+pp <- enrichplot::gseaplot2(enrich_gsea, geneSetID=ifelse(nrow(enrich_gsea@result) < 4, seq(nrow(enrich_gsea@result)), 1:4), title = enrich_gsea$Description[1], pvalue_table = TRUE)
 
-plot_in_div(pp, fig_width = default_width)
+DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 ```
@@ -555,7 +554,7 @@ for (onto in names(go_main_enrich)) {
 	message(go_flags)
 	##################################################### ORA PLOTS
 	if(go_flags[[paste0("perform_ora_go_",onto)]]){
-		default_width <- set_default_width(enrich_obj = enrich_go[[onto]], showCategory=n_category)
+		default_width <- DEgenesHunter:::set_default_width(enrich_obj = enrich_go[[onto]], showCategory=n_category)
 
 		# Add main label
 		cat(paste("### **[",onto,"] Over Representation Analysis** \n",sep=""),
@@ -567,27 +566,27 @@ for (onto in names(go_main_enrich)) {
 			"The plot shows the functional top significative terms in ascendant order by adjusted pvalue. The color represents the associated adjusted pvalue. 
 			The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
 		)
-		go_pp <- barplot(enrich_go[[onto]], showCategory=n_category)
-		plot_in_div(go_pp, fig_width = default_width)
+		go_pp <- graphics::barplot(enrich_go[[onto]], showCategory=n_category)
+		DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 
 		
 		cat("\n\n**Dotplot**\n\n",
 			"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
 			The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 		)
-		go_pp <- dotplot(enrich_go[[onto]], showCategory=n_category)
-		plot_in_div(go_pp, fig_width = default_width)
+		go_pp <- enrichplot::dotplot(enrich_go[[onto]], showCategory=n_category)
+		DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 
 		cat("\n\n**Gene-Concept Network**\n\n", 
 			"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 			The size of the functional terms shows the number of connected genes.\n\n"
 		)
-		enrich_go_ora_symb <- setReadable(enrich_go[[onto]], OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+		enrich_go_ora_symb <- DOSE::setReadable(enrich_go[[onto]], OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 
-		if(length(get_genes(enrich_go_ora_symb)) <= 200){
-			go_pp <- cnetplot(enrich_go_ora_symb, showCategory=n_category, foldChange=geneList) +
-					 scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-			plot_in_div(go_pp, fig_width = default_width)
+		if(length(DEgenesHunter:::get_genes(enrich_go_ora_symb)) <= 200){
+			go_pp <- enrichplot::cnetplot(enrich_go_ora_symb, showCategory=n_category, foldChange=geneList) +
+					 ggplot2::scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+			DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 		}else{
 			cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
 		}
@@ -596,26 +595,26 @@ for (onto in names(go_main_enrich)) {
 			"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 			The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 		)
-		if (check_categories(enrich_go[[onto]], min_categories = 1)) {
-			go_pp <- emapplot(enrich_go[[onto]], showCategory=n_category)
-			plot_in_div(go_pp, fig_width = default_width)
+		if (DEgenesHunter:::check_categories(enrich_go[[onto]], min_categories = 1)) {
+			go_pp <- enrichplot::emapplot(enrich_go[[onto]], showCategory=n_category)
+			DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 		} else {
 			cat("\nThis graph can not be plotted because only one functional category was enriched\n")
 		}
 		cat("\n\n**Heatplot**\n\n", 
 			"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 		)
-		go_pp <- heatplot(enrich_go_ora_symb, showCategory=n_category, foldChange=geneList)
-		width_size <- calc_width(enrich_go_ora_symb)
-		height_size <- calc_height(enrich_go_ora_symb) 
-		plot_in_div(go_pp, height_size, width_size)
+		go_pp <- enrichplot::heatplot(enrich_go_ora_symb, showCategory=n_category, foldChange=geneList)
+		width_size <- DEgenesHunter:::calc_width(enrich_go_ora_symb)
+		height_size <- DEgenesHunter:::calc_height(enrich_go_ora_symb) 
+		DEgenesHunter:::plot_in_div(go_pp, height_size, width_size)
 
 		cat("\n\n**Upsetplot**\n\n", 
 			"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 		)
-		if(length(get_categories(enrich_go[[onto]]))>=2){ # Needs, at least, two categories
-			go_pp <- upsetplot(enrich_go[[onto]], n=n_category)
-			plot_in_div(go_pp, fig_width = default_width)
+		if(length(DEgenesHunter:::get_categories(enrich_go[[onto]]))>=2){ # Needs, at least, two categories
+			go_pp <- enrichplot::upsetplot(enrich_go[[onto]], n=n_category)
+			DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 			cat("\n \n")
 		}else{
 			cat("\n\nGenes has been enriched in less than 2 categories, so Upsetplot cannot be printed\n\n")
@@ -627,7 +626,7 @@ for (onto in names(go_main_enrich)) {
 	###################################################### GSEA PLOTS
 	if(go_flags[[paste0("perform_gsea_go_",onto)]]){
 		# Add main label
-		default_width <- set_default_width(enrich_obj = enrich_go_gsea[[onto]], showCategory=n_category)
+		default_width <- DEgenesHunter:::set_default_width(enrich_obj = enrich_go_gsea[[onto]], showCategory=n_category)
 
 		cat(paste("\n\n### **[",onto,"]Gene Set Enrichment Analysis**\n",sep=""),
 			"In this method, all the genes are sorted by their fold-change and the algorithm scan which genes with similar fold-change shares a term of the selected functional category.\n\n"
@@ -637,19 +636,19 @@ for (onto in names(go_main_enrich)) {
 			"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
 			The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 		)
-		go_pp <- dotplot(enrich_go_gsea[[onto]], showCategory=n_category)
-		plot_in_div(go_pp, fig_width = default_width)
+		go_pp <- enrichplot::dotplot(enrich_go_gsea[[onto]], showCategory=n_category)
+		DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 
 		cat("\n\n**Gene-Concept Network**\n\n", 
 			"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 			The size of the functional terms shows the number of connected genes.\n\n"
 		)
-		enrich_go_gsea_symb <- setReadable(enrich_go_gsea[[onto]], OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+		enrich_go_gsea_symb <- DOSE::setReadable(enrich_go_gsea[[onto]], OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 
-		if(length(get_genes(enrich_go_gsea_symb)) <= 200){
-			go_pp <- cnetplot(enrich_go_gsea_symb, showCategory=n_category, foldChange=geneList) +
-					  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-			plot_in_div(go_pp, fig_width = default_width)
+		if(length(DEgenesHunter:::get_genes(enrich_go_gsea_symb)) <= 200){
+			go_pp <- enrichplot::cnetplot(enrich_go_gsea_symb, showCategory=n_category, foldChange=geneList) +
+					  ggplot2::scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+			DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 		}else{
 			cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
 		}
@@ -658,34 +657,34 @@ for (onto in names(go_main_enrich)) {
 			"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 			The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 		)
-		if (check_categories(enrich_go_gsea[[onto]], min_categories = 1)) {
-			go_pp <- emapplot(enrich_go_gsea[[onto]], showCategory=n_category)
-			plot_in_div(go_pp, fig_width = default_width)
+		if (DEgenesHunter:::check_categories(enrich_go_gsea[[onto]], min_categories = 1)) {
+			go_pp <- enrichplot::emapplot(enrich_go_gsea[[onto]], showCategory=n_category)
+			DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 		} else {
 			cat("\nThis graph can not be plotted because only one functional category was enriched\n")
 		}
 		cat("\n\n**Heatplot**\n\n", 
 			"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 		)
-		go_pp <- heatplot(enrich_go_gsea_symb, showCategory=n_category, foldChange=geneList)
-		width_size <- calc_width(enrich_go_gsea_symb)
-		height_size <- calc_height(enrich_go_gsea_symb) 
+		go_pp <- enrichplot::heatplot(enrich_go_gsea_symb, showCategory=n_category, foldChange=geneList)
+		width_size <- DEgenesHunter:::calc_width(enrich_go_gsea_symb)
+		height_size <- DEgenesHunter:::calc_height(enrich_go_gsea_symb) 
 		save(enrich_go_gsea_symb, file = "enrich_go_gsea_symb.Rdata")
-		plot_in_div(go_pp, height_size, width_size)
+		DEgenesHunter:::plot_in_div(go_pp, height_size, width_size)
 
 		cat("\n\n**Ridgeplot**\n\n",
 			"Top functional terms are show in the Y axis and for each one of them a fold-change distribution is shown.
 			The distribution colours indicates the adjusted pvalue.\n\n"
 		)
-		go_pp <- ridgeplot(enrich_go_gsea[[onto]], showCategory=n_category)
-		plot_in_div(go_pp, fig_width = default_width)
+		go_pp <- enrichplot::ridgeplot(enrich_go_gsea[[onto]], showCategory=n_category)
+		DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 
 		cat("\n\n**Rank plot**\n\n", 
 			"The enrichment score evolution trought the ranked genes by fold-change are show for the top functional terms. 
 			Y axis shows the enrichment score and the X axis shows the genes ranked by fold-change.\n\n"
 		)
-		go_pp <- gseaplot2(enrich_go_gsea[[onto]], geneSetID=ifelse(nrow(enrich_go_gsea[[onto]]@result) < 4, seq(nrow(enrich_go_gsea[[onto]]@result)), 1:4), pvalue_table = TRUE) 
-		plot_in_div(go_pp, fig_width = default_width)
+		go_pp <- enrichplot::gseaplot2(enrich_go_gsea[[onto]], geneSetID=ifelse(nrow(enrich_go_gsea[[onto]]@result) < 4, seq(nrow(enrich_go_gsea[[onto]]@result)), 1:4), pvalue_table = TRUE) 
+		DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 		cat("\n \n")
 	}
 }
@@ -698,7 +697,7 @@ if(go_flags$enrich_go){
 		)
 	# Concat results
 	enr_go <- enrich_go[[1]]
-	default_width <- set_default_width(enrich_obj = enr_go, showCategory=n_category)
+	default_width <- DEgenesHunter:::set_default_width(enrich_obj = enr_go, showCategory=n_category)
 	if(length(enrich_go)>1){
 		invisible(lapply(seq_along(enrich_go)[-1],function(i){
 			enr_go@result <<- rbind(enr_go@result, enrich_go[[i]]@result)
@@ -713,25 +712,25 @@ if(go_flags$enrich_go){
 		"The plot shows the functional top significative terms in ascendant order by adjusted pvalue. The color represents the associated adjusted pvalue. 
 		The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
 	)
-	go_pp  <- barplot(enr_go, showCategory=n_category)
-	plot_in_div(go_pp, fig_width = default_width)
+	go_pp  <- graphics::barplot(enr_go, showCategory=n_category)
+	DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 
 	cat("\n\n**Dotplot**\n\n",
 		"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
 		The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 	)
-	go_pp  <- dotplot(enr_go, showCategory=n_category)
-	plot_in_div(go_pp, fig_width = default_width)
+	go_pp  <- enrichplot::dotplot(enr_go, showCategory=n_category)
+	DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 
 	cat("\n\n**Gene-Concept Network**\n\n", 
 		"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 		The size of the functional terms shows the number of connected genes.\n\n"
 	)
-	enr_go_symb <- setReadable(enr_go, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-	if(length(get_genes(enr_go_symb)) <= 200){
-		go_pp  <- cnetplot(enr_go_symb, showCategory=n_category, foldChange=geneList) +
-				  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-		plot_in_div(go_pp, fig_width = default_width)
+	enr_go_symb <- DOSE::setReadable(enr_go, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+	if(length(DEgenesHunter:::get_genes(enr_go_symb)) <= 200){
+		go_pp  <- enrichplot::cnetplot(enr_go_symb, showCategory=n_category, foldChange=geneList) +
+				  ggplot2::scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+		DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 	}else{
 		cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
 	}
@@ -740,9 +739,9 @@ if(go_flags$enrich_go){
 		"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 	)
-	if (check_categories(enr_go, min_categories = 1)) {
-		go_pp  <- emapplot(enr_go, showCategory=n_category)
-		plot_in_div(go_pp, fig_width = default_width)
+	if (DEgenesHunter:::check_categories(enr_go, min_categories = 1)) {
+		go_pp  <- enrichplot::emapplot(enr_go, showCategory=n_category)
+		DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 	} else {
 		cat("\nThis graph can not be plotted because only one functional category was enriched\n")
 	}
@@ -750,17 +749,17 @@ if(go_flags$enrich_go){
 	cat("\n\n**Heatplot**\n\n", 
 		"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 	)
-	go_pp  <- heatplot(enr_go_symb, showCategory=n_category, foldChange=geneList)
-	width_size <- calc_width(enr_go_symb)
-	height_size <- calc_height(enr_go_symb) 
-	plot_in_div(go_pp, height_size, width_size)
+	go_pp  <- enrichplot::heatplot(enr_go_symb, showCategory=n_category, foldChange=geneList)
+	width_size <- DEgenesHunter:::calc_width(enr_go_symb)
+	height_size <- DEgenesHunter:::calc_height(enr_go_symb) 
+	DEgenesHunter:::plot_in_div(go_pp, height_size, width_size)
 
 	cat("\n\n**Upsetplot**\n\n", 
 		"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 	)
-	if(length(get_categories(enr_go))>=2){ # Needs, at least, two categories
-		go_pp <- upsetplot(enr_go, n=n_category)
-		plot_in_div(go_pp, fig_width = default_width)
+	if(length(DEgenesHunter:::get_categories(enr_go))>=2){ # Needs, at least, two categories
+		go_pp <- enrichplot::upsetplot(enr_go, n=n_category)
+		DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 	}else{
 		cat("\n\nGenes has been enriched in less than 2 categories, so Upsetplot cannot be printed\n\n")
 	}
@@ -774,7 +773,7 @@ if(go_flags$enrich_go_gsea){
 	)
 	# Concat results
 	enr_go_gsea <- enrich_go_gsea[[1]]
-	default_width <- set_default_width(enrich_obj = enr_go_gsea, showCategory=n_category)
+	default_width <- DEgenesHunter:::set_default_width(enrich_obj = enr_go_gsea, showCategory=n_category)
 
 	if(length(enrich_go_gsea)>1){
 		invisible(lapply(seq_along(enrich_go_gsea)[-1],function(i){
@@ -788,18 +787,18 @@ if(go_flags$enrich_go_gsea){
 		"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
 		The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 	)
-	go_pp <- dotplot(enr_go_gsea, showCategory=n_category)
-	plot_in_div(go_pp, fig_width = default_width)
+	go_pp <- enrichplot::dotplot(enr_go_gsea, showCategory=n_category)
+	DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 
 	cat("\n\n**Gene-Concept Network**\n\n", 
 		"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 		The size of the functional terms shows the number of connected genes.\n\n"
 	)
-	enr_go_gsea_symb <- setReadable(enr_go_gsea, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-	if(length(get_genes(enr_go_gsea_symb)) <= 200){
-		go_pp <- cnetplot(enr_go_gsea_symb, showCategory=n_category, foldChange=geneList) +
-				  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-		plot_in_div(go_pp, fig_width = default_width)
+	enr_go_gsea_symb <- DOSE::setReadable(enr_go_gsea, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+	if(length(DEgenesHunter:::get_genes(enr_go_gsea_symb)) <= 200){
+		go_pp <- enrichplot::cnetplot(enr_go_gsea_symb, showCategory=n_category, foldChange=geneList) +
+				  ggplot2::scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+		DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 	}else{
 		cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
 	}
@@ -807,27 +806,27 @@ if(go_flags$enrich_go_gsea){
 		"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 	)
-	if (check_categories(enr_go_gsea, min_categories = 1)) {
-		go_pp <- emapplot(enr_go_gsea, showCategory=n_category)
-		plot_in_div(go_pp, fig_width = default_width)
+	if (DEgenesHunter:::check_categories(enr_go_gsea, min_categories = 1)) {
+		go_pp <- enrichplot::emapplot(enr_go_gsea, showCategory=n_category)
+		DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 	} else {
 		cat("\nThis graph can not be plotted because only one functional category was enriched\n")
 	}
 	cat("\n\n**Heatplot**\n\n", 
 		"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 	)
-	go_pp <- heatplot(enr_go_gsea_symb, showCategory=n_category, foldChange=geneList)
-	width_size <- calc_width(enr_go_gsea_symb)
-	height_size <- calc_height(enr_go_gsea_symb)
+	go_pp <- enrichplot::heatplot(enr_go_gsea_symb, showCategory=n_category, foldChange=geneList)
+	width_size <- DEgenesHunter:::calc_width(enr_go_gsea_symb)
+	height_size <- DEgenesHunter:::calc_height(enr_go_gsea_symb)
 
-	plot_in_div(go_pp, height_size, width_size)
+	DEgenesHunter:::plot_in_div(go_pp, height_size, width_size)
 	
 	cat("\n\n**Ridgeplot**\n\n",
 		"Top functional terms are show in the Y axis and for each one of them a fold-change distribution is shown.
 		The distribution colours indicates the adjusted pvalue.\n\n"
 	)
-	go_pp <- ridgeplot(enr_go_gsea, showCategory=n_category)
-	plot_in_div(go_pp, fig_width = default_width)
+	go_pp <- enrichplot::ridgeplot(enr_go_gsea, showCategory=n_category)
+	DEgenesHunter:::plot_in_div(go_pp, fig_width = default_width)
 	cat("\n \n")
 }
 
@@ -869,10 +868,10 @@ if(!go_flags$GO_SECTION){
 			onto <- ontos[[tail(splitted,1)]]
 			label <- paste(header,onto,sep=" ")[1]
 			# Paste and return
-			return(knit_expand(text = paste(label,
+			return(knitr::knit_expand(text = paste(label,
 											body,
 											"<br>",
-											chunks(code = paste("include_graphics('",go_files[[f]],"')"),
+											chunks(code = paste("knitr::include_graphics('",go_files[[f]],"')"),
 												   options = "echo = FALSE"),
 											"\n",sep = "\n")))
 		}else{
@@ -881,12 +880,12 @@ if(!go_flags$GO_SECTION){
 	}))
 
 	# Add section header
-	out <- c(knit_expand(text = "## **GO graphs**"),out)
+	out <- c(knitr::knit_expand(text = "## **GO graphs**"),out)
 }
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ```
 
-`r paste(knit(text = paste(out,collapse = "\n")),collapse = "\n")`
+`r paste(knitr::knit(text = paste(out,collapse = "\n")),collapse = "\n")`
 
 
 
@@ -904,7 +903,7 @@ if(!react_flags$enrich_react & !react_flags$enrich_react_gsea){
 ```
 
 ```{r react_ora, results='asis', echo = FALSE, eval = react_flags$enrich_react, message=FALSE, warning=FALSE}
-default_width <- set_default_width(enrich_obj = enrich_react, showCategory=n_category)
+default_width <- DEgenesHunter:::set_default_width(enrich_obj = enrich_react, showCategory=n_category)
 
 # Main label 
 cat("### **Over Representation Analysis**\n",
@@ -915,8 +914,8 @@ cat(
 	"The plot shows the functional top significative terms in ascendant order by adjusted pvalue. The color represents the associated adjusted pvalue. 
 	The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
 )
-pp <- barplot(enrich_react, showCategory=n_category)
-plot_in_div(pp, fig_width = default_width)
+pp <- graphics::barplot(enrich_react, showCategory=n_category)
+DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -924,8 +923,8 @@ cat("\n\n**Dotplot**\n\n",
 	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
 	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 )
-pp <- dotplot(enrich_react, showCategory=n_category)
-plot_in_div(pp, fig_width = default_width)
+pp <- enrichplot::dotplot(enrich_react, showCategory=n_category)
+DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -933,11 +932,11 @@ cat("\n\n**Gene-Concept Network**\n\n",
 	"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 	The size of the functional terms shows the number of connected genes.\n\n"
 )
-enrich_react_symb <- setReadable(enrich_react, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-if(length(get_genes(enrich_react_symb)) <= 200){
-	pp <- cnetplot(enrich_react_symb, showCategory=n_category, foldChange=geneList) +
-		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-	plot_in_div(pp, fig_width = default_width)
+enrich_react_symb <- DOSE::setReadable(enrich_react, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+if(length(DEgenesHunter:::get_genes(enrich_react_symb)) <= 200){
+	pp <- enrichplot::cnetplot(enrich_react_symb, showCategory=n_category, foldChange=geneList) +
+		  ggplot2::scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 }else{
 	cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
 }
@@ -947,9 +946,9 @@ cat("\n\n**Enrich Map plot**\n\n",
 	"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 	The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 )
-if (check_categories(enrich_react, min_categories = 1)) {
-	pp <- emapplot(enrich_react, showCategory=n_category)
-	plot_in_div(pp, fig_width = default_width)
+if (DEgenesHunter:::check_categories(enrich_react, min_categories = 1)) {
+	pp <- enrichplot::emapplot(enrich_react, showCategory=n_category)
+	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 } else {
 	cat("\nThis graph can not be plotted because only one functional category was enriched\n")
 }
@@ -958,10 +957,10 @@ if (check_categories(enrich_react, min_categories = 1)) {
 cat("\n\n**Heatplot**\n\n", 
 	"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 )
-pp <- heatplot(enrich_react_symb, showCategory=n_category, foldChange=geneList)
-width_size <- calc_width(enrich_react_symb)
-height_size <- calc_height(enrich_react_symb)
-plot_in_div(pp, height_size, width_size)
+pp <- enrichplot::heatplot(enrich_react_symb, showCategory=n_category, foldChange=geneList)
+width_size <- DEgenesHunter:::calc_width(enrich_react_symb)
+height_size <- DEgenesHunter:::calc_height(enrich_react_symb)
+DEgenesHunter:::plot_in_div(pp, height_size, width_size)
 	
 
 
@@ -969,10 +968,10 @@ plot_in_div(pp, height_size, width_size)
 cat("\n\n**Upsetplot**\n\n", 
 	"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 )
-if(length(get_categories(enrich_react))>=2){ # Needs, at least, two categories
+if(length(DEgenesHunter:::get_categories(enrich_react))>=2){ # Needs, at least, two categories
 
-	pp <- upsetplot(enrich_react, n=n_category)
-	plot_in_div(pp, fig_width = default_width)
+	pp <- enrichplot::upsetplot(enrich_react, n=n_category)
+	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 }else{
 		cat("\n\nGenes has been enriched in less than 2 categories, so Upsetplot cannot be printed\n\n")
 	}
@@ -985,7 +984,7 @@ if(length(get_categories(enrich_react))>=2){ # Needs, at least, two categories
 
 
 ```{r react_gsea, results='asis', echo = FALSE, eval = react_flags$enrich_react_gsea}
-default_width <- set_default_width(enrich_obj = enrich_react_gsea, showCategory=n_category)
+default_width <- DEgenesHunter:::set_default_width(enrich_obj = enrich_react_gsea, showCategory=n_category)
 # Main label
 cat("\n\n### **Gene Set Enrichment Analysis**\n",
 	"In this method, all the genes are sorted by their fold-change and the algorithm scan which genes with similar fold-change shares a term of the selected functional category.\n\n"
@@ -995,19 +994,19 @@ cat("\n\n**Dotplot**\n\n",
 	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
 	The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 )
-pp <- dotplot(enrich_react_gsea, showCategory=n_category)
-plot_in_div(pp, fig_width = default_width)
+pp <- enrichplot::dotplot(enrich_react_gsea, showCategory=n_category)
+DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 cat("\n\n**Gene-Concept Network**\n\n", 
 	"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 	The size of the functional terms shows the number of connected genes.\n\n"
 )
-enrich_react_gsea_symb <- setReadable(enrich_react_gsea, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-if(length(get_genes(enrich_react_gsea_symb)) <= 200){
-	pp <- cnetplot(enrich_react_gsea_symb, showCategory=n_category, foldChange=geneList) +
-		  scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-	plot_in_div(pp, fig_width = default_width)
+enrich_react_gsea_symb <- DOSE::setReadable(enrich_react_gsea, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+if(length(DEgenesHunter:::get_genes(enrich_react_gsea_symb)) <= 200){
+	pp <- enrichplot::cnetplot(enrich_react_gsea_symb, showCategory=n_category, foldChange=geneList) +
+		  ggplot2::scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
+	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 }else {
 	cat("\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n")
 }
@@ -1016,9 +1015,9 @@ cat("\n\n**Enrich Map plot**\n\n",
 	"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 	The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 )
-if (check_categories(enrich_react_gsea, min_categories = 1)) {
-	pp <- emapplot(enrich_react_gsea, showCategory=n_category)
-	plot_in_div(pp, fig_width = default_width)
+if (DEgenesHunter:::check_categories(enrich_react_gsea, min_categories = 1)) {
+	pp <- enrichplot::emapplot(enrich_react_gsea, showCategory=n_category)
+	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 } else {
 	cat("\nThis graph can not be plotted because only one functional category was enriched\n")
 }
@@ -1026,26 +1025,26 @@ if (check_categories(enrich_react_gsea, min_categories = 1)) {
 cat("\n\n**Heatplot**\n\n", 
 	"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 )
-pp <- heatplot(enrich_react_gsea_symb, showCategory=n_category, foldChange=geneList)
-width_size <- calc_width(enrich_react_gsea_symb)
-height_size <- calc_height(enrich_react_gsea_symb)
-plot_in_div(pp, height_size, width_size)
+pp <- enrichplot::heatplot(enrich_react_gsea_symb, showCategory=n_category, foldChange=geneList)
+width_size <- DEgenesHunter:::calc_width(enrich_react_gsea_symb)
+height_size <- DEgenesHunter:::calc_height(enrich_react_gsea_symb)
+DEgenesHunter:::plot_in_div(pp, height_size, width_size)
 
 
 cat("\n\n**Ridgeplot**\n\n",
 	"Top functional terms are show in the Y axis and for each one of them a fold-change distribution is shown.
 	The distribution colours indicates the adjusted pvalue.\n\n"
 )
-pp <- ridgeplot(enrich_react_gsea, showCategory=n_category)
-plot_in_div(pp, fig_width = default_width)
+pp <- enrichplot::ridgeplot(enrich_react_gsea, showCategory=n_category)
+DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 cat("\n\n**Rank plot**\n\n", 
 	"The enrichment score evolution trought the ranked genes by fold-change are show for the top functional terms. 
 	Y axis shows the enrichment score and the X axis shows the genes ranked by fold-change.\n\n"
 )
-pp <- gseaplot2(enrich_react_gsea, geneSetID=ifelse(nrow(enrich_react_gsea@result) < 4, seq(nrow(enrich_react_gsea@result)), 1:4), title = enrich_react_gsea$Description[1], pvalue_table = TRUE)
-plot_in_div(pp, fig_width = default_width)
+pp <- enrichplot::gseaplot2(enrich_react_gsea, geneSetID=ifelse(nrow(enrich_react_gsea@result) < 4, seq(nrow(enrich_react_gsea@result)), 1:4), title = enrich_react_gsea$Description[1], pvalue_table = TRUE)
+DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 ```
@@ -1066,7 +1065,7 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 
 		# Prepare ORA plots
 		body <- "enr_custom <- custom_enrichments[[{{i}}]]$Result
-				default_width <- set_default_width(enrich_obj = enr_custom, showCategory=n_category)
+				default_width <- DEgenesHunter:::set_default_width(enrich_obj = enr_custom, showCategory=n_category)
 				
 				# Header
 				cat(paste('\n## **',basename(custom_enrichments[[{{i}}]]$File),'**\n',sep=''))
@@ -1080,8 +1079,8 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 					'The plot shows the functional top significative terms in ascendant order by adjusted pvalue. The color represents the associated adjusted pvalue. 
 					The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n'
 				)
-				pp <- barplot(enr_custom, showCategory=n_category)
-				plot_in_div(pp, fig_width = default_width)
+				pp <- graphics::barplot(enr_custom, showCategory=n_category)
+				DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -1089,8 +1088,8 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 					'he plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
 					The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n'
 				)
-				pp <- dotplot(enr_custom, showCategory=n_category)
-				plot_in_div(pp, fig_width = default_width)
+				pp <- enrichplot::dotplot(enr_custom, showCategory=n_category)
+				DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -1098,11 +1097,11 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 					'The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 					The size of the functional terms shows the number of connected genes.\n\n'
 				)
-				enr_custom <- setReadable(enr_custom, OrgDb = current_organism_info$Bioconductor_DB[1], keyType='ENTREZID')
-				if(length(get_genes(enr_custom)) <= 200){
-					pp <- cnetplot(enr_custom, showCategory=n_category, foldChange=geneList) +
-						  scale_color_gradient2(name = 'fold change', low = '#0000BF', high = '#bf0000', na.value = '#50EA55')
-					plot_in_div(pp, fig_width = default_width)
+				enr_custom <- DOSE::setReadable(enr_custom, OrgDb = current_organism_info$Bioconductor_DB[1], keyType='ENTREZID')
+				if(length(DEgenesHunter:::get_genes(enr_custom)) <= 200){
+					pp <- enrichplot::cnetplot(enr_custom, showCategory=n_category, foldChange=geneList) +
+						  ggplot2::scale_color_gradient2(name = 'fold change', low = '#0000BF', high = '#bf0000', na.value = '#50EA55')
+					DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 				}else{
 					cat('\n\nCnetplot is not readable because more than 200 genes has been enriched in this nomenclature, so is not printed\n\n')
 				}
@@ -1112,9 +1111,9 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 					'The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 					The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n'
 				)
-				if (check_categories(enr_custom, min_categories = 1)) {
-					pp <- emapplot(enr_custom, showCategory=n_category)
-					plot_in_div(pp, fig_width = default_width)
+				if (DEgenesHunter:::check_categories(enr_custom, min_categories = 1)) {
+					pp <- enrichplot::emapplot(enr_custom, showCategory=n_category)
+					DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
 				} else {
 					cat('\nThis graph can not be plotted because only one functional category was enriched\n')
 				}
@@ -1123,17 +1122,17 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 				cat('\n\n**Heatplot**\n\n', 
 					'Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n'
 				)
-				pp <- heatplot(enr_custom, showCategory=n_category, foldChange=geneList)
-				width_size <- calc_width(enr_custom)
-				height_size <- calc_height(enr_custom)
-				plot_in_div(pp, height_size, width_size)
+				pp <- enrichplot::heatplot(enr_custom, showCategory=n_category, foldChange=geneList)
+				width_size <- DEgenesHunter:::calc_width(enr_custom)
+				height_size <- DEgenesHunter:::calc_height(enr_custom)
+				DEgenesHunter:::plot_in_div(pp, height_size, width_size)
 					
 				cat('\n\n**Upsetplot**\n\n', 
 					'Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n'
 				)
-				if(length(get_categories(enr_custom))>=2){ # Needs, at least, two categories
-					pp <- upsetplot(enr_custom, n=n_category)
-					plot_in_div(pp, fig_width = default_width)\n
+				if(length(DEgenesHunter:::get_categories(enr_custom))>=2){ # Needs, at least, two categories
+					pp <- enrichplot::upsetplot(enr_custom, n=n_category)
+					DEgenesHunter:::plot_in_div(pp, fig_width = default_width)\n
 				}else{
 					cat('\n\nGenes has been enriched in less than 2 categories, so Upsetplot cannot be printed\n\n')
 				}
@@ -1145,14 +1144,14 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 	body <- gsub("\\{\\{i\\}\\}",i,body)
 
 
-	out_custom <<- c(out_custom,paste(knit_expand(text = paste(header,
+	out_custom <<- c(out_custom,paste(knitr::knit_expand(text = paste(header,
 											 					chunks(body, options = "echo = FALSE,results='asis'"),
 											 					"\n",sep = "\n")),
 														sep = "\n"))
 }))
 ```
 
-  `r paste(knit(text = paste(out_custom,collapse = "\n")),collapse = "\n")`
+  `r paste(knitr::knit(text = paste(out_custom,collapse = "\n")),collapse = "\n")`
 
 
 ## **Values of options used to run Functional Hunter**
@@ -1160,6 +1159,7 @@ First column contains the option names; second column contains the given values 
 ```{r opt_vals, echo = FALSE}
 knitr::kable(cbind(opt))
 ```
+
 
 
 
