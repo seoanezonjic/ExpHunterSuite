@@ -9,8 +9,8 @@
 options(warn=1)
 if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   # Loading libraries
-  suppressPackageStartupMessages(require(optparse)) 
-  suppressPackageStartupMessages(require(TCC))
+  # suppressPackageStartupMessages(require(optparse)) 
+  # suppressPackageStartupMessages(require(TCC))
 
   # Obtain this script directory
   full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using source
@@ -61,7 +61,7 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 ### LOAD & PREPARE 
 #############################################
 
-degsynth <- function(
+degsynth(
   inputfile = opt$inputfile,
   outfile = opt$outfile,
   replicates = opt$replicates,

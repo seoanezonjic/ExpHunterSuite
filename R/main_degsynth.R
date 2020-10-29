@@ -30,7 +30,7 @@ fcfunc <- function(means,fcmin=1.4, fcmax=3, meanlog = 1, sdlog = 0.8){
 	xx <- xx[order(xx$Quant),]
 	xx$Quant <- xx$Quant[seq(from = nrow(xx), to = 1)] # Apply inverse 
 	# Prepare wuantiles of observed
-	ecdffun <- ecdf(means)
+	ecdffun <- stats::ecdf(means)
 	means <- data.frame(X = means, Quant = unlist(lapply(means,ecdffun)))
 	# Merge values
 	if(all(means$B %in% xx$B)){
@@ -41,7 +41,19 @@ fcfunc <- function(means,fcmin=1.4, fcmax=3, meanlog = 1, sdlog = 0.8){
 	return(means)
 }
 
-
+#' Main function to generate synthetic data using an specific exponential distribution for logFC
+#' @param outfile
+#' @param inputfile
+#' @param replicates
+#' @param ngenes
+#' @param DEGs_proportion
+#' @param FC_min
+#' @param FC_max
+#' @param P_up
+#' @param group
+#' @keywords
+#' @export
+#' @return 
 degsynth <- function(
 	outfile,
 	inputfile = NULL,

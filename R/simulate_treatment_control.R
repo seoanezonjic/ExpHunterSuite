@@ -11,8 +11,8 @@
 STC <- function(Ngene = 1000, PDEG = 0.2, DEG.foldchange = 2, replicates = 3, bcount = NULL, group = NULL){
     # Load & prepare base data
 	if(is.null(bcount)){
-		require(TCC)
-		data(arab)
+		# require(TCC)
+		data(arab, package = "TCC")
 		bcount <- arab
 		group <- seq(3)
 	}
