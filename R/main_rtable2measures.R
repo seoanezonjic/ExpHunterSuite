@@ -1,3 +1,13 @@
+#'
+#' @param htfile
+#' @param realprediction
+#' @param aucfile
+#' @param experiment
+#' @param logFC_threshold
+#' @param pval_threshold
+#' @keywords
+#' @export
+#' @return
 rtable2measures <- function(
   htfile,
   realprediction,
@@ -29,8 +39,8 @@ rtable2measures <- function(
     dgh_fdr[is.na(dgh_fdr)] <- 1
     dgh_fdr <- 1 - dgh_fdr
     real_df <- as.data.frame(replicate(ncol(dgh_fdr), true_pred[,2]))
-    pred <- prediction(dgh_fdr, real_df)
-    perf_auc <- performance(pred, "auc")
+    pred <- ROCR::prediction(dgh_fdr, real_df)
+    perf_auc <- ROCR::performance(pred, "auc")
     auc_vals <- data.frame(Method = gsub("_FDR","",gsub("FDR_","",colnames(dgh_fdr))), 
                  Set = rep("All",ncol(dgh_fdr)),
                  Measure = rep("auc", ncol(dgh_fdr)),
@@ -84,11 +94,11 @@ rtable2measures <- function(
   # Calculate values for
 
   # Calculate measures
-  df_cuts$ACC <- acc(df_cuts)           # Accuracy
-  df_cuts$Precision <- ppv(df_cuts)     # Precision
-  df_cuts$Recall <- recall(df_cuts)     # Recall / sensitivity
-  df_cuts$Specificity <- spc(df_cuts)   # Specificity
-  df_cuts$FMeasure <- fmeasure(df_cuts) # F-measure
+  df_cuts$ACC <- DEgenesHunter:::acc(df_cuts)           # Accuracy
+  df_cuts$Precision <- DEgenesHunter:::ppv(df_cuts)     # Precision
+  df_cuts$Recall <- DEgenesHunter:::recall(df_cuts)     # Recall / sensitivity
+  df_cuts$Specificity <- DEgenesHunter:::spc(df_cuts)   # Specificity
+  df_cuts$FMeasure <- DEgenesHunter:::fmeasure(df_cuts) # F-measure
 
   #############################################
   ### EXPORT
