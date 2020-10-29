@@ -21,6 +21,7 @@
 #' @keywords 
 #' @export
 #' @examples
+
 functional_hunter <- function(
 	input_hunter_folder,
 	model_organism,
@@ -79,6 +80,8 @@ functional_hunter <- function(
 		time_control <- list(start = Sys.time())
 		debug_point(debug_file, "Start point", environment())
 	#################################################################
+	}else{
+		debug <- FALSE
 	}
 
 
