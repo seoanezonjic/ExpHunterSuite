@@ -40,7 +40,7 @@ cl_profile <- cl_eigvalues_gnorm[cl_eigvalues_gnorm$Cluster_ID == paste0("ME", {
 pp <- ggplot2::ggplot(mapping = ggplot2::aes(x = Sample)) + 
 	  ggplot2::geom_line(data = scaled_counts_table[tgt_indx,], alpha = 0.05, mapping = ggplot2::aes(y = Count, group = Gene)) +
 	  ggplot2::geom_line(data = cl_profile, mapping = ggplot2::aes(y = Count, group = Cluster_ID), color = "blue", linetype = "dashed", size = 0.5) +
-	  ggplot2::scale_y_continuous(sec.axis = sec_axis(~.*2-1, name = "Cluster-Sample correlation")) +
+	  ggplot2::scale_y_continuous(sec.axis = ggplot2::sec_axis(~.*2-1, name = "Cluster-Sample correlation")) +
       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 30, hjust = 1))
 plot(pp)
 ```
