@@ -40,4 +40,5 @@ Imports:
     plyr,
     reshape2,
     PerformanceAnalytics,
-    WGCNA
+    WGCNA,
+    dplyr
