@@ -103,6 +103,7 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 dir.create(opt$output_files)
 write.table(cbind(opt), file=file.path(opt$output_files, "opt_input_values.txt"), sep="\t", col.names =FALSE, quote = FALSE)
 
+debug_file <- NULL
 if(!is.null(opt$Debug)){
   debug <- TRUE
   debug_file <- file.path(opt$Debug)
@@ -118,7 +119,7 @@ if(opt$debug){
   debug_dir <- normalizePath(debug_dir)
   # Store session
   time_control <- list(start = Sys.time())
-  debug_point(debug_file,"Start point")
+  DEgenesHunter:::debug_point(debug_file,"Start point")
 }
 
 

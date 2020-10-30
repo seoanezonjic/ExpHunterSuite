@@ -3,6 +3,7 @@
 . ~soft_bio_267/initializes/init_degenes_hunter
 # https://laderast.github.io/2019/02/12/package-building-description-namespace/
 # Rscript -e "usethis::use_package('optparse')" # To add dependencies that are not consigned by roxygen documentation
+unset DEGHUNTER_MODE
 
 current=`pwd`
 cd ../../
