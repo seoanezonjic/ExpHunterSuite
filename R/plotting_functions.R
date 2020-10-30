@@ -261,6 +261,10 @@ ht2logFCPlot <- function(ht,var_filter = 0.001, title = "Filtered logFC", y_rang
   names(vars) <- gene_names
   vars <- sort(vars, decreasing = T)
   vars <- vars[vars > var_filter]
+  # Check
+  if(length(vars) <= 0){
+    return(NULL)
+  }
   aux_vars <- length(vars)
   if(!is.null(top)){
     if(top <= length(vars)) vars <- vars[1:top]
