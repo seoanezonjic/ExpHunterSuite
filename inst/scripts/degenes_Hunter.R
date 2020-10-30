@@ -103,6 +103,25 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 dir.create(opt$output_files)
 write.table(cbind(opt), file=file.path(opt$output_files, "opt_input_values.txt"), sep="\t", col.names =FALSE, quote = FALSE)
 
+if(!is.null(opt$Debug)){
+  debug <- TRUE
+  debug_file <- file.path(opt$Debug)
+}
+
+if(opt$debug){
+  # Define only once
+  if(is.null(opt$Debug)){
+    debug_file <- file.path(opt$output_files, "debug_files", paste(c("FHunter_Debug_Session_",format(Sys.Date(),format = "%Y%m%d"),".RData"),collapse = ""))
+  }
+  debug_dir <- dirname(debug_file)
+  dir.create(debug_dir, recursive = T)
+  debug_dir <- normalizePath(debug_dir)
+  # Store session
+  time_control <- list(start = Sys.time())
+  debug_point(debug_file,"Start point")
+}
+
+
 main_degenes_Hunter(
   input_file=opt$input_file,
   Control_columns=opt$Control_columns,
@@ -131,8 +150,7 @@ main_degenes_Hunter(
   WGCNA_all=opt$WGCNA_all,
   WGCNA_blockwiseNetworkType=opt$WGCNA_blockwiseNetworkType,
   WGCNA_blockwiseTOMType=opt$WGCNA_blockwiseTOMType,
-  debug=opt$debug,
-  Debug=opt$Debug,
+  debug_file=debug_file,
   opt=opt, # To allow markdown report output input data. Think how fit this in the new package
   template_folder=template_folder
 )

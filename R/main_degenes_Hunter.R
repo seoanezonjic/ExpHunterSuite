@@ -29,8 +29,7 @@
 #' @param WGCNA_all
 #' @param WGCNA_blockwiseNetworkType
 #' @param WGCNA_blockwiseTOMType
-#' @param debug
-#' @param Debug
+#' @param debug_file
 #' @keywords installation
 #' @export
 #' @examples
@@ -64,8 +63,7 @@ main_degenes_Hunter <- function(
     WGCNA_all,
     WGCNA_blockwiseNetworkType,
     WGCNA_blockwiseTOMType,
-    debug,
-    Debug,
+    debug_file,
     opt,
     template_folder=file.path(find.package('DEgenesHunter'), 'templates')
   ){
@@ -138,23 +136,22 @@ main_degenes_Hunter <- function(
       warning("If you wish to use factors for the correlation analysis you must also run WGCNA and include a target file. The -S and -N options will be ignored")
     }
 
-    if(!is.null(Debug)){
-      debug <- TRUE
-      debug_file <- file.path(Debug)
-    }
 
-    if(debug){
-      # Define only once
-      if(is.null(Debug)){
-        debug_file <- file.path(paths$root, debug_files, paste(c("FHunter_Debug_Session_",format(Sys.Date(),format = "%Y%m%d"),".RData"),collapse = ""))
-      }
+    if(!is.null(debug_file)) {
+      debug <- TRUE
       debug_dir <- dirname(debug_file)
       dir.create(debug_dir, recursive = T)
       debug_dir <- normalizePath(debug_dir)
       # Store session
+    ####################### DEBUG POINT #############################
       time_control <- list(start = Sys.time())
-      debug_point(debug_file,"Start point")
+      debug_point(debug_file, "Start point", environment())
+    #################################################################
+    }else{
+      debug <- FALSE
     }
+
+    
 
     ############################################################
     ##                         I/O DATA                       ##
