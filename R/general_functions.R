@@ -88,6 +88,9 @@ write_df_list_as_tables <- function(df_list, prefix, root) {
 }
 
 debug_point <- function(file, message = "Debug point",envir = NULL){
+    if(!dir.exists(dirname(file))){
+      dir.create(dirname(file), recursive = T)
+    }
     if(is.null(envir)){
       debug_message <<- message
       save.image(file)
