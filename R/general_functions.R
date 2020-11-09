@@ -13,7 +13,15 @@ standard_error <- function(x) {
 
 ########################################################
 # Functions to generate output files
-unite_DEG_pack_results <- function(DEG_pack_columns, all_DE, all_FDR_names, all_LFC_names, all_pvalue_names, final_pvalue_names, final_logFC_names, final_FDR_names, p_val_cutoff, lfc, minpack_common) {
+unite_DEG_pack_results <- function(exp_results, p_val_cutoff, lfc, minpack_common) {
+  DEG_pack_columns <- exp_results[['DEG_pack_columns']] 
+  all_DE <- exp_results[['all_counts_for_plotting']] 
+  all_FDR_names <- exp_results[['all_FDR_names']]
+  all_LFC_names <- exp_results[['all_LFC_names']] 
+  all_pvalue_names <- exp_results[['all_pvalue_names']]
+  final_pvalue_names <- exp_results[['final_pvalue_names']]
+  final_logFC_names <- exp_results[['final_logFC_names']]
+  final_FDR_names <- exp_results[['final_FDR_names']]
   # Reorder all output by gene id so all equal
   all_DE <- lapply(all_DE, function(x) x[order(row.names(x)),])
   gene_ids <- row.names(all_DE[[1]])
@@ -75,16 +83,6 @@ add_filtered_genes <- function(all_DE_df, raw) {
   all_DE_df <- rbind(all_DE_df, filtered_df)
 
   return(all_DE_df)
-}
-
-write_df_list_as_tables <- function(df_list, prefix, root) {
-  invisible(
-    lapply(1:length(df_list), function(i) {
-      pack <- names(df_list)[i]
-      write.table(df_list[[pack]],
-      file=file.path(root, paste0("Results_", pack), paste0(prefix, pack, '.txt')), quote=FALSE, col.names = NA, sep="\t")
-    })
-  )
 }
 
 debug_point <- function(file, message = "Debug point",envir = NULL){
