@@ -13,7 +13,7 @@ miRNA_RNAseq_analysis <- function(
 	report,
 	translation_file,
 	template_folder = file.path(find.package('DEgenesHunter'), "templates"),
-	organism_table_path = file.path(find.package('DEgenesHunter'), "R", "organism_table.txt") # organism_table.txt hay que cambiarlo de sitio de cara al paquete
+	organism_table_path = file.path(find.package('DEgenesHunter'), "inst", "external_data", "organism_table.txt") # organism_table.txt hay que cambiarlo de sitio de cara al paquete
 	){
 
 dir.create(opt$output_files, recursive = T)
@@ -130,7 +130,8 @@ all_known_miRNAs <- miRBaseConverter::getAllMiRNAs(version = "v22", type = "all"
 all_strategies <- list()
 prec_recall <- list()
 print("TEST")
-# save.image(file = file.path(output_files, "debug.RData"))
+
+
 for (strategy in names(strategies)) {
 	print(strategy)
 
@@ -147,26 +148,49 @@ for (strategy in names(strategies)) {
 	
 	if (!sum(significant_pairs) > 0 ){
 		strategies[[strategy]] <- NULL
+		message("No significant pairs can be used for multimir comparison in strategy:")
+		message(print(strategy))
 		next 
 	}
+
+
+
 	predicted_pairs <- plot_obj$predicted_c > 0
 	validated_pairs <- plot_obj$validated_c > 0
+	# prediction_scores <- c()
+	# aux_data <- as.data.frame(plot_obj)
+	# for (database in c("diana_microt", "elmmo", "microcosm", "miranda","mirdb", "pictar", "pita", "targetscan")) {
+	# 	# print(str(plot_obj))
+
+	# 	predicted_db_scores <- aux_data[aux_data[,database] > 0 & significant_pairs, database]
+	# 					print(length(predicted_db_scores))
+	# 	prediction_scores <- c(prediction_scores, predicted_db_scores)
+	# }
+	# str(plot_obj)
+	# q()
+	# db_distribution <- rbind(db_distribution, data.table(
+	# 												strategy = strategy_name,
+	# 												step = "predicted",
+	# 												values = prediction_scores #plot_obj$predicted_c[predicted_pairs])
+	# 						))
+	# str(db_distribution)
+	# db_distribution <- rbind(db_distribution, data.table(stringsAsFactors = FALSE,
+	# 												strategy = strategy_name,
+	# 												step = "validated",
+	# 												values = plot_obj$validated_c[validated_pairs])
+								# )
+								# q()
 	both_pairs <- predicted_pairs & validated_pairs
 	print(paste0("before filtering ", sum(significant_pairs), " pairs"))
 	significant_pairs <- significant_pairs & strategies$dd$plot_obj$miRNAseq %in% multimir_summary$mature_mirna_acc & strategies$dd$plot_obj$RNAseq %in% multimir_summary$target_ensembl
 	print(paste0("after filtering ", sum(significant_pairs), " pairs"))
 
-	if (sum(significant_pairs) > 0 ){
 		 
-		stats <- data.frame(stringsAsFactors = FALSE,
-							predicted = pred_stats(significant_pairs, predicted_pairs),
-							validated = pred_stats(significant_pairs, validated_pairs),
-							both = pred_stats(significant_pairs, both_pairs)
-							)
-	} else {
-		message("No significant pairs can be used for multimir comparison in strategy:")
-		message(print(strategy))
-	}
+	stats <- data.frame(stringsAsFactors = FALSE,
+						predicted = pred_stats(significant_pairs, predicted_pairs),
+						validated = pred_stats(significant_pairs, validated_pairs),
+						both = pred_stats(significant_pairs, both_pairs)
+						)
 
 	print("TEST3")
 
@@ -174,7 +198,6 @@ for (strategy in names(strategies)) {
 
 	stats <- as.data.frame(t(as.matrix(stats)))
 	stats$gold_standard <- rownames(stats)
-
 	all_strategies[[strategy_name]] <- as.data.table(plot_obj)[significant_pairs,]
 	prec_recall[[strategy_name]] <- stats
 	# str(all_strategies[[strategy_name]])
@@ -184,14 +207,19 @@ for (strategy in names(strategies)) {
 	gc()
 }
 
-print("TEST")
+print("TEST_chck")
+print(str(all_strategies))
+for (strategy in names(all_strategies)) {
+		print(str(all_strategies[[strategy]]))
 
+}
 
 all_strategies <- as.data.frame(rbindlist(all_strategies, use.names=TRUE, idcol= "strategy"))
 prec_recall <- as.data.frame(rbindlist(prec_recall, use.names = TRUE, idcol = "strategy"))
 
 
-
+# save(all_strategies, file = file.path(opt$output_files, "debug.RData") )
+# q()
 all_strategies$known_miRNA <- all_strategies$miRNAseq %in% all_known_miRNAs 
 print("TEST")
 
@@ -217,9 +245,29 @@ print("TEST")
 background_pairs <- strategies$dd$plot_obj[strategies$dd$plot_obj$miRNAseq %in% all_known_miRNAs & strategies$dd$plot_obj$miRNAseq %in% multimir_summary$mature_mirna_acc & strategies$dd$plot_obj$RNAseq %in% multimir_summary$target_ensembl,]
 print(paste0("background before: ", nrow(strategies$dd$plot_obj), " background after: ", nrow(background_pairs)))
 
-filters_summary <- add_randoms(background = background_pairs, 
-								filters_summary = filters_summary)
+db_distribution <- data.table(strategy = all_strategies[all_strategies$predicted_c > 0, "strategy"],
+								step = "predicted",
+								score = all_strategies[all_strategies$predicted_c > 0, "score"])
+	# print(str(as.data.table(plot_obj)[significant_pairs,]))
 
+random_obj <- add_randoms(background = background_pairs, 
+								filters_summary = filters_summary,
+								db_distribution = db_distribution)
+
+filters_summary <- random_obj[["filters_summary"]]
+db_distribution <- random_obj[["db_distribution"]]
+ 
+ # save(db_distribution,file = file.path(output_files, "debug.RData"))
+
+str(filters_summary)
+print("TEST_actual")
+str(db_distribution)
+# q()
+
+random_obj <- NULL
+print("all_ok")
+
+# q()
 filters_summary$type <- factor(filters_summary$type, levels=c("novel_miRNAs","known_miRNAs","predicted", "predicted_random", "validated","validated_random", "both", "both_random"))
 print(filters_summary)
 
