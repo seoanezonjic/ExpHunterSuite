@@ -3,7 +3,7 @@
 ################################################
 # Manager function
 #-----------------------------------------------
-perform_expression_analysis <- function(modules, replicatesC, replicatesT, output_files, raw_filter, p_val_cutoff, target, model_formula_text, external_DEA_data=NULL){
+perform_expression_analysis <- function(modules, replicatesC, replicatesT, raw_filter, p_val_cutoff, target, model_formula_text, external_DEA_data=NULL){
     # Prepare results containers
     all_data_normalized     <- list()
     all_counts_for_plotting <- list()
@@ -24,7 +24,6 @@ perform_expression_analysis <- function(modules, replicatesC, replicatesT, outpu
       if(replicatesC >= 2 & replicatesT >= 2) {
         # Verbose
         cat('Gene expression analysis is performed with DESeq2.\n')
-        dir.create(file.path(output_files, "Results_DESeq2"))
         # Calculate results
         results <- analysis_DESeq2(data   = raw_filter,
                                    p_val_cutoff = p_val_cutoff,
@@ -57,8 +56,6 @@ perform_expression_analysis <- function(modules, replicatesC, replicatesT, outpu
       if(replicatesC >= 2 & replicatesT >= 2) {
         # Verbose point
         cat('Gene expression analysis is performed with edgeR.\n')
-        path <- file.path(output_files, "Results_edgeR")
-        dir.create(path)
         # Calculate results
         results <- analysis_edgeR(data   = raw_filter,
                                   target = target,
@@ -90,7 +87,6 @@ perform_expression_analysis <- function(modules, replicatesC, replicatesT, outpu
       if(replicatesC >= 3 & replicatesT >= 3) {
         # Verbose
         cat('Gene expression analysis is performed with limma.\n')
-        dir.create(file.path(output_files, "Results_limma"))
 
         # Calculate results
         results <- analysis_limma(data   = raw_filter,
@@ -123,8 +119,6 @@ perform_expression_analysis <- function(modules, replicatesC, replicatesT, outpu
 
         # Verbose
         cat("Gene expression analysis is performed with NOISeqBIO function within NOISeq.\n")
-        path <- file.path(output_files, "Results_NOISeq")
-        dir.create(path)
         # Calculate results
         results <- analysis_NOISeq(data    = raw_filter, 
                                    target = target)
@@ -153,7 +147,6 @@ perform_expression_analysis <- function(modules, replicatesC, replicatesT, outpu
     #####
     if(grepl("F",modules)){
       cat('External DEA data to be processed \n')
-      dir.create(file.path(output_files, "Results_external_DEA"))
       # Calculate results
       results <- analysis_external_DEA(raw_filter, external_DEA_data)
       # Store results

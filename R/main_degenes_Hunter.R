@@ -120,7 +120,7 @@ main_degenes_Hunter <- function(
     ############################################################
     dir.create(output_files)
     
-    exp_results <- perform_expression_analysis(modules, replicatesC, replicatesT, output_files, raw_filter, p_val_cutoff, target, model_formula_text)
+    exp_results <- perform_expression_analysis(modules, replicatesC, replicatesT, raw_filter, p_val_cutoff, target, model_formula_text)
 
     if(debug){ # DEBUG POINT #############################
       time_control$dea_packages <- Sys.time()
