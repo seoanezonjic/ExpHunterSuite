@@ -23,7 +23,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   main_path_script <- dirname(full.fpath)
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
-  custom_libraries <- c('main_degenes_Hunter.R', 'general_functions.R', 'dif_expression_packages.R', 'qc_and_benchmarking_functions.R', 'correlation_packages.R', 'correlation_packages_PCIT.R', 'plotting_functions.R', 'general_functions.R')
+  custom_libraries <- c('main_degenes_Hunter.R', 'io_handling.R', 'general_functions.R', 'dif_expression_packages.R', 'qc_and_benchmarking_functions.R', 'correlation_packages.R', 'correlation_packages_PCIT.R', 'plotting_functions.R', 'write_report.R')
   for (lib in custom_libraries){
     source(file.path(root_path, 'R', lib))
   }
@@ -99,7 +99,9 @@ option_list <- list(
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
+#############################################################################
 #DRAFT INPUT/OUTPUT
+############################################################################
 dir.create(opt$output_files)
 write.table(cbind(opt), file=file.path(opt$output_files, "opt_input_values.txt"), sep="\t", col.names =FALSE, quote = FALSE)
 
@@ -107,6 +109,35 @@ debug_file <- NULL
 if(!is.null(opt$Debug)){
   debug <- TRUE
   debug_file <- file.path(opt$Debug)
+}
+
+#############################################################################
+#CHECKINGS
+############################################################################
+
+# Check inputs not allowed values
+if (is.null(opt$input_file)){
+  stop(cat("No file with RNA-seq counts is provided.\nPlease use -i to submit file"))
+}
+
+# Check either C and T columns or target file.
+if( (is.null(opt$Treatment_columns) | is.null(opt$Control_columns)) & is.null(opt$target_file)) {
+  stop(cat("You must include either the names of the control and treatment columns or a target file with a treat column."))
+}
+# In the case of -C/-T AND -t target - give a warning
+if( (!is.null(opt$Treatment_columns) | !is.null(opt$Control_columns)) & !is.null(opt$target_file)) {
+  warning("You have included at least one -C/-T option as well as a -t option for a target file. The target file will take precedence for assigning samples labels as treatment or control.")
+}
+
+
+#############################################################################
+#EXPRESSION ANALYSIS
+############################################################################
+target <- target_generation(from_file=opt$target_file, ctrl_samples=opt$Control_columns, treat_samples=opt$Treatment_columns)
+raw_count_table <- read.table(opt$input_file, header=TRUE, row.names=1, sep="\t")
+external_DEA_data <- NULL
+if (grepl("F", opt$modules)) { # Open the external data file for pre-analysed deg data
+  external_DEA_data <- read.table(opt$external_DEA_file, header=TRUE, sep="\t", row.names=1)
 }
 
 if(opt$debug){
@@ -122,21 +153,18 @@ if(opt$debug){
   DEgenesHunter:::debug_point(debug_file,"Start point")
 }
 
-
-main_degenes_Hunter(
-  input_file=opt$input_file,
-  Control_columns=opt$Control_columns,
-  Treatment_columns=opt$Treatment_columns,
+final_results <- main_degenes_Hunter(
+  target=target,
+  raw=raw_count_table,
+  external_DEA_data=external_DEA_data,
+  output_files=opt$output_files,
   reads=opt$reads,
   minlibraries=opt$minlibraries,
   filter_type=opt$filter_type,
-  output_files=opt$output_files,
   p_val_cutoff=opt$p_val_cutoff,
   lfc=opt$lfc,
   modules=opt$modules,
   minpack_common=opt$minpack_common,
-  target_file=opt$target_file,
-  external_DEA_file=opt$external_DEA_file,
   model_variables=opt$model_variables,
   numerics_as_factors=opt$numerics_as_factors,
   custom_model=opt$custom_model,
@@ -151,10 +179,23 @@ main_degenes_Hunter(
   WGCNA_all=opt$WGCNA_all,
   WGCNA_blockwiseNetworkType=opt$WGCNA_blockwiseNetworkType,
   WGCNA_blockwiseTOMType=opt$WGCNA_blockwiseTOMType,
-  debug_file=debug_file,
-  opt=opt, # To allow markdown report output input data. Think how fit this in the new package
-  template_folder=template_folder
+  debug_file=debug_file
 )
 
-#DRAFT OUTPUT
-#TODO
+#############################################################################
+#WRITE OUTPUT
+############################################################################
+write.table(final_results[['raw_filter']], file=file.path(opt$output_files, "filtered_count_data.txt"), quote=FALSE, col.names=NA, sep="\t")
+write.table(final_results[['sample_groups']], file=file.path(opt$output_files, "control_treatment.txt"), row.names=FALSE, quote=FALSE, sep="\t")
+write_df_list_as_tables(final_results[['all_data_normalized']], prefix = 'Normalized_counts_', root = opt$output_files)
+write_df_list_as_tables(final_results[['all_counts_for_plotting']], prefix = 'allgenes_', root = opt$output_files)
+dir.create(file.path(opt$output_files, "Common_results"))
+write.table(final_results[['DE_all_genes']], file=file.path(opt$output_files, "Common_results", "hunter_results_table.txt"), quote=FALSE, row.names=TRUE, sep="\t")
+write_expression_report(final_results, opt$output_files, template_folder, opt)
+
+# if(debug){ # DEBUG POINT ############################# TO RESTORE
+#     time_control$render_main_report <- Sys.time()
+#     debug_point(debug_file,"Report printed")
+#     save_times(time_control, output = file.path(debug_dir, "degenes_hunter_time_control.txt"), plot_name = "DH_times_control.pdf")
+# }
+

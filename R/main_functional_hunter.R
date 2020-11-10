@@ -72,9 +72,7 @@ functional_hunter <- function(
 	############ CREATE DEBUG FOLDERS #########
 	if(!is.null(debug_file)) {
 		debug <- TRUE
-		debug_dir <- dirname(debug_file)
-		dir.create(debug_dir, recursive = T)
-		debug_dir <- normalizePath(debug_dir)
+		debug_dir <- normalizePath(dirname(debug_file))
 		# Store session
 	####################### DEBUG POINT #############################
 		time_control <- list(start = Sys.time())

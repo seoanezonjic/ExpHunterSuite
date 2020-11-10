@@ -14,6 +14,122 @@ analysis_diffcoexp <- function(data, path, target) {
 	return(res)
 }
 
+    # FOR WGCNA: Check that the appropriate factor columns can be found in the target file and makes a data frame with the specified factor
+build_design_for_WGCNA <- function(target, string_factors=NULL, numeric_factors=NULL){
+		if(!is.null(string_factors)){
+			  if(string_factors == "") {
+		        string_factors <- "treat"
+		      } else {
+		        string_factors <- paste0("treat,", string_factors)
+		      }
+		      string_factors <- unique(unlist(strsplit(string_factors, ","))) # In case we duplicate treat
+
+		      if(! all(string_factors %in% colnames(target))) {
+		        warning("Some factors specified with the --string_factors option cannot be found in the target file.")
+		      }
+		      string_factors_index <- colnames(target) %in% string_factors 
+
+		      target_string_factors <- target[string_factors_index]
+		      target_string_factors <-  data.frame(sapply(target_string_factors, as.factor), stringsAsFactors=TRUE)
+		}
+
+		if(!is.null(numeric_factors)){
+		      if(numeric_factors != "") {
+		        numeric_factors <- unlist(strsplit(numeric_factors, ","))
+		        if(! all(numeric_factors %in% colnames(target))) {
+		          warning("Some factors specified with the --numeric_factors option cannot be found in the target file.")
+		        }
+
+		        numeric_factors_index <- colnames(target) %in% numeric_factors
+		        if(TRUE %in% numeric_factors_index) {
+		          target_numeric_factors <- target[numeric_factors_index]
+		          # Ensure the factors are numeric
+		          #invisible(lapply(seq(ncol(target_numeric_factors)), function(i){target_numeric_factors[,i] <<- as.numeric(target_numeric_factors[,i])}))
+		        } else {
+		          stop(cat("Factors specified with the --numeric_factors option cannot be found in the target file.\nPlease resubmit."))
+		        }
+		      } else {
+		        target_numeric_factors <- ""
+		      }
+		}
+      if(!is.null(string_factors)){
+        target_factors <- target_string_factors
+      } else {
+        target_factors <- target_numeric_factors
+      }
+      return(target_factors)	
+}
+
+
+
+perform_WGCNA_combinations <- function(WGCNA_all=FALSE, WGCNA_input, index_treatmn_cols, index_control_cols, path, 
+					target_numeric_factors, target_string_factors, WGCNA_memory, WGCNA_deepsplit, WGCNA_detectcutHeight, WGCNA_mergecutHeight, 
+					WGCNA_min_genes_cluster, WGCNA_blockwiseNetworkType, WGCNA_blockwiseTOMType){
+	  results <- list()
+      if(WGCNA_all == TRUE) { #TODO => Este bloque de código es repetitivo. 
+        WGCNA_input_treatment <- WGCNA_input[, index_treatmn_cols]
+        WGCNA_input_control <- WGCNA_input[, index_control_cols]
+        WGCNA_treatment_path <- file.path(path, "Treatment_only_data")
+        dir.create(WGCNA_treatment_path)
+        cat('Performing WGCNA correlation analysis for treated samples\n')
+        results[['WGCNA_treatment']] <- analysis_WGCNA(data=WGCNA_input_treatment,
+                       path=WGCNA_treatment_path,
+                       target_numeric_factors=target_numeric_factors,
+                       target_string_factors=target_string_factors,
+                       WGCNA_memory=WGCNA_memory,
+                       WGCNA_deepsplit=WGCNA_deepsplit,
+                       WGCNA_detectcutHeight=WGCNA_detectcutHeight,
+                       WGCNA_mergecutHeight=WGCNA_mergecutHeight,
+                       WGCNA_min_genes_cluster=WGCNA_min_genes_cluster,
+                       cor_only=TRUE, 
+                       blockwiseNetworkType = WGCNA_blockwiseNetworkType, 
+                       blockwiseTOMType = WGCNA_blockwiseTOMType
+        )
+
+        WGCNA_control_path <- file.path(path, "Control_only_data")
+        dir.create(WGCNA_control_path)
+
+        cat('Performing WGCNA correlation analysis for control samples\n')
+        results[['WGCNA_control']] <- analysis_WGCNA(data=WGCNA_input_control,
+                       path=WGCNA_control_path,
+                       target_numeric_factors=target_numeric_factors,
+                       target_string_factors=target_string_factors,
+                       WGCNA_memory=WGCNA_memory,
+                       WGCNA_deepsplit=WGCNA_deepsplit,
+                       WGCNA_detectcutHeight=WGCNA_detectcutHeight,
+                       WGCNA_mergecutHeight=WGCNA_mergecutHeight,
+                       WGCNA_min_genes_cluster=WGCNA_min_genes_cluster,                    
+                       cor_only=TRUE, 
+                       blockwiseNetworkType = WGCNA_blockwiseNetworkType, 
+                       blockwiseTOMType = WGCNA_blockwiseTOMType
+        )
+      }
+        # Need to improve the control, probably by removing PCIT
+        # if(results_WGCNA_treatment == "NO_POWER_VALUE" | results_WGCNA_control == "NO_POWER_VALUE") {
+        #   warning("WGCNA was unable to generate a suitable power value for at least one of the partial datasets")
+        # }
+      cat('Performing WGCNA correlation analysis for all samples\n')
+      results[['WGCNA_all']] <- analysis_WGCNA(data=WGCNA_input,
+                                     path=path,
+                                     target_numeric_factors=target_numeric_factors,
+                                     target_string_factors=target_string_factors,
+                                     WGCNA_memory=WGCNA_memory,
+                                     WGCNA_deepsplit=WGCNA_deepsplit,
+                                     WGCNA_detectcutHeight=WGCNA_detectcutHeight,
+                                     WGCNA_mergecutHeight=WGCNA_mergecutHeight,
+                                     WGCNA_min_genes_cluster=WGCNA_min_genes_cluster,
+                                     cor_only=FALSE, 
+                                     blockwiseNetworkType = WGCNA_blockwiseNetworkType, 
+                                     blockwiseTOMType = WGCNA_blockwiseTOMType
+      )
+      return(results)
+}
+
+
+
+
+
+
 analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_factors, WGCNA_memory, WGCNA_deepsplit, WGCNA_detectcutHeight, WGCNA_mergecutHeight, WGCNA_min_genes_cluster, cor_only, blockwiseNetworkType, blockwiseTOMType) {
 
 	data <- t(data)#[, 1:500]
