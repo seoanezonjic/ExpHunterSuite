@@ -9,7 +9,7 @@
 
 ## REQUIREMENTS
 
-* R version 4.
+* R version 4
 
 ## INSTALLATION
 
@@ -36,16 +36,16 @@ This export PATH can also be added to the .bash_rc or .bash_profile files.
 
 ## Usage
 
-There are two ways for using DEgenes Hunter: as command line scripts or as an R package. We will first explain the procedure to perform the  expression analysis and functional analysis using the command line, and then how to use this tool as and R package.
+There are two ways for using DEgenes Hunter: as command line scripts or as an R package. We will explain the procedure to perform both 1. differential expression and 2. functional analysis using the command line.
 
-### 1.1 Command line scripts for differential expression analysis.
+### 1. Command line scripts for differential expression analysis.
 
 Once installed, DEgenes Hunter performs the expression analysis from a raw count table. For this, the user must first create a targets file, including for each *sample* its name in the count table, it *treat* condition (Treat or Ctrl).This file must contain this information separated by tabs. 
 
     Note: we recommend to use ENSEMBL identifiers for the functional analysis.
 
 Here we include an example in which the targets file must include the samples (CTL, TreatA and TreatB), the samples condition (Ctrl or Treat) and to which age_group they belong (adult or child). 
-The multifactorial correction (-v and -M) or co-expression analysis using extra measures (-S and -C) require additional information that must be included in target file. Extra mneasures are names as _traits_. This options take the traits column names as arguments.
+The multifactorial correction (-v and -M) or co-expression analysis using extra measures (-S and -C) require additional information that must be included in targets file. Extra measures are named as _traits_. These options use the _traits_ column names as arguments.
 
 | sample                                | treat        |  age_group |
 |---------------------------------------|--------------|------------|	
@@ -72,7 +72,7 @@ Mandatory arguments:
 	-i Input read counts file.
 	-t Targets file.
 
-Differential expresion analsysis arguments:
+Differential expresion analysis arguments:
 
     -o Output path.
 	  (optional) Output folder. 
@@ -87,8 +87,8 @@ Differential expresion analsysis arguments:
 	-p value between 0.01 and 0.1
 	  (optional) Adjusted p-value for the differential expression analysis. 
 	  Default = 0.05
-	-f float number.
-	  (optional) Minimum log2 fold change in expression. Please, consider this is on a log2 scale, so a value of 1 would mean a 2 fold change.
+	-f float
+	(optional) Minimum log2 fold change in expression. Please, consider this is on a log2 scale, so a value of 1 would mean a 2 fold change.
 	  Default = 1.
 	-q value between 0.95 and 0.99
 	  (optional) q value threshold for NOISeqBIO analysis. 
@@ -113,18 +113,18 @@ Differential expresion analsysis arguments:
 	  (optional) Variables to include in the model. Must be comma separated and each variable must be a column in the target file.
 	  Default = NULL.
 	-M model_text
-	  Text fo this variable will be passed directly to the model construction overwriting previous configuration.
+	  Text for this variable will be given directly to the model construction, overwriting the previous configuration.
 
 Co-expression analysis arguments:
 	
 	-b Any integer.
-      Maximum block size value, to be passed to the blockwiseModules function of WGCNA as the maxBlockSize argument.
+      Maximum block size value to be given to the WGCNA blockwiseModules function as the maxBlockSize argument.
       Default = 5000.
     --WGCNA_norm_method NOISeq | DESeq2 | edgeR | limma
       Method used to normalized the table of counts for WGCNA. Must also run this method in the --modules argument. Raw counts are used if an empty string is given.
       Default=DESeq2
     --WGCNA_deepsplit 1-4
-      This option control the module building process and is defined as 1,2,3 and 4 values. 1 for rough clustering and 4 for accurate clustering.
+      This option controls the module building process and is defined as 1,2,3 and 4 values. 1 for rough clustering and 4 for accurate clustering.
       Default = 2.
     --WGCNA_min_genes_cluster integer
       Minimum number of genes to keep a cluster.
@@ -142,12 +142,11 @@ Co-expression analysis arguments:
       Default = signed.
     --WGCNA_blockwiseTOMType none | unsigned | signed | signed Nowick | unsigned 2 | signed 2 | signed Nowick 2
       TOMType option to be passed to blockwiseModules function. 
-      Default = signed
+      Default = signed.
     -S comma sepparated text
       Columns in the target file to be used as categorical factors for the correlation analysis. If more than one to be used, should be comma separated
     -N comma sepparated text
-      Columns in the target file to be used as numeric (continuous) factors for the correlation analysis. If more than one to be used, should be comma separated
-
+      Columns in the target file to be used as numeric (continuous) factors for the correlation analysis. If more than one is specified, they must separated by commas.
 
 Results files will be included in the output_path:
     
@@ -162,12 +161,13 @@ In addition, the results folder will include subfolders generated in accordance 
 
 In the case of performing the co-expression analysis with WGCNA, it will be created a Results_WGCNA folder including tables with correlations between modules, genes and traits.
 
-
 #### Non-canonical usage scenarios: 
 
-##### A. Differential expression corrected by extra factor (Multifactorial)
+##### A. Differential expression corrected by extra factor (multifactorial)
 
-Sometimes the RNAseq samples clasifyed by two or more variables. In our example we can analyze the standard differential expresion through treatment and control clasification (default treat column), but results can be altered by biological variablility that comes from different proportion of child and adults in groups. In this kind of cases the differential expression model can be completed by adding -v age_group. Full model can be customized using -M option.
+In some experiments, the RNA-seq samples can have several attributes (variables). In the previous example, one of these variables is defined in the targets file as age_group. We can analyze the standard differential expression through treatment and control classification (default treat column). However, results can be altered by the biological variablility from different proportion of child and adults in groups. In these cases, the differential expression model can be completed by adding -v age_group. Full model can be customized using -M option.
+
+An example of code for this multifactorial analysis can be used as follows:
 
 ```bash
     #Both commands do the same
@@ -175,7 +175,6 @@ Sometimes the RNAseq samples clasifyed by two or more variables. In our example 
 
     degenes_Hunter.R -t path_to_target_file -i path_to_counts_table -M "~ treat + age_group" -o path_to_DEgenesHunter_results
 ```
-
 
 ##### B. Genes co-expression analysis with WGCNA
 
@@ -195,35 +194,31 @@ In this situation, the user can run WGCNA using the data in the table of counts 
     degenes_Hunter.R --WGCNA_norm_method none -m WL -c 1 -f 1 -S age_group -t path_to_targets_file -i path_to_normalized_table -o path_to_DEgenesHunter_results
 ```
 
-### 1.2 Command line scripts for functional enrichment analysis.
+### 2. Command line scripts for functional enrichment analysis.
 
-To perform the functional enrichment analysis we will use the functional_Hunter.R script. This tool will use the hipergeometric test for enrich functions and pathways from GO, KEGG and Reactome, with genes. Depending of the expression analysis performed, funcitonal hunter will execute different enrichments:
+To perform the functional enrichment analysis we will use the functional_Hunter.R script. This tool will use the hypergeometric test to enrich genes in functions and pathways from GO, KEGG and Reactome. Depending on the expression analysis performed, the DEgenes Hunter functional analysis tool, functional_Hunter.R, will execute different enrichments:
 
-When differential expression analysis is launched, all prevalent DEGs will be used for enrichments. A html summary will be returned.
+    * When differential expression analysis is launched, all prevalent DEGs will be used to perform the functional enrichment. An html summary will be returned.
+    * If co-expression analysis is set up, genes from each WGCNA independent module will be used to perform the functional enrichment. An html summary for each module and a global module enrichments summary will be returned.
 
-When co-expression analysis is launched, genes from each WGCNA independent module will be used for enrichment. A html summary for each module and a global module enrichments summary will be returned.
-
-
-## Command Line Arguments
-
-Mandatory arguments: 
-
-	-i | -m | -o 
-	(required) Specify the path to the degenes_Hunter.R output folder, the model organism and the path to the output folder
-
-	-i path
-	  Path to the DEgenes Hunter's differential expression results
-	-m organism
-	  Ortologue species to be used as model organism to perform the functional analysis with. Run 'functional_Hunter.R' -L to display all available organisms.
-	-o Output path
-
-Launching example: 
+Here we show an example of basic usage:
 
 ```sh
 	functional_Hunter.R -i path_to_DEgenesHunter_results -m Grapevine -o path_to_output
 ```
 
-Customizate your command:
+Mandatory arguments: 
+
+	-i | -m | -o 
+	(required) Specify the path to the degenes_Hunter.R output folder, the model organism to use and the path to the output folder.
+
+	-i path
+	  Path to the DEgenes Hunter's differential expression results.
+	-m organism
+	  Ortologue species to be used as model organism to perform the functional analysis with. Run 'functional_Hunter.R' -L to display all available organisms.
+	-o Output path.
+
+Optional input arguments:
 
 	-t input_ID
 	  Input gene IDs of counts table. Available IDs are: ENSEMBL (E), entrezgene (e), TAIR/Arabidopsis (T), Gene Names (G). 
@@ -231,12 +226,12 @@ Customizate your command:
 	-L 
 	  (optional) List all organisms provided.
 	-a tab_file
-	  (optional) Path to file for providing own annotations for functional analysis.
+	  (optional) Path to file with own annotations for functional analysis.
 	-f G | g | K | R
 	  Nomenclature and enrichment method(s) to use (topGO: G = GO | clusterProfiler: K = KEGG, g = GO, R = Reactome).
 	  Default = gKR.
 	-G M | B | C
-	  Subontologies of GO to enrich 
+     Gene Ontology sub-classification to perform functional enrichment.
 	  M = Molecular Function (MF), B = Biological Process (BP), C = Celular Components (CC)
 	  Default = MBC.
 	-A analysis_type
@@ -254,26 +249,18 @@ Customizate your command:
     -C files
       Files with custom functional annotation database (in GMT format) separated by commas (,)
 	-r mode
-	   Flags to activate remote query from enrichments and Genes translation. Use (b) to launch biomaRt translation; (k) to use Kegg remote data base. Requires internet connection.
+	   Flags to activate remote query from enrichments and genes translation. Use (b) to launch biomaRt translation; (k) to use KEGG remote database. Requires internet connection.
 	   Default = NULL
 	-q 
 	(optional) If indicated, biomaRt query is saved in an .RDS file.
-
-
-### 2.1 R packages for differential expression analysis.
-
-### 2.2 R packages for functional enrichment analysis.
-
 
 ## REFERENCES AND CITATION
 
 Please cite DEgenes Hunter as:
 
-González Gayte, I., Bautista Moreno, R., Seoane Zonjic, P., & Claros, M. (2017). DEgenes Hunter - A Flexible R Pipeline for Automated RNA-seq Studies in Organisms without Reference Genome. Genomics And Computational Biology, 3(3), e31. doi:http://dx.doi.org/10.18547/gcb.2017.vol3.iss3.e31
+Isabel González Gayte, Rocío Bautista Moreno, Pedro Seoane Zonjic & Manuel G. Claros (2017). DEgenes Hunter - A Flexible R Pipeline for Automated RNA-seq Studies in Organisms without Reference Genome. Genomics And Computational Biology, 3(3), e31. doi:http://dx.doi.org/10.18547/gcb.2017.vol3.iss3.e31
 
-Fernando M. Jabato, Jose Cordoba-Caballero, Elena Rojano, Carlos Romá-Mateo, Pascual Sanz, Belén Pérez, Diana Gallego, Pedro Seoane, Juan A.G. Ranea y and James R. Perkins. Differential expression, co-expression and functional analysis of RNA-seq data using the DEgenes Hunter suite and its applicability to rare disease (in preparation). Briefings in Bioinformatics.
-
-
+Fernando M. Jabato, José Córdoba-Caballero, Elena Rojano, Carlos Romá-Mateo, Pascual Sanz, Belén Pérez, Diana Gallego, Pedro Seoane, Juan A.G. Ranea y and James R. Perkins. Differential expression, co-expression and functional analysis of RNA-seq data using the DEgenes Hunter suite and its applicability to rare disease (in review). Briefings in Bioinformatics.
 
 [npm-image]: https://img.shields.io/npm/v/datadog-metrics.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/datadog-metrics
