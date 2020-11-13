@@ -1,10 +1,9 @@
 #' This function allows you to perform the Functional analysis with different enrichment corpus.
-#' @param input_hunter_folder
+#' @param hunter_results
 #' @param model_organism
-#' @param annot_file
+#' @param annot_table
 #' @param organisms_table
 #' @param template_folder
-#' @param List_organisms
 #' @param input_gene_id
 #' @param func_annot_db
 #' @param GO_subont
@@ -14,21 +13,17 @@
 #' @param save_query
 #' @param pthreshold
 #' @param qthreshold
-#' @param debug_file
 #' @param cores
 #' @param output_files
 #' @param fc_colname
 #' @keywords 
 #' @export
 #' @examples
-
 functional_hunter <- function(
-	input_hunter_folder,
+	hunter_results,
 	model_organism,
-	annot_file,
-	organisms_table = file.path(find.package('DEgenesHunter'), "external_data", "organism_table.txt"),
-	template_folder = file.path(find.package('DEgenesHunter'), "templates"),
-	List_organisms = FALSE,
+	annot_table,
+	organisms_table = get_organism_table(),
 	input_gene_id = "E",
 	func_annot_db = "gKR",
 	GO_subont = "BMC",
@@ -38,87 +33,34 @@ functional_hunter <- function(
 	save_query = FALSE,
 	pthreshold = 0.1,
 	qthreshold = 0.2,
-	debug_file = NULL,
 	cores = 1,
 	output_files = "results",
 	fc_colname = "mean_logFCs"
 	){
 
-	if(!exists("opt")){
-		opt <- list(input_hunter_folder = input_hunter_folder,
-					model_organism = model_organism,
-					annot_file = annot_file,
-					organisms_table = organisms_table,
-					template_folder = template_folder,
-					List_organisms = List_organisms,
-					input_gene_id = input_gene_id,
-					func_annot_db = func_annot_db,
-					GO_subont = GO_subont,
-					custom = custom,
-					analysis_type = analysis_type,
-					remote = remote,
-					save_query = save_query,
-					pthreshold = pthreshold,
-					qthreshold = qthreshold,
-					debug_file = debug_file,
-					cores = cores,
-					output_files = output_files,
-					fc_colname = fc_colname)
-	}
-
-	if(!file.exists(input_hunter_folder)) 
-		stop("No input degenes_Hunter folder")
-
-	############ CREATE DEBUG FOLDERS #########
-	if(!is.null(debug_file)) {
-		debug <- TRUE
-		debug_dir <- normalizePath(dirname(debug_file))
-		# Store session
-	####################### DEBUG POINT #############################
-		time_control <- list(start = Sys.time())
-		debug_point(debug_file, "Start point", environment())
-	#################################################################
-	}else{
-		debug <- FALSE
-	}
-
-
-	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-	##                                                                                                                   ##
-	##                                       LOAD AND CHECK MAIN FILES                                                   ## 
-	##                                                                                                                   ##
-	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-
-	## Load available organisms
-	## all_organisms_info => Table with information abaut all organism available
-	all_organisms_info <- read.table(organisms_table, header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA)
+	func_results <- list()
 
 	# Check organism selected
-	if (List_organisms){
-	  print(as.character(rownames(all_organisms_info)))
-	  stop('Check this list and choose one model species.')
-	} else if (any(is.null(model_organism), !model_organism %in% rownames(all_organisms_info))) {
-	  stop('Model organism has not been indicated or is not available. Please indicate the model organism using parameter -m. Use -L to list all model organisms available')
-	} else { # ORGANISM AVAILABLE --> LOAD
-	  current_organism_info <- subset(all_organisms_info, rownames(all_organisms_info) %in% model_organism)  
+	if (any(is.null(model_organism), !model_organism %in% rownames(organisms_table))) {
+		stop('Model organism has not been indicated or is not available. Please indicate the model organism.')
+	}else{ # ORGANISM AVAILABLE --> LOAD
+		current_organism_info <- subset(organisms_table, rownames(organisms_table) %in% model_organism)  
 	}
 
-	# Load DEGenesHunter config
-	# DEGenesHunter_expression_opt => DEGenesHunter options 
-	DEGenesHunter_expression_opt <- read.table(file.path(input_hunter_folder, "opt_input_values.txt"), header = FALSE, stringsAsFactors = FALSE, sep = "\t")
-	degh_exp_threshold <- as.numeric(DEGenesHunter_expression_opt[which(DEGenesHunter_expression_opt[,1] == "p_val_cutoff"), 2])
-
-	experiments <- read.table(file.path(input_hunter_folder, "control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
+	# experiments <- read.table(file.path(input_hunter_folder, "control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
+	experiments <- hunter_results$sample_groups
 	experiments$class[experiments$class == "C"] <- "Control"
 	experiments$class[experiments$class == "T"] <- "Treatment"
 	sample_classes <- apply(experiments, 1, function(x) paste0("* [", x[1], "] ", x[2]))
 
 	## Load DEGenesHunter results
 	## DEGH_results => DEgenes Hunter results table and modifications
-	DEGH_results <- read.table(file.path(input_hunter_folder, "Common_results", "hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE)
+	# DEGH_results <- read.table(file.path(input_hunter_folder, "Common_results", "hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE)
+	DEGH_results <- hunter_results$DE_all_genes
 	DEGH_results <- DEGH_results[DEGH_results$genes_tag != "FILTERED_OUT", ]
 
 	# Temporary bodge to enable funcitonal hunter to be run on externally processed data and DESeq2 not run
+	# TODO : This is not working
 	if(! grepl("DESeq2", names(DEGH_results)) && grepl("external_DEA", names(DEGH_results))) {
 		names(DEGH_results) <- gsub("external_DEA", "DESeq2", names(DEGH_results))
 		# This is particularly horrible - like this to ensure it matches EXACTLY the file loaded if WGCNA
@@ -223,51 +165,48 @@ functional_hunter <- function(
 	##                                                                                                                   ##
 	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 	#Load annotation gene table for translation ID
-	if(!is.null(annot_file)){
-		annot_table <- read.table(annot_file, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "") # Load
+	if(!is.null(annot_table)){
+		# annot_table <- read.table(annot_table, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "") # Load
 	  	DEGH_results$input_IDs <- translate_id(rownames(DEGH_results), annot_table)
 	} else {
 		DEGH_results$input_IDs <- rownames(DEGH_results)
 	}
 	added_cols <- c("input_IDs")
 
-	# Load Normalized correlation data
-	if (flags$WGCNA) {
-		####
-		# LOAD NORMALIZED COUNTS
-		norm_counts <- as.matrix(read.table(file.path(input_hunter_folder, "Results_DESeq2", "Normalized_counts_DESeq2.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-		scaled_counts <- scale_data_matrix(data_matrix = norm_counts, transpose = TRUE)
-		scaled_counts_table <- as.data.frame(as.table(scaled_counts))
-		colnames(scaled_counts_table) <- c("Gene","Sample","Count")
+	# # Load Normalized correlation data
+	# if (flags$WGCNA) {
+	# 	####
+	# 	# LOAD NORMALIZED COUNTS
+	# 	# norm_counts <- as.matrix(read.table(file.path(input_hunter_folder, "Results_DESeq2", "Normalized_counts_DESeq2.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
+	# 	# norm_counts <- hunter_results[["all_data_normalized"]][["DESeq2"]]
+	# 	# scaled_counts <- scale_data_matrix(data_matrix = norm_counts, transpose = TRUE)
+	# 	# scaled_counts_table <- as.data.frame(as.table(scaled_counts))
+	# 	# colnames(scaled_counts_table) <- c("Gene","Sample","Count")
 			
-		####
-		# LOAD WGCNA clusters representative profiles with samples
-		cl_eigvalues <- as.matrix(read.table(file.path(input_hunter_folder, "Results_WGCNA", "eigen_values_per_samples.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-		cl_eigvalues <- as.data.frame(as.table(cl_eigvalues),stringsAsFactors = FALSE)
-		colnames(cl_eigvalues) <- c("Sample","Cluster_ID","Count") 
-		cl_eigvalues_gnorm <- cl_eigvalues
-		cl_eigvalues_gnorm$Count <- (cl_eigvalues_gnorm$Count + 1) / 2 
+	# 	####
+	# 	# LOAD WGCNA clusters representative profiles with samples
+	# 	# cl_eigvalues <- as.matrix(read.table(file.path(input_hunter_folder, "Results_WGCNA", "eigen_values_per_samples.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
+	# 	# cl_eigvalues <- as.matrix(hunter_results$WGCNA_all$plot_objects$trait_and_module[,grepl("^ME",colnames(hunter_results$WGCNA_all$plot_objects$trait_and_module))])
+	# 	# cl_eigvalues <- as.data.frame(as.table(cl_eigvalues),stringsAsFactors = FALSE)
+	# 	# colnames(cl_eigvalues) <- c("Sample","Cluster_ID","Count") 
+	# 	# cl_eigvalues_gnorm <- cl_eigvalues
+	# 	# cl_eigvalues_gnorm$Count <- (cl_eigvalues_gnorm$Count + 1) / 2 
 		
-		####
-		# LOAD WGCNA - PVal (Cluster - Trait)
-		wgcna_pval_cl_trait <- as.matrix(read.table(file.path(input_hunter_folder, "Results_WGCNA", "module_trait_p_val.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-		wgcna_corr_cl_trait <- as.matrix(read.table(file.path(input_hunter_folder, "Results_WGCNA", "module_trait.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-		
-		####
-		# LOAD WGCNA - Correlation (Sample - Trait)
-		wgcna_count_sample_trait <- as.matrix(read.table(file.path(input_hunter_folder, "Results_WGCNA", "sample_trait.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-		wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait)
-	}
+	# 	####
+	# 	# LOAD WGCNA - PVal (Cluster - Trait)
+	# 	# wgcna_pval_cl_trait <- as.matrix(read.table(file.path(input_hunter_folder, "Results_WGCNA", "module_trait_p_val.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
+	# 	# wgcna_corr_cl_trait <- as.matrix(read.table(file.path(input_hunter_folder, "Results_WGCNA", "module_trait.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
+	# 	# wgcna_pval_cl_trait <- as.matrix(hunter_results$WGCNA_all$package_objects$module_trait_cor_p)
+	# 	# wgcna_corr_cl_trait <- as.matrix(hunter_results$WGCNA_all$package_objects$module_trait_cor)
+	# 	####
+	# 	# LOAD WGCNA - Correlation (Sample - Trait)
+	# 	# wgcna_count_sample_trait <- as.matrix(read.table(file.path(input_hunter_folder, "Results_WGCNA", "sample_trait.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
+	# 	# wgcna_count_sample_trait <- as.matrix(hunter_results$WGCNA_all$plot_objects$trait_and_module[,!grepl("^ME",colnames(hunter_results$WGCNA_all$plot_objects$trait_and_module))])
+	# 	# wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait)
+	# }
 
+######################################################## CHECKED
 
-	###############################
-	## LOAD CUSTOM GMT 	
-	all_custom_gmt <- NULL
-	if (!is.null(custom)) {
-		custom_files <- unlist(strsplit(custom, ","))
-		all_custom_gmt <- lapply(custom_files, load_and_parse_gmt)
-		names(all_custom_gmt) <- custom_files
-	}
 
 	# Verbose point 
 	aux <- table(DEGH_results$genes_tag)
@@ -275,14 +214,6 @@ functional_hunter <- function(
 		message(paste(names(aux)[i],aux[i]))
 	}
 
-
-	####################### DEBUG POINT #############################
-	if (debug) {
-		time_control$load_data <- Sys.time()
-		debug_point(debug_file, "Files have been loaded and parsed", environment())
-	}
-	message("Files have been loaded and parsed")
-	#################################################################
 
 
 
@@ -292,7 +223,7 @@ functional_hunter <- function(
 	##                                                                                                                   ##
 	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 	if (need_translate) {
-		# valid_genes => A vector containing all unique genes that were not filtered out. These genes are translated according annot_file given with -a
+		# valid_genes => A vector containing all unique genes that were not filtered out. These genes are translated according annot_table given with -a
 		valid_genes <- unique(DEGH_results$input_IDs[!is.na(DEGH_results$input_IDs)])
 		if (remote_actions$biomart) { # REMOTE MODE
 			############# BIOMART QUERY  #############
@@ -336,7 +267,7 @@ functional_hunter <- function(
 		################# ADD ENTREZ IDS TO INPUT FILE #############
 		DEGH_results$entrezgene <- input_to_entrezgene[match(DEGH_results$input_IDs, input_to_entrezgene$ensembl_gene_id), "entrezgene"]
 		added_cols <- c(added_cols, "entrezgene")
-		message(paste(opt$input_gene_id, "IDs have been translated to entrezgene"))
+		message(paste(input_gene_id, "IDs have been translated to entrezgene"))
 	} else {
 		################# ADD ENTREZ IDS TO INPUT FILE #############
 		DEGH_results$entrezgene <- DEGH_results$input_IDs
@@ -357,12 +288,6 @@ functional_hunter <- function(
 		message("entrezgene IDs have been translated to SYMBOLS")
 	}
 
-	####################### DEBUG POINT #############################
-	if (debug) {
-		time_control$translate_id <- Sys.time()
-		debug_point(debug_file, "IDs translated", environment())
-	}
-	#################################################################
 
 
 	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
@@ -424,24 +349,18 @@ functional_hunter <- function(
 		if (flags$GSEA) {
 			enrichments_GSEA_expanded <- list()
 			cl_gene_fc <- lapply(cls, function(cl) {
-				cl_results <- DEGH_results[!is.na(DEGH_results$entrezgene) & DEGH_results$Cluster_ID == cl,]
-			
-				gene_fc <- as.vector(cl_results$fc_colname)
+				cl_results <- DEGH_results[!is.na(DEGH_results$entrezgene) & DEGH_results$Cluster_ID == cl,]			
+				gene_fc <- as.vector(cl_results[,fc_colname])
 				names(gene_fc) <- cl_results$entrezgene
 				gene_fc <- sort(gene_fc, decreasing = TRUE)
 
 				return(gene_fc)
 			})
+			names(cl_gene_fc) <- as.character(cls)
 		}
 	}
 
-	####################### DEBUG POINT #############################
-	if (debug) {
-		time_control$data_preparation <- Sys.time()
-		debug_point(debug_file, "Data prepared for enrichments", environment())
-	} 
 	message("Data prepared for enrichments")
-	#################################################################
 
 
 
@@ -464,13 +383,14 @@ functional_hunter <- function(
 			# Launch topGO analysis
 			invisible(lapply(GO_subontologies,function(mod) {
 				# Common
-				perform_topGO(go_attr_name, likely_degs_entrez, union_annot_DEGs_df, mod, paste("GOgraph_preval_",mod,".pdf",sep=""),input_gene_id)
-				perform_topGO(go_attr_name, pos_logFC_likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_overex_",mod,".pdf",sep=""),input_gene_id)
-				perform_topGO(go_attr_name, neg_logFC_likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_underex_",mod,".pdf",sep=""),input_gene_id)
+# TODO : this methods create files (should be exported out of this main)
+				perform_topGO(go_attr_name, likely_degs_entrez, union_annot_DEGs_df, mod, paste("GOgraph_preval_",mod,".pdf",sep=""),input_gene_id, output_files)
+				perform_topGO(go_attr_name, pos_logFC_likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_overex_",mod,".pdf",sep=""),input_gene_id, output_files)
+				perform_topGO(go_attr_name, neg_logFC_likely_degs, union_annot_DEGs_df, mod, paste("GOgraph_preval_underex_",mod,".pdf",sep=""),input_gene_id, output_files)
 				# Union
-				perform_topGO(go_attr_name, union_DEGs, input_to_entrezgene, mod, paste("GOgraph_allpos_",mod,".pdf",sep=""),input_gene_id)
-				perform_topGO(go_attr_name, pos_logFC_union_DEGs, input_to_entrezgene, mod, paste("GOgraph_allpos_overex_",mod,".pdf",sep=""),input_gene_id)
-				perform_topGO(go_attr_name, neg_logFC_union_DEGs, input_to_entrezgene, mod, paste("GOgraph_allpos_underex_",mod,".pdf",sep=""),input_gene_id)    				
+				perform_topGO(go_attr_name, union_DEGs, input_to_entrezgene, mod, paste("GOgraph_allpos_",mod,".pdf",sep=""),input_gene_id, output_files)
+				perform_topGO(go_attr_name, pos_logFC_union_DEGs, input_to_entrezgene, mod, paste("GOgraph_allpos_overex_",mod,".pdf",sep=""),input_gene_id, output_files)
+				perform_topGO(go_attr_name, neg_logFC_union_DEGs, input_to_entrezgene, mod, paste("GOgraph_allpos_underex_",mod,".pdf",sep=""),input_gene_id, output_files)    				
 			}))
 		} else { # LOCAL MODE
 
@@ -480,6 +400,7 @@ functional_hunter <- function(
 			# Launch topGO analysis
 			invisible(lapply(GO_subontologies,function(mod) {
 				# Common
+# TODO : this methods create files (should be exported out of this main)
 				perform_topGO_local(likely_degs_entrez, reference_ids_common, mod, file.path(output_files, paste("GO_preval",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
 				perform_topGO_local(pos_logFC_likely_degs, reference_ids_common, mod, file.path(output_files, paste("GO_preval_overex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
 				perform_topGO_local(neg_logFC_likely_degs, reference_ids_common,mod, file.path(output_files, paste("GO_preval_underex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])
@@ -489,13 +410,7 @@ functional_hunter <- function(
 				perform_topGO_local(neg_logFC_union_DEGs, reference_ids_union, mod, file.path(output_files, paste("GO_allpos_underex",mod,sep="_")),current_organism_info$Bioconductor_DB[1])    
 			}))
 		} # END LOCAL/REMOTE IF
-		####################### DEBUG POINT #############################
-		if (debug) {
-			time_control$TopGO <- Sys.time()
-			debug_point(debug_file, "topGO analysis finished", environment())
-		}
 		message("topGO analysis finished")
-		#################################################################
 	}
 
 
@@ -513,9 +428,7 @@ functional_hunter <- function(
 			})
 			# Add names
 			names(enrich_go) <- GO_subontologies
-			# Write results
-			write.table(as.data.frame(do.call(rbind,lapply(enrich_go,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_ora"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-			
+			func_results$GO_ORA <- enrich_go
 			#PERFORM WGCNA MODULES ANALYSIS
 			if (flags$WGCNA) {
 				for (subont in GO_subontologies) {
@@ -538,14 +451,12 @@ functional_hunter <- function(
 		if (flags$GSEA) {
 			# Enrich
 			enrich_go_gsea <- lapply(GO_subontologies,function(mod) {
-				enrich <- enrichment_GSEA(geneList = geneList,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = pthreshold,pAdjustMethod = "BH",ont = paste0("GO_",mod))
+				enrich <- enrich_GSEA(geneList = geneList,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = pthreshold,pAdjustMethod = "BH",ont = paste0("GO_",mod))
 				return(enrich)
 			})
 			# Add names
 			names(enrich_go_gsea) <- GO_subontologies
-			# Write results
-			write.table(as.data.frame(do.call(rbind,lapply(enrich_go_gsea,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_gsea"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")	
-
+			func_results$GO_GSEA <- enrich_go_gsea
 			#PERFORM WGCNA MODULES ANALYSIS
 			if (flags$WGCNA) {
 				for (subont in GO_subontologies) {
@@ -560,13 +471,7 @@ functional_hunter <- function(
 				}
 			}
 		}
-		####################### DEBUG POINT #############################
-		if (debug) {
-			time_control$clusterProfiler_GO <- Sys.time()
-			debug_point(debug_file, "clusterProfiler GO analysis finished", environment())
-		}
 		message("clusterProfiler GO analysis finished")
-		#################################################################
 	}
 
 
@@ -579,9 +484,7 @@ functional_hunter <- function(
 		if (flags$ORA) {
 			# Enrich
 			enrich_ora <- enrichment_ORA(genes = likely_degs_entrez,organism = current_organism_info$KeggCode[1],keyType = "kegg",pvalueCutoff = pthreshold,pAdjustMethod = "BH",ont = "KEGG",useInternal = !remote_actions$kegg, qvalueCutoff = qthreshold)
-			# Write output
-			write.table(enrich_ora, file=file.path(output_files, "KEGG_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-			
+			func_results$KEGG_ORA <- enrich_ora
 			#PERFORM WGCNA MODULES ANALYSIS
 			if (flags$WGCNA) {
 				enrichments_ORA_expanded[["KEGG"]] <- enrichment_clusters_ORA(genes = clgenes,
@@ -599,10 +502,8 @@ functional_hunter <- function(
 		###########
 		### GSEA ENRICHMENTS
 		if (flags$GSEA) {
-			enrich_gsea <- enrichment_GSEA(geneList = geneList,organism = current_organism_info$KeggCode[1],pvalueCutoff = pthreshold,ont = "KEGG",useInternal = !remote_actions$kegg)
-			# Write output
-			write.table(enrich_gsea, file=file.path(output_files, "KEGG_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-			
+			enrich_gsea <- enrich_GSEA(geneList = geneList,organism = current_organism_info$KeggCode[1],pvalueCutoff = pthreshold,ont = "KEGG",useInternal = !remote_actions$kegg)
+			func_results$KEGG_GSEA <- enrich_gsea
 			#PERFORM WGCNA MODULES ANALYSIS
 			if (flags$WGCNA) {
 				enrichments_GSEA_expanded[["KEGG"]] <- perform_GSEA_clusters(all_clusters = cl_gene_fc,
@@ -614,13 +515,7 @@ functional_hunter <- function(
 									useInternal = !remote_actions$kegg)
 			}
 		}
-		####################### DEBUG POINT #############################
-		if (debug) {
-			time_control$clusterProfiler_KEGG <- Sys.time()
-			debug_point(debug_file, "clusterProfiler KEGG analysis finished", environment())
-		}
 		message("clusterProfiler KEGG analysis finished")
-		#################################################################
 	}
 
 
@@ -635,9 +530,7 @@ functional_hunter <- function(
 		if (flags$ORA) {
 			# Make enrichment (ORA)
 			enrich_react <- enrichment_ORA(genes = likely_degs_entrez,organism = current_organism_info$Reactome_ID[1],keyType = "ENTREZID",pvalueCutoff = pthreshold,pAdjustMethod = "BH",ont = "REACT", qvalueCutoff = qthreshold)		
-			# Write output
-			write.table(enrich_react, file=file.path(output_files, "REACT_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")	
-			
+			func_results$REACT_ORA <- enrich_react
 			#PERFORM WGCNA MODULES ANALYSIS
 			if (flags$WGCNA) {
 				enrichments_ORA_expanded[["REACT"]] <- enrichment_clusters_ORA(genes = clgenes,
@@ -655,9 +548,9 @@ functional_hunter <- function(
 		###########
 		### GSEA ENRICHMENTS
 		if (flags$GSEA) {
-			enrich_react_gsea <- enrichment_GSEA(geneList = geneList, organism = current_organism_info$Reactome_ID[1], pvalueCutoff = pthreshold, pAdjustMethod = "BH", ont = "REACT")
-			# Write output
-			write.table(enrich_react_gsea, file=file.path(output_files, "REACT_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+			enrich_react_gsea <- enrich_GSEA(geneList = geneList, organism = current_organism_info$Reactome_ID[1], pvalueCutoff = pthreshold, pAdjustMethod = "BH", ont = "REACT")
+			func_results$REACT_GSEA
+
 			if (flags$WGCNA) {
 				enrichments_GSEA_expanded[["REACT"]] <- perform_GSEA_clusters(all_clusters = cl_gene_fc,
 									organism = current_organism_info$Reactome_ID[1],
@@ -668,41 +561,26 @@ functional_hunter <- function(
 									useInternal = FALSE)
 			}
 		}
-		####################### DEBUG POINT #############################
-		if (debug) {
-			time_control$clusterProfiler_REACTOME <- Sys.time()
-			debug_point(debug_file, "clusterProfiler REACTOME analysis finished", environment())
-		}
 		message("clusterProfiler REACTOME analysis finished")
-		#################################################################
-		#PERFORM WGCNA MODULES ANALYSIS
 	}
 
 	#############################################
 	### CUSTOM ENRICHMENT
 	if (!is.null(custom)) {
 		message("Performing CUSTOM enrichments")
-		# Obtain custom files
-		custom_files <- unlist(strsplit(custom,","))
-
 		###########
 		### CUSTOM ENRICHMENTS
-		# Per each file, launch enrichment
-		custom_enrichments <- enrich_all_customs(custom_files = custom_files, 
+		custom_enrichments <- enrich_all_customs(custom_sets = custom, 
 												 p_val_threshold = pthreshold, 
-												 likely_degs_entrez = likely_degs_entrez)
+												 likely_degs_entrez = likely_degs_entrez,
+												 write = FALSE)
+		func_results$CUSTOM <- custom_enrichments
 		if (flags$WGCNA){
-			custom_cls_ORA_expanded <- lapply(all_custom_gmt, function(gmt){
-				enrich_clusters_with_gmt(gmt, clgenes, opt$pthreshold, opt$cores)
+			custom_cls_ORA_expanded <- lapply(custom, function(gmt){
+				enrich_clusters_with_gmt(gmt, clgenes, pthreshold, cores)
 			})
 		}
-		####################### DEBUG POINT #############################
-		if (debug) {
-			time_control$TopGO <- Sys.time()
-			debug_point(debug_file, "CUSTOM enrichments finished", environment())
-		}
 		message("CUSTOM enrichments finished")
-		#################################################################
 	} else {
 		custom_enrichments <- NULL
 	}
@@ -712,105 +590,88 @@ functional_hunter <- function(
 	##                                               EXPORT DATA                                                         ## 
 	##                                                                                                                   ##
 	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-
 	if (flags$WGCNA) {
-		message("Performing CLUSTERS enrichments")
-
 		if (flags$ORA) {
-			enrichments_ORA <- lapply(enrichments_ORA_expanded, merge_result)
-			# Write output
-			for(enrichment_i in 1:length(enrichments_ORA)) {
-				# Concat
-				df <- enrichplot:::fortify.compareClusterResult(enrichments_ORA[[enrichment_i]])
-				# Write table
-				write.table(df, file=file.path(output_files, paste0(names(enrichments_ORA[enrichment_i]),"_cls_ora")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-			}
+			enrichments_ORA <- lapply(enrichments_ORA_expanded, clusterProfiler::merge_result)
+			func_results$WGCNA_ORA <- enrichments_ORA
+			func_results$WGCNA_ORA_expanded <- enrichments_ORA_expanded
 		}
 
 		if (flags$GSEA) {
-			enrichments_GSEA <- lapply(enrichments_GSEA_expanded, merge_result)
-
-			for (enrichment_i in 1:length(enrichments_GSEA)) {
-				# Concat
-				# df <- clusterProfiler:::fortify.compareClusterResult(enrichments_GSEA[[enrichment_i]])
-				df <- enrichments_GSEA[[enrichment_i]]@compareClusterResult
-				# Write table
-				write.table(df, file=file.path(output_files, paste0(names(enrichments_GSEA[enrichment_i]),"_cls_gsea")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-			}
+			enrichments_GSEA <- lapply(enrichments_GSEA_expanded, clusterProfiler::merge_result)
+			func_results$WGCNA_GSEA <- enrichments_GSEA
+			func_results$WGCNA_GSEA_expanded <- enrichments_GSEA_expanded
 		}
 
-		if (!is.null(opt$custom)){
-			custom_cls_ORA <- lapply(custom_cls_ORA_expanded, merge_result)
-			for(enrichment_i in 1:length(custom_cls_ORA)) {
-				# Concat
-				df <- enrichplot:::fortify.compareClusterResult(custom_cls_ORA[[enrichment_i]])
-				# Write table
-				write.table(df, file=file.path(output_files, paste0(basename(names(custom_cls_ORA[enrichment_i])),"_cls_ORA")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-			}
+		if (!is.null(custom)){
+			custom_cls_ORA <- lapply(custom_cls_ORA_expanded, clusterProfiler::merge_result)
+			func_results$WGCNA_CUSTOM <- enrichments_CUSTOM
+			func_results$WGCNA_CUSTOM_expanded <-custom_cls_ORA_expanded
 		}
-		message("CLUSTERS enrichments finished")
 	}
 
 	DEGH_results <- DEGH_results[c(added_cols, setdiff(names(DEGH_results), added_cols))] # Reorder columns so annotated first
 	DEGH_results <- DEGH_results[order(DEGH_results[,"combined_FDR"]),] # Reorder rows by combined FDR
-	write.table(DEGH_results, file=file.path(output_files, "hunter_results_table_annotated.txt"), quote=FALSE, col.names=NA, sep="\t")
+	func_results$DEGH_results_annot <- DEGH_results
 
-	####################### DEBUG POINT #############################
-	if (debug) {
-		time_control$TopGO <- Sys.time()
-		debug_point(debug_file, "Results saved", environment())
-	}
-	message("Results have been saved")
-	#################################################################
+	# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+	# ##                                                                                                                   ##
+	# ##                                                 RENDERING REPORTS                                                 ##                                                     
+	# ##                                                                                                                   ##
+	# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
-	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-	##                                                                                                                   ##
-	##                                                 RENDERING REPORTS                                                 ##                                                     
-	##                                                                                                                   ##
-	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+	# message("RENDERING REPORT ...")
 
-	message("RENDERING REPORT ...")
+	# ############################################################
+	# ##                GENERATE CLUSTER REPORTS                ##
+	# ############################################################
+	# results_path <- normalizePath(output_files)
 
-	############################################################
-	##                GENERATE CLUSTER REPORTS                ##
-	############################################################
-	results_path <- normalizePath(output_files)
+	# if (flags$WGCNA) { # Clustered
+	# 	message("Rendering specific cluster reports")
+	# 	# invisible(parallel::mclapply(cls, function(cl) {
+	# 	invisible(parallel::mclapply(cls[1:3], function(cl) {
+	# 		# Take output name
+	# 		aux <- paste0("cl_func_",cl,".html")
+	# 		outf_cls_i <- file.path(results_path, aux)
+	# 		# Generate report
+	# 		rmarkdown::render(file.path(template_folder, 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
+	# 		if (debug) {
+	# 			time_control[[paste0("cl_func_",cl)]] <<- Sys.time()
+	# 		}
+	# 	}, mc.cores = cores
+	# ))
 
-	if (flags$WGCNA) { # Clustered
-		message("Rendering specific cluster reports")
-		# invisible(parallel::mclapply(cls, function(cl) {
-		invisible(parallel::mclapply(cls[1:3], function(cl) {
-			# Take output name
-			aux <- paste0("cl_func_",cl,".html")
-			outf_cls_i <- file.path(results_path, aux)
-			# Generate report
-			rmarkdown::render(file.path(template_folder, 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
-			if (debug) {
-				time_control[[paste0("cl_func_",cl)]] <<- Sys.time()
-			}
-		}, mc.cores = cores
-	))
+	# 	message("\tRendering clustered report")
+	# 	outf_cls <- file.path(results_path, "clusters_func_report.html")
+	# 	rmarkdown::render(file.path(template_folder, 'clusters_main_report.Rmd'),output_file = outf_cls, intermediates_dir = results_path)
+	# 	if (debug) {
+	# 		time_control$render_cluster_main_report <- Sys.time()
+	# 	}
+	# }
 
-		message("\tRendering clustered report")
-		outf_cls <- file.path(results_path, "clusters_func_report.html")
-		rmarkdown::render(file.path(template_folder, 'clusters_main_report.Rmd'),output_file = outf_cls, intermediates_dir = results_path)
-		if (debug) {
-			time_control$render_cluster_main_report <- Sys.time()
-		}
-	}
+	# ############################################################
+	# ##              GENERATE DEG FUNCTIONAL REPORT            ##
+	# ############################################################
+	# message("\tRendering regular report")
+	# outf <- file.path(results_path, "functional_report.html")
+	# rmarkdown::render(file.path(template_folder, 'functional_report.Rmd'), output_file = outf, intermediates_dir = results_path)
 
-	############################################################
-	##              GENERATE DEG FUNCTIONAL REPORT            ##
-	############################################################
-	message("\tRendering regular report")
-	outf <- file.path(results_path, "functional_report.html")
-	rmarkdown::render(file.path(template_folder, 'functional_report.Rmd'), output_file = outf, intermediates_dir = results_path)
 
-	if (debug) {
-	####################### DEBUG POINT #############################
-	    time_control$render_main_report <- Sys.time()
-	    debug_point(debug_file,"Report printed", environment())
-	#################################################################
-	    save_times(time_control, output = file.path(debug_dir, "function_hunter_time_control.txt"), plot_name = "FH_times_control.pdf")
-	}
+	func_results$flags <- flags
+######################################################## CHECKED
+	return(func_results)
+}
+
+
+
+
+#' Table with information abaut all organism available
+#' @param file to be loaded. DEfault: internal organism table
+#' @return organism table
+#' @keywords 
+#' @export
+#' @examples
+get_organism_table <- function(file = file.path(find.package('DEgenesHunter'), "external_data", "organism_table.txt")){
+	return(read.table(file, header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA))
 }

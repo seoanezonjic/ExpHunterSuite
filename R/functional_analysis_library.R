@@ -218,15 +218,29 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
 
 
 #'
+#' @param custom_sets
 #' @param custom_files
 #' @param p_val_threshold
 #' @param likely_degs_entrez
+#' @param write
 #' @keywords
 #' @return
-enrich_all_customs <- function(custom_files, p_val_threshold, likely_degs_entrez){
-  custom_enrichments <- lapply(custom_files, function(custom_gmt) {
+enrich_all_customs <- function(custom_sets = NULL, custom_files = NULL, p_val_threshold, likely_degs_entrez, write_res = TRUE){
+  if(is.null(custom_gmt)){
+    custom_set <- custom_sets
+    load_files <- FALSE
+  }else{
+    custom_set <- custom_files
+    names(custom_set) <- custom_files
+    load_files <- TRUE
+  }
+  custom_enrichments <- lapply(custom_set, function(custom_gmt) {
       # Load info
-      c_terms <- unlist(read.table(file = custom_gmt, sep = "\n", header = FALSE, stringsAsFactors = FALSE))
+      if(load_files){
+        c_terms <- unlist(read.table(file = custom_gmt, sep = "\n", header = FALSE, stringsAsFactors = FALSE))
+      }else{
+        c_terms <- custom_gmt
+      }
       # Split all
       c_terms <- as.data.frame(do.call(rbind,lapply(c_terms,function(GeneTerms) {
         aux <- unlist(strsplit(GeneTerms,"\t"))
@@ -235,10 +249,12 @@ enrich_all_customs <- function(custom_files, p_val_threshold, likely_degs_entrez
                   stringsAsFactors = FALSE))
       })))
       enr <- clusterProfiler::enricher(likely_degs_entrez, pvalueCutoff = p_val_threshold, TERM2GENE = c_terms)
-      # Store results
-      write.table(enr, file=file.path(paths$root, paste0(basename(custom_gmt),"_ora_results")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")      
+      # # Store results
+      # TODO: using external variables which has not been given by parameters? Uh someone has been a bad boy. Please Pepe/Jim be careful with that
+      # TODO: stay until targets_functional script is refactored. then REMOVE WRITE FLAG 
+      if(write_res) write.table(enr, file=file.path(paths$root, paste0(basename(names(custom_gmt)[1]),"_ora_results")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")      
       # Return
-      return(list(File = custom_gmt,
+      return(list(File = names(custom_gmt)[1],
             Result = enr))
     })
   return(custom_enrichments)
@@ -365,9 +381,10 @@ scale_data_matrix <- function(data_matrix, transpose = FALSE){
 #' @param ontology
 #' @param graphname
 #' @param filter_name
+#' @param output_files
 #' @keywords
 #' @return
-perform_topGO <- function(attr_name, interesting_genenames, DEG_annot_table, ontology, graphname,filter_name){
+perform_topGO <- function(attr_name, interesting_genenames, DEG_annot_table, ontology, graphname,filter_name, output_files){
     geneID2GO <- split(DEG_annot_table[,attr_name], DEG_annot_table[,filter_name])
     geneID2GO <- lapply(geneID2GO, unique)
     geneNames <- names(geneID2GO)
@@ -384,7 +401,7 @@ perform_topGO <- function(attr_name, interesting_genenames, DEG_annot_table, ont
         classicKS = resultKS, elimKS = resultKS.elim,
         orderBy = "elimKS", ranksOf = "classicFisher", topNodes = length(GOdata@graph@nodes))
 
-    write.table(allRes, file=file.path(paths$root, "allResGOs.txt"), quote=FALSE, col.names=NA, sep="\t")
+    write.table(allRes, file=file.path(output_files, "allResGOs.txt"), quote=FALSE, col.names=NA, sep="\t")
 
     pdf(file.path(paths, graphname), w=11, h=8.5)
         topGO::showSigOfNodes(GOdata, BiocGenerics::score(resultFis), firstSigNodes = 10, useInfo = 'all')
