@@ -120,7 +120,7 @@ main_degenes_Hunter <- function(
     ############################################################
     dir.create(output_files)
     
-    exp_results <- perform_expression_analysis(modules, replicatesC, replicatesT, output_files, raw_filter, p_val_cutoff, target, model_formula_text)
+    exp_results <- perform_expression_analysis(modules, replicatesC, replicatesT, raw_filter, p_val_cutoff, target, model_formula_text)
 
     if(debug){ # DEBUG POINT #############################
       time_control$dea_packages <- Sys.time()
@@ -205,11 +205,9 @@ main_degenes_Hunter <- function(
     final_results <- list()
     final_results[['raw_filter']] <- raw_filter
     final_results[['sample_groups']] <- sample_groups
-    final_results[['all_data_normalized']] <- all_data_normalized
     final_results[['DE_all_genes']] <- DE_all_genes
     final_results[['index_control_cols']] <- index_control_cols
     final_results[['index_treatmn_cols']] <- index_treatmn_cols
-    final_results[['raw_filter']] <- raw_filter
     final_results[['design_vector']] <- design_vector
     final_results[['replicatesC']] <- replicatesC
     final_results[['replicatesT']] <- replicatesT

@@ -1,10 +1,12 @@
 #' Function to generate target
 #'
 #' Load target file if it exists, otherwise use the -C and -T flags. Note target takes precedence over target.
-#' @param from_file Path to gene table count table
+#' @param from_file 
 #' @param ctrl_samples
 #' @param treat_samples
+#' @keywords design
 #' @export
+#' @examples
 #' target_generation()
 target_generation <- function(from_file=NULL, ctrl_samples=NULL, treat_samples=NULL){
 	target <- NULL
@@ -23,6 +25,18 @@ target_generation <- function(from_file=NULL, ctrl_samples=NULL, treat_samples=N
 	}	
 	return(target)
 }	
+
+
+#' Function to write expression package results
+#'
+#' Write to disk the results of each diff expression package
+#' @param df_list 
+#' @param prefix
+#' @param root
+#' @keywords output
+#' @export
+#' @examples
+#' write_df_list_as_tables()
 
 write_df_list_as_tables <- function(df_list, prefix, root) {
   invisible(
