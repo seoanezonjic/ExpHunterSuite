@@ -17,18 +17,6 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 	organisms_table_file <- file.path(root_path, "inst", "external_data", "organism_table.txt")
 	template_folder <- file.path(root_path, 'inst', 'templates')
 
-	#############################################
-	### LOAD LIBRARIES
-	#############################################
-	# suppressPackageStartupMessages(require(optparse))
-	# suppressPackageStartupMessages(require(biomaRt)) 
-	# suppressPackageStartupMessages(require(topGO))
-	# suppressPackageStartupMessages(require(KEGGREST))
-	# suppressPackageStartupMessages(require(stringr))
-	# suppressPackageStartupMessages(require(plyr))
-	# suppressPackageStartupMessages(require(knitr))
-	# suppressPackageStartupMessages(require(clusterProfiler))
-	# suppressPackageStartupMessages(require(dplyr))
 }else{
 	require('DEgenesHunter')
 	root_path <- find.package('DEgenesHunter')

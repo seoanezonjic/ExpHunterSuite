@@ -1,28 +1,27 @@
 #' This function allows you to perform the Functional analysis with different enrichment corpus.
-#' @param hunter_results
-#' @param model_organism
-#' @param annot_table
-#' @param organisms_table
-#' @param template_folder
-#' @param input_gene_id
-#' @param func_annot_db
-#' @param GO_subont
-#' @param custom
-#' @param analysis_type
-#' @param remote
+#' @param hunter_results list with DEG analysis results
+#' @param model_organism organisms which genes are being studied
+#' @param annot_table (OPTIONAL) annotation table to translate gene IDs
+#' @param organisms_table (OPTIONAL) configuration table for given organism. Use see get_organism_table()
+#' @param input_gene_id (OPTIONAL) type og gene IDs given. Allowed: ENSEMBL (E), entrezgene (e), TAIR/Arabidopsis (T), Gene Names (G).
+#' @param func_annot_db (OPTIONAL) modules to be enriched
+#' @param GO_subont (OPTIONAL) specific GO subontologies to be enriched
+#' @param custom (OPTIONAL) list of dataframes with GMT corpus
+#' @param analysis_type (OPTIONAL) enrichment type to be performed. Allowed: ORA (o) and GSEA (g)
+#' @param remote (OPTIONAL) remote allowed actions. Are: Biomart query (b) and KEGG enrichment (k)
 #' @param save_query
-#' @param pthreshold
-#' @param qthreshold
-#' @param cores
-#' @param output_files
-#' @param fc_colname
+#' @param pthreshold pvalue threshold
+#' @param qthreshold qvalue threshold
+#' @param cores cores to be used if parallel features are going to be used. Default: 1
+#' @param output_files output folder
+#' @param fc_colname main logFC colname (into hunter_results dataframe)
 #' @keywords 
 #' @export
 #' @examples
 functional_hunter <- function(
 	hunter_results,
 	model_organism,
-	annot_table,
+	annot_table = NULL,
 	organisms_table = get_organism_table(),
 	input_gene_id = "E",
 	func_annot_db = "gKR",
@@ -55,7 +54,6 @@ functional_hunter <- function(
 
 	## Load DEGenesHunter results
 	## DEGH_results => DEgenes Hunter results table and modifications
-	# DEGH_results <- read.table(file.path(input_hunter_folder, "Common_results", "hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE)
 	DEGH_results <- hunter_results$DE_all_genes
 	DEGH_results <- DEGH_results[DEGH_results$genes_tag != "FILTERED_OUT", ]
 
@@ -166,55 +164,17 @@ functional_hunter <- function(
 	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 	#Load annotation gene table for translation ID
 	if(!is.null(annot_table)){
-		# annot_table <- read.table(annot_table, header=FALSE, row.names=NULL, sep="\t", stringsAsFactors = FALSE, quote = "") # Load
 	  	DEGH_results$input_IDs <- translate_id(rownames(DEGH_results), annot_table)
 	} else {
 		DEGH_results$input_IDs <- rownames(DEGH_results)
 	}
 	added_cols <- c("input_IDs")
 
-	# # Load Normalized correlation data
-	# if (flags$WGCNA) {
-	# 	####
-	# 	# LOAD NORMALIZED COUNTS
-	# 	# norm_counts <- as.matrix(read.table(file.path(input_hunter_folder, "Results_DESeq2", "Normalized_counts_DESeq2.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-	# 	# norm_counts <- hunter_results[["all_data_normalized"]][["DESeq2"]]
-	# 	# scaled_counts <- scale_data_matrix(data_matrix = norm_counts, transpose = TRUE)
-	# 	# scaled_counts_table <- as.data.frame(as.table(scaled_counts))
-	# 	# colnames(scaled_counts_table) <- c("Gene","Sample","Count")
-			
-	# 	####
-	# 	# LOAD WGCNA clusters representative profiles with samples
-	# 	# cl_eigvalues <- as.matrix(read.table(file.path(input_hunter_folder, "Results_WGCNA", "eigen_values_per_samples.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-	# 	# cl_eigvalues <- as.matrix(hunter_results$WGCNA_all$plot_objects$trait_and_module[,grepl("^ME",colnames(hunter_results$WGCNA_all$plot_objects$trait_and_module))])
-	# 	# cl_eigvalues <- as.data.frame(as.table(cl_eigvalues),stringsAsFactors = FALSE)
-	# 	# colnames(cl_eigvalues) <- c("Sample","Cluster_ID","Count") 
-	# 	# cl_eigvalues_gnorm <- cl_eigvalues
-	# 	# cl_eigvalues_gnorm$Count <- (cl_eigvalues_gnorm$Count + 1) / 2 
-		
-	# 	####
-	# 	# LOAD WGCNA - PVal (Cluster - Trait)
-	# 	# wgcna_pval_cl_trait <- as.matrix(read.table(file.path(input_hunter_folder, "Results_WGCNA", "module_trait_p_val.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-	# 	# wgcna_corr_cl_trait <- as.matrix(read.table(file.path(input_hunter_folder, "Results_WGCNA", "module_trait.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-	# 	# wgcna_pval_cl_trait <- as.matrix(hunter_results$WGCNA_all$package_objects$module_trait_cor_p)
-	# 	# wgcna_corr_cl_trait <- as.matrix(hunter_results$WGCNA_all$package_objects$module_trait_cor)
-	# 	####
-	# 	# LOAD WGCNA - Correlation (Sample - Trait)
-	# 	# wgcna_count_sample_trait <- as.matrix(read.table(file.path(input_hunter_folder, "Results_WGCNA", "sample_trait.txt"), header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-	# 	# wgcna_count_sample_trait <- as.matrix(hunter_results$WGCNA_all$plot_objects$trait_and_module[,!grepl("^ME",colnames(hunter_results$WGCNA_all$plot_objects$trait_and_module))])
-	# 	# wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait)
-	# }
-
-######################################################## CHECKED
-
-
 	# Verbose point 
 	aux <- table(DEGH_results$genes_tag)
 	for(i in seq_along(aux)) {
 		message(paste(names(aux)[i],aux[i]))
 	}
-
-
 
 
 	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
@@ -252,11 +212,9 @@ functional_hunter <- function(
 				input_to_entrezgene <- id_translation_orgdb(input_ids = valid_genes,
 													 organism_db = current_organism_info$Bioconductor_DB[1],
 													 org_var_name = current_organism_info$Bioconductor_VarName[1])
-				# colnames(input_to_entrezgene) <- c("ensembl_gene_id", current_organism_info[,"Attribute_entrez"])
 				colnames(input_to_entrezgene) <- c("ensembl_gene_id", "entrezgene") # Fix names
 			}
 		} else {
-		# print("it works")
 			stop("Specified organism not available in LOCAL mode. Please try REMOTE mode")
 		}
 
@@ -614,52 +572,8 @@ functional_hunter <- function(
 	DEGH_results <- DEGH_results[order(DEGH_results[,"combined_FDR"]),] # Reorder rows by combined FDR
 	func_results$DEGH_results_annot <- DEGH_results
 
-	# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-	# ##                                                                                                                   ##
-	# ##                                                 RENDERING REPORTS                                                 ##                                                     
-	# ##                                                                                                                   ##
-	# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-
-	# message("RENDERING REPORT ...")
-
-	# ############################################################
-	# ##                GENERATE CLUSTER REPORTS                ##
-	# ############################################################
-	# results_path <- normalizePath(output_files)
-
-	# if (flags$WGCNA) { # Clustered
-	# 	message("Rendering specific cluster reports")
-	# 	# invisible(parallel::mclapply(cls, function(cl) {
-	# 	invisible(parallel::mclapply(cls[1:3], function(cl) {
-	# 		# Take output name
-	# 		aux <- paste0("cl_func_",cl,".html")
-	# 		outf_cls_i <- file.path(results_path, aux)
-	# 		# Generate report
-	# 		rmarkdown::render(file.path(template_folder, 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
-	# 		if (debug) {
-	# 			time_control[[paste0("cl_func_",cl)]] <<- Sys.time()
-	# 		}
-	# 	}, mc.cores = cores
-	# ))
-
-	# 	message("\tRendering clustered report")
-	# 	outf_cls <- file.path(results_path, "clusters_func_report.html")
-	# 	rmarkdown::render(file.path(template_folder, 'clusters_main_report.Rmd'),output_file = outf_cls, intermediates_dir = results_path)
-	# 	if (debug) {
-	# 		time_control$render_cluster_main_report <- Sys.time()
-	# 	}
-	# }
-
-	# ############################################################
-	# ##              GENERATE DEG FUNCTIONAL REPORT            ##
-	# ############################################################
-	# message("\tRendering regular report")
-	# outf <- file.path(results_path, "functional_report.html")
-	# rmarkdown::render(file.path(template_folder, 'functional_report.Rmd'), output_file = outf, intermediates_dir = results_path)
-
 
 	func_results$flags <- flags
-######################################################## CHECKED
 	return(func_results)
 }
 
@@ -667,11 +581,10 @@ functional_hunter <- function(
 
 
 #' Table with information abaut all organism available
-#' @param file to be loaded. DEfault: internal organism table
+#' @param file to be loaded. Default: internal organism table
 #' @return organism table
 #' @keywords 
 #' @export
-#' @examples
 get_organism_table <- function(file = file.path(find.package('DEgenesHunter'), "external_data", "organism_table.txt")){
 	return(read.table(file, header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA))
 }

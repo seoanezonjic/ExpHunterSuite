@@ -120,7 +120,9 @@ load_package_result <- function(pack_path){
 	return(info)
 }
 
-
+#' Loads stored WGCNA results in DEgenes Hunter expression analysis package folder and returns in compact object
+#' @param path of expression analysis results (Hunter folder)
+#' @param main_deg_table dataframe with main DEG analysis results
 load_WGCNA_results <- function(path, main_deg_table){
 	info <- list()
 	if(dir.exists(file.path(path,"Results_WGCNA"))){

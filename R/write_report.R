@@ -33,6 +33,15 @@ write_expression_report <- function(exp_results, output_files,template_folder = 
 #' Write Main DEgenes Hunter functional report
 #'
 #' This function allows you to report the Functional analysis.
+#' @param
+#' @param hunter_results DEG analysis results
+#' @param func_results functional results
+#' @param output_files output folder
+#' @param template_folder (OPTIONAL) RMD templates folder
+#' @param cores (OPTIONAL) cores for parallel features
+#' @param model_organism model organism which genes are being studied
+#' @param organisms_table configuration table for given organism. Use see get_organism_table()
+#' @param fc_colname main logFC colname (into hunter_results dataframe)
 #' @export
 #' @examples
 write_functional_report <- function(hunter_results, func_results, output_files, template_folder = file.path(find.package('DEgenesHunter'), 'templates'), cores = 1, model_organism, organisms_table, fc_colname){
