@@ -155,3 +155,41 @@ load_WGCNA_results <- function(path, main_deg_table){
 
 	return(info)
 }
+
+
+#' 
+#' @param func_results functional enrichment results
+#' @param output_file output folderpath
+#' @export
+write_enrich_files <- function(func_results,output_file){
+	if("GO_ORA" %in% names(func_results)) write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_ORA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_ora"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+	if("GO_GSEA" %in% names(func_results)) write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_GSEA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_gsea"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")	
+	if("KEGG_ORA" %in% names(func_results)) write.table(func_results$KEGG_ORA, file=file.path(output_files, "KEGG_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+	if("KEGG_GSEA" %in% names(func_results)) write.table(func_results$KEGG_GSEA, file=file.path(output_files, "KEGG_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+	if("REACT_ORA" %in% names(func_results)) write.table(func_results$REACT_ORA, file=file.path(output_files, "REACT_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+	if("REACT_GSEA" %in% names(func_results)) write.table(func_results$REACT_GSEA, file=file.path(output_files, "REACT_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+	if("DEGH_results_annot" %in% names(func_results)) write.table(func_results$DEGH_results_annot, file=file.path(output_files, "hunter_results_table_annotated.txt"), quote=FALSE, col.names=NA, sep="\t")
+	if("CUSTOM" %in% names(func_results)){
+		invisible(lapply(func_results$CUSTOM,function(res){
+			write.table(res$Result, file=file.path(output_files, paste0(basename(res$File),"_ora_results")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		}))
+	}
+	if("WGCNA_ORA" %in% names(func_results)){
+		for(enrichment_i in 1:length(func_results$WGCNA_ORA)) {
+			df <- enrichplot:::fortify.compareClusterResult(func_results$WGCNA_ORA[[enrichment_i]])
+			write.table(df, file=file.path(output_files, paste0(names(func_results$WGCNA_ORA[enrichment_i]),"_cls_ora")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		}
+	}
+	if("WGCNA_GSEA" %in% names(func_results)){
+		for (enrichment_i in 1:length(func_results$WGCNA_GSEA)) {
+			df <- func_results$WGCNA_GSEA[[enrichment_i]]@compareClusterResult
+			write.table(df, file=file.path(output_files, paste0(names(func_results$WGCNA_GSEA[enrichment_i]),"_cls_gsea")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		}
+	}
+	if("WGCNA_CUSTOM" %in% names(func_results)){
+		for(enrichment_i in 1:length(func_results$WGCNA_CUSTOM)) {
+			df <- enrichplot:::fortify.compareClusterResult(func_results$WGCNA_CUSTOM[[enrichment_i]])
+			write.table(df, file=file.path(output_files, paste0(basename(names(func_results$WGCNA_CUSTOM[enrichment_i])),"_cls_ORA")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		}
+	}
+}
