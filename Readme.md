@@ -204,7 +204,7 @@ To perform the functional enrichment analysis we will use the functional_Hunter.
 Here we show an example of basic usage:
 
 ```sh
-	functional_Hunter.R -i path_to_DEgenesHunter_results -m Grapevine -o path_to_output
+	functional_Hunter.R -i path_to_DEgenesHunter_results -m Organism -o path_to_output
 ```
 
 Mandatory arguments: 
