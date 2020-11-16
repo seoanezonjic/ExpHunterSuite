@@ -125,7 +125,7 @@ if(opt$List_organisms){
 		fc_colname = fc_colname)
 
 	# Write outputs
-	write_enrich_files(func_results,output_files)
+	write_enrich_files(func_results, opt$output_files)
 
-	write_functional_report(hunter_results, func_results, opt$output_files, template_folder, opt$cores, opt$model_organism, organisms_table, fc_colname)
+	write_functional_report(hunter_results, func_results, opt$model_organism, fc_colname, organisms_table, opt$output_files, template_folder, opt$cores)
 }

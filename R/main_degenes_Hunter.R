@@ -33,39 +33,44 @@
 #' main_degenes_Hunter()
 
 main_degenes_Hunter <- function(
-    raw=NULL,
-    target=NULL,
-    external_DEA_data=NULL,
-    output_files=getwd(),
-    reads,
-    minlibraries,
-    filter_type,
-    p_val_cutoff,
-    lfc,
-    modules,
-    minpack_common,
-    model_variables,
-    numerics_as_factors,
-    custom_model,
-    string_factors,
-    numeric_factors,
-    WGCNA_memory,
-    WGCNA_norm_method,
-    WGCNA_deepsplit,
-    WGCNA_min_genes_cluster,
-    WGCNA_detectcutHeight,
-    WGCNA_mergecutHeight,
-    WGCNA_all,
-    WGCNA_blockwiseNetworkType,
-    WGCNA_blockwiseTOMType,
-    debug_file
+    raw = NULL,
+    target = NULL,
+    external_DEA_data = NULL,
+    output_files = getwd(),
+    reads = 2,
+    minlibraries = 2,
+    filter_type = "separate",
+    p_val_cutoff = 0.05,
+    lfc = 1,
+    modules ="DELNW",
+    minpack_common = 4,
+    model_variables = "",
+    numerics_as_factors = TRUE,
+    custom_model = FALSE,
+    string_factors = "",
+    numeric_factors = "",
+    WGCNA_memory = 5000,
+    WGCNA_norm_method = "DESeq2",
+    WGCNA_deepsplit = 2,
+    WGCNA_min_genes_cluster = 20,
+    WGCNA_detectcutHeight = 0.995,
+    WGCNA_mergecutHeight = 0.25,
+    WGCNA_all = FALSE,
+    WGCNA_blockwiseNetworkType = "signed",
+    WGCNA_blockwiseTOMType = "signed",
+    debug_file = NULL
   ){
 
     modified_input_args <- check_input_main_degenes_Hunter(minlibraries, reads, external_DEA_data, modules, model_variables, active_modules, WGCNA_all, minpack_common, target, custom_model, string_factors, numeric_factors)
     modules <- modified_input_args[['modules']]
     active_modules <- modified_input_args[['active_modules']]
     minpack_common <- modified_input_args[['minpack_common']]
-
+    final_main_params <- list(
+      'minpack_common' = minpack_common,
+      'p_val_cutoff' = p_val_cutoff,
+      'lfc' = lfc,
+      'modules' = modules
+    )
     ############################################################
     ##               INITIALIZE DEBUG SYSTEM                  ##
     ############################################################    
@@ -131,6 +136,7 @@ main_degenes_Hunter <- function(
     ##                       CORRELATION ANALYSIS                   ##
     ##################################################################
 
+    combinations_WGCNA <- NULL
     if(grepl("W", modules)) { # CASE W: WGCNA
       cat('Correlation analysis is performed with WGCNA\n')
       path <- file.path(output_files, "Results_WGCNA")
@@ -211,8 +217,9 @@ main_degenes_Hunter <- function(
     final_results[['design_vector']] <- design_vector
     final_results[['replicatesC']] <- replicatesC
     final_results[['replicatesT']] <- replicatesT
-
-    return(c(final_results, exp_results, combinations_WGCNA))
+    final_results[['final_main_params']] <- final_main_params
+    if(!is.null(combinations_WGCNA)){final_results <- c(final_results, combinations_WGCNA)}
+    return(c(final_results, exp_results))
 }
 
 

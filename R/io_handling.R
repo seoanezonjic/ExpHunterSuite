@@ -38,7 +38,7 @@ target_generation <- function(from_file=NULL, ctrl_samples=NULL, treat_samples=N
 #' @examples
 #' write_df_list_as_tables()
 
-write_df_list_as_tables <- function(df_list, prefix, root) {
+write_df_list_as_tables <- function(df_list, prefix, root=getwd()) {
   invisible(
     lapply(1:length(df_list), function(i) {
       pack <- names(df_list)[i]
@@ -161,7 +161,7 @@ load_WGCNA_results <- function(path, main_deg_table){
 #' @param func_results functional enrichment results
 #' @param output_file output folderpath
 #' @export
-write_enrich_files <- function(func_results,output_file){
+write_enrich_files <- function(func_results, output_files){
 	if("GO_ORA" %in% names(func_results)) write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_ORA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_ora"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 	if("GO_GSEA" %in% names(func_results)) write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_GSEA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_gsea"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")	
 	if("KEGG_ORA" %in% names(func_results)) write.table(func_results$KEGG_ORA, file=file.path(output_files, "KEGG_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")

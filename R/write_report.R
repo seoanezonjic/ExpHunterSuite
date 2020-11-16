@@ -4,7 +4,8 @@
 #' @export
 #' @examples
 #' write_expression_report()
-write_expression_report <- function(exp_results, output_files,template_folder = file.path(find.package('DEgenesHunter'), 'templates'), opt){
+write_expression_report <- function(exp_results, output_files=getwd(),template_folder = file.path(find.package('DEgenesHunter'), 'templates'), opt=NULL){
+    if(is.null(opt)){ opt <- exp_results[['final_main_params']]}
     DEG_pack_columns <- exp_results[['DEG_pack_columns']] 
     all_counts_for_plotting <- exp_results[['all_counts_for_plotting']] 
     all_FDR_names <- exp_results[['all_FDR_names']]
@@ -44,7 +45,7 @@ write_expression_report <- function(exp_results, output_files,template_folder = 
 #' @param fc_colname main logFC colname (into hunter_results dataframe)
 #' @export
 #' @examples
-write_functional_report <- function(hunter_results, func_results, output_files, template_folder = file.path(find.package('DEgenesHunter'), 'templates'), cores = 1, model_organism, organisms_table, fc_colname){
+write_functional_report <- function(hunter_results, func_results, model_organism, fc_colname="mean_logFCs", organisms_table=get_organism_table(file.path(find.package('DEgenesHunter'), "external_data", "organism_table.txt")), output_files=getwd(), template_folder = file.path(find.package('DEgenesHunter'), 'templates'), cores = 1){
     # TODO: update names into Rmd files instead this
     ############################################################
     ##               CREATE NECESSARY VARIABLES               ##
