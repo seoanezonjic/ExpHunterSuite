@@ -50,7 +50,6 @@ write_functional_report <- function(hunter_results, func_results, output_files, 
     ##               CREATE NECESSARY VARIABLES               ##
     ############################################################
     DEGH_results <- func_results$DEGH_results_annot
-    cls  <- unique(DEGH_results$Cluster_ID)
     # -
     experiments <- hunter_results$sample_groups
     sample_classes <- apply(experiments, 1, function(x) paste0("* [", x[1], "] ", x[2]))
@@ -61,12 +60,13 @@ write_functional_report <- function(hunter_results, func_results, output_files, 
     colnames(scaled_counts_table) <- c("Gene","Sample","Count")
     # -
     flags <- func_results$flags
-    cl_eigvalues <- as.matrix(hunter_results$WGCNA_all$plot_objects$trait_and_module[,grepl("^ME",colnames(hunter_results$WGCNA_all$plot_objects$trait_and_module))])
-    cl_eigvalues <- as.data.frame(as.table(cl_eigvalues),stringsAsFactors = FALSE)
-    colnames(cl_eigvalues) <- c("Sample","Cluster_ID","Count") 
-    cl_eigvalues_gnorm <- cl_eigvalues
-    cl_eigvalues_gnorm$Count <- (cl_eigvalues_gnorm$Count + 1) / 2 
     if(flags$WGCNA){
+        cls  <- unique(DEGH_results$Cluster_ID)
+        cl_eigvalues <- as.matrix(hunter_results$WGCNA_all$plot_objects$trait_and_module[,grepl("^ME",colnames(hunter_results$WGCNA_all$plot_objects$trait_and_module))])
+        cl_eigvalues <- as.data.frame(as.table(cl_eigvalues),stringsAsFactors = FALSE)
+        colnames(cl_eigvalues) <- c("Sample","Cluster_ID","Count") 
+        cl_eigvalues_gnorm <- cl_eigvalues
+        cl_eigvalues_gnorm$Count <- (cl_eigvalues_gnorm$Count + 1) / 2 
         wgcna_pval_cl_trait <- as.matrix(hunter_results$WGCNA_all$package_objects$module_trait_cor_p)
         wgcna_corr_cl_trait <- as.matrix(hunter_results$WGCNA_all$package_objects$module_trait_cor)
         wgcna_count_sample_trait <- as.matrix(hunter_results$WGCNA_all$plot_objects$trait_and_module[,!grepl("^ME",colnames(hunter_results$WGCNA_all$plot_objects$trait_and_module))])
