@@ -254,6 +254,15 @@ Optional input arguments:
 	-q 
 	(optional) If indicated, biomaRt query is saved in an .RDS file.
 
+### DEgenes Hunter functional enrichment examples of use 
+
+Here we show an example of use for DEgenes Hunter functional enrichment, changing some input parameters. 
+
+*Functional enrichment in GO biological processes (-G B) using topGO (-f G) for H. sapiens (-m Human), using a overrepresentation analysis (-A o). P-value threshold set to 0.1 (-P 0.1). ctrl_vs_mut is the input folder with data from the functional expression analysis performed with degenes_Hunter.R (-i). Gene identifiers provided as entrez codes (-t E). Execution parallelized using 6 cores (-c 6).*
+```
+functional_Hunter.R -f G -G B -A o -P 0.1 -m Human -i ctrl_vs_mut -t E -c 6 -o functional_enrichment
+```
+
 ## REFERENCES AND CITATION
 
 Please cite DEgenes Hunter as:
