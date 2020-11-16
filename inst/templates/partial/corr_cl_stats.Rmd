@@ -88,7 +88,7 @@ pp2 <- ggplot2::ggplot(smtraits, ggplot2::aes(x = Sample, y = Correlation, group
 	  ggplot2::geom_line(data = cl_profile, linetype = "dashed", size = 0.5, color = "blue") +
 	  ggplot2::ylab("eigen gene / normalized external measures values") +
 	  # ylim(c(-1,1)) +
-      ggplot2::theme(axis.text.x = element_text(angle = 30, hjust = 1))
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 30, hjust = 1))
 plot(pp2)
 ```
 ```{r "{{cl}}_wgcna_corr_plERR", echo = FALSE, results = 'asis', eval = length(clpvals) <= 0}

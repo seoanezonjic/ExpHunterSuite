@@ -86,13 +86,16 @@ curr_out <- knitr::knit_expand("partial/corr_cl_stats.Rmd")
 
 `r paste(knitr::knit(text = curr_out), collapse = '\n')`
 
-```{r load_ORA_results, echo = FALSE, eval = exists("enrichments_ORA_expanded")}
-# Per each category defined, perform enrichment
-curr_out <- unlist(lapply(names(enrichments_ORA_expanded),function(cat){
-  sec_text <- paste(c("## **",cat," enrichment results**\n"),collapse="") # Header
-  sec_text <- c(sec_text,knitr::knit_expand("partial/ora_enrichResult.Rmd")) # Body
-  return(sec_text)
-}))
+```{r load_ORA_results, echo = FALSE}
+curr_out <- ""
+if(exists("enrichments_ORA_expanded")){
+  # Per each category defined, perform enrichment
+  curr_out <- unlist(lapply(names(enrichments_ORA_expanded),function(cat){
+    sec_text <- paste(c("## **",cat," enrichment results**\n"),collapse="") # Header
+    sec_text <- c(sec_text,knitr::knit_expand("partial/ora_enrichResult.Rmd")) # Body
+    return(sec_text)
+  }))  
+}
 ```
 `r paste(knitr::knit(text = curr_out), collapse = '\n')`
 
