@@ -3,10 +3,6 @@
 # DEgenes Hunter
 > Protocol to undertake the key steps in the analysis of transcriptomics experiments, including differentially expressed gene detection, a co-expression analysis and the functional enrichment.
 
-[![NPM Version][npm-image]][npm-url]
-[![Build Status][travis-image]][travis-url]
-[![Downloads Stats][npm-downloads]][npm-url]
-
 ## REQUIREMENTS
 
 * R version 4
@@ -304,8 +300,3 @@ Isabel González Gayte, Rocío Bautista Moreno, Pedro Seoane Zonjic & Manuel G. 
 
 Fernando M. Jabato, José Córdoba-Caballero, Elena Rojano, Carlos Romá-Mateo, Pascual Sanz, Belén Pérez, Diana Gallego, Pedro Seoane, Juan A.G. Ranea y and James R. Perkins. Differential expression, co-expression and functional analysis of RNA-seq data using the DEgenes Hunter suite and its applicability to rare disease (in review). Briefings in Bioinformatics.
 
-[npm-image]: https://img.shields.io/npm/v/datadog-metrics.svg?style=flat-square
-[npm-url]: https://npmjs.org/package/datadog-metrics
-[npm-downloads]: https://img.shields.io/npm/dm/datadog-metrics.svg?style=flat-square
-[travis-image]: https://img.shields.io/travis/dbader/node-datadog-metrics/master.svg?style=flat-square
-[travis-url]: https://travis-ci.org/dbader/node-datadog-metrics
