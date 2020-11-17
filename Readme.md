@@ -254,7 +254,7 @@ Optional input arguments:
 	-q 
 	(optional) If indicated, biomaRt query is saved in an .RDS file.
 
-### DEgenes Hunter functional enrichment examples of use 
+#### DEgenes Hunter functional enrichment examples of use 
 
 Here we show an example of use for DEgenes Hunter functional enrichment, changing some input parameters. 
 
@@ -262,6 +262,39 @@ Here we show an example of use for DEgenes Hunter functional enrichment, changin
 ```
 functional_Hunter.R -f G -G B -A o -P 0.1 -m Human -i ctrl_vs_mut -t E -c 6 -o functional_enrichment
 ```
+
+### 3. R console pipeline.
+Clone this repository and in R console move to the root folder. Then, you can execute the basic pipeline as follows:
+```R
+library('DEgenesHunter')
+
+target <- target_generation(from_file='inst/example/target.txt') # Read experiment design which describes the sample groups
+raw_count_table <- read.table('inst/example/counts.txt', header=TRUE, row.names=1, sep="\t") # Read the table counts with the number of reads per gene.
+
+final_results <- main_degenes_Hunter( # Perform the expresion analysis with default parameters
+  target=target,
+  raw=raw_count_table,
+  modules='DE' # Use DEseq2 and EdgeR as expresion packages and other complementary analysis as WGCNA (coexpresion) are disabled. 
+)
+
+write.table(final_results[['raw_filter']], "filtered_count_data.txt", quote=FALSE, col.names=NA, sep="\t") # Raw table filtered by minreads parameter
+write_df_list_as_tables(final_results[['all_data_normalized']], prefix = 'Normalized_counts_') #Normalized table by each expresion package used in modules argument.
+write_df_list_as_tables(final_results[['all_counts_for_plotting']], prefix = 'allgenes_')
+write.table(final_results[['DE_all_genes']], "hunter_results_table.txt", quote=FALSE, row.names=TRUE, sep="\t") # Table with all the expresion packages and the integrated results (gene_tag, combined p-value and combined log2FC)
+write_expression_report(final_results) # Generate friendly html report with expresion data.
+
+
+func_results <- functional_hunter( #Perform enrichment analisys
+        final_results,
+        'Mouse', #Use specified organism database
+        func_annot_db = "R", #Perform enrichment analysis using only Reactome nomenclature
+        analysis_type= "o" #Perform enrichment  using only Overepresentation analysis (Not GSEA)
+)
+
+write_enrich_files(func_results) #Write enrichment tables
+write_functional_report(final_results, func_results) # Generate friendly html report with functional data.
+```
+
 
 ## REFERENCES AND CITATION
 
