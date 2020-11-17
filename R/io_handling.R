@@ -100,6 +100,18 @@ load_hunter_folder <- function(path){
 	aux <- load_WGCNA_results(path,dgh_exp_results[["DE_all_genes"]])
 	if(length(aux) > 0) dgh_exp_results[["WGCNA_all"]] <- aux
 	
+	DEGenesHunter_expression_opt <- read.table(file.path(path, "opt_input_values.txt"), header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+	aux_numeric <- c("reads","minlibraries","p_val_cutoff","lfc","minpack_common","WGCNA_memory","WGCNA_deepsplit","WGCNA_min_genes_cluster","WGCNA_detectcutHeight","WGCNA_mergecutHeight")
+	aux_logical <- c("numerics_as_factors","WGCNA_all")
+	degh_exp <- as.list(DEGenesHunter_expression_opt[,2])
+	names(degh_exp) <- DEGenesHunter_expression_opt[,1]
+	invisible(lapply(names(degh_exp),function(name){
+		if(name %in% aux_numeric) degh_exp[[name]] <<- as.numeric(degh_exp[[name]])
+		if(name %in% aux_logical) degh_exp[[name]] <<- as.logical(degh_exp[[name]])
+	}))
+
+	dgh_exp_results[["final_main_params"]] <- degh_exp
+
 	# dgh_exp_results[["all_package_results"]] <- 
 	# dgh_exp_results[["package_objects"]] <- 
 
@@ -159,9 +171,11 @@ load_WGCNA_results <- function(path, main_deg_table){
 
 #' 
 #' @param func_results functional enrichment results
-#' @param output_file output folderpath
+#' @param output_file output folder path
 #' @export
 write_enrich_files <- function(func_results, output_files){
+	if(!dir.exists(output_files)) dir.create(output_files)
+	write.table(data.frame(A = names(func_results$final_main_params), B = unlist(func_results$final_main_params)), file = file.path(output_files,"functional_opt.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 	if("GO_ORA" %in% names(func_results)) write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_ORA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_ora"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 	if("GO_GSEA" %in% names(func_results)) write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_GSEA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_gsea"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")	
 	if("KEGG_ORA" %in% names(func_results)) write.table(func_results$KEGG_ORA, file=file.path(output_files, "KEGG_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")

@@ -27,7 +27,7 @@ functional_hunter <- function(
 	func_annot_db = "gKR",
 	GO_subont = "BMC",
 	custom = NULL,
-	analysis_type = c("go"),
+	analysis_type = "go",
 	remote = "",
 	save_query = FALSE,
 	pthreshold = 0.1,
@@ -38,6 +38,18 @@ functional_hunter <- function(
 	){
 
 	func_results <- list()
+	main_params <- list(model_organism = model_organism,
+						input_gene_id = input_gene_id,
+						func_annot_db = func_annot_db,
+						GO_subont = GO_subont,
+						analysis_type = analysis_type,
+						remote = remote,
+						save_query = save_query,
+						pthreshold = pthreshold,
+						qthreshold = qthreshold,
+						cores = cores,
+						fc_colname = fc_colname)
+	func_results[["final_main_params"]] <- main_params
 
 	# Check organism selected
 	if (any(is.null(model_organism), !model_organism %in% rownames(organisms_table))) {

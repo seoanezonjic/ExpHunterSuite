@@ -37,26 +37,38 @@ write_expression_report <- function(exp_results, output_files=getwd(),template_f
 #' @param
 #' @param hunter_results DEG analysis results
 #' @param func_results functional results
-#' @param output_files output folder
+#' @param output_files output folder.
 #' @param template_folder (OPTIONAL) RMD templates folder
 #' @param cores (OPTIONAL) cores for parallel features
-#' @param model_organism model organism which genes are being studied
-#' @param organisms_table configuration table for given organism. Use see get_organism_table()
-#' @param fc_colname main logFC colname (into hunter_results dataframe)
+#' @param organisms_table (OPTIONAL) configuration table for given organism. Use see get_organism_table()
+#' @param fc_colname (OPTIONAL) main logFC colname (into hunter_results dataframe)
+#' @param report string with reports to be written. Allowed: clusters (c) and functional (f). Default = "fc"
 #' @export
 #' @examples
-write_functional_report <- function(hunter_results, func_results, model_organism, fc_colname="mean_logFCs", organisms_table=get_organism_table(file.path(find.package('DEgenesHunter'), "external_data", "organism_table.txt")), output_files=getwd(), template_folder = file.path(find.package('DEgenesHunter'), 'templates'), cores = 1){
+write_functional_report <- function(hunter_results, 
+                                    func_results, 
+                                    output_files, 
+                                    fc_colname="mean_logFCs", 
+                                    organisms_table=NULL, 
+                                    template_folder = file.path(find.package('DEgenesHunter'), 'templates'), 
+                                    cores = 1, 
+                                    report = "fc"){
+    if(is.null(organisms_table)){
+        organisms_table <- DEgenesHunter::get_organism_table()
+    }
+    model_organism <- func_results$final_main_params$model_organism
     # TODO: update names into Rmd files instead this
     ############################################################
     ##               CREATE NECESSARY VARIABLES               ##
     ############################################################
+    degh_exp_threshold <- hunter_results$final_main_params$p_val_cutoff
     DEGH_results <- func_results$DEGH_results_annot
     # -
     experiments <- hunter_results$sample_groups
     sample_classes <- apply(experiments, 1, function(x) paste0("* [", x[1], "] ", x[2]))
     # -
     norm_counts <- hunter_results[["all_data_normalized"]][["DESeq2"]]
-    scaled_counts <- scale_data_matrix(data_matrix = norm_counts, transpose = TRUE)
+    scaled_counts <- DEgenesHunter:::scale_data_matrix(data_matrix = norm_counts, transpose = TRUE)
     scaled_counts_table <- as.data.frame(as.table(scaled_counts))
     colnames(scaled_counts_table) <- c("Gene","Sample","Count")
     # -
@@ -71,7 +83,7 @@ write_functional_report <- function(hunter_results, func_results, model_organism
         wgcna_pval_cl_trait <- as.matrix(hunter_results$WGCNA_all$package_objects$module_trait_cor_p)
         wgcna_corr_cl_trait <- as.matrix(hunter_results$WGCNA_all$package_objects$module_trait_cor)
         wgcna_count_sample_trait <- as.matrix(hunter_results$WGCNA_all$plot_objects$trait_and_module[,!grepl("^ME",colnames(hunter_results$WGCNA_all$plot_objects$trait_and_module))])
-        wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait)        
+        wgcna_count_sample_trait <- DEgenesHunter:::scale_data_matrix(wgcna_count_sample_trait)        
     }
     #-
     if(any(grepl("WGCNA_ORA",names(func_results)))){
@@ -104,26 +116,29 @@ write_functional_report <- function(hunter_results, func_results, model_organism
     ##                GENERATE CLUSTER REPORTS                ##
     ############################################################
     results_path <- normalizePath(output_files)
+    if(grepl("c", report)){
+        if (any(grepl("WGCNA",names(func_results)))) { # Clustered
+            message("Rendering specific cluster reports")
+            invisible(parallel::mclapply(cls, function(cl) {
+                # Take output name
+                aux <- paste0("cl_func_",cl,".html")
+                outf_cls_i <- file.path(results_path, aux)
+                # Generate report
+                rmarkdown::render(file.path(template_folder, 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
+            }, mc.cores = cores))
 
-    if (any(grepl("WGCNA",names(func_results)))) { # Clustered
-        message("Rendering specific cluster reports")
-        invisible(parallel::mclapply(cls, function(cl) {
-            # Take output name
-            aux <- paste0("cl_func_",cl,".html")
-            outf_cls_i <- file.path(results_path, aux)
-            # Generate report
-            rmarkdown::render(file.path(template_folder, 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
-        }, mc.cores = cores))
-
-        message("\tRendering clustered report")
-        outf_cls <- file.path(results_path, "clusters_func_report.html")
-        rmarkdown::render(file.path(template_folder, 'clusters_main_report.Rmd'),output_file = outf_cls, intermediates_dir = results_path)
+            message("\tRendering clustered report")
+            outf_cls <- file.path(results_path, "clusters_func_report.html")
+            rmarkdown::render(file.path(template_folder, 'clusters_main_report.Rmd'),output_file = outf_cls, intermediates_dir = results_path)
+        }        
     }
 
     ############################################################
     ##              GENERATE DEG FUNCTIONAL REPORT            ##
     ############################################################
-    message("\tRendering regular report")
-    outf <- file.path(results_path, "functional_report.html")
-    rmarkdown::render(file.path(template_folder, 'functional_report.Rmd'), output_file = outf, intermediates_dir = results_path)
+    if(grepl("f", report)){
+        message("\tRendering regular report")
+        outf <- file.path(results_path, "functional_report.html")
+        rmarkdown::render(file.path(template_folder, 'functional_report.Rmd'), output_file = outf, intermediates_dir = results_path)        
+    }
 }

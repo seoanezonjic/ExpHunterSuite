@@ -1157,7 +1157,7 @@ invisible(lapply(seq_along(custom_enrichments),function(i){
 ## **Values of options used to run Functional Hunter**
 First column contains the option names; second column contains the given values for each option in this run.
 ```{r opt_vals, echo = FALSE}
-knitr::kable(cbind(opt))
+knitr::kable(cbind(func_results$final_main_params))
 ```
 
 

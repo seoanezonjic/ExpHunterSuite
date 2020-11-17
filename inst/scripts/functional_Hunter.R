@@ -49,7 +49,7 @@ option_list <- list(
     help="GO sub-ontologies to use for functional analysis (M = Molecular Function, B = Biological Process, C = Celular Component). Default=%default"), # Not Checked
   optparse::make_option(c("-C", "--custom"), ,type = "character", default=NULL,
     help="Files with custom functional annotation database (in GMT format) separated by commas (,)"),
-  optparse::make_option(c("-A", "--analysis_type"), type="character", default=c("go"),
+  optparse::make_option(c("-A", "--analysis_type"), type="character", default="go",
     help="Analysis performance (g = Gene Set Enrichment Analysis, o = Over Representation Analysis). Default=%default"), # Not Checked
    optparse::make_option(c("-r", "--remote"), ,type = "character", default="",
     help="Flags to activate remote query from enrichments and Genes translation. Use (b) to launch biomaRt translation; (k) to use Kegg remote data base"),
@@ -78,11 +78,6 @@ paths$root <- opt$output_files
 
 
 organisms_table <- get_organism_table(organisms_table_file)
-
-
-# Load DEGenesHunter config
-DEGenesHunter_expression_opt <- read.table(file.path(opt$input_hunter_folder, "opt_input_values.txt"), header = FALSE, stringsAsFactors = FALSE, sep = "\t")
-degh_exp_threshold <- as.numeric(DEGenesHunter_expression_opt[which(DEGenesHunter_expression_opt[,1] == "p_val_cutoff"), 2])
 
 # Load Hunter Folder
 hunter_results <- load_hunter_folder(opt$input_hunter_folder)
@@ -127,5 +122,11 @@ if(opt$List_organisms){
 	# Write outputs
 	write_enrich_files(func_results, opt$output_files)
 
-	write_functional_report(hunter_results, func_results, opt$model_organism, fc_colname, organisms_table, opt$output_files, template_folder, opt$cores)
+	write_functional_report(hunter_results = hunter_results, 
+							func_results = func_results, 
+							organism_table = organisms_table,
+							output_files = opt$output_files,
+							template_folder = template_folder,
+							cores =  opt$cores)
+
 }
