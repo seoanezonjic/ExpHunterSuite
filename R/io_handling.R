@@ -173,7 +173,7 @@ load_WGCNA_results <- function(path, main_deg_table){
 #' @param func_results functional enrichment results
 #' @param output_file output folder path
 #' @export
-write_enrich_files <- function(func_results, output_files){
+write_enrich_files <- function(func_results, output_files=getwd()){
 	if(!dir.exists(output_files)) dir.create(output_files)
 	write.table(data.frame(A = names(func_results$final_main_params), B = unlist(func_results$final_main_params)), file = file.path(output_files,"functional_opt.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 	if("GO_ORA" %in% names(func_results)) write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_ORA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_ora"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")

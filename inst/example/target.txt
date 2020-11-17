@@ -1,0 +1,8 @@
+sample	treat
+CTL_1	Ctrl
+CTL_2	Ctrl
+CTL_3	Ctrl
+CTL_4	Ctrl
+epm2a_1	Treat
+epm2a_2	Treat
+epm2a_3	Treat

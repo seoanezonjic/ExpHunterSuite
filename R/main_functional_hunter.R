@@ -27,7 +27,7 @@ functional_hunter <- function(
 	func_annot_db = "gKR",
 	GO_subont = "BMC",
 	custom = NULL,
-	analysis_type = "go",
+	analysis_type = "o", #g
 	remote = "",
 	save_query = FALSE,
 	pthreshold = 0.1,

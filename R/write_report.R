@@ -47,7 +47,7 @@ write_expression_report <- function(exp_results, output_files=getwd(),template_f
 #' @examples
 write_functional_report <- function(hunter_results, 
                                     func_results, 
-                                    output_files, 
+                                    output_files=getwd(), 
                                     fc_colname="mean_logFCs", 
                                     organisms_table=NULL, 
                                     template_folder = file.path(find.package('DEgenesHunter'), 'templates'), 
