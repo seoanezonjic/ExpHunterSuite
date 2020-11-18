@@ -17,7 +17,7 @@ Go to page https://cran.r-project.org and install the latest R version on your c
 To install DEgenes Hunter from console, we use the devtools utility to install R packages from GitHub. Please type the following commands:
 
 ``` bash
-    Rscript -e 'install.packages("devtools")'
+    Rscript -e 'install.packages("devtools", repos="http://cran.us.r-project.org")'
     Rscript -e 'devtools::install_github("seoanezonjic/DEgenesHunter")'
 ```
 
