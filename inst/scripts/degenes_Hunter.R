@@ -91,11 +91,7 @@ option_list <- list(
   optparse::make_option(c("--WGCNA_blockwiseNetworkType"), type="character", default="signed",
     help="NetworkType option to be passed to blockwiseModules function (unsigned, signed, signed hybrid)."),
   optparse::make_option(c("--WGCNA_blockwiseTOMType"), type="character", default="signed",
-    help="TOMType option to be passed to blockwiseModules function (none, unsigned, signed, signed Nowick, unsigned 2, signed 2 and signed Nowick 2). If none, adjacency will be used for clustering. Default=%default"),
-  optparse::make_option(c("--debug"), type="logical", default=FALSE, action = "store_true",
-    help="Activate debug mode, which stores RData sessions at different points of the pipeline"),
-  optparse::make_option(c("--Debug"), type="character", default=NULL,
-    help="Activate debug mode and uses given filename. File must have '.RData' extension")
+    help="TOMType option to be passed to blockwiseModules function (none, unsigned, signed, signed Nowick, unsigned 2, signed 2 and signed Nowick 2). If none, adjacency will be used for clustering. Default=%default")
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
@@ -104,12 +100,6 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 ############################################################################
 dir.create(opt$output_files)
 write.table(cbind(opt), file=file.path(opt$output_files, "opt_input_values.txt"), sep="\t", col.names =FALSE, quote = FALSE)
-
-debug_file <- NULL
-if(!is.null(opt$Debug)){
-  debug <- TRUE
-  debug_file <- file.path(opt$Debug)
-}
 
 #############################################################################
 #CHECKINGS
@@ -140,18 +130,6 @@ if (grepl("F", opt$modules)) { # Open the external data file for pre-analysed de
   external_DEA_data <- read.table(opt$external_DEA_file, header=TRUE, sep="\t", row.names=1)
 }
 
-if(opt$debug){
-  # Define only once
-  if(is.null(opt$Debug)){
-    debug_file <- file.path(opt$output_files, "debug_files", paste(c("FHunter_Debug_Session_",format(Sys.Date(),format = "%Y%m%d"),".RData"),collapse = ""))
-  }
-  debug_dir <- dirname(debug_file)
-  dir.create(debug_dir, recursive = T)
-  debug_dir <- normalizePath(debug_dir)
-  # Store session
-  time_control <- list(start = Sys.time())
-  DEgenesHunter:::debug_point(debug_file,"Start point")
-}
 
 final_results <- main_degenes_Hunter(
   target=target,
@@ -178,8 +156,7 @@ final_results <- main_degenes_Hunter(
   WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
   WGCNA_all=opt$WGCNA_all,
   WGCNA_blockwiseNetworkType=opt$WGCNA_blockwiseNetworkType,
-  WGCNA_blockwiseTOMType=opt$WGCNA_blockwiseTOMType,
-  debug_file=debug_file
+  WGCNA_blockwiseTOMType=opt$WGCNA_blockwiseTOMType
 )
 
 #############################################################################
@@ -192,10 +169,3 @@ write_df_list_as_tables(final_results[['all_counts_for_plotting']], prefix = 'al
 dir.create(file.path(opt$output_files, "Common_results"))
 write.table(final_results[['DE_all_genes']], file=file.path(opt$output_files, "Common_results", "hunter_results_table.txt"), quote=FALSE, row.names=TRUE, sep="\t")
 write_expression_report(final_results, opt$output_files, template_folder, opt)
-
-# if(debug){ # DEBUG POINT ############################# TO RESTORE
-#     time_control$render_main_report <- Sys.time()
-#     debug_point(debug_file,"Report printed")
-#     save_times(time_control, output = file.path(debug_dir, "degenes_hunter_time_control.txt"), plot_name = "DH_times_control.pdf")
-# }
-

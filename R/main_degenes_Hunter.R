@@ -26,7 +26,6 @@
 #' @param WGCNA_all
 #' @param WGCNA_blockwiseNetworkType
 #' @param WGCNA_blockwiseTOMType
-#' @param debug_file
 #' @keywords installation
 #' @export
 #' @examples
@@ -57,8 +56,7 @@ main_degenes_Hunter <- function(
     WGCNA_mergecutHeight = 0.25,
     WGCNA_all = FALSE,
     WGCNA_blockwiseNetworkType = "signed",
-    WGCNA_blockwiseTOMType = "signed",
-    debug_file = NULL
+    WGCNA_blockwiseTOMType = "signed"
   ){
 
     modified_input_args <- check_input_main_degenes_Hunter(minlibraries, reads, external_DEA_data, modules, model_variables, active_modules, WGCNA_all, minpack_common, target, custom_model, string_factors, numeric_factors)
@@ -71,17 +69,6 @@ main_degenes_Hunter <- function(
       'lfc' = lfc,
       'modules' = modules
     )
-    ############################################################
-    ##               INITIALIZE DEBUG SYSTEM                  ##
-    ############################################################    
-    if(!is.null(debug_file)) {
-      debug <- TRUE
-      debug_dir <- normalizePath(dirname(debug_file))
-      time_control <- list(start = Sys.time())
-      debug_point(debug_file, "Start point", environment()) # Store session
-    }else{
-      debug <- FALSE
-    }
 
     ############################################################
     ##                         I/O DATA                       ##
@@ -115,22 +102,12 @@ main_degenes_Hunter <- function(
 
     raw_filter <- filter_count(reads, minlibraries, raw, filter_type, index_control_cols, index_treatmn_cols)
     
-    if(debug){ # DEBUG POINT #############################
-      time_control$initialize <- Sys.time()
-      debug_point(debug_file,"Initialize performed")
-    }
-
     ############################################################
     ##             PERFORM EXPRESION ANALYSIS                 ##
     ############################################################
     dir.create(output_files)
     
     exp_results <- perform_expression_analysis(modules, replicatesC, replicatesT, raw_filter, p_val_cutoff, target, model_formula_text)
-
-    if(debug){ # DEBUG POINT #############################
-      time_control$dea_packages <- Sys.time()
-      debug_point(debug_file,"DEA analysis performed")
-    }
 
     #################################################################
     ##                       CORRELATION ANALYSIS                   ##
@@ -159,12 +136,6 @@ main_degenes_Hunter <- function(
         warning("Something went wrong with WGCNA on the full dataset")
         modules <- gsub("W", "", modules)
       }
-
-      if(debug){ # DEBUG POINT #############################
-        time_control$wgcna <- Sys.time()
-        debug_point(debug_file,"WGCNA analysis performed")
-      }
-
     }
 
     if(grepl("X", modules)) { # CASE X: diffcoexp
@@ -175,10 +146,6 @@ main_degenes_Hunter <- function(
       results_diffcoexp <- analysis_diffcoexp(data = raw_filter,
                                            path = path,
                                            target = target)
-      if(debug){ # DEBUG POINT #############################
-        time_control$diffcoexp <- Sys.time()
-        debug_point(debug_file,"Diffcoexp analysis performed")
-      }
     }
 
 
@@ -202,11 +169,6 @@ main_degenes_Hunter <- function(
     }
     
     DE_all_genes <- add_filtered_genes(DE_all_genes, raw) # Add the filtered genes back
-
-    if(debug){ # DEBUG POINT #############################
-      time_control$write_output_tables <- Sys.time()
-      debug_point(debug_file,"Full analysis performed")
-    }
 
     final_results <- list()
     final_results[['raw_filter']] <- raw_filter
