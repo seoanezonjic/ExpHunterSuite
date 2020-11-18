@@ -124,8 +124,8 @@ if(opt$List_organisms){
 
 	write_functional_report(hunter_results = hunter_results, 
 							func_results = func_results, 
-							organism_table = organisms_table,
 							output_files = opt$output_files,
+							organisms_table = organisms_table,
 							template_folder = template_folder,
 							cores =  opt$cores)
 
