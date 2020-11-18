@@ -58,7 +58,21 @@ if (flags$ORA) {
 	executed <- rep(FALSE, times = length(all_posible))
 }
 names(executed) <- all_posible
-q
+
+
+# Load necessary functions
+if("DEgenesHunter" %in% (.packages())){ # Package mode, load private functions
+	plot_enrResult_DT <- DEgenesHunter:::plot_enrResult_DT
+	get_categories <- DEgenesHunter:::get_categories
+	set_standard_size <- DEgenesHunter:::set_standard_size
+	plot_in_div <- DEgenesHunter:::plot_in_div
+	calc_height <- DEgenesHunter:::calc_height
+	calc_width <- DEgenesHunter:::calc_width
+	clusters_heatplot <- DEgenesHunter:::clusters_heatplot
+}
+
+
+# q
 # plot_enrResult_DT <- function(ER){
 # 	toshow <- ggplot2::fortify(ER)[,!colnames(ER@compareClusterResult) %in% c("pvalue","qvalue")]
 # 	toshow$Cluster <- gsub("[\n,\t,\r]{0,1}\\(.*\\)","",toshow$Cluster)
@@ -163,7 +177,7 @@ cat("## **KEGG analysis**\n")
 cat("### **Over Representation Analysis**\n",
 	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
 
-DEgenesHunter:::plot_enrResult_DT(enrichments_ORA$KEGG)
+plot_enrResult_DT(enrichments_ORA$KEGG)
 
 
 cat(
@@ -171,10 +185,10 @@ cat(
 	"WRITE THIS TEXT >>>>.\n\n"
 )
 message("Printing dotplot")
-cat(length(DEgenesHunter:::get_categories(enrichments_ORA$KEGG)))
+cat(length(get_categories(enrichments_ORA$KEGG)))
 pp <- enrichplot::dotplot(enrichments_ORA$KEGG, showCategory=n_category) 
-pp <- DEgenesHunter:::set_standard_size(pp)
-DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$KEGG),DEgenesHunter:::calc_width(enrichments_ORA$KEGG))
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$KEGG),calc_width(enrichments_ORA$KEGG))
 
 
 
@@ -185,15 +199,15 @@ cat(
 )
 message("Printing heatplot")
 
-pp <- DEgenesHunter:::clusters_heatplot(enrichments_ORA$KEGG@compareClusterResult)  
-pp <- DEgenesHunter:::set_standard_size(pp)
-DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$KEGG),DEgenesHunter:::calc_width(enrichments_ORA$KEGG))
+pp <- clusters_heatplot(enrichments_ORA$KEGG@compareClusterResult)  
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$KEGG),calc_width(enrichments_ORA$KEGG))
 
 cat('\n\n**Enrich Map plot**\n\n', 
 	'WRITE THIS TEXT >>>>.\n\n'
 )
 pp <- enrichplot::emapplot(enrichments_ORA$KEGG, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
-DEgenesHunter:::plot_in_div(pp, fig_width = DEgenesHunter:::calc_width(enrichments_ORA$KEGG))
+plot_in_div(pp, fig_width = calc_width(enrichments_ORA$KEGG))
 # cat(
 # 	"**CNetplot**\n\n", 
 # 	"WRITE THIS TEXT >>>>.\n\n"
@@ -201,7 +215,7 @@ DEgenesHunter:::plot_in_div(pp, fig_width = DEgenesHunter:::calc_width(enrichmen
 # message("Printing cnetplot")
 
 # pp <- cnetplot(enrichments_ORA$KEGG, showCategory = n_category)
-# DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$KEGG), DEgenesHunter:::calc_width(enrichments_ORA$KEGG))
+# plot_in_div(pp, calc_height(enrichments_ORA$KEGG), calc_width(enrichments_ORA$KEGG))
 # message("Ploting ended")
 
 
@@ -217,18 +231,18 @@ cat("## **Reactome analysis**\n")
 cat("### **Over Representation Analysis**\n",
 	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
 
-DEgenesHunter:::plot_enrResult_DT(enrichments_ORA$REACT)
+plot_enrResult_DT(enrichments_ORA$REACT)
 
 
 cat(
 	"**Dotplot**\n\n", 
 	"WRITE THIS TEXT >>>>.\n\n"
 )
-cat(length(DEgenesHunter:::get_categories(enrichments_ORA$REACT)))
+cat(length(get_categories(enrichments_ORA$REACT)))
 
 pp <- enrichplot::dotplot(enrichments_ORA$REACT, showCategory=n_category)  
-pp <- DEgenesHunter:::set_standard_size(pp)
-DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$REACT), DEgenesHunter:::calc_width(enrichments_ORA$REACT))
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$REACT), calc_width(enrichments_ORA$REACT))
 
 
 cat(
@@ -236,22 +250,22 @@ cat(
 	"WRITE THIS TEXT >>>>.\n\n"
 )
 
-pp <- DEgenesHunter:::clusters_heatplot(enrichments_ORA$REACT@compareClusterResult)  
-pp <- DEgenesHunter:::set_standard_size(pp)
-DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$REACT), DEgenesHunter:::calc_width(enrichments_ORA$REACT))
+pp <- clusters_heatplot(enrichments_ORA$REACT@compareClusterResult)  
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$REACT), calc_width(enrichments_ORA$REACT))
 
 cat('\n\n**Enrich Map plot**\n\n', 
 	'WRITE THIS TEXT >>>>.\n\n'
 )
 pp <- enrichplot::emapplot(enrichments_ORA$REACT, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
-DEgenesHunter:::plot_in_div(pp, fig_width = DEgenesHunter:::calc_width(enrichments_ORA$REACT))
+plot_in_div(pp, fig_width = calc_width(enrichments_ORA$REACT))
 # cat(
 # 	"**CNetplot**\n\n", 
 # 	"WRITE THIS TEXT >>>>.\n\n"
 # )
 
 # pp <- cnetplot(enrichments_ORA$REACT, showCategory = n_category)
-# DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$REACT), DEgenesHunter:::calc_width(enrichments_ORA$REACT))
+# plot_in_div(pp, calc_height(enrichments_ORA$REACT), calc_width(enrichments_ORA$REACT))
 
 ```
 
@@ -267,18 +281,18 @@ cat("## **Gene Ontology (GO) analysis**\n")
 cat("### **[BP] Over Representation Analysis**\n",
 	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
 
-DEgenesHunter:::plot_enrResult_DT(enrichments_ORA$GO_BP)
+plot_enrResult_DT(enrichments_ORA$GO_BP)
 
 
 cat(
 	"**Dotplot**\n\n", 
 	"WRITE THIS TEXT >>>>.\n\n"
 )
-cat(length(unique(DEgenesHunter:::get_categories(enrichments_ORA$GO_BP, showCategory = n_category))))
+cat(length(unique(get_categories(enrichments_ORA$GO_BP, showCategory = n_category))))
 
 pp <- enrichplot::dotplot(enrichments_ORA$GO_BP, showCategory=n_category)  
-pp <- DEgenesHunter:::set_standard_size(pp)
-DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$GO_BP, showCategory=n_category), DEgenesHunter:::calc_width(enrichments_ORA$GO_BP))
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_BP, showCategory=n_category), calc_width(enrichments_ORA$GO_BP))
 
 
 cat(
@@ -286,22 +300,22 @@ cat(
 	"WRITE THIS TEXT >>>>.\n\n"
 )
 
-pp <- DEgenesHunter:::clusters_heatplot(enrichments_ORA$REACT@compareClusterResult) 
-pp <- DEgenesHunter:::set_standard_size(pp)
-DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$GO_BP), DEgenesHunter:::calc_width(enrichments_ORA$GO_BP))
+pp <- clusters_heatplot(enrichments_ORA$REACT@compareClusterResult) 
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_BP), calc_width(enrichments_ORA$GO_BP))
 
 cat('\n\n**Enrich Map plot**\n\n', 
 	'WRITE THIS TEXT >>>>.\n\n'
 )
 pp <- enrichplot::emapplot(enrichments_ORA$GO_BP, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
-DEgenesHunter:::plot_in_div(pp, fig_width = DEgenesHunter:::calc_width(enrichments_ORA$GO_BP))
+plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_BP))
 # cat(
 # 	"**CNetplot**\n\n", 
 # 	"WRITE THIS TEXT >>>>.\n\n"
 # )
 
 # pp <- cnetplot(enrichments_ORA$GO_BP, showCategory = n_category)
-# DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$GO_BP), DEgenesHunter:::calc_width(enrichments_ORA$GO_BP))
+# plot_in_div(pp, calc_height(enrichments_ORA$GO_BP), calc_width(enrichments_ORA$GO_BP))
 
 
 ```
@@ -311,7 +325,7 @@ DEgenesHunter:::plot_in_div(pp, fig_width = DEgenesHunter:::calc_width(enrichmen
 cat("### **[MF] Over Representation Analysis**\n",
 	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
 
-DEgenesHunter:::plot_enrResult_DT(enrichments_ORA$GO_MF)
+plot_enrResult_DT(enrichments_ORA$GO_MF)
 
 
 cat(
@@ -319,29 +333,29 @@ cat(
 	"WRITE THIS TEXT >>>>.\n\n"
 )
 pp <- enrichplot::dotplot(enrichments_ORA$GO_MF, showCategory=n_category)  
-pp <- DEgenesHunter:::set_standard_size(pp)
-DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$GO_MF), DEgenesHunter:::calc_width(enrichments_ORA$GO_MF))
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_MF), calc_width(enrichments_ORA$GO_MF))
 
 cat(
 	"**Heatmap**\n\n", 
 	"WRITE THIS TEXT >>>>.\n\n"
 )
 
-pp <- DEgenesHunter:::clusters_heatplot(enrichments_ORA$GO_MF@compareClusterResult) 
-pp <- DEgenesHunter:::set_standard_size(pp)
-DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$GO_MF), DEgenesHunter:::calc_width(enrichments_ORA$GO_MF))
+pp <- clusters_heatplot(enrichments_ORA$GO_MF@compareClusterResult) 
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_MF), calc_width(enrichments_ORA$GO_MF))
 
 cat('\n\n**Enrich Map plot**\n\n', 
 	'WRITE THIS TEXT >>>>.\n\n'
 )
 pp <- enrichplot::emapplot(enrichments_ORA$GO_MF, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
-DEgenesHunter:::plot_in_div(pp, fig_width = DEgenesHunter:::calc_width(enrichments_ORA$GO_MF))
+plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_MF))
 # cat(
 # 	"**CNetplot**\n\n", 
 # 	"WRITE THIS TEXT >>>>.\n\n"
 # )
 # pp <- cnetplot(enrichments_ORA$GO_MF, showCategory = n_category)
-# DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$GO_MF), DEgenesHunter:::calc_width(enrichments_ORA$GO_MF))
+# plot_in_div(pp, calc_height(enrichments_ORA$GO_MF), calc_width(enrichments_ORA$GO_MF))
 
 ```
 
@@ -350,7 +364,7 @@ DEgenesHunter:::plot_in_div(pp, fig_width = DEgenesHunter:::calc_width(enrichmen
 cat("### **[CC] Over Representation Analysis**\n",
 	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
 
-DEgenesHunter:::plot_enrResult_DT(enrichments_ORA$GO_CC)
+plot_enrResult_DT(enrichments_ORA$GO_CC)
 
 
 cat(
@@ -359,8 +373,8 @@ cat(
 )
 
 pp <- enrichplot::dotplot(enrichments_ORA$GO_CC, showCategory=n_category)  
-pp <- DEgenesHunter:::set_standard_size(pp)
-DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$GO_CC), DEgenesHunter:::calc_width(enrichments_ORA$GO_CC))
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_CC), calc_width(enrichments_ORA$GO_CC))
 
 
 cat(
@@ -368,16 +382,16 @@ cat(
 	"WRITE THIS TEXT >>>>.\n\n"
 )
 
-pp <- DEgenesHunter:::clusters_heatplot(enrichments_ORA$GO_CC@compareClusterResult) 
-pp <- DEgenesHunter:::set_standard_size(pp)
-DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$GO_CC), DEgenesHunter:::calc_width(enrichments_ORA$GO_CC))
+pp <- clusters_heatplot(enrichments_ORA$GO_CC@compareClusterResult) 
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrichments_ORA$GO_CC), calc_width(enrichments_ORA$GO_CC))
 
 
 cat('\n\n**Enrich Map plot**\n\n', 
 	'WRITE THIS TEXT >>>>.\n\n'
 )
 pp <- enrichplot::emapplot(enrichments_ORA$GO_CC, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
-DEgenesHunter:::plot_in_div(pp, fig_width = DEgenesHunter:::calc_width(enrichments_ORA$GO_CC))
+plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_CC))
 
 # cat(
 # 	"**CNetplot**\n\n", 
@@ -385,7 +399,7 @@ DEgenesHunter:::plot_in_div(pp, fig_width = DEgenesHunter:::calc_width(enrichmen
 # )
 
 # pp <- cnetplot(enrichments_ORA$GO_CC, showCategory = n_category)
-# DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(enrichments_ORA$GO_CC), DEgenesHunter:::calc_width(enrichments_ORA$GO_CC))
+# plot_in_div(pp, calc_height(enrichments_ORA$GO_CC), calc_width(enrichments_ORA$GO_CC))
 
 ```
 
@@ -414,31 +428,31 @@ invisible(lapply(seq_along(custom_cls_ORA),function(i){
 				cat('### **{{cname}} -  Over Representation Analysis**\n',
 				'The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n')
 				
-				DEgenesHunter:::plot_enrResult_DT(res)
+				plot_enrResult_DT(res)
 
 				cat(
 					'**Dotplot**\n\n', 
 					'WRITE THIS TEXT >>>>.\n\n'
 				)
 				pp <- enrichplot::dotplot(res, showCategory=n_category)   
-				pp <- DEgenesHunter:::set_standard_size(pp)
-				DEgenesHunter:::plot_in_div( pp, DEgenesHunter:::calc_height(res), DEgenesHunter:::calc_width(res))
+				pp <- set_standard_size(pp)
+				plot_in_div( pp, calc_height(res), calc_width(res))
 
 				cat(
 					'**Heatmap**\n\n', 
 					'WRITE THIS TEXT >>>>.\n\n'
 				)
 
-				pp <- DEgenesHunter:::clusters_heatplot(res@compareClusterResult) 
-				pp <- DEgenesHunter:::set_standard_size(pp)
-				DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(res), DEgenesHunter:::calc_width(res))
+				pp <- clusters_heatplot(res@compareClusterResult) 
+				pp <- set_standard_size(pp)
+				plot_in_div(pp, calc_height(res), calc_width(res))
 
 				cat('\n\n**Enrich Map plot**\n\n', 
 					'The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 					The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n'
 				)
 				pp <- enrichplot::emapplot(res, showCategory=n_category,pie='count', pie_scale=1.5, layout='kk')
-				DEgenesHunter:::plot_in_div(pp, fig_width = DEgenesHunter:::calc_width(res))
+				plot_in_div(pp, fig_width = calc_width(res))
 		"
 
 	}
@@ -448,7 +462,7 @@ invisible(lapply(seq_along(custom_cls_ORA),function(i){
 				# )
 
 				# pp <- cnetplot(res, showCategory = n_category)
-				# DEgenesHunter:::plot_in_div(pp, DEgenesHunter:::calc_height(res), DEgenesHunter:::calc_width(res))
+				# plot_in_div(pp, calc_height(res), calc_width(res))
 	out_custom <<- c(out_custom,paste(knitr::knit_expand(text = paste(header,
 										 					chunks(body, options = "echo = FALSE,results='asis'"),
 										 					"\n",sep = "\n")),

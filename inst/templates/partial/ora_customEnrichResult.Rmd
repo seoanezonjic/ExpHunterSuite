@@ -25,6 +25,16 @@ render <- function(text){paste(knitr::knit(text = paste(text,collapse = "\n")),c
 # Prepare all HPO reports container
 out <- NULL
 
+# Load necessary functions
+if("DEgenesHunter" %in% (.packages())){ # Package mode, load private functions
+	get_categories <- DEgenesHunter:::get_categories
+	set_default_width <- DEgenesHunter:::set_default_width
+	plot_in_div <- DEgenesHunter:::plot_in_div
+	calc_width <- DEgenesHunter:::calc_width
+	calc_height <- DEgenesHunter:::calc_height
+	get_genes <- DEgenesHunter:::get_genes
+}
+
 ```
 
 
@@ -32,8 +42,8 @@ out <- NULL
 ```{r "{{cl}}_{{cat}}_oraEnrich", results='asis', echo = FALSE, message=FALSE, warning=FALSE}
 
 n_category <- 30
-default_width <- DEgenesHunter:::set_default_width(enrich_obj = custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
-if(length(DEgenesHunter:::get_categories(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2){ # Needs, at least, two categories
+default_width <- set_default_width(enrich_obj = custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
+if(length(get_categories(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2){ # Needs, at least, two categories
 	# Main label
 	fname <- basename("{{cat}}") 
 	cat(paste0("### **",fname," - Over Representation Analysis**\n"),
@@ -45,7 +55,7 @@ if(length(DEgenesHunter:::get_categories(custom_cls_ORA_expanded[["{{cat}}"]][["
 		The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
 	)
 	pp <- graphics::barplot(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
-	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
+	plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -55,7 +65,7 @@ if(length(DEgenesHunter:::get_categories(custom_cls_ORA_expanded[["{{cat}}"]][["
 		The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
 	)
 	pp <- enrichplot::dotplot(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
-	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
+	plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -65,10 +75,10 @@ if(length(DEgenesHunter:::get_categories(custom_cls_ORA_expanded[["{{cat}}"]][["
 	)
 	enrichments_ORA_symb <- DOSE::setReadable(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]], OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 	
-	if(length(DEgenesHunter::get_genes(enrichments_ORA_symb)) <= 150){
+	if(length(get_genes(enrichments_ORA_symb)) <= 150){
 		pp <- enrichplot::cnetplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList) +
 			  ggplot2::scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
-		DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
+		plot_in_div(pp, fig_width = default_width)
 	}else{
 		cat("\n\nCnetplot is not readable because more than 150 genes has been enriched in this nomenclature, so is not printed\n\n")
 	}
@@ -79,7 +89,7 @@ if(length(DEgenesHunter:::get_categories(custom_cls_ORA_expanded[["{{cat}}"]][["
 		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 	)
 	pp <- enrichplot::emapplot(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]], showCategory=n_category)
-	DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
+	plot_in_div(pp, fig_width = default_width)
 
 
 
@@ -88,16 +98,16 @@ if(length(DEgenesHunter:::get_categories(custom_cls_ORA_expanded[["{{cat}}"]][["
 	)
 
 	pp <- enrichplot::heatplot(enrichments_ORA_symb, showCategory=n_category, foldChange=geneList)
-	width_size <- DEgenesHunter:::calc_width(enrichments_ORA_symb)
-	height_size <- DEgenesHunter:::calc_height(enrichments_ORA_symb) 
-	DEgenesHunter:::plot_in_div(pp, height_size, width_size)
+	width_size <- calc_width(enrichments_ORA_symb)
+	height_size <- calc_height(enrichments_ORA_symb) 
+	plot_in_div(pp, height_size, width_size)
 
 	cat("\n\n**Upsetplot**\n\n", 
 		"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 	)
-	if(length(DEgenesHunter:::get_categories(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2){ # Needs, at least, two categories
+	if(length(get_categories(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]]))>=2){ # Needs, at least, two categories
 		pp <- enrichplot::upsetplot(custom_cls_ORA_expanded[["{{cat}}"]][["{{cl}}"]], n=n_category)
-		DEgenesHunter:::plot_in_div(pp, fig_width = default_width)
+		plot_in_div(pp, fig_width = default_width)
 	}else{
 		cat('\n\nGenes has been enriched in less than 2 categories, so Upsetplot cannot be printed\n\n')
 	}

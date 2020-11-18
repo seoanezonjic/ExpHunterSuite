@@ -54,7 +54,7 @@ write_functional_report <- function(hunter_results,
                                     cores = 1, 
                                     report = "fc"){
     if(is.null(organisms_table)){
-        organisms_table <- DEgenesHunter::get_organism_table()
+        organisms_table <- get_organism_table()
     }
     model_organism <- func_results$final_main_params$model_organism
     # TODO: update names into Rmd files instead this
@@ -68,7 +68,7 @@ write_functional_report <- function(hunter_results,
     sample_classes <- apply(experiments, 1, function(x) paste0("* [", x[1], "] ", x[2]))
     # -
     norm_counts <- hunter_results[["all_data_normalized"]][["DESeq2"]]
-    scaled_counts <- DEgenesHunter:::scale_data_matrix(data_matrix = norm_counts, transpose = TRUE)
+    scaled_counts <- scale_data_matrix(data_matrix = norm_counts, transpose = TRUE)
     scaled_counts_table <- as.data.frame(as.table(scaled_counts))
     colnames(scaled_counts_table) <- c("Gene","Sample","Count")
     # -
@@ -83,7 +83,7 @@ write_functional_report <- function(hunter_results,
         wgcna_pval_cl_trait <- as.matrix(hunter_results$WGCNA_all$package_objects$module_trait_cor_p)
         wgcna_corr_cl_trait <- as.matrix(hunter_results$WGCNA_all$package_objects$module_trait_cor)
         wgcna_count_sample_trait <- as.matrix(hunter_results$WGCNA_all$plot_objects$trait_and_module[,!grepl("^ME",colnames(hunter_results$WGCNA_all$plot_objects$trait_and_module))])
-        wgcna_count_sample_trait <- DEgenesHunter:::scale_data_matrix(wgcna_count_sample_trait)        
+        wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait)        
     }
     #-
     if(any(grepl("WGCNA_ORA",names(func_results)))){
