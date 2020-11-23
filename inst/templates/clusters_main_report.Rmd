@@ -72,6 +72,9 @@ if("DEgenesHunter" %in% (.packages())){ # Package mode, load private functions
 }
 
 
+has_enrr <- function(enrich){nrow(enrich) > 0}
+
+
 # q
 # plot_enrResult_DT <- function(ER){
 # 	toshow <- ggplot2::fortify(ER)[,!colnames(ER@compareClusterResult) %in% c("pvalue","qvalue")]
@@ -203,11 +206,17 @@ pp <- clusters_heatplot(enrichments_ORA$KEGG@compareClusterResult)
 pp <- set_standard_size(pp)
 plot_in_div(pp, calc_height(enrichments_ORA$KEGG),calc_width(enrichments_ORA$KEGG))
 
-cat('\n\n**Enrich Map plot**\n\n', 
-	'WRITE THIS TEXT >>>>.\n\n'
-)
-pp <- enrichplot::emapplot(enrichments_ORA$KEGG, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
-plot_in_div(pp, fig_width = calc_width(enrichments_ORA$KEGG))
+if(has_enrr(enrichments_ORA$KEGG)){
+	cat('\n\n**Enrich Map plot**\n\n',
+		'The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
+						The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n'
+	)
+	pp <- enrichplot::emapplot(enrichments_ORA$KEGG, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
+	plot_in_div(pp, fig_width = calc_width(enrichments_ORA$KEGG))
+}else{
+	cat('\n\n**Enrich Map plot**\n\n', 
+		'There is no relevant enrichment results to plot.\n\n')
+}
 # cat(
 # 	"**CNetplot**\n\n", 
 # 	"WRITE THIS TEXT >>>>.\n\n"
@@ -254,11 +263,17 @@ pp <- clusters_heatplot(enrichments_ORA$REACT@compareClusterResult)
 pp <- set_standard_size(pp)
 plot_in_div(pp, calc_height(enrichments_ORA$REACT), calc_width(enrichments_ORA$REACT))
 
-cat('\n\n**Enrich Map plot**\n\n', 
-	'WRITE THIS TEXT >>>>.\n\n'
-)
-pp <- enrichplot::emapplot(enrichments_ORA$REACT, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
-plot_in_div(pp, fig_width = calc_width(enrichments_ORA$REACT))
+if(has_enrr(enrichments_ORA$REACT)){
+	cat('\n\n**Enrich Map plot**\n\n',
+		'The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
+						The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n'
+	)
+	pp <- enrichplot::emapplot(enrichments_ORA$REACT, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
+	plot_in_div(pp, fig_width = calc_width(enrichments_ORA$REACT))
+}else{
+	cat('\n\n**Enrich Map plot**\n\n', 
+		'There is no relevant enrichment results to plot.\n\n')
+}
 # cat(
 # 	"**CNetplot**\n\n", 
 # 	"WRITE THIS TEXT >>>>.\n\n"
@@ -304,11 +319,18 @@ pp <- clusters_heatplot(enrichments_ORA$REACT@compareClusterResult)
 pp <- set_standard_size(pp)
 plot_in_div(pp, calc_height(enrichments_ORA$GO_BP), calc_width(enrichments_ORA$GO_BP))
 
-cat('\n\n**Enrich Map plot**\n\n', 
-	'WRITE THIS TEXT >>>>.\n\n'
-)
-pp <- enrichplot::emapplot(enrichments_ORA$GO_BP, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
-plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_BP))
+
+if(has_enrr(enrichments_ORA$GO_BP)){
+	cat('\n\n**Enrich Map plot**\n\n',
+		'The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
+		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n'
+	)
+	pp <- enrichplot::emapplot(enrichments_ORA$GO_BP, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
+	plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_BP))
+}else{
+	cat('\n\n**Enrich Map plot**\n\n', 
+		'There is no relevant enrichment results to plot.\n\n')
+}
 # cat(
 # 	"**CNetplot**\n\n", 
 # 	"WRITE THIS TEXT >>>>.\n\n"
@@ -345,11 +367,17 @@ pp <- clusters_heatplot(enrichments_ORA$GO_MF@compareClusterResult)
 pp <- set_standard_size(pp)
 plot_in_div(pp, calc_height(enrichments_ORA$GO_MF), calc_width(enrichments_ORA$GO_MF))
 
-cat('\n\n**Enrich Map plot**\n\n', 
-	'WRITE THIS TEXT >>>>.\n\n'
-)
-pp <- enrichplot::emapplot(enrichments_ORA$GO_MF, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
-plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_MF))
+if(has_enrr(enrichments_ORA$GO_MF)){
+	cat('\n\n**Enrich Map plot**\n\n',
+		'The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
+		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n'
+	)
+	pp <- enrichplot::emapplot(enrichments_ORA$GO_MF, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
+	plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_MF))
+}else{
+	cat('\n\n**Enrich Map plot**\n\n', 
+		'There is no relevant enrichment results to plot.\n\n')
+}
 # cat(
 # 	"**CNetplot**\n\n", 
 # 	"WRITE THIS TEXT >>>>.\n\n"
@@ -387,11 +415,17 @@ pp <- set_standard_size(pp)
 plot_in_div(pp, calc_height(enrichments_ORA$GO_CC), calc_width(enrichments_ORA$GO_CC))
 
 
-cat('\n\n**Enrich Map plot**\n\n', 
-	'WRITE THIS TEXT >>>>.\n\n'
-)
-pp <- enrichplot::emapplot(enrichments_ORA$GO_CC, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
-plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_CC))
+if(has_enrr(enrichments_ORA$GO_CC)){
+	cat('\n\n**Enrich Map plot**\n\n',
+		'The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
+		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n'
+	)
+	pp <- enrichplot::emapplot(enrichments_ORA$GO_CC, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
+	plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_CC))
+}else{
+	cat('\n\n**Enrich Map plot**\n\n', 
+		'There is no relevant enrichment results to plot.\n\n')
+}
 
 # cat(
 # 	"**CNetplot**\n\n", 
@@ -447,12 +481,17 @@ invisible(lapply(seq_along(custom_cls_ORA),function(i){
 				pp <- set_standard_size(pp)
 				plot_in_div(pp, calc_height(res), calc_width(res))
 
-				cat('\n\n**Enrich Map plot**\n\n', 
-					'The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
-					The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n'
-				)
-				pp <- enrichplot::emapplot(res, showCategory=n_category,pie='count', pie_scale=1.5, layout='kk')
-				plot_in_div(pp, fig_width = calc_width(res))
+				if(has_enrr(res)){
+					cat('\n\n**Enrich Map plot**\n\n', 
+						'The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
+						The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n'
+					)
+					pp <- enrichplot::emapplot(res, showCategory=n_category,pie='count', pie_scale=1.5, layout='kk')
+					plot_in_div(pp, fig_width = calc_width(res))
+				}else{
+					cat('\n\n**Enrich Map plot**\n\n', 
+						'There is no relevant enrichment results to plot.\n\n')
+				}
 		"
 
 	}

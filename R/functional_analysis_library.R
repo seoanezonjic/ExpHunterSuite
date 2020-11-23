@@ -483,7 +483,7 @@ perform_topGO <- function(attr_name, interesting_genenames, DEG_annot_table, ont
 #' @param ENRICH_DATA 
 #' @keywords
 #' @return enrichment performed
-enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff = 0.2,ENRICH_DATA = NULL){
+enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff = 0.2,ENRICH_DATA = NULL, semsim = TRUE){
   # @import clusterProfiler KEGG.db ReactomePA
   # Check
   if(is.numeric(ont)){
@@ -554,6 +554,8 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
   } else{
     stop("Error, ontology specified is not supported to be enriched")
   }
+
+  if(nrow(as.data.frame(enrichment)) > 0 && semsim) enrichment <- enrichplot::pairwise_termsim(enrichment)
 
   # Return enrichment
   return(enrichment)
@@ -740,7 +742,8 @@ enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCuto
                           ont           = src_ont,
                           useInternal   = useInternal, 
                           qvalueCutoff  = qvalueCutoff,
-                          ENRICH_DATA   = ENRICH_DATA)
+                          ENRICH_DATA   = ENRICH_DATA,
+                          semsim = FALSE)
     # Return
     return(enr)
   }, mc.cores = mc.cores, mc.preschedule = mc.preschedule)

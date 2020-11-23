@@ -563,6 +563,10 @@ functional_hunter <- function(
 	if (flags$WGCNA) {
 		if (flags$ORA) {
 			enrichments_ORA <- lapply(enrichments_ORA_expanded, clusterProfiler::merge_result)
+			enrichments_ORA <- lapply(enrichments_ORA, function(res){
+				if(nrow(res) > 0) res <- enrichplot::pairwise_termsim(res)
+				return(res)
+			})
 			func_results$WGCNA_ORA <- enrichments_ORA
 			func_results$WGCNA_ORA_expanded <- enrichments_ORA_expanded
 		}
@@ -575,6 +579,7 @@ functional_hunter <- function(
 
 		if (!is.null(custom)){
 			custom_cls_ORA <- lapply(custom_cls_ORA_expanded, clusterProfiler::merge_result)
+			if(nrow(as.data.frame(enrichments_CUSTOM)) > 0) enrichments_CUSTOM <- enrichplot::pairwise_termsim(enrichments_CUSTOM)
 			func_results$WGCNA_CUSTOM <- enrichments_CUSTOM
 			func_results$WGCNA_CUSTOM_expanded <-custom_cls_ORA_expanded
 		}
