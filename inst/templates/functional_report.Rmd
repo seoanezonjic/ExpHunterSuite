@@ -703,6 +703,11 @@ for (onto in names(go_main_enrich)) {
 	}
 }
 # }
+```
+
+```{r plot_go_cl_ora, results='asis', echo = FALSE, eval = FALSE, message=FALSE, warning=FALSE}
+# TODO : all is not being genrated now
+#{r plot_go_cl_ora, results='asis', echo = FALSE, eval = go_flags$GO_CL_SECTION, message=FALSE, warning=FALSE}
 
 if(go_flags$enrich_go){
 	# message("PLOTS SETS ALL UNIFIED")
@@ -779,6 +784,12 @@ if(go_flags$enrich_go){
 	}
 	cat("\n \n")
 }
+
+```
+
+```{r plot_go_cl_gsea, results='asis', echo = FALSE, eval = FALSE, message=FALSE, warning=FALSE}
+# TODO : all is not being genrated now
+# {r plot_go_cl_gsea, results='asis', echo = FALSE, eval = go_flags$GO_CL_SECTION, message=FALSE, warning=FALSE}
 
 if(go_flags$enrich_go_gsea){
 	# message("PLOTS SETS ALL UNIFIED")
