@@ -469,6 +469,35 @@ perform_topGO <- function(attr_name, interesting_genenames, DEG_annot_table, ont
 ######################### FUNCTIONAL ANALYSIS WITH KEGGREST ##################3
 
 
+#' Catched errors fo pairwise_termsim for special cases
+#' @param enr enrichment object to be studied
+#' @return enrichment object after add termsim info
+catched_pairwise_termsim <- function(enr){
+  endedWithoutERRs <- FALSE
+  initial_num_cats <- 200
+  num_cats <- initial_num_cats
+  res <- enr
+  while(!endedWithoutERRs){
+    tryCatch(
+      # MAIN
+      {
+        res <- enrichplot::pairwise_termsim(enr, showCategory = num_cats)
+        endedWithoutERRs <- TRUE
+      },
+      # CATCH
+      error = function(cond){
+        num_cats <<- num_cats - 20
+        if(num_cats <= 0){
+          stop(cond)
+        }
+      }
+    )
+  }
+  if(num_cats < initial_num_cats) warning(paste0("Finally number of categories used has been (",num_cats,") for pairwise_termsim"))
+  return(res)
+}
+
+
 
 
 #'
@@ -555,7 +584,9 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
     stop("Error, ontology specified is not supported to be enriched")
   }
 
-  if(nrow(as.data.frame(enrichment)) > 0 && semsim) enrichment <- enrichplot::pairwise_termsim(enrichment)
+  if(!is.null(enrichment)){
+    if(nrow(enrichment) > 0 && semsim) enrichment <- catched_pairwise_termsim(enrichment)
+  }
 
   # Return enrichment
   return(enrichment)
@@ -743,7 +774,7 @@ enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCuto
                           useInternal   = useInternal, 
                           qvalueCutoff  = qvalueCutoff,
                           ENRICH_DATA   = ENRICH_DATA,
-                          semsim = FALSE)
+                          semsim = TRUE)
     # Return
     return(enr)
   }, mc.cores = mc.cores, mc.preschedule = mc.preschedule)
