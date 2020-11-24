@@ -127,6 +127,7 @@ if(opt$List_organisms){
 							output_files = opt$output_files,
 							organisms_table = organisms_table,
 							template_folder = template_folder,
-							cores =  opt$cores)
+							cores =  opt$cores,
+							report = "fc")
 
 }
