@@ -542,19 +542,20 @@ functional_hunter <- function(
 		### CUSTOM ENRICHMENTS
 		custom_enrichments <- enrich_all_customs(custom_sets = custom, 
 												 p_val_threshold = pthreshold, 
-												 likely_degs_entrez = likely_degs_entrez,
-												 write = FALSE)
+												 genes = likely_degs_entrez)
 		func_results$CUSTOM <- custom_enrichments
 		if (flags$WGCNA){
 			custom_cls_ORA_expanded <- lapply(custom, function(gmt){
-				enrich_clusters_with_gmt(gmt, clgenes, pthreshold, cores)
+				enrich_clusters_with_gmt(custom_set = gmt, 
+										genes_in_modules = clgenes, 
+										p_val_threshold = pthreshold, 
+										cores = cores)
 			})
 		}
 		message("CUSTOM enrichments finished")
 	} else {
 		custom_enrichments <- NULL
 	}
-
 
 	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 	##                                                                                                                   ##
@@ -580,8 +581,11 @@ functional_hunter <- function(
 
 		if (!is.null(custom)){
 			custom_cls_ORA <- lapply(custom_cls_ORA_expanded, clusterProfiler::merge_result)
-			if(nrow(as.data.frame(enrichments_CUSTOM)) > 0) enrichments_CUSTOM <- catched_pairwise_termsim(enrichments_CUSTOM)
-			func_results$WGCNA_CUSTOM <- enrichments_CUSTOM
+			custom_cls_ORA <- lapply(custom_cls_ORA, function(res){
+				if(nrow(res) > 0) res <- catched_pairwise_termsim(res)
+				return(res)
+			})
+			func_results$WGCNA_CUSTOM <- custom_cls_ORA
 			func_results$WGCNA_CUSTOM_expanded <-custom_cls_ORA_expanded
 		}
 	}

@@ -201,12 +201,15 @@ if (!is.null(opt$custom)) {
 		custom_files <- unlist(strsplit(opt$custom,","))
 
 		enrich_custom <- enrich_all_customs(custom_files = custom_files, 
-												p_val_threshold = opt$pthreshold, 
-												likely_degs_entrez = enrich_genes)
+											p_val_threshold = opt$pthreshold, 
+											genes = enrich_genes)
 	}
 	if (launch_expanded) {
 		custom_cls_ORA_expanded <- lapply(custom_files, function(gmt){ # custom_cls_ORA_expanded name is given for make compatible ora_customEnrichResult.Rmd 
-			enrich_clusters_with_gmt(gmt, expanded_targets)
+			custom_set <- load_and_parse_gmt(gmt)
+			enrich_clusters_with_gmt(custom_set = custom_set, 
+									genes_in_modules = expanded_targets, 
+									p_val_threshold = opt$pthreshold)
 		})
 		custom_targets_ORA <- lapply(custom_cls_ORA_expanded, merge_result)
 

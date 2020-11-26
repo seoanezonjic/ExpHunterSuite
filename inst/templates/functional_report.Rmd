@@ -298,8 +298,8 @@ if(!is.null(custom_enrichments)){
 	custom_flags <- list()
 
 	# Check all variables
-	invisible(lapply(custom_enrichments,function(var){
-		custom_flags[var$File] <<- check_results(var$Result)
+	invisible(lapply(seq_along(custom_enrichments),function(i){
+		custom_flags[names(custom_enrichments)[i]] <<- check_results(custom_enrichments[[i]])
 	}))
 
 	custom_flags$CUSTOM_SECTION <- any(unlist(custom_flags))
@@ -1082,18 +1082,18 @@ out_custom <- ""
 out_custom <- NULL
 invisible(lapply(seq_along(custom_enrichments),function(i){
 	res <- custom_enrichments[[i]]
-	if(!custom_flags[[res$File]]){
-		header <- paste("## **",basename(res$File),"** \n\nThis CUSTOM study has been executed but **has not returned any result**\n", sep="")
+	if(!custom_flags[[names(custom_enrichments)[i]]]){
+		header <- paste("## **",basename(names(custom_enrichments)[i]),"** \n\nThis CUSTOM study has been executed but **has not returned any result**\n", sep="")
 		body <- ""
 	}else{
 		header <- ""
 
 		# Prepare ORA plots
-		body <- "enr_custom <- custom_enrichments[[{{i}}]]$Result
+		body <- "enr_custom <- custom_enrichments[[{{i}}]]
 				default_width <- set_default_width(enrich_obj = enr_custom, showCategory=n_category)
 				
 				# Header
-				cat(paste('\n## **',basename(custom_enrichments[[{{i}}]]$File),'**\n',sep=''))
+				cat(paste('\n## **',basename(names(custom_enrichments)[{{i}}]),'**\n',sep=''))
 
 				# Main label 
 				cat('\n### **Over Representation Analysis**\n',

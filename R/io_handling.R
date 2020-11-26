@@ -184,8 +184,8 @@ write_enrich_files <- function(func_results, output_files=getwd()){
 	if("REACT_GSEA" %in% names(func_results)) write.table(func_results$REACT_GSEA, file=file.path(output_files, "REACT_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 	if("DEGH_results_annot" %in% names(func_results)) write.table(func_results$DEGH_results_annot, file=file.path(output_files, "hunter_results_table_annotated.txt"), quote=FALSE, col.names=NA, sep="\t")
 	if("CUSTOM" %in% names(func_results)){
-		invisible(lapply(func_results$CUSTOM,function(res){
-			write.table(res$Result, file=file.path(output_files, paste0(basename(res$File),"_ora_results")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		invisible(lapply(seq_along(func_results$CUSTOM),function(i){
+			write.table(func_results$CUSTOM[[i]], file=file.path(output_files, paste0(basename(names(func_results$CUSTOM)[i]),"_results")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}))
 	}
 	if("WGCNA_ORA" %in% names(func_results)){
@@ -201,9 +201,9 @@ write_enrich_files <- function(func_results, output_files=getwd()){
 		}
 	}
 	if("WGCNA_CUSTOM" %in% names(func_results)){
-		for(enrichment_i in 1:length(func_results$WGCNA_CUSTOM)) {
-			df <- enrichplot:::fortify.compareClusterResult(func_results$WGCNA_CUSTOM[[enrichment_i]])
-			write.table(df, file=file.path(output_files, paste0(basename(names(func_results$WGCNA_CUSTOM[enrichment_i])),"_cls_ORA")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		for(i in 1:length(func_results$WGCNA_CUSTOM)) {
+			df <- enrichplot:::fortify.compareClusterResult(func_results$WGCNA_CUSTOM[[i]])
+			write.table(df, file=file.path(output_files, paste0(basename(names(func_results$WGCNA_CUSTOM)[i]),"_cls_ora")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}
 	}
 }

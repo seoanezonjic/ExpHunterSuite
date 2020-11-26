@@ -218,50 +218,6 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
 
 
 #'
-#' @param custom_sets
-#' @param custom_files
-#' @param p_val_threshold
-#' @param likely_degs_entrez
-#' @param write
-#' @keywords
-#' @return
-enrich_all_customs <- function(custom_sets = NULL, custom_files = NULL, p_val_threshold, likely_degs_entrez, write_res = TRUE){
-  if(is.null(custom_gmt)){
-    custom_set <- custom_sets
-    load_files <- FALSE
-  }else{
-    custom_set <- custom_files
-    names(custom_set) <- custom_files
-    load_files <- TRUE
-  }
-  custom_enrichments <- lapply(custom_set, function(custom_gmt) {
-      # Load info
-      if(load_files){
-        c_terms <- unlist(read.table(file = custom_gmt, sep = "\n", header = FALSE, stringsAsFactors = FALSE))
-      }else{
-        c_terms <- custom_gmt
-      }
-      # Split all
-      c_terms <- as.data.frame(do.call(rbind,lapply(c_terms,function(GeneTerms) {
-        aux <- unlist(strsplit(GeneTerms,"\t"))
-        return(data.frame(Term = rep(aux[1],length(aux)-2),
-                  Gene = tail(aux,-2),
-                  stringsAsFactors = FALSE))
-      })))
-      enr <- clusterProfiler::enricher(likely_degs_entrez, pvalueCutoff = p_val_threshold, TERM2GENE = c_terms)
-      # # Store results
-      # TODO: using external variables which has not been given by parameters? Uh someone has been a bad boy. Please Pepe/Jim be careful with that
-      # TODO: stay until targets_functional script is refactored. then REMOVE WRITE FLAG 
-      if(write_res) write.table(enr, file=file.path(paths$root, paste0(basename(names(custom_gmt)[1]),"_ora_results")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")      
-      # Return
-      return(list(File = names(custom_gmt)[1],
-            Result = enr))
-    })
-  return(custom_enrichments)
-}
-
-
-#'
 #' @param input_ids
 #' @param organism_db
 #' @param org_var_name
@@ -594,26 +550,69 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
 
 
 #'
-#' @param gmt
-#' @param genes_in_modules
-#' @param pthreshold
-#' @param cores
-#' @keywords
+#' @param custom_sets
+#' @param custom_files
+#' @param p_val_threshold
+#' @param genes
+#' @param write_path
 #' @return
-enrich_clusters_with_gmt <- function(gmt, genes_in_modules, pthreshold,cores){
+#' @keywords
+#' @export
+enrich_all_customs <- function(custom_sets = NULL, custom_files = NULL, p_val_threshold, genes, write_path = NULL){
+  if(!is.null(custom_sets)){
+    custom_set <- custom_sets
+    load_files <- FALSE
+  }else{
+    custom_set <- custom_files
+    names(custom_set) <- custom_files
+    load_files <- TRUE
+  }
+  custom_enrichments <- lapply(seq_along(custom_set), function(i) {
+      # Load info
+      if(load_files){
+        custom_gmt <- load_and_parse_gmt(custom_set[i])
+        custom_file <- custom_set[i]
+      }else{
+        custom_gmt <- custom_set[[i]]
+        custom_file <- names(custom_set[i])
+      }
+      enr <- clusterProfiler::enricher(genes, pvalueCutoff = p_val_threshold, TERM2GENE = custom_gmt)
+      if(nrow(enr) > 0) enr <- catched_pairwise_termsim(enr)
+      # # Store results
+      if(!is.null(write_path)) write.table(enr, file=file.path(write_path,paste0(basename(custom_file),"_ora_results")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")      
+      # Return
+      return(enr)
+    })
+  names(custom_enrichments) <- names(custom_set)
+  return(custom_enrichments)
+}
+
+
+#'
+#' @param custom_sets
+#' @param genes_in_modules
+#' @param p_val_threshold
+#' @param cores
+#' @return
+#' @keywords
+#' @export
+enrich_clusters_with_gmt <- function(custom_set, genes_in_modules, p_val_threshold, cores = 1){
       # Enrich
       modules_enrichment <- parallel::mclapply(genes_in_modules, function(genesset) {
-        clusterProfiler::enricher(genesset, pvalueCutoff = pthreshold, TERM2GENE = gmt)
+        enr <- clusterProfiler::enricher(genesset, pvalueCutoff = p_val_threshold, TERM2GENE = custom_set)
+        if(nrow(enr) > 0) enr <- catched_pairwise_termsim(enr)
+        return(enr)
       },mc.cores = cores)
       names(modules_enrichment) <- names(genes_in_modules)
       # Return
       return(modules_enrichment)
 }
 
-#'
-#' @param gmt_file
+
+#' Load a GMT format file and return a dataframe in correct format
+#' @param gmt_file file to be loaded
 #' @keywords
-#' @return
+#' @export
 load_and_parse_gmt <- function(gmt_file) {
     # Load file
     gmt <- readLines(con = gmt_file)
