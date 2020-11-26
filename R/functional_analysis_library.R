@@ -656,6 +656,7 @@ enrich_GSEA <- function(geneList,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
   }
   # Check ontology 
   if(ont == "GO"){
+    require(organism, character.only = TRUE)
     enrichment <- clusterProfiler::gseGO(geneList      = geneList,
                                         OrgDb         = get(organism),
                                         keyType       = keyType,
@@ -785,3 +786,154 @@ enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCuto
 }
 
 
+
+#' Returns correct organism ID to be used
+#' @param organism_info organism table entry
+#' @param ont ontology to be used
+#' @return organism ID to be used
+get_organismID_byOnto <- function(organism_info, ont){
+  if(grepl("GO",ont)){
+    return(organism_info$Bioconductor_DB[1])
+  }else if(grepl("KEGG",ont)){
+    return(organism_info$KeggCode[1])
+  }else if(grepl("REACT",ont)){
+    return(organism_info$Reactome_ID[1])
+  }else{
+    return(NULL)
+  }
+}
+
+
+
+
+#' Perform enrichment of ORA and/or GSEA using a set of genes given
+#' @param genes
+#' @param organism organism table info. Must include entries depending on ontologies selected: Bioconductor_DB (GO), KeggCode (KEGG), Reactome_ID (Reactome)
+#' @param keytype
+#' @param ontology string with ontologIDs to be used. Allowed: Gene Ontology (BP: b ; MF: m ; CC: c), KEGG (k), Reactome (r) 
+#' @param enrichmentType
+#' @param pvalueCutoff
+#' @param pAdjustMethod
+#' @param pvaluecutoff q-value threshold. ONLY USED FOR ORA.
+#' @param useInternal
+#' @param mc.cores for parallel. Only used in case of genes are cluster genes
+#' @param mc.preschedule for parallel. Only used in case of genes are cluster genes
+#' @param verbose activate verbose mode
+#' @return list with enrichments performed
+#' @export
+multienricher <- function(genes,
+                          organism_info,
+                          keytype = "ENTREZID",
+                          ontology = "bkr",
+                          enrichmentType = "o",
+                          pvalueCutoff = 0.01,
+                          pAdjustMethod = "BH",
+                          useInternal = TRUE,
+                          qvalueCutoff = 0.02,
+                          mc.cores = 1,
+                          mc.preschedule = TRUE,
+                          verbose = FALSE){
+  # Initialize
+  func_results <- list()
+  flags <- list()
+  onts <- c()
+
+  # Create flags
+  flags$ORA <- grepl("o", enrichmentType)
+  flags$GSEA <- grepl("g", enrichmentType)
+  flags$clusters <- is.list(genes)
+  if(grepl("b", ontology)) onts <- c(onts,"GO_BP") 
+  if(grepl("m", ontology)) onts <- c(onts,"GO_MF") 
+  if(grepl("c", ontology)) onts <- c(onts,"GO_CC") 
+  if(grepl("k", ontology)) onts <- c(onts,"KEGG") 
+  if(grepl("r", ontology)) onts <- c(onts,"REACT") 
+
+  # Check genes format
+  if(flags$clusters){
+    func_results[["Clusters"]] <- list()
+    if(class(genes[[1]]) == "character"){
+      genes_ora <- genes
+      genes_gsea <- NULL
+    }else{
+      genes_ora <- lapply(genes,names)
+      genes_gsea <- genes
+    }
+  }else if(class(genes) == "character"){ # Vector with genes
+    genes_ora  <- genes
+    genes_gsea <- NULL 
+  }else{ # or named vector with logFC
+    genes_ora  <- unique(names(genes))
+    genes_gsea <- genes 
+  }
+
+  apply_fun <- lapply
+  if(verbose){
+    apply_fun <- pbapply::pblapply
+  }
+
+  ## ORA
+  if(flags$ORA){
+    if(flags$clusters){
+      if(verbose) message(paste0("Performing clusters ORA enrichment for (",length(onts),") ontologies"))
+      func_results[["Clusters"]][["ORA"]] <- apply_fun(onts, function(ont){
+        enrichment_clusters_ORA(genes = genes_ora,
+                                organism = get_organismID_byOnto(organism_info,ont),
+                                keyType = keytype,
+                                pvalueCutoff = pvalueCutoff,
+                                pAdjustMethod = pAdjustMethod,
+                                ont = ont,
+                                useInternal = useInternal,
+                                qvalueCutoff = qvalueCutoff,
+                                mc.cores = mc.cores,
+                                mc.preschedule = mc.preschedule)
+      }) 
+      names(func_results$Clusters$ORA) <- onts
+    }else{
+      if(verbose) message(paste0("Performing ORA enrichment for (",length(onts),") ontologies"))
+      func_results[["ORA"]] <- apply_fun(onts, function(ont){
+        enrichment_ORA(genes = genes_ora,
+                       organism = get_organismID_byOnto(organism_info,ont),
+                       keyType = keytype,
+                       pvalueCutoff = pvalueCutoff,
+                       pAdjustMethod = pAdjustMethod,
+                       ont = ont,
+                       useInternal = useInternal, 
+                       qvalueCutoff = qvalueCutoff)
+      })
+      names(func_results$ORA) <- onts
+    }
+  }
+
+  ## GSEA
+  if(flags$GSEA && !is.null(genes_gsea)){
+    if(flags$clusters){
+      if(verbose) message(paste0("Performing clusters GSEA enrichment for (",length(onts),") ontologies"))
+      func_results[["Clusters"]][["GSEA"]] <- apply_fun(onts, function(ont){
+        perform_GSEA_clusters(all_clusters = genes_gsea, 
+                              organism = get_organismID_byOnto(organism_info,ont), 
+                              keyType = keytype, 
+                              pvalueCutoff = pvalueCutoff, 
+                              pAdjustMethod = pAdjustMethod, 
+                              ont = ont, 
+                              useInternal = useInternal)   
+      })
+    }else{
+      if(verbose) message(paste0("Performing GSEA enrichment for (",length(onts),") ontologies"))
+      func_results[["GSEA"]] <- apply_fun(onts, function(ont){
+        enrich_GSEA(geneList = genes_gsea,
+                    organism = get_organismID_byOnto(organism_info,ont),
+                    keyType = keytype,
+                    pvalueCutoff = pvalueCutoff,
+                    pAdjustMethod = pAdjustMethod,
+                    ont = ont,
+                    useInternal = useInternal)
+      })
+      names(func_results$GSEA) <- onts
+    }
+  }else if(flags$GSEA){
+    warning("Genes are not in GSEA format, GSEA enrichment will not be performed")
+  }
+
+  # End and return
+  return(func_results)
+}

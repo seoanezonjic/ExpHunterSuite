@@ -519,7 +519,7 @@ functional_hunter <- function(
 		### GSEA ENRICHMENTS
 		if (flags$GSEA) {
 			enrich_react_gsea <- enrich_GSEA(geneList = geneList, organism = current_organism_info$Reactome_ID[1], pvalueCutoff = pthreshold, pAdjustMethod = "BH", ont = "REACT")
-			func_results$REACT_GSEA
+			func_results$REACT_GSEA <- enrich_react_gsea
 
 			if (flags$WGCNA) {
 				enrichments_GSEA_expanded[["REACT"]] <- perform_GSEA_clusters(all_clusters = cl_gene_fc,
