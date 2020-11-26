@@ -657,7 +657,7 @@ enrich_GSEA <- function(geneList,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
   # Check ontology 
   if(ont == "GO"){
     enrichment <- clusterProfiler::gseGO(geneList      = geneList,
-                                        OrgDb         = organism,
+                                        OrgDb         = get(organism),
                                         keyType       = keyType,
                                         ont           = go_subonto,
                                         pvalueCutoff  = pvalueCutoff,
@@ -735,8 +735,7 @@ perform_GSEA_clusters <- function(all_clusters, organism, keyType, pvalueCutoff,
 #' @param mc.preschedule 
 #' @keywords
 #' @return enrichment performed
-enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, mc.cores = 1, mc.preschedule
- = TRUE){
+enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, mc.cores = 1, mc.preschedule = TRUE){
   #' @import clusterProfiler KEGG.db ReactomePA parallel
   # Parse onto
   # save(list = ls(all.names = TRUE), file = "test.RData", envir = environment())
@@ -784,3 +783,5 @@ enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCuto
   # Return enrichment
   return(enrichment)
 }
+
+
