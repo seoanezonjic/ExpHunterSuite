@@ -517,7 +517,8 @@ cat("### Module Membership distribution\n"
 	mm_tables_equivalence <- match(mm_dist$Cluster_ID, mm_summary$Cluster_ID)
 	mm_dist <- cbind(mm_dist, mm_summary[mm_tables_equivalence, c("MM_sd", "MM_mean", "gene_count")])
 	mm_dist <- mm_dist[!is.na(mm_dist$Cluster_ID),]		
-	mm_dist$Cluster_ID <- factor(mm_dist$Cluster_ID)	
+	mm_dist$Cluster_ID <- factor(mm_dist$Cluster_ID, levels = as.character(sort(unique(as.numeric(mm_dist$Cluster_ID)))))
+	# mm_dist<- mm_dist[order(as.numeric(mm_dist$Cluster_ID)),]	
 	gg <- ggplot2::ggplot(mm_dist, ggplot2::aes(x = Cluster_ID, group = Cluster_ID, y = Cluster_MM, fill = gene_count)) + 
 			ggplot2::geom_violin(trim = TRUE, scale = "width") + ggplot2::ylim(c(-1.000001, 1.00001)) +
   			ggplot2::geom_boxplot(width=0.05)+  
