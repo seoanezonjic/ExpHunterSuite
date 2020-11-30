@@ -64,7 +64,7 @@ build_design_for_WGCNA <- function(target, string_factors=NULL, numeric_factors=
 
 perform_WGCNA_combinations <- function(WGCNA_all=FALSE, WGCNA_input, index_treatmn_cols, index_control_cols, path, 
 					target_numeric_factors, target_string_factors, WGCNA_memory, WGCNA_deepsplit, WGCNA_detectcutHeight, WGCNA_mergecutHeight, 
-					WGCNA_min_genes_cluster, WGCNA_blockwiseNetworkType, WGCNA_blockwiseTOMType){
+					WGCNA_min_genes_cluster, WGCNA_blockwiseNetworkType, WGCNA_blockwiseTOMType, WGCNA_minCoreKME, WGCNA_minCoreKMESize, WGCNA_minKMEtoStay){
 	  results <- list()
       if(WGCNA_all == TRUE) { #TODO => Este bloque de código es repetitivo. 
         WGCNA_input_treatment <- WGCNA_input[, index_treatmn_cols]
@@ -83,7 +83,10 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE, WGCNA_input, index_treat
                        WGCNA_min_genes_cluster=WGCNA_min_genes_cluster,
                        cor_only=TRUE, 
                        blockwiseNetworkType = WGCNA_blockwiseNetworkType, 
-                       blockwiseTOMType = WGCNA_blockwiseTOMType
+                       blockwiseTOMType = WGCNA_blockwiseTOMType,
+                       WGCNA_minCoreKME = WGCNA_minCoreKME,
+                       WGCNA_minCoreKMESize = WGCNA_minCoreKMESize,
+                       WGCNA_minKMEtoStay = WGCNA_minKMEtoStay
         )
 
         WGCNA_control_path <- file.path(path, "Control_only_data")
@@ -101,7 +104,10 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE, WGCNA_input, index_treat
                        WGCNA_min_genes_cluster=WGCNA_min_genes_cluster,                    
                        cor_only=TRUE, 
                        blockwiseNetworkType = WGCNA_blockwiseNetworkType, 
-                       blockwiseTOMType = WGCNA_blockwiseTOMType
+                       blockwiseTOMType = WGCNA_blockwiseTOMType,
+                       WGCNA_minCoreKME = WGCNA_minCoreKME,
+                       WGCNA_minCoreKMESize = WGCNA_minCoreKMESize,
+                       WGCNA_minKMEtoStay = WGCNA_minKMEtoStay
         )
       }
         # Need to improve the control, probably by removing PCIT
@@ -120,8 +126,11 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE, WGCNA_input, index_treat
                                      WGCNA_min_genes_cluster=WGCNA_min_genes_cluster,
                                      cor_only=FALSE, 
                                      blockwiseNetworkType = WGCNA_blockwiseNetworkType, 
-                                     blockwiseTOMType = WGCNA_blockwiseTOMType
-      )
+                                     blockwiseTOMType = WGCNA_blockwiseTOMType,
+                       				 WGCNA_minCoreKME = WGCNA_minCoreKME,
+                       				 WGCNA_minCoreKMESize = WGCNA_minCoreKMESize,
+                       				 WGCNA_minKMEtoStay = WGCNA_minKMEtoStay
+      )		
       return(results)
 }
 
@@ -130,7 +139,11 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE, WGCNA_input, index_treat
 
 
 
-analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_factors, WGCNA_memory, WGCNA_deepsplit, WGCNA_detectcutHeight, WGCNA_mergecutHeight, WGCNA_min_genes_cluster, cor_only, blockwiseNetworkType, blockwiseTOMType) {
+analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_factors, WGCNA_memory, WGCNA_deepsplit, WGCNA_detectcutHeight, WGCNA_mergecutHeight, WGCNA_min_genes_cluster, cor_only, blockwiseNetworkType, blockwiseTOMType, WGCNA_minCoreKME, WGCNA_minCoreKMESize, WGCNA_minKMEtoStay) {
+
+	if(is.null(WGCNA_minCoreKMESize)){
+		WGCNA_minCoreKMESize <- WGCNA_min_genes_cluster/3
+	} 
 
 	data <- t(data)#[, 1:500]
 	nSamples <- nrow(data)
@@ -218,7 +231,10 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	saveTOMFileBase = file.path(path, tom_file_base), 
 	verbose = 5, 
 	networkType = blockwiseNetworkType,
-	TOMType = blockwiseTOMType)
+	TOMType = blockwiseTOMType,
+	minCoreKME = WGCNA_minCoreKME,
+	minCoreKMESize = WGCNA_minCoreKMESize, 
+    minKMEtoStay = WGCNA_minKMEtoStay)
 
 	moduleColors = WGCNA::labels2colors(net$colors)
 

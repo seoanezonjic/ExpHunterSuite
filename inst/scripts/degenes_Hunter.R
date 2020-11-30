@@ -91,10 +91,15 @@ option_list <- list(
   optparse::make_option(c("--WGCNA_blockwiseNetworkType"), type="character", default="signed",
     help="NetworkType option to be passed to blockwiseModules function (unsigned, signed, signed hybrid)."),
   optparse::make_option(c("--WGCNA_blockwiseTOMType"), type="character", default="signed",
-    help="TOMType option to be passed to blockwiseModules function (none, unsigned, signed, signed Nowick, unsigned 2, signed 2 and signed Nowick 2). If none, adjacency will be used for clustering. Default=%default")
+    help="TOMType option to be passed to blockwiseModules function (none, unsigned, signed, signed Nowick, unsigned 2, signed 2 and signed Nowick 2). If none, adjacency will be used for clustering. Default=%default"),
+  optparse::make_option(c("--WGCNA_minCoreKME"), type="double", default=0.7, 
+    help="Minimum module membership threshold to define module core. Modules under the threshold will not be considered. Default=%default"),
+  optparse::make_option(c("--WGCNA_minCoreKMESize"), type="integer", default=NULL, 
+    help="Minimun genes that belong to module core. Modules under the threshold will not be considered. Default min(20, WGCNA_min_genes_cluster/3)."),
+  optparse::make_option(c("--WGCNA_minKMEtoStay"), type="double", default=0.5, 
+    help="Minimun module membership of a gene to be kept in module. Default=%default")
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
-
 #############################################################################
 #DRAFT INPUT/OUTPUT
 ############################################################################
@@ -156,7 +161,10 @@ final_results <- main_degenes_Hunter(
   WGCNA_mergecutHeight=opt$WGCNA_mergecutHeight,
   WGCNA_all=opt$WGCNA_all,
   WGCNA_blockwiseNetworkType=opt$WGCNA_blockwiseNetworkType,
-  WGCNA_blockwiseTOMType=opt$WGCNA_blockwiseTOMType
+  WGCNA_blockwiseTOMType=opt$WGCNA_blockwiseTOMType,
+  WGCNA_minCoreKME=opt$WGCNA_minCoreKME,
+  WGCNA_minCoreKMESize=opt$WGCNA_minCoreKMESize,
+  WGCNA_minKMEtoStay = opt$WGCNA_minKMEtoStay
 )
 
 #############################################################################
