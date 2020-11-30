@@ -1,13 +1,13 @@
-#'
-#' @param htfile
-#' @param realprediction
-#' @param aucfile
-#' @param experiment
-#' @param logFC_threshold
-#' @param pval_threshold
-#' @keywords
+#' Calculates emasures from result tables
+#' @param htfile hunter table file
+#' @param realprediction real predictions file
+#' @param aucfile output AUC plot file
+#' @param experiment experiment info file to be loaded
+#' @param logFC_threshold logFC threshold
+#' @param pval_threshold p-value threshold
+#' @keywords metrics
 #' @export
-#' @return
+#' @return metrics table
 rtable2measures <- function(
   htfile,
   realprediction,

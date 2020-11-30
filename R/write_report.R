@@ -1,6 +1,10 @@
 #' Write Main DEgenes Hunter report
 #'
 #' This function allows you to report the DEG analysis.
+#' @param exp_results DEG analysis results object
+#' @param output_files output file path
+#' @param template_folder RMD templates folder
+#' @param opt option list
 #' @export
 #' @examples
 #' write_expression_report()
@@ -32,9 +36,7 @@ write_expression_report <- function(exp_results, output_files=getwd(),template_f
 
 
 #' Write Main DEgenes Hunter functional report
-#'
 #' This function allows you to report the Functional analysis.
-#' @param
 #' @param hunter_results DEG analysis results
 #' @param func_results functional results
 #' @param output_files output folder.
@@ -44,7 +46,6 @@ write_expression_report <- function(exp_results, output_files=getwd(),template_f
 #' @param fc_colname (OPTIONAL) main logFC colname (into hunter_results dataframe)
 #' @param report string with reports to be written. Allowed: clusters (c) and functional (f). Default = "fc"
 #' @export
-#' @examples
 write_functional_report <- function(hunter_results, 
                                     func_results, 
                                     output_files=getwd(), 

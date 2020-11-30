@@ -1,13 +1,10 @@
-#' Function to generate target
-#'
+#' Function to generate targets file
 #' Load target file if it exists, otherwise use the -C and -T flags. Note target takes precedence over target.
-#' @param from_file 
-#' @param ctrl_samples
-#' @param treat_samples
+#' @param from_file input targets file
+#' @param ctrl_samples control samples
+#' @param treat_samples target samples
 #' @keywords design
 #' @export
-#' @examples
-#' target_generation()
 target_generation <- function(from_file=NULL, ctrl_samples=NULL, treat_samples=NULL){
 	target <- NULL
 	if(! is.null(from_file)) {
@@ -27,17 +24,15 @@ target_generation <- function(from_file=NULL, ctrl_samples=NULL, treat_samples=N
 }	
 
 
-#' Function to write expression package results
-#'
+#' Function to write expression package results.
 #' Write to disk the results of each diff expression package
-#' @param df_list 
-#' @param prefix
-#' @param root
+#' @param df_list dataframes list 
+#' @param prefix prefix concatenated to output file name
+#' @param root path where write
 #' @keywords output
 #' @export
 #' @examples
 #' write_df_list_as_tables()
-
 write_df_list_as_tables <- function(df_list, prefix, root=getwd()) {
   invisible(
     lapply(1:length(df_list), function(i) {
@@ -53,6 +48,7 @@ write_df_list_as_tables <- function(df_list, prefix, root=getwd()) {
 
 #' Loads stored results in DEgenes Hunter expression analysis folder and returns in correct object format
 #' @param path of DGH folder
+#' @keywords input
 #' @export
 load_hunter_folder <- function(path){
 	dgh_exp_results <- list()
@@ -118,8 +114,10 @@ load_hunter_folder <- function(path){
 	return(dgh_exp_results)
 }
 
+
 #' Loads stored results in DEgenes Hunter expression analysis package folder and returns in compact object
 #' @param pack_path of expression package folder
+#' @keywords input
 load_package_result <- function(pack_path){
 	info <- list()
 	pack_name <- tail(unlist(strsplit(pack_path,"_")),1)
@@ -132,9 +130,11 @@ load_package_result <- function(pack_path){
 	return(info)
 }
 
+
 #' Loads stored WGCNA results in DEgenes Hunter expression analysis package folder and returns in compact object
 #' @param path of expression analysis results (Hunter folder)
 #' @param main_deg_table dataframe with main DEG analysis results
+#' @keywords input
 load_WGCNA_results <- function(path, main_deg_table){
 	info <- list()
 	if(dir.exists(file.path(path,"Results_WGCNA"))){
@@ -169,9 +169,10 @@ load_WGCNA_results <- function(path, main_deg_table){
 }
 
 
-#' 
+#' Write enrichment files related to functional_hunter results list
 #' @param func_results functional enrichment results
 #' @param output_file output folder path
+#' @keywords export
 #' @export
 write_enrich_files <- function(func_results, output_files=getwd()){
 	if(!dir.exists(output_files)) dir.create(output_files)

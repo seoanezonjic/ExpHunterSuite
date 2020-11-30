@@ -237,7 +237,6 @@ extract_legend <- function(a.gplot){ #code taken from https://stackoverflow.com/
 #' @param top : plots only the top N items with more variance. NULL will not filter
 #' @param alpha : transparency of dots
 #' @return plot ready to be rendered
-#' @require ggplot2
 #' @author Fernando Moreno Jabato <jabato(at)uma(dot)com>
 ht2logFCPlot <- function(ht,var_filter = 0.001, title = "Filtered logFC", y_range = NULL, top = 50, alpha = 0.5){
   gene_names <- rownames(ht)

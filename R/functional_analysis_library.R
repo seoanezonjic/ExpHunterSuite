@@ -2,25 +2,25 @@
 ############################ FUNCTIONAL ANALYSIS LIBRARY ########################
 #################################################################################
 
-#'
-#' @param opt
-#' @keywords
-#' @return
-defining_functional_hunter_subfolders <- function(opt){
-  subfolders <- c()
-  if (grepl("G", opt$functional_analysis)){
-    subfolders <- c(subfolders, 'Results_topGO')
-  }
-  if (grepl("K", opt$functional_analysis)){
-    subfolders <- c(subfolders, 'Results_KEGG')
-  }
-}
+# #'
+# #' @param opt list with options where folders will be taken
+# #' @keywords
+# #' @return
+# defining_functional_hunter_subfolders <- function(opt){
+#   subfolders <- c()
+#   if (grepl("G", opt$functional_analysis)){
+#     subfolders <- c(subfolders, 'Results_topGO')
+#   }
+#   if (grepl("K", opt$functional_analysis)){
+#     subfolders <- c(subfolders, 'Results_KEGG')
+#   }
+# }
 
-#'
-#' @param var_name
-#' @param level_depth
-#' @keywords
-#' @return
+#' Function used to check if a specific result has been calculated
+#' @param var_name variable name to be checked
+#' @param level_depth variable depth into a list of objects
+#' @keywords check
+#' @return true if variable exists or false in other cases
 exists_enrich_df <- function(var_name,level_depth = 3){
   # Check if it is instantiated
   if(!var_name %in% ls(envir = parent.frame(n = level_depth))){
@@ -32,33 +32,33 @@ exists_enrich_df <- function(var_name,level_depth = 3){
 }
 
 
-#'
-#' @param path
-#' @param file_name
-#' @param ext
-#' @keywords
-#' @return
+#' Generates the full path to a specific graph file
+#' @param path to file
+#' @param file_name file name
+#' @param ext file extension
+#' @keywords file
+#' @return full file path and name
 graph_file_name <- function(path, file_name, ext = "pdf"){
   return(paste(path,.Platform$file.sep,file_name,".",ext,sep=""))
 }
 
 
-#'
-#' @param path
-#' @param file_name
-#' @param ext
-#' @keywords
-#' @return
+#' Checks  if a graph file exists
+#' @param path to file
+#' @param file_name file name
+#' @param ext file extension
+#' @keywords file
+#' @return true if file exists or false in other cases
 exists_graph_file <- function(path, file_name, ext = "pdf"){
   f <- graph_file_name(path,file_name,ext)
   return(file.exists(f))
 }
 
 
-#'
-#' @param df
-#' @keywords
-#' @return
+#' Check if a given object is a correct enrichment result object
+#' @param df variable to be checked
+#' @keywords check
+#' @return true if it is an allowed object or false in other cases
 check_results <- function(df){
   if(is.data.frame(df)){
     if(nrow(df) <= 0){
@@ -104,11 +104,11 @@ check_results <- function(df){
 }
 
 
-#'
-#' @param ids_to_translate
-#' @param annot_table
-#' @keywords
-#' @return
+#' Translates a given gene ID using a dictionary
+#' @param ids_to_translate set of IDs to be translated
+#' @param annot_table dictionary to translate IDs
+#' @keywords translate
+#' @return translated IDs or NA if it's not possible to translate
 translate_id <- function(ids_to_translate, annot_table){ 
 #This function translates unknown transcripts IDs to known gen IDs
 #ids_to_translate: unknown gene IDs
@@ -128,15 +128,15 @@ translate_id <- function(ids_to_translate, annot_table){
 }
 
 
-#'
-#' @param orthologues
-#' @param id_type
-#' @param mart
-#' @param dataset
-#' @param host
-#' @param attr
-#' @keywords
-#' @return
+#' Obtains biological info from BiomaRt API
+#' @param orthologues orthologue organism ID
+#' @param id_type gene code type
+#' @param mart BioMart database name you want to connect to
+#' @param dataset Dataset you want to use
+#' @param host host to connect to
+#' @param attr Attributes you want to retrieve
+#' @keywords method
+#' @return downloaded biomaRt response
 obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, attr){
     # require(biomaRt)
 
@@ -217,12 +217,12 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
 }
 
 
-#'
-#' @param input_ids
-#' @param organism_db
-#' @param org_var_name
-#' @keywords
-#' @return
+#' Translates a given gene ID
+#' @param input_ids gene IDs to be translated
+#' @param organism_db BiocGenerics organism database
+#' @param org_var_name BiocGenerics organism translation variable name
+#' @keywords translate
+#' @return translated gene IDs
 id_translation_orgdb <- function(input_ids, organism_db, org_var_name){
     # Load necessary package
     require(organism_db, character.only = TRUE)
@@ -246,16 +246,14 @@ id_translation_orgdb <- function(input_ids, organism_db, org_var_name){
 
 
 
-#'
-#' @param entrez_targets
-#' @param entrez_universe
-#' @param sub_ontology
-#' @keywords
-#' @return
+#' Pipeline to perform topGO enrichment
+#' @param entrez_targets genes used to enrich
+#' @param entrez_universe total of allowed genes
+#' @param sub_ontology GO subontology to be used
+#' @keywords enrich
+#' @return enrichment tables obtained
 perform_topGO_local <- function(entrez_targets,entrez_universe,sub_ontology,outFile=NULL,organism, plot_graph = TRUE){
-  
   #! GOFisherTest
-  
   # require(topGO)
   
   # Prepare necessary info
@@ -282,8 +280,7 @@ perform_topGO_local <- function(entrez_targets,entrez_universe,sub_ontology,outF
                                   ranksOf = "classicFisher", 
                                   topNodes = length(TopGOobject@graph@nodes)) 
   }
-  
-  
+    
   # Write info
   if(!is.null(outFile)){
     write.table(all_results_table, file=outFile, quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")    
@@ -301,11 +298,11 @@ perform_topGO_local <- function(entrez_targets,entrez_universe,sub_ontology,outF
 }
 
 
-#'
-#' @param data_matrix
-#' @param transpose
-#' @keywords
-#' @return
+#' Scale a matrix using minimum-maximum method
+#' @param data_matrix to be scaled
+#' @param transpose boolena which indicates if matrix must be transposed. Default: FALSE
+#' @keywords method
+#' @return scaled matrix
 scale_data_matrix <- function(data_matrix, transpose = FALSE){
   if ( transpose ) {
     data_matrix <- t(data_matrix)
@@ -330,16 +327,15 @@ scale_data_matrix <- function(data_matrix, transpose = FALSE){
 
 
 
-#'
-#' @param attr_name
-#' @param interesting_genenames
-#' @param DEG_annot_table
-#' @param ontology
-#' @param graphname
-#' @param filter_name
-#' @param output_files
-#' @keywords
-#' @return
+#' Run topGO enrichment and generates target plots storing into PDF files
+#' @param attr_name target column of DEG_annot_table with attributes
+#' @param interesting_genenames target genes
+#' @param DEG_annot_table DEgenes Hunter expression result table
+#' @param ontology GO subontology to be used
+#' @param graphname output file name
+#' @param filter_name target column of DEG_annot_table with filtering param
+#' @param output_files 
+#' @keywords enrich
 perform_topGO <- function(attr_name, interesting_genenames, DEG_annot_table, ontology, graphname,filter_name, output_files){
     geneID2GO <- split(DEG_annot_table[,attr_name], DEG_annot_table[,filter_name])
     geneID2GO <- lapply(geneID2GO, unique)
@@ -359,7 +355,7 @@ perform_topGO <- function(attr_name, interesting_genenames, DEG_annot_table, ont
 
     write.table(allRes, file=file.path(output_files, "allResGOs.txt"), quote=FALSE, col.names=NA, sep="\t")
 
-    pdf(file.path(paths, graphname), w=11, h=8.5)
+    pdf(file.path(output_files, graphname), w=11, h=8.5)
         topGO::showSigOfNodes(GOdata, BiocGenerics::score(resultFis), firstSigNodes = 10, useInfo = 'all')
     dev.off()
 
@@ -456,18 +452,18 @@ catched_pairwise_termsim <- function(enr){
 
 
 
-#'
-#' @param genes 
-#' @param organism 
-#' @param keyType 
-#' @param pvalueCutoff 
-#' @param pAdjustMethod 
+#' Performs Over Representation Analysis (ORA) enrichment of specified ontology
+#' @param genes significant genes to be used
+#' @param organism target organism
+#' @param keyType genes code type
+#' @param pvalueCutoff p-value threshold
+#' @param pAdjustMethod p-valued adjust method to be applied
 #' @param ont ontology to be used. Allowed [GO_MF,GO_CC,GO_BP,KEGG,REACT]
 #' @param useInternal used only for KEGG enrichment, activate internal data usage mode
-#' @param qvalueCutoff 
-#' @param ENRICH_DATA 
-#' @keywords
-#' @return enrichment performed
+#' @param qvalueCutoff q-value threshold
+#' @param ENRICH_DATA optional enrichment universe already loaded
+#' @keywords enrich
+#' @return enrichment table obtained
 enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff = 0.2,ENRICH_DATA = NULL, semsim = TRUE){
   # @import clusterProfiler KEGG.db ReactomePA
   # Check
@@ -549,14 +545,14 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
 }
 
 
-#'
-#' @param custom_sets
-#' @param custom_files
-#' @param p_val_threshold
-#' @param genes
-#' @param write_path
-#' @return
-#' @keywords
+#' Performs several CUSTOM enrichments using ORA method. You can give universes or load GMT files
+#' @param custom_sets custom universes to be used.
+#' @param custom_files custom files to load universes to be used
+#' @param p_val_threshold p-value threshold
+#' @param genes significant genes to be used
+#' @param write_path optional output path where enrichment tables will be stored
+#' @return list with enrichment tables obtained
+#' @keywords enrich
 #' @export
 enrich_all_customs <- function(custom_sets = NULL, custom_files = NULL, p_val_threshold, genes, write_path = NULL){
   if(!is.null(custom_sets)){
@@ -588,13 +584,13 @@ enrich_all_customs <- function(custom_sets = NULL, custom_files = NULL, p_val_th
 }
 
 
-#'
-#' @param custom_sets
-#' @param genes_in_modules
-#' @param p_val_threshold
-#' @param cores
-#' @return
-#' @keywords
+#' Performs custom enrichments over cluster sets
+#' @param custom_sets custom unvierses
+#' @param genes_in_modules list of genes (clusters)
+#' @param p_val_threshold p-value threshold
+#' @param cores optional parallel cores to be used. Default: 1
+#' @return enrichment tables obtained
+#' @keywords enrich
 #' @export
 enrich_clusters_with_gmt <- function(custom_set, genes_in_modules, p_val_threshold, cores = 1){
       # Enrich
@@ -611,7 +607,7 @@ enrich_clusters_with_gmt <- function(custom_set, genes_in_modules, p_val_thresho
 
 #' Load a GMT format file and return a dataframe in correct format
 #' @param gmt_file file to be loaded
-#' @keywords
+#' @keywords file
 #' @export
 load_and_parse_gmt <- function(gmt_file) {
     # Load file
@@ -628,15 +624,16 @@ load_and_parse_gmt <- function(gmt_file) {
 }
 
 
-#'
-#' @param genes
-#' @param organism  
-#' @param keyType  
-#' @param pvalueCutoff  
-#' @param pAdjustMethod  
+#' Performs Gene Set Enrichment Analysis (GSEA) using a specified ontology
+#' @param genes significant genes to be used
+#' @param organism target organism
+#' @param keyType gene code type
+#' @param pvalueCutoff p-value threshold
+#' @param pAdjustMethod p-value adjust method to be applied
 #' @param ont ontology to be used. Allowed [GO_MF,GO_CC,GO_BP,KEGG,REACT]
 #' @param useInternal used only for KEGG enrichment, activate internal data usage mode
 #' @return enrichment performed
+#' @keywords enrich
 enrich_GSEA <- function(geneList,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE){
   #' @import clusterProfiler KEGG.db ReactomePA
   # require(clusterProfiler)
@@ -692,17 +689,17 @@ enrich_GSEA <- function(geneList,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
 }
 
 
-#'
-#' @param all_clusters
-#' @param organism
-#' @param keyType
-#' @param pvalueCutoff
-#' @param pAdjustMethod
-#' @param ont
-#' @param useInternal
-#' @keywords
-#' @return
-perform_GSEA_clusters <- function(all_clusters, organism, keyType, pvalueCutoff, pAdjustMethod = "BH", ont, useInternal){
+#' Performs GSEA enrichment over several gene sets (clusters)
+#' @param all_clusters list of gene sets (clusters)
+#' @param organism target organism
+#' @param keyType gene code type
+#' @param pvalueCutoff p-value threshold
+#' @param pAdjustMethod p-value adjust method to be applied
+#' @param ont ontology to be used
+#' @param useInternal optional KEGG param used to indicate if already downloaded KEGG database must be used or online API must be called. DEfault: FALSE
+#' @keywords enrich
+#' @return enrichment tables obtained
+perform_GSEA_clusters <- function(all_clusters, organism, keyType, pvalueCutoff, pAdjustMethod = "BH", ont, useInternal = FALSE){
   enriched_clusters <- lapply(all_clusters, function(cl_genes) {
         # Enrich
         cl_GSEA <- enrich_GSEA(geneList = cl_genes,
@@ -719,21 +716,19 @@ perform_GSEA_clusters <- function(all_clusters, organism, keyType, pvalueCutoff,
 
 
 
-
-
-#'
-#' @param genes 
-#' @param organism 
-#' @param keyType 
-#' @param pvalueCutoff 
-#' @param pAdjustMethod 
+#' Performs ORA enrichment over several gene sets (clusters)
+#' @param genes list of gene sets (clusters9)
+#' @param organism target organism
+#' @param keyType gene code type
+#' @param pvalueCutoff p-value threshold
+#' @param pAdjustMethod p_value adjust method to be applied
 #' @param ont ontology to be used. Allowed [GO_MF,GO_CC,GO_BP,KEGG,REACT]
 #' @param useInternal used only for KEGG enrichment, activate internal data usage mode
-#' @param qvalueCutoff 
-#' @param ENRICH_DATA 
-#' @param mc.cores 
-#' @param mc.preschedule 
-#' @keywords
+#' @param qvalueCutoff q-value threshold
+#' @param ENRICH_DATA optional enrichment universe already loaded 
+#' @param mc.cores optional number of parallel cores to be used. See mcapply
+#' @param mc.preschedule see mcapply
+#' @keywords enrich
 #' @return enrichment performed
 enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, mc.cores = 1, mc.preschedule = TRUE){
   #' @import clusterProfiler KEGG.db ReactomePA parallel
@@ -806,19 +801,20 @@ get_organismID_byOnto <- function(organism_info, ont){
 
 
 #' Perform enrichment of ORA and/or GSEA using a set of genes given
-#' @param genes
+#' @param genes significant genes to be used (vector or list of vectors - clusters)
 #' @param organism organism table info. Must include entries depending on ontologies selected: Bioconductor_DB (GO), KeggCode (KEGG), Reactome_ID (Reactome)
-#' @param keytype
+#' @param keytype gene code type
 #' @param ontology string with ontologIDs to be used. Allowed: Gene Ontology (BP: b ; MF: m ; CC: c), KEGG (k), Reactome (r) 
-#' @param enrichmentType
-#' @param pvalueCutoff
-#' @param pAdjustMethod
+#' @param enrichmentType enrichment technique to be used. Allowed: ORA (o) and GSEA (g)
+#' @param pvalueCutoff p-value threshold
+#' @param pAdjustMethod p-value adjust method to be applied
 #' @param pvaluecutoff q-value threshold. ONLY USED FOR ORA.
-#' @param useInternal
+#' @param useInternal optional KEGG internal usage flag
 #' @param mc.cores for parallel. Only used in case of genes are cluster genes
 #' @param mc.preschedule for parallel. Only used in case of genes are cluster genes
 #' @param verbose activate verbose mode
 #' @return list with enrichments performed
+#' @keywords enrich
 #' @export
 multienricher <- function(genes,
                           organism_info,

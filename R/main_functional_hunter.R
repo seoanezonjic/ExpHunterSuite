@@ -9,15 +9,14 @@
 #' @param custom (OPTIONAL) list of dataframes with GMT corpus
 #' @param analysis_type (OPTIONAL) enrichment type to be performed. Allowed: ORA (o) and GSEA (g)
 #' @param remote (OPTIONAL) remote allowed actions. Are: Biomart query (b) and KEGG enrichment (k)
-#' @param save_query
+#' @param save_query (OPTIONAL) flag to indicate if query must be stored
 #' @param pthreshold pvalue threshold
 #' @param qthreshold qvalue threshold
 #' @param cores cores to be used if parallel features are going to be used. Default: 1
 #' @param output_files output folder
 #' @param fc_colname main logFC colname (into hunter_results dataframe)
-#' @keywords 
+#' @keywords method
 #' @export
-#' @examples
 functional_hunter <- function(
 	hunter_results,
 	model_organism,
@@ -603,7 +602,7 @@ functional_hunter <- function(
 #' Table with information abaut all organism available
 #' @param file to be loaded. Default: internal organism table
 #' @return organism table
-#' @keywords 
+#' @keywords method
 #' @export
 get_organism_table <- function(file = file.path(find.package('DEgenesHunter'), "external_data", "organism_table.txt")){
 	return(read.table(file, header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA))

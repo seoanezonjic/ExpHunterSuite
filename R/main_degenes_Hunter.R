@@ -2,39 +2,38 @@
 #'
 #' This function allows you to perform the DEG analysis with different algorithms.
 #' @param raw Dataframe with raw counts per sample and feature
-#' @param target
-#' @param external_DEA_data
-#' @param output_files
-#' @param reads
-#' @param minlibraries
-#' @param filter_type
-#' @param p_val_cutoff
-#' @param lfc
-#' @param modules
-#' @param minpack_common
-#' @param model_variables
-#' @param numerics_as_factors
-#' @param custom_model
-#' @param string_factors
-#' @param numeric_factors
-#' @param WGCNA_memory
-#' @param WGCNA_norm_method
-#' @param WGCNA_deepsplit
-#' @param WGCNA_min_genes_cluster
-#' @param WGCNA_detectcutHeight
-#' @param WGCNA_mergecutHeight
-#' @param WGCNA_all
-#' @param WGCNA_blockwiseNetworkType
-#' @param WGCNA_blockwiseTOMType
-#' @keywords installation
+#' @param target set with control and treatment information
+#' @param external_DEA_data external DEA set 
+#' @param output_files otput files path
+#' @param reads set of reads
+#' @param minlibraries minimum of libraries to use a set of data
+#' @param filter_type filter type to ba applied. Allowed: "separate" or "global"
+#' @param p_val_cutoff p-value threshold
+#' @param lfc minimum logFold Change
+#' @param modules modules to be executed. Allowed: DESeq2 (D), NOISeq (N), Limma (L), EdgeR (E), WGCNA (W)
+#' @param minpack_common minimum of pack that must be significant to tag a gene as significant
+#' @param model_variables custom model
+#' @param numerics_as_factors transform numeric values to factors. Default: TRUE
+#' @param custom_model boolean of usage of custom model. Default: FALSE
+#' @param string_factors string factors for WGCNA
+#' @param numeric_factors numeric factors for WGCNA
+#' @param WGCNA_memory see WGCNA package
+#' @param WGCNA_norm_method see WGCNA package
+#' @param WGCNA_deepsplit see WGCNA package
+#' @param WGCNA_min_genes_cluster see WGCNA package
+#' @param WGCNA_detectcutHeight see WGCNA package
+#' @param WGCNA_mergecutHeight see WGCNA package
+#' @param WGCNA_all see WGCNA package
+#' @param WGCNA_blockwiseNetworkType see WGCNA package
+#' @param WGCNA_blockwiseTOMType see WGCNA package
+#' @keywords method
 #' @export
 #' @examples
 #' main_degenes_Hunter()
-
 main_degenes_Hunter <- function(
     raw = NULL,
     target = NULL,
-    external_DEA_data = NULL,
+    external_DEA_data = NULL, # TODO unused variable, remove from interface and affected scripts
     output_files = getwd(),
     reads = 2,
     minlibraries = 2,

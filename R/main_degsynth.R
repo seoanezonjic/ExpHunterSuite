@@ -15,7 +15,7 @@ scale_range <- function(vect,nmin,nmax){
 
 
 #' Custom function to generate exponentially degradated foldchange range
-#' @param means
+#' @param means means vector
 #' @param fcmin minimum foldchange
 #' @param fcmax maximum foldchange
 #' @param meanLog param of rlnorm function
@@ -42,16 +42,16 @@ fcfunc <- function(means,fcmin=1.4, fcmax=3, meanlog = 1, sdlog = 0.8){
 }
 
 #' Main function to generate synthetic data using an specific exponential distribution for logFC
-#' @param outfile
-#' @param inputfile
-#' @param replicates
-#' @param ngenes
-#' @param DEGs_proportion
-#' @param FC_min
-#' @param FC_max
-#' @param P_up
-#' @param group
-#' @keywords
+#' @param outfile output file
+#' @param inputfile input file
+#' @param replicates number of replicates
+#' @param ngenes number of genes
+#' @param DEGs_proportion numeric [0,1] proportion of DEG genes to be simulated
+#' @param FC_min minimum Fold-Change
+#' @param FC_max maximum Fold-Change
+#' @param P_up proportion og up-regulated genes
+#' @param group optional group identifiers seprated by commas
+#' @keywords synthetic
 #' @export
 #' @return 
 degsynth <- function(
