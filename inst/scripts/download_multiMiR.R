@@ -45,7 +45,7 @@ if(opt$cache_mode && file.exists(remaining_miRNAs_file)){
 ### Download data 
 org_path <- file.path(temp_dir, opt$organism)
 if(!dir.exists(org_path)){
-	dir.create(org_path, recursive = T)
+	dir.create(org_path, recursive = TRUE)
 }
 
 while(length(remaining_mirnas) > 0){

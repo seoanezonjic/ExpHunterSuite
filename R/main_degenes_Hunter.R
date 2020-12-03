@@ -26,10 +26,11 @@
 #' @param WGCNA_all see WGCNA package
 #' @param WGCNA_blockwiseNetworkType see WGCNA package
 #' @param WGCNA_blockwiseTOMType see WGCNA package
+#' @return expression analysis result object with studies performed
 #' @keywords method
 #' @export
 #' @examples
-#' main_degenes_Hunter()
+#' 
 main_degenes_Hunter <- function(
     raw = NULL,
     target = NULL,
@@ -105,7 +106,7 @@ main_degenes_Hunter <- function(
     ##             PERFORM EXPRESION ANALYSIS                 ##
     ############################################################
     dir.create(output_files)
-    
+   
     exp_results <- perform_expression_analysis(modules, replicatesC, replicatesT, raw_filter, p_val_cutoff, target, model_formula_text)
 
     #################################################################
@@ -153,10 +154,11 @@ main_degenes_Hunter <- function(
     #################################################################################
     DE_all_genes <- unite_DEG_pack_results(exp_results, p_val_cutoff, lfc, minpack_common)
     
-    if(grepl("P", modules)) { # CASE P: PCIT, TODO: RESTORE FUNCTION, PEDRO 
-      metrics_pcit <- analysis_diff_correlation(DE_all_genes, DESeq2_counts, DESeq2_counts_control, DESeq2_counts_treatment, PCIT_filter=FALSE)
-      DE_all_genes <- transform(merge(DE_all_genes, metrics_pcit, by.x=0, by.y=0), row.names=Row.names, Row.names=NULL)
-    }
+    # if(grepl("P", modules)) { # CASE P: PCIT, TODO: RESTORE FUNCTION, PEDRO 
+    #   # TODO : This is not working, variables "DESeq2_counts" are not being generated inside this function
+    #   metrics_pcit <- analysis_diff_correlation(DE_all_genes, DESeq2_counts, DESeq2_counts_control, DESeq2_counts_treatment, PCIT_filter=FALSE)
+    #   DE_all_genes <- transform(merge(DE_all_genes, metrics_pcit, by.x=0, by.y=0), row.names=Row.names, Row.names=NULL)
+    # }
     
     if(grepl("W", modules)) { # Check WGCNA was run and it returned proper results
       DE_all_genes <- transform(merge(DE_all_genes, combinations_WGCNA[['WGCNA_all']][['gene_cluster_info']], by.x=0, by.y="ENSEMBL_ID"), row.names=Row.names, Row.names=NULL)
@@ -243,6 +245,7 @@ check_input_main_degenes_Hunter <- function(minlibraries, reads, external_DEA_da
     return(list(modules=modules, active_modules=active_modules, minpack_common=minpack_common))
 }
 
+#' @importFrom edgeR cpm
 filter_count <- function(reads, minlibraries, raw, filter_type, index_control_cols, index_treatmn_cols){
     # Prepare filtered set
     if(reads != 0){

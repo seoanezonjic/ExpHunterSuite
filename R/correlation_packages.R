@@ -1,21 +1,27 @@
-analysis_diffcoexp <- function(data, path, target) {
+#' @importFrom DESeq2 DESeqDataSetFromMatrix rlog
+#' @importFrom WGCNA allowWGCNAThreads
+#' @importFrom diffcoexp diffcoexp
+#' @importFrom utils write.table
+#' @importFrom SummarizedExperiment assay
+vanalysis_diffcoexp <- function(data, path, target) {
 
-	dds <- DESeqDataSetFromMatrix(countData = data, colData = target["treat"], design = ~ treat)
-	rld <- rlog(dds, blind=FALSE)
-	mat_counts <- assay(rld)
+	dds <- DESeq2::DESeqDataSetFromMatrix(countData = data, colData = target["treat"], design = ~ treat)
+	rld <- DESeq2::rlog(dds, blind=FALSE)
+	mat_counts <- SummarizedExperiment::assay(rld)
 	treat <- mat_counts[,target$treat=="Treat"]
 	control <- mat_counts[,target$treat=="Ctrl"]
 
-	allowWGCNAThreads()
-	res <- diffcoexp(exprs.1 = control, exprs.2 = treat, r.method = "spearman", q.dcgth=1)
+	WGCNA::allowWGCNAThreads()
+	res <- diffcoexp::diffcoexp(exprs.1 = control, exprs.2 = treat, r.method = "spearman", q.dcgth=1)
 
-	write.table(res$DCLs, file=file.path(path, "DCLs.txt"), sep="\t", quote=FALSE, row.names=FALSE)
-	write.table(res$DCGs, file=file.path(path, "DCGs.txt"), sep="\t", quote=FALSE, row.names=FALSE)
+	utils::write.table(res$DCLs, file=file.path(path, "DCLs.txt"), sep="\t", quote=FALSE, row.names=FALSE)
+	utils::write.table(res$DCGs, file=file.path(path, "DCGs.txt"), sep="\t", quote=FALSE, row.names=FALSE)
 	return(res)
 }
 
-    # FOR WGCNA: Check that the appropriate factor columns can be found in the target file and makes a data frame with the specified factor
+
 build_design_for_WGCNA <- function(target, string_factors=NULL, numeric_factors=NULL){
+# FOR WGCNA: Check that the appropriate factor columns can be found in the target file and makes a data frame with the specified factor
 		if(!is.null(string_factors)){
 			  if(string_factors == "") {
 		        string_factors <- "treat"
@@ -108,7 +114,7 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE, WGCNA_input, index_treat
         # if(results_WGCNA_treatment == "NO_POWER_VALUE" | results_WGCNA_control == "NO_POWER_VALUE") {
         #   warning("WGCNA was unable to generate a suitable power value for at least one of the partial datasets")
         # }
-      cat('Performing WGCNA correlation analysis for all samples\n')
+     cat('Performing WGCNA correlation analysis for all samples\n')
       results[['WGCNA_all']] <- analysis_WGCNA(data=WGCNA_input,
                                      path=path,
                                      target_numeric_factors=target_numeric_factors,
@@ -129,7 +135,12 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE, WGCNA_input, index_treat
 
 
 
-
+#' @importFrom utils assignInNamespace write.table
+#' @importFrom WGCNA pickSoftThreshold blockwiseModules labels2colors plotDendroAndColors moduleEigengenes corPvalueStudent binarizeCategoricalVariable orderMEs
+#' @importFrom grDevices pdf dev.control recordPlot dev.off
+#' @importFrom graphics par text abline
+#' @importFrom stats cor
+#' @importFrom ggplot2 ggplot scale_x_continuous scale_y_continuous geom_count aes_string
 analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_factors, WGCNA_memory, WGCNA_deepsplit, WGCNA_detectcutHeight, WGCNA_mergecutHeight, WGCNA_min_genes_cluster, cor_only, blockwiseNetworkType, blockwiseTOMType) {
 
 	data <- t(data)#[, 1:500]
@@ -138,7 +149,7 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	####################################################################
 	## THRESHOLDING - EFFECTS OF BETA ON TOPOLOGY AND AUTO SELECTION
 	####################################################################
-	assignInNamespace(x="..minNSamples", value=3, ns="WGCNA") #Overwrite harcoded limit from 4 to 3
+	utils::assignInNamespace(x="..minNSamples", value=3, ns="WGCNA") #Overwrite harcoded limit from 4 to 3
 	powers <- c(c(1:10), seq(from = 12, to=30, by=2))
 
  	sft <- WGCNA::pickSoftThreshold(data, powerVector = powers, verbose = 5)
@@ -166,32 +177,32 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 		min_pow_ind <- length(sft_mfs_r2) # assumes 30 will be the largest testable power
 	}
 	pow <- sft$fitIndices[min_pow_ind, "Power"]
-	cor <- WGCNA::cor # TO CORRECT FUNCTION OVERRIDE DUE TO OTHER PACKAGES
+	# cor <- WGCNA::cor # TO CORRECT FUNCTION OVERRIDE DUE TO OTHER PACKAGES
 
-	pdf(file.path(path, "thresholding.pdf"))
-		dev.control(displaylist="enable")
-		par(mfrow = c(1,2));
+	grDevices::pdf(file.path(path, "thresholding.pdf"))
+		grDevices::dev.control(displaylist="enable")
+		graphics::par(mfrow = c(1,2));
 		cex1 = 0.9;
 		# Scale-free topology fit index as a function of the soft-thresholding power
 		plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
 		     xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit,signed R^2",type="n",
 		     main = paste("Scale independence"));
-		text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
+		graphics::text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
 		     labels=powers,cex=cex1,col="red");
 		# this line corresponds to using an R^2 cut-off of h
-		abline(h=0.90, col="red")
-		abline(h=0.80, col="red", lty="dashed")
-		abline(v=pow, col="black", lty="dotted")
+		graphics::abline(h=0.90, col="red")
+		graphics::abline(h=0.80, col="red", lty="dashed")
+		graphics::abline(v=pow, col="black", lty="dotted")
 
 		# Mean connectivity as a function of the soft-thresholding power
 		plot(sft$fitIndices[,1], sft$fitIndices[,5],
 		     xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n",
 		     main = paste("Mean connectivity"))
-		text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
-		abline(v=pow, col="black", lty="dotted")
+		graphics::text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
+		graphics::abline(v=pow, col="black", lty="dotted")
 
-		power_threshold_effects <- recordPlot()
-	dev.off()
+		power_threshold_effects <- grDevices::recordPlot()
+	grDevices::dev.off()
 
 	####################################################################
 	## CLUSTER SAMPLES TO GENERATE MODULES
@@ -208,37 +219,37 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	}
 
 	net <- WGCNA::blockwiseModules(data, power = pow,
-	maxBlockSize = WGCNA_memory, # Increase to memory limit in order to obtain more realistic results
-	minModuleSize = WGCNA_min_genes_cluster,
-	deepSplit = WGCNA_deepsplit, detectCutHeight = WGCNA_detectcutHeight,
-	reassignThreshold = 0, mergeCutHeight = WGCNA_mergecutHeight,
-	numericLabels = TRUE, pamRespectsDendro = FALSE,
-	loadTOM = loadTOM_TF,	
-	saveTOM = saveTOM_TF,
-	saveTOMFileBase = file.path(path, tom_file_base), 
-	verbose = 5, 
-	networkType = blockwiseNetworkType,
-	TOMType = blockwiseTOMType)
+									maxBlockSize = WGCNA_memory, # Increase to memory limit in order to obtain more realistic results
+									minModuleSize = WGCNA_min_genes_cluster,
+									deepSplit = WGCNA_deepsplit, detectCutHeight = WGCNA_detectcutHeight,
+									reassignThreshold = 0, mergeCutHeight = WGCNA_mergecutHeight,
+									numericLabels = TRUE, pamRespectsDendro = FALSE,
+									loadTOM = loadTOM_TF,	
+									saveTOM = saveTOM_TF,
+									saveTOMFileBase = file.path(path, tom_file_base), 
+									verbose = 5, 
+									networkType = blockwiseNetworkType,
+									TOMType = blockwiseTOMType)
 
 	moduleColors = WGCNA::labels2colors(net$colors)
 
 	# Plot the dendrogram and the module colors underneath
-	pdf(file.path(path, 'wcgnaModules.pdf'))
+	grDevices::pdf(file.path(path, 'wcgnaModules.pdf'))
 		WGCNA::plotDendroAndColors(net$dendrograms[[1]], moduleColors[net$blockGenes[[1]]],
                     "Module colors",
                     dendroLabels = FALSE, hang = 0.03,
                     addGuide = TRUE, guideHang = 0.05)
-	dev.off()
+	grDevices::dev.off()
 
 	MEs <- WGCNA::moduleEigengenes(data, net$colors)$eigengenes
 
-	gene_module_cor <- as.data.frame(cor(data, MEs, use = "p"));
+	gene_module_cor <- as.data.frame(WGCNA::cor(data, MEs, use = "p"));
 	gene_module_cor_p <- as.data.frame(WGCNA::corPvalueStudent(as.matrix(gene_module_cor), nSamples));
 	colnames(gene_module_cor_p) = colnames(gene_module_cor) <- gsub("ME", "Cluster_", colnames(gene_module_cor_p) )
 
-	write.table(gene_module_cor, file=file.path(path, "gene_MM.txt"), sep="\t", quote=FALSE)
-	write.table(gene_module_cor_p, file=file.path(path, "gene_MM_p_val.txt"), sep="\t", quote=FALSE)
-	write.table(MEs, file=file.path(path, "eigen_values_per_samples.txt"), sep="\t", quote=FALSE)
+	utils::write.table(gene_module_cor, file=file.path(path, "gene_MM.txt"), sep="\t", quote=FALSE)
+	utils::write.table(gene_module_cor_p, file=file.path(path, "gene_MM_p_val.txt"), sep="\t", quote=FALSE)
+	utils::write.table(MEs, file=file.path(path, "eigen_values_per_samples.txt"), sep="\t", quote=FALSE)
 
 	if(cor_only == TRUE) {
 		return("cor_only")
@@ -279,7 +290,7 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	ME_numeric <- as.numeric(gsub("ME", "", colnames(MEs)))
 	colnames(MEs_colors) <- paste0("ME", WGCNA::labels2colors(ME_numeric))
 
-	moduleTraitCor = cor(MEs_colors, trait, use = "p")
+	moduleTraitCor = WGCNA::cor(MEs_colors, trait, use = "p")
 	moduleTraitPvalue = WGCNA::corPvalueStudent(moduleTraitCor, nSamples)
  
 	textMatrix =  paste(signif(moduleTraitCor, 2), "\n(",
@@ -298,7 +309,7 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	####################################################################
 	ME_numeric_traits <- WGCNA::orderMEs(cbind(MEs, trait))
 
-	trait_and_module_cor <- cor(ME_numeric_traits, use = "p")
+	trait_and_module_cor <- WGCNA::cor(ME_numeric_traits, use = "p")
 	#write.table(trait_and_module_cor, file=file.path(path, "trait_and_module_cor.txt"), sep="\t", quote=FALSE)
 	trait_and_module_cor_p <- WGCNA::corPvalueStudent(trait_and_module_cor, nSamples)
 	#write.table(trait_and_module_cor_p, file=file.path(path, "trait_and_module_cor_p.txt"), sep="\t", quote=FALSE)
@@ -307,7 +318,7 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 
 	trait_module_all_vals <- data.frame(trait_module_cor_val, trait_module_p_val[,3])
 	names(trait_module_all_vals) <- c("A", "B", "correlation", "p-value")
-	write.table(trait_module_all_vals, file=file.path(path, "trait_and_module_all_vals.txt"), sep="\t", quote=FALSE, row.names=FALSE)
+	utils::write.table(trait_module_all_vals, file=file.path(path, "trait_and_module_all_vals.txt"), sep="\t", quote=FALSE, row.names=FALSE)
 	# write.table(trait_and_module_cor, file=file.path(path, "trait_module_all_vals2.txt"), sep="\t", quote=FALSE)
 
 	####################################################################
@@ -315,22 +326,22 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	####################################################################
 	# Report tables: 
 	# Genes per module 
-	gene_module_cor <- as.data.frame(cor(data, MEs, use = "p"));
+	gene_module_cor <- as.data.frame(WGCNA::cor(data, MEs, use = "p"));
 	gene_module_cor_p <- as.data.frame(WGCNA::corPvalueStudent(as.matrix(gene_module_cor), nSamples));
 	colnames(gene_module_cor_p) = colnames(gene_module_cor) <- gsub("ME", "Cluster_", colnames(gene_module_cor_p) )
 	# Genes per trait
-	gene_trait_cor <- as.data.frame(cor(data, trait, use = "p"));
+	gene_trait_cor <- as.data.frame(WGCNA::cor(data, trait, use = "p"));
 	gene_trait_cor_p <- as.data.frame(WGCNA::corPvalueStudent(as.matrix(gene_trait_cor), nSamples));
 	# Module per trait (also produced above for the plot - should give smae results.)
-	module_trait_cor = cor(MEs, trait, use = "p")
+	module_trait_cor = WGCNA::cor(MEs, trait, use = "p")
 	module_trait_cor_p <- WGCNA::corPvalueStudent(module_trait_cor, nSamples)
 	row.names(module_trait_cor) = row.names(module_trait_cor_p) <- gsub("ME", "Cluster_", row.names(module_trait_cor_p))
 
-	write.table(trait, file=file.path(path, "sample_trait.txt"), sep="\t", quote=FALSE)
-	write.table(gene_trait_cor, file=file.path(path, "gene_trait.txt"), sep="\t", quote=FALSE)
-	write.table(gene_trait_cor_p, file=file.path(path, "gene_trait_p_val.txt"), sep="\t", quote=FALSE)
-	write.table(module_trait_cor, file=file.path(path, "module_trait.txt"), sep="\t", quote=FALSE)
-	write.table(module_trait_cor_p, file=file.path(path, "module_trait_p_val.txt"), sep="\t", quote=FALSE)
+	utils::write.table(trait, file=file.path(path, "sample_trait.txt"), sep="\t", quote=FALSE)
+	utils::write.table(gene_trait_cor, file=file.path(path, "gene_trait.txt"), sep="\t", quote=FALSE)
+	utils::write.table(gene_trait_cor_p, file=file.path(path, "gene_trait_p_val.txt"), sep="\t", quote=FALSE)
+	utils::write.table(module_trait_cor, file=file.path(path, "module_trait.txt"), sep="\t", quote=FALSE)
+	utils::write.table(module_trait_cor_p, file=file.path(path, "module_trait_p_val.txt"), sep="\t", quote=FALSE)
 
 	cluster_ID<- net$colors
 	Cluster_MM <- sapply(names(cluster_ID), function(x) gene_module_cor[x, paste0("Cluster_", cluster_ID[x])]) 
@@ -338,7 +349,7 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 
 	# Plot cluster ID vs. ID of cluster with lowest MM p-value for each gene
 	MM_Cluster_ID <- apply(gene_module_cor_p, 1, function(x) which(x == min(x))) - 1 # Cluster ID with minimum MM p value
-	cluster_vs_MM <- ggplot2::ggplot(as.data.frame(cbind(cluster_ID, MM_Cluster_ID)), ggplot2::aes(x = cluster_ID ,y = MM_Cluster_ID)) + ggplot2::geom_count() + 
+	cluster_vs_MM <- ggplot2::ggplot(as.data.frame(cbind(cluster_ID, MM_Cluster_ID)), ggplot2::aes_string(x = "cluster_ID" ,y = "MM_Cluster_ID")) + ggplot2::geom_count() + 
 		ggplot2::scale_x_continuous("Cluster ID", labels = function(x) paste0("Cluster_", x)) + 
 		ggplot2::scale_y_continuous("Cluster with highest MM value", labels = function(x) paste0("Cluster_", x))
 

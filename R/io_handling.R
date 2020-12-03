@@ -3,12 +3,17 @@
 #' @param from_file input targets file
 #' @param ctrl_samples control samples
 #' @param treat_samples target samples
+#' @return targets info loaded
 #' @keywords design
 #' @export
+#' @importFrom utils read.table
+#' @examples
+#'
+#'
 target_generation <- function(from_file=NULL, ctrl_samples=NULL, treat_samples=NULL){
 	target <- NULL
 	if(! is.null(from_file)) {
-	  target <- read.table(from_file, header=TRUE, sep="\t", check.names = FALSE)
+	  target <- utils::read.table(from_file, header=TRUE, sep="\t", check.names = FALSE)
 	  # Check there is a column named treat
 	  if(! "treat" %in% colnames(target)) {
 	    stop(cat("No column named treat in the target file.\nPlease resubmit"))
@@ -29,17 +34,19 @@ target_generation <- function(from_file=NULL, ctrl_samples=NULL, treat_samples=N
 #' @param df_list dataframes list 
 #' @param prefix prefix concatenated to output file name
 #' @param root path where write
+#' @return void
 #' @keywords output
 #' @export
+#' @importFrom utils write.table
 #' @examples
-#' write_df_list_as_tables()
+#' 
 write_df_list_as_tables <- function(df_list, prefix, root=getwd()) {
   invisible(
     lapply(1:length(df_list), function(i) {
       pack <- names(df_list)[i]
       folder <- file.path(root, paste0("Results_", pack))
       if(!dir.exists(folder)){dir.create(folder)}
-      write.table(df_list[[pack]],
+      utils::write.table(df_list[[pack]],
       file=file.path(folder, paste0(prefix, pack, '.txt')), quote=FALSE, col.names = NA, sep="\t")
     })
   )
@@ -48,12 +55,17 @@ write_df_list_as_tables <- function(df_list, prefix, root=getwd()) {
 
 #' Loads stored results in DEgenes Hunter expression analysis folder and returns in correct object format
 #' @param path of DGH folder
+#' @return hunter expression analysis object loaded
 #' @keywords input
 #' @export
+#' @importFrom utils read.table tail
+#' @examples
+#'
+#'
 load_hunter_folder <- function(path){
 	dgh_exp_results <- list()
-	dgh_exp_results[["raw_filter"]] <- read.table(file.path(path,"filtered_count_data.txt"), stringsAsFactors = FALSE) 
-	dgh_exp_results[["sample_groups"]] <- read.table(file.path(path,"control_treatment.txt"), stringsAsFactors = FALSE, header = TRUE)
+	dgh_exp_results[["raw_filter"]] <- utils::read.table(file.path(path,"filtered_count_data.txt"), stringsAsFactors = FALSE) 
+	dgh_exp_results[["sample_groups"]] <- utils::read.table(file.path(path,"control_treatment.txt"), stringsAsFactors = FALSE, header = TRUE)
 	dgh_exp_results[["index_control_cols"]] <- dgh_exp_results[["sample_groups"]][dgh_exp_results[["sample_groups"]][1] == "C",2]
 	dgh_exp_results[["index_treatmn_cols"]] <- dgh_exp_results[["sample_groups"]][dgh_exp_results[["sample_groups"]][1] == "T",2]
 	dgh_exp_results[["design_vector"]] <- dgh_exp_results[["sample_groups"]][[1]]
@@ -67,7 +79,7 @@ load_hunter_folder <- function(path){
 		packages_results <- packages_results[!grepl("WGCNA$",packages_results)]
 	}
 	
-	dgh_exp_results[["DE_all_genes"]] <- read.table(file.path(path,"Common_results","hunter_results_table.txt"), stringsAsFactors = FALSE, header = TRUE)
+	dgh_exp_results[["DE_all_genes"]] <- utils::read.table(file.path(path,"Common_results","hunter_results_table.txt"), stringsAsFactors = FALSE, header = TRUE)
 	dgh_exp_results[["all_FDR_names"]] <- c("padj", "FDR")
 	dgh_exp_results[["all_LFC_names"]] <- c("log2FoldChange", "logFC")
 	dgh_exp_results[["all_pvalue_names"]] <- c("pvalue", "PValue")
@@ -81,7 +93,7 @@ load_hunter_folder <- function(path){
 	dgh_exp_results[["DEG_pack_columns"]] <- c() 
 	invisible(lapply(packages_results,function(pack_path){
 		pack_res <- load_package_result(pack_path)
-		pack_name <- tail(unlist(strsplit(pack_path,"_")),1)
+		pack_name <- utils::tail(unlist(strsplit(pack_path,"_")),1)
 		if(length(pack_res) > 0){
 			for(n in names(pack_res)){
 				dgh_exp_results[[n]][[pack_name]] <<- pack_res[[n]]
@@ -96,7 +108,7 @@ load_hunter_folder <- function(path){
 	aux <- load_WGCNA_results(path,dgh_exp_results[["DE_all_genes"]])
 	if(length(aux) > 0) dgh_exp_results[["WGCNA_all"]] <- aux
 	
-	DEGenesHunter_expression_opt <- read.table(file.path(path, "opt_input_values.txt"), header = FALSE, stringsAsFactors = FALSE, sep = "\t")
+	DEGenesHunter_expression_opt <- utils::read.table(file.path(path, "opt_input_values.txt"), header = FALSE, stringsAsFactors = FALSE, sep = "\t")
 	aux_numeric <- c("reads","minlibraries","p_val_cutoff","lfc","minpack_common","WGCNA_memory","WGCNA_deepsplit","WGCNA_min_genes_cluster","WGCNA_detectcutHeight","WGCNA_mergecutHeight")
 	aux_logical <- c("numerics_as_factors","WGCNA_all")
 	degh_exp <- as.list(DEGenesHunter_expression_opt[,2])
@@ -117,15 +129,17 @@ load_hunter_folder <- function(path){
 
 #' Loads stored results in DEgenes Hunter expression analysis package folder and returns in compact object
 #' @param pack_path of expression package folder
+#' @return package info laoded
 #' @keywords input
+#' @importFrom utils tail read.table
 load_package_result <- function(pack_path){
 	info <- list()
-	pack_name <- tail(unlist(strsplit(pack_path,"_")),1)
+	pack_name <- utils::tail(unlist(strsplit(pack_path,"_")),1)
 	if(file.exists(file.path(pack_path,paste0("Normalized_counts_",pack_name,".txt")))){
-		info[["all_data_normalized"]] <- read.table(file.path(pack_path,paste0("Normalized_counts_",pack_name,".txt")), stringsAsFactors = FALSE)
+		info[["all_data_normalized"]] <- utils::read.table(file.path(pack_path,paste0("Normalized_counts_",pack_name,".txt")), stringsAsFactors = FALSE)
 	}
 	if(file.exists(file.path(pack_path,paste0("allgenes_",pack_name,".txt")))){
-		info[["all_counts_for_plotting"]] <- read.table(file.path(pack_path,paste0("allgenes_",pack_name,".txt")), stringsAsFactors = FALSE)
+		info[["all_counts_for_plotting"]] <- utils::read.table(file.path(pack_path,paste0("allgenes_",pack_name,".txt")), stringsAsFactors = FALSE)
 	}
 	return(info)
 }
@@ -134,18 +148,20 @@ load_package_result <- function(pack_path){
 #' Loads stored WGCNA results in DEgenes Hunter expression analysis package folder and returns in compact object
 #' @param path of expression analysis results (Hunter folder)
 #' @param main_deg_table dataframe with main DEG analysis results
+#' @return WGCNA results loaded
 #' @keywords input
+#' @importFrom utils read.table
 load_WGCNA_results <- function(path, main_deg_table){
 	info <- list()
 	if(dir.exists(file.path(path,"Results_WGCNA"))){
 		# Package objects
 		package_objects <- list()
-		package_objects[["gene_module_cor"]] <- read.table(file.path(path,"Results_WGCNA","gene_MM.txt"))
-		package_objects[["gene_module_cor_p"]] <- read.table(file.path(path,"Results_WGCNA","gene_MM_p_val.txt"))
-		package_objects[["gene_trait_cor"]] <- read.table(file.path(path,"Results_WGCNA","gene_trait.txt"))
-		package_objects[["gene_trait_cor_p"]] <- read.table(file.path(path,"Results_WGCNA","gene_trait_p_val.txt"))
-		package_objects[["module_trait_cor"]] <- read.table(file.path(path,"Results_WGCNA","module_trait.txt"))
-		package_objects[["module_trait_cor_p"]] <- read.table(file.path(path,"Results_WGCNA","module_trait_p_val.txt"))
+		package_objects[["gene_module_cor"]] <- utils::read.table(file.path(path,"Results_WGCNA","gene_MM.txt"))
+		package_objects[["gene_module_cor_p"]] <- utils::read.table(file.path(path,"Results_WGCNA","gene_MM_p_val.txt"))
+		package_objects[["gene_trait_cor"]] <- utils::read.table(file.path(path,"Results_WGCNA","gene_trait.txt"))
+		package_objects[["gene_trait_cor_p"]] <- utils::read.table(file.path(path,"Results_WGCNA","gene_trait_p_val.txt"))
+		package_objects[["module_trait_cor"]] <- utils::read.table(file.path(path,"Results_WGCNA","module_trait.txt"))
+		package_objects[["module_trait_cor_p"]] <- utils::read.table(file.path(path,"Results_WGCNA","module_trait_p_val.txt"))
 		# gene_cluster_info
 		gene_cluster_info <- cbind(rownames(main_deg_table), main_deg_table[,c("Cluster_ID", "Cluster_MM", "Cluster_MM_pval")])
 		colnames(gene_cluster_info) <- c("ENSEMBL_ID", "Cluster_ID", "Cluster_MM", "Cluster_MM_pval")
@@ -154,8 +170,8 @@ load_WGCNA_results <- function(path, main_deg_table){
 		# plot_objects
 		plot_objects <- list()
 
-		sample_module <- read.table(file.path(path,"Results_WGCNA","eigen_values_per_samples.txt"))
-		sample_trait <- read.table(file.path(path,"Results_WGCNA","sample_trait.txt"))
+		sample_module <- utils::read.table(file.path(path,"Results_WGCNA","eigen_values_per_samples.txt"))
+		sample_trait <- utils::read.table(file.path(path,"Results_WGCNA","sample_trait.txt"))
 		plot_objects[["trait_and_module"]] <- cbind(sample_module,sample_trait)
 
 
@@ -171,40 +187,46 @@ load_WGCNA_results <- function(path, main_deg_table){
 
 #' Write enrichment files related to functional_hunter results list
 #' @param func_results functional enrichment results
-#' @param output_file output folder path
+#' @param output_files output folder path
+#' @return void
 #' @keywords export
 #' @export
+#' @importFrom utils write.table
+#' @examples
+#'
+#'
 write_enrich_files <- function(func_results, output_files=getwd()){
 	if(!dir.exists(output_files)) dir.create(output_files)
-	write.table(data.frame(A = names(func_results$final_main_params), B = unlist(func_results$final_main_params)), file = file.path(output_files,"functional_opt.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-	if("GO_ORA" %in% names(func_results)) write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_ORA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_ora"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-	if("GO_GSEA" %in% names(func_results)) write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_GSEA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_gsea"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")	
-	if("KEGG_ORA" %in% names(func_results)) write.table(func_results$KEGG_ORA, file=file.path(output_files, "KEGG_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-	if("KEGG_GSEA" %in% names(func_results)) write.table(func_results$KEGG_GSEA, file=file.path(output_files, "KEGG_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-	if("REACT_ORA" %in% names(func_results)) write.table(func_results$REACT_ORA, file=file.path(output_files, "REACT_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-	if("REACT_GSEA" %in% names(func_results)) write.table(func_results$REACT_GSEA, file=file.path(output_files, "REACT_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-	if("DEGH_results_annot" %in% names(func_results)) write.table(func_results$DEGH_results_annot, file=file.path(output_files, "hunter_results_table_annotated.txt"), quote=FALSE, col.names=NA, sep="\t")
+	utils::write.table(data.frame(A = names(func_results$final_main_params), B = unlist(func_results$final_main_params)), file = file.path(output_files,"functional_opt.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+	if("GO_ORA" %in% names(func_results)) utils::write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_ORA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_ora"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+	if("GO_GSEA" %in% names(func_results)) utils::write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_GSEA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_gsea"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")	
+	if("KEGG_ORA" %in% names(func_results)) utils::write.table(func_results$KEGG_ORA, file=file.path(output_files, "KEGG_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+	if("KEGG_GSEA" %in% names(func_results)) utils::write.table(func_results$KEGG_GSEA, file=file.path(output_files, "KEGG_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+	if("REACT_ORA" %in% names(func_results)) utils::write.table(func_results$REACT_ORA, file=file.path(output_files, "REACT_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+	if("REACT_GSEA" %in% names(func_results)) utils::write.table(func_results$REACT_GSEA, file=file.path(output_files, "REACT_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+	if("DEGH_results_annot" %in% names(func_results)) utils::write.table(func_results$DEGH_results_annot, file=file.path(output_files, "hunter_results_table_annotated.txt"), quote=FALSE, col.names=NA, sep="\t")
 	if("CUSTOM" %in% names(func_results)){
 		invisible(lapply(seq_along(func_results$CUSTOM),function(i){
-			write.table(func_results$CUSTOM[[i]], file=file.path(output_files, paste0(basename(names(func_results$CUSTOM)[i]),"_results")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+			utils::write.table(func_results$CUSTOM[[i]], file=file.path(output_files, paste0(basename(names(func_results$CUSTOM)[i]),"_results")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}))
 	}
+	fortify.compareClusterResult <- "enrichplot" %:::% "fortify.compareClusterResult"
 	if("WGCNA_ORA" %in% names(func_results)){
 		for(enrichment_i in 1:length(func_results$WGCNA_ORA)) {
-			df <- enrichplot:::fortify.compareClusterResult(func_results$WGCNA_ORA[[enrichment_i]])
-			write.table(df, file=file.path(output_files, paste0(names(func_results$WGCNA_ORA[enrichment_i]),"_cls_ora")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+			df <- fortify.compareClusterResult(func_results$WGCNA_ORA[[enrichment_i]])
+			utils::write.table(df, file=file.path(output_files, paste0(names(func_results$WGCNA_ORA[enrichment_i]),"_cls_ora")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}
 	}
 	if("WGCNA_GSEA" %in% names(func_results)){
 		for (enrichment_i in 1:length(func_results$WGCNA_GSEA)) {
 			df <- func_results$WGCNA_GSEA[[enrichment_i]]@compareClusterResult
-			write.table(df, file=file.path(output_files, paste0(names(func_results$WGCNA_GSEA[enrichment_i]),"_cls_gsea")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+			utils::write.table(df, file=file.path(output_files, paste0(names(func_results$WGCNA_GSEA[enrichment_i]),"_cls_gsea")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}
 	}
 	if("WGCNA_CUSTOM" %in% names(func_results)){
 		for(i in 1:length(func_results$WGCNA_CUSTOM)) {
-			df <- enrichplot:::fortify.compareClusterResult(func_results$WGCNA_CUSTOM[[i]])
-			write.table(df, file=file.path(output_files, paste0(basename(names(func_results$WGCNA_CUSTOM)[i]),"_cls_ora")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+			df <- fortify.compareClusterResult(func_results$WGCNA_CUSTOM[[i]])
+			utils::write.table(df, file=file.path(output_files, paste0(basename(names(func_results$WGCNA_CUSTOM)[i]),"_cls_ora")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}
 	}
 }

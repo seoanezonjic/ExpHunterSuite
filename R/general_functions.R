@@ -1,5 +1,13 @@
 ################################# GENERAL FUNCTIONS ##############################################
 
+#' Method used to import hidden functions legally for CRAN check
+#' @param pkg package
+#' @param fun function to be luaded
+#' @return function requried
+`%:::%` <- function(pkg, fun){
+  return(get(fun, envir = asNamespace(pkg),inherits = FALSE))
+} 
+
 handling_errors <- function(a){
   normalized_counts <- NULL
   expres_diff <- NULL
@@ -13,6 +21,7 @@ standard_error <- function(x) {
 
 ########################################################
 # Functions to generate output files
+#' @importFrom stats pchisq
 unite_DEG_pack_results <- function(exp_results, p_val_cutoff, lfc, minpack_common) {
   DEG_pack_columns <- exp_results[['DEG_pack_columns']] 
   all_DE <- exp_results[['all_counts_for_plotting']] 
@@ -53,7 +62,7 @@ unite_DEG_pack_results <- function(exp_results, p_val_cutoff, lfc, minpack_commo
 
   xi_squared <-  -2 * rowSums(log_FDR)
   degrees_freedom <- 2 * length(final_FDR_names)
-  combined_FDR <- pchisq(xi_squared, degrees_freedom, lower.tail = FALSE)
+  combined_FDR <- stats::pchisq(xi_squared, degrees_freedom, lower.tail = FALSE)
   all_DE_df[,"combined_FDR"] <- combined_FDR
 
   # Reorder by combined FDR value
@@ -87,20 +96,22 @@ add_filtered_genes <- function(all_DE_df, raw) {
 
 debug_point <- function(file, message = "Debug point",envir = NULL){
     if(!dir.exists(dirname(file))){
-      dir.create(dirname(file), recursive = T)
+      dir.create(dirname(file), recursive = TRUE)
     }
     if(is.null(envir)){
-      debug_message <<- message
-      save.image(file)
-    }else{
-      envir$debug_message <- message
-      on.exit(file.remove(file))
-      save(list = names(envir), file = file, envir = envir, precheck = FALSE)      
-      on.exit()
+      current_envir <- environment() # current environment
+      envir <- parent.env(current_envir)
     }
+
+    envir$debug_message <- message
+    on.exit(file.remove(file))
+    save(list = names(envir), file = file, envir = envir, precheck = FALSE)      
+    on.exit()
 }
 
-
+#' @importFrom ggplot2 ggplot aes_string geom_bar theme element_text
+#' @importFrom grDevices pdf dev.off
+#' @importFrom utils write.table
 save_times <- function(time_control, output="times_control.txt", plot_name = "time_control.pdf"){
  spent_times <- list()
     invisible(lapply(seq(2,length(time_control)), function(time_control_i){
@@ -109,12 +120,12 @@ save_times <- function(time_control, output="times_control.txt", plot_name = "ti
     spent_times_df <- do.call(rbind.data.frame, spent_times)
     colnames(spent_times_df) <- c("time")
     spent_times_df$control <- names(spent_times)
-    pp <- ggplot(spent_times_df, aes(x= control, y = time)) +
-    geom_bar(stat = "identity") +
-    theme(axis.text.x=element_text(angle = 25, hjust=1))
-    pdf(file.path(dirname(output), plot_name))    
+    pp <- ggplot2::ggplot(spent_times_df, ggplot2::aes_string(x= "control", y = "time")) +
+          ggplot2::geom_bar(stat = "identity") +
+          ggplot2::theme(axis.text.x=ggplot2::element_text(angle = 25, hjust=1))
+    grDevices::pdf(file.path(dirname(output), plot_name))    
       plot(pp)
-    dev.off()
-    write.table(spent_times_df, file=output, quote=FALSE, row.names=FALSE, sep="\t")
+    grDevices::dev.off()
+    utils::write.table(spent_times_df, file=output, quote=FALSE, row.names=FALSE, sep="\t")
 }
 

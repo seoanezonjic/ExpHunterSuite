@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+#' @import dplyr
+
 suppressPackageStartupMessages(library(optparse)) 
 
  

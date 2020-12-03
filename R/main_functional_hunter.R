@@ -15,8 +15,11 @@
 #' @param cores cores to be used if parallel features are going to be used. Default: 1
 #' @param output_files output folder
 #' @param fc_colname main logFC colname (into hunter_results dataframe)
+#' @return functional result object with enrichments performed
 #' @keywords method
 #' @export
+#' @importFrom magrittr %>%
+#' @importFrom clusterProfiler merge_result
 functional_hunter <- function(
 	hunter_results,
 	model_organism,
@@ -70,15 +73,15 @@ functional_hunter <- function(
 
 	# Temporary bodge to enable funcitonal hunter to be run on externally processed data and DESeq2 not run
 	# TODO : This is not working
-	if(! grepl("DESeq2", names(DEGH_results)) && grepl("external_DEA", names(DEGH_results))) {
-		names(DEGH_results) <- gsub("external_DEA", "DESeq2", names(DEGH_results))
-		# This is particularly horrible - like this to ensure it matches EXACTLY the file loaded if WGCNA
-		external_DEA_folder <- file.path(input_hunter_folder, "Results_external_DEA")
-		DESeq2_dummy_folder <- file.path(input_hunter_folder, "Results_DESeq2")
-		dir.create(DESeq2_dummy_folder)
-		file.copy(file.path(external_DEA_folder, "Normalized_counts_external_DEA.txt"),
-				  file.path(DESeq2_dummy_folder, "Normalized_counts_DESeq2.txt"))
-	}
+	# if(! grepl("DESeq2", names(DEGH_results)) && grepl("external_DEA", names(DEGH_results))) {
+	# 	names(DEGH_results) <- gsub("external_DEA", "DESeq2", names(DEGH_results))
+	# 	# This is particularly horrible - like this to ensure it matches EXACTLY the file loaded if WGCNA
+	# 	external_DEA_folder <- file.path(input_hunter_folder, "Results_external_DEA")
+	# 	DESeq2_dummy_folder <- file.path(input_hunter_folder, "Results_DESeq2")
+	# 	dir.create(DESeq2_dummy_folder)
+	# 	file.copy(file.path(external_DEA_folder, "Normalized_counts_external_DEA.txt"),
+	# 			  file.path(DESeq2_dummy_folder, "Normalized_counts_DESeq2.txt"))
+	# }
 
 	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 	##                                                                                                                   ##
@@ -140,9 +143,9 @@ functional_hunter <- function(
 		} else if (current_organism_info$Reactome_ID[1] == "" || (keytypes != "ENTREZID")) {
 			flags$REACT <- FALSE
 			warning("Specified organism is not allowed to be used with Reactome module. Please check your IDs table")
-		} else {
-			require(ReactomePA)
-		}
+		}# else {
+		# 	require(ReactomePA)
+		# }
 	}
 
 	if(!any(flags$GP_cp, flags$KEGG, flags$REACT)){
@@ -276,7 +279,8 @@ functional_hunter <- function(
 
 	###############################
 	## topGO & ORA
-	likely_degs_df <- subset(DEGH_results, genes_tag == "PREVALENT_DEG", !is.na(input_IDs))
+	# likely_degs_df <- subset(DEGH_results, genes_tag == "PREVALENT_DEG", !is.na(input_IDs))
+	likely_degs_df <- DEGH_results[DEGH_results$genes_tag == "PREVALENT_DEG" & !is.na(DEGH_results$input_IDs),]
 	likely_degs_entrez <- unique(likely_degs_df$entrezgene)
 	# likely_degs <- unique(likely_degs_df$input_IDs)
 
@@ -604,6 +608,7 @@ functional_hunter <- function(
 #' @return organism table
 #' @keywords method
 #' @export
+#' @importFrom utils read.table
 get_organism_table <- function(file = file.path(find.package('DEgenesHunter'), "external_data", "organism_table.txt")){
-	return(read.table(file, header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA))
+	return(utils::read.table(file, header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA))
 }

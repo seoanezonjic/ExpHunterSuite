@@ -1,17 +1,19 @@
 ################### FUNCTIONS
- 
+
+#' @importFrom utils read.table
+#' @importFrom stringr str_remove
 load_DEGH_information <- function(execution_path, translation_table = NULL, only_known = FALSE){
 	execution <- list()
-	execution[['normalized_counts']] <- as.matrix(read.table(file.path(execution_path, "Results_DESeq2/Normalized_counts_DESeq2.txt"), header=TRUE, row.names=1, sep="\t"))
+	execution[['normalized_counts']] <- as.matrix(utils::read.table(file.path(execution_path, "Results_DESeq2/Normalized_counts_DESeq2.txt"), header=TRUE, row.names=1, sep="\t"))
 
-	execution[['DH_results']] <- read.table(file.path(execution_path, "Common_results/hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t")
+	execution[['DH_results']] <- utils::read.table(file.path(execution_path, "Common_results/hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t")
 	execution[['DH_results']]$gene_name <- rownames(execution[['DH_results']])
 	rownames(execution[['DH_results']]) <- NULL
 	execution[["DH_results"]] <-  execution[["DH_results"]][execution[["DH_results"]]$gene_name != "id" & execution[["DH_results"]]$genes_tag != "FILTERED_OUT",] #Esto es un control porque en algun momento del flujo se ha insertado una columna en la matriz de conteos que no debe
 	# execution[["DH_results"]] execution[["DH_results"]][execution[["DH_results"]]$Cluster_ID < mm_fil]
-	execution[['Eigengene']] <- read.table(file.path(execution_path, "Results_WGCNA/eigen_values_per_samples.txt"), header=TRUE, row.names=1, sep="\t")
+	execution[['Eigengene']] <- utils::read.table(file.path(execution_path, "Results_WGCNA/eigen_values_per_samples.txt"), header=TRUE, row.names=1, sep="\t")
 	# execution[['Eigengene']] <- execution[['Eigengene']] #TODO => Proponer el cambio de output del DGH
-	names(execution[["Eigengene"]]) <- str_remove(names(execution[["Eigengene"]]), "ME")
+	names(execution[["Eigengene"]]) <- stringr::str_remove(names(execution[["Eigengene"]]), "ME")
 	execution[["Eigengene"]] <- as.matrix(execution[["Eigengene"]])
  	
 	if (!is.null(translation_table)) {
@@ -48,11 +50,12 @@ load_DEGH_information <- function(execution_path, translation_table = NULL, only
 
 
 # filter_correlations
+#' @importFrom dplyr desc between row_number filter arrange group_by
 get_hub_genes_by_MM <- function(normalized_counts, hunter_results, top = 1){
 	hub_genes <- hunter_results %>% 
-				filter(Cluster_MM_pval <= 0.05) %>% 
-				arrange(desc(Cluster_MM)) %>% 
-				group_by(Cluster_ID) %>% filter(between(row_number(), 1, top))
+				dplyr::filter(Cluster_MM_pval <= 0.05) %>% 
+				dplyr::arrange(dplyr::desc(Cluster_MM)) %>% 
+				dplyr::group_by(Cluster_ID) %>% dplyr::filter(dplyr::between(dplyr::row_number(), 1, top))
 
 	hub_genes_profile <- as.matrix(normalized_counts[,colnames(normalized_counts) %in% hub_genes$gene_name])
 	
@@ -70,12 +73,16 @@ translate_column <- function(column, translation_table) { #translation_table, a 
 	return(column)
 }
 
+
+#' @importFrom WGCNA corPvalueStudent
+#' @importFrom stats cor
 correlate_profiles <- function(profiles_A, profiles_B) {
 	
-	correlations <- cor(profiles_A, profiles_B)
+	correlations <- stats::cor(profiles_A, profiles_B)
+	# correlations <- WGCNA::cor(profiles_A, profiles_B) # Check if this is the correct one or not
 	
 	nSamples <- ncol(profiles_A) 
-	cor_pval <- as.data.frame(corPvalueStudent(as.matrix(correlations), nSamples))
+	cor_pval <- as.data.frame(WGCNA::corPvalueStudent(as.matrix(correlations), nSamples))
 
 	correlated_profiles <- list(
 		corr = correlations,
@@ -115,19 +122,21 @@ summarize_multimir <- function(multimir_table) {
 
 
 
+#' @importFrom data.table as.data.table
+#' @importFrom dplyr select
 add_multimir_info <- function(plot_obj, expand_miRNA = NULL , expand_RNA = NULL, multimir_summary = NULL) {
-	plot_obj <- as.data.table(plot_obj)
+	plot_obj <- data.table::as.data.table(plot_obj)
 	if (!is.null(expand_RNA)) {
 		print("expand RNA")
 		names(plot_obj)[names(plot_obj)=="RNAseq"] <- "RNAseq_mod"
 
-		RNAseq <- expand_RNA  %>% select(Cluster_ID, gene_name)
-		RNAseq <- as.data.table(RNAseq)
+		RNAseq <- expand_RNA  %>% dplyr::select(Cluster_ID, gene_name)
+		RNAseq <- data.table::as.data.table(RNAseq)
 		colnames(RNAseq) <- c("module", "RNAseq")
 		# print(head(RNAseq))
 		RNAseq$module <- as.character(RNAseq$module)
 
-		plot_obj <- merge(x = plot_obj, y = RNAseq, by.x = "RNAseq_mod", by.y = "module", by =.EACHI, allow.cartesian  = TRUE)
+		plot_obj <- merge(x = plot_obj, y = RNAseq, by.x = "RNAseq_mod", by.y = "module", by =data.table::.EACHI, allow.cartesian  = TRUE)
 		plot_obj$RNAseq_mod <- NULL
 		
 	}
@@ -138,12 +147,12 @@ add_multimir_info <- function(plot_obj, expand_miRNA = NULL , expand_RNA = NULL,
 		print("expand RNA")
 		names(plot_obj)[names(plot_obj) == "miRNAseq"] <- "miRNAseq_mod"
 		
-		miRNAseq <- expand_miRNA %>% select(Cluster_ID, gene_name) # get_module_genes(expand_miRNA, miRNAseq, "miRNAseq")
+		miRNAseq <- expand_miRNA %>% dplyr::select(Cluster_ID, gene_name) # get_module_genes(expand_miRNA, miRNAseq, "miRNAseq")
 		miRNAseq <- as.data.table(miRNAseq)
 		colnames(miRNAseq) <- c("module", "miRNAseq")
 		miRNAseq$module <- as.character(miRNAseq$module)
 
-		plot_obj <- merge(x = plot_obj, y = miRNAseq, by.x = "miRNAseq_mod", by.y = "module", by =.EACHI, allow.cartesian  = TRUE)
+		plot_obj <- merge(x = plot_obj, y = miRNAseq, by.x = "miRNAseq_mod", by.y = "module", by =data.table::.EACHI, allow.cartesian  = TRUE)
 		plot_obj$miRNAseq_mod <- NULL
 	}
 	
@@ -155,17 +164,18 @@ add_multimir_info <- function(plot_obj, expand_miRNA = NULL , expand_RNA = NULL,
 	return(as.data.frame(plot_obj))
 }
 
+#' @importFrom data.table data.table rbindlist
 expand_module <- function(module_genes, plot_obj, column_name){ #column_name is the name of column to expand
 	gene_corr_list <- lapply(1:nrow(plot_obj), function(i) {
 
 	 	 	this_row <- plot_obj[i,]
 	 	 	module_genes2 <- module_genes[module_genes$module %in% this_row[[column_name]], column_name]
 	 	 	this_row[[column_name]] <- NULL
-	  		expanded_data <- data.table(this_row, module_genes2)
+	  		expanded_data <- data.table::data.table(this_row, module_genes2)
 	  		names(expanded_data)[names(expanded_data) == "module_genes2"] <- column_name
 	  		return(as.data.frame(expanded_data))
 		})
-	gene_corr_list <- rbindlist(gene_corr_list)
+	gene_corr_list <- data.table::rbindlist(gene_corr_list)
 
 	return(gene_corr_list)
 }
@@ -179,6 +189,8 @@ get_module_genes <- function(hunter_results, module_name, column_name){
 	return(module_genes)
 }
 
+#' @importFrom dplyr summarize
+#' @importFrom stats sd
 add_randoms <- function(background = NULL, filters_summary = NULL, permutations = 100){
 	# str(background)
 	# str(filters_summary)
@@ -195,7 +207,7 @@ add_randoms <- function(background = NULL, filters_summary = NULL, permutations 
 			# save(random_strat, file = "/mnt/home/users/bio_267_uma/josecordoba/test/test_miRNA-RNA/test.RData")
 			# q() 
 			random_summary <- random_strat %>% 
-							   summarize(predicted = sum(predicted_c > 0),
+							   dplyr::summarize(predicted = sum(predicted_c > 0),
 							   			validated = sum(validated_c > 0), 
 							   			both = sum(predicted_c > 0 & validated_c > 0))
 			
@@ -211,7 +223,7 @@ add_randoms <- function(background = NULL, filters_summary = NULL, permutations 
 		random_summary <- data.frame(strategy = strategy_name,
 									type = c("predicted_random", "validated_random", "both_random"),
 									pairs = c(mean(dist[["random_predicted_counts"]]), mean(dist[["random_validated_counts"]]), mean(dist[["random_both_counts"]])),
-									sdev = c(sd(dist[["random_predicted_counts"]]), sd(dist[["random_validated_counts"]]), sd(dist[["random_both_counts"]])),
+									sdev = c(stats::sd(dist[["random_predicted_counts"]]), stats::sd(dist[["random_validated_counts"]]), stats::sd(dist[["random_both_counts"]])),
 									p_val = rep(NA, 3), #c(calc_pval(predicted_pairs, random_predicted_counts), calc_pval(validated_pairs, random_validated_counts), calc_pval(both_pairs,random_both_counts)),
 									quantile = rep(NA, 3) #c(calc_quantile(predicted_pairs, random_predicted_counts), calc_quantile(validated_pairs, random_validated_counts), calc_quantile(both_pairs,random_both_counts))
 
@@ -234,15 +246,17 @@ add_randoms <- function(background = NULL, filters_summary = NULL, permutations 
 	return(filters_summary)
 }
 
+#' @importFrom stats sd pnorm
 calc_pval <- function(value, distribution){
 	d_mean <- mean(distribution)
-	d_sd <- sd(distribution)
-	pval <- 1 - pnorm(value, mean = d_mean, sd = d_sd)
+	d_sd <- stats::sd(distribution)
+	pval <- 1 - stats::pnorm(value, mean = d_mean, sd = d_sd)
 	return(pval)
 }
 
+#' @importFrom stats ecdf
 calc_quantile <- function(value, distribution){
-	Fn <- ecdf(distribution)
+	Fn <- stats::ecdf(distribution)
 	quantile <- 1 - Fn(value)
 	return(quantile)
 }

@@ -72,7 +72,7 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 
 
-dir.create(opt$output_files, recursive = T)
+dir.create(opt$output_files, recursive = TRUE)
 
 
 miRNA_RNAseq_analysis(

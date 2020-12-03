@@ -186,16 +186,20 @@ perform_expression_analysis <- function(modules, replicatesC, replicatesT, raw_f
 
 # DESeq2
 #-----------------------------------------------
+#' @importFrom DESeq2 DESeqDataSetFromMatrix DESeq results counts
+#' @importFrom stats formula
 analysis_DESeq2 <- function(data, p_val_cutoff, target, model_formula_text){
 	dds <- DESeq2::DESeqDataSetFromMatrix(countData = data,
 								  colData = target,
-                                  design = formula(model_formula_text))
+                                  design = stats::formula(model_formula_text))
 	dds <- DESeq2::DESeq(dds)
 	all_DESeq2_genes <- DESeq2::results(dds, alpha = p_val_cutoff)
 	normalized_counts <- as.data.frame(DESeq2::counts(dds, normalized=TRUE)) # Getting normalized values
 	return(list(normalized_counts, as.data.frame(all_DESeq2_genes), list(de_deseq2=all_DESeq2_genes, DESeq2_dataset=dds)))
 }
 
+#' @importFrom edgeR DGEList calcNormFactors estimateDisp exactTest glmQLFit glmQLFTest topTags cpm
+#' @importFrom stats formula model.matrix
 analysis_edgeR <- function(data, target, model_formula_text){
 	# This is the default model_formula_text if nothing else is given.
 	if(model_formula_text == "~ treat") {
@@ -205,7 +209,7 @@ analysis_edgeR <- function(data, target, model_formula_text){
 		d_edgeR_DE <- edgeR::exactTest(d_edgeR, dispersion = "auto", pair=c("Ctrl", "Treat"))
 	} else {
 		d_edgeR <- edgeR::DGEList(counts=data)
-		model_design <- model.matrix(formula(paste("~", model_formula_text)), target)
+		model_design <- stats::model.matrix(stats::formula(paste("~", model_formula_text)), target)
 		d_edgeR <- edgeR::estimateDisp(d_edgeR, model_design)
 		d_edgeR_DE <- edgeR::glmQLFit(d_edgeR, model_design)
 		d_edgeR_DE <- edgeR::glmQLFTest(d_edgeR_DE)
@@ -218,8 +222,11 @@ analysis_edgeR <- function(data, target, model_formula_text){
 	return(list(normalized_counts, all_genes_df, list(d_edgeR=d_edgeR, dennorm=dennorm)))
 }
 
+#' @importFrom limma voom eBayes topTable lmFit
+#' @importFrom edgeR DGEList calcNormFactors
+#' @importFrom stats formula model.matrix
 analysis_limma <- function(data, target, model_formula_text){
-	model_design <- model.matrix(formula(paste("~", model_formula_text)), target)
+	model_design <- stats::model.matrix(stats::formula(paste("~", model_formula_text)), target)
 	# Calculating differential expression
 	DGE_List <- edgeR::DGEList(counts=data) # Building object (DGEList)
 	DGE_List <- edgeR::calcNormFactors(DGE_List) # Calculation of the normalization factor 
@@ -232,6 +239,8 @@ analysis_limma <- function(data, target, model_formula_text){
     return(list(normalized_counts, todos_limma))
 }
 
+#' @importFrom NOISeq readData noiseqbio tmm
+#' @importFrom Biobase assayData
 analysis_NOISeq <- function(data, target){
 	group <- as.character(target$treat)
 	# Experimental design
