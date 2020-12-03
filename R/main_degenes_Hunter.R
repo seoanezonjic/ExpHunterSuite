@@ -26,6 +26,9 @@
 #' @param WGCNA_all see WGCNA package
 #' @param WGCNA_blockwiseNetworkType see WGCNA package
 #' @param WGCNA_blockwiseTOMType see WGCNA package
+#' @param WGCNA_minCoreKME see WGCNA package
+#' @param WGCNA_minCoreKMESize see WGCNA package
+#' @param WGCNA_minKMEtoStay see WGCNA package
 #' @return expression analysis result object with studies performed
 #' @keywords method
 #' @export
@@ -56,8 +59,12 @@ main_degenes_Hunter <- function(
     WGCNA_mergecutHeight = 0.25,
     WGCNA_all = FALSE,
     WGCNA_blockwiseNetworkType = "signed",
-    WGCNA_blockwiseTOMType = "signed"
+    WGCNA_blockwiseTOMType = "signed",
+    WGCNA_minCoreKME = 0.5,
+    WGCNA_minCoreKMESize = NULL,
+    WGCNA_minKMEtoStay = 0.2
   ){
+
 
     modified_input_args <- check_input_main_degenes_Hunter(minlibraries, reads, external_DEA_data, modules, model_variables, active_modules, WGCNA_all, minpack_common, target, custom_model, string_factors, numeric_factors)
     modules <- modified_input_args[['modules']]
@@ -76,9 +83,9 @@ main_degenes_Hunter <- function(
 
     # Infer replicates and group index from target
     # index_control_cols <- as.character(subset(target, treat == "Ctrl", select = sample, drop=TRUE))
-    index_control_cols <- as.character(target$sample[target$treat == "Ctrl",])
+    index_control_cols <- as.character(target$sample[target$treat == "Ctrl"])
     # index_treatmn_cols <- as.character(subset(target, treat == "Treat", select = sample, drop=TRUE))
-    index_control_cols <- as.character(target$sample[target$treat == "Treat",])
+    index_treatmn_cols <- as.character(target$sample[target$treat == "Treat"])
     replicatesC <- length(index_control_cols)
     replicatesT <- length(index_treatmn_cols)
     design_vector <- c(rep("C", replicatesC), rep("T", replicatesT))
@@ -132,7 +139,7 @@ main_degenes_Hunter <- function(
 
       combinations_WGCNA <- perform_WGCNA_combinations(WGCNA_all, WGCNA_input, index_treatmn_cols, index_control_cols, path, 
           target_numeric_factors, target_string_factors, WGCNA_memory, WGCNA_deepsplit, WGCNA_detectcutHeight, WGCNA_mergecutHeight, 
-          WGCNA_min_genes_cluster, WGCNA_blockwiseNetworkType, WGCNA_blockwiseTOMType)
+          WGCNA_min_genes_cluster, WGCNA_blockwiseNetworkType, WGCNA_blockwiseTOMType, WGCNA_minCoreKME, WGCNA_minCoreKMESize, WGCNA_minKMEtoStay)
 
       if(length(combinations_WGCNA[['WGCNA_all']]) == 1) {
         warning("Something went wrong with WGCNA on the full dataset")

@@ -498,13 +498,36 @@ cat("In total there were ", max(unique(results_WGCNA$gene_cluster_info$Cluster_I
     ggplot2::labs(x = "Cluster ID (0 = unclustered)", y = "Frequency", main="Number of Genes per Cluster")
 ```
 
-```{r WGCNA_conditional_block_head_factors, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
-
-	cat("The following plots show the correlation between the different modules and specified factors. This is done using eigengenes, 
-which can be broadly thought of as the average expression pattern for the genes in a given cluster. MEn refers to the eigengene for cluster n."
+```{r WGCNA_conditional_dist_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
+cat("### Module Membership distribution\n"
 )
-
 ```
+
+```{r WGCNA_dist_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
+		"%>%" <- magrittr::"%>%"
+
+	mm_dist <- DE_all_genes[,c("Cluster_MM", "Cluster_ID")]
+	mm_dist$Cluster_ID <- as.character(mm_dist$Cluster_ID)
+	mm_summary <- mm_dist %>% 
+					dplyr::group_by(Cluster_ID) %>% 
+					dplyr::summarise(MM_sd = sd(Cluster_MM),
+							MM_mean = mean(Cluster_MM),
+							gene_count = length(Cluster_MM))
+	mm_summary <- as.data.frame(mm_summary)				
+	mm_tables_equivalence <- match(mm_dist$Cluster_ID, mm_summary$Cluster_ID)
+	mm_dist <- cbind(mm_dist, mm_summary[mm_tables_equivalence, c("MM_sd", "MM_mean", "gene_count")])
+	mm_dist <- mm_dist[!is.na(mm_dist$Cluster_ID),]		
+	mm_dist$Cluster_ID <- factor(mm_dist$Cluster_ID, levels = as.character(sort(unique(as.numeric(mm_dist$Cluster_ID)))))
+	# mm_dist<- mm_dist[order(as.numeric(mm_dist$Cluster_ID)),]	
+	gg <- ggplot2::ggplot(mm_dist, ggplot2::aes(x = Cluster_ID, group = Cluster_ID, y = Cluster_MM, fill = gene_count)) + 
+			ggplot2::geom_violin(trim = TRUE, scale = "width") + ggplot2::ylim(c(-1.000001, 1.00001)) +
+  			ggplot2::geom_boxplot(width=0.05)+  
+  			ggplot2::scale_fill_gradient(low = "#9FCBFC", high =  "#0067DC")
+	gg
+
+````
+
+
 
 ```{r WGCNA_conditional_block_plot_factors, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15, results = 'asis'}
 cat("### **Cluster assignment vs lower module membership (MM) **")
@@ -516,6 +539,9 @@ cat("\nThis plot shows, for each gene, the cluster ID ascertained by WGCNA, vs. 
 	features_count <- get_features_count(results_WGCNA)
 	
 cat("### **Cluster vs. factors correlation**")
+
+cat("\nThe following plots show the correlation between the different modules and specified factors. This is done using eigengenes, 
+which can be broadly thought of as the average expression pattern for the genes in a given cluster. MEn refers to the eigengene for cluster n.\n")
 
 cat("\nThis plot shows the correlation between clusters (eigen genes) and factors directly.")
 
