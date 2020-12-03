@@ -75,8 +75,10 @@ main_degenes_Hunter <- function(
     ############################################################
 
     # Infer replicates and group index from target
-    index_control_cols <- as.character(subset(target, treat == "Ctrl", select = sample, drop=TRUE))
-    index_treatmn_cols <- as.character(subset(target, treat == "Treat", select = sample, drop=TRUE))
+    # index_control_cols <- as.character(subset(target, treat == "Ctrl", select = sample, drop=TRUE))
+    index_control_cols <- as.character(target$sample[target$treat == "Ctrl",])
+    # index_treatmn_cols <- as.character(subset(target, treat == "Treat", select = sample, drop=TRUE))
+    index_control_cols <- as.character(target$sample[target$treat == "Treat",])
     replicatesC <- length(index_control_cols)
     replicatesT <- length(index_treatmn_cols)
     design_vector <- c(rep("C", replicatesC), rep("T", replicatesT))
