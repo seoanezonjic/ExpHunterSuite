@@ -609,6 +609,8 @@ functional_hunter <- function(
 #' @keywords method
 #' @export
 #' @importFrom utils read.table
+#' @examples
+#' ot <- get_organism_table()
 get_organism_table <- function(file = file.path(find.package('DEgenesHunter'), "external_data", "organism_table.txt")){
 	return(utils::read.table(file, header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA))
 }
