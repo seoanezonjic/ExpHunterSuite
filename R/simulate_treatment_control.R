@@ -7,21 +7,23 @@
 #' @param group columns to be used as group replicates. If NULL, all columns will be used.
 #' @return a list with COUNT) a simulated gene counts matrix with simulated genes and sample names and TRUEDEG) a vector with real up/down regulated genes
 #' @author Fernando Moreno Jabato <jabato(at)uma(dot)es>
+#' @importFrom utils data
+#' @importFrom stats median var runif rnbinom
 STC <- function(Ngene = 1000, PDEG = 0.2, DEG.foldchange = 2, replicates = 3, bcount = NULL, group = NULL){
     # Load & prepare base data
 	if(is.null(bcount)){
 		# require(TCC)
-		data(arab, package = "TCC")
-		bcount <- arab
+		utils::data("arab", package = "TCC")
+		bcount <- environment()$arab
 		group <- seq(3)
 	}
 	if(is.null(group)){
 		group <- seq(ncol(bcount))
 	}
-	rpm.a <- sweep(bcount[, group], 2, median(colSums(bcount[, group]))/colSums(bcount[,group]), "*")
-	rpm.a <- rpm.a[apply(rpm.a, 1, var) > 0, ]
+	rpm.a <- sweep(bcount[, group], 2, stats::median(colSums(bcount[, group]))/colSums(bcount[,group]), "*")
+	rpm.a <- rpm.a[apply(rpm.a, 1, stats::var) > 0, ]
 	mean.a <- apply(rpm.a, 1, mean)
-	var.a <- apply(rpm.a, 1, var)
+	var.a <- apply(rpm.a, 1, stats::var)
 	dispersion <- (var.a - mean.a)/(mean.a * mean.a)
 	population <- data.frame(mean = mean.a, disp = dispersion)
 	population <- population[population$disp > 0, ]
@@ -54,10 +56,10 @@ STC <- function(Ngene = 1000, PDEG = 0.2, DEG.foldchange = 2, replicates = 3, bc
 		} 
 		# Generate foldchange
 		experiments[i,] <<- c(rep(1.0,replicates),
-						 DEGs[i] * runif(replicates,min = DEG.foldchange[i] - 0.2, max = DEG.foldchange[i] + 0.2))
+						 DEGs[i] * stats::runif(replicates,min = DEG.foldchange[i] - 0.2, max = DEG.foldchange[i] + 0.2))
 	}))	
 	# Generate
-	experiments <- apply(experiments, 2, function(x, pp = population) {rnbinom(n = Ngene, mu = (abs(x)^(x/abs(x)))*pp$mean, size = 1/pp$disp)})
+	experiments <- apply(experiments, 2, function(x, pp = population) {stats::rnbinom(n = Ngene, mu = (abs(x)^(x/abs(x)))*pp$mean, size = 1/pp$disp)})
 	# Change names
 	colnames(experiments) <- c(paste0("Ctrl_rep",seq(replicates)),paste0("Treat_rep",seq(replicates)))
 	rownames(experiments) <- paste0("gene_",seq(Ngene))

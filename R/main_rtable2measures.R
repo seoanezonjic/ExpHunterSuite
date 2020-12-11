@@ -8,6 +8,8 @@
 #' @keywords metrics
 #' @export
 #' @return metrics table
+#' @importFrom utils read.table write.table head
+#' @importFrom ROCR prediction performance
 rtable2measures <- function(
   htfile,
   realprediction,
@@ -18,10 +20,10 @@ rtable2measures <- function(
   ){
 
   # Load hunter table
-  dgh_res_raw <- read.table(file = htfile, sep = "\t", header = T, stringsAsFactors = FALSE, row.names = 1)
+  dgh_res_raw <- utils::read.table(file = htfile, sep = "\t", header = TRUE, stringsAsFactors = FALSE, row.names = 1)
 
   # Load real predictions
-  true_pred <- read.table(file = realprediction, sep = "\t", header = T, stringsAsFactors = FALSE)
+  true_pred <- utils::read.table(file = realprediction, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
 
   # Sort
   dgh_res_raw <- dgh_res_raw[true_pred[,1],]
@@ -46,7 +48,7 @@ rtable2measures <- function(
                  Measure = rep("auc", ncol(dgh_fdr)),
                  Value = unlist(perf_auc@y.values), stringsAsFactors = FALSE) 
     # Write
-    write.table(auc_vals, file = aucfile, sep = "\t", col.names = FALSE, row.names = FALSE, quote = FALSE)  
+    utils::write.table(auc_vals, file = aucfile, sep = "\t", col.names = FALSE, row.names = FALSE, quote = FALSE)  
   }
 
 
@@ -63,7 +65,7 @@ rtable2measures <- function(
 
   # Prepare matrix for vote cuts
   votes <- unlist(lapply(seq(nrow(preds_res)),function(i){
-    sum(head(preds_res[i,],-1)) 
+    sum(utils::head(preds_res[i,],-1)) 
   }))
 
   # Add cuts
@@ -105,7 +107,7 @@ rtable2measures <- function(
   #############################################
   # Concat experiment info (if proceed)
   if(!is.null(experiment)){
-    exp_info <- read.table(file = experiment, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+    exp_info <- utils::read.table(file = experiment, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
     exp_info <- as.data.frame(do.call(cbind,lapply(seq(ncol(exp_info)),function(i){
       aux <- data.frame(Value = rep(exp_info[1,i],nrow(df_cuts)))
       colnames(aux) <- colnames(exp_info)[i]

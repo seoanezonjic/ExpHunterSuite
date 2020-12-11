@@ -1,12 +1,16 @@
 #################################################################################
 ############### Plot functions
 ###############################################################################
+#' @importFrom knitr knit knit_expand
+#' @importFrom stats runif
 resize <- function(g, fig_height=5, fig_width=12) {
   g_deparsed <- paste0(deparse(function() {g}), collapse = '')
-  sub_chunk <- paste0("\n```{r sub_chunk_", floor(runif(1) * 10000), ", fig.height=", fig_height, ", fig.width=", fig_width, ", echo=FALSE}", "\n(", g_deparsed, ")()\n```\n\n\n")
+  sub_chunk <- paste0("\n```{r sub_chunk_", floor(stats::runif(1) * 10000), ", fig.height=", fig_height, ", fig.width=", fig_width, ", echo=FALSE}", "\n(", g_deparsed, ")()\n```\n\n\n")
   cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk), quiet = TRUE))
 }
 
+#' @importFrom ggplot2 fortify
+#' @importFrom DT datatable
 plot_enrResult_DT <- function(ER){
   toshow <- ggplot2::fortify(ER)[,!colnames(ER@compareClusterResult) %in% c("pvalue","qvalue")]
   toshow$Cluster <- gsub("[\n,\t,\r]{0,1}\\(.*\\)","",toshow$Cluster)
@@ -18,6 +22,8 @@ plot_enrResult_DT <- function(ER){
   ))
 }
 
+#' @importFrom knitr knit knit_expand
+#' @importFrom stats runif
 plot_in_div <- function(g, fig_height=7, fig_width=12, ## height and width in inches
   cex = 1, #size multiplier
   max_size = 50, # max size for plots in inches
@@ -38,13 +44,13 @@ plot_in_div <- function(g, fig_height=7, fig_width=12, ## height and width in in
     fig_width <- min_size  
   }
   g_deparsed <- paste0(deparse(function() {g}), collapse = '')
-  set.seed(Sys.time())
+  # set.seed(Sys.time())
   if (!is.null(counter)){
     chunk_name <- paste0("sub_chunk_", counter)
     # cat(paste0("\n\nplot counter =", counter, "\nchunk_name = ", chunk_name, "\n\n"))
     counter <- counter + 1
   } else {
-    chunk_name <- paste0("sub_chunk_", floor(runif(1) * 10000))
+    chunk_name <- paste0("sub_chunk_", floor(stats::runif(1) * 10000))
   }
   sub_chunk <- paste0("\n```{r ", chunk_name, ", fig.height=", fig_height, ", fig.width=", fig_width, ", echo=FALSE}", "\n(", g_deparsed, ")()\n```\n\n\n") 
     # sub_chunk_", floor(runif(1) * 1000000), "
@@ -54,8 +60,11 @@ plot_in_div <- function(g, fig_height=7, fig_width=12, ## height and width in in
 }
  
 get_plot_df <- function(enrich_obj, showCategory = 30) {
-  geneSets <- enrichplot:::extract_geneSets(enrich_obj, enrichplot:::update_n(enrich_obj, showCategory))
-  geneSets <- enrichplot:::list2df(geneSets)
+  extract_geneSets <- "enrichplot" %:::% "extract_geneSets"
+  list2df <- "enrichplot" %:::% "list2df"
+  update_n <- "enrichplot" %:::% "update_n"
+  geneSets <- extract_geneSets(enrich_obj, update_n(enrich_obj, showCategory))
+  geneSets <- list2df(geneSets)
   return(geneSets)
 }
 
@@ -89,6 +98,7 @@ get_categories <- function(enrich_obj, showCategory = 30){
       categories <- enrich_obj@compareClusterResult$Description
     }else{
       warning("Not valid enrich object")
+      return(NULL)
     }
     return(unique(categories))
 }
@@ -162,16 +172,21 @@ set_default_width <- function(enrich_obj, default = 12, showCategory = 30, thres
 }
 # Prepare resize function
 
+#' @importFrom ggplot2 ggplot aes_string geom_tile
 clusters_heatplot <- function(compare_cluster_obj){
-  pp <- ggplot2::ggplot(compare_cluster_obj, ggplot2::aes(x = Cluster, y = Description, fill = p.adjust)) + 
+  pp <- ggplot2::ggplot(compare_cluster_obj, ggplot2::aes_string(x = "Cluster", y = "Description", fill = "p.adjust")) + 
   ggplot2::geom_tile() 
 }
+
+
+#' @importFrom ggplot2 theme_light theme element_text element_blank
 set_standard_size <- function(pp){
   pp <- pp + ggplot2::theme_light() + 
         ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10, face = 'bold'), axis.title = ggplot2::element_blank()) 
   return(pp)
 }
 
+#' @importFrom ggplot2 ggplot aes_string geom_tile theme_minimal theme element_blank element_text scale_fill_gradient2 geom_text
 gg_heatmap <- function(data_table, 
   input = "", 
   traspose = FALSE, 
@@ -196,7 +211,7 @@ gg_heatmap <- function(data_table,
     }
 
 #    save(list = ls(all.names = TRUE), file = "~/test/ggtest.RData", envir = environment())
-    pp <- ggplot2::ggplot(data_table, ggplot2::aes_string(x = x_axis, y = y_axis, fill = fill)) +
+    pp <- ggplot2::ggplot(data_table, ggplot2::aes_string(x = "x_axis", y = "y_axis", fill = "fill")) +
     ggplot2::geom_tile(show.legend = TRUE) +
     ggplot2::theme_minimal() +
     ggplot2::theme(panel.grid.major = ggplot2::element_blank())+
@@ -215,11 +230,12 @@ gg_heatmap <- function(data_table,
         axis.title.y = ggplot2::element_blank())
     }
     if(!is.null(text_plot)){
-      pp <- pp + ggplot2::geom_text(ggplot2::aes_string(label=text_plot), colour = text_colour, size = text_size) 
+      pp <- pp + ggplot2::geom_text(ggplot2::aes_string(label="text_plot"), colour = text_colour, size = text_size) 
     }
     return(pp)
 }
 
+#' @importFrom ggplot2 ggplot_gtable ggplot_build
 extract_legend <- function(a.gplot){ #code taken from https://stackoverflow.com/questions/13649473/add-a-common-legend-for-combined-ggplots
   tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(a.gplot))
   leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
@@ -238,6 +254,8 @@ extract_legend <- function(a.gplot){ #code taken from https://stackoverflow.com/
 #' @param alpha : transparency of dots
 #' @return plot ready to be rendered
 #' @author Fernando Moreno Jabato <jabato(at)uma(dot)com>
+#' @importFrom ggplot2 ggplot aes_string geom_point scale_shape_manual ylim xlab ggtitle theme theme_classic element_blank
+#' @importFrom stats var
 ht2logFCPlot <- function(ht,var_filter = 0.001, title = "Filtered logFC", y_range = NULL, top = 50, alpha = 0.5){
   gene_names <- rownames(ht)
   target_cols <- which(grepl("logFC_",colnames(ht)))
@@ -256,9 +274,9 @@ ht2logFCPlot <- function(ht,var_filter = 0.001, title = "Filtered logFC", y_rang
   if(length(nas) > 0) df_logfc <- df_logfc[-nas,]
   # Calculate var
   gene_names <- unique(df_logfc$Gene)
-  vars <- unlist(lapply(seq_along(gene_names),function(i){var(df_logfc$logFC[which(df_logfc$Gene == gene_names[i])])}))
+  vars <- unlist(lapply(seq_along(gene_names),function(i){stats::var(df_logfc$logFC[which(df_logfc$Gene == gene_names[i])])}))
   names(vars) <- gene_names
-  vars <- sort(vars, decreasing = T)
+  vars <- sort(vars, decreasing = TRUE)
   vars <- vars[vars > var_filter]
   # Check
   if(length(vars) <= 0){
@@ -286,12 +304,12 @@ ht2logFCPlot <- function(ht,var_filter = 0.001, title = "Filtered logFC", y_rang
   # Plot
   # Check special cases
   if(!is.null(y_range)){
-    pp <- ggplot2::ggplot(df_logfc, ggplot2::aes(x = Gene, y = logFC, colour = Package)) + 
-        ggplot2::geom_point(alpha = alpha, ggplot2::aes(shape = Type)) +
+    pp <- ggplot2::ggplot(df_logfc, ggplot2::aes_string(x = "Gene", y = "logFC", colour = "Package")) + 
+        ggplot2::geom_point(alpha = alpha, ggplot2::aes_string(shape = "Type")) +
         ggplot2::scale_shape_manual(values=c(16, 17)) +
         ggplot2::ylim(c(-abs(y_range),abs(y_range))) 
   }else{
-    pp <- ggplot2::ggplot(df_logfc, ggplot2::aes(x = Gene, y = logFC, colour = Package)) + 
+    pp <- ggplot2::ggplot(df_logfc, ggplot2::aes_string(x = "Gene", y = "logFC", colour = "Package")) + 
         ggplot2::geom_point(alpha = alpha) 
   }
   pp <- pp + 

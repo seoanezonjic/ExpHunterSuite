@@ -5,9 +5,11 @@
 #' @param output_files output file path
 #' @param template_folder RMD templates folder
 #' @param opt option list
+#' @return void
 #' @export
+#' @importFrom rmarkdown render
 #' @examples
-#' write_expression_report()
+#' 
 write_expression_report <- function(exp_results, output_files=getwd(),template_folder = file.path(find.package('DEgenesHunter'), 'templates'), opt=NULL){
     if(is.null(opt)){ opt <- exp_results[['final_main_params']]}
     DEG_pack_columns <- exp_results[['DEG_pack_columns']] 
@@ -45,6 +47,9 @@ write_expression_report <- function(exp_results, output_files=getwd(),template_f
 #' @param organisms_table (OPTIONAL) configuration table for given organism. Use see get_organism_table()
 #' @param fc_colname (OPTIONAL) main logFC colname (into hunter_results dataframe)
 #' @param report string with reports to be written. Allowed: clusters (c) and functional (f). Default = "fc"
+#' @return void
+#' @importFrom parallel mclapply
+#' @importFrom rmarkdown render
 #' @export
 write_functional_report <- function(hunter_results, 
                                     func_results, 

@@ -1,3 +1,4 @@
+#' @importFrom stats cor
 analysis_diff_correlation <- function(all_genes_stats, data, control, treat, PCIT_filter){
 	# DE and PIF calculation, see "Microarray data processing, normalization and differential expression" in https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
 	# DE => Diff exp, PIF =>Phenotypic Impact Factor
@@ -84,10 +85,11 @@ compute_rif2 <- function(g, data, deg_stats, control_r, treat_r){ #eq 5
 	return(rif)
 }
 
+#' @importFrom PCIT pcit idx idxInvert
 do_pcit <- function(cor_mat){
-        result <- pcit(cor_mat) # Check correlations by PCIT
-        signif <- idx(result) # Get significative correlations (vector with linear index of matrix, not pairs of coordinates)
-        nonsignif <- idxInvert(nrow(cor_mat), signif) # Get NON significative correlations (vector with linear index of matrix, not pairs of coordinates)
+        result <- PCIT::pcit(cor_mat) # Check correlations by PCIT
+        signif <- PCIT::idx(result) # Get significative correlations (vector with linear index of matrix, not pairs of coordinates)
+        nonsignif <- PCIT::idxInvert(nrow(cor_mat), signif) # Get NON significative correlations (vector with linear index of matrix, not pairs of coordinates)
         n_elements <- nrow(cor_mat)
         # plotCorCoeff(cor_mat, list("PCIT Meaningful" = signif), col=c("red")) #TODO make conditional, I think that is important for reports
         cor_mat[nonsignif] <- 0

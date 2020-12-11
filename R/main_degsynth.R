@@ -1,6 +1,6 @@
-#' Funtion used to scale a vector of numeric values from [x_min,x_max] range to [y_min,y_max] range.
+#' Funtion used to scale a vector of numeric values from (x_min,x_max) range to (y_min,y_max) range.
 #' 	f : R -> R
-#'      [x_min, x_max] -> [y_min, y_max]
+#'      (x_min, x_max) -> (y_min, y_max)
 #'                         vect - x_min
 #'  f(vect,y_min,y_max) =  ------------- x (y_max - y_min) + y_min
 #'                         x_max - x_min
@@ -18,18 +18,19 @@ scale_range <- function(vect,nmin,nmax){
 #' @param means means vector
 #' @param fcmin minimum foldchange
 #' @param fcmax maximum foldchange
-#' @param meanLog param of rlnorm function
+#' @param meanlog param of rlnorm function
 #' @param sdlog param of rlnorm function
 #' @return a vector of foldchanges to be applied
+#' @importFrom stats ecdf rlnorm
 fcfunc <- function(means,fcmin=1.4, fcmax=3, meanlog = 1, sdlog = 0.8){
 	# Generate exponential distributio 
-	xx <- rlnorm(length(means), meanlog = meanlog, sdlog = sdlog)
+	xx <- stats::rlnorm(length(means), meanlog = meanlog, sdlog = sdlog)
 	xx <- scale_range(xx,fcmin, fcmax)
-	ecdffun <- ecdf(xx)
+	ecdffun <- stats::ecdf(xx)
 	xx <- data.frame(FC = xx, Quant = unlist(lapply(xx,ecdffun)))
 	xx <- xx[order(xx$Quant),]
 	xx$Quant <- xx$Quant[seq(from = nrow(xx), to = 1)] # Apply inverse 
-	# Prepare wuantiles of observed
+	# Prepare quantiles of observed
 	ecdffun <- stats::ecdf(means)
 	means <- data.frame(X = means, Quant = unlist(lapply(means,ecdffun)))
 	# Merge values
@@ -46,14 +47,15 @@ fcfunc <- function(means,fcmin=1.4, fcmax=3, meanlog = 1, sdlog = 0.8){
 #' @param inputfile input file
 #' @param replicates number of replicates
 #' @param ngenes number of genes
-#' @param DEGs_proportion numeric [0,1] proportion of DEG genes to be simulated
+#' @param DEGs_proportion numeric (0,1) proportion of DEG genes to be simulated
 #' @param FC_min minimum Fold-Change
 #' @param FC_max maximum Fold-Change
 #' @param P_up proportion og up-regulated genes
 #' @param group optional group identifiers seprated by commas
 #' @keywords synthetic
 #' @export
-#' @return 
+#' @return synthetic data generated
+#' @importFrom utils read.table write.table
 degsynth <- function(
 	outfile,
 	inputfile = NULL,
@@ -72,7 +74,7 @@ degsynth <- function(
 		bcount <- NULL
 		group <- NULL
 	}else{
-		bcount <- read.table(file = inputfile, row.names = 1, header = TRUE, sep = "\t")
+		bcount <- utils::read.table(file = inputfile, row.names = 1, header = TRUE, sep = "\t")
 		if(is.null(group)){
 			group <- NULL
 		}else{
@@ -108,8 +110,8 @@ degsynth <- function(
 	#############################################
 	### EXPORT 
 	#############################################
-	write.table(simul$count, file=paste0(outfile,"_scount"), quote = FALSE, col.names = TRUE, sep = "\t")
-	write.table(prediction_vector, file=paste0(outfile,"_predv"), quote = FALSE, col.names = TRUE, sep = "\t", row.names = FALSE)
+	utils::write.table(simul$count, file=paste0(outfile,"_scount"), quote = FALSE, col.names = TRUE, sep = "\t")
+	utils::write.table(prediction_vector, file=paste0(outfile,"_predv"), quote = FALSE, col.names = TRUE, sep = "\t", row.names = FALSE)
 
 }
 
