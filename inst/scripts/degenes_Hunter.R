@@ -23,7 +23,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   main_path_script <- dirname(full.fpath)
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
-  custom_libraries <- c('main_degenes_Hunter.R', 'io_handling.R', 'general_functions.R', 'dif_expression_packages.R', 'qc_and_benchmarking_functions.R', 'correlation_packages.R', 'correlation_packages_PCIT.R', 'plotting_functions.R', 'write_report.R')
+  custom_libraries <- c('main_degenes_Hunter.R', 'io_handling.R', 'general_functions.R', 'dif_expression_packages.R', 'qc_and_benchmarking_functions.R', 'correlation_packages.R', 'plotting_functions.R', 'write_report.R')
   for (lib in custom_libraries){
     source(file.path(root_path, 'R', lib))
   }
