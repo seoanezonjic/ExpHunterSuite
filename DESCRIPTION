@@ -32,7 +32,6 @@ Imports:
     AnnotationDbi,
     BiocGenerics,
     enrichplot,
-    parallel,
     rmarkdown,
     stats,
     Biobase,
@@ -47,4 +46,5 @@ Imports:
     grDevices,
     graphics,
     utils,
-    pryr
+    pryr,
+    BiocParallel

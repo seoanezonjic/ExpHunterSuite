@@ -555,15 +555,14 @@ enrich_all_customs <- function(custom_sets = NULL, custom_files = NULL, p_val_th
 #' @return enrichment tables obtained
 #' @keywords enrich
 #' @export
-#' @importFrom parallel mclapply
 #' @importFrom clusterProfiler enricher
-enrich_clusters_with_gmt <- function(custom_set, genes_in_modules, p_val_threshold, cores = 1){
+enrich_clusters_with_gmt <- function(custom_set, genes_in_modules, p_val_threshold, cores = 1, task_size = 1){
       # Enrich
-      modules_enrichment <- parallel::mclapply(genes_in_modules, function(genesset) {
+      modules_enrichment <- parallel_list(genes_in_modules, function(genesset) {
         enr <- clusterProfiler::enricher(genesset, pvalueCutoff = p_val_threshold, TERM2GENE = custom_set)
         if(nrow(enr) > 0) enr <- catched_pairwise_termsim(enr)
         return(enr)
-      },mc.cores = cores)
+      }, workers = cores, task_size = task_size)
       names(modules_enrichment) <- names(genes_in_modules)
       # Return
       return(modules_enrichment)
@@ -698,8 +697,7 @@ perform_GSEA_clusters <- function(all_clusters, organism, keyType, pvalueCutoff,
 #' @param mc.preschedule see mcapply
 #' @keywords enrich
 #' @return enrichment performed
-#' @importFrom parallel mclapply
-enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, mc.cores = 1, mc.preschedule = TRUE){
+enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, mc.cores = 1, task_size = 1){
   # @import clusterProfiler KEGG.db ReactomePA parallel
   # Parse onto
   # save(list = ls(all.names = TRUE), file = "test.RData", envir = environment())
@@ -730,7 +728,7 @@ enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCuto
 
   # require(parallel)
   # Enrich per gene_set
-  enrichment <- parallel::mclapply(genes,function(setg){
+  enrichment <- parallel_list(genes, function(setg){
     # Obtain enrichment 
     enr <- enrichment_ORA(genes         = setg,
                           organism      = organism,
@@ -744,7 +742,7 @@ enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCuto
                           semsim = TRUE)
     # Return
     return(enr)
-  }, mc.cores = mc.cores, mc.preschedule = mc.preschedule)
+  }, workers= mc.cores, task_size = task_size)
 
   names(enrichment) <- names(genes)
 

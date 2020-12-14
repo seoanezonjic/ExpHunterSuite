@@ -129,3 +129,36 @@ save_times <- function(time_control, output="times_control.txt", plot_name = "ti
     utils::write.table(spent_times_df, file=output, quote=FALSE, row.names=FALSE, sep="\t")
 }
 
+#' Performs ORA enrichment over several gene sets (clusters)
+#' @param X R list
+#' @param FUNC Function to execute in each element of the list
+#' @param workers Number of process to use in parallel execution
+#' @param task_size Number of list elements to be executed on each BiocParallel task
+#' @param ... Additional arguments to BiocParallel or to FUNC
+#' @keywords performance
+#' @return list
+#' @importFrom BiocParallel MulticoreParam bptry bplapply bpok
+
+parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
+    timestamp <- as.integer(Sys.time())
+    log_path <- file.path(getwd(), 'bcplogs', as.character(timestamp))
+    if(file.exists(log_path)){
+      timestamp = timestamp + 1
+      log_path <- file.path(getwd(), 'bcplogs', as.character(timestamp))
+    }
+    dir.create(log_path, recursive = TRUE)
+    param <- BiocParallel::MulticoreParam( 
+      workers, tasks = ceiling(length(X)/task_size), stop.on.error = TRUE,
+      log = TRUE, threshold = "INFO", logdir = log_path
+    )
+    res <- BiocParallel::bptry(
+      BiocParallel::bplapply(X, FUNC, BPPARAM = param, ...)
+    )
+    exec_status <- BiocParallel::bpok(res)
+    fails <- which( exec_status == FALSE)
+    if(length(fails) > 0 ){
+      print(tail(attr(res[[fails[1]]], "traceback")))
+      stop(paste('Parallel execution has failed at item', fails[1],'and a total of', length(fails) , 'items have failed.'))
+    }
+    return(res)
+}

@@ -48,7 +48,6 @@ write_expression_report <- function(exp_results, output_files=getwd(),template_f
 #' @param fc_colname (OPTIONAL) main logFC colname (into hunter_results dataframe)
 #' @param report string with reports to be written. Allowed: clusters (c) and functional (f). Default = "fc"
 #' @return void
-#' @importFrom parallel mclapply
 #' @importFrom rmarkdown render
 #' @export
 write_functional_report <- function(hunter_results, 
@@ -57,7 +56,8 @@ write_functional_report <- function(hunter_results,
                                     fc_colname="mean_logFCs", 
                                     organisms_table=NULL, 
                                     template_folder = file.path(find.package('DEgenesHunter'), 'templates'), 
-                                    cores = 1, 
+                                    cores = 1,
+                                    task_size = 1, 
                                     report = "fc"){
     if(is.null(organisms_table)){
         organisms_table <- get_organism_table()
@@ -125,13 +125,13 @@ write_functional_report <- function(hunter_results,
     if(grepl("c", report)){
         if (any(grepl("WGCNA",names(func_results)))) { # Clustered
             message("Rendering specific cluster reports")
-            invisible(parallel::mclapply(cls, function(cl) {
+            invisible(parallel_list(cls, function(cl) {
                 # Take output name
                 aux <- paste0("cl_func_",cl,".html")
                 outf_cls_i <- file.path(results_path, aux)
                 # Generate report
                 rmarkdown::render(file.path(template_folder, 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
-            }, mc.cores = cores))
+            }, workers = cores))
 
             message("\tRendering clustered report")
             outf_cls <- file.path(results_path, "clusters_func_report.html")

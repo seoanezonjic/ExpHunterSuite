@@ -61,6 +61,8 @@ option_list <- list(
     help="Enrichment q-value threshold. [Default = %default]"),
   optparse::make_option(c("-c", "--cores"), ,type = "numeric", default=1,
     help="Cores to be used to parallelize clusters enrichments. Default : %default"),
+  optparse::make_option(c("-s", "--task_size"), ,type = "numeric", default=10,
+    help="Number of items to be processed in each parallel task. Default : %default"),  
   optparse::make_option(c("-o", "--output_files"), type="character", default="results",
     help="Output path. Default=%default")
 )
@@ -115,6 +117,7 @@ if(opt$List_organisms){
 		pthreshold = opt$pthreshold,
 		qthreshold = opt$qthreshold,
 		cores = opt$cores,
+		task_size = opt$task_size,
 		output_files = opt$output_files,
 		organisms_table = organisms_table,
 		fc_colname = fc_colname)
@@ -128,6 +131,7 @@ if(opt$List_organisms){
 							organisms_table = organisms_table,
 							template_folder = template_folder,
 							cores =  opt$cores,
+							task_size = opt$task_size,
 							report = "fc")
 
 }

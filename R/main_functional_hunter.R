@@ -35,6 +35,7 @@ functional_hunter <- function(
 	pthreshold = 0.1,
 	qthreshold = 0.2,
 	cores = 1,
+	task_size = 1,
 	output_files = "results",
 	fc_colname = "mean_logFCs"
 	){
@@ -50,6 +51,7 @@ functional_hunter <- function(
 						pthreshold = pthreshold,
 						qthreshold = qthreshold,
 						cores = cores,
+						task_size = task_size,
 						fc_colname = fc_colname)
 	func_results[["final_main_params"]] <- main_params
 
@@ -414,7 +416,8 @@ functional_hunter <- function(
 		                                 ont = subont_name,
 		                                 qvalueCutoff = qthreshold,
 		                                 useInternal = FALSE,
-		                                 mc.cores = cores)
+		                                 mc.cores = cores,
+		                                 task_size = task_size)
 				}
 			}
 		}
@@ -468,7 +471,8 @@ functional_hunter <- function(
 	                                 ont = "KEGG",
 	                                 qvalueCutoff = qthreshold,
 	                                 useInternal = !remote_actions$kegg,
-	                                 mc.cores = cores)
+	                                 mc.cores = cores,
+	                                 task_size = task_size)
 			}
 		}
 
@@ -514,7 +518,8 @@ functional_hunter <- function(
 	                                 ont = "REACT",
 	                                 qvalueCutoff = qthreshold,
 	                                 useInternal = FALSE,
-	                                 mc.cores = cores)
+	                                 mc.cores = cores,
+	                                 task_size = task_size)
 			}
 		}
 
@@ -552,7 +557,8 @@ functional_hunter <- function(
 				enrich_clusters_with_gmt(custom_set = gmt, 
 										genes_in_modules = clgenes, 
 										p_val_threshold = pthreshold, 
-										cores = cores)
+										cores = cores,
+										task_size= task_size)
 			})
 		}
 		message("CUSTOM enrichments finished")
