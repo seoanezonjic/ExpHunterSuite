@@ -37,7 +37,6 @@ Imports:
     stats,
     Biobase,
     DESeq2,
-    PCIT,
     ROCR,
     data.table,
     knitr,
