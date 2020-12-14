@@ -18,6 +18,8 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 	suppressPackageStartupMessages(require(DT))  
 	suppressPackageStartupMessages(require(miRBaseConverter))  
 	suppressPackageStartupMessages(require(gridExtra))
+	suppressPackageStartupMessages(require(VennDiagram))
+
 
 	full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using source
 	               error=function(e) # works when using R CMD
@@ -29,11 +31,13 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
     	source(file.path(root_path, 'R', lib))
   	}
 	template_folder <- file.path(root_path, 'inst', 'templates')
+	organism_table_path <- file.path(root_path,"inst","external_data", "organism_table.txt")
 
 } else {
 	require('DEgenesHunter')
-	package_folder <- find.package('DEgenesHunter')
-	template_folder <- file.path(package_folder, 'templates')
+	root_path <- find.package('DEgenesHunter')
+	template_folder <- file.path(root_path, 'templates')
+	organism_table_path <- file.path(root_path, "inst","external_data", "organism_table.txt")
 }
  
  #### NOTAS PARA EL SCRIPT
@@ -48,7 +52,7 @@ option_list <- list(
 		help="DEG tag. Set the DEG tag of DEGenesHunter to filter results. 'PREVALENT_DEG' or 'POSSIBLE_DEG'. Default : %default"),
 	optparse::make_option(c("-o", "--output_files"), type="character", default=".", 
 		help = "Output folder"),
-	optparse::make_option(c("-a", "--aproaches"), type="character", default="EE,Eh,Ed,hd,hE",
+	optparse::make_option(c("-a", "--approaches"), type="character", default="EE,Eh,Ed,hd,hE",
 		help = "EE = Anticorrelation between RNAseq modules Eigengene and miRNAseq modules Eigengene, Eh = Anticorrelation between RNAseq modules Eigengene and miRNAseq hub genes, Ed = Anticorrelation between RNAseq modules Eigengene and miRNAseq DEG expression profiles, hd = Anticorrelation between RNAseq hub genes and miRNAseq DEG expression profiles, hE = Anticorrelation between RNAseq hub genes and miRNAseq modules Eigengene. Default : %default"),
 	optparse::make_option(c("--organism"), type ="character", default="hsa",
 		help= "Reference organism to use. Available 'hsa' for human and 'mmu' for mouse."),
@@ -58,14 +62,20 @@ option_list <- list(
 		help= "Perform analysis only using known miRNAs. Faster but you lose information of novel miRNAs. Only available when a translation file is given"),
 	optparse::make_option(c("-p", "--p_val_cutoff"), type="double", default=0.05,
     	help="Correlation P value threshold . Default=%default"),
+	optparse::make_option(c("-P", "--permutations"), type="double", default=10,
+    	help="Permutations of random tests. Default=%default"),
 	optparse::make_option(c("-c", "--corr_cutoff"), type="double", default=-0.7,
     	help="Correlation threshold . Default=%default"),
-	optparse::make_option(c("--module_membership_cutoff"), type="double", default=0.8,
+	optparse::make_option(c("-C", "--mc_cores"), type="double", default=1,
+    	help="Dist. Default=%default"),
+	optparse::make_option(c("--module_membership_cutoff"), type="double", default=0.7,
     	help="This script reject genes with lower module membership to their modules. Default=%default"),
 	optparse::make_option(c("-R", "--report"), ,type = "character", default="miRNA_RNA_comparison.html",
 	    help="Name of the html file. Default : %default"),
 	optparse::make_option(c("-t", "--translation_file"), type = "character", default = NULL,
-		help = 'Two columns (\t) file with miRNA names translation: Same IDs as imput on first column, and miRNA mature ID on second column (no need to header)')
+		help = 'Two columns (\t) file with miRNA names translation: Same IDs as input on first column, and miRBase ID on second column (MIMAT000000)'),
+	optparse::make_option(c("-T", "--translate_ensembl"), type="logical", default=FALSE, action = "store_true",
+		help = 'Translate mRNA Ensembl ID to ENTREZ ID and GENESYMBOL and include the translation in output.')
 )
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
@@ -80,15 +90,17 @@ miRNA_RNAseq_analysis(
 	miRNAseq_folder=opt$miRNAseq_folder,
 	deg_tag=opt$deg_tag,
 	output_files=opt$output_files,
-	aproaches=opt$aproaches,
+	approaches=opt$approaches,
 	organism=opt$organism,
 	multimir_db=opt$multimir_db,
-	only_known=opt$only_known,
 	p_val_cutoff=opt$p_val_cutoff,
 	corr_cutoff=opt$corr_cutoff,
 	module_membership_cutoff=opt$module_membership_cutoff,
+	permutations = opt$permutations,
 	report=opt$report,
-	translation_file=opt$translation_file,
-	organism_table_path = file.path(root_path, "R", "organism_table.txt"),
-	template_folder = file.path(root_path, "inst", "templates")
+	translate_ensembl = opt$translate_ensembl,
+	mc_cores = opt$mc_cores,
+	translation_file = opt$translation_file,
+	organism_table_path = organism_table_path, #file.path(root_path, "R", "organism_table.txt"),
+	template_folder = template_folder #file.path(root_path, "inst", "templates")
 	)

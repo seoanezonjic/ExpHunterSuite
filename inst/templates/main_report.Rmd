@@ -506,7 +506,7 @@ cat("### Module Membership distribution\n"
 ```{r WGCNA_dist_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
 		"%>%" <- magrittr::"%>%"
 
-	mm_dist <- DE_all_genes[,c("Cluster_MM", "Cluster_ID")]
+	mm_dist <- DE_all_genes[DE_all_genes$Cluster_ID != 0, c("Cluster_MM", "Cluster_ID")]
 	mm_dist$Cluster_ID <- as.character(mm_dist$Cluster_ID)
 	mm_summary <- mm_dist %>% 
 					dplyr::group_by(Cluster_ID) %>% 
@@ -520,7 +520,7 @@ cat("### Module Membership distribution\n"
 	mm_dist$Cluster_ID <- factor(mm_dist$Cluster_ID, levels = as.character(sort(unique(as.numeric(mm_dist$Cluster_ID)))))
 	# mm_dist<- mm_dist[order(as.numeric(mm_dist$Cluster_ID)),]	
 	gg <- ggplot2::ggplot(mm_dist, ggplot2::aes(x = Cluster_ID, group = Cluster_ID, y = Cluster_MM, fill = gene_count)) + 
-			ggplot2::geom_violin(trim = TRUE, scale = "width") + ggplot2::ylim(c(-1.000001, 1.00001)) +
+			ggplot2::geom_violin(trim = TRUE, scale = "width") + ggplot2::ylim(c(-0.00001, 1.00001)) +
   			ggplot2::geom_boxplot(width=0.05)+  
   			ggplot2::scale_fill_gradient(low = "#9FCBFC", high =  "#0067DC")
 	gg

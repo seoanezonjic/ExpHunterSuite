@@ -207,11 +207,11 @@ gg_heatmap <- function(data_table,
     }
     if(input == "matrix"){
       data_table <- as.data.frame(as.table(as.matrix(data_table)))
-      colnames(data_table) <- c(y_axis,x_axis,fill)
+      colnames(data_table) <- c(y_axis, x_axis, fill)
     }
 
-#    save(list = ls(all.names = TRUE), file = "~/test/ggtest.RData", envir = environment())
-    pp <- ggplot2::ggplot(data_table, ggplot2::aes_string(x = "x_axis", y = "y_axis", fill = "fill")) +
+   save(list = ls(all.names = TRUE), file = "~/test/ggtest.RData", envir = environment())
+    pp <- ggplot2::ggplot(data_table, ggplot2::aes_(x = as.name(x_axis), y = as.name(y_axis), fill = as.name(fill))) +
     ggplot2::geom_tile(show.legend = TRUE) +
     ggplot2::theme_minimal() +
     ggplot2::theme(panel.grid.major = ggplot2::element_blank())+
@@ -230,7 +230,7 @@ gg_heatmap <- function(data_table,
         axis.title.y = ggplot2::element_blank())
     }
     if(!is.null(text_plot)){
-      pp <- pp + ggplot2::geom_text(ggplot2::aes_string(label="text_plot"), colour = text_colour, size = text_size) 
+      pp <- pp + ggplot2::geom_text(ggplot2::aes_(label=as.name(text_plot)), colour = text_colour, size = text_size) 
     }
     return(pp)
 }
