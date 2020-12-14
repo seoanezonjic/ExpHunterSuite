@@ -28,7 +28,7 @@ Then, please create the folder where you want to install DEgenes Hunter command 
     Rscript -e "DEgenesHunter::install_DEgenes_hunter('install_folder')"
     export PATH=path_to_install_folder:$PATH
 ```
-This export PATH can also be added to the .bash_rc or .bash_profile files.
+This export PATH can also be added to the .bashrc or .bash_profile files.
 
 ## Usage
 
