@@ -693,11 +693,10 @@ perform_GSEA_clusters <- function(all_clusters, organism, keyType, pvalueCutoff,
 #' @param useInternal used only for KEGG enrichment, activate internal data usage mode
 #' @param qvalueCutoff q-value threshold
 #' @param ENRICH_DATA optional enrichment universe already loaded 
-#' @param mc.cores optional number of parallel cores to be used. See mcapply
-#' @param mc.preschedule see mcapply
+#' @param cores optional number of parallel cores to be used. See mcapply
 #' @keywords enrich
 #' @return enrichment performed
-enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, mc.cores = 1, task_size = 1){
+enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, cores = 1, task_size = 1){
   # @import clusterProfiler KEGG.db ReactomePA parallel
   # Parse onto
   # save(list = ls(all.names = TRUE), file = "test.RData", envir = environment())
@@ -742,7 +741,7 @@ enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCuto
                           semsim = TRUE)
     # Return
     return(enr)
-  }, workers= mc.cores, task_size = task_size)
+  }, workers= cores, task_size = task_size)
 
   names(enrichment) <- names(genes)
 
@@ -781,8 +780,8 @@ get_organismID_byOnto <- function(organism_info, ont){
 #' @param pAdjustMethod p-value adjust method to be applied
 #' @param qvalueCutoff q-value threshold. ONLY USED FOR ORA.
 #' @param useInternal optional KEGG internal usage flag
-#' @param mc.cores for parallel. Only used in case of genes are cluster genes
-#' @param mc.preschedule for parallel. Only used in case of genes are cluster genes
+#' @param cores for parallel. Only used in case of genes are cluster genes
+#' @param task_size number of elements per packages used
 #' @param verbose activate verbose mode
 #' @return list with enrichments performed
 #' @keywords enrich
@@ -797,8 +796,8 @@ multienricher <- function(genes,
                           pAdjustMethod = "BH",
                           useInternal = TRUE,
                           qvalueCutoff = 0.02,
-                          mc.cores = 1,
-                          mc.preschedule = TRUE,
+                          cores = 1,
+                          task_size = 1,
                           verbose = FALSE){
   # Initialize
   func_results <- list()
@@ -851,8 +850,8 @@ multienricher <- function(genes,
                                 ont = ont,
                                 useInternal = useInternal,
                                 qvalueCutoff = qvalueCutoff,
-                                mc.cores = mc.cores,
-                                mc.preschedule = mc.preschedule)
+                                cores = cores,
+                                task_size = task_size)
       }) 
       names(func_results$Clusters$ORA) <- onts
     }else{

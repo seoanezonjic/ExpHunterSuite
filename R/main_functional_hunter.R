@@ -416,7 +416,7 @@ functional_hunter <- function(
 		                                 ont = subont_name,
 		                                 qvalueCutoff = qthreshold,
 		                                 useInternal = FALSE,
-		                                 mc.cores = cores,
+		                                 cores = cores,
 		                                 task_size = task_size)
 				}
 			}
@@ -471,7 +471,7 @@ functional_hunter <- function(
 	                                 ont = "KEGG",
 	                                 qvalueCutoff = qthreshold,
 	                                 useInternal = !remote_actions$kegg,
-	                                 mc.cores = cores,
+	                                 cores = cores,
 	                                 task_size = task_size)
 			}
 		}
@@ -518,7 +518,7 @@ functional_hunter <- function(
 	                                 ont = "REACT",
 	                                 qvalueCutoff = qthreshold,
 	                                 useInternal = FALSE,
-	                                 mc.cores = cores,
+	                                 cores = cores,
 	                                 task_size = task_size)
 			}
 		}
