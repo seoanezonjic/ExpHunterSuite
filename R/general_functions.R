@@ -129,7 +129,7 @@ save_times <- function(time_control, output="times_control.txt", plot_name = "ti
     utils::write.table(spent_times_df, file=output, quote=FALSE, row.names=FALSE, sep="\t")
 }
 
-#' Performs ORA enrichment over several gene sets (clusters)
+#' Parallelize function execution in list with multiple elements
 #' @param X R list
 #' @param FUNC Function to execute in each element of the list
 #' @param workers Number of process to use in parallel execution
@@ -146,10 +146,14 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
       timestamp = timestamp + 1
       log_path <- file.path(getwd(), 'bcplogs', as.character(timestamp))
     }
-    dir.create(log_path, recursive = TRUE)
+    log = FALSE
+    if(workers > 1){
+      log = TRUE
+      dir.create(log_path, recursive = TRUE)
+    }
     param <- BiocParallel::MulticoreParam( 
       workers, tasks = ceiling(length(X)/task_size), stop.on.error = TRUE,
-      log = TRUE, threshold = "INFO", logdir = log_path
+      log = log, threshold = "INFO", logdir = log_path
     )
     res <- BiocParallel::bptry(
       BiocParallel::bplapply(X, FUNC, BPPARAM = param, ...)
