@@ -11,7 +11,7 @@
 
 ### Install latest R-Version
 
-Go to page https://cran.r-project.org and install the latest R version on your computer.
+Go to page https://cran.r-project.org and install the latest R version on your computer.	
 
 ### Install DEgenes Hunter from console (using devtools)
 To install DEgenes Hunter from console, we use the devtools utility to install R packages from GitHub. Please type the following commands:
@@ -21,7 +21,20 @@ To install DEgenes Hunter from console, we use the devtools utility to install R
     Rscript -e 'devtools::install_github("seoanezonjic/DEgenesHunter")'
 ```
 
-Then, please create the folder where you want to install DEgenes Hunter command line scripts, copy the scripts there and make them command-line accesible using these commands:
+Sometimes reactome.db download fails because this package is too large (>400 Mb) and R has a download timeout of 60 seconds by default. 
+
+``` bash
+	Rscript -e "getOption('timeout')"
+		[1] 60
+```
+
+This error can be solved by installing reactome.db from source or extending the timeout threshold before installing the DEgenesHunter package with the command:
+
+``` bash
+    Rscript -e 'options(timeout=1000); devtools::install_github("seoanezonjic/DEgenesHunter")'
+```
+
+Then, please create the folder where you want to install the DEgenesHunter command line scripts, copy the scripts there and make them command line accesible using these commands:
 
 ```bash
     mkdir install_folder
