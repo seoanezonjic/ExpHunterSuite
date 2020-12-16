@@ -210,7 +210,6 @@ gg_heatmap <- function(data_table,
       colnames(data_table) <- c(y_axis, x_axis, fill)
     }
 
-   save(list = ls(all.names = TRUE), file = "~/test/ggtest.RData", envir = environment())
     pp <- ggplot2::ggplot(data_table, ggplot2::aes_(x = as.name(x_axis), y = as.name(y_axis), fill = as.name(fill))) +
     ggplot2::geom_tile(show.legend = TRUE) +
     ggplot2::theme_minimal() +
