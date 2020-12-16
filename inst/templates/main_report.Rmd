@@ -495,7 +495,7 @@ cat("In total there were ", max(unique(results_WGCNA$gene_cluster_info$Cluster_I
 	names(col_clusters_barplot) <- names(genes_per_cluster)
 	ggplot2::ggplot(as.data.frame(genes_per_cluster), ggplot2::aes(Var1, Freq, fill=Var1)) + 
     ggplot2::geom_bar(stat="identity") + ggplot2::scale_fill_manual(name = "Cluster ID", values=col_clusters_barplot) + 
-    ggplot2::labs(x = "Cluster ID (0 = unclustered)", y = "Frequency", main="Number of Genes per Cluster") + theme(legend.position = "none")
+    ggplot2::labs(x = "Cluster ID (0 = unclustered)", y = "Frequency", main="Number of Genes per Cluster") + ggplot2::theme(legend.position = "none")
 ```
 
 ```{r WGCNA_conditional_dist_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
