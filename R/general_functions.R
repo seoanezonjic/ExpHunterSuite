@@ -155,13 +155,16 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
       workers, tasks = ceiling(length(X)/task_size), stop.on.error = TRUE,
       log = log, threshold = "INFO", logdir = log_path
     )
+    message(paste('items:', length(X), 'task_size:', task_size))
+    message(param)    
     res <- BiocParallel::bptry(
       BiocParallel::bplapply(X, FUNC, BPPARAM = param, ...)
     )
     exec_status <- BiocParallel::bpok(res)
     fails <- which( exec_status == FALSE)
+    message(paste('exec_status => exec items:', length(exec_status), 'fails:', length(fails)))
     if(length(fails) > 0 ){
-      print(tail(attr(res[[fails[1]]], "traceback")))
+      message(tail(attr(res[[fails[1]]], "traceback")))
       stop(paste('Parallel execution has failed at item', fails[1],'and a total of', length(fails) , 'items have failed.'))
     }
     return(res)

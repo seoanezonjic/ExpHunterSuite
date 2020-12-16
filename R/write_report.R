@@ -131,7 +131,7 @@ write_functional_report <- function(hunter_results,
                 outf_cls_i <- file.path(results_path, aux)
                 # Generate report
                 rmarkdown::render(file.path(template_folder, 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
-            }, workers = cores))
+            }, workers = cores, task_size= task_size))
 
             message("\tRendering clustered report")
             outf_cls <- file.path(results_path, "clusters_func_report.html")
