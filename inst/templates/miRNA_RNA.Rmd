@@ -33,7 +33,7 @@ output:
 # **RNAseq - miRNAseq correlation report**
 
 ```{r introduction, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-cat(paste0("This report summarizes results from [script_name] execution comparing **", opt$RNAseq_folder, "** RNAseq data and **", opt$miRNAseq_folder, "** miRNAseq data.
+cat(paste0("This report summarizes results from [script_name] execution comparing **", RNAseq_folder, "** RNAseq data and **", miRNAseq_folder, "** miRNAseq data.
  miRNAseq and RNAseq data has been correlated using different strategies and then compared with databases included in multiMiR.\n\n" ))
 ```
 
@@ -56,10 +56,10 @@ min <- -0.5
 if (min < corr_cutoff) {
   min <- corr_cutoff
 }
-pp <- ggplot(all_strategies, aes(x = strategy, y = correlation, fill = strategy)) +
-  geom_violin(trim = FALSE, scale = "width") + ylim(-1.000001, min + 0.00001) +
-  geom_boxplot(width=0.05)+
-  theme(axis.text.x = element_blank(), axis.title.x = element_blank()) 
+pp <- ggplot2::ggplot(all_strategies, ggplot2::aes(x = strategy, y = correlation, fill = strategy)) +
+  ggplot2::geom_violin(trim = FALSE, scale = "width") + ggplot2::ylim(-1.000001, min + 0.00001) +
+  ggplot2::geom_boxplot(width=0.05)+
+  ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.title.x = ggplot2::element_blank()) 
 pp
 
 ```
@@ -68,10 +68,10 @@ pp
 
 cat("\n\nThis plot shows the distributions of correlation P values between RNAseq and miRNAseq using diferent strategies.
   \n")
-pp <- ggplot(all_strategies, aes(x = strategy, y = pval, fill = strategy)) +
-  geom_violin(trim = FALSE, scale = "width") + ylim(-0.0001, 0.2) +
-  geom_boxplot(width=0.05)+
-  theme(axis.text.x = element_blank(), axis.title.x = element_blank()) 
+pp <- ggplot2::ggplot(all_strategies, ggplot2::aes(x = strategy, y = pval, fill = strategy)) +
+  ggplot2::geom_violin(trim = FALSE, scale = "width") + ggplot2::ylim(-0.0001, 0.2) +
+  ggplot2::geom_boxplot(width=0.05)+
+  ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.title.x = ggplot2::element_blank()) 
 pp
 
 ```
@@ -80,16 +80,16 @@ pp
 
 cat("\n\n This plot shows how strategies are supported by target databases\n\n")
 
-pp <- ggplot(filters_summary, aes(y = pairs, x = strategy, fill = type)) + 
-      geom_bar(stat= "identity",position=position_dodge()) +
-      geom_errorbar(aes(ymin=pairs-sdev, ymax=pairs+sdev), width=.2,
-                 position=position_dodge(.9)) + 
-      theme(axis.text.x = element_text(angle = 20, hjust = 1)) + 
-      geom_text(aes(label = pairs), angle = 45, position = position_dodge(width=0.95), size=2, vjust = -2)
+pp <- ggplot2::ggplot(filters_summary, ggplot2::aes(y = pairs, x = strategy, fill = type)) + 
+      ggplot2::geom_bar(stat= "identity",position=ggplot2::position_dodge()) +
+      ggplot2::geom_errorbar(ggplot2::aes(ymin=pairs-sdev, ymax=pairs+sdev), width=.2,
+                 position=ggplot2::position_dodge(.9)) + 
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 20, hjust = 1)) + 
+      ggplot2::geom_text(ggplot2::aes(label = pairs), angle = 45, position = ggplot2::position_dodge(width=0.95), size=2, vjust = -2)
 pp
 
 filter_stats <- filters_summary[!is.na(filters_summary$p_val), c("strategy", "type", "p_val", "quantile")]
-filter_stats <- reshape(filter_stats, timevar="type", idvar="strategy", direction ="wide")
+filter_stats <- stats::reshape(filter_stats, timevar="type", idvar="strategy", direction ="wide")
 filter_stats$targets <- rep(NA, nrow(filter_stats))
 # save(filter_stats, all_strategies, file = file.path(opt$output_files, "debug.RData") )
 prevalent_miRNAs <- miRNAseq[["DH_results"]]$gene_name[miRNAseq[["DH_results"]]$genes_tag == "PREVALENT_DEG"]
@@ -127,11 +127,11 @@ rownames(common_pairs) <- approaches
 for (col_strategy in approaches) {
   strat_pairs <- strategies$all_possible_permutations[all_strategies[all_strategies$strategy == col_strategy, "pair"], c("RNAseq", "miRNAseq")]
 
-  col_pairs <- strat_pairs %>% unite("pairs", RNAseq:miRNAseq, sep = "", na.rm = FALSE)
+  col_pairs <- strat_pairs %>% tidyr::unite("pairs", RNAseq:miRNAseq, sep = "", na.rm = FALSE)
   col_pairs <- col_pairs$pairs
   for (row_strategy in approaches) {
     strat_pairs <- strategies$all_possible_permutations[all_strategies[all_strategies$strategy == row_strategy, "pair"], c("RNAseq", "miRNAseq")]
-    row_pairs <- strat_pairs %>% unite("pairs", RNAseq:miRNAseq, sep = "", na.rm = FALSE)
+    row_pairs <- strat_pairs %>% tidyr::unite("pairs", RNAseq:miRNAseq, sep = "", na.rm = FALSE)
     row_pairs <- row_pairs$pairs
     common_pairs[row_strategy, col_strategy] <- length(intersect(col_pairs, row_pairs))
   }
@@ -157,41 +157,6 @@ pp <- gg_heatmap(data =  common_pairs,
 pp
 # q()
 # gc()
-```
-
-```{r methods_comparison_cor_dist, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-
-# cat("\n\nOverlap between the different strategies in terms of miRNA-target gene pairs detected.\n\n")
-
-
-# distribution_legend <- c()
-
-# plot_grid <- lapply(names(strategies), function(strategy) {
-#     signif_distribution <- strategies[[strategy]]$all_pairs_info 
-
-#     cor_distributions <- data.frame(subset = "background", correlation = strategies$dd$all_pairs_info$correlation, stringsAsFactors = FALSE)
-#     # save(cor_distributions, signif_distribution, file = file.path(opt$output_files, "debug.RData"))
-
-#     cor_distributions <- rbind(cor_distributions, data.frame(subset = "predicted", 
-#                                                               correlation = signif_distribution[signif_distribution$predicted_c > 0,"correlation"]))
-#     cor_distributions <- rbind(cor_distributions, data.frame(subset = "validated", 
-#                                                               correlation = signif_distribution[signif_distribution$validated_c > 0,"correlation"]))
-#     cor_distributions <- rbind(cor_distributions, data.frame(subset = "both", 
-#                                                               correlation = signif_distribution[signif_distribution$validated_c > 0 & signif_distribution$predicted_c > 0, "correlation"]))
-#     gg <- ggplot(data = cor_distributions, aes(x = correlation, color = subset, fill = subset) ) +
-#           ggtitle(strategies[[strategy]]$name) +
-#           geom_density(alpha = 0.2, stat = "density") + ylim(0,2) + theme(legend.position = "top")
-#     cor_distributions <- NULL
-#     return(gg)
-# })
-
-# distribution_legend <- extract_legend(plot_grid[[1]])
-# plot_grid <- lapply(plot_grid, function(plot){ return(plot + theme(legend.position = "none")) })
-
-# library(grid)
-# grid.draw(distribution_legend) 
-# grid.arrange(grobs = plot_grid, ncol = 3)
-
 ```
 
 ```{r roc_curve, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
@@ -226,6 +191,7 @@ pp
 #     plot(prec_rec_val, main = "PREC-REC")
 
 ``` 
+
 ```{r all_db_dist, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
     # cat("\n\nArea under the curve for different strategies using multiMiR predicted and validated pairs as gold standard\n\n")
     # predicted_auc <- ROCR::performance(pred_pred, "auc")
@@ -249,30 +215,16 @@ pp
     # db_distribution <- db_distribution[db_distribution$strategy %in% valid_strats,]
     
     # db_distribution$strategy <- gsub("_vs_", "_vs\n", db_distribution$strategy)
-    gg <- ggplot(db_distribution, aes(y = score, x = strategy, fill = step)) +
-    geom_boxplot() + ylim(0, NA) + theme(axis.text.x = element_text(angle = 20, hjust = 1))
+    gg <- ggplot2::ggplot(db_distribution, ggplot2::aes(y = score, x = strategy, fill = step)) +
+    ggplot2::geom_boxplot() + ggplot2::ylim(0, NA) + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 20, hjust = 1))
 
     plot(gg)
    # aux <- db_distribution %>% group_by(strategy, step) %>% summarize(Count = n())
-    dist_pval <- data.frame()
-    for (strategy in unique(db_distribution$strategy)) {
-      true_dis <- db_distribution[db_distribution$strategy == strategy & db_distribution$step == "predicted", "score"]
-      rand_dis <- db_distribution[db_distribution$strategy == strategy & db_distribution$step == "predicted_random", "score"] 
-      # str(true_dis)
-      # message(length(res))
-      # print(c(nrow(true_dis), nrow(rand_dis)))
-      if(nrow(true_dis) != 0 ){
-        res <- MKinfer::boot.t.test(true_dis, y = rand_dis, alternative = "greater" )
-        res <- res$boot.p.value
-      } else {
-        res <- 1
-      }
-      tem_pval <- data.frame(strategy = strategy, dist_pvalue = res)
-      dist_pval <- rbind(dist_pval, tem_pval)
-    }
+
 
 ```
 ```{r db_distr_table, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
+   dist_pval <- prediction_dist_pval(db_distribution)
    knitr::kable(dist_pval, format.args = list(scientific = TRUE))
 
 ```
@@ -282,12 +234,12 @@ pp
     strat_significant_pairs <- all_strategies$strategy == strategy & all_strategies$predicted_c > 0
 
     pairs <- strategies$all_possible_permutations[all_strategies[strat_significant_pairs, "pair"], c("RNAseq", "miRNAseq")] #<- paste0(all_strategies[strat_significant_pairs, "miRNAseq"], all_strategies[strat_significant_pairs, "RNAseq"])
-    pairs <- pairs %>% unite("pair", RNAseq:miRNAseq, sep = "", na.rm = FALSE) 
+    pairs <- pairs %>% tidyr::unite("pair", RNAseq:miRNAseq, sep = "", na.rm = FALSE) 
     pairs <- unique(pairs$pairs)
     return(pairs)
     })
   names(venn_data) <- valid_strats
-  grid::grid.draw(venn.diagram(x = venn_data,
+  grid::grid.draw(VennDiagram::venn.diagram(x = venn_data,
   filename = NULL))
 ```
 
@@ -301,7 +253,7 @@ pp
     return(miRNA_ID)
     })
   names(venn_data) <- valid_strats
-  grid::grid.draw(venn.diagram(x = venn_data,
+  grid::grid.draw(VennDiagram::venn.diagram(x = venn_data,
   filename = NULL))
 ```
 ```{r str_diff_target, results = 'asis', echo = FALSE, warning = FALSE,  eval = FALSE}
@@ -314,7 +266,7 @@ pp
     return(RNA_ID)
     })
   names(venn_data) <- valid_strats
-  grid::grid.draw(venn.diagram(x = venn_data,
+  grid::grid.draw(VennDiagram::venn.diagram(x = venn_data,
   filename = NULL))
 ```
 
@@ -324,9 +276,9 @@ pp
     prec_recall$gold_standard <- factor(prec_recall$gold_standard, levels=c("predicted","validated","both"))
 
     for (metric in c("precision", "recall", "F1")) {
-      gg <- ggplot(prec_recall, aes(x = strategy, y = prec_recall[,metric], fill = gold_standard))+
-      geom_bar(stat= "identity",position=position_dodge()) + 
-      ggtitle(metric) + theme(axis.text.x = element_text(angle = 20, hjust = 1))
+      gg <- ggplot2::ggplot(prec_recall, ggplot2::aes(x = strategy, y = prec_recall[,metric], fill = gold_standard))+
+      ggplot2::geom_bar(stat= "identity",position=ggplot2::position_dodge()) + 
+      ggplot2::ggtitle(metric) + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 20, hjust = 1))
       cat(paste0("\n\n",metric," comparison for strategies\n\n"))
       plot(gg)
     }
@@ -340,14 +292,14 @@ pp
 
   curr_out <- unlist(lapply(approaches ,function(method_name){
       sec_text <- paste(c("## **", method_name ," correlation method**\n"),collapse="") # Header
-      sec_text <- c(sec_text, knit_expand("partial/miRNA_cor_methods.Rmd")) # Body
+      sec_text <- c(sec_text, knitr::knit_expand("partial/miRNA_cor_methods.Rmd")) # Body
       return(sec_text)
   }))    
 # save(list = ls(all.names = TRUE), file = file.path(opt$output_files, "debug.RData"), envir = environment())
 
 ``` 
 
-`r paste(knit(text = curr_out), collapse = '\n')`
+`r paste(knitr::knit(text = curr_out), collapse = '\n')`
 
 
 

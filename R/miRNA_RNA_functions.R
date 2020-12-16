@@ -124,31 +124,31 @@ parse_approaches <- function(approaches){
 perform_correlations <- function(strategy = "normalized_counts_RNA_vs_miRNA_normalized_counts", RNAseq, miRNAseq, corrected_positions, multimir_summary = NULL, cor_cutoff = 0, pval_cutoff = 0.05){ #correct_positions is a mirna_RNA pairs vector
 
 	strat_description <- unlist(strsplit(strategy, "_RNA_vs_miRNA_"))
-	print(strategy)
+	# message(paste0("\n", strategy))
 	if (strat_description[1] == "hub_1" && is.null(RNAseq$hub_1)){
 		RNAseq$hub_1 <- get_hub_genes_by_MM(normalized_counts = RNAseq$normalized_counts, hunter_results = RNAseq$DH_results[RNAseq$DH_results$candidate_deg, ])
 	}
 	if (strat_description[2] == "hub_1" && is.null(miRNAseq$hub_1)){
 		miRNAseq$hub_1 <- get_hub_genes_by_MM(normalized_counts = miRNAseq$normalized_counts, hunter_results = miRNAseq$DH_results[miRNAseq$DH_results$candidate_deg, ])
 	}
-	print(strat_description[2])
-	print(str(miRNAseq$hub_1))
+	# print(strat_description[2])
+	# print(str(miRNAseq$hub_1))
 
 	RNA_profiles <- RNAseq[[strat_description[1]]]
 	miRNA_profiles <- miRNAseq[[strat_description[2]]]
-	print(str(RNA_profiles))
-	print(str(miRNA_profiles))
+	# print(str(RNA_profiles))
+	# print(str(miRNA_profiles))
 	all_pairs_info <- correlate_profiles(RNA_profiles, miRNA_profiles)
 	all_pairs_info <- data.table::as.data.table(all_pairs_info)
 
 	if (strat_description[1] != "normalized_counts"){
-		print("expand RNA")
+		# message("expand RNA")
 		all_pairs_info <- expand_module(all_pairs_info = all_pairs_info, tag = "RNAseq", DH_results = RNAseq$DH_results[RNAseq$DH_results$candidate_deg, ])
 		
 	}
 	
 	if (strat_description[2] != "normalized_counts"){
-		print("expand miRNA")
+		# message("expand miRNA")
 		all_pairs_info <- expand_module(all_pairs_info = all_pairs_info, tag = "miRNAseq", DH_results = miRNAseq$DH_results[miRNAseq$DH_results$candidate_deg, ])
 	}
 	all_pairs_info$all_permutations <- TRUE
@@ -195,6 +195,8 @@ correlate_profiles <- function(RNA_profiles, miRNA_profiles) {
 
 #' @importFrom dplyr desc between row_number filter arrange group_by
 get_hub_genes_by_MM <- function(normalized_counts, hunter_results, top = 1){
+	"%>%" <- magrittr::"%>%"
+
 	hub_genes <- hunter_results %>% 
 				dplyr::filter(Cluster_MM_pval <= 0.05) %>% 
 				dplyr::arrange(dplyr::desc(Cluster_MM)) %>% 
@@ -210,6 +212,8 @@ get_hub_genes_by_MM <- function(normalized_counts, hunter_results, top = 1){
 #' @importFrom data.table as.data.table merge.data.table  
 #' @importFrom dplyr select
 expand_module <- function(all_pairs_info, tag, DH_results){
+		"%>%" <- magrittr::"%>%"
+
 		mod_tag <- paste0(tag, "_mod")
 		names(all_pairs_info)[names(all_pairs_info)== tag] <- mod_tag
 
@@ -219,7 +223,7 @@ expand_module <- function(all_pairs_info, tag, DH_results){
 		# print(head(RNAseq))
 		partial_expanded$module <- as.character(partial_expanded$module)
 		all_pairs_info <- data.table::as.data.table(all_pairs_info)
-		all_pairs_info <- data.table::merge.data.table(x = all_pairs_info, y = partial_expanded, by.x = mod_tag, by.y = "module", by =data.table::.EACHI, allow.cartesian  = TRUE)
+		all_pairs_info <- data.table::merge.data.table(x = all_pairs_info, y = partial_expanded, by.x = mod_tag, by.y = "module", allow.cartesian  = TRUE)
 		all_pairs_info[,mod_tag] <- NULL
 		return(all_pairs_info)
 }
@@ -252,9 +256,9 @@ get_db_scores <- function(all_db_info){
 		all_pred_dbs <- c("diana_microt", "elmmo", "microcosm", "miranda","mirdb", "pictar", "pita", "targetscan")
 		strats_r_scores <- lapply(all_pred_dbs, function(pred_db){
 			pred_db_score <- data.table::data.table(database = pred_db, r_scores = all_db_info[, pred_db], significant = all_db_info$correlated_pairs)
-			print("1")
+			# print("1")
 			pred_db_score <- pred_db_score[pred_db_score$r_scores > 0, ]
-			print("2")
+			# print("2")
 			return(pred_db_score) 
 		})
 		strats_r_scores <- data.table::rbindlist(strats_r_scores)
@@ -304,12 +308,12 @@ add_randoms <- function(background = NULL, filters_summary = NULL, permutations 
 		sig_pairs <- as.numeric(all_strategies[all_strategies$strategy == strategy_name, "pairs"])
 		strat_background <- background[-sig_pairs,]
 		sig_pairs_count <- filters_summary[filters_summary$strategy == strategy_name & filters_summary$type == "known_miRNAs", "pairs"]
-		print(sig_pairs_count)
+		# print(sig_pairs_count)
 		for (i in 1:permutations){ 
 			# print("\tdebug1_1")
 			random_indices <- sample(rownames(background), size = sig_pairs_count, replace = FALSE)	
 			random_strat <- as.data.frame(background[random_indices,])
-			random_summary <- data.table(predicted = sum(random_strat$predicted_c > 0),
+			random_summary <- data.table::data.table(predicted = sum(random_strat$predicted_c > 0),
 											validated = sum(random_strat$validated_c > 0),
 											both= sum(random_strat$predicted_c > 0 & random_strat$validated_c > 0)
 										)

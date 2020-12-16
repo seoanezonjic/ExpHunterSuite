@@ -149,7 +149,7 @@ write_functional_report <- function(hunter_results,
     }
 }
 
-write_miRNA_cor_report <- function(miRNA_cor_results, template_folder, output_path, report_name){
+write_miRNA_cor_report <- function(miRNA_cor_results, template_folder, output_files, report_name){
     "%>%" <- magrittr::"%>%"
 
     all_strategies <- miRNA_cor_results$all_strategies
@@ -165,9 +165,10 @@ write_miRNA_cor_report <- function(miRNA_cor_results, template_folder, output_pa
     corr_cutoff <- miRNA_cor_results$corr_cutoff
     mirna_names <- miRNA_cor_results$mirna_names
     gene_id_translation <- miRNA_cor_results$gene_id_translation
-    ref_strategy = miRNA_cor_results$ref_strategy
+    ref_strategy <- miRNA_cor_results$ref_strategy
+    score_filter <- miRNA_cor_results$score_filter    
     
     rmarkdown::render(file.path(template_folder, 'miRNA_RNA.Rmd'), 
-                  output_file = file.path(output_path, report_name), intermediates_dir = output_path)
+                  output_file = file.path(output_files, report_name), intermediates_dir = output_files)
     
 }

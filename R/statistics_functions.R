@@ -59,3 +59,22 @@ spc <- function(df){
 fmeasure <- function(df){
 	2 * (df$Precision * df$Recall) / (df$Precision + df$Recall)
 }
+
+
+#' @importFrom MKinfer boot.t.test
+prediction_dist_pval <- function(db_distribution) {
+  dist_pval <- data.frame()
+  for (strategy in unique(db_distribution$strategy)) {
+    true_dis <- db_distribution[db_distribution$strategy == strategy & db_distribution$step == "predicted", "score"]
+    rand_dis <- db_distribution[db_distribution$strategy == strategy & db_distribution$step == "predicted_random", "score"] 
+    if(length(true_dis) != 0 ){
+      res <- MKinfer::boot.t.test(true_dis, y = rand_dis, alternative = "greater" )
+      res <- res$boot.p.value
+    } else {
+      res <- 1
+    }
+    tem_pval <- data.frame(strategy = strategy, dist_pvalue = res)
+    dist_pval <- rbind(dist_pval, tem_pval)
+   }
+  return(dist_pval)
+}

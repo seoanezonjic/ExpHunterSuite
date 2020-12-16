@@ -6,27 +6,12 @@ options(scipen = 0.001,
 
 if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 
-	suppressPackageStartupMessages(library(pryr))
-	suppressPackageStartupMessages(library(knitr))
-	suppressPackageStartupMessages(require(rmarkdown))
-	suppressPackageStartupMessages(require(dplyr))
-	suppressPackageStartupMessages(require(WGCNA))
-	suppressPackageStartupMessages(require(ggplot2))  
-	suppressPackageStartupMessages(require(stringr))  
-	suppressPackageStartupMessages(require(data.table))  
-	suppressPackageStartupMessages(require(tidyverse))  
-	suppressPackageStartupMessages(require(DT))  
-	suppressPackageStartupMessages(require(miRBaseConverter))  
-	suppressPackageStartupMessages(require(gridExtra))
-	suppressPackageStartupMessages(require(VennDiagram))
-
-
 	full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  # works when using source
 	               error=function(e) # works when using R CMD
 	              normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', commandArgs())], '='))[2]))
 	main_path_script <- dirname(full.fpath)
 	root_path <- file.path(main_path_script, '..', '..')
-	custom_libraries <- c("plotting_functions.R", "general_functions.R", "miRNA_RNA_functions.R", "functional_analysis_library.R", "main_miRNA_RNAseq_analysis.R")
+	custom_libraries <- c("plotting_functions.R", "write_report.R", "general_functions.R",  "statistics_functions.R", "miRNA_RNA_functions.R", "functional_analysis_library.R", "main_miRNA_RNAseq_analysis.R")
 	for (lib in custom_libraries){
     	source(file.path(root_path, 'R', lib))
   	}
@@ -48,8 +33,6 @@ option_list <- list(
 		help="DEgenesHunter RNAseq execution folder"),
 	optparse::make_option(c("-m", "--miRNAseq_folder"), type="character", default=NULL,
 		help="DEgenesHunter miRNAseq execution folder"),
-	optparse::make_option(c("-d", "--deg_tag"), type="character", default="PREVALENT_DEG",
-		help="DEG tag. Set the DEG tag of DEGenesHunter to filter results. 'PREVALENT_DEG' or 'POSSIBLE_DEG'. Default : %default"),
 	optparse::make_option(c("-o", "--output_files"), type="character", default=".", 
 		help = "Output folder"),
 	optparse::make_option(c("-a", "--approaches"), type="character", default="EE,Eh,Ed,hd,hE",
@@ -85,10 +68,9 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 dir.create(opt$output_files, recursive = TRUE)
 
 
-miRNA_RNAseq_analysis(
+miRNA_cor_results <- miRNA_RNAseq_analysis(
 	RNAseq_folder=opt$RNAseq_folder,
 	miRNAseq_folder=opt$miRNAseq_folder,
-	deg_tag=opt$deg_tag,
 	output_files=opt$output_files,
 	approaches=opt$approaches,
 	organism=opt$organism,
@@ -104,3 +86,9 @@ miRNA_RNAseq_analysis(
 	organism_table_path = organism_table_path, #file.path(root_path, "R", "organism_table.txt"),
 	template_folder = template_folder #file.path(root_path, "inst", "templates")
 	)
+
+write_miRNA_cor_report(miRNA_cor_results = miRNA_cor_results, 
+						template_folder = template_folder, 
+						output_files = opt$output_files, 
+						report_name = "miRNA_RNA_comparison.html"
+						)
