@@ -156,7 +156,7 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
       log = log, threshold = "INFO", logdir = log_path
     )
     message(paste('items:', length(X), 'task_size:', task_size))
-    message(param)    
+    print(param)    
     res <- BiocParallel::bptry(
       BiocParallel::bplapply(X, FUNC, BPPARAM = param, ...)
     )
