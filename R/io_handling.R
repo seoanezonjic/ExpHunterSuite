@@ -8,7 +8,7 @@
 #' @export
 #' @importFrom utils read.table
 #' @examples
-#' # To generate target using or load from file. 
+#' # To generate target or load from file. 
 #' # Example shows generation based on names of treament/control samples.
 #' # These should match the column names in the table of counts.
 #' case_sample_names <- paste("case", 1:5, sep="_")
@@ -43,7 +43,7 @@ target_generation <- function(from_file=NULL, ctrl_samples=NULL, treat_samples=N
 #' @export
 #' @importFrom utils write.table
 #' @examples
-#' Typically used with the @all_counts_for_plotting slot of the main output
+#' # Typically used with the @all_counts_for_plotting slot of the main output
 #' deg_res <- list(aa=data.frame(a=1:5,b=1:5), bb=data.frame(a=6:10,b=6:10))
 #' write_df_list_as_tables(deg_res, prefix="test", root=tempdir())
 write_df_list_as_tables <- function(df_list, prefix, root=getwd()) {

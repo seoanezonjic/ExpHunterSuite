@@ -15,6 +15,8 @@ LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 biocViews: GeneExpressionWorkflow
+Suggests: optparse
+VignetteBuilder: knitr
 Imports: 
     ReactomePA,
     limma,
@@ -48,5 +50,4 @@ Imports:
     graphics,
     utils,
     BiocParallel,
-    optparse,
     MKinfer
