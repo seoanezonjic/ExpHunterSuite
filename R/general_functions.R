@@ -143,8 +143,8 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
     log <- FALSE
     log_path <- NA_character_
     if(workers > 1){
-      log_path <- file.path(getwd(), 'bcplogs', as.character(timestamp))
       timestamp <- as.integer(Sys.time())
+      log_path <- file.path(getwd(), 'bcplogs', as.character(timestamp))
       if(file.exists(log_path)){
         timestamp = timestamp + 1
         log_path <- file.path(getwd(), 'bcplogs', as.character(timestamp))
