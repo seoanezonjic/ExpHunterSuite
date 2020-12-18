@@ -25,7 +25,7 @@ miRNA_RNAseq_analysis <- function(
 	#create output folder
 	"%>%" <- magrittr::"%>%"
 
-	dir.create(output_files, recursive = T)
+	dir.create(output_files, recursive = TRUE)
 
 	#parse strategies
 	approaches <- parse_approaches(unlist(strsplit(approaches, ",")))

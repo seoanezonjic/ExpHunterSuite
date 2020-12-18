@@ -517,6 +517,8 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
 #' @export
 #' @importFrom clusterProfiler enricher
 #' @importFrom utils write.table
+#' @examples
+#' enrich_all_customs()
 enrich_all_customs <- function(custom_sets = NULL, custom_files = NULL, p_val_threshold, genes, write_path = NULL){
   if(!is.null(custom_sets)){
     custom_set <- custom_sets
@@ -552,12 +554,19 @@ enrich_all_customs <- function(custom_sets = NULL, custom_files = NULL, p_val_th
 #' @param genes_in_modules list of genes (clusters)
 #' @param p_val_threshold p-value threshold
 #' @param cores optional parallel cores to be used. Default: 1
+#' @param task_size number of elements per packages used
 #' @return enrichment tables obtained
 #' @keywords enrich
 #' @export
 #' @importFrom clusterProfiler enricher
-enrich_clusters_with_gmt <- function(custom_set, genes_in_modules, p_val_threshold, cores = 1, task_size = 1){
-      # Enrich
+#' @examples
+#' # Will return NULL
+#' enrich_clusters_with_gmt()
+enrich_clusters_with_gmt <- function(custom_set, genes_in_modules = NULL, p_val_threshold, cores = 1, task_size = 1){
+      if(is.null(genes_in_modules)) {
+        warning("no value for genes_in_modules argument given")
+        return(NULL)
+      }
       modules_enrichment <- parallel_list(genes_in_modules, function(genesset) {
         enr <- clusterProfiler::enricher(genesset, pvalueCutoff = p_val_threshold, TERM2GENE = custom_set)
         if(nrow(enr) > 0) enr <- catched_pairwise_termsim(enr)
@@ -694,6 +703,7 @@ perform_GSEA_clusters <- function(all_clusters, organism, keyType, pvalueCutoff,
 #' @param qvalueCutoff q-value threshold
 #' @param ENRICH_DATA optional enrichment universe already loaded 
 #' @param cores optional number of parallel cores to be used. See mcapply
+#' @param task_size number of elements per packages used
 #' @keywords enrich
 #' @return enrichment performed
 enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, cores = 1, task_size = 1){

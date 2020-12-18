@@ -56,8 +56,11 @@ fcfunc <- function(means,fcmin=1.4, fcmax=3, meanlog = 1, sdlog = 0.8){
 #' @export
 #' @return synthetic data generated
 #' @importFrom utils read.table write.table
+#' @examples
+#' syznthetic_dataset <- degsynth()
+#' # Returns simulated count dataset and indication of which are DE/not DE
 degsynth <- function(
-	outfile,
+	outfile = NULL,
 	inputfile = NULL,
 	replicates = 3,
 	ngenes = 20000,
@@ -67,7 +70,6 @@ degsynth <- function(
 	P_up = 1,
 	group = NULL
 	){
-
 
 	# Load count table if proceed
 	if(is.null(inputfile)){
@@ -90,7 +92,6 @@ degsynth <- function(
 	#############################################
 	### SIMULATE 
 	#############################################
-
 	simul <- STC(Ngene      = ngenes,
 				 DEG.foldchange = function(means){fcfunc(means,fcmin = FC_min,fcmax = FC_max)}, 
 				 replicates = replicates, 
@@ -108,10 +109,13 @@ degsynth <- function(
 
 
 	#############################################
-	### EXPORT 
+	### EXPORT OR RETURN
 	#############################################
-	utils::write.table(simul$count, file=paste0(outfile,"_scount"), quote = FALSE, col.names = TRUE, sep = "\t")
-	utils::write.table(prediction_vector, file=paste0(outfile,"_predv"), quote = FALSE, col.names = TRUE, sep = "\t", row.names = FALSE)
-
+	if(is.null(outfile)) {
+		return(list(simul_count=simul$count, prediction_vector=prediction_vector))
+	} else {
+		utils::write.table(simul$count, file=paste0(outfile,"_scount"), quote = FALSE, col.names = TRUE, sep = "\t")
+		utils::write.table(prediction_vector, file=paste0(outfile,"_predv"), quote = FALSE, col.names = TRUE, sep = "\t", row.names = FALSE)
+	}
 }
 

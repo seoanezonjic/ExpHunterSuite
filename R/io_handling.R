@@ -8,8 +8,12 @@
 #' @export
 #' @importFrom utils read.table
 #' @examples
-#'
-#'
+#' # To generate target using or load from file. 
+#' # Example shows generation based on names of treament/control samples.
+#' # These should match the column names in the table of counts.
+#' case_sample_names <- paste("case", 1:5, sep="_")
+#' control_sample_names <- paste("control", 1:5, sep="_")
+#' target <- target_generation(ctrl_samples=control_sample_names, treat_samples=case_sample_names)
 target_generation <- function(from_file=NULL, ctrl_samples=NULL, treat_samples=NULL){
 	target <- NULL
 	if(! is.null(from_file)) {
@@ -39,17 +43,17 @@ target_generation <- function(from_file=NULL, ctrl_samples=NULL, treat_samples=N
 #' @export
 #' @importFrom utils write.table
 #' @examples
-#' 
+#' Typically used with the @all_counts_for_plotting slot of the main output
+#' deg_res <- list(aa=data.frame(a=1:5,b=1:5), bb=data.frame(a=6:10,b=6:10))
+#' write_df_list_as_tables(deg_res, prefix="test", root=tempdir())
 write_df_list_as_tables <- function(df_list, prefix, root=getwd()) {
-  invisible(
-    lapply(1:length(df_list), function(i) {
-      pack <- names(df_list)[i]
+  for(pack in names(df_list)) {
       folder <- file.path(root, paste0("Results_", pack))
-      if(!dir.exists(folder)){dir.create(folder)}
+      if(!dir.exists(folder)) dir.create(folder)
       utils::write.table(df_list[[pack]],
-      file=file.path(folder, paste0(prefix, pack, '.txt')), quote=FALSE, col.names = NA, sep="\t")
-    })
-  )
+      file=file.path(folder, paste0(prefix, pack, '.txt')), 
+      quote=FALSE, col.names = NA, sep="\t")
+  }
 }
 
 

@@ -33,7 +33,10 @@
 #' @keywords method
 #' @export
 #' @examples
-#' 
+#' data(toc)
+#' data(target)
+#' de_out <- main_degenes_Hunter(raw=toc, target=target, modules="D")
+
 main_degenes_Hunter <- function(
     raw = NULL,
     target = NULL,

@@ -13,6 +13,7 @@
 #' @param pthreshold pvalue threshold
 #' @param qthreshold qvalue threshold
 #' @param cores cores to be used if parallel features are going to be used. Default: 1
+#' @param task_size number of elements per packages used
 #' @param output_files output folder
 #' @param fc_colname main logFC colname (into hunter_results dataframe)
 #' @return functional result object with enrichments performed

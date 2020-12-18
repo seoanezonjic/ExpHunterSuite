@@ -14,7 +14,7 @@ STC <- function(Ngene = 1000, PDEG = 0.2, DEG.foldchange = 2, replicates = 3, bc
 	if(is.null(bcount)){
 		# require(TCC)
 		utils::data("arab", package = "TCC")
-		bcount <- environment()$arab
+		bcount <- arab
 		group <- seq(3)
 	}
 	if(is.null(group)){

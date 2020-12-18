@@ -46,6 +46,7 @@ write_expression_report <- function(exp_results, output_files=getwd(),template_f
 #' @param cores (OPTIONAL) cores for parallel features
 #' @param organisms_table (OPTIONAL) configuration table for given organism. Use see get_organism_table()
 #' @param fc_colname (OPTIONAL) main logFC colname (into hunter_results dataframe)
+#' @param task_size number of elements per packages used
 #' @param report string with reports to be written. Allowed: clusters (c) and functional (f). Default = "fc"
 #' @return void
 #' @importFrom rmarkdown render
