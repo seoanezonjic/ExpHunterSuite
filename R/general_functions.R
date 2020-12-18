@@ -140,17 +140,19 @@ save_times <- function(time_control, output="times_control.txt", plot_name = "ti
 #' @importFrom BiocParallel MulticoreParam bptry bplapply bpok
 
 parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
-    timestamp <- as.integer(Sys.time())
-    log_path <- file.path(getwd(), 'bcplogs', as.character(timestamp))
-    if(file.exists(log_path)){
-      timestamp = timestamp + 1
-      log_path <- file.path(getwd(), 'bcplogs', as.character(timestamp))
-    }
-    log = FALSE
+    log <- FALSE
+    log_path <- NA_character_
     if(workers > 1){
-      log = TRUE
+      log_path <- file.path(getwd(), 'bcplogs', as.character(timestamp))
+      timestamp <- as.integer(Sys.time())
+      if(file.exists(log_path)){
+        timestamp = timestamp + 1
+        log_path <- file.path(getwd(), 'bcplogs', as.character(timestamp))
+      }
+      log <- TRUE
       dir.create(log_path, recursive = TRUE)
     }
+    str(log_path)
     param <- BiocParallel::MulticoreParam( 
       workers, tasks = ceiling(length(X)/task_size), stop.on.error = TRUE,
       log = log, threshold = "INFO", logdir = log_path
