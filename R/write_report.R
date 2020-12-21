@@ -112,12 +112,20 @@ write_functional_report <- function(hunter_results,
     geneList <- sort(geneList, decreasing = TRUE)
     # -
     custom_enrichments <- func_results$CUSTOM
-    if("GO_ORA" %in% names(func_results)) enrich_go <- func_results$GO_ORA
-    if("GO_GSEA" %in% names(func_results)) enrich_go_gsea <- func_results$GO_GSEA
-    if("KEGG_ORA" %in% names(func_results)) enrich_ora <- func_results$KEGG_ORA
-    if("KEGG_GSEA" %in% names(func_results)) enrich_gsea <- func_results$KEGG_GSEA
-    if("REACT_ORA" %in% names(func_results)) enrich_react <- func_results$REACT_ORA
-    if("REACT_GSEA" %in% names(func_results)) enrich_react_gsea <- func_results$REACT_GSEA
+    if("ORA" %in% names(func_results)){
+        aux <- grepl("GO", names(func_results$ORA))
+        if(any(aux)) enrich_go <- func_results$ORA[aux]
+        # if("GO_OR" %in% names(func_results)) enrich_go <- func_results$GO_ORA
+        if("KEGG" %in% names(func_results$ORA)) enrich_ora <- func_results$ORA$KEGG
+        if("REACT" %in% names(func_results$ORA)) enrich_react <- func_results$ORA$REACT
+    }
+    if("GSEA" %in% names(func_results)){
+        aux <- grepl("GO", names(func_results$GSEA))
+        if(any(aux)) enrich_go_gsea <- func_results$GSEA[aux]
+        # if("GO_GSEA" %in% names(func_results)) enrich_go_gsea <- func_results$GO_GSEA
+        if("KEGG" %in% names(func_results$GSEA)) enrich_gsea <- func_results$GSEA$KEGG
+        if("REACT" %in% names(func_results$GSEA)) enrich_react_gsea <- func_results$GSEA$REACT   
+    }
     # TODO: topGO is not bein loaded because files are not been search
     ############################################################
     ##                GENERATE CLUSTER REPORTS                ##

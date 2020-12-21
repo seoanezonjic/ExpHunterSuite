@@ -202,12 +202,22 @@ load_WGCNA_results <- function(path, main_deg_table){
 write_enrich_files <- function(func_results, output_files=getwd()){
 	if(!dir.exists(output_files)) dir.create(output_files)
 	utils::write.table(data.frame(A = names(func_results$final_main_params), B = unlist(func_results$final_main_params)), file = file.path(output_files,"functional_opt.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-	if("GO_ORA" %in% names(func_results)) utils::write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_ORA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_ora"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-	if("GO_GSEA" %in% names(func_results)) utils::write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_GSEA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_gsea"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")	
-	if("KEGG_ORA" %in% names(func_results)) utils::write.table(func_results$KEGG_ORA, file=file.path(output_files, "KEGG_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-	if("KEGG_GSEA" %in% names(func_results)) utils::write.table(func_results$KEGG_GSEA, file=file.path(output_files, "KEGG_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-	if("REACT_ORA" %in% names(func_results)) utils::write.table(func_results$REACT_ORA, file=file.path(output_files, "REACT_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-	if("REACT_GSEA" %in% names(func_results)) utils::write.table(func_results$REACT_GSEA, file=file.path(output_files, "REACT_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+	if("ORA" %in% names(func_results)){
+		# if("GO_ORA" %in% names(func_results$ORA)) utils::write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_ORA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_ora"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		if("GO_BP" %in% names(func_results$ORA)) utils::write.table(func_results$ORA$GO_BP, file=file.path(output_files, "GO_BP_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		if("GO_MF" %in% names(func_results$ORA)) utils::write.table(func_results$ORA$GO_MF, file=file.path(output_files, "GO_MF_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		if("GO_CC" %in% names(func_results$ORA)) utils::write.table(func_results$ORA$GO_CC, file=file.path(output_files, "GO_CC_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		if("KEGG" %in% names(func_results$ORA)) utils::write.table(func_results$ORA$KEGG, file=file.path(output_files, "KEGG_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		if("REACT" %in% names(func_results$ORA)) utils::write.table(func_results$ORA$REACT, file=file.path(output_files, "REACT_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+	}
+	if("GSEA" %in% names(func_results)){
+		# if("GO_GSEA" %in% names(func_results)) utils::write.table(as.data.frame(do.call(rbind,lapply(func_results$GO_GSEA,function(res) {as.data.frame(res)}))), file=file.path(output_files, "GO_CL_gsea"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")	
+		if("GO_BP" %in% names(func_results$GSEA)) utils::write.table(func_results$GSEA$GO_BP, file=file.path(output_files, "GO_BP_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		if("GO_MF" %in% names(func_results$GSEA)) utils::write.table(func_results$GSEA$GO_MF, file=file.path(output_files, "GO_MF_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		if("GO_CC" %in% names(func_results$GSEA)) utils::write.table(func_results$GSEA$GO_CC, file=file.path(output_files, "GO_CC_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		if("KEGG" %in% names(func_results$GSEA)) utils::write.table(func_results$GSEA$KEGG, file=file.path(output_files, "KEGG_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+		if("REACT" %in% names(func_results$GSEA)) utils::write.table(func_results$GSEA$REACT, file=file.path(output_files, "REACT_GSEA_results"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")	
+	}
 	if("DEGH_results_annot" %in% names(func_results)) utils::write.table(func_results$DEGH_results_annot, file=file.path(output_files, "hunter_results_table_annotated.txt"), quote=FALSE, col.names=NA, sep="\t")
 	if("CUSTOM" %in% names(func_results)){
 		invisible(lapply(seq_along(func_results$CUSTOM),function(i){
