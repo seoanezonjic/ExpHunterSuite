@@ -163,13 +163,16 @@ functional_hunter <- function(
 	if(any(flags$GO, flags$GO_cp)){
 		GO_subontologies <- c()
 		if(grepl("M", GO_subont)){
-			GO_subontologies <- c(GO_subontologies,"MF")
+			# GO_subontologies <- c(GO_subontologies,"MF")
+			GO_subontologies <- c(GO_subontologies,"m")
 		}
 		if(grepl("B", GO_subont)){
-			GO_subontologies <- c(GO_subontologies,"BP")
+			# GO_subontologies <- c(GO_subontologies,"BP")
+			GO_subontologies <- c(GO_subontologies,"b")
 		}
 		if(grepl("C", GO_subont)){
-			GO_subontologies <- c(GO_subontologies,"CC")
+			# GO_subontologies <- c(GO_subontologies,"CC")
+			GO_subontologies <- c(GO_subontologies,"c")
 		}
 	}
 
@@ -390,157 +393,53 @@ functional_hunter <- function(
 	}
 
 
-
-	#############################################
-	### GO ENRICHMENT (clusterProfiler)
-	if (flags$GO_cp) {
-		message("Performing GO enrichments")
-		###########
-		### ORA ENRICHMENTS
-		if (flags$ORA) {
-			enrich_go <- lapply(GO_subontologies,function(mod) {
-				enrich <- enrichment_ORA(genes = likely_degs_entrez, organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = pthreshold,pAdjustMethod = "BH", ont = paste0("GO_",mod), qvalueCutoff = qthreshold)
-				return(enrich)
-			})
-			# Add names
-			names(enrich_go) <- GO_subontologies
-			func_results$GO_ORA <- enrich_go
-			#PERFORM WGCNA MODULES ANALYSIS
-			if (flags$WGCNA) {
-				for (subont in GO_subontologies) {
-					subont_name <- paste0("GO_", subont)
-					enrichments_ORA_expanded[[subont_name]] <- enrichment_clusters_ORA(genes = clgenes,
-		                                 organism = current_organism_info$Bioconductor_DB[1],
-		                                 keyType = keytypes,
-		                                 pvalueCutoff = pthreshold,
-		                                 pAdjustMethod = "BH",
-		                                 ont = subont_name,
-		                                 qvalueCutoff = qthreshold,
-		                                 useInternal = FALSE,
-		                                 cores = cores,
-		                                 task_size = task_size)
-				}
-			}
-		}
-
-		###########
-		### GSEA ENRICHMENTS
-		if (flags$GSEA) {
-			# Enrich
-			enrich_go_gsea <- lapply(GO_subontologies,function(mod) {
-				enrich <- enrich_GSEA(geneList = geneList,organism = current_organism_info$Bioconductor_DB[1],keyType = keytypes,pvalueCutoff = pthreshold,pAdjustMethod = "BH",ont = paste0("GO_",mod))
-				return(enrich)
-			})
-			# Add names
-			names(enrich_go_gsea) <- GO_subontologies
-			func_results$GO_GSEA <- enrich_go_gsea
-			#PERFORM WGCNA MODULES ANALYSIS
-			if (flags$WGCNA) {
-				for (subont in GO_subontologies) {
-					subont_name <- paste0("GO_", subont)
-					enrichments_GSEA_expanded[[subont_name]] <- perform_GSEA_clusters(all_clusters = cl_gene_fc,
-										organism = current_organism_info$Bioconductor_DB[1],
-										keyType = keytypes,
-										pvalueCutoff = pthreshold,
-										pAdjustMethod = "BH",
-										ont = subont_name, 
-										useInternal = FALSE)
-				}
-			}
-		}
-		message("clusterProfiler GO analysis finished")
+	# Prepare enrichments by flags
+	vonts <- c()
+	vkeytypes <- c()
+	if(flags$GO_cp){
+		vonts <- c(vonts,GO_subontologies)
+		vkeytypes <- c(vkeytypes,rep(keytypes,length(GO_subontologies)))
 	}
-
-
-	#############################################
-	### KEGG ENRICHMENT
-	if (flags$KEGG) {
-		message("Performing KEGG enrichments")
-		###########
-		### ORA ENRICHMENTS
-		if (flags$ORA) {
-			# Enrich
-			enrich_ora <- enrichment_ORA(genes = likely_degs_entrez,organism = current_organism_info$KeggCode[1],keyType = "kegg",pvalueCutoff = pthreshold,pAdjustMethod = "BH",ont = "KEGG",useInternal = !remote_actions$kegg, qvalueCutoff = qthreshold)
-			func_results$KEGG_ORA <- enrich_ora
-			#PERFORM WGCNA MODULES ANALYSIS
-			if (flags$WGCNA) {
-				enrichments_ORA_expanded[["KEGG"]] <- enrichment_clusters_ORA(genes = clgenes,
-	                                 organism = current_organism_info$KeggCode[1],
-	                                 keyType = "kegg",
-	                                 pvalueCutoff = pthreshold,
-	                                 pAdjustMethod = "BH",
-	                                 ont = "KEGG",
-	                                 qvalueCutoff = qthreshold,
-	                                 useInternal = !remote_actions$kegg,
-	                                 cores = cores,
-	                                 task_size = task_size)
-			}
-		}
-
-		###########
-		### GSEA ENRICHMENTS
-		if (flags$GSEA) {
-			enrich_gsea <- enrich_GSEA(geneList = geneList,organism = current_organism_info$KeggCode[1],pvalueCutoff = pthreshold,ont = "KEGG",useInternal = !remote_actions$kegg)
-			func_results$KEGG_GSEA <- enrich_gsea
-			#PERFORM WGCNA MODULES ANALYSIS
-			if (flags$WGCNA) {
-				enrichments_GSEA_expanded[["KEGG"]] <- perform_GSEA_clusters(all_clusters = cl_gene_fc,
-									organism = current_organism_info$KeggCode[1],
-									keyType = "ENTREZID",
-									pvalueCutoff = pthreshold,
-									pAdjustMethod = "BH",
-									ont = "KEGG", 
-									useInternal = !remote_actions$kegg)
-			}
-		}
-		message("clusterProfiler KEGG analysis finished")
+	if(flags$KEGG){
+		vonts <- c(vonts,"k")
+		vkeytypes <- c(vkeytypes,"kegg")
 	}
+	if(flags$KEGG){
+		vonts <- c(vonts,"r")
+		vkeytypes <- c(vkeytypes,"ENTREZID")
+	}
+	vonts <- paste(vonts, collapse="")
 
-
-	#############################################
-	### REACTOME ENRICHMENT
-
-	if (flags$REACT) {
-		message("Performing Reactome enrichments")
-		
-		###########
-		### ORA ENRICHMENTS
-		if (flags$ORA) {
-			# Make enrichment (ORA)
-			enrich_react <- enrichment_ORA(genes = likely_degs_entrez,organism = current_organism_info$Reactome_ID[1],keyType = "ENTREZID",pvalueCutoff = pthreshold,pAdjustMethod = "BH",ont = "REACT", qvalueCutoff = qthreshold)		
-			func_results$REACT_ORA <- enrich_react
-			#PERFORM WGCNA MODULES ANALYSIS
-			if (flags$WGCNA) {
-				enrichments_ORA_expanded[["REACT"]] <- enrichment_clusters_ORA(genes = clgenes,
-	                                 organism = current_organism_info$Reactome_ID[1],
-	                                 keyType = "ENTREZID",
-	                                 pvalueCutoff = pthreshold,
-	                                 pAdjustMethod = "BH",
-	                                 ont = "REACT",
-	                                 qvalueCutoff = qthreshold,
-	                                 useInternal = FALSE,
-	                                 cores = cores,
-	                                 task_size = task_size)
-			}
+	# Perform regular enrichments
+	if(flags$ORA){
+		regular_enr_ora  <- multienricher(genes = likely_degs_entrez, enrichmentType = "o", organism_info = current_organism_info, keytype = vkeytypes, ontology = vonts, pvalueCutoff = pthreshold, useInternal = !remote_actions$kegg, qvalueCutoff = qthreshold)
+		aux <- grepl("GO",names(regular_enr_ora$ORA))
+		if(any(aux)) func_results$GO_ORA <- regular_enr_ora$ORA[aux] # TODO :: refactor scripts and reports code to use original multienricher structure
+		if(any(!aux)){
+			aux <- !aux
+			names(regular_enr_ora$ORA)[aux] <- paste(names(regular_enr_ora$ORA)[aux],"ORA",sep="_") 
+			func_results <- append(func_results, regular_enr_ora$ORA[aux])
 		}
-
-		###########
-		### GSEA ENRICHMENTS
-		if (flags$GSEA) {
-			enrich_react_gsea <- enrich_GSEA(geneList = geneList, organism = current_organism_info$Reactome_ID[1], pvalueCutoff = pthreshold, pAdjustMethod = "BH", ont = "REACT")
-			func_results$REACT_GSEA <- enrich_react_gsea
-
-			if (flags$WGCNA) {
-				enrichments_GSEA_expanded[["REACT"]] <- perform_GSEA_clusters(all_clusters = cl_gene_fc,
-									organism = current_organism_info$Reactome_ID[1],
-									keyType = "ENTREZID",
-									pvalueCutoff = pthreshold,
-									pAdjustMethod = "BH",
-									ont = "REACT", 
-									useInternal = FALSE)
-			}
+		if(flags$WGCNA){
+			clusters_enr_ora  <- multienricher(genes = clgenes, enrichmentType = "o", organism_info = current_organism_info, keytype = vkeytypes, ontology = vonts, pvalueCutoff = pthreshold, useInternal = !remote_actions$kegg, qvalueCutoff = qthreshold)
+			func_results$WGCNA_ORA <- clusters_enr_ora$WGCNA$ORA
+			func_results$WGCNA_ORA_expanded <- clusters_enr_ora$WGCNA$ORA_expanded
 		}
-		message("clusterProfiler REACTOME analysis finished")
+	}
+	if(flags$GSEA){
+		regular_enr_gsea <- multienricher(genes = geneList, enrichmentType = "g", organism_info = current_organism_info, keytype = vkeytypes, ontology = vonts, pvalueCutoff = pthreshold, useInternal = !remote_actions$kegg, qvalueCutoff = qthreshold)
+		aux <- grepl("GO",names(regular_enr_gsea$GSEA))
+		if(any(aux)) func_results$GO_GSEA <- regular_enr_gsea$GSEA[aux] # TODO :: refactor scripts and reports code to use original multienricher structure
+		if(any(!aux)){
+			aux <- !aux
+			names(regular_enr_gsea$GSEA)[aux] <- paste(names(regular_enr_gsea$GSEA)[aux],"GSEA",sep="_") 
+			func_results <- append(func_results, regular_enr_gsea$GSEA[aux])
+		}
+		if(flags$WGCNA){
+			clusters_enr_gsea <- multienricher(genes = cl_gene_fc, enrichmentType = "g", organism_info = current_organism_info, keytype = vkeytypes, ontology = vonts, pvalueCutoff = pthreshold, useInternal = !remote_actions$kegg, qvalueCutoff = qthreshold)
+			func_results$WGCNA_GSEA <- clusters_enr_ora$WGCNA$GSEA
+			func_results$WGCNA_GSEA_expanded <- clusters_enr_ora$WGCNA$GSEA_expanded
+		}
 	}
 
 	#############################################
@@ -573,22 +472,6 @@ functional_hunter <- function(
 	##                                                                                                                   ##
 	## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 	if (flags$WGCNA) {
-		if (flags$ORA) {
-			enrichments_ORA <- lapply(enrichments_ORA_expanded, clusterProfiler::merge_result)
-			enrichments_ORA <- lapply(enrichments_ORA, function(res){
-				if(nrow(res) > 0) res <- catched_pairwise_termsim(res)
-				return(res)
-			})
-			func_results$WGCNA_ORA <- enrichments_ORA
-			func_results$WGCNA_ORA_expanded <- enrichments_ORA_expanded
-		}
-
-		if (flags$GSEA) {
-			enrichments_GSEA <- lapply(enrichments_GSEA_expanded, clusterProfiler::merge_result)
-			func_results$WGCNA_GSEA <- enrichments_GSEA
-			func_results$WGCNA_GSEA_expanded <- enrichments_GSEA_expanded
-		}
-
 		if (!is.null(custom)){
 			custom_cls_ORA <- lapply(custom_cls_ORA_expanded, clusterProfiler::merge_result)
 			custom_cls_ORA <- lapply(custom_cls_ORA, function(res){

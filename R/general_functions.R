@@ -137,8 +137,8 @@ save_times <- function(time_control, output="times_control.txt", plot_name = "ti
 #' @param ... Additional arguments to BiocParallel or to FUNC
 #' @keywords performance
 #' @return list
+#' @importFrom utils str
 #' @importFrom BiocParallel MulticoreParam bptry bplapply bpok
-
 parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
     log <- FALSE
     log_path <- NA_character_
@@ -152,7 +152,7 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
       log <- TRUE
       dir.create(log_path, recursive = TRUE)
     }
-    str(log_path)
+    utils::str(log_path)
     param <- BiocParallel::MulticoreParam( 
       workers, tasks = ceiling(length(X)/task_size), stop.on.error = TRUE,
       log = log, threshold = "INFO", logdir = log_path

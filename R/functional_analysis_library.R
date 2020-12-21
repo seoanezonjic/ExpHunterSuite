@@ -783,7 +783,7 @@ get_organismID_byOnto <- function(organism_info, ont){
 #' Perform enrichment of ORA and/or GSEA using a set of genes given
 #' @param genes significant genes to be used (vector or list of vectors - clusters)
 #' @param organism_info organism table info. Must include entries depending on ontologies selected: Bioconductor_DB (GO), KeggCode (KEGG), Reactome_ID (Reactome)
-#' @param keytype gene code type
+#' @param keytype gene code type. If is a vector, will be used in the same order than ontology items are given
 #' @param ontology string with ontologIDs to be used. Allowed: Gene Ontology (BP: b ; MF: m ; CC: c), KEGG (k), Reactome (r) 
 #' @param enrichmentType enrichment technique to be used. Allowed: ORA (o) and GSEA (g)
 #' @param pvalueCutoff p-value threshold
@@ -796,6 +796,7 @@ get_organismID_byOnto <- function(organism_info, ont){
 #' @return list with enrichments performed
 #' @keywords enrich
 #' @importFrom pbapply pblapply
+#' @importFrom clusterProfiler merge_result
 #' @export
 multienricher <- function(genes,
                           organism_info,
@@ -818,15 +819,12 @@ multienricher <- function(genes,
   flags$ORA <- grepl("o", enrichmentType)
   flags$GSEA <- grepl("g", enrichmentType)
   flags$clusters <- is.list(genes)
-  if(grepl("b", ontology)) onts <- c(onts,"GO_BP") 
-  if(grepl("m", ontology)) onts <- c(onts,"GO_MF") 
-  if(grepl("c", ontology)) onts <- c(onts,"GO_CC") 
-  if(grepl("k", ontology)) onts <- c(onts,"KEGG") 
-  if(grepl("r", ontology)) onts <- c(onts,"REACT") 
+  allowed_onts <- c("b" = "GO_BP", "m" = "GO_MF", "c" = "GO_CC", "k" = "KEGG", "r" = "REACT")
+  onts <- unlist(lapply(seq_along(allowed_onts),function(i){if(grepl(names(allowed_onts)[i], ontology)) return(allowed_onts[[i]])}))
 
   # Check genes format
   if(flags$clusters){
-    func_results[["Clusters"]] <- list()
+    func_results[["WGCNA"]] <- list()
     if(is(genes[[1]], "character")){
       genes_ora <- genes
       genes_gsea <- NULL
@@ -847,14 +845,27 @@ multienricher <- function(genes,
     apply_fun <- pbapply::pblapply
   }
 
+  # Prepare keytypes
+  if(length(keytype) > 1){
+    if(length(keytype) != length(onts)) stop("Given keytypes have not the same length than ontologies specified")
+    ontology_splitted <- unlist(strsplit(ontology,""))
+    keytypes <- lapply(onts,function(o){
+      indx_ont <- which(allowed_onts == o)
+      return(keytype[which(ontology_splitted == names(allowed_onts)[indx_ont])])
+    })    
+  }else{
+    keytypes <- lapply(onts,function(o){keytype})    
+  }
+  names(keytypes) <- onts
+
   ## ORA
   if(flags$ORA){
     if(flags$clusters){
       if(verbose) message(paste0("Performing clusters ORA enrichment for (",length(onts),") ontologies"))
-      func_results[["Clusters"]][["ORA"]] <- apply_fun(onts, function(ont){
+      func_results[["WGCNA"]][["ORA_expanded"]] <- apply_fun(onts, function(ont){
         enrichment_clusters_ORA(genes = genes_ora,
                                 organism = get_organismID_byOnto(organism_info,ont),
-                                keyType = keytype,
+                                keyType = keytypes[[ont]],
                                 pvalueCutoff = pvalueCutoff,
                                 pAdjustMethod = pAdjustMethod,
                                 ont = ont,
@@ -863,13 +874,13 @@ multienricher <- function(genes,
                                 cores = cores,
                                 task_size = task_size)
       }) 
-      names(func_results$Clusters$ORA) <- onts
+      names(func_results$WGCNA$ORA_expanded) <- onts
     }else{
       if(verbose) message(paste0("Performing ORA enrichment for (",length(onts),") ontologies"))
       func_results[["ORA"]] <- apply_fun(onts, function(ont){
         enrichment_ORA(genes = genes_ora,
                        organism = get_organismID_byOnto(organism_info,ont),
-                       keyType = keytype,
+                       keyType = keytypes[[ont]],
                        pvalueCutoff = pvalueCutoff,
                        pAdjustMethod = pAdjustMethod,
                        ont = ont,
@@ -884,21 +895,22 @@ multienricher <- function(genes,
   if(flags$GSEA && !is.null(genes_gsea)){
     if(flags$clusters){
       if(verbose) message(paste0("Performing clusters GSEA enrichment for (",length(onts),") ontologies"))
-      func_results[["Clusters"]][["GSEA"]] <- apply_fun(onts, function(ont){
+      func_results[["WGCNA"]][["GSEA_expanded"]] <- apply_fun(onts, function(ont){
         perform_GSEA_clusters(all_clusters = genes_gsea, 
                               organism = get_organismID_byOnto(organism_info,ont), 
-                              keyType = keytype, 
+                              keyType = keytypes[[ont]], 
                               pvalueCutoff = pvalueCutoff, 
                               pAdjustMethod = pAdjustMethod, 
                               ont = ont, 
                               useInternal = useInternal)   
       })
+      names(func_results$WGCNA$GSEA_expanded) <- onts
     }else{
       if(verbose) message(paste0("Performing GSEA enrichment for (",length(onts),") ontologies"))
       func_results[["GSEA"]] <- apply_fun(onts, function(ont){
         enrich_GSEA(geneList = genes_gsea,
                     organism = get_organismID_byOnto(organism_info,ont),
-                    keyType = keytype,
+                    keyType = keytypes[[ont]],
                     pvalueCutoff = pvalueCutoff,
                     pAdjustMethod = pAdjustMethod,
                     ont = ont,
@@ -908,6 +920,20 @@ multienricher <- function(genes,
     }
   }else if(flags$GSEA){
     warning("Genes are not in GSEA format, GSEA enrichment will not be performed")
+  }
+
+  # Compact
+  if(!is.null(func_results$WGCNA)){
+    if(!is.null(func_results$WGCNA$ORA_expanded)){
+      enrichments_ORA <- lapply(func_results$WGCNA$ORA_expanded, clusterProfiler::merge_result)
+      func_results$WGCNA$ORA <- lapply(enrichments_ORA, function(res){
+        if(nrow(res) > 0) res <- catched_pairwise_termsim(res)
+        return(res)
+      })
+    }
+    if(!is.null(func_results$WGCNA$GSEA_expanded)){
+      func_results$WGCNA$GSEA <- lapply(func_results$WGCNA$GSEA_expanded, clusterProfiler::merge_result)
+    }
   }
 
   # End and return
