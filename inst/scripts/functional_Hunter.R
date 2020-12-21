@@ -122,8 +122,6 @@ if(opt$List_organisms){
 		organisms_table = organisms_table,
 		fc_colname = fc_colname)
 
-debug_point("/mnt/home/users/bio_267_uma/jabato/projects/degeneshunter_refactor/test_hunter/full_tests/toremove.RData", message = "After new enrichment2",envir = environment())
-
 	# Write outputs
 	write_enrich_files(func_results, opt$output_files)
 
