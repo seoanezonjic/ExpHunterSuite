@@ -1,4 +1,5 @@
 ---
+title: "Module specific report"
 author: "Fernando Moreno Jabato"
 output:
   html_document:
