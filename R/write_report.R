@@ -130,6 +130,12 @@ write_functional_report <- function(hunter_results,
     ############################################################
     ##                GENERATE CLUSTER REPORTS                ##
     ############################################################
+    clean_tmpfiles_mod <- function() {
+        message("Calling clean_tmpfiles_mod()")
+    }
+
+    assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown") #https://github.com/rstudio/rmarkdown/issues/1632#issuecomment-545824711
+
     results_path <- normalizePath(output_files)
     if(grepl("c", report)){
         if (any(grepl("WGCNA",names(func_results)))) { # Clustered
@@ -139,7 +145,7 @@ write_functional_report <- function(hunter_results,
                 aux <- paste0("cl_func_",cl,".html")
                 outf_cls_i <- file.path(results_path, aux)
                 # Generate report
-                rmarkdown::render(file.path(template_folder, 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path)
+                rmarkdown::render(file.path(template_folder, 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path, quiet=TRUE)
             }, workers = cores, task_size= task_size))
 
             message("\tRendering clustered report")
