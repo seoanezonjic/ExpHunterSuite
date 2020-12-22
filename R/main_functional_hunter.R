@@ -423,8 +423,10 @@ functional_hunter <- function(
 		func_results <- append(func_results,regular_enr_ora)
 		if(flags$WGCNA){
 			clusters_enr_ora  <- multienricher(genes = clgenes, enrichmentType = "o", organism_info = current_organism_info, keytype = vkeytypes, ontology = vonts, pvalueCutoff = pthreshold, useInternal = !remote_actions$kegg, qvalueCutoff = qthreshold)
-			func_results$WGCNA_ORA <- clusters_enr_ora$WGCNA$ORA
-			func_results$WGCNA_ORA_expanded <- clusters_enr_ora$WGCNA$ORA_expanded
+			if(length(clusters_enr_ora$WGCNA$ORA) > 0){
+				func_results$WGCNA_ORA <- clusters_enr_ora$WGCNA$ORA
+				func_results$WGCNA_ORA_expanded <- clusters_enr_ora$WGCNA$ORA_expanded				
+			}
 		}
 	}
 	if(flags$GSEA){
@@ -439,8 +441,10 @@ functional_hunter <- function(
 		func_results <- append(func_results,regular_enr_gsea)
 		if(flags$WGCNA){
 			clusters_enr_gsea <- multienricher(genes = cl_gene_fc, enrichmentType = "g", organism_info = current_organism_info, keytype = vkeytypes, ontology = vonts, pvalueCutoff = pthreshold, useInternal = !remote_actions$kegg, qvalueCutoff = qthreshold)
-			func_results$WGCNA_GSEA <- clusters_enr_ora$WGCNA$GSEA
-			func_results$WGCNA_GSEA_expanded <- clusters_enr_ora$WGCNA$GSEA_expanded
+			if(length(clusters_enr_gsea$WGCNA$GSEA)){
+				func_results$WGCNA_GSEA <- clusters_enr_gsea$WGCNA$GSEA
+				func_results$WGCNA_GSEA_expanded <- clusters_enr_gsea$WGCNA$GSEA_expanded
+			}
 		}
 	}
 
