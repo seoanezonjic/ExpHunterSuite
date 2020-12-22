@@ -404,7 +404,7 @@ functional_hunter <- function(
 		vonts <- c(vonts,"k")
 		vkeytypes <- c(vkeytypes,"kegg")
 	}
-	if(flags$KEGG){
+	if(flags$REACT){
 		vonts <- c(vonts,"r")
 		vkeytypes <- c(vkeytypes,"ENTREZID")
 	}
