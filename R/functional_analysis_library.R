@@ -519,7 +519,7 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
 #' @importFrom utils write.table
 #' @examples
 #' enrich_all_customs()
-enrich_all_customs <- function(custom_sets = NULL, custom_files = NULL, p_val_threshold, genes, write_path = NULL){
+enrich_all_customs <- function(custom_sets = NULL, custom_files = NULL, p_val_threshold = 0.05, genes, write_path = NULL){
   if(!is.null(custom_sets)){
     custom_set <- custom_sets
     load_files <- FALSE
@@ -778,6 +778,17 @@ get_organismID_byOnto <- function(organism_info, ont){
 }
 
 
+#' Table with information abaut all organism available
+#' @param file to be loaded. Default: internal organism table
+#' @return organism table
+#' @keywords method
+#' @export
+#' @importFrom utils read.table
+#' @examples
+#' ot <- get_organism_table()
+get_organism_table <- function(file = file.path(find.package('DEgenesHunter'), "external_data", "organism_table.txt")){
+  return(utils::read.table(file, header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA))
+}
 
 
 #' Perform enrichment of ORA and/or GSEA using a set of genes given
@@ -799,7 +810,7 @@ get_organismID_byOnto <- function(organism_info, ont){
 #' @importFrom clusterProfiler merge_result
 #' @export
 multienricher <- function(genes,
-                          organism_info,
+                          organism_info = get_organism_table(),
                           keytype = "ENTREZID",
                           ontology = "bkr",
                           enrichmentType = "o",
