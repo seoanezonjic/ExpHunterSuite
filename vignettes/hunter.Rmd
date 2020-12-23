@@ -1,8 +1,6 @@
 ---
-title: "The Hunter Suite and DEgenesHunter "
-author:
--name: "James R. Perkins"
--affiliation: Fred Hutchinson Cancer Research Center, 1100 Fairview Ave. N., P.O. Box 19024, Seattle, WA, USA 98109–1024
+title: "The Expression Hunter Suite"
+author: "James R. Perkins"
 date: "`r format(Sys.Date(), '%m/%d/%Y')`"
 output:
   rmarkdown::html_document:
@@ -10,64 +8,61 @@ output:
     toc: true
     fig_width: 5
 vignette: >
-  %\VignetteIndexEntry{Analyzing RNA-seq data with DESeq2}
+  %\VignetteIndexEntry{The Expression Hunter Suite}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-  %\usepackage[utf8]{inputenc}
 ---
 
-# Version Info
-```{r, echo=FALSE, results="hide", warning=FALSE}
-suppressPackageStartupMessages({library('DEgenesHunter')})
-```
+## Version Info
 
- <p>
  **R version**: `r R.version.string`
- <br />
+
  **Bioconductor version**: `r BiocManager::version()`
- <br />
- **Package**: `r packageVersion("DEgenesHunter")`
- <\p>
+
+ **Package version**: `r packageVersion("DEgenesHunter")`
 
 # Introduction
 
-DEgenes Hunter implements a comprehensive protocol for the analysis of transcriptional data using established *R* packages and combining their 
+ExpHunterSuite implements a comprehensive protocol for the analysis of transcriptional data using established *R* packages and combining their 
 results. It covers all key steps in DEG detection, CEG detection and functional analysis for RNA-seq data. It has been implemented as an R package 
-containing functions that can be run interactively, it also contains command line scripts that wrap the functions.
+containing functions that can be run interactively. In addition, it also contains scripts that wrap the functions and can be run directly from the command line.
 
 # Standard Package Usage
 
-Here we will describe how the functions in DEgenesHunter can be used interactively or joined together in user-written scripts. We will also describe
+In this section we will describe how the functions in ExpHunterSuite can be used interactively or joined together in user-written scripts. We will also describe
 how the output reports can be generated from this data.
 
 ## Differential Expression Analysis
 
-The most basic use of the package is to perform differential expression (DE) gene analysis. DEgenes Hunter will, following some initial 
-preprocessing, run the different methods, combine the results and produce an output report, as well as an single output table containing the 
-results of all of the methods used, and their combined scores.
+The most basic use of the package is to perform differential expression (DE) gene analysis. ExpHunterSuite will, following some initial 
+preprocessing, run the different methods, combine the results, and produce an output report, as well as a single output table containing the 
+results of all of the methods used, and their combined scores. The combined scores consist of the mean logFC value and the combined adjusted p-value (FDR) values, calculated by Fishers method.
 
-The combined scores consist of the mean logFC value and the combined adjusted p-value (FDR) values, calculated by Fishers method.
-
-To use DEgenes hunter with only a single DE package, one can run the following command:
+To use ExpHunterSuite with only a single DE package, one can run the following command:
 
 ```{r standard_DEA_one_pack, echo=TRUE, results="hide", message=FALSE, warning=FALSE}
-library(DEgenesHunter)
+library(ExpHunterSuite)
 data(toc)
 data(target)
 degh_out_one_pack <- main_degenes_Hunter(raw=toc, 
                                          target=target,
                                          modules="D") # D for DESeq2
 ```
-
 Where toc is a data.frame of aligned reads per samples and target is a data.frame relating each sample to its sample meta data. Here we include a 
-minimal example including the samples (CTL/epm2a), the samples condition (Ctrl or Treat).
+minimal example of the target file whcih includes the samples (CTL/epm2a), the samples condition (Ctrl or Treat):
+
+```{r input_data, echo=TRUE, results="as.is", message=FALSE, warning=FALSE}
+head(toc)
+head(target)
+```
+
 
 The files containing this data are contained within the extData package directory and can be accessed in the following manner. We will come back to them in the 
 section on command line usage.
 
 ```{r input_files, echo=TRUE, results="as.is"}
-system.file("extData", "table_of_counts.txt", package = "DEgenesHunter")
-system.file("extData", "target.txt", package = "DEgenesHunter")
+system.file("extData", "table_of_counts.txt", package = "ExpHunterSuite")
+system.file("extData", "target.txt", package = "ExpHunterSuite")
 ```
 
 To use it with multiple packages, one can run the following command:
@@ -88,12 +83,12 @@ head(degh_out_multi_pack$DE_all_genes)
 It also contains information on whether the genes are considered to be DE, in the column *genes_tag*
 The tag *PREVALENT_DEGS* refers to those genes that are considered significant in at least n of the DE methods used
 *POSSIBLE_DEGS* are those considered significant by at least one method. As such, *PREVALENT_DEGS* and *POSSIBLE_DEGS* will be the same 
-when n = 1. n is controlled by the argument *minlibraries*.
+when n = 1. N is controlled by the argument *minlibraries*.
 
 To be considered significant for a given method, a gene must have an adjusted-pvalue < 0.05 and |logFC| > 1; these values are adjustable 
 using the arguments *p_val_cutoff* and *lfc*.
 
-genes_tag columns includes the labels *NOT_DEGS* and *FILTERED_OUT* to refer to those genes not detected as DE by at least one DE method 
+The *genes_tag* columns includes the labels *NOT_DEGS* and *FILTERED_OUT* to refer to those genes not detected as DE by at least one DE method 
 and those that do not pass the initial low-count filtering step, controlled by parameters *reads* and *minlibraries*.
 
 There is another column, *combined_FDR* – which is POS/NEG depending on whether the combined adjusted p-value as described above is less 
@@ -103,7 +98,8 @@ than or equal to 0.05 (or whatever the value of the argument *p_val_cutoff* is).
 
 In order to control for specific variables (such as individuals in paired designs, potential confounding factors such as age, etc.), 
 
-For example, if we consider our previous experiment, but add an extra column to the target, indicating different age groupings for the samples:
+For example, if we consider our previous experiment, but add an extra column to the target, indicating different age groupings for the 
+samples we obtain the following:
 
 ```{r standard_DEA_model_target, echo=TRUE, results="as.is"}
 target_multi <- data.frame(target,
@@ -113,7 +109,7 @@ target_multi
 
 We may wish to control for the effects of age_group on the experiment.
 
-This can be achieved using the argument *model_variables*. The variables given to this argument will be used in the model to control for when calculating
+This can be achieved using the argument *model_variables*. The variables given to this argument will be used in the model when calculating
 differential expression between the Treat and Ctrl samples:
 
 ```{r standard_DEA_model_execute, results="hide", message=FALSE, warning=FALSE}
@@ -127,11 +123,10 @@ The output has the same structure as the original analysis.
 Custom model designs can also be specified in the *model_variables* argument, based on the R model syntax, 
 see *help("formula")* for more details. If a custom formula is used, the *custom_model* argument must be set to true.
 
-
 ## Co-expression Analysis
 
 Co-expression analysis is included via the R package Weighted correlation network analysis (WGCNA). The idea is to look for groups (modules) of genes showing correlated expression.
-The groups can then be correlated with experimental factors such as treatment vs. non treatment, as well as other groupings such as the age 
+The groups can then be correlated with experimental factors, such as treatment vs. non treatment, as well as other groupings such as the age 
 grouping mentioned earlier, or numeric factors such as known values of metabolites related to the experiment. 
 
 WGCNA is activated using by adding "W" to the *modules* argument. The traits to be correlated with the modules are specified using the *string_factors* and *numeric_factors* options:
@@ -145,9 +140,8 @@ least one DE method, which is specified with the argument *WGCNA_norm_method*.
 
 ## Functional Analysis
 
-
 ```{r standard_FA, results="as.is",  eval=FALSE}
-fh_out_one_pack <- functional_hunter( #Perform enrichment analisys
+fh_out_one_pack <- functional_hunter( #Perform enrichment analysis
         degh_out_one_pack,
         'Mouse', # Use specified organism database 
         func_annot_db = "gKR", # Perform enrichment analysis for GO, KEGG and Reactome
@@ -165,7 +159,8 @@ fh_out_coexp <- functional_hunter( #Perform enrichment analisys
 
 ## Obtaining Reports
 
-EXPLAIN
+To obtain highly detailed html reports including multiple plots to visualize the data and the results of the different analysis methods, 
+the following commands can be used:
 
 ```{r write_reports, echo=TRUE, eval=FALSE}
 print(getwd())
@@ -173,14 +168,11 @@ write_expression_report(exp_results=degh_out_coexp)
 write_enrich_files(func_results=fh_out_one_pack)
 write_functional_report(hunter_results=degh_out_coexp, func_results=fh_out_coexp)
 ```
-#write_functional_report(hunter_results = hunter_results)
+In all cases, the output folder for each report can be specified with the *output_files* option.
 
 # Command-line Package Usage
 
-
 The package also includes a number of scripts, in the folder *inst/scripts*, which can be used to run the above functions from the command line.
-
-## Differential Expression Analysis
 
 ```{r input_files_cl, echo=TRUE, results="hide"}
 input_toc <- system.file("extdata", "table_of_counts.txt", package = "mypackage")
@@ -189,23 +181,23 @@ input_target <- system.file("extdata", "target.txt", package = "mypackage")
 input_target
 ```
 
-We recommend the user first creates a folder in which to install the DEgenesHunter command line scripts, the copies the scripts there and make them command line accesible using these commands:
+We recommend the user first creates a folder in which to install the ExpHunterSuite command line scripts, then copies the scripts there and make 
+them command line accesible using these commands:
 
 ```bash
-    mkdir install_folder
-    Rscript -e "DEgenesHunter::install_DEgenes_hunter('install_folder')"
-    export PATH=path_to_install_folder:$PATH
+mkdir install_folder
+Rscript -e "ExpHunterSuite::install_DEgenes_hunter('install_folder')"
+export PATH=path_to_install_folder:$PATH
 ```
-
-
 
 This export PATH can also be added to the .bashrc or .bash_profile files.
 
+The user can then run the protocol from the command line with scripts such as the following, which will implement the functions and create the 
+output reports, all from a single script.
 
+```bash
+degenes_Hunter.R -t $INPUT_TARGET_FILE -i $INPUT_TOC -o $DEGENES_HUNTER_RESULTS
+functional_Hunter.R -i $DEGENES_HUNTER_RESULTS -m Organism -o FUNCTIONAL_HUNTER_RESULTS
+```
 
-
-
-`
-
-
-
+Full details of the arguments to give the the script can be found by running *degenes_Hunter.R -h* or *functional_Hunter.R -h*. More examples are given in the README file for this packet

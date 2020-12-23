@@ -1,13 +1,53 @@
-Package: DEgenesHunter
-Title: What the Package Does (One Line, Title Case)
+Package: ExpHunterSuite
+Title: Package For The Comprehensive Analysis Of Transcriptomic Data
 Version: 0.0.9
 Authors@R: 
-    person(given = "James",
+    c(person(given = "James",
            family = "Perkins",
            role = c("aut", "cre"),
            email = "jimrperkins@gmail.com",
-           comment = c(ORCID = "0000-0003-4108-096X"))
-Description: What the package does (one paragraph).
+           comment = c(ORCID = "0000-0003-4108-096X")),
+    person(given = "Rocio",
+           family = "Bautista Moreno",
+           role = c("aut"),
+           email = "rociobm@uma.es",
+           comment = c(ORCID = "0000-0003-1685-8119")),
+    person(given = "Pedro",
+           family = "Seoane Zonjic",
+           role = c("aut"),
+           email = "seoanezonjic@uma.es",
+           comment = c(ORCID = "0000-0002-3020-1415")),
+    person(given = "José",
+           family = "Córdoba Caballero",
+           role = c("aut"),
+           email = "josecordoba1995@gmail.com",
+           comment = c(ORCID = "0000-0002-1821-5742")),      
+    person(given = "Fernando",
+           family = "Moreno Jabato",
+           role = c("aut"),
+           email = "fmjabato@gmail.com",
+           comment = c(ORCID = "0000-0001-7498-1962")),     
+    person(given = "M. Gonzalo",
+           family = "Claros",
+           role = c("aut"),
+           email = "claros@uma.es",
+           comment = c(ORCID = "0000-0002-0112-3550")),          
+    person(given = "Isabel",
+           family = "Gonzalez Gayte",
+           role = c("aut"),
+           email = "isabel.ggayte@gmail.com"),         
+    person(given = "Elena",
+           family = "Rojano Rivera",
+           role = c("aut"),
+           email = "elenarojano@outlook.com",
+           comment = c(ORCID = "0000-0002-2678-710X")),
+    person(given = "Juan Antonio",
+           family = "García Ranea",
+           role = c("aut"),
+           email = "ranea@uma.es",
+           comment = c(ORCID = "0000-0003-0327-1837"))
+    )
+Description: The ExpHunterSuite implements a comprehensive protocol for the analysis of transcriptional data using established *R* packages and combining their results. It covers all key steps in DEG detection, CEG detection and functional analysis for RNA-seq data. It has been implemented as an R package containing functions that can be run interactively. In addition, it also contains scripts that wrap the functions and can be run directly from the command line.
 Depends: R (>= 4.0.0)
 License: MIT + file LICENSE
 Encoding: UTF-8

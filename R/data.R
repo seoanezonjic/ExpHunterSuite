@@ -25,3 +25,17 @@
 #' @examples
 #' data(target)
 "target"
+
+#' Output data from the main_degenes_Hunter function
+#'
+#' @docType data
+#'
+#' @usage data(degh_output)
+#'
+#' @format An output object from the main_degenes_Hunter function. 
+#'
+#' @keywords datasets
+#'
+#' @examples
+#' data(degh_output)
+"degh_output"
