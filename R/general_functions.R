@@ -143,6 +143,7 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
     log <- FALSE
     log_path <- NA_character_
     workers <- workers - 1 # Reserve one core for main execution process
+    if( workers == 0) workers <- 1
     if(workers > 1){
       timestamp <- as.integer(Sys.time())
       log_path <- file.path(getwd(), 'bcplogs', as.character(timestamp))
