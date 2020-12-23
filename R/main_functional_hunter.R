@@ -410,19 +410,13 @@ functional_hunter <- function(
 	}
 	vonts <- paste(vonts, collapse="")
 
+
 	# Perform regular enrichments
 	if(flags$ORA){
 		regular_enr_ora  <- multienricher(genes = likely_degs_entrez, enrichmentType = "o", organism_info = current_organism_info, keytype = vkeytypes, ontology = vonts, pvalueCutoff = pthreshold, useInternal = !remote_actions$kegg, qvalueCutoff = qthreshold)
-		# aux <- grepl("GO",names(regular_enr_ora$ORA))
-		# if(any(aux)) func_results$GO_ORA <- regular_enr_ora$ORA[aux] # TODO :: refactor scripts and reports code to use original multienricher structure
-		# if(any(!aux)){
-		# 	aux <- !aux
-		# 	names(regular_enr_ora$ORA)[aux] <- paste(names(regular_enr_ora$ORA)[aux],"ORA",sep="_") 
-		# 	func_results <- append(func_results, regular_enr_ora$ORA[aux])
-		# }
 		func_results <- append(func_results,regular_enr_ora)
 		if(flags$WGCNA){
-			clusters_enr_ora  <- multienricher(genes = clgenes, enrichmentType = "o", organism_info = current_organism_info, keytype = vkeytypes, ontology = vonts, pvalueCutoff = pthreshold, useInternal = !remote_actions$kegg, qvalueCutoff = qthreshold)
+			clusters_enr_ora  <- multienricher(genes = clgenes, enrichmentType = "o", organism_info = current_organism_info, keytype = vkeytypes, ontology = vonts, pvalueCutoff = pthreshold, useInternal = !remote_actions$kegg, qvalueCutoff = qthreshold, cores = cores, task_size = task_size)
 			if(length(clusters_enr_ora$WGCNA$ORA) > 0){
 				func_results$WGCNA_ORA <- clusters_enr_ora$WGCNA$ORA
 				func_results$WGCNA_ORA_expanded <- clusters_enr_ora$WGCNA$ORA_expanded				
@@ -431,16 +425,9 @@ functional_hunter <- function(
 	}
 	if(flags$GSEA){
 		regular_enr_gsea <- multienricher(genes = geneList, enrichmentType = "g", organism_info = current_organism_info, keytype = vkeytypes, ontology = vonts, pvalueCutoff = pthreshold, useInternal = !remote_actions$kegg, qvalueCutoff = qthreshold)
-		# aux <- grepl("GO",names(regular_enr_gsea$GSEA))
-		# if(any(aux)) func_results$GO_GSEA <- regular_enr_gsea$GSEA[aux] # TODO :: refactor scripts and reports code to use original multienricher structure
-		# if(any(!aux)){
-		# 	aux <- !aux
-		# 	names(regular_enr_gsea$GSEA)[aux] <- paste(names(regular_enr_gsea$GSEA)[aux],"GSEA",sep="_") 
-		# 	func_results <- append(func_results, regular_enr_gsea$GSEA[aux])
-		# }
 		func_results <- append(func_results,regular_enr_gsea)
 		if(flags$WGCNA){
-			clusters_enr_gsea <- multienricher(genes = cl_gene_fc, enrichmentType = "g", organism_info = current_organism_info, keytype = vkeytypes, ontology = vonts, pvalueCutoff = pthreshold, useInternal = !remote_actions$kegg, qvalueCutoff = qthreshold)
+			clusters_enr_gsea <- multienricher(genes = cl_gene_fc, enrichmentType = "g", organism_info = current_organism_info, keytype = vkeytypes, ontology = vonts, pvalueCutoff = pthreshold, useInternal = !remote_actions$kegg, qvalueCutoff = qthreshold, cores = cores, task_size = task_size)
 			if(length(clusters_enr_gsea$WGCNA$GSEA)){
 				func_results$WGCNA_GSEA <- clusters_enr_gsea$WGCNA$GSEA
 				func_results$WGCNA_GSEA_expanded <- clusters_enr_gsea$WGCNA$GSEA_expanded
