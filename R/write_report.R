@@ -10,7 +10,7 @@
 #' @importFrom rmarkdown render
 #' @examples
 #' 
-write_expression_report <- function(exp_results, output_files=getwd(),template_folder = file.path(find.package('DEgenesHunter'), 'templates'), opt=NULL){
+write_expression_report <- function(exp_results, output_files=getwd(),template_folder = file.path(find.package('ExpHunterSuite'), 'templates'), opt=NULL){
     if(is.null(opt)){ opt <- exp_results[['final_main_params']]}
     DEG_pack_columns <- exp_results[['DEG_pack_columns']] 
     all_counts_for_plotting <- exp_results[['all_counts_for_plotting']] 
@@ -56,7 +56,7 @@ write_functional_report <- function(hunter_results,
                                     output_files=getwd(), 
                                     fc_colname="mean_logFCs", 
                                     organisms_table=NULL, 
-                                    template_folder = file.path(find.package('DEgenesHunter'), 'templates'), 
+                                    template_folder = file.path(find.package('ExpHunterSuite'), 'templates'), 
                                     cores = 1,
                                     task_size = 1, 
                                     report = "fc"){

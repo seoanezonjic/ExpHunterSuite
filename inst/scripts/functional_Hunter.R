@@ -18,8 +18,8 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 	template_folder <- file.path(root_path, 'inst', 'templates')
 
 }else{
-	require('DEgenesHunter')
-	root_path <- find.package('DEgenesHunter')
+	require('ExpHunterSuite')
+	root_path <- find.package('ExpHunterSuite')
 	template_folder <- file.path(root_path, 'templates')
 	organisms_table_file <- file.path(root_path, "external_data", "organism_table.txt")
 }

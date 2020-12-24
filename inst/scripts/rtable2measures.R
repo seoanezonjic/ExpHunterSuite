@@ -24,8 +24,8 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 	# suppressPackageStartupMessages(require(optparse))
 	# suppressPackageStartupMessages(library(ROCR)) 
 }else{
-	require('DEgenesHunter')
-	root_path <- find.package('DEgenesHunter')
+	require('ExpHunterSuite')
+	root_path <- find.package('ExpHunterSuite')
 }
 
 

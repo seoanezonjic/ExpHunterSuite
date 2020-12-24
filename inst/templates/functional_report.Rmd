@@ -46,17 +46,17 @@ render <- function(text){paste(knitr::knit(text = paste(text,collapse = "\n")),c
 out <- NULL
 
 # Load necessary functions
-if("DEgenesHunter" %in% (.packages())){ # Package mode, load private functions
-	exists_graph_file <- DEgenesHunter:::exists_graph_file
-	exists_enrich_df <- DEgenesHunter:::exists_enrich_df
-	check_results <- DEgenesHunter:::check_results
-	set_default_width <- DEgenesHunter:::set_default_width
-	plot_in_div <- DEgenesHunter:::plot_in_div
-	get_genes <- DEgenesHunter:::get_genes
-	check_categories <- DEgenesHunter:::check_categories
-	calc_width <- DEgenesHunter:::calc_width
-	calc_height <- DEgenesHunter:::calc_height
-	get_categories <- DEgenesHunter:::get_categories
+if("ExpHunterSuite" %in% (.packages())){ # Package mode, load private functions
+	exists_graph_file <- ExpHunterSuite:::exists_graph_file
+	exists_enrich_df <- ExpHunterSuite:::exists_enrich_df
+	check_results <- ExpHunterSuite:::check_results
+	set_default_width <- ExpHunterSuite:::set_default_width
+	plot_in_div <- ExpHunterSuite:::plot_in_div
+	get_genes <- ExpHunterSuite:::get_genes
+	check_categories <- ExpHunterSuite:::check_categories
+	calc_width <- ExpHunterSuite:::calc_width
+	calc_height <- ExpHunterSuite:::calc_height
+	get_categories <- ExpHunterSuite:::get_categories
 }
 
 ```

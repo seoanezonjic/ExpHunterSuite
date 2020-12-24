@@ -26,13 +26,13 @@ render <- function(text){paste(knitr::knit(text = paste(text,collapse = "\n")),c
 out <- NULL
 
 # Load necessary functions
-if("DEgenesHunter" %in% (.packages())){ # Package mode, load private functions
-	set_default_width <- DEgenesHunter:::set_default_width
-	get_categories <- DEgenesHunter:::get_categories
-	plot_in_div <- DEgenesHunter:::plot_in_div
-	get_genes <- DEgenesHunter:::get_genes
-	calc_width <- DEgenesHunter:::calc_width
-	calc_height <- DEgenesHunter:::calc_height 
+if("ExpHunterSuite" %in% (.packages())){ # Package mode, load private functions
+	set_default_width <- ExpHunterSuite:::set_default_width
+	get_categories <- ExpHunterSuite:::get_categories
+	plot_in_div <- ExpHunterSuite:::plot_in_div
+	get_genes <- ExpHunterSuite:::get_genes
+	calc_width <- ExpHunterSuite:::calc_width
+	calc_height <- ExpHunterSuite:::calc_height 
 }
 
 ```

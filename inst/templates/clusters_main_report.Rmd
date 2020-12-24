@@ -61,14 +61,14 @@ names(executed) <- all_posible
 
 
 # Load necessary functions
-if("DEgenesHunter" %in% (.packages())){ # Package mode, load private functions
-	plot_enrResult_DT <- DEgenesHunter:::plot_enrResult_DT
-	get_categories <- DEgenesHunter:::get_categories
-	set_standard_size <- DEgenesHunter:::set_standard_size
-	plot_in_div <- DEgenesHunter:::plot_in_div
-	calc_height <- DEgenesHunter:::calc_height
-	calc_width <- DEgenesHunter:::calc_width
-	clusters_heatplot <- DEgenesHunter:::clusters_heatplot
+if("ExpHunterSuite" %in% (.packages())){ # Package mode, load private functions
+	plot_enrResult_DT <- ExpHunterSuite:::plot_enrResult_DT
+	get_categories <- ExpHunterSuite:::get_categories
+	set_standard_size <- ExpHunterSuite:::set_standard_size
+	plot_in_div <- ExpHunterSuite:::plot_in_div
+	calc_height <- ExpHunterSuite:::calc_height
+	calc_width <- ExpHunterSuite:::calc_width
+	clusters_heatplot <- ExpHunterSuite:::clusters_heatplot
 }
 
 

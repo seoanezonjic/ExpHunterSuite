@@ -786,7 +786,7 @@ get_organismID_byOnto <- function(organism_info, ont){
 #' @importFrom utils read.table
 #' @examples
 #' ot <- get_organism_table()
-get_organism_table <- function(file = file.path(find.package('DEgenesHunter'), "external_data", "organism_table.txt")){
+get_organism_table <- function(file = file.path(find.package('ExpHunterSuite'), "external_data", "organism_table.txt")){
   return(utils::read.table(file, header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA))
 }
 

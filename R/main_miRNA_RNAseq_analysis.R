@@ -19,8 +19,8 @@ miRNA_RNAseq_analysis <- function(
 	translation_file,
 	translate_ensembl = FALSE,
 	mc_cores = 1,
-	template_folder = file.path(find.package('DEgenesHunter'), "templates"),
-	organism_table_path = file.path(find.package('DEgenesHunter'), "inst", "external_data", "organism_table.txt") 
+	template_folder = file.path(find.package('ExpHunterSuite'), "templates"),
+	organism_table_path = file.path(find.package('ExpHunterSuite'), "inst", "external_data", "organism_table.txt") 
 	){
 	#create output folder
 	"%>%" <- magrittr::"%>%"
