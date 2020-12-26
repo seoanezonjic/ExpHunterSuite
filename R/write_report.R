@@ -9,8 +9,14 @@
 #' @export
 #' @importFrom rmarkdown render
 #' @examples
-#' 
+#' # Load DE analysis results
+#' degh_output <- list() # data(degh_output)
+#' write_expression_report(degh_output)
 write_expression_report <- function(exp_results, output_files=getwd(),template_folder = file.path(find.package('ExpHunterSuite'), 'templates'), opt=NULL){
+    if(length(exp_results) == 0){
+        warning("Experiment results is not complete")
+        return(NULL)
+    }
     if(is.null(opt)){ opt <- exp_results[['final_main_params']]}
     DEG_pack_columns <- exp_results[['DEG_pack_columns']] 
     all_counts_for_plotting <- exp_results[['all_counts_for_plotting']] 
@@ -51,17 +57,26 @@ write_expression_report <- function(exp_results, output_files=getwd(),template_f
 #' @return void
 #' @importFrom rmarkdown render
 #' @export
+#' @examples
+#' # Load func and DE results
+#' data(degh_output)
+#' func_results <- list() # func_results <- functional_hunter(degh_output,"Mouse")
+#' write_functional_report(degh_output, func_results)
 write_functional_report <- function(hunter_results, 
                                     func_results, 
                                     output_files=getwd(), 
                                     fc_colname="mean_logFCs", 
                                     organisms_table=NULL, 
                                     template_folder = file.path(find.package('ExpHunterSuite'), 'templates'), 
-                                    cores = 1,
+                                    cores = 2,
                                     task_size = 1, 
                                     report = "fc"){
     if(is.null(organisms_table)){
         organisms_table <- get_organism_table()
+    }
+    if(length(hunter_results) == 0 || length(func_results) == 0){
+        warning("Results objects are not complete")
+        return(NULL)
     }
     model_organism <- func_results$final_main_params$model_organism
     # TODO: update names into Rmd files instead this

@@ -809,8 +809,13 @@ get_organism_table <- function(file = file.path(find.package('ExpHunterSuite'), 
 #' @importFrom pbapply pblapply
 #' @importFrom clusterProfiler merge_result
 #' @export
+#' @examples
+#' data(degh_output)
+#' genes <- head(rownames(degh_output$raw_filter),1000) # You need to translate to entrez if you want use all ontology types
+#' ontologies <- "" # Select your wanted ontologies
+#' enrch <- multienricher(genes = genes, ontology = "")
 multienricher <- function(genes,
-                          organism_info = get_organism_table(),
+                          organism_info,
                           keytype = "ENTREZID",
                           ontology = "bkr",
                           enrichmentType = "o",

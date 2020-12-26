@@ -21,6 +21,11 @@
 #' @export
 #' @importFrom magrittr %>%
 #' @importFrom clusterProfiler merge_result
+#' @examples
+#' # Load DE analysis result
+#' data(degh_output)
+#' annots <- "" # Include here wanted ontologies to be used
+#' func_results <- functional_hunter(degh_output,"Mouse",func_annot_db = annots)
 functional_hunter <- function(
 	hunter_results,
 	model_organism,
@@ -61,6 +66,11 @@ functional_hunter <- function(
 		stop('Model organism has not been indicated or is not available. Please indicate the model organism.')
 	}else{ # ORGANISM AVAILABLE --> LOAD
 		current_organism_info <- subset(organisms_table, rownames(organisms_table) %in% model_organism)  
+	}
+
+	if(nchar(func_annot_db) == 0){
+		warning("There are not ontologies specified. Ending process")
+		return(func_results)
 	}
 
 	# experiments <- read.table(file.path(input_hunter_folder, "control_treatment.txt"), sep = "\t", quote = "", header = TRUE, stringsAsFactors = FALSE)
