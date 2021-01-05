@@ -19,7 +19,7 @@ vignette: >
 
  **Bioconductor version**: `r BiocManager::version()`
 
- **Package version**: `r packageVersion("DEgenesHunter")`
+ **Package version**: `r packageVersion("ExpHunterSuite")`
 
 # Introduction
 
