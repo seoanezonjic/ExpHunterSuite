@@ -18,7 +18,7 @@ To install DEgenes Hunter from console, we use the devtools utility to install R
 
 ``` bash
     Rscript -e 'install.packages("devtools", repos="http://cran.us.r-project.org")'
-    Rscript -e 'devtools::install_github("seoanezonjic/DEgenesHunter")'
+    Rscript -e 'devtools::install_github("seoanezonjic/ExpHunterSuite")'
 ```
 
 Sometimes reactome.db download fails because this package is too large (>400 Mb) and R has a download timeout of 60 seconds by default. 
@@ -28,17 +28,17 @@ Sometimes reactome.db download fails because this package is too large (>400 Mb)
 		[1] 60
 ```
 
-This error can be solved by installing reactome.db from source or extending the timeout threshold before installing the DEgenesHunter package with the command:
+This error can be solved by installing reactome.db from source or extending the timeout threshold before installing the ExpHunterSuite package with the command:
 
 ``` bash
-    Rscript -e 'options(timeout=1000); devtools::install_github("seoanezonjic/DEgenesHunter")'
+    Rscript -e 'options(timeout=1000); devtools::install_github("seoanezonjic/ExpHunterSuite")'
 ```
 
-Then, please create the folder where you want to install the DEgenesHunter command line scripts, copy the scripts there and make them command line accesible using these commands:
+Then, please create the folder where you want to install the command line scripts, copy the scripts there and make them command line accesible using these commands:
 
 ```bash
     mkdir install_folder
-    Rscript -e "DEgenesHunter::install_DEgenes_hunter('install_folder')"
+    Rscript -e "ExpHunterSuite::install_DEgenes_hunter('install_folder')"
     export PATH=path_to_install_folder:$PATH
 ```
 This export PATH can also be added to the .bashrc or .bash_profile files.
@@ -70,7 +70,7 @@ Once generated, the expression analysis can be performed using degenes_Hunter.R 
 Here we show an example of basic usage:
 
 ```bash
-    degenes_Hunter.R -t path_to_target_file -i path_to_counts_table -o path_to_DEgenesHunter_results
+    degenes_Hunter.R -t path_to_target_file -i path_to_counts_table -o path_to_results
 ```
 
 Mandatory arguments:
@@ -162,7 +162,7 @@ Results files will be included in the output_path:
     * DEG_report.html: file that encompass and summarizes all the information provided by the expression analysis. 
     * control_treatment.txt: file that includes information about the samples classification as determined in the targets file.
     * filtered_count_data.txt: filtered counts table used the differential expression analysis. Filtering has been performed according to -r, -l and -F options.
-    * opt_input_values.txt: summary of the parameters used for the differential expression analysis with DEgenes Hunter.
+    * opt_input_values.txt: summary of the parameters used for the differential expression analysis
 
 This folder will also include a Common_results folder with a file (table) with all methods used for the differential expression analysis and their logFC, FDR and p-value calculated, the number of DEGs and values for combined_FDR, FDR_labeling, mean_logFCs and genes_tag, and results for the WGCNA analysis (if established): Cluster_ID and Cluster_MM (MM: module membership).
 
@@ -180,9 +180,9 @@ An example of code for this multifactorial analysis can be used as follows:
 
 ```bash
     #Both commands do the same
-    degenes_Hunter.R -t path_to_target_file -i path_to_counts_table -v age_group -o path_to_DEgenesHunter_results
+    degenes_Hunter.R -t path_to_target_file -i path_to_counts_table -v age_group -o path_to_results
 
-    degenes_Hunter.R -t path_to_target_file -i path_to_counts_table -M "~ treat + age_group" -o path_to_DEgenesHunter_results
+    degenes_Hunter.R -t path_to_target_file -i path_to_counts_table -M "~ treat + age_group" -o path_to_results
 ```
 
 ##### B. Genes co-expression analysis with WGCNA
@@ -190,7 +190,7 @@ An example of code for this multifactorial analysis can be used as follows:
 Co-expression analysis has been included in DEgenes Hunter to detect gene modules with related biological functions. WGCNA can be activated using -m "W" option. Additional traits can be correlated with module mean profile (use -S for discrete columns and -N for continuous column). Here we show an example of using WGCNA with restrictive options:
 
 ```bash
-    degenes_Hunter.R -m WDELN -c 4 -f 1 --WGCNA_mergecutHeight 0.1 --WGCNA_min_genes_cluster 15 --WGCNA_detectcutHeight 0.995 -S age_group -t path_to_targets_file -i path_to_counts_table -o path_to_DEgenesHunter_results
+    degenes_Hunter.R -m WDELN -c 4 -f 1 --WGCNA_mergecutHeight 0.1 --WGCNA_min_genes_cluster 15 --WGCNA_detectcutHeight 0.995 -S age_group -t path_to_targets_file -i path_to_counts_table -o path_to_results
 ```
 
 ##### C. Analysing pre-normalized data with WGCNA
@@ -200,7 +200,7 @@ DEgenes Hunter requires a table of counts with integers. However, in some situta
 In this situation, the user can run WGCNA using the data in the table of counts directly, without performing normalization. To do this, they must run degenes_hunter.R with the argument --WGCNA_norm_method equal to "none" and the argument --modules must include "WL", i.e. specify limma is the only algorithm that will accept normalised values. However the DE results will likely not make much sense.
 
 ```bash
-    degenes_Hunter.R --WGCNA_norm_method none -m WL -c 1 -f 1 -S age_group -t path_to_targets_file -i path_to_normalized_table -o path_to_DEgenesHunter_results
+    degenes_Hunter.R --WGCNA_norm_method none -m WL -c 1 -f 1 -S age_group -t path_to_targets_file -i path_to_normalized_table -o path_to_results
 ```
 
 ### 2. Command line scripts for functional enrichment analysis.
@@ -213,7 +213,7 @@ To perform the functional enrichment analysis we will use the functional_Hunter.
 Here we show an example of basic usage:
 
 ```sh
-	functional_Hunter.R -i path_to_DEgenesHunter_results -m Organism -o path_to_output
+	functional_Hunter.R -i path_to_results -m Organism -o path_to_output
 ```
 
 Mandatory arguments: 
@@ -222,7 +222,7 @@ Mandatory arguments:
 	(required) Specify the path to the degenes_Hunter.R output folder, the model organism to use and the path to the output folder.
 
 	-i path
-	  Path to the DEgenes Hunter's differential expression results.
+	  Path to the ExpHunterSuite differential expression results.
 	-m organism
 	  Ortologue species to be used as model organism to perform the functional analysis with. Run 'functional_Hunter.R' -L to display all available organisms.
 	-o Output path.
@@ -275,7 +275,7 @@ functional_Hunter.R -f G -G B -A o -P 0.1 -m Human -i ctrl_vs_mut -t E -c 6 -o f
 ### 3. R console pipeline.
 Clone this repository and in R console move to the root folder. Then, you can execute the basic pipeline as follows:
 ```R
-library('DEgenesHunter')
+library('ExpHunterSuite')
 
 target <- target_generation(from_file='inst/example/target.txt') # Read experiment design which describes the sample groups
 raw_count_table <- read.table('inst/example/counts.txt', header=TRUE, row.names=1, sep="\t") # Read the table counts with the number of reads per gene.

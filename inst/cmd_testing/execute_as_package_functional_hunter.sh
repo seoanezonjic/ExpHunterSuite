@@ -12,5 +12,5 @@ Rscript -e "devtools::install(dependencies=FALSE)"
 
 cd $current
 mkdir install_folder
-Rscript -e "DEgenesHunter::install_DEgenes_hunter('install_folder')"
+Rscript -e "ExpHunterSuite::install_DEgenes_hunter('install_folder')"
 install_folder/functional_Hunter.R -h
