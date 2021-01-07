@@ -721,16 +721,16 @@ enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCuto
   if(is.null(ENRICH_DATA) & length(genes) > 1){
     if(ont == "GO"){
       # require(clusterProfiler)
-      get_GO_data <- privateFun("clusterProfiler","get_GO_data")
+      get_GO_data <- "clusterProfiler" %:::% "get_GO_data"
       ENRICH_DATA <- get_GO_data(organism, go_subonto, keyType)
     } else if(ont == "KEGG"){
       # require(clusterProfiler)
-      get_data_from_KEGG_db <- privateFun("clusterProfiler", "get_data_from_KEGG_db")
-      organismMapper <- privateFun("clusterProfiler", "organismMapper")
+      get_data_from_KEGG_db <- "clusterProfiler" %:::% "get_data_from_KEGG_db"
+      organismMapper <- "clusterProfiler" %:::% "organismMapper"
       ENRICH_DATA <- get_data_from_KEGG_db(organismMapper(organism))
     } else if(ont == "REACT"){
       # require(ReactomePA)
-      get_Reactome_DATA <- privateFun("ReactomePA", "get_Reactome_DATA")
+      get_Reactome_DATA <- "ReactomePA" %:::% "get_Reactome_DATA"
       ENRICH_DATA <- get_Reactome_DATA(organism)
     }
   }

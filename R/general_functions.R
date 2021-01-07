@@ -4,13 +4,9 @@
 #' @param pkg package
 #' @param fun function to be luaded
 #' @return function requried
-privateFun <- function(pkg, fun){
+`%:::%` <- function(pkg, fun){
   return(get(fun, envir = asNamespace(pkg),inherits = FALSE))
 } 
-
-# `%:::%` <- function(pkg, fun){
-#   return(get(fun, envir = asNamespace(pkg),inherits = FALSE))
-# } 
 
 handling_errors <- function(a){
   normalized_counts <- NULL
