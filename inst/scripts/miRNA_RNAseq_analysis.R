@@ -30,9 +30,9 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 ################### OPTIONS
 option_list <- list(
 	optparse::make_option(c("-r", "--RNAseq_folder"), type="character", default=NULL,
-		help="DEgenesHunter RNAseq execution folder"),
+		help="ExpHunterSuite RNAseq execution folder"),
 	optparse::make_option(c("-m", "--miRNAseq_folder"), type="character", default=NULL,
-		help="DEgenesHunter miRNAseq execution folder"),
+		help="ExpHunterSuite miRNAseq execution folder"),
 	optparse::make_option(c("-o", "--output_files"), type="character", default=".", 
 		help = "Output folder"),
 	optparse::make_option(c("-a", "--approaches"), type="character", default="EE,Eh,Ed,hd,hE",
@@ -86,7 +86,6 @@ miRNA_cor_results <- miRNA_RNAseq_analysis(
 	organism_table_path = organism_table_path, #file.path(root_path, "R", "organism_table.txt"),
 	template_folder = template_folder #file.path(root_path, "inst", "templates")
 	)
-
 write_miRNA_cor_report(miRNA_cor_results = miRNA_cor_results, 
 						template_folder = template_folder, 
 						output_files = opt$output_files, 

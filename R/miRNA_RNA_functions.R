@@ -2,72 +2,84 @@
 
 #' @importFrom utils read.table
 #' @importFrom stringr str_remove
-load_DEGH_information <- function(execution_path, translation_table = NULL, only_known = FALSE, MM_cutoff = 0){ #TODO quitar only_known; 
+load_DEGH_information <- function(execution_path){ 
 	execution <- list()
 
 	execution[['DH_results']] <- utils::read.table(file.path(execution_path, "Common_results/hunter_results_table.txt"), header=TRUE, row.names=1, sep="\t")
 	execution[['DH_results']]$gene_name <- rownames(execution[['DH_results']])
 	rownames(execution[['DH_results']]) <- NULL
+	execution$DH_results <- execution$DH_results[execution$DH_results$gene_name != "id",]
 
-	modules_with_DEGS <- unique(execution[["DH_results"]][execution[["DH_results"]]$gene_name != "id" & 
-											 execution[["DH_results"]]$genes_tag %in% c("PREVALENT_DEG", "POSSIBLE_DEG") & 
-											 execution[["DH_results"]]$Cluster_MM >= MM_cutoff, "Cluster_ID"])
-
-
-	relevant_not_deg <- recover_not_deg(DH_results = execution[["DH_results"]], confirmed_modules = modules_with_DEGS, MM_cutoff = MM_cutoff)
-
-	candidate_degs <- c(relevant_not_deg, execution[["DH_results"]][execution[["DH_results"]]$genes_tag %in% c("PREVALENT_DEG", "POSSIBLE_DEG"), "gene_name"])
-
-	execution[["DH_results"]]$candidate_deg <- execution[["DH_results"]]$gene_name %in% candidate_degs #& execution[["DH_results"]]$Cluster_MM >= MM_cutoff
-	
 	execution[['normalized_counts']] <- as.matrix(utils::read.table(file.path(execution_path, "Results_DESeq2/Normalized_counts_DESeq2.txt"), header=TRUE, row.names=1, sep="\t"))
-	execution[['normalized_counts']] <- execution[['normalized_counts']][candidate_degs, ]
 
 
-	execution[['Eigengene']] <- utils::read.table(file.path(execution_path, "Results_WGCNA/eigen_values_per_samples.txt"), header=TRUE, row.names=1, sep="\t")
-	names(execution[["Eigengene"]]) <- stringr::str_remove(names(execution[["Eigengene"]]), "ME")
-	execution[["Eigengene"]] <- as.matrix(execution[["Eigengene"]][,colnames(execution[["Eigengene"]]) %in% modules_with_DEGS])
+	execution[['Eigengene']] <- as.matrix(utils::read.table(file.path(execution_path, "Results_WGCNA/eigen_values_per_samples.txt"), header=TRUE, row.names=1, sep="\t"))
+	colnames(execution[["Eigengene"]]) <- stringr::str_remove(colnames(execution[["Eigengene"]]), "ME")
  	
-	if (!is.null(translation_table)) {
-	# 	#translate DH_results
-		temp_translation <- as.vector(translation_table[match(execution[['DH_results']]$gene_name, translation_table$input_ID), "mature_ID"])
-		if (!only_known) {
-			for (element in seq(1:length(temp_translation))){ 
-				if(is.na(temp_translation[element])) {
-					temp_translation[element] <- execution[["DH_results"]][element, "gene_name"]
-				}
-			}
-		}
-		execution[["DH_results"]]$gene_name <- temp_translation
-		execution[["DH_results"]] <- execution[["DH_results"]][!is.na(execution[["DH_results"]]$gene_name), ]
+	execution[['normalized_counts']] <- t(execution[['normalized_counts']]) 
 
-		#translate normalized counts
-		temp_translation <- as.vector(translation_table[match(rownames(execution[['normalized_counts']]), translation_table$input_ID), "mature_ID"])
-		if (!only_known) {
-			for (element in seq(1:length(temp_translation))){ 
-				if(is.na(temp_translation[element])) {
-					temp_translation[element] <- rownames(execution[['normalized_counts']])[element]
-				}
-			}
-		}
-
-		rownames(execution[['normalized_counts']]) <- temp_translation
-		execution[['normalized_counts']] <- execution[['normalized_counts']][!is.na(rownames(execution[['normalized_counts']])), ]
-		
-	} 	
-	execution[['normalized_counts']] <- t(execution[['normalized_counts']])
+	execution[['hub_1']] <- get_hub_genes_by_MM(execution[['normalized_counts']], execution[['DH_results']])
 	return(execution)
 }
 
+# translate_genes <- function(){
+	# if (!is.null(translation_table)) {
+	# # 	#translate DH_results
+	# 	temp_translation <- as.vector(translation_table[match(execution[['DH_results']]$gene_name, translation_table$input_ID), "mature_ID"])
+	# 	if (!only_known) {
+	# 		for (element in seq(1:length(temp_translation))){ 
+	# 			if(is.na(temp_translation[element])) {
+	# 				temp_translation[element] <- execution[["DH_results"]][element, "gene_name"]
+	# 			}
+	# 		}
+	# 	}
+	# 	execution[["DH_results"]]$gene_name <- temp_translation
+	# 	execution[["DH_results"]] <- execution[["DH_results"]][!is.na(execution[["DH_results"]]$gene_name), ]
 
-recover_not_deg <- function(DH_results, confirmed_modules, MM_cutoff){
-   	recovered_genes <- DH_results$Cluster_ID %in% confirmed_modules &
-   							 DH_results$genes_tag == "NOT_DEG" &
-   							  DH_results$Cluster_MM >= MM_cutoff
+	# 	#translate normalized counts
+	# 	temp_translation <- as.vector(translation_table[match(rownames(execution[['normalized_counts']]), translation_table$input_ID), "mature_ID"])
+	# 	if (!only_known) {
+	# 		for (element in seq(1:length(temp_translation))){ 
+	# 			if(is.na(temp_translation[element])) {
+	# 				temp_translation[element] <- rownames(execution[['normalized_counts']])[element]
+	# 			}
+	# 		}
+	# 	}
 
-	DH_results <- DH_results[recovered_genes, "gene_name"]
-	return(DH_results)
+	# 	rownames(execution[['normalized_counts']]) <- temp_translation
+	# 	execution[['normalized_counts']] <- execution[['normalized_counts']][!is.na(rownames(execution[['normalized_counts']])), ]
+		
+	# } 	
+
+# }
+
+filter_DEGH_data <- function(DGH_data, MM_cutoff){
+
+	DGH_results <- DGH_data$DH_results 
+	all_degs <- DGH_results$genes_tag %in% c("PREVALENT_DEG", "POSSIBLE_DEG")
+	modules_with_DEGS <- unique(DGH_results[all_degs & DGH_results$Cluster_MM >= MM_cutoff, "Cluster_ID"])
+
+   	candidate_not_deg <- DGH_results$Cluster_ID %in% modules_with_DEGS &
+   							 DGH_results$genes_tag == "NOT_DEG" &
+   							  DGH_results$Cluster_MM >= MM_cutoff
+
+	candidate_not_deg <- DGH_results[candidate_not_deg, "gene_name"]
+
+	relevant_genes <- c(candidate_not_deg, DGH_results[all_degs, "gene_name"]) 
+
+	DGH_data$DH_results$relevant_genes <- DGH_results$gene_name %in% relevant_genes
+	
+	DGH_data$normalized_counts <- DGH_data$normalized_counts[, colnames(DGH_data$normalized_counts) %in% relevant_genes ]
+	# str(DGH_data$Eigengene)
+	# str(DGH_data$hub_1)
+
+
+	DGH_data$Eigengene <- DGH_data$Eigengene[,colnames(DGH_data$Eigengene) %in% modules_with_DEGS]
+	DGH_data$hub_1 <- DGH_data$hub_1[,colnames(DGH_data$hub_1) %in% modules_with_DEGS]
+
+	return(DGH_data)
 }
+
 
 summarize_multimir <- function(multimir_table) {
 	multimir_table <- as.data.frame(multimir_table)
@@ -121,18 +133,9 @@ parse_approaches <- function(approaches){
 # }
 
 
-perform_correlations <- function(strategy = "normalized_counts_RNA_vs_miRNA_normalized_counts", RNAseq, miRNAseq, corrected_positions, multimir_summary = NULL, cor_cutoff = 0, pval_cutoff = 0.05){ #correct_positions is a mirna_RNA pairs vector
+perform_correlations <- function(strategy = "normalized_counts_RNA_vs_miRNA_normalized_counts", RNAseq, miRNAseq, corrected_positions, cor_cutoff = 0, pval_cutoff = 0.05){ #correct_positions is a mirna_RNA pairs vector
 
 	strat_description <- unlist(strsplit(strategy, "_RNA_vs_miRNA_"))
-	# message(paste0("\n", strategy))
-	if (strat_description[1] == "hub_1" && is.null(RNAseq$hub_1)){
-		RNAseq$hub_1 <- get_hub_genes_by_MM(normalized_counts = RNAseq$normalized_counts, hunter_results = RNAseq$DH_results[RNAseq$DH_results$candidate_deg, ])
-	}
-	if (strat_description[2] == "hub_1" && is.null(miRNAseq$hub_1)){
-		miRNAseq$hub_1 <- get_hub_genes_by_MM(normalized_counts = miRNAseq$normalized_counts, hunter_results = miRNAseq$DH_results[miRNAseq$DH_results$candidate_deg, ])
-	}
-	# print(strat_description[2])
-	# print(str(miRNAseq$hub_1))
 
 	RNA_profiles <- RNAseq[[strat_description[1]]]
 	miRNA_profiles <- miRNAseq[[strat_description[2]]]
@@ -143,28 +146,36 @@ perform_correlations <- function(strategy = "normalized_counts_RNA_vs_miRNA_norm
 
 	if (strat_description[1] != "normalized_counts"){
 		# message("expand RNA")
-		all_pairs_info <- expand_module(all_pairs_info = all_pairs_info, tag = "RNAseq", DH_results = RNAseq$DH_results[RNAseq$DH_results$candidate_deg, ])
+		all_pairs_info <- expand_module(all_pairs_info = all_pairs_info, tag = "RNAseq", DH_results = RNAseq$DH_results[RNAseq$DH_results$relevant_genes, ])
 		
 	}
 	
 	if (strat_description[2] != "normalized_counts"){
 		# message("expand miRNA")
-		all_pairs_info <- expand_module(all_pairs_info = all_pairs_info, tag = "miRNAseq", DH_results = miRNAseq$DH_results[miRNAseq$DH_results$candidate_deg, ])
+		all_pairs_info <- expand_module(all_pairs_info = all_pairs_info, tag = "miRNAseq", DH_results = miRNAseq$DH_results[miRNAseq$DH_results$relevant_genes, ])
 	}
 	all_pairs_info$all_permutations <- TRUE
+	# str(all_pairs_info)
+
+	# print(head(all_pairs_info$correlation))
+
+	# print(summary(all_pairs_info$correlation))
+	# print(cor_cutoff)
+	# print(summary(all_pairs_info$pval))
+	# print(pval_cutoff)
+
+
 	all_pairs_info$correlated_pairs <- all_pairs_info$correlation <= cor_cutoff & all_pairs_info$pval < pval_cutoff
+	print(sum(all_pairs_info$correlated_pairs))
 	if (!is.null(corrected_positions)){
 		all_pairs <- paste0(all_pairs_info$RNAseq, "_", all_pairs_info$miRNAseq)
 
-		all_pairs_info <- all_pairs_info[match(corrected_positions, all_pairs),] #esta linea puede ser peligrosa
-		all_pairs_info[is.na(all_pairs_info$all_permutations), "all_permutations"] <- FALSE
-		all_pairs_info[is.na(all_pairs_info$correlated_pairs), "correlated_pairs"] <- FALSE
-		rownames(all_pairs_info) <- 1:nrow(all_pairs_info)	
+		all_pairs_info$pair_n <- match(all_pairs, corrected_positions) 
+		# all_pairs_info[is.na(all_pairs_info$all_permutations), "all_permutations"] <- FALSE
+		# all_pairs_info[is.na(all_pairs_info$correlated_pairs), "correlated_pairs"] <- FALSE
+		# rownames(all_pairs_info) <- 1:nrow(all_pairs_info)	
 		all_pairs_info[,c("RNAseq", "miRNAseq")] <- NULL
 	}
-	if (!is.null(multimir_summary)){
-		all_pairs_info <- add_multimir_info(all_pairs_info, multimir_summary = multimir_summary)
-	} 
 	return(all_pairs_info)
 }
 
@@ -172,8 +183,10 @@ perform_correlations <- function(strategy = "normalized_counts_RNA_vs_miRNA_norm
 #' @importFrom WGCNA corPvalueStudent
 #' @importFrom stats cor
 correlate_profiles <- function(RNA_profiles, miRNA_profiles) {
-	
-	correlations <- stats::cor(RNA_profiles, miRNA_profiles)
+	# str(RNA_profiles)
+	# str(miRNA_profiles)
+
+	correlations <- WGCNA::cor(RNA_profiles, miRNA_profiles)
 	
 	nSamples <- ncol(RNA_profiles) 
 	cor_pval <- as.data.frame(WGCNA::corPvalueStudent(as.matrix(correlations), nSamples))
@@ -196,6 +209,7 @@ correlate_profiles <- function(RNA_profiles, miRNA_profiles) {
 #' @importFrom dplyr desc between row_number filter arrange group_by
 get_hub_genes_by_MM <- function(normalized_counts, hunter_results, top = 1){
 	"%>%" <- magrittr::"%>%"
+	# hunter_results <- hunter_results[hunter_results$relevant_genes,]
 
 	hub_genes <- hunter_results %>% 
 				dplyr::filter(Cluster_MM_pval <= 0.05) %>% 
@@ -213,11 +227,13 @@ get_hub_genes_by_MM <- function(normalized_counts, hunter_results, top = 1){
 #' @importFrom dplyr select
 expand_module <- function(all_pairs_info, tag, DH_results){
 		"%>%" <- magrittr::"%>%"
+		# save(list = ls(all.names = TRUE), file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/pmm2_belen/target_miRNA_2020/test_3.RData", envir = environment())
+		# q()
 
 		mod_tag <- paste0(tag, "_mod")
 		names(all_pairs_info)[names(all_pairs_info)== tag] <- mod_tag
 
-		partial_expanded <- DH_results  %>% dplyr::select(Cluster_ID, gene_name)
+		partial_expanded <- DH_results %>% dplyr::select(Cluster_ID, gene_name)
 		partial_expanded <- data.table::as.data.table(partial_expanded)
 		colnames(partial_expanded) <- c("module", tag)
 		# print(head(RNAseq))
@@ -266,19 +282,22 @@ get_db_scores <- function(all_db_info){
 }
 
 
-get_prediction_stats <- function(strategy_correlated_pairs, all_possible_permutations){
+get_prediction_stats <- function(all_pairs_info, all_possible_pairs){
+		strategy_correlated_pairs <- rep(FALSE, nrow(all_possible_pairs))
+		strategy_correlated_pairs[all_pairs_info$pair_n] <- TRUE
+		# print(paste0(length(strategy_correlated_pairs), " teeeeest ", nrow(all_possible_pairs)))
 
-		correlated_multimir <- strategy_correlated_pairs & all_possible_permutations$possible_positives
+		correlated_in_multimir <- strategy_correlated_pairs & all_possible_pairs$possible_positives
 		
-		predicted_pairs <- all_possible_permutations$predicted_c > 0
-		validated_pairs <- all_possible_permutations$validated_c > 0
+		predicted_pairs <- all_possible_pairs$predicted_c > 0
+		validated_pairs <- all_possible_pairs$validated_c > 0
 		both_pairs <- predicted_pairs & validated_pairs
 
 		## Get precision recall F1 stats
 		stats <- data.frame(stringsAsFactors = FALSE,
-							predicted = pred_stats(correlated_multimir, predicted_pairs),
-							validated = pred_stats(correlated_multimir, validated_pairs),
-							both = pred_stats(correlated_multimir, both_pairs)
+							predicted = pred_stats(correlated_in_multimir, predicted_pairs),
+							validated = pred_stats(correlated_in_multimir, validated_pairs),
+							both = pred_stats(correlated_in_multimir, both_pairs)
 							)
 
 		rownames(stats) <- c("precision", "recall", "F1")
@@ -296,39 +315,42 @@ get_module_genes <- function(hunter_results, module_name, column_name){
 	return(module_genes)
 }
 
-#' @importFrom data.table data.table rbindlist 
+#' @importFrom data.table data.table rbindlist as.data.table
 #' @importFrom stats sd 
 add_randoms <- function(background = NULL, filters_summary = NULL, permutations = 10, all_strategies, db_distribution = data.table(stringsAsFactors = FALSE)){
-	# str(background)
+	background <- data.table::as.data.table(background)
 	# str(filters_summary)
 	db_distribution <- list("0" = db_distribution)
 	for (strategy_name in unique(filters_summary$strategy)) {
 		random_dist <- list()
-		# print("debug_1")	
-		sig_pairs <- as.numeric(all_strategies[all_strategies$strategy == strategy_name, "pairs"])
-		strat_background <- background[-sig_pairs,]
+		message("debug_1")	
+		# sig_pairs <- rep(FALSE, nrow(background))
+		# sig_pairs[as.numeric(all_strategies[all_strategies$strategy == strategy_name, "pair_n"])] <- TRUE
+		# strat_background <- background[!sig_pairs,]
 		sig_pairs_count <- filters_summary[filters_summary$strategy == strategy_name & filters_summary$type == "known_miRNAs", "pairs"]
 		# print(sig_pairs_count)
-		for (i in 1:permutations){ 
-			# print("\tdebug1_1")
-			random_indices <- sample(rownames(background), size = sig_pairs_count, replace = FALSE)	
-			random_strat <- as.data.frame(background[random_indices,])
-			random_summary <- data.table::data.table(predicted = sum(random_strat$predicted_c > 0),
-											validated = sum(random_strat$validated_c > 0),
-											both= sum(random_strat$predicted_c > 0 & random_strat$validated_c > 0)
+		# save(list = ls(all.names = TRUE), file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/pmm2_belen/target_miRNA_2020/test.RData", envir = environment())
+		# q()
+		for( i in 1:permutations){ 
+			message("\tdebug1_1")
+			random_indices <- sample(nrow(background), size = sig_pairs_count, replace = FALSE)	
+			random_set <- as.data.frame(background[random_indices,])
+			random_summary <- data.table::data.table(predicted = sum(random_set$predicted_c > 0),
+											validated = sum(random_set$validated_c > 0),
+											both= sum(random_set$predicted_c > 0 & random_set$validated_c > 0)
 										)
-			random_dist[[i]] <-  random_summary
+			random_dist[[i]] <- random_summary
 			
 			random_score_dist <- data.table::data.table(strategy = strategy_name,
 											step = "predicted_random",
-											score = random_strat[random_strat$predicted_c > 0, "score"] )
+											score = random_set[random_set$predicted_c > 0, "score"] )
 			
 			db_distribution <- c(db_distribution, list(random_score_dist))
 			
 		}
 		random_dist <- as.data.frame(data.table::rbindlist(random_dist))
 		
-		# print("debug_2")
+		message("debug_2")
 
 		random_summary <- lapply(c("predicted", "validated", "both"), function(type){
 			type_dist <- random_dist[, type]
@@ -342,7 +364,7 @@ add_randoms <- function(background = NULL, filters_summary = NULL, permutations 
 						)
 		})
 		
-		# print("debug_4")
+		message("debug_4")
 		
 
 		filters_summary <- as.data.frame(data.table::rbindlist(c(list(filters_summary), random_summary), use.names=TRUE))	

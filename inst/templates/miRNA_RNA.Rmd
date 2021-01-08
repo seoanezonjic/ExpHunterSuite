@@ -95,7 +95,7 @@ filter_stats$targets <- rep(NA, nrow(filter_stats))
 prevalent_miRNAs <- miRNAseq[["DH_results"]]$gene_name[miRNAseq[["DH_results"]]$genes_tag == "PREVALENT_DEG"]
 # save(filter_stats, prevalent_miRNAs, strategies, file = file.path(opt$output_files, "debug.RData"))
 for (strategy in unique(filter_stats$strategy)) {
-  correlated_pairs <- strategies$all_possible_permutations[strategies[[strategy]]$correlated_pairs, c("miRNAseq", "RNAseq")]
+  correlated_pairs <- strategies$all_possible_pairs[strategies[[strategy]]$index, c("miRNAseq", "RNAseq")]
   filter_stats[filter_stats$strategy == strategy, "miRNAs"] <- length(unique(correlated_pairs$miRNAseq))
   filter_stats[filter_stats$strategy == strategy, "targets"] <- length(unique(correlated_pairs$RNAseq))
   filter_stats[filter_stats$strategy == strategy, "DEMs"] <- length(unique(correlated_pairs[correlated_pairs$miRNAseq %in% prevalent_miRNAs, "miRNAseq"]))
@@ -125,12 +125,12 @@ colnames(common_pairs) <- approaches
 rownames(common_pairs) <- approaches
 
 for (col_strategy in approaches) {
-  strat_pairs <- strategies$all_possible_permutations[all_strategies[all_strategies$strategy == col_strategy, "pair"], c("RNAseq", "miRNAseq")]
+  strat_pairs <- strategies$all_possible_pairs[all_strategies[all_strategies$strategy == col_strategy, "pair_n"], c("RNAseq", "miRNAseq")]
 
   col_pairs <- strat_pairs %>% tidyr::unite("pairs", RNAseq:miRNAseq, sep = "", na.rm = FALSE)
   col_pairs <- col_pairs$pairs
   for (row_strategy in approaches) {
-    strat_pairs <- strategies$all_possible_permutations[all_strategies[all_strategies$strategy == row_strategy, "pair"], c("RNAseq", "miRNAseq")]
+    strat_pairs <- strategies$all_possible_pairs[all_strategies[all_strategies$strategy == row_strategy, "pair_n"], c("RNAseq", "miRNAseq")]
     row_pairs <- strat_pairs %>% tidyr::unite("pairs", RNAseq:miRNAseq, sep = "", na.rm = FALSE)
     row_pairs <- row_pairs$pairs
     common_pairs[row_strategy, col_strategy] <- length(intersect(col_pairs, row_pairs))
@@ -233,7 +233,7 @@ pp
   venn_data <- lapply(valid_strats, function(strategy){
     strat_significant_pairs <- all_strategies$strategy == strategy & all_strategies$predicted_c > 0
 
-    pairs <- strategies$all_possible_permutations[all_strategies[strat_significant_pairs, "pair"], c("RNAseq", "miRNAseq")] #<- paste0(all_strategies[strat_significant_pairs, "miRNAseq"], all_strategies[strat_significant_pairs, "RNAseq"])
+    pairs <- strategies$all_possible_pairs[all_strategies[strat_significant_pairs, "pair_n"], c("RNAseq", "miRNAseq")] #<- paste0(all_strategies[strat_significant_pairs, "miRNAseq"], all_strategies[strat_significant_pairs, "RNAseq"])
     pairs <- pairs %>% tidyr::unite("pair", RNAseq:miRNAseq, sep = "", na.rm = FALSE) 
     pairs <- unique(pairs$pairs)
     return(pairs)
@@ -249,7 +249,7 @@ pp
   venn_data <- lapply(valid_strats, function(strategy){
     strat_significant_pairs <- all_strategies$strategy == strategy & all_strategies$predicted_c > 0
 
-    miRNA_ID <- unique(strategies$all_possible_permutations[all_strategies[strat_significant_pairs, "pair"], "miRNAseq"])
+    miRNA_ID <- unique(strategies$all_possible_pairs[all_strategies[strat_significant_pairs, "pair_n"], "miRNAseq"])
     return(miRNA_ID)
     })
   names(venn_data) <- valid_strats
@@ -262,7 +262,7 @@ pp
   venn_data <- lapply(valid_strats, function(strategy){
     strat_significant_pairs <- all_strategies$strategy == strategy & all_strategies$predicted_c > 0
 
-    RNA_ID <- unique(strategies$all_possible_permutations[all_strategies[strat_significant_pairs, "pair"], "RNAseq"])
+    RNA_ID <- unique(strategies$all_possible_pairs[all_strategies[strat_significant_pairs, "pair_n"], "RNAseq"])
     return(RNA_ID)
     })
   names(venn_data) <- valid_strats
@@ -287,19 +287,19 @@ pp
 ```
 
 
-```{r render_partial_reports, echo = FALSE, warning = FALSE}
-  curr_out <- ""
+```{r render_partial_reports, echo = FALSE, warning = FALSE, eval = FALSE}
+  # curr_out <- ""
 
-  curr_out <- unlist(lapply(approaches ,function(method_name){
-      sec_text <- paste(c("## **", method_name ," correlation method**\n"),collapse="") # Header
-      sec_text <- c(sec_text, knitr::knit_expand("partial/miRNA_cor_methods.Rmd")) # Body
-      return(sec_text)
-  }))    
+  # curr_out <- unlist(lapply(approaches ,function(method_name){
+  #     sec_text <- paste(c("## **", method_name ," correlation method**\n"),collapse="") # Header
+  #     sec_text <- c(sec_text, knitr::knit_expand("partial/miRNA_cor_methods.Rmd")) # Body
+  #     return(sec_text)
+  # }))    
 # save(list = ls(all.names = TRUE), file = file.path(opt$output_files, "debug.RData"), envir = environment())
 
+# `r paste(knitr::knit(text = curr_out), collapse = '\n')`
 ``` 
 
-`r paste(knitr::knit(text = curr_out), collapse = '\n')`
 
 
 

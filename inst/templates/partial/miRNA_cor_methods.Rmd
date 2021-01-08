@@ -10,7 +10,7 @@
 	
 	all_pairs_strat <- all_strategies[all_strategies$strategy == "{{method_name}}", ]
 	method_table <- all_pairs_strat[all_pairs_strat$validated_c > 0 | all_pairs_strat$predicted_c > 0,]
-	method_table <- cbind(method_table,strategies$all_possible_permutations[method_table$pair, c("miRNAseq", "RNAseq")])
+	method_table <- cbind(method_table,strategies$all_possible_permutations[method_table$pair_n, c("miRNAseq", "RNAseq")])
 	method_table$miRNA_names <- mirna_names[match(method_table$miRNAseq, mirna_names$Accession), "TargetName"]
 	if (!is.null(gene_id_translation)) {
 		method_table <- merge(method_table, gene_id_translation, by.x = "RNAseq", by.y = "ensembl_gene_id", all.x = TRUE)
@@ -37,8 +37,8 @@
 		}
 
 		# match_in_raw <- match(paste0(method_table$RNAseq, method_table$miRNAseq) , paste0(strategies$dd$all_pairs_info$RNAseq, strategies$dd$all_pairs_info$miRNAseq))
-		method_table$raw_cor <- strategies[[ref_strategy]][method_table$pair, "correlation"]
-		method_table$raw_pval <- strategies[[ref_strategy]][method_table$pair, "pval"]
+		method_table$raw_cor <- strategies[[ref_strategy]][method_table$pair_n, "correlation"]
+		method_table$raw_pval <- strategies[[ref_strategy]][method_table$pair_n, "pval"]
 		# method_table <- method_table[,c("miRNA_names", "miRNAseq", "RNAseq","entrezgene", "Symbol", "RNA_mod", "correlation", "raw_cor", "pval", "raw_pval","RNA_MM", "mean_logFCs", "target_deg_tag" )]
 		all_dems_summary <- data.frame()
 		all_dems_info <- data.frame()
