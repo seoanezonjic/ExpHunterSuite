@@ -4,10 +4,12 @@
 \alias{catched_pairwise_termsim}
 \title{Catched errors fo pairwise_termsim for special cases}
 \usage{
-catched_pairwise_termsim(enr)
+catched_pairwise_termsim(enr, num_cats = 200)
 }
 \arguments{
 \item{enr}{enrichment object to be studied}
+
+\item{num_cats}{number of categories to be shown}
 }
 \value{
 enrichment object after add termsim info

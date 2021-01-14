@@ -377,26 +377,61 @@ perform_topGO <- function(attr_name, interesting_genenames, DEG_annot_table, ont
 }
 
 
+#' Mutate enrichment object to remove conflict of IDs or Descriptions for fortify
+#' @param enr enrichment object
+#' @return enrichment object with repeated IDs or Description cleaned
+prepare_for_fortify <- function(enr){
+  res <- enr
+  # Check possible categories repetition (same term, different ID => alternative IDs usage)
+  slotDF <- slotNames(res)[1]
+  cats_dict <- slot(res,slotDF)[,c("ID","Description")]
+  cats_dict <- unique(cats_dict)
+  tids <- table(cats_dict$ID)
+  tdes <- table(cats_dict$Description)
+  removeAlternativeIDs <- function(dict,obj,columnName,slotDF){
+    dict <- dict[dict > 1]
+    obj <- obj
+    invisible(lapply(seq_along(dict),function(i){
+      indexes <- which(slot(obj,slotDF)[,columnName] == names(dict)[i])
+      slot(obj,slotDF) <<- slot(obj,slotDF)[-tail(indexes,-1),]
+    }))
+    return(obj)
+  }
+  if(any(tids > 1)){
+    res <- removeAlternativeIDs(tids,res,"ID",slotDF)
+  }else if(any(tdes > 1)){
+    res <- removeAlternativeIDs(tdes,res,"Description",slotDF)
+  }
+  return(res)
+}
+
 
 #' Catched errors fo pairwise_termsim for special cases
 #' @param enr enrichment object to be studied
+#' @param num_cats number of categories to be shown
 #' @return enrichment object after add termsim info
 #' @importFrom enrichplot pairwise_termsim
-catched_pairwise_termsim <- function(enr){
+catched_pairwise_termsim <- function(enr, num_cats = 200){
   endedWithoutERRs <- FALSE
-  initial_num_cats <- 200
-  num_cats <- initial_num_cats
+  preparedForFortify <- FALSE
+  initial_num_cats <- num_cats
   res <- enr
+  # Try
   while(!endedWithoutERRs){
     tryCatch(
       # MAIN
       {
-        res <- enrichplot::pairwise_termsim(enr, showCategory = num_cats)
+        enr <- enrichplot::pairwise_termsim(res, showCategory = num_cats)
         endedWithoutERRs <- TRUE
       },
       # CATCH
       error = function(cond){
-        num_cats <<- num_cats - 20
+        if(!preparedForFortify){
+          res <<- prepare_for_fortify(res)
+          preparedForFortify <<- TRUE
+        }else{
+          num_cats <<- num_cats - 20
+        }
         if(num_cats <= 0){
           stop(cond)
         }
@@ -404,7 +439,7 @@ catched_pairwise_termsim <- function(enr){
     )
   }
   if(num_cats < initial_num_cats) warning(paste0("Finally number of categories used has been (",num_cats,") for pairwise_termsim"))
-  return(res)
+  return(enr)
 }
 
 
@@ -498,6 +533,7 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
   }
 
   if(!is.null(enrichment)){
+    # enrichment <- prepare_for_fortify(enrichment) 
     if(nrow(enrichment) > 0 && semsim) enrichment <- catched_pairwise_termsim(enrichment)
   }
 
@@ -660,6 +696,7 @@ enrich_GSEA <- function(geneList,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
   if (nrow(enrichment) == 0){
     return(NULL)
   } else {
+    # return(prepare_for_fortify(enrichment))
     return(enrichment)
   }
 }
@@ -943,7 +980,7 @@ multienricher <- function(genes,
     if(!is.null(func_results$WGCNA$ORA_expanded)){
       enrichments_ORA <- lapply(func_results$WGCNA$ORA_expanded, clusterProfiler::merge_result)
       func_results$WGCNA$ORA <- lapply(enrichments_ORA, function(res){
-        if(nrow(res) > 0) res <- catched_pairwise_termsim(res)
+        if(nrow(res) > 0) res <- catched_pairwise_termsim(res, 200)
         return(res)
       })
     }
