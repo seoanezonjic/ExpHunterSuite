@@ -60,9 +60,9 @@ plot_in_div <- function(g, fig_height=7, fig_width=12, ## height and width in in
 }
  
 get_plot_df <- function(enrich_obj, showCategory = 30) {
-  extract_geneSets <- getNonExportedFunction("enrichplot", "extract_geneSets")
-  list2df <- getNonExportedFunction("enrichplot", "list2df")
-  update_n <- getNonExportedFunction("enrichplot", "update_n")
+  extract_geneSets <- get_unexported_function("enrichplot", "extract_geneSets")
+  list2df <- get_unexported_function("enrichplot", "list2df")
+  update_n <- get_unexported_function("enrichplot", "update_n")
   geneSets <- extract_geneSets(enrich_obj, update_n(enrich_obj, showCategory))
   geneSets <- list2df(geneSets)
   return(geneSets)

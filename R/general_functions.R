@@ -4,7 +4,7 @@
 #' @param pkg package
 #' @param fun function to be luaded
 #' @return function requried
-getNonExportedFunction <- function(pkg, fun){
+get_unexported_function <- function(pkg, fun){
   return(get(fun, envir = asNamespace(pkg),inherits = FALSE))
 } 
 

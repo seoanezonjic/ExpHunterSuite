@@ -229,7 +229,7 @@ write_enrich_files <- function(func_results, output_files=getwd()){
 			utils::write.table(func_results$CUSTOM[[i]], file=file.path(output_files, paste0(basename(names(func_results$CUSTOM)[i]),"_results")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}))
 	}
-	fortify.compareClusterResult <- getNonExportedFunction("enrichplot", "fortify.compareClusterResult")
+	fortify.compareClusterResult <- get_unexported_function("enrichplot", "fortify.compareClusterResult")
 	if("WGCNA_ORA" %in% names(func_results)){
 		for(enrichment_i in 1:length(func_results$WGCNA_ORA)) {
 			df <- fortify.compareClusterResult(func_results$WGCNA_ORA[[enrichment_i]])
