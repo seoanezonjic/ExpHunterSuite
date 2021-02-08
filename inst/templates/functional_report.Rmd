@@ -397,7 +397,7 @@ cat("\n\n**Enrich Map plot**\n\n",
 	"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 	The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 )
-if (check_categories(enrich_ora, min_categories = 1) || nrow(as.data.frame(enrich_ora)) > 1 ) {
+if (check_categories(enrich_ora, min_categories = 1) && nrow(as.data.frame(enrich_ora)) > 1 ) {
 	pp <- enrichplot::emapplot(enrich_ora, showCategory=n_category)
 	plot_in_div(pp, fig_width = default_width)
 } else {
