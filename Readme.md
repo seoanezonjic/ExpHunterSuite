@@ -18,7 +18,7 @@ To install DEgenes Hunter from console, we use the devtools utility to install R
 
 ``` bash
     Rscript -e 'install.packages("devtools", repos="http://cran.us.r-project.org")'
-    Rscript -e 'devtools::install_github("seoanezonjic/ExpHunterSuite")'
+    Rscript -e 'devtools::install_github("seoanezonjic/ExpHunterSuite", dependencies=TRUE)'
 ```
 
 Sometimes reactome.db download fails because this package is too large (>400 Mb) and R has a download timeout of 60 seconds by default. 
