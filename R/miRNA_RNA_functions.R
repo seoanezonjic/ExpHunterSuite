@@ -54,6 +54,7 @@ load_DEGH_information <- function(execution_path){
 # }
 
 filter_DEGH_data <- function(DGH_data, MM_cutoff){
+	# save(list = ls(all.names = TRUE), file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/test.RData", envir = environment())
 
 	DGH_results <- DGH_data$DH_results 
 	all_degs <- DGH_results$genes_tag %in% c("PREVALENT_DEG", "POSSIBLE_DEG")
@@ -81,12 +82,19 @@ filter_DEGH_data <- function(DGH_data, MM_cutoff){
 }
 
 
-summarize_multimir <- function(multimir_table) {
+summarize_multimir <- function(
+	multimir_table, 
+	selected_predicted_databases = c("diana_microt", "elmmo", "microcosm", "miranda","mirdb", "pictar", "pita", "targetscan"),
+	filter_unmaintained = 0
+	) {
+	# save(multimir_table,selected_predicted_databases, file = file.path("/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/pmm2_belen/target_miRNA_2020", "test1.RData"))
+
 	multimir_table <- as.data.frame(multimir_table)
+	pred_dbs <- c("diana_microt", "elmmo", "microcosm", "miranda","mirdb", "pictar", "pita", "targetscan")
 
 	dbs <- list(
 		"validated_c" = c("mirecords", "mirtarbase", "tarbase"),
-		"predicted_c" = c("diana_microt", "elmmo", "microcosm", "miranda","mirdb", "pictar", "pita", "targetscan")
+		"predicted_c" = pred_dbs[pred_dbs %in% unlist(selected_predicted_databases)]
 		)
 	# for (db_type in names(dbs)) {
 	multimir_table[["validated_c"]] <- rowSums(multimir_table[,dbs[["validated_c"]]], na.rm = TRUE)
@@ -98,7 +106,18 @@ summarize_multimir <- function(multimir_table) {
 
 	multimir_table$score <- (rowSums(multimir_table[,dbs$predicted_c], na.rm = TRUE) / multimir_table$predicted_c) 
 	multimir_table[is.na(multimir_table$score), "score"] <- 0
+
+
 	gc()
+	if ( filter_unmaintained > 0) {
+		unmaintained_dbs <- c("diana_microt", "elmmo", "microcosm", "miranda", "pictar", "pita")
+		aux_multimir_table <- multimir_table[,unmaintained_dbs[unmaintained_dbs %in% unlist(selected_predicted_databases) ]]
+		# save(list = ls(all.names = TRUE), file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/pmm2_belen/target_miRNA_2020/test.RData", envir = environment())
+		# q()
+		aux_multimir_table$unmaintained_count <- rowSums(aux_multimir_table)
+		multimir_table <- multimir_table[aux_multimir_table$unmaintained_count >= filter_unmaintained |
+											 multimir_table$predicted_c > 0,]
+	}
 
 	return(multimir_table)
 }
@@ -139,8 +158,14 @@ perform_correlations <- function(strategy = "normalized_counts_RNA_vs_miRNA_norm
 
 	RNA_profiles <- RNAseq[[strat_description[1]]]
 	miRNA_profiles <- miRNAseq[[strat_description[2]]]
+	# print(strategy)
 	# print(str(RNA_profiles))
 	# print(str(miRNA_profiles))
+
+	# save(miRNA_profiles, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/test.RData")
+	if (ncol(RNA_profiles) == 0 || ncol(miRNA_profiles) == 0) {
+		return(data.frame(NULL))
+	}
 	all_pairs_info <- correlate_profiles(RNA_profiles, miRNA_profiles)
 	all_pairs_info <- data.table::as.data.table(all_pairs_info)
 
@@ -284,7 +309,11 @@ get_db_scores <- function(all_db_info){
 
 get_prediction_stats <- function(all_pairs_info, all_possible_pairs){
 		strategy_correlated_pairs <- rep(FALSE, nrow(all_possible_pairs))
-		strategy_correlated_pairs[all_pairs_info$pair_n] <- TRUE
+		strategy_correlated_pairs[all_pairs_info$pair_n[all_pairs_info$correlated_pairs]] <- TRUE
+		# save(list = ls(all.names = TRUE), file = file.path("/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/pmm2_belen/target_miRNA_2020", "test.RData"), envir = environment())
+		# q()
+
+		# str(all_pairs_info$pair_n)
 		# print(paste0(length(strategy_correlated_pairs), " teeeeest ", nrow(all_possible_pairs)))
 
 		correlated_in_multimir <- strategy_correlated_pairs & all_possible_pairs$possible_positives
@@ -292,7 +321,8 @@ get_prediction_stats <- function(all_pairs_info, all_possible_pairs){
 		predicted_pairs <- all_possible_pairs$predicted_c > 0
 		validated_pairs <- all_possible_pairs$validated_c > 0
 		both_pairs <- predicted_pairs & validated_pairs
-
+		# save(list = ls(all.names = TRUE), file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/pmm2_belen/target_miRNA_2020/test.RData", envir = environment())
+		# q()
 		## Get precision recall F1 stats
 		stats <- data.frame(stringsAsFactors = FALSE,
 							predicted = pred_stats(correlated_in_multimir, predicted_pairs),

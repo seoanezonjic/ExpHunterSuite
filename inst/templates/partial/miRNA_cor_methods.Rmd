@@ -8,9 +8,12 @@
 # => method :: method object
 # => method_name :: method name
 	
+	method_name <- "{{method_name}}"
+
 	all_pairs_strat <- all_strategies[all_strategies$strategy == "{{method_name}}", ]
 	method_table <- all_pairs_strat[all_pairs_strat$validated_c > 0 | all_pairs_strat$predicted_c > 0,]
-	method_table <- cbind(method_table,strategies$all_possible_permutations[method_table$pair_n, c("miRNAseq", "RNAseq")])
+
+	method_table <- cbind(method_table, strategies$all_possible_pairs[method_table$pair_n, c("miRNAseq", "RNAseq")])
 	method_table$miRNA_names <- mirna_names[match(method_table$miRNAseq, mirna_names$Accession), "TargetName"]
 	if (!is.null(gene_id_translation)) {
 		method_table <- merge(method_table, gene_id_translation, by.x = "RNAseq", by.y = "ensembl_gene_id", all.x = TRUE)
@@ -37,8 +40,14 @@
 		}
 
 		# match_in_raw <- match(paste0(method_table$RNAseq, method_table$miRNAseq) , paste0(strategies$dd$all_pairs_info$RNAseq, strategies$dd$all_pairs_info$miRNAseq))
-		method_table$raw_cor <- strategies[[ref_strategy]][method_table$pair_n, "correlation"]
-		method_table$raw_pval <- strategies[[ref_strategy]][method_table$pair_n, "pval"]
+		# ref_strategy <- 
+		# save(strategies, method_table, file = file.path(output_files, "test.RData"))
+
+
+		aux <- as.data.frame(strategies[["normalized_counts_RNA_vs_miRNA_normalized_counts"]][match(method_table$pair_n, strategies[["normalized_counts_RNA_vs_miRNA_normalized_counts"]]$pair_n), c("correlation", "pval")])
+		 # <- as.vector(strategies[["normalized_counts_RNA_vs_miRNA_normalized_counts"]][method_table$pair_n, "pval"])
+		colnames(aux) <- c("raw_cor", "raw_pval")
+		method_table <- cbind(method_table, aux)
 		# method_table <- method_table[,c("miRNA_names", "miRNAseq", "RNAseq","entrezgene", "Symbol", "RNA_mod", "correlation", "raw_cor", "pval", "raw_pval","RNA_MM", "mean_logFCs", "target_deg_tag" )]
 		all_dems_summary <- data.frame()
 		all_dems_info <- data.frame()
@@ -120,8 +129,6 @@ for (mirna in unique(all_dems_info$miRNAseq)) {
 
 	# all_dems_info <- method_table[method_table$miRNAseq %in% dems, ]
 	all_dems_info$mean_logFCs <- RNAseq$DH_results$mean_logFCs[match(all_dems_info$RNAseq, RNAseq$DH_results$gene_name)]
-		# save(all_dems_info, file = file.path(opt$output_files, paste0("{{method_name}}", "debug.RData")) )
-			# gc()
 	# print(message(head(method_table)))
     outdir <- file.path(output_files, "{{method_name}}")
     dir.create(outdir)
@@ -160,7 +167,11 @@ for (mirna in unique(all_dems_info$miRNAseq)) {
 
 ```
 ```{r "{{method_name}}_cor_comparison", echo = FALSE, message=FALSE, warning=FALSE, eval = nrow(all_dems_info) > 0}
-	
+		if ( "{{method_name}}" != "normalized_counts_RNA_vs_miRNA_normalized_counts") {
+
+		# save(all_dems_info, file = file.path(output_files, "test.RData"))
+		# q()
+		}
 	ggplot2::ggplot(all_dems_info, ggplot2::aes(x = correlation, y = raw_cor)) + ggplot2::geom_point() 
 	
 ```  
@@ -172,7 +183,7 @@ for (mirna in unique(all_dems_info$miRNAseq)) {
 	score_dist <- score_filter[["{{method_name}}"]]
 
 	sig_score_dist <- score_dist[score_dist$significant,]
-	# save(list = ls(all.names = TRUE), file = file.path(output_files, "test.RData"), envir = environment())
+		# save(score_dist, file = file.path(output_files, "test2.RData"))
 
 	ggplot2::ggplot(score_dist, ggplot2::aes(x = r_scores, fill = database)) + ggplot2::geom_boxplot()
 

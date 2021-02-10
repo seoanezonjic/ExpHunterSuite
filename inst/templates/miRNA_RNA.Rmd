@@ -52,12 +52,29 @@ cat(paste0("This report summarizes results from [script_name] execution comparin
 cat("## **RNAseq and miRNAseq correlation methods comparison**")
 cat("\nThis plot shows the distributions of correlations between RNAseq and miRNAseq using diferent strategies.
   \n")
-min <- -0.5
-if (min < corr_cutoff) {
-  min <- corr_cutoff
-}
-pp <- ggplot2::ggplot(all_strategies, ggplot2::aes(x = strategy, y = correlation, fill = strategy)) +
-  ggplot2::geom_violin(trim = FALSE, scale = "width") + ggplot2::ylim(-1.000001, min + 0.00001) +
+
+# min <- -0.5
+# if (min < corr_cutoff) {
+#   min <- corr_cutoff
+# }
+all_cor_dist <- strategies
+all_cor_dist[["all_possible_pairs"]] <- NULL
+strat_names <- names(all_cor_dist)
+all_cor_dist <- lapply(all_cor_dist, function(strategy_data){
+   dist <- strategy_data[,c("correlation", "pval")]
+  # dist$cor_thr <- quantile(dist$correlation,probs = .2)
+  # dist$pval_thr <- quantile(dist$pval,probs = .2)
+   return(dist)
+  })
+names(all_cor_dist) <- strat_names
+
+
+all_cor_dist <- as.data.frame(data.table::rbindlist(all_cor_dist, use.names=TRUE, idcol= "strategy"))
+# threshold <- unique(all_cor_dist[,c("strategy", "cor_thr")])
+# save(all_cor_dist, all_cor_dist2, file = file.path(opt$output_files, "debug.RData"))
+pp <- ggplot2::ggplot(all_cor_dist, ggplot2::aes(x = strategy, y = correlation, fill = strategy)) +
+  ggplot2::geom_violin(trim = FALSE, scale = "width",draw_quantiles = c( 0.1, 0.05)) + #ggplot2::ylim(-1.000001, min + 0.00001) +
+  ggplot2::geom_hline(yintercept= corr_cutoff) +
   ggplot2::geom_boxplot(width=0.05)+
   ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.title.x = ggplot2::element_blank()) 
 pp
@@ -68,11 +85,11 @@ pp
 
 cat("\n\nThis plot shows the distributions of correlation P values between RNAseq and miRNAseq using diferent strategies.
   \n")
-pp <- ggplot2::ggplot(all_strategies, ggplot2::aes(x = strategy, y = pval, fill = strategy)) +
-  ggplot2::geom_violin(trim = FALSE, scale = "width") + ggplot2::ylim(-0.0001, 0.2) +
-  ggplot2::geom_boxplot(width=0.05)+
-  ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.title.x = ggplot2::element_blank()) 
-pp
+# pp <- ggplot2::ggplot(all_cor_dist, ggplot2::aes(x = strategy, y = pval, fill = strategy)) +
+#   ggplot2::geom_violin(trim = FALSE, scale = "width") + ggplot2::ylim(-0.0001, 0.1) +
+#   ggplot2::geom_boxplot(width=0.05)+
+#   ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.title.x = ggplot2::element_blank()) 
+# pp
 
 ```
 
@@ -101,7 +118,7 @@ for (strategy in unique(filter_stats$strategy)) {
   filter_stats[filter_stats$strategy == strategy, "DEMs"] <- length(unique(correlated_pairs[correlated_pairs$miRNAseq %in% prevalent_miRNAs, "miRNAseq"]))
   filter_stats[filter_stats$strategy == strategy, "DEMs_targets"] <- length(unique(correlated_pairs[correlated_pairs$miRNAseq %in% prevalent_miRNAs, "RNAseq"]))
 }
-
+ 
 cat("\n\n This table compare P values and Quantile of pairs discovering by strategy. Targets are unique count of genes that correlated with prevalent differential expression miRNAs\n\n")
 knitr::kable(filter_stats, digits = 3, format.args = list(scientific = TRUE))
 # datatable(filter_stats, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
@@ -287,19 +304,19 @@ pp
 ```
 
 
-```{r render_partial_reports, echo = FALSE, warning = FALSE, eval = FALSE}
-  # curr_out <- ""
+```{r render_partial_reports, echo = FALSE, warning = FALSE}
+  curr_out <- ""
 
-  # curr_out <- unlist(lapply(approaches ,function(method_name){
-  #     sec_text <- paste(c("## **", method_name ," correlation method**\n"),collapse="") # Header
-  #     sec_text <- c(sec_text, knitr::knit_expand("partial/miRNA_cor_methods.Rmd")) # Body
-  #     return(sec_text)
-  # }))    
+  curr_out <- unlist(lapply(approaches ,function(method_name){
+      sec_text <- paste(c("## **", method_name ," correlation method**\n"),collapse="") # Header
+      sec_text <- c(sec_text, knitr::knit_expand("partial/miRNA_cor_methods.Rmd")) # Body
+      return(sec_text)
+  }))    
 # save(list = ls(all.names = TRUE), file = file.path(opt$output_files, "debug.RData"), envir = environment())
 
-# `r paste(knitr::knit(text = curr_out), collapse = '\n')`
 ``` 
 
+`r paste(knitr::knit(text = curr_out), collapse = '\n')`
 
 
 
