@@ -203,6 +203,18 @@ In this situation, the user can run WGCNA using the data in the table of counts 
     degenes_Hunter.R --WGCNA_norm_method none -m WL -c 1 -f 1 -S age_group -t path_to_targets_file -i path_to_normalized_table -o path_to_results
 ```
 
+##### D. Using a pre-calculated list of DEA genes
+
+In some cases, as well as using pre-normalized count data, we wish to use a precalculated list of DE genes. This can be useful if we want to run WGCNA but not the DE analysis modules.
+
+To do so, the user must provide a pre-normalized count dataset as well as a list of DE analysis results. This should consist of three columns, containing p-value, logFC and FDR/adjusted p-values, in that order.
+
+For example, to run WGCNA only using prenormalized count data and a pre-calculated gene list, the following command can be used:
+
+```bash
+    degenes_Hunter.R --WGCNA_norm_method none -m "WF" --WGCNA_norm_method "none" -t path_to_targets_file -i path_to_normalized_table -e path_to_precalculated_deg_file -o path_to_results
+```
+
 ### 2. Command line scripts for functional enrichment analysis.
 
 To perform the functional enrichment analysis we will use the functional_Hunter.R script. This tool will use the hypergeometric test to enrich genes in functions and pathways from GO, KEGG and Reactome. Depending on the expression analysis performed, the DEgenes Hunter functional analysis tool, functional_Hunter.R, will execute different enrichments:

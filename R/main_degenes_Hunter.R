@@ -40,7 +40,7 @@
 main_degenes_Hunter <- function(
     raw = NULL,
     target = NULL,
-    external_DEA_data = NULL, # TODO unused variable, remove from interface and affected scripts
+    external_DEA_data = NULL,
     output_files = getwd(),
     reads = 2,
     minlibraries = 2,
@@ -119,7 +119,7 @@ main_degenes_Hunter <- function(
     ############################################################
     dir.create(output_files)
    
-    exp_results <- perform_expression_analysis(modules, replicatesC, replicatesT, raw_filter, p_val_cutoff, target, model_formula_text)
+    exp_results <- perform_expression_analysis(modules, replicatesC, replicatesT, raw_filter, p_val_cutoff, target, model_formula_text, external_DEA_data)
 
     #################################################################
     ##                       CORRELATION ANALYSIS                   ##
