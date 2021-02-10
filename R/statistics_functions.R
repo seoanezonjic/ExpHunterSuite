@@ -64,10 +64,11 @@ fmeasure <- function(df){
 #' @importFrom MKinfer boot.t.test
 prediction_dist_pval <- function(db_distribution) {
   dist_pval <- data.frame()
+  
   for (strategy in unique(db_distribution$strategy)) {
     true_dis <- db_distribution[db_distribution$strategy == strategy & db_distribution$step == "predicted", "score"]
     rand_dis <- db_distribution[db_distribution$strategy == strategy & db_distribution$step == "predicted_random", "score"] 
-    if(length(true_dis) != 0 ){
+    if(length(true_dis) > 0 && sum(true_dis) > 0){
       res <- MKinfer::boot.t.test(true_dis, y = rand_dis, alternative = "greater" )
       res <- res$boot.p.value
     } else {
