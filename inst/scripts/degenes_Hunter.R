@@ -110,26 +110,36 @@ write.table(cbind(opt), file=file.path(opt$output_files, "opt_input_values.txt")
 #CHECKINGS
 ############################################################################
 
-# Check inputs not allowed values
-if (is.null(opt$input_file)){
-  stop(cat("No file with RNA-seq counts is provided.\nPlease use -i to submit file"))
-}
-
+# Don't check if we have given an exernal DEA file
+if (is.null(opt$external_DEA_file)) {
+  # Check inputs not allowed values
+  if (is.null(opt$input_file)){
+    stop(cat("No file with RNA-seq counts is provided.\nPlease use -i to submit file"))
+  }
 # Check either C and T columns or target file.
-if( (is.null(opt$Treatment_columns) | is.null(opt$Control_columns)) & is.null(opt$target_file)) {
-  stop(cat("You must include either the names of the control and treatment columns or a target file with a treat column."))
+  if( (is.null(opt$Treatment_columns) | is.null(opt$Control_columns)) & is.null(opt$target_file)) {
+    stop(cat("You must include either the names of the control and treatment columns or a target file with a treat column."))
+  }
+  # In the case of -C/-T AND -t target - give a warning
+  if( (!is.null(opt$Treatment_columns) | !is.null(opt$Control_columns)) & !is.null(opt$target_file)) {
+    warning("You have included at least one -C/-T option as well as a -t option for a target file. The target file will take precedence for assigning samples labels as treatment or control.")
+  }
 }
-# In the case of -C/-T AND -t target - give a warning
-if( (!is.null(opt$Treatment_columns) | !is.null(opt$Control_columns)) & !is.null(opt$target_file)) {
-  warning("You have included at least one -C/-T option as well as a -t option for a target file. The target file will take precedence for assigning samples labels as treatment or control.")
-}
-
 
 #############################################################################
 #EXPRESSION ANALYSIS
 ############################################################################
-target <- target_generation(from_file=opt$target_file, ctrl_samples=opt$Control_columns, treat_samples=opt$Treatment_columns)
-raw_count_table <- read.table(opt$input_file, header=TRUE, row.names=1, sep="\t")
+#
+if(! is.null(c(opt$target_file, opt$Control_columns, opt$Treatment_columns))) {
+  target <- target_generation(from_file=opt$target_file, ctrl_samples=opt$Control_columns, treat_samples=opt$Treatment_columns)
+} else {
+  target <- NULL
+}
+if(! is.null(opt$input_file)) {
+  raw_count_table <- read.table(opt$input_file, header=TRUE, row.names=1, sep="\t")
+} else {
+  raw_count_table <- NULL
+}
 external_DEA_data <- NULL
 if (grepl("F", opt$modules)) { # Open the external data file for pre-analysed deg data
   external_DEA_data <- read.table(opt$external_DEA_file, header=TRUE, sep="\t", row.names=1)

@@ -69,10 +69,13 @@ main_degenes_Hunter <- function(
   ){
 
 
-    modified_input_args <- check_input_main_degenes_Hunter(minlibraries, reads, external_DEA_data, modules, model_variables, active_modules, WGCNA_all, minpack_common, target, custom_model, string_factors, numeric_factors)
+    modified_input_args <- check_input_main_degenes_Hunter(raw, minlibraries, reads, external_DEA_data, modules, model_variables, active_modules, WGCNA_all, minpack_common, target, custom_model, string_factors, numeric_factors)
     modules <- modified_input_args[['modules']]
     active_modules <- modified_input_args[['active_modules']]
     minpack_common <- modified_input_args[['minpack_common']]
+    raw <- modified_input_args[['raw']]
+    reads <- modified_input_args[['reads']]
+    target <- modified_input_args[['target']]
     final_main_params <- list(
       'minpack_common' = minpack_common,
       'p_val_cutoff' = p_val_cutoff,
@@ -93,9 +96,10 @@ main_degenes_Hunter <- function(
     replicatesT <- length(index_treatmn_cols)
     design_vector <- c(rep("C", replicatesC), rep("T", replicatesT))
     sample_groups <- data.frame(class = design_vector, name = c(index_control_cols, index_treatmn_cols))   
-
     # Check if there are enough replicates for specified method
     if((replicatesC < 2) | (replicatesT < 2)) stop('At least two replicates per class (i.e. treatment and control) are required\n')
+    # if(((replicatesC < 2) | (replicatesT < 2)) & !grepl("F", modules)) stop('At least two replicates per class (i.e. treatment and control) are required\n')
+
 
     if(!is.null(target) & grepl("W", modules)) {
       target_numeric_factors <- build_design_for_WGCNA(target, numeric_factors=numeric_factors)
@@ -199,7 +203,7 @@ main_degenes_Hunter <- function(
 
 
 
-check_input_main_degenes_Hunter <- function(minlibraries, reads, external_DEA_data, modules, model_variables, active_modules, WGCNA_all, minpack_common, target, custom_model, string_factors, numeric_factors){
+check_input_main_degenes_Hunter <- function(raw, minlibraries, reads, external_DEA_data, modules, model_variables, active_modules, WGCNA_all, minpack_common, target, custom_model, string_factors, numeric_factors){
     if (minlibraries < 1){
       stop(cat("Minimum library number to check minimum read counts cannot be less than 1.\nIf you want to avoid filtering, set --reads to 0."))
     }
@@ -210,7 +214,16 @@ check_input_main_degenes_Hunter <- function(minlibraries, reads, external_DEA_da
 
     if (!is.null(external_DEA_data)) {
       modules <- paste0(modules, "F")
-      warning("External DEA dataframe given. Note that if the count table corresponding to the DEA is non-integer, many DE detection packages will fail.")
+      warning("External DEA dataframe given.")
+      if(is.null(target)){
+        warning("External DEA dataframe given but no target - creating a blank one")
+        target <- data.frame(samples=c("case_dummy_1", "case_dummy_2", "control_dummy_1", "control_dummy2"), treat=c("Treat","Treat", "Ctrl", "Ctrl"))
+      }
+      if(is.null(raw)) {
+        warning("External DEA dataframe given but no count data - creating a blank one")
+        raw <- as.data.frame(matrix(1, nrow=20, ncol=nrow(target), dimnames = list(letters[1:20], target$sample)))
+        reads <- 0
+      }
     }
 
     if (model_variables != "" & grepl("N", modules) & nchar(modules) == 1) {
@@ -254,7 +267,7 @@ check_input_main_degenes_Hunter <- function(minlibraries, reads, external_DEA_da
     if((string_factors != "" | numeric_factors != "") & (!grepl("W", modules) | is.null(target))) {
       warning("If you wish to use factors for the correlation analysis you must also run WGCNA and include a target file. The -S and -N options will be ignored")
     }
-    return(list(modules=modules, active_modules=active_modules, minpack_common=minpack_common))
+    return(list(modules=modules, active_modules=active_modules, minpack_common=minpack_common, raw=raw, reads=reads, target=target))
 }
 
 #' @importFrom edgeR cpm
