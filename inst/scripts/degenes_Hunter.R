@@ -63,7 +63,7 @@ option_list <- list(
   optparse::make_option(c("-t", "--target_file"), type="character", default=NULL,
     help="Sample descriptions: one column must be named treat and contain values of Treat or Ctrl. This file will take precedent over the -T and -C sample flags."),
   optparse::make_option(c("-e", "--external_DEA_file"), type="character", default=NULL,
-    help="External data file containing preanalysed DE data. Must consist of three columns containing p-value, logFC and FDR/padjust IN THAT ORDER"),
+    help="External data file containing preanalysed DE data. Must consist of four columns with the following names and corresponding information: Entrez (or other gene id supported by functional hunter), P.Value, logFC and adj.P.Val IN THAT ORDER"),
   optparse::make_option(c("-v", "--model_variables"), type="character", default="",
     help="Variables to include in the model. Must be comma separated and each variable must be a column in the target_file, or the model can be specified precisely if the custom_model flag is TRUE"),
   optparse::make_option(c("-n", "--numerics_as_factors"), type="logical", default=TRUE,

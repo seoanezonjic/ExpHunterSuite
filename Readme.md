@@ -205,14 +205,16 @@ In this situation, the user can run WGCNA using the data in the table of counts 
 
 ##### D. Using a pre-calculated list of DEA genes
 
-In some cases, as well as using pre-normalized count data, we wish to use a precalculated list of DE genes. This can be useful if we want to run WGCNA but not the DE analysis modules.
+In some cases, as well as using pre-normalized count data, we wish to use a precalculated list of DE genes. This can be useful if we want to run functional enrichment but not the DE analysis modules.
 
-To do so, the user must provide a pre-normalized count dataset as well as a list of DE analysis results. This should consist of three columns, containing p-value, logFC and FDR/adjusted p-values, in that order.
+To do so, the user must provide a preeanalyzed list of DE analysis results. This should consist of four columns, with the following names and corresponding information: Entrez (or other gene id supported by functional hunter), P.Value, logFC and adj.P.Val, in that order.
 
-For example, to run WGCNA only using prenormalized count data and a pre-calculated gene list, the following command can be used:
+In such a scenario, the user can provide a target and counts file, in which case the DE output reports will be generated using this information. They can also choose not to provide them, in which case the DE output report will be rather limited.
+
+To run DEgenes Hunter using a pre-calculated gene list, the following command can be used:
 
 ```bash
-    degenes_Hunter.R --WGCNA_norm_method none -m "WF" --WGCNA_norm_method "none" -t path_to_targets_file -i path_to_normalized_table -e path_to_precalculated_deg_file -o path_to_results
+    degenes_Hunter.R  -m "F" -t path_to_targets_file -i path_to_normalized_table -e path_to_precalculated_deg_file -o path_to_results
 ```
 
 ### 2. Command line scripts for functional enrichment analysis.
