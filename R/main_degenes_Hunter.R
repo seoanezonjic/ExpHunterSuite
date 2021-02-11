@@ -213,7 +213,6 @@ check_input_main_degenes_Hunter <- function(raw, minlibraries, reads, external_D
     }
 
     if (!is.null(external_DEA_data)) {
-      modules <- paste0(modules, "F")
       warning("External DEA dataframe given.")
       if(is.null(target)){
         warning("External DEA dataframe given but no target - creating a blank one")
@@ -221,7 +220,7 @@ check_input_main_degenes_Hunter <- function(raw, minlibraries, reads, external_D
       }
       if(is.null(raw)) {
         warning("External DEA dataframe given but no count data - creating a blank one")
-        raw <- as.data.frame(matrix(1, nrow=20, ncol=nrow(target), dimnames = list(letters[1:20], target$sample)))
+        raw <- as.data.frame(matrix(1, nrow=nrow(external_DEA_data), ncol=nrow(target), dimnames = list(row.names(external_DEA_data), target$sample)))
         reads <- 0
       }
     }
