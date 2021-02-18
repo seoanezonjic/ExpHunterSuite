@@ -284,7 +284,7 @@ check_input_main_degenes_Hunter <- function(raw,
     }
     if (model_variables != "" & grepl("N", modules) & nchar(modules) > 1) {
       warning(paste0("NOISeq will not be run as you have an experimental",
-        " design that uses the model_variables option.")
+        " design that uses the model_variables option."))
       modules <- gsub("N", "", modules)
     }
 
