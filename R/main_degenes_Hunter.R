@@ -111,8 +111,8 @@ main_degenes_Hunter <- function(
     if(!is.null(target) & grepl("W", modules)) {
       target_numeric_factors <- build_design_for_WGCNA(target, 
            numeric_factors=numeric_factors)
-      target_string_factors <- build_design_for_WGCNA(target, s
-           tring_factors=string_factors)
+      target_string_factors <- build_design_for_WGCNA(target, 
+          string_factors=string_factors)
     }
 
     if(numerics_as_factors == TRUE) { 
