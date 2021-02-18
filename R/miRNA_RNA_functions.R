@@ -5,7 +5,7 @@
 load_DEGH_information <- function(execution_path){ 
     execution <- list()
 
-    execution[['DH_results']] <- utils::read.table
+    execution[['DH_results']] <- utils::read.table(
        file.path(execution_path, "Common_results/hunter_results_table.txt"), 
        header=TRUE, row.names=1, sep="\t")
     execution[['DH_results']]$gene_name <- rownames(execution[['DH_results']])
