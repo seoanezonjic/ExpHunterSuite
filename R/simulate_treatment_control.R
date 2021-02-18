@@ -27,7 +27,7 @@ STC <- function(Ngene = 1000, PDEG = 0.2, DEG.foldchange = 2, replicates = 3, bc
 	dispersion <- (var.a - mean.a)/(mean.a * mean.a)
 	population <- data.frame(mean = mean.a, disp = dispersion)
 	population <- population[population$disp > 0, ]
-	population <- population[sample(1:nrow(population), Ngene, replace = TRUE), ]
+	population <- population[sample(seq(nrow(population)), Ngene, replace = TRUE), ]
 	# Define which genes will be DEGs
 	if(is.vector(PDEG)){
 		ndeg_pos <- floor(Ngene*abs(PDEG[1]))

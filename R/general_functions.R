@@ -37,14 +37,14 @@ unite_DEG_pack_results <- function(exp_results, p_val_cutoff, lfc, minpack_commo
   
   # Initialise output dataframe and add p/FDR/logFC values from the different packages
   all_DE_df <- data.frame(row.names=gene_ids)
-  for(i in 1:length(all_DE)) {
+  for(i in seq(length(all_DE))) {
     all_DE_df[final_logFC_names[i]] <- all_DE[[i]][, all_LFC_names[i]]
     all_DE_df[final_FDR_names[i]] <- all_DE[[i]][, all_FDR_names[i]]
     all_DE_df[final_pvalue_names[i]] <- all_DE[[i]][, all_pvalue_names[i]]
   }
 
   # Add TRUE/FALSE for each DEG package
-  for(i in 1:length(all_DE)) {
+  for(i in seq(length(all_DE))) {
     all_DE_df[DEG_pack_columns[i]] <- all_DE_df[, final_FDR_names[i]] < p_val_cutoff & abs(all_DE_df[, final_logFC_names[i]]) >= lfc
     all_DE_df[DEG_pack_columns[i]][is.na(all_DE_df[DEG_pack_columns[i]])] <- FALSE
     # Check: if no DE genes for package, give warning

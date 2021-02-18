@@ -11,8 +11,8 @@
 #' # To generate target or load from file. 
 #' # Example shows generation based on names of treament/control samples.
 #' # These should match the column names in the table of counts.
-#' case_sample_names <- paste("case", 1:5, sep="_")
-#' control_sample_names <- paste("control", 1:5, sep="_")
+#' case_sample_names <- paste("case", seq(5), sep="_")
+#' control_sample_names <- paste("control", seq(5), sep="_")
 #' target <- target_generation(ctrl_samples=control_sample_names, treat_samples=case_sample_names)
 target_generation <- function(from_file=NULL, ctrl_samples=NULL, treat_samples=NULL){
 	target <- NULL
@@ -231,19 +231,19 @@ write_enrich_files <- function(func_results, output_files=getwd()){
 	}
 	fortify.compareClusterResult <- get_unexported_function("enrichplot", "fortify.compareClusterResult")
 	if("WGCNA_ORA" %in% names(func_results)){
-		for(enrichment_i in 1:length(func_results$WGCNA_ORA)) {
+		for(enrichment_i in seq(length(func_results$WGCNA_ORA))) {
 			df <- fortify.compareClusterResult(func_results$WGCNA_ORA[[enrichment_i]])
 			utils::write.table(df, file=file.path(output_files, paste0(names(func_results$WGCNA_ORA[enrichment_i]),"_cls_ora")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}
 	}
 	if("WGCNA_GSEA" %in% names(func_results)){
-		for (enrichment_i in 1:length(func_results$WGCNA_GSEA)) {
+		for (enrichment_i in seq(length(func_results$WGCNA_GSEA))) {
 			df <- func_results$WGCNA_GSEA[[enrichment_i]]@compareClusterResult
 			utils::write.table(df, file=file.path(output_files, paste0(names(func_results$WGCNA_GSEA[enrichment_i]),"_cls_gsea")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}
 	}
 	if("WGCNA_CUSTOM" %in% names(func_results)){
-		for(i in 1:length(func_results$WGCNA_CUSTOM)) {
+		for(i in seq(length(func_results$WGCNA_CUSTOM))) {
 			df <- fortify.compareClusterResult(func_results$WGCNA_CUSTOM[[i]])
 			utils::write.table(df, file=file.path(output_files, paste0(basename(names(func_results$WGCNA_CUSTOM)[i]),"_cls_ora")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 		}

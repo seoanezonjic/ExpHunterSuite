@@ -156,14 +156,14 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 		WGCNA_minCoreKMESize <- WGCNA_min_genes_cluster/3
 	} 
 
-	data <- t(data)#[, 1:500]
+	data <- t(data)
 	nSamples <- nrow(data)
 
 	####################################################################
 	## THRESHOLDING - EFFECTS OF BETA ON TOPOLOGY AND AUTO SELECTION
 	####################################################################
 	utils::assignInNamespace(x="..minNSamples", value=3, ns="WGCNA") #Overwrite harcoded limit from 4 to 3
-	powers <- c(c(1:10), seq(from = 12, to=30, by=2))
+	powers <- c(seq(10), seq(from = 12, to=30, by=2))
 
  	sft <- WGCNA::pickSoftThreshold(data, powerVector = powers, verbose = 5)
 
@@ -174,7 +174,7 @@ analysis_WGCNA <- function(data, path, target_numeric_factors, target_string_fac
 	in_advance <- 2
 	if(is.na(min_pow_ind)) {
 		# Plan B to calculate power
-		for(i in 1:(length(sft_mfs_r2)-in_advance)) {
+		for(i in seq(length(sft_mfs_r2)-in_advance)) {
 			vals <- sft_mfs_r2[i:(i+in_advance)]
 			diffs <- abs(diff(vals))
 			# Condition to meet

@@ -377,7 +377,7 @@ add_randoms <- function(background = NULL, filters_summary = NULL, permutations 
 		# print(sig_pairs_count)
 		# save(list = ls(all.names = TRUE), file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/pmm2_belen/target_miRNA_2020/test.RData", envir = environment())
 		# q()
-		for( i in 1:permutations){ 
+		for( i in seq(permutations)){ 
 			message("\tdebug1_1")
 			random_indices <- sample(nrow(background), size = sig_pairs_count, replace = FALSE)	
 			random_set <- as.data.frame(background[random_indices,])

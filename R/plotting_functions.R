@@ -283,7 +283,7 @@ ht2logFCPlot <- function(ht,var_filter = 0.001, title = "Filtered logFC", y_rang
   }
   aux_vars <- length(vars)
   if(!is.null(top)){
-    if(top <= length(vars)) vars <- vars[1:top]
+    if(top <= length(vars)) vars <- vars[seq(top)]
   }
   df_logfc$Gene <- factor(df_logfc$Gene, levels = names(vars))
   df_logfc <- df_logfc[-which(is.na(df_logfc$Gene)),]
