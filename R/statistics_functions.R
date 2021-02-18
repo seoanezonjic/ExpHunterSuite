@@ -79,3 +79,64 @@ prediction_dist_pval <- function(db_distribution) {
    }
   return(dist_pval)
 }
+
+
+
+#' @importFrom stats fisher.test
+get_strategies_stats <- function(data , input_cols, reference_cols) {
+  
+  # save(list = ls(all.names = TRUE), file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/pmm2_belen/target_miRNA_2020/test.RData", envir = environment())
+# q()
+  pval_table <- matrix(NA, ncol = length(reference_cols), nrow = length(input_cols), dimnames = list(input_cols,reference_cols))
+  LR_test_matrix <- matrix(NA, ncol = length(reference_cols), nrow = length(input_cols), dimnames = list(input_cols,reference_cols))
+  LR_sub_matrix  <- matrix(NA, ncol = length(reference_cols), nrow = length(input_cols), dimnames = list(input_cols,reference_cols))
+  for (icol_name in input_cols){
+    for (rcol_name in reference_cols){
+      icol <- data[,icol_name]
+      rcol <- data[,rcol_name]
+      c_matrix <- calc_contingency_matrix(icol, rcol)
+      print(paste0(icol_name, " ", rcol_name))
+      print(c_matrix)
+      ftest <- stats::fisher.test(c_matrix, alternative = "greater")
+      pval_table[icol_name,rcol_name] <- ftest$p.value
+      LR_test_matrix[icol_name,rcol_name] <- calc_LRplus_test(c_matrix)
+      LR_sub_matrix[icol_name,rcol_name] <- calc_LRplus_subject(c_matrix)
+      # print(c_matrix)
+      # message(ftest$p.value)
+      LR_test_matrix[is.na(LR_test_matrix)] <- 0
+      LR_sub_matrix[is.na(LR_test_matrix)] <- 0
+
+    }
+  }
+  return(list(pval_table = pval_table, LR_test_matrix = LR_test_matrix, LR_sub_matrix = LR_sub_matrix))
+}
+
+calc_contingency_matrix <- function(experiment, gold_standard){
+  tpositives <- sum(experiment & gold_standard)
+  fpositives <- sum(experiment & !gold_standard)
+  tnegatives <- sum(!experiment & !gold_standard)
+  fnegatives <- sum(!experiment & gold_standard)
+
+  c_matrix <- matrix(c(tpositives, fnegatives, fpositives, tnegatives), nrow = 2 , dimnames = list(experiment =c(TRUE,FALSE), gold_standard = c(TRUE,FALSE)))
+  return(c_matrix)
+}
+
+calc_LRplus_subject <- function(c_matrix) {
+  tpositives<- c_matrix[1,1]
+  fpositives <- c_matrix[1,2]
+  tnegatives <- c_matrix[2,2]
+  fnegatives <- c_matrix[2,1]
+  LR_plus <- ( tpositives / ( tpositives + fpositives ) ) / ( fnegatives / ( fnegatives + tnegatives ))
+  return(LR_plus)
+}
+
+calc_LRplus_test <- function(c_matrix) {
+  tpositives<- c_matrix[1,1]
+  fpositives <- c_matrix[1,2]
+  tnegatives <- c_matrix[2,2]
+  fnegatives <- c_matrix[2,1]
+  LR_plus <- ( tpositives / ( tpositives + fnegatives ) ) / ( fpositives / ( fpositives + tnegatives ))
+  return(LR_plus)
+}
+
+

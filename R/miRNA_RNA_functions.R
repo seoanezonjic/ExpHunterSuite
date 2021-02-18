@@ -71,9 +71,9 @@ filter_DEGH_data <- function(DGH_data, MM_cutoff){
 	DGH_data$DH_results$relevant_genes <- DGH_results$gene_name %in% relevant_genes
 	
 	DGH_data$normalized_counts <- DGH_data$normalized_counts[, colnames(DGH_data$normalized_counts) %in% relevant_genes ]
-	# str(DGH_data$Eigengene)
-	# str(DGH_data$hub_1)
 
+
+	DGH_data$Eigengene_0 <- DGH_data$Eigengene[,"0", drop = FALSE]
 
 	DGH_data$Eigengene <- DGH_data$Eigengene[,colnames(DGH_data$Eigengene) %in% modules_with_DEGS]
 	DGH_data$hub_1 <- DGH_data$hub_1[,colnames(DGH_data$hub_1) %in% modules_with_DEGS]
@@ -154,41 +154,54 @@ parse_approaches <- function(approaches){
 
 perform_correlations <- function(strategy = "normalized_counts_RNA_vs_miRNA_normalized_counts", RNAseq, miRNAseq, corrected_positions, cor_cutoff = 0, pval_cutoff = 0.05){ #correct_positions is a mirna_RNA pairs vector
 
-	strat_description <- unlist(strsplit(strategy, "_RNA_vs_miRNA_"))
-
-	RNA_profiles <- RNAseq[[strat_description[1]]]
-	miRNA_profiles <- miRNAseq[[strat_description[2]]]
-	# print(strategy)
-	# print(str(RNA_profiles))
-	# print(str(miRNA_profiles))
-
-	# save(miRNA_profiles, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/test.RData")
-	if (ncol(RNA_profiles) == 0 || ncol(miRNA_profiles) == 0) {
-		return(data.frame(NULL))
-	}
-	all_pairs_info <- correlate_profiles(RNA_profiles, miRNA_profiles)
-	all_pairs_info <- data.table::as.data.table(all_pairs_info)
-
-	if (strat_description[1] != "normalized_counts"){
-		# message("expand RNA")
-		all_pairs_info <- expand_module(all_pairs_info = all_pairs_info, tag = "RNAseq", DH_results = RNAseq$DH_results[RNAseq$DH_results$relevant_genes, ])
-		
-	}
 	
-	if (strat_description[2] != "normalized_counts"){
-		# message("expand miRNA")
-		all_pairs_info <- expand_module(all_pairs_info = all_pairs_info, tag = "miRNAseq", DH_results = miRNAseq$DH_results[miRNAseq$DH_results$relevant_genes, ])
+	if (strategy == "DEGs_vs_DEMs") {
+		DEGS <- miRNAseq$DH_results[miRNAseq$DH_results$genes_tag %in% c("PREVALENT_DEG", "POSSIBLE_DEG"), "gene_name"]
+		DEMS <- miRNAseq$DH_results[miRNAseq$DH_results$genes_tag %in% c("PREVALENT_DEG", "POSSIBLE_DEG"), "gene_name"]
+		all_pairs_info <- expand.grid(DEGS, DEMS, stringsAsFactors= FALSE, KEEP.OUT.ATTRS = FALSE)
+		colnames(all_pairs_info) <- c("RNAseq", "miRNAseq")
+		# all_pairs_info$RNAseq <- as.character(all_pairs_info$RNAseq)
+		# all_pairs_info$miRNAseq <- as.character(all_pairs_info$miRNAseq)
+		all_pairs_info$correlation <- -1
+		all_pairs_info$pval <- 0
+		
+	} else {
+
+
+		strat_description <- unlist(strsplit(strategy, "_RNA_vs_miRNA_"))
+
+		RNA_profiles <- RNAseq[[strat_description[1]]]
+		miRNA_profiles <- miRNAseq[[strat_description[2]]]
+		# print(strategy)
+		print(str(RNA_profiles))
+		print(str(miRNA_profiles))
+
+		# save(miRNA_profiles, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/test.RData")
+		if (ncol(RNA_profiles) == 0 || ncol(miRNA_profiles) == 0) {
+			return(data.frame(NULL))
+		}
+		all_pairs_info <- correlate_profiles(RNA_profiles, miRNA_profiles)
+		all_pairs_info <- data.table::as.data.table(all_pairs_info)
+
+		if (strat_description[1] != "normalized_counts"){
+			# message("expand RNA")
+			relevant_genes <- RNAseq$DH_results$relevant_genes
+			if (strat_description[1] == "Eigengene_0") {
+				relevant_genes <- rep(TRUE, length(relevant_genes))
+			}
+			all_pairs_info <- expand_module(all_pairs_info = all_pairs_info, tag = "RNAseq", DH_results = RNAseq$DH_results[relevant_genes, ])
+		}
+		
+		if (strat_description[2] != "normalized_counts"){
+			# message("expand miRNA")
+			relevant_genes <- miRNAseq$DH_results$relevant_genes
+			if (strat_description[2] == "Eigengene_0") {
+				relevant_genes <- rep(TRUE, length(relevant_genes))
+			}
+
+			all_pairs_info <- expand_module(all_pairs_info = all_pairs_info, tag = "miRNAseq", DH_results = miRNAseq$DH_results[relevant_genes, ])
+		}
 	}
-	all_pairs_info$all_permutations <- TRUE
-	# str(all_pairs_info)
-
-	# print(head(all_pairs_info$correlation))
-
-	# print(summary(all_pairs_info$correlation))
-	# print(cor_cutoff)
-	# print(summary(all_pairs_info$pval))
-	# print(pval_cutoff)
-
 
 	all_pairs_info$correlated_pairs <- all_pairs_info$correlation <= cor_cutoff & all_pairs_info$pval < pval_cutoff
 	print(sum(all_pairs_info$correlated_pairs))
@@ -286,7 +299,10 @@ add_multimir_info <- function(all_pairs_info, multimir_summary = NULL) {
 	for (pred_db in c("mirecords", "mirtarbase", "tarbase")) {
 		all_pairs_info[is.na(all_pairs_info[,pred_db]), pred_db] <- FALSE
 	}
-
+	all_pairs_info$predicted <- all_pairs_info$predicted_c > 0
+	all_pairs_info$validated <- all_pairs_info$validated_c > 0
+	all_pairs_info$pred_and_val <- all_pairs_info$predicted & all_pairs_info$validated
+	all_pairs_info$multimir <- all_pairs_info$predicted | all_pairs_info$validated
 	gc()
 	return(all_pairs_info)
 }
@@ -365,7 +381,8 @@ add_randoms <- function(background = NULL, filters_summary = NULL, permutations 
 			message("\tdebug1_1")
 			random_indices <- sample(nrow(background), size = sig_pairs_count, replace = FALSE)	
 			random_set <- as.data.frame(background[random_indices,])
-			random_summary <- data.table::data.table(predicted = sum(random_set$predicted_c > 0),
+			random_summary <- data.table::data.table(multiMiR = sum(random_set$predicted_c > 0 | random_set$validated_c > 0),
+											predicted = sum(random_set$predicted_c > 0),
 											validated = sum(random_set$validated_c > 0),
 											both= sum(random_set$predicted_c > 0 & random_set$validated_c > 0)
 										)
@@ -382,7 +399,7 @@ add_randoms <- function(background = NULL, filters_summary = NULL, permutations 
 		
 		message("debug_2")
 
-		random_summary <- lapply(c("predicted", "validated", "both"), function(type){
+		random_summary <- lapply(c("multiMiR", "predicted", "validated", "both"), function(type){
 			type_dist <- random_dist[, type]
 			type_pairs <- filters_summary[filters_summary$strategy == strategy_name & filters_summary$type == type, "pairs"]
 			data.frame(type = paste0(type, "_random"),

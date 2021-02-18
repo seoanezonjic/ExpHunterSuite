@@ -1,5 +1,5 @@
 ---
-author: "José Córdoba Caballero"
+author: "SysBioLab"
 output:
   html_document:
     toc: true
@@ -120,18 +120,48 @@ for (strategy in unique(filter_stats$strategy)) {
 }
  
 cat("\n\n This table compare P values and Quantile of pairs discovering by strategy. Targets are unique count of genes that correlated with prevalent differential expression miRNAs\n\n")
-knitr::kable(filter_stats, digits = 3, format.args = list(scientific = TRUE))
-# datatable(filter_stats, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
-#             options = list(
-#               paging = FALSE,
-#               colReorder = TRUE,
-#               dom = 'lftBip',
-#               buttons = c('copy', 'csv', 'excel')
-#           ))
+# knitr::kable(filter_stats, digits = 3, format.args = list(scientific = TRUE))
+  DT::datatable(filter_stats, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+            options = list(
+              colReorder = TRUE,
+              dom = 'lftBip',
+              buttons = c('copy', 'csv', 'excel')
+        ))
 
 valid_strats <- filter_stats[filter_stats$p_val.predicted < 0.01 & filter_stats$p_val.validated < 0.01, "strategy"]
 
 ```
+
+
+```{r fet_table_info,  echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+``` 
+```{r fet_table,  echo=FALSE, warning = FALSE, message = FALSE}
+    DT::datatable(as.data.frame(fet_pvals), filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
+            options = list(
+              colReorder = TRUE,
+              dom = 'lftBip',
+              buttons = c('copy', 'csv', 'excel')
+        ))
+```
+
+```{r LR_test,  echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+    DT::datatable(as.data.frame(LR_test), filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
+            options = list(
+              colReorder = TRUE,
+              dom = 'lftBip',
+              buttons = c('copy', 'csv', 'excel')
+        ))
+```
+
+```{r LR_sub,  echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+    DT::datatable(as.data.frame(LR_test), filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
+            options = list(
+              colReorder = TRUE,
+              dom = 'lftBip',
+              buttons = c('copy', 'csv', 'excel')
+        ))
+```
+
 
 ```{r methods_comparison_intersection, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 
@@ -228,21 +258,23 @@ pp
 
 ```
 ```{r db_distr, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
-    # warning(str(db_distribution))
-    # db_distribution <- db_distribution[db_distribution$strategy %in% valid_strats,]
-    
-    # db_distribution$strategy <- gsub("_vs_", "_vs\n", db_distribution$strategy)
+
     gg <- ggplot2::ggplot(db_distribution, ggplot2::aes(y = score, x = strategy, fill = step)) +
     ggplot2::geom_boxplot() + ggplot2::ylim(0, NA) + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 20, hjust = 1))
 
     plot(gg)
-   # aux <- db_distribution %>% group_by(strategy, step) %>% summarize(Count = n())
 
 
 ```
 ```{r db_distr_table, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
    dist_pval <- prediction_dist_pval(db_distribution)
-   knitr::kable(dist_pval, format.args = list(scientific = TRUE))
+    DT::datatable(dist_pval, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
+            options = list(
+              colReorder = TRUE,
+              dom = 'lftBip',
+              buttons = c('copy', 'csv', 'excel')
+        ))
+   # knitr::kable(dist_pval, format.args = list(scientific = TRUE))
 
 ```
 ```{r str_diff_predicted, results = 'asis', echo = FALSE, warning = FALSE, eval = FALSE}
