@@ -2,20 +2,6 @@
 ############################ FUNCTIONAL ANALYSIS LIBRARY ########################
 #################################################################################
 
-# #'
-# #' @param opt list with options where folders will be taken
-# #' @keywords
-# #' @return
-# defining_functional_hunter_subfolders <- function(opt){
-#   subfolders <- c()
-#   if (grepl("G", opt$functional_analysis)){
-#     subfolders <- c(subfolders, 'Results_topGO')
-#   }
-#   if (grepl("K", opt$functional_analysis)){
-#     subfolders <- c(subfolders, 'Results_KEGG')
-#   }
-# }
-
 #' Function used to check if a specific result has been calculated
 #' @param var_name variable name to be checked
 #' @param level_depth variable depth into a list of objects
@@ -55,6 +41,33 @@ exists_graph_file <- function(path, file_name, ext = "pdf"){
 }
 
 
+#' Check if a given list of objects is a correct enrichment result objects list
+#' @param ls variable to be checked
+#' @keywords check
+#' @return true if it is an allowed object or false in other cases
+check_results_list <- function(ls){
+  all_checks <- all(unlist(lapply(ls,function(set){
+      if(typeof(set)=="S4"){
+        aux <- set@result
+        if("pvalueCutoff" %in% slotNames(set)){
+          if(nrow(aux[which(aux$p.adjust <= set@pvalueCutoff),]) < 1){
+            return(FALSE)
+          }
+        }else if("params" %in% slotNames(set)){
+          if(nrow(aux[which(aux$p.adjust <= set@params$pvalueCutoff),]) < 1){
+            return(FALSE)
+          }
+        }
+        return(FALSE)
+      } else if (is.null(set)) {
+        return(FALSE)
+      }
+      return(TRUE)
+    })))
+  return(all_checks)
+}
+
+
 #' Check if a given object is a correct enrichment result object
 #' @param df variable to be checked
 #' @keywords check
@@ -66,56 +79,32 @@ check_results <- function(df){
     }
   }else if(typeof(df)=="S4"){
     if("pvalueCutoff" %in% slotNames(df)){
-      if(nrow(df@result[which(df@result$p.adjust <= df@pvalueCutoff),]) < 1){
+      aux <- df@result
+      if(nrow(aux[which(aux$p.adjust <= df@pvalueCutoff),]) < 1){
         return(FALSE)
       }
     }else if(length(get_categories(df)) < 1){
       return(FALSE)
     }
-    return(TRUE)
-  }else if(!is.list(df) & !typeof(df)=="S4"){
-    return(FALSE)
   }else if(is.list(df)){
-    if(!all(unlist(lapply(df,function(set){
-      if(typeof(set)=="S4"){
-        if("pvalueCutoff" %in% slotNames(set)){
-          if(nrow(set@result[which(set@result$p.adjust <= set@pvalueCutoff),]) >= 1){
-            return(TRUE)
-          }
-        }else if("params" %in% slotNames(set)){
-          if(nrow(set@result[which(set@result$p.adjust <= set@params$pvalueCutoff),]) >= 1){
-            return(TRUE)
-          }
-        }else{
-          return(FALSE)
-        }
-        return(FALSE)
-      } else if (is.null(set)) {
-        return(FALSE)
-      }
-
-      return(TRUE)
-    })))){ # IF
+    if(!check_results_list(df)){
       return(FALSE)
     }
+  }else{
+    return(FALSE)
   }
   # Everything OK
   return(TRUE)
 }
 
 
-#' Translates a given gene ID using a dictionary
+#' Translates a given gene ID using a dictionary. Note: one unknown ID can
+#' corresponds to many known ids. 
 #' @param ids_to_translate set of IDs to be translated
 #' @param annot_table dictionary to translate IDs
 #' @keywords translate
 #' @return translated IDs or NA if it's not possible to translate
 translate_id <- function(ids_to_translate, annot_table){ 
-#This function translates unknown transcripts IDs to known gen IDs
-#ids_to_translate: unknown gene IDs
-#annot_table: DF, KNOWN gene IG on first column and UNKNOWN on second
-#ONE unknown ID can correspond to MANY Known IDs  
- # save(list = ls(all.names = TRUE), file = "test.RData", envir = environment())
-
   translated_ids <- unlist(lapply(ids_to_translate, function(id){
     indx <- which(annot_table[,2] == id)
     if(length(indx) == 0){
@@ -180,10 +169,14 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
             end <- indx[i+1] - 1
         }
         interval <- seq(indx[i],end)
-        message(paste("Fragment: ",i,"/",length(indx),"  (",length(interval),")",sep=""))
+        message(paste("Fragment: ",i,"/",length(indx),"  (",
+                length(interval),")",sep=""))
 
         # Run query
-        query <- biomaRt::getBM(attributes = attr, filters = filt, values = val[interval], mart = ensembl)
+        query <- biomaRt::getBM(attributes = attr, 
+                                filters = filt, 
+                                values = val[interval], 
+                                mart = ensembl)
         # Store
         if(is.null(container)){
             container <- query
@@ -196,11 +189,6 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
             miss <- val[interval]
             miss <- which(!miss %in% container[,1])
             warning(paste("There are (",length(miss),") without results from the API",sep=""))
-            # # Add empty lines
-            # aux_NAs <- rep(NA,length(miss))
-            # to_concat <- cbind(miss,as.data.frame(matrix(aux_NAs,length(aux_NAs), ncol(container) - 1)))
-            # # Concat
-            # container <- rbind(container,to_concat)
         }
 
         # Save
