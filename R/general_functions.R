@@ -22,7 +22,10 @@ standard_error <- function(x) {
 ########################################################
 # Functions to generate output files
 #' @importFrom stats pchisq
-unite_DEG_pack_results <- function(exp_results, p_val_cutoff, lfc, minpack_common) {
+unite_DEG_pack_results <- function(exp_results, 
+                                   p_val_cutoff, 
+                                  lfc, 
+                                  minpack_common) {
   DEG_pack_columns <- exp_results[['DEG_pack_columns']] 
   all_DE <- exp_results[['all_counts_for_plotting']] 
   all_FDR_names <- exp_results[['all_FDR_names']]
@@ -35,7 +38,8 @@ unite_DEG_pack_results <- function(exp_results, p_val_cutoff, lfc, minpack_commo
   all_DE <- lapply(all_DE, function(x) x[order(row.names(x)),])
   gene_ids <- row.names(all_DE[[1]])
   
-  # Initialise output dataframe and add p/FDR/logFC values from the different packages
+  # Initialise output dataframe and add p/FDR/logFC 
+  #values from the different packages
   all_DE_df <- data.frame(row.names=gene_ids)
   for(i in seq(length(all_DE))) {
     all_DE_df[final_logFC_names[i]] <- all_DE[[i]][, all_LFC_names[i]]
@@ -45,19 +49,25 @@ unite_DEG_pack_results <- function(exp_results, p_val_cutoff, lfc, minpack_commo
 
   # Add TRUE/FALSE for each DEG package
   for(i in seq(length(all_DE))) {
-    all_DE_df[DEG_pack_columns[i]] <- all_DE_df[, final_FDR_names[i]] < p_val_cutoff & abs(all_DE_df[, final_logFC_names[i]]) >= lfc
-    all_DE_df[DEG_pack_columns[i]][is.na(all_DE_df[DEG_pack_columns[i]])] <- FALSE
+    all_DE_df[DEG_pack_columns[i]] <- all_DE_df[, 
+                                final_FDR_names[i]] < p_val_cutoff & 
+                                abs(all_DE_df[, final_logFC_names[i]]) >= lfc
+    all_DE_df[DEG_pack_columns[i]][is.na(all_DE_df[DEG_pack_columns[i]])]<-FALSE
     # Check: if no DE genes for package, give warning
-    if(sum(all_DE_df[, DEG_pack_columns[i]]) == 0) warning(paste("No significant", DEG_pack_columns[i], "found"))
+    if(sum(all_DE_df[, DEG_pack_columns[i]]) == 0) 
+      warning(paste("No significant", DEG_pack_columns[i], "found"))
   }
   # Get DEG_counts
   all_DE_df["DEG_counts"] <- rowSums(all_DE_df[DEG_pack_columns], na.rm = TRUE)
  
   # Calc and add combined FDR-values
   log_FDR <- log(all_DE_df[final_FDR_names]) # Log all final p-values
-  log_FDR[is.na(log_FDR)] <- 0 # any NAs made to 0 so as not to contribute to the combined score
-  if("FDR_NOISeq" %in% final_FDR_names){ # NOISeq can give FDR values of 0 - these become 0 when -logged:
-    log_FDR[,"FDR_NOISeq"][log_FDR[,"FDR_NOISeq"] == -Inf] <- sort(unique(log_FDR[, "FDR_NOISeq"]))[2]  # Give NOISeq -Inf values smallest possible value
+  log_FDR[is.na(log_FDR)] <- 0 # any NAs made 0s -> not contribute combined Scor
+  if("FDR_NOISeq" %in% final_FDR_names){ # NOISeq can give FDR values of 0 
+                                        #- these become 0 when -logged:
+    log_FDR[,"FDR_NOISeq"][log_FDR[,"FDR_NOISeq"] == -Inf] <- sort(
+             unique(log_FDR[, "FDR_NOISeq"]))[2]  
+             # Give NOISeq -Inf values smallest possible value
   }
 
   xi_squared <-  -2 * rowSums(log_FDR)
@@ -69,14 +79,21 @@ unite_DEG_pack_results <- function(exp_results, p_val_cutoff, lfc, minpack_commo
   all_DE_df <- all_DE_df[order(all_DE_df[,"combined_FDR"]), ]
   
   # Label as significant or not using combined FDR values
-  all_DE_df[, "FDR_labeling"] <- ifelse(all_DE_df[, "combined_FDR"] < p_val_cutoff, "SIGN", "NOTSIGN")
+  all_DE_df[, "FDR_labeling"] <- ifelse(
+                                   all_DE_df[, "combined_FDR"] < p_val_cutoff, 
+                                   "SIGN", 
+                                   "NOTSIGN")
 
   # Calculate average fold changes
   all_DE_df[, "mean_logFCs"] <- rowMeans(all_DE_df[final_logFC_names])
 
-  # Add PREVALENT_DEG tag if as many as minpack_common; POSSIBLE_DEG if less but > 0; NOT_DEG if == 0
-  genes_tag <- ifelse(all_DE_df[, "DEG_counts"] >= minpack_common, yes = "PREVALENT_DEG",
-         no = ifelse(all_DE_df[, "DEG_counts"] > 0, yes = "POSSIBLE_DEG", no = "NOT_DEG")
+  # Add PREVALENT_DEG tag if as many as minpack_common; 
+  # POSSIBLE_DEG if less but > 0; NOT_DEG if == 0
+  genes_tag <- ifelse(all_DE_df[, "DEG_counts"] >= minpack_common, 
+                      yes = "PREVALENT_DEG",
+                      no = ifelse(all_DE_df[, "DEG_counts"] > 0, 
+                                  yes = "POSSIBLE_DEG", 
+                                  no = "NOT_DEG")
   )
   all_DE_df[, "genes_tag"] <- genes_tag
 
@@ -85,7 +102,9 @@ unite_DEG_pack_results <- function(exp_results, p_val_cutoff, lfc, minpack_commo
 
 add_filtered_genes <- function(all_DE_df, raw) {
   filtered_genes <- row.names(raw)[! row.names(raw) %in% row.names(all_DE_df)]
-  filtered_df <- as.data.frame(matrix(NA, ncol = ncol(all_DE_df), nrow = length(filtered_genes)))
+  filtered_df <- as.data.frame(matrix(NA, 
+                                      ncol = ncol(all_DE_df), 
+                                      nrow = length(filtered_genes)))
   colnames(filtered_df) <- colnames(all_DE_df)
   row.names(filtered_df) <- filtered_genes
   filtered_df[, "genes_tag"] <- rep("FILTERED_OUT", dim(filtered_df)[1])
@@ -112,21 +131,30 @@ debug_point <- function(file, message = "Debug point",envir = NULL){
 #' @importFrom ggplot2 ggplot aes_string geom_bar theme element_text
 #' @importFrom grDevices pdf dev.off
 #' @importFrom utils write.table
-save_times <- function(time_control, output="times_control.txt", plot_name = "time_control.pdf"){
+save_times <- function(time_control, 
+                       output="times_control.txt", 
+                       plot_name = "time_control.pdf"){
  spent_times <- list()
     invisible(lapply(seq(2,length(time_control)), function(time_control_i){
-      spent_times[[names(time_control)[time_control_i]]] <<- as.numeric(unlist(time_control[time_control_i]) - unlist(time_control[time_control_i - 1]))
+      spent_times[[names(time_control)[time_control_i]]] <<- as.numeric(
+                                      unlist(time_control[time_control_i]) - 
+                                      unlist(time_control[time_control_i - 1]))
     }))
     spent_times_df <- do.call(rbind.data.frame, spent_times)
     colnames(spent_times_df) <- c("time")
     spent_times_df$control <- names(spent_times)
-    pp <- ggplot2::ggplot(spent_times_df, ggplot2::aes_string(x= "control", y = "time")) +
+    pp <- ggplot2::ggplot(spent_times_df, ggplot2::aes_string(x = "control", 
+                                                              y = "time")) +
           ggplot2::geom_bar(stat = "identity") +
           ggplot2::theme(axis.text.x=ggplot2::element_text(angle = 25, hjust=1))
     grDevices::pdf(file.path(dirname(output), plot_name))    
       plot(pp)
     grDevices::dev.off()
-    utils::write.table(spent_times_df, file=output, quote=FALSE, row.names=FALSE, sep="\t")
+    utils::write.table(spent_times_df, 
+                       file=output, 
+                       quote=FALSE, 
+                       row.names=FALSE, 
+                       sep="\t")
 }
 
 #' Parallelize function execution in list with multiple elements
@@ -166,10 +194,14 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
     )
     exec_status <- BiocParallel::bpok(res)
     fails <- which( exec_status == FALSE)
-    message(paste('exec_status => exec items:', length(exec_status), 'fails:', length(fails)))
+    message(paste('exec_status => exec items:', 
+                  length(exec_status), 
+                  'fails:', 
+                  length(fails)))
     if(length(fails) > 0 ){
       message(tail(attr(res[[fails[1]]], "traceback")))
-      stop(paste('Parallel execution has failed at item', fails[1],'and a total of', length(fails) , 'items have failed.'))
+      stop(paste('Parallel execution has failed at item', fails[1],
+                 'and a total of', length(fails) , 'items have failed.'))
     }
     return(res)
 }

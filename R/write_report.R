@@ -12,7 +12,10 @@
 #' # Load DE analysis results
 #' degh_output <- list() # data(degh_output)
 #' write_expression_report(degh_output)
-write_expression_report <- function(exp_results, output_files=getwd(),template_folder = file.path(find.package('ExpHunterSuite'), 'templates'), opt=NULL){
+write_expression_report <- function(exp_results, 
+    output_files=getwd(),
+    template_folder = file.path(find.package('ExpHunterSuite'), 'templates'), 
+    opt=NULL){
     if(length(exp_results) == 0){
         warning("Experiment results is not complete")
         return(NULL)
@@ -50,24 +53,28 @@ write_expression_report <- function(exp_results, output_files=getwd(),template_f
 #' @param output_files output folder.
 #' @param template_folder (OPTIONAL) RMD templates folder
 #' @param cores (OPTIONAL) cores for parallel features
-#' @param organisms_table (OPTIONAL) configuration table for given organism. Use see get_organism_table()
-#' @param fc_colname (OPTIONAL) main logFC colname (into hunter_results dataframe)
+#' @param organisms_table (OPTIONAL) configuration table for given organism.
+#'  Use see get_organism_table()
+#' @param fc_colname (OPTIONAL) main logFC colname (into hunter_results
+#'  dataframe)
 #' @param task_size number of elements per packages used
-#' @param report string with reports to be written. Allowed: clusters (c) and functional (f). Default = "fc"
+#' @param report string with reports to be written. Allowed: clusters (c)
+#'  and functional (f). Default = "fc"
 #' @return void
 #' @importFrom rmarkdown render
 #' @export
 #' @examples
 #' # Load func and DE results
 #' data(degh_output)
-#' func_results <- list() # func_results <- functional_hunter(degh_output,"Mouse")
+#' func_results <- list() 
+#' # func_results <- functional_hunter(degh_output,"Mouse")
 #' write_functional_report(degh_output, func_results)
 write_functional_report <- function(hunter_results, 
                                     func_results, 
                                     output_files=getwd(), 
                                     fc_colname="mean_logFCs", 
-                                    organisms_table=NULL, 
-                                    template_folder = file.path(find.package('ExpHunterSuite'), 'templates'), 
+       organisms_table=NULL, 
+       template_folder = file.path(find.package('ExpHunterSuite'), 'templates'), 
                                     cores = 2,
                                     task_size = 1, 
                                     report = "fc"){
@@ -87,7 +94,8 @@ write_functional_report <- function(hunter_results,
     DEGH_results <- func_results$DEGH_results_annot
     # -
     experiments <- hunter_results$sample_groups
-    sample_classes <- apply(experiments, 1, function(x) paste0("* [", x[1], "] ", x[2]))
+    sample_classes <- apply(experiments, 1, function(x) paste0("* [", x[1],
+                      "] ", x[2]))
     # -
     if("externalDEA" %in% names(hunter_results[["all_data_normalized"]])) {
         warning("external DEA data found - using for the counts matrix")
@@ -95,21 +103,26 @@ write_functional_report <- function(hunter_results,
     } else {
         norm_counts <- hunter_results[["all_data_normalized"]][["DESeq2"]]
     }
-    scaled_counts <- scale_data_matrix(data_matrix = norm_counts, transpose = TRUE)
+    scaled_counts <- scale_data_matrix(data_matrix = norm_counts, 
+        transpose = TRUE)
     scaled_counts_table <- as.data.frame(as.table(scaled_counts))
     colnames(scaled_counts_table) <- c("Gene","Sample","Count")
     # -
     flags <- func_results$flags
     if(flags$WGCNA){
         cls  <- unique(DEGH_results$Cluster_ID)
-        cl_eigvalues <- as.matrix(hunter_results$WGCNA_all$plot_objects$trait_and_module[,grepl("^ME",colnames(hunter_results$WGCNA_all$plot_objects$trait_and_module))])
-        cl_eigvalues <- as.data.frame(as.table(cl_eigvalues),stringsAsFactors = FALSE)
+        aux <- hunter_results$WGCNA_all$plot_objects$trait_and_module
+        cl_eigvalues <- as.matrix(aux[,grepl("^ME",colnames(aux))])
+        cl_eigvalues <- as.data.frame(as.table(cl_eigvalues),
+            stringsAsFactors = FALSE)
         colnames(cl_eigvalues) <- c("Sample","Cluster_ID","Count") 
         cl_eigvalues_gnorm <- cl_eigvalues
-        cl_eigvalues_gnorm$Count <- (cl_eigvalues_gnorm$Count + 1) / 2 
-        wgcna_pval_cl_trait <- as.matrix(hunter_results$WGCNA_all$package_objects$module_trait_cor_p)
-        wgcna_corr_cl_trait <- as.matrix(hunter_results$WGCNA_all$package_objects$module_trait_cor)
-        wgcna_count_sample_trait <- as.matrix(hunter_results$WGCNA_all$plot_objects$trait_and_module[,!grepl("^ME",colnames(hunter_results$WGCNA_all$plot_objects$trait_and_module))])
+        cl_eigvalues_gnorm$Count <- (cl_eigvalues_gnorm$Count + 1) / 2
+        aux2 <- hunter_results$WGCNA_all$package_objects
+        wgcna_pval_cl_trait <- as.matrix(aux2$module_trait_cor_p)
+        wgcna_corr_cl_trait <- as.matrix(aux2$module_trait_cor)
+        wgcna_count_sample_trait <- as.matrix(aux[,!grepl("^ME",
+            colnames(aux))])
         wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait)        
     }
     #-
@@ -126,25 +139,30 @@ write_functional_report <- function(hunter_results,
         custom_cls_ORA_expanded <- func_results$WGCNA_CUSTOM_expanded
     }
     #-
-    current_organism_info <- subset(organisms_table, rownames(organisms_table) %in% model_organism)  
-    geneList <- func_results$DEGH_results_annot[!is.na(func_results$DEGH_results_annot$entrezgene), fc_colname]
-    names(geneList) <- func_results$DEGH_results_annot[!is.na(func_results$DEGH_results_annot$entrezgene), "entrezgene"]
+    current_organism_info <- subset(organisms_table, 
+        rownames(organisms_table) %in% model_organism)  
+    geneList <- func_results$DEGH_results_annot[
+       !is.na(func_results$DEGH_results_annot$entrezgene), fc_colname]
+    names(geneList) <- func_results$DEGH_results_annot[
+       !is.na(func_results$DEGH_results_annot$entrezgene), "entrezgene"]
     geneList <- sort(geneList, decreasing = TRUE)
     # -
     custom_enrichments <- func_results$CUSTOM
     if("ORA" %in% names(func_results)){
         aux <- grepl("GO", names(func_results$ORA))
         if(any(aux)) enrich_go <- func_results$ORA[aux]
-        # if("GO_OR" %in% names(func_results)) enrich_go <- func_results$GO_ORA
-        if("KEGG" %in% names(func_results$ORA)) enrich_ora <- func_results$ORA$KEGG
-        if("REACT" %in% names(func_results$ORA)) enrich_react <- func_results$ORA$REACT
+        if("KEGG" %in% names(func_results$ORA)) 
+            enrich_ora <- func_results$ORA$KEGG
+        if("REACT" %in% names(func_results$ORA)) 
+            enrich_react <- func_results$ORA$REACT
     }
     if("GSEA" %in% names(func_results)){
         aux <- grepl("GO", names(func_results$GSEA))
         if(any(aux)) enrich_go_gsea <- func_results$GSEA[aux]
-        # if("GO_GSEA" %in% names(func_results)) enrich_go_gsea <- func_results$GO_GSEA
-        if("KEGG" %in% names(func_results$GSEA)) enrich_gsea <- func_results$GSEA$KEGG
-        if("REACT" %in% names(func_results$GSEA)) enrich_react_gsea <- func_results$GSEA$REACT   
+        if("KEGG" %in% names(func_results$GSEA)) 
+            enrich_gsea <- func_results$GSEA$KEGG
+        if("REACT" %in% names(func_results$GSEA)) 
+            enrich_react_gsea <- func_results$GSEA$REACT   
     }
     # TODO: topGO is not bein loaded because files are not been search
     ############################################################
@@ -154,7 +172,8 @@ write_functional_report <- function(hunter_results,
         message("Calling clean_tmpfiles_mod()")
     }
 
-    assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown") #https://github.com/rstudio/rmarkdown/issues/1632#issuecomment-545824711
+#https://github.com/rstudio/rmarkdown/issues/1632#issuecomment-545824711
+    assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown") 
 
     results_path <- normalizePath(output_files)
     if(grepl("c", report)){
@@ -165,12 +184,16 @@ write_functional_report <- function(hunter_results,
                 aux <- paste0("cl_func_",cl,".html")
                 outf_cls_i <- file.path(results_path, aux)
                 # Generate report
-                rmarkdown::render(file.path(template_folder, 'cl_func_report.Rmd'), output_file = outf_cls_i, intermediates_dir = results_path, quiet=TRUE)
+                rmarkdown::render(file.path(template_folder, 
+                    'cl_func_report.Rmd'), output_file = outf_cls_i, 
+                intermediates_dir = results_path, quiet=TRUE)
             }, workers = cores, task_size= task_size))
 
             message("\tRendering clustered report")
             outf_cls <- file.path(results_path, "clusters_func_report.html")
-            rmarkdown::render(file.path(template_folder, 'clusters_main_report.Rmd'),output_file = outf_cls, intermediates_dir = results_path)
+            rmarkdown::render(file.path(template_folder, 
+                'clusters_main_report.Rmd'),output_file = outf_cls, 
+            intermediates_dir = results_path)
         }        
     }
 
@@ -180,11 +203,13 @@ write_functional_report <- function(hunter_results,
     if(grepl("f", report)){
         message("\tRendering regular report")
         outf <- file.path(results_path, "functional_report.html")
-        rmarkdown::render(file.path(template_folder, 'functional_report.Rmd'), output_file = outf, intermediates_dir = results_path)        
+        rmarkdown::render(file.path(template_folder, 'functional_report.Rmd'), 
+            output_file = outf, intermediates_dir = results_path)        
     }
 }
 
-write_miRNA_cor_report <- function(miRNA_cor_results, template_folder, output_files, report_name){
+write_miRNA_cor_report <- function(miRNA_cor_results, template_folder, 
+    output_files, report_name){
     "%>%" <- magrittr::"%>%"
 
     all_strategies <- miRNA_cor_results$all_strategies
@@ -206,6 +231,7 @@ write_miRNA_cor_report <- function(miRNA_cor_results, template_folder, output_fi
     LR_test <- miRNA_cor_results$LR_test
     LR_sub <- miRNA_cor_results$LR_sub
     rmarkdown::render(file.path(template_folder, 'miRNA_RNA.Rmd'), 
-                  output_file = file.path(output_files, report_name), intermediates_dir = output_files)
+                  output_file = file.path(output_files, report_name), 
+                  intermediates_dir = output_files)
     
 }

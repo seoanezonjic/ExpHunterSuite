@@ -1,6 +1,6 @@
-#################################################################################
-############################ FUNCTIONAL ANALYSIS LIBRARY ########################
-#################################################################################
+###############################################################################
+########################## FUNCTIONAL ANALYSIS LIBRARY ########################
+###############################################################################
 
 #' Function used to check if a specific result has been calculated
 #' @param var_name variable name to be checked
@@ -127,7 +127,12 @@ translate_id <- function(ids_to_translate, annot_table){
 #' @keywords method
 #' @importFrom biomaRt useMart getBM
 #' @return downloaded biomaRt response
-obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, attr){
+obtain_info_from_biomaRt <- function(orthologues, 
+                                     id_type, 
+                                     mart, 
+                                     dataset, 
+                                     host, 
+                                     attr){
     # require(biomaRt)
 
     ensembl <- biomaRt::useMart(mart,dataset=dataset, host=host)
@@ -146,7 +151,8 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
         warning("Current query results does not match. Will be overwritten")
         container <- NULL
       } else if(all(val %in% container[,1])){
-        message("All IDs are already stored at temporal query results file. Query will not be performed")
+        message(paste0("All IDs are already stored at temporal query results",
+                       " file. Query will not be performed"))
         return(container)
       } else if(any(val %in% container[,1])){
           # Filter already calculated 
@@ -188,7 +194,8 @@ obtain_info_from_biomaRt <- function(orthologues, id_type, mart, dataset, host, 
         if(!all(val[interval] %in% container[,1])){
             miss <- val[interval]
             miss <- which(!miss %in% container[,1])
-            warning(paste("There are (",length(miss),") without results from the API",sep=""))
+            warning(paste("There are (",length(miss),
+                          ") without results from the API",sep=""))
         }
 
         # Save
@@ -222,7 +229,8 @@ id_translation_orgdb <- function(input_ids, organism_db, org_var_name){
     # Translate ENSEMBL to Entrex IDs
     translation_table <- as.list(org_var[AnnotationDbi::mappedkeys(org_var)])
     # Convert to dataframe
-    translation_table_df <- as.data.frame(do.call(rbind,lapply(intersect(input_ids, names(translation_table)),function(matches){
+    translation_table_df <- as.data.frame(do.call(rbind,
+      lapply(intersect(input_ids, names(translation_table)),function(matches){
         # Obtain genes
         translated_ids <- translation_table[[matches]]            
  
@@ -230,7 +238,9 @@ id_translation_orgdb <- function(input_ids, organism_db, org_var_name){
             return(data.frame())
         }
         # Return info
-        return(data.frame(input = rep(matches,length(translated_ids)), output = translated_ids, stringsAsFactors = FALSE))
+        return(data.frame(input = rep(matches,length(translated_ids)), 
+                          output = translated_ids, 
+                          stringsAsFactors = FALSE))
     })))
     return(translation_table_df)
 }
@@ -250,7 +260,12 @@ id_translation_orgdb <- function(input_ids, organism_db, org_var_name){
 #' @importFrom utils write.table
 #' @importFrom grDevices pdf dev.off
 #' @return enrichment tables obtained
-perform_topGO_local <- function(entrez_targets,entrez_universe,sub_ontology,outFile=NULL,organism, plot_graph = TRUE){
+perform_topGO_local <- function(entrez_targets,
+                                entrez_universe,
+                                sub_ontology,
+                                outFile=NULL,
+                                organism, 
+                                plot_graph = TRUE){
   #! GOFisherTest
   # require(topGO)
   
@@ -263,11 +278,18 @@ perform_topGO_local <- function(entrez_targets,entrez_universe,sub_ontology,outF
   names(geneList) <- allGenes
   
   if(length(levels(geneList)) == 2){ # launch analysis
-    TopGOobject <- new("topGOdata", ontology = sub_ontology, allGenes = geneList, annot = topGO::annFUN.org, mapping = organism)
+    TopGOobject <- new("topGOdata", 
+                   ontology = sub_ontology, 
+                   allGenes = geneList, 
+                   annot = topGO::annFUN.org, 
+                   mapping = organism)
     # # Possible option 2
-    results_fisher  <- topGO::runTest(TopGOobject, algorithm = "classic", statistic = "fisher") 
-    results_KS      <- topGO::runTest(TopGOobject, algorithm = "classic", statistic = "ks")
-    results_KS_elim <- topGO::runTest(TopGOobject, algorithm = "elim", statistic = "ks")
+    results_fisher  <- topGO::runTest(TopGOobject, algorithm = "classic", 
+                                                   statistic = "fisher") 
+    results_KS      <- topGO::runTest(TopGOobject, algorithm = "classic", 
+                                                   statistic = "ks")
+    results_KS_elim <- topGO::runTest(TopGOobject, algorithm = "elim", 
+                                                   statistic = "ks")
 
     # Create results table
     all_results_table <- topGO::GenTable(TopGOobject, 
@@ -278,16 +300,24 @@ perform_topGO_local <- function(entrez_targets,entrez_universe,sub_ontology,outF
                                   ranksOf = "classicFisher", 
                                   topNodes = length(TopGOobject@graph@nodes)) 
   }
-    
+
   # Write info
   if(!is.null(outFile)){
-    utils::write.table(all_results_table, file=outFile, quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")    
+    utils::write.table(all_results_table, 
+                       file=outFile, 
+                       quote=FALSE, 
+                       col.names=TRUE, 
+                       row.names = FALSE, 
+                       sep="\t")    
   }
 
   # Plot graphs
   if(plot_graph){
     grDevices::pdf(paste(outFile,"pdf",sep="."), w=11, h=8.5)
-      topGO::showSigOfNodes(TopGOobject, BiocGenerics::score(results_fisher), firstSigNodes = 10, useInfo = 'all')
+      topGO::showSigOfNodes(TopGOobject, 
+                            BiocGenerics::score(results_fisher), 
+                            firstSigNodes = 10, 
+                            useInfo = 'all')
     grDevices::dev.off()
   }
   
@@ -339,27 +369,52 @@ scale_data_matrix <- function(data_matrix, transpose = FALSE){
 #' @importFrom grDevices pdf dev.off
 #' @importFrom BiocGenerics score
 #' @keywords enrich
-perform_topGO <- function(attr_name, interesting_genenames, DEG_annot_table, ontology, graphname,filter_name, output_files){
-    geneID2GO <- split(DEG_annot_table[,attr_name], DEG_annot_table[,filter_name])
+perform_topGO <- function(attr_name, 
+                          interesting_genenames, 
+                          DEG_annot_table, 
+                          ontology, 
+                          graphname,
+                          filter_name, 
+                          output_files){
+    geneID2GO <- split(DEG_annot_table[,attr_name], 
+                       DEG_annot_table[,filter_name])
     geneID2GO <- lapply(geneID2GO, unique)
     geneNames <- names(geneID2GO)
     geneList <- factor(as.integer(geneNames %in% interesting_genenames))
     names(geneList) <- geneNames
 
-    GOdata <- new("topGOdata", ontology =ontology, allGenes = geneList, annot=topGO::annFUN.gene2GO, gene2GO = geneID2GO)
-    resultFis <- topGO::runTest(GOdata, algorithm = "classic", statistic = "fisher") 
+    GOdata <- new("topGOdata", 
+                  ontology =ontology, 
+                  allGenes = geneList, 
+                  annot=topGO::annFUN.gene2GO, 
+                  gene2GO = geneID2GO)
+    resultFis <- topGO::runTest(GOdata, algorithm = "classic", 
+                                        statistic = "fisher") 
 
-    resultKS <- topGO::runTest(GOdata, algorithm = "classic", statistic = "ks")
-    resultKS.elim <- topGO::runTest(GOdata, algorithm = "elim", statistic = "ks")
+    resultKS <- topGO::runTest(GOdata, algorithm = "classic", 
+                                       statistic = "ks")
+    resultKS.elim <- topGO::runTest(GOdata, algorithm = "elim", 
+                                            statistic = "ks")
 
-    allRes <- topGO::GenTable(GOdata, classicFisher = resultFis,
-        classicKS = resultKS, elimKS = resultKS.elim,
-        orderBy = "elimKS", ranksOf = "classicFisher", topNodes = length(GOdata@graph@nodes))
+    allRes <- topGO::GenTable(GOdata, 
+                              classicFisher = resultFis,
+                              classicKS = resultKS, 
+                              elimKS = resultKS.elim,
+                              orderBy = "elimKS", 
+                              ranksOf = "classicFisher", 
+                              topNodes = length(GOdata@graph@nodes))
 
-    utils::write.table(allRes, file=file.path(output_files, "allResGOs.txt"), quote=FALSE, col.names=NA, sep="\t")
+    utils::write.table(allRes, 
+                       file=file.path(output_files, "allResGOs.txt"), 
+                       quote=FALSE, 
+                       col.names=NA, 
+                       sep="\t")
 
     grDevices::pdf(file.path(output_files, graphname), w=11, h=8.5)
-        topGO::showSigOfNodes(GOdata, BiocGenerics::score(resultFis), firstSigNodes = 10, useInfo = 'all')
+        topGO::showSigOfNodes(GOdata, 
+                              BiocGenerics::score(resultFis), 
+                              firstSigNodes = 10, 
+                              useInfo = 'all')
     grDevices::dev.off()
 
 }
@@ -426,7 +481,9 @@ catched_pairwise_termsim <- function(enr, num_cats = 200){
       }
     )
   }
-  if(num_cats < initial_num_cats) warning(paste0("Finally number of categories used has been (",num_cats,") for pairwise_termsim"))
+  if(num_cats < initial_num_cats) 
+    warning(paste0("Finally number of categories used has been (",
+                   num_cats,") for pairwise_termsim"))
   return(enr)
 }
 
@@ -448,7 +505,16 @@ catched_pairwise_termsim <- function(enr, num_cats = 200){
 #' @return enrichment table obtained
 #' @importFrom clusterProfiler enrichGO enrichKEGG
 #' @importFrom ReactomePA enrichPathway
-enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff = 0.2,ENRICH_DATA = NULL, semsim = TRUE){
+enrichment_ORA <- function(genes,
+                           organism,
+                           keyType="ENTREZID",
+                           pvalueCutoff,
+                           pAdjustMethod = "BH",
+                           ont,
+                           useInternal = FALSE, 
+                           qvalueCutoff = 0.2,
+                           ENRICH_DATA = NULL, 
+                           semsim = TRUE){
   # @import clusterProfiler KEGG.db ReactomePA
   # Check
   if(is.numeric(ont)){
@@ -463,39 +529,40 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
   # Take enrichment function
   if(ont == "GO"){
     # require(clusterProfiler)
-    enr_fun <- clusterProfiler::enrichGO
+    enrf <- clusterProfiler::enrichGO
     patter_to_remove <- "GO_DATA *<-"
   } else if(ont == "KEGG"){
     # require(clusterProfiler)
-    enr_fun <- clusterProfiler::enrichKEGG
+    enrf <- clusterProfiler::enrichKEGG
     patter_to_remove <- "KEGG_DATA *<-"
   } else if(ont == "REACT"){
     # require(ReactomePA)
-    enr_fun <- ReactomePA::enrichPathway
+    enrf <- ReactomePA::enrichPathway
     patter_to_remove <- "Reactome_DATA *<-"
   }
 
   # Substitute if proceed
   if(!is.null(ENRICH_DATA)){
     # Find not necessary task into code
-    line_to_remove <- grep(patter_to_remove,body(enr_fun))
+    ltorem <- grep(patter_to_remove,body(enrf))
     # Check
-    if(length(line_to_remove) == 0){ # Warning, task not found
-      warning("ern_fun: Can not find annot task to be removed. Regular version will be used.")
+    if(length(ltorem) == 0){ # Warning, task not found
+      warning(paste0("ern_fun: Can not find annot task to be removed.",
+                     " Regular version will be used."))
     } else{ # Remove task from code
       if(ont == "GO"){
-        body(enr_fun)[[line_to_remove]] <- substitute(GO_DATA <- parent.frame()$ENRICH_DATA)      
+  body(enrf)[[ltorem]] <- substitute(GO_DATA <- parent.frame()$ENRICH_DATA)      
       } else if(ont == "KEGG"){
-        body(enr_fun)[[line_to_remove]] <- substitute(KEGG_DATA <- parent.frame()$ENRICH_DATA)      
+  body(enrf)[[ltorem]] <- substitute(KEGG_DATA <- parent.frame()$ENRICH_DATA)      
       } else if(ont == "REACT"){
-        body(enr_fun)[[line_to_remove]] <- substitute(Reactome_DATA <- parent.frame()$ENRICH_DATA)              
+body(enrf)[[ltorem]] <- substitute(Reactome_DATA <- parent.frame()$ENRICH_DATA)              
       }
     }
   }
 
   # Check ontology 
   if(ont == "GO"){
-    enrichment <- enr_fun(gene          = genes,
+    enrichment <- enrf(gene          = genes,
                           OrgDb         = organism,
                           keyType       = keyType,
                           ont           = go_subonto,
@@ -503,7 +570,7 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
                           pAdjustMethod = pAdjustMethod,
                           qvalueCutoff  = qvalueCutoff) 
   } else if(ont == "KEGG"){
-    enrichment <- enr_fun(gene          = genes,
+    enrichment <- enrf(gene          = genes,
                           organism      = organism,
                           keyType       = keyType,
                           pvalueCutoff  = pvalueCutoff,
@@ -511,7 +578,7 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
                           use_internal_data = useInternal,
                           qvalueCutoff  = qvalueCutoff)
   } else if(ont == "REACT"){
-    enrichment <- enr_fun(gene          = genes,
+    enrichment <- enrf(gene          = genes,
                           organism      = organism,
                           pAdjustMethod = pAdjustMethod,
                           pvalueCutoff  = pvalueCutoff,
@@ -522,7 +589,8 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
 
   if(!is.null(enrichment)){
     # enrichment <- prepare_for_fortify(enrichment) 
-    if(nrow(enrichment) > 0 && semsim) enrichment <- catched_pairwise_termsim(enrichment)
+    if(nrow(enrichment) > 0 && semsim) 
+        enrichment <- catched_pairwise_termsim(enrichment)
   }
 
   # Return enrichment
@@ -530,7 +598,8 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
 }
 
 
-#' Performs several CUSTOM enrichments using ORA method. You can give universes or load GMT files
+#' Performs several CUSTOM enrichments using ORA method. 
+#' You can give universes or load GMT files
 #' @param custom_sets custom universes to be used.
 #' @param custom_files custom files to load universes to be used
 #' @param p_val_threshold p-value threshold
@@ -543,7 +612,11 @@ enrichment_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
 #' @importFrom utils write.table
 #' @examples
 #' enrich_all_customs()
-enrich_all_customs <- function(custom_sets = NULL, custom_files = NULL, p_val_threshold = 0.05, genes, write_path = NULL){
+enrich_all_customs <- function(custom_sets = NULL, 
+                               custom_files = NULL, 
+                               p_val_threshold = 0.05, 
+                               genes, 
+                               write_path = NULL){
   if(!is.null(custom_sets)){
     custom_set <- custom_sets
     load_files <- FALSE
@@ -561,10 +634,19 @@ enrich_all_customs <- function(custom_sets = NULL, custom_files = NULL, p_val_th
         custom_gmt <- custom_set[[i]]
         custom_file <- names(custom_set[i])
       }
-      enr <- clusterProfiler::enricher(genes, pvalueCutoff = p_val_threshold, TERM2GENE = custom_gmt)
+      enr <- clusterProfiler::enricher(genes, 
+                                       pvalueCutoff = p_val_threshold, 
+                                       TERM2GENE = custom_gmt)
       if(nrow(enr) > 0) enr <- catched_pairwise_termsim(enr)
       # # Store results
-      if(!is.null(write_path)) utils::write.table(enr, file=file.path(write_path,paste0(basename(custom_file),"_ora_results")), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")      
+      if(!is.null(write_path)) 
+          utils::write.table(enr, 
+                 file=file.path(write_path,
+                                paste0(basename(custom_file),"_ora_results")), 
+                 quote=FALSE, 
+                 col.names=TRUE, 
+                 row.names = FALSE, 
+                 sep="\t")      
       # Return
       return(enr)
     })
@@ -586,13 +668,19 @@ enrich_all_customs <- function(custom_sets = NULL, custom_files = NULL, p_val_th
 #' @examples
 #' # Will return NULL
 #' enrich_clusters_with_gmt()
-enrich_clusters_with_gmt <- function(custom_set, genes_in_modules = NULL, p_val_threshold, cores = 1, task_size = 1){
+enrich_clusters_with_gmt <- function(custom_set, 
+                                     genes_in_modules = NULL, 
+                                     p_val_threshold, 
+                                     cores = 1, 
+                                     task_size = 1){
       if(is.null(genes_in_modules)) {
         warning("no value for genes_in_modules argument given")
         return(NULL)
       }
       modules_enrichment <- parallel_list(genes_in_modules, function(genesset) {
-        enr <- clusterProfiler::enricher(genesset, pvalueCutoff = p_val_threshold, TERM2GENE = custom_set)
+        enr <- clusterProfiler::enricher(genesset, 
+                                         pvalueCutoff = p_val_threshold, 
+                                         TERM2GENE = custom_set)
         if(nrow(enr) > 0) enr <- catched_pairwise_termsim(enr)
         return(enr)
       }, workers = cores, task_size = task_size)
@@ -614,7 +702,9 @@ load_and_parse_gmt <- function(gmt_file) {
     parsed_gmt <- do.call(rbind, lapply(gmt_list, function(category) {
           category_name <- category[1]
           genes <-category[3:length(category)]
-          parsedTerms <- data.frame(Term = category_name, Gene= genes, stringsAsFactors = FALSE)
+          parsedTerms <- data.frame(Term = category_name, 
+                                    Gene= genes, 
+                                    stringsAsFactors = FALSE)
           return(parsedTerms)
 
     }))
@@ -634,12 +724,13 @@ load_and_parse_gmt <- function(gmt_file) {
 #' @keywords enrich
 #' @importFrom clusterProfiler gseGO gseKEGG
 #' @importFrom ReactomePA gsePathway
-enrich_GSEA <- function(geneList,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE){
-  # @import clusterProfiler KEGG.db ReactomePA
-  # require(clusterProfiler)
-  # if(useInternal)
-  #   require(KEGG.db)
-  # require(ReactomePA)
+enrich_GSEA <- function(geneList,
+                        organism,
+                        keyType="ENTREZID",
+                        pvalueCutoff,
+                        pAdjustMethod = "BH",
+                        ont,
+                        useInternal = FALSE){
   # Check
   if(is.numeric(ont)){
     stop("Ontology specified is a number, not a string")
@@ -700,7 +791,13 @@ enrich_GSEA <- function(geneList,organism,keyType="ENTREZID",pvalueCutoff,pAdjus
 #' @param useInternal optional KEGG param used to indicate if already downloaded KEGG database must be used or online API must be called. DEfault: FALSE
 #' @keywords enrich
 #' @return enrichment tables obtained
-perform_GSEA_clusters <- function(all_clusters, organism, keyType, pvalueCutoff, pAdjustMethod = "BH", ont, useInternal = FALSE){
+perform_GSEA_clusters <- function(all_clusters, 
+                                  organism, 
+                                  keyType, 
+                                  pvalueCutoff, 
+                                  pAdjustMethod = "BH", 
+                                  ont, 
+                                  useInternal = FALSE){
   enriched_clusters <- lapply(all_clusters, function(cl_genes) {
         # Enrich
         cl_GSEA <- enrich_GSEA(geneList = cl_genes,
@@ -731,10 +828,17 @@ perform_GSEA_clusters <- function(all_clusters, organism, keyType, pvalueCutoff,
 #' @param task_size number of elements per packages used
 #' @keywords enrich
 #' @return enrichment performed
-enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCutoff,pAdjustMethod = "BH",ont,useInternal = FALSE, qvalueCutoff, ENRICH_DATA = NULL, cores = 1, task_size = 1){
-  # @import clusterProfiler KEGG.db ReactomePA parallel
-  # Parse onto
-  # save(list = ls(all.names = TRUE), file = "test.RData", envir = environment())
+enrichment_clusters_ORA <- function(genes,
+                                    organism,
+                                    keyType="ENTREZID",
+                                    pvalueCutoff,
+                                    pAdjustMethod = "BH",
+                                    ont,
+                                    useInternal = FALSE, 
+                                    qvalueCutoff, 
+                                    ENRICH_DATA = NULL, 
+                                    cores = 1, 
+                                    task_size = 1){
   src_ont = ont
   if(grepl("GO",ont)){
     aux = unlist(strsplit(ont, "_"))
@@ -750,12 +854,15 @@ enrichment_clusters_ORA <- function(genes,organism,keyType="ENTREZID",pvalueCuto
       ENRICH_DATA <- get_GO_data(organism, go_subonto, keyType)
     } else if(ont == "KEGG"){
       # require(clusterProfiler)
-      get_data_from_KEGG_db <- get_unexported_function("clusterProfiler", "get_data_from_KEGG_db")
-      organismMapper <- get_unexported_function("clusterProfiler", "organismMapper")
+      get_data_from_KEGG_db <- get_unexported_function("clusterProfiler", 
+                                                       "get_data_from_KEGG_db")
+      organismMapper <- get_unexported_function("clusterProfiler", 
+                                                "organismMapper")
       ENRICH_DATA <- get_data_from_KEGG_db(organismMapper(organism))
     } else if(ont == "REACT"){
       # require(ReactomePA)
-      get_Reactome_DATA <- get_unexported_function("ReactomePA", "get_Reactome_DATA")
+      get_Reactome_DATA <- get_unexported_function("ReactomePA", 
+                                                   "get_Reactome_DATA")
       ENRICH_DATA <- get_Reactome_DATA(organism)
     }
   }
@@ -811,8 +918,15 @@ get_organismID_byOnto <- function(organism_info, ont){
 #' @importFrom utils read.table
 #' @examples
 #' ot <- get_organism_table()
-get_organism_table <- function(file = file.path(find.package('ExpHunterSuite'), "external_data", "organism_table.txt")){
-  return(utils::read.table(file, header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, fill = NA))
+get_organism_table <- function(file = file.path(find.package('ExpHunterSuite'), 
+                                       "external_data", 
+                                       "organism_table.txt")){
+  return(utils::read.table(file, 
+                           header = TRUE, 
+                           row.names=1, 
+                           sep="\t", 
+                           stringsAsFactors = FALSE, 
+                           fill = NA))
 }
 
 
@@ -860,8 +974,15 @@ multienricher <- function(genes,
   flags$ORA <- grepl("o", enrichmentType)
   flags$GSEA <- grepl("g", enrichmentType)
   flags$clusters <- is.list(genes)
-  allowed_onts <- c("b" = "GO_BP", "m" = "GO_MF", "c" = "GO_CC", "k" = "KEGG", "r" = "REACT")
-  onts <- unlist(lapply(seq_along(allowed_onts),function(i){if(grepl(names(allowed_onts)[i], ontology)) return(allowed_onts[[i]])}))
+  allowed_onts <- c("b" = "GO_BP", 
+                    "m" = "GO_MF", 
+                    "c" = "GO_CC", 
+                    "k" = "KEGG", 
+                    "r" = "REACT")
+  onts <- unlist(lapply(seq_along(allowed_onts),function(i){
+    if(grepl(names(allowed_onts)[i], ontology)) 
+      return(allowed_onts[[i]])
+  }))
 
   # Check genes format
   if(flags$clusters){
@@ -888,7 +1009,8 @@ multienricher <- function(genes,
 
   # Prepare keytypes
   if(length(keytype) > 1){
-    if(length(keytype) != length(onts)) stop("Given keytypes have not the same length than ontologies specified")
+    if(length(keytype) != length(onts)) stop(paste0("Given keytypes have not",
+                                 " the same length than ontologies specified"))
     ontology_splitted <- unlist(strsplit(ontology,""))
     keytypes <- lapply(onts,function(o){
       indx_ont <- which(allowed_onts == o)
@@ -902,10 +1024,13 @@ multienricher <- function(genes,
   ## ORA
   if(flags$ORA){
     if(flags$clusters){
-      if(verbose) message(paste0("Performing clusters ORA enrichment for (",length(onts),") ontologies"))
-      func_results[["WGCNA"]][["ORA_expanded"]] <- apply_fun(onts, function(ont){
-        enrichment_clusters_ORA(genes = genes_ora,
-                                organism = get_organismID_byOnto(organism_info,ont),
+      if(verbose) message(paste0("Performing clusters ORA enrichment for (",
+                                 length(onts),") ontologies"))
+        func_results[["WGCNA"]][["ORA_expanded"]] <- apply_fun(onts, 
+          function(ont){
+            enrichment_clusters_ORA(genes = genes_ora,
+                                organism = get_organismID_byOnto(organism_info,
+                                                                 ont),
                                 keyType = keytypes[[ont]],
                                 pvalueCutoff = pvalueCutoff,
                                 pAdjustMethod = pAdjustMethod,
@@ -917,7 +1042,8 @@ multienricher <- function(genes,
       }) 
       names(func_results$WGCNA$ORA_expanded) <- onts
     }else{
-      if(verbose) message(paste0("Performing ORA enrichment for (",length(onts),") ontologies"))
+      if(verbose) message(paste0("Performing ORA enrichment for (",
+                                 length(onts),") ontologies"))
       func_results[["ORA"]] <- apply_fun(onts, function(ont){
         enrichment_ORA(genes = genes_ora,
                        organism = get_organismID_byOnto(organism_info,ont),
@@ -935,10 +1061,13 @@ multienricher <- function(genes,
   ## GSEA
   if(flags$GSEA && !is.null(genes_gsea)){
     if(flags$clusters){
-      if(verbose) message(paste0("Performing clusters GSEA enrichment for (",length(onts),") ontologies"))
-      func_results[["WGCNA"]][["GSEA_expanded"]] <- apply_fun(onts, function(ont){
-        perform_GSEA_clusters(all_clusters = genes_gsea, 
-                              organism = get_organismID_byOnto(organism_info,ont), 
+      if(verbose) message(paste0("Performing clusters GSEA enrichment for (",
+                                 length(onts),") ontologies"))
+      func_results[["WGCNA"]][["GSEA_expanded"]] <- apply_fun(onts, 
+        function(ont){
+          perform_GSEA_clusters(all_clusters = genes_gsea, 
+                              organism = get_organismID_byOnto(organism_info,
+                                                               ont), 
                               keyType = keytypes[[ont]], 
                               pvalueCutoff = pvalueCutoff, 
                               pAdjustMethod = pAdjustMethod, 
@@ -947,7 +1076,8 @@ multienricher <- function(genes,
       })
       names(func_results$WGCNA$GSEA_expanded) <- onts
     }else{
-      if(verbose) message(paste0("Performing GSEA enrichment for (",length(onts),") ontologies"))
+      if(verbose) message(paste0("Performing GSEA enrichment for (",
+                                 length(onts),") ontologies"))
       func_results[["GSEA"]] <- apply_fun(onts, function(ont){
         enrich_GSEA(geneList = genes_gsea,
                     organism = get_organismID_byOnto(organism_info,ont),
@@ -960,20 +1090,23 @@ multienricher <- function(genes,
       names(func_results$GSEA) <- onts
     }
   }else if(flags$GSEA){
-    warning("Genes are not in GSEA format, GSEA enrichment will not be performed")
+    warning(paste0("Genes are not in GSEA format, GSEA enrichment will",
+                   " not be performed"))
   }
 
   # Compact
   if(!is.null(func_results$WGCNA)){
     if(!is.null(func_results$WGCNA$ORA_expanded)){
-      enrichments_ORA <- lapply(func_results$WGCNA$ORA_expanded, clusterProfiler::merge_result)
+      enrichments_ORA <- lapply(func_results$WGCNA$ORA_expanded, 
+                                clusterProfiler::merge_result)
       func_results$WGCNA$ORA <- lapply(enrichments_ORA, function(res){
         if(nrow(res) > 0) res <- catched_pairwise_termsim(res, 200)
         return(res)
       })
     }
     if(!is.null(func_results$WGCNA$GSEA_expanded)){
-      func_results$WGCNA$GSEA <- lapply(func_results$WGCNA$GSEA_expanded, clusterProfiler::merge_result)
+      func_results$WGCNA$GSEA <- lapply(func_results$WGCNA$GSEA_expanded, 
+                                        clusterProfiler::merge_result)
     }
   }
 

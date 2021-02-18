@@ -20,10 +20,12 @@ rtable2measures <- function(
   ){
 
   # Load hunter table
-  dgh_res_raw <- utils::read.table(file = htfile, sep = "\t", header = TRUE, stringsAsFactors = FALSE, row.names = 1)
+  dgh_res_raw <- utils::read.table(file = htfile, sep = "\t", 
+    header = TRUE, stringsAsFactors = FALSE, row.names = 1)
 
   # Load real predictions
-  true_pred <- utils::read.table(file = realprediction, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+  true_pred <- utils::read.table(file = realprediction, sep = "\t", 
+    header = TRUE, stringsAsFactors = FALSE)
 
   # Sort
   dgh_res_raw <- dgh_res_raw[true_pred[,1],]
@@ -36,25 +38,29 @@ rtable2measures <- function(
 
   # CALCULATE AUCS
   if(!is.null(aucfile)){
-    pck_fdrnames <- c("FDR_DESeq2","FDR_edgeR","FDR_limma","FDR_NOISeq", "combined_FDR")
+    pck_fdrnames <- c("FDR_DESeq2","FDR_edgeR","FDR_limma",
+      "FDR_NOISeq", "combined_FDR")
     dgh_fdr <- dgh_res_raw[, pck_fdrnames]
     dgh_fdr[is.na(dgh_fdr)] <- 1
     dgh_fdr <- 1 - dgh_fdr
     real_df <- as.data.frame(replicate(ncol(dgh_fdr), true_pred[,2]))
     pred <- ROCR::prediction(dgh_fdr, real_df)
     perf_auc <- ROCR::performance(pred, "auc")
-    auc_vals <- data.frame(Method = gsub("_FDR","",gsub("FDR_","",colnames(dgh_fdr))), 
+    auc_vals <- data.frame(Method = gsub("_FDR","",gsub("FDR_","",
+                                    colnames(dgh_fdr))), 
                  Set = rep("All",ncol(dgh_fdr)),
                  Measure = rep("auc", ncol(dgh_fdr)),
                  Value = unlist(perf_auc@y.values), stringsAsFactors = FALSE) 
     # Write
-    utils::write.table(auc_vals, file = aucfile, sep = "\t", col.names = FALSE, row.names = FALSE, quote = FALSE)  
+    utils::write.table(auc_vals, file = aucfile, sep = "\t", 
+      col.names = FALSE, row.names = FALSE, quote = FALSE)  
   }
 
 
 
   # Calculate values for combined values
-  dgh_res$Combined <- (abs(dgh_res_raw$mean_logFCs) >= logFC_threshold) & (dgh_res_raw$combined_FDR <= pval_threshold)
+  dgh_res$Combined <- (abs(dgh_res_raw$mean_logFCs) >= logFC_threshold) &
+      (dgh_res_raw$combined_FDR <= pval_threshold)
 
 
   # Combine into unique matrix
@@ -107,11 +113,13 @@ rtable2measures <- function(
   #############################################
   # Concat experiment info (if proceed)
   if(!is.null(experiment)){
-    exp_info <- utils::read.table(file = experiment, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
-    exp_info <- as.data.frame(do.call(cbind,lapply(seq(ncol(exp_info)),function(i){
-      aux <- data.frame(Value = rep(exp_info[1,i],nrow(df_cuts)))
-      colnames(aux) <- colnames(exp_info)[i]
-      return(aux)
+    exp_info <- utils::read.table(file = experiment, 
+      sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+    exp_info <- as.data.frame(do.call(cbind,lapply(seq(ncol(exp_info)),
+      function(i){
+        aux <- data.frame(Value = rep(exp_info[1,i],nrow(df_cuts)))
+        colnames(aux) <- colnames(exp_info)[i]
+        return(aux)
     })))
     df_cuts <- cbind(exp_info,df_cuts)  
   }

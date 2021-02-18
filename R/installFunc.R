@@ -8,9 +8,10 @@
 #' @examples
 #' install_DEgenes_hunter("./")
 install_DEgenes_hunter <- function(to){
-	scripts_path <- file.path(find.package('ExpHunterSuite'), 'scripts')
-	hunter_scripts <- list.files(scripts_path, pattern = ".R", recursive = FALSE, include.dirs = FALSE)
-	for(hunter_script in hunter_scripts){
-		file.copy(file.path(scripts_path, hunter_script), to, overwrite = TRUE)
-	}
+    scripts_path <- file.path(find.package('ExpHunterSuite'), 'scripts')
+    hunter_scripts <- list.files(scripts_path, pattern = ".R", 
+    	                         recursive = FALSE, include.dirs = FALSE)
+    for(hunter_script in hunter_scripts){
+        file.copy(file.path(scripts_path, hunter_script), to, overwrite = TRUE)
+    }
 }
