@@ -63,7 +63,7 @@ option_list <- list(
   optparse::make_option(c("-t", "--target_file"), type="character", default=NULL,
     help="Sample descriptions: one column must be named treat and contain values of Treat or Ctrl. This file will take precedent over the -T and -C sample flags."),
   optparse::make_option(c("-e", "--external_DEA_file"), type="character", default=NULL,
-    help="External data file containing preanalysed DE data. Must consist of three columns containing p-value, logFC and FDR/padjust IN THAT ORDER"),
+    help="External data file containing preanalysed DE data. Must consist of four columns with the following names and corresponding information: Entrez (or other gene id supported by functional hunter), P.Value, logFC and adj.P.Val IN THAT ORDER"),
   optparse::make_option(c("-v", "--model_variables"), type="character", default="",
     help="Variables to include in the model. Must be comma separated and each variable must be a column in the target_file, or the model can be specified precisely if the custom_model flag is TRUE"),
   optparse::make_option(c("-n", "--numerics_as_factors"), type="logical", default=TRUE,
@@ -110,26 +110,36 @@ write.table(cbind(opt), file=file.path(opt$output_files, "opt_input_values.txt")
 #CHECKINGS
 ############################################################################
 
-# Check inputs not allowed values
-if (is.null(opt$input_file)){
-  stop(cat("No file with RNA-seq counts is provided.\nPlease use -i to submit file"))
-}
-
+# Don't check if we have given an exernal DEA file
+if (is.null(opt$external_DEA_file)) {
+  # Check inputs not allowed values
+  if (is.null(opt$input_file)){
+    stop(cat("No file with RNA-seq counts is provided.\nPlease use -i to submit file"))
+  }
 # Check either C and T columns or target file.
-if( (is.null(opt$Treatment_columns) | is.null(opt$Control_columns)) & is.null(opt$target_file)) {
-  stop(cat("You must include either the names of the control and treatment columns or a target file with a treat column."))
+  if( (is.null(opt$Treatment_columns) | is.null(opt$Control_columns)) & is.null(opt$target_file)) {
+    stop(cat("You must include either the names of the control and treatment columns or a target file with a treat column."))
+  }
+  # In the case of -C/-T AND -t target - give a warning
+  if( (!is.null(opt$Treatment_columns) | !is.null(opt$Control_columns)) & !is.null(opt$target_file)) {
+    warning("You have included at least one -C/-T option as well as a -t option for a target file. The target file will take precedence for assigning samples labels as treatment or control.")
+  }
 }
-# In the case of -C/-T AND -t target - give a warning
-if( (!is.null(opt$Treatment_columns) | !is.null(opt$Control_columns)) & !is.null(opt$target_file)) {
-  warning("You have included at least one -C/-T option as well as a -t option for a target file. The target file will take precedence for assigning samples labels as treatment or control.")
-}
-
 
 #############################################################################
 #EXPRESSION ANALYSIS
 ############################################################################
-target <- target_generation(from_file=opt$target_file, ctrl_samples=opt$Control_columns, treat_samples=opt$Treatment_columns)
-raw_count_table <- read.table(opt$input_file, header=TRUE, row.names=1, sep="\t")
+#
+if(! is.null(c(opt$target_file, opt$Control_columns, opt$Treatment_columns))) {
+  target <- target_generation(from_file=opt$target_file, ctrl_samples=opt$Control_columns, treat_samples=opt$Treatment_columns)
+} else {
+  target <- NULL
+}
+if(! is.null(opt$input_file)) {
+  raw_count_table <- read.table(opt$input_file, header=TRUE, row.names=1, sep="\t")
+} else {
+  raw_count_table <- NULL
+}
 external_DEA_data <- NULL
 if (grepl("F", opt$modules)) { # Open the external data file for pre-analysed deg data
   external_DEA_data <- read.table(opt$external_DEA_file, header=TRUE, sep="\t", row.names=1)

@@ -89,7 +89,12 @@ write_functional_report <- function(hunter_results,
     experiments <- hunter_results$sample_groups
     sample_classes <- apply(experiments, 1, function(x) paste0("* [", x[1], "] ", x[2]))
     # -
-    norm_counts <- hunter_results[["all_data_normalized"]][["DESeq2"]]
+    if("externalDEA" %in% names(hunter_results[["all_data_normalized"]])) {
+        warning("external DEA data found - using for the counts matrix")
+        norm_counts <- hunter_results[["all_data_normalized"]][["externalDEA"]]
+    } else {
+        norm_counts <- hunter_results[["all_data_normalized"]][["DESeq2"]]
+    }
     scaled_counts <- scale_data_matrix(data_matrix = norm_counts, transpose = TRUE)
     scaled_counts_table <- as.data.frame(as.table(scaled_counts))
     colnames(scaled_counts_table) <- c("Gene","Sample","Count")

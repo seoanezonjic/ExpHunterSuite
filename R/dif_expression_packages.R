@@ -150,19 +150,19 @@ perform_expression_analysis <- function(modules, replicatesC, replicatesT, raw_f
       # Calculate results
       results <- analysis_external_DEA(raw_filter, external_DEA_data)
       # Store results
-      all_data_normalized[['external_DEA']] <- results[[1]]
-      all_counts_for_plotting[['external_DEA']] <- results[[2]]
-      package_objects[['external_DEA']] <- results[[3]]
+      all_data_normalized[['externalDEA']] <- results[[1]]
+      all_counts_for_plotting[['externalDEA']] <- results[[2]]
+      package_objects[['externalDEA']] <- results[[3]]
 
       # Result Plot Visualization
-      if (!is.null(all_counts_for_plotting[['external_DEA']])){
+      if (!is.null(all_counts_for_plotting[['externalDEA']])){
         all_pvalue_names   <- c(all_pvalue_names, names(external_DEA_data)[1])
         all_LFC_names      <- c(all_LFC_names, names(external_DEA_data)[2])
         all_FDR_names      <- c(all_FDR_names, names(external_DEA_data)[3])
-        final_pvalue_names <- c(final_pvalue_names, 'pvalue_external_DEA')
-        final_logFC_names  <- c(final_logFC_names, 'logFC_external_DEA')
-        final_FDR_names    <- c(final_FDR_names, 'FDR_external_DEA')
-        DEG_pack_columns   <- c(DEG_pack_columns, 'external_DEA_DEG')
+        final_pvalue_names <- c(final_pvalue_names, 'pvalue_externalDEA')
+        final_logFC_names  <- c(final_logFC_names, 'logFC_externalDEA')
+        final_FDR_names    <- c(final_FDR_names, 'FDR_externalDEA')
+        DEG_pack_columns   <- c(DEG_pack_columns, 'externalDEA_DEG')
       }
 
     }

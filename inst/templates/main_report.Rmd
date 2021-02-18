@@ -98,7 +98,7 @@ PerformanceAnalytics::chart.Correlation(raw_filter, histogram=TRUE, pch=19, log=
 ### **Heatmap and clustering showing correlation between replicates**
 **BROWN: higher correlation; YELLOW: lower**
 
-```{r heatmap_corr,echo = FALSE, fig.height=12, fig.width=12}
+```{r heatmap_corr, eval=!"externalDEA" %in% names(all_counts_for_plotting), echo = FALSE, fig.height=12, fig.width=12}
 col<- colorRampPalette(c("#FFFFCC", "#FD8D3C", "#800026"))(20)
 res <- cor(raw_filter)
 gplots::heatmap.2(x = res, col = col, symm = TRUE, margins = rep(max(nchar(colnames(res))), 2), scale = "none", trace = "none")
