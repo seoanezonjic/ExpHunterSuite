@@ -197,7 +197,9 @@ write_miRNA_cor_report <- function(miRNA_cor_results, template_folder, output_fi
     gene_id_translation <- miRNA_cor_results$gene_id_translation
     ref_strategy <- miRNA_cor_results$ref_strategy
     score_filter <- miRNA_cor_results$score_filter    
-    
+    fet_pvals <- miRNA_cor_results$fet_pvals
+    LR_test <- miRNA_cor_results$LR_test
+    LR_sub <- miRNA_cor_results$LR_sub
     rmarkdown::render(file.path(template_folder, 'miRNA_RNA.Rmd'), 
                   output_file = file.path(output_files, report_name), intermediates_dir = output_files)
     
