@@ -328,7 +328,7 @@ check_input_main_degenes_Hunter <- function(raw,
        (!grepl("W", modules) | is.null(target))) {
       warning(psate0("If you wish to use factors for the correlation analysis",
         " you must also run WGCNA and include a target file. The -S",
-        " and -N options will be ignored")
+        " and -N options will be ignored"))
     }
     return(list(modules=modules, 
                 active_modules=active_modules, 
