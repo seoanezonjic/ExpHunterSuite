@@ -71,7 +71,7 @@ functional_hunter <- function(
     if (any(is.null(model_organism), 
             !model_organism %in% rownames(organisms_table))) {
         stop(paste0('Model organism has not been indicated or is not',
-            ' available. Please indicate the model organism.')
+            ' available. Please indicate the model organism.'))
     }else{ # ORGANISM AVAILABLE --> LOAD
         current_organism_info <- subset(organisms_table, 
                 rownames(organisms_table) %in% model_organism)  
@@ -148,17 +148,18 @@ functional_hunter <- function(
     if(flags$KEGG && current_organism_info$KeggCode[1] == ""){
         flags$KEGG <- FALSE
         warning(paste0("Specified organism is not allowed to be used with",
-            " KEGG module. Please check your IDs table")
+            " KEGG module. Please check your IDs table"))
     }
 
     if(flags$REACT){
         if (keytypes %in% c("TAIR","GENENAME")) {
             flags$REACT <- FALSE
             warning("Reactome module can not be used with GENENAME identifiers")
-        } else if (current_organism_info$Reactome_ID[1] == "" || (keytypes != "ENTREZID")) {
+        } else if (current_organism_info$Reactome_ID[1] == "" || 
+            (keytypes != "ENTREZID")) {
             flags$REACT <- FALSE
             warning(paste0("Specified organism is not allowed to be used",
-                " with Reactome module. Please check your IDs table")
+                " with Reactome module. Please check your IDs table"))
         }
     }
 
