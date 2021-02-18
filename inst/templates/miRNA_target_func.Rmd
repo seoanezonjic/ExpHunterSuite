@@ -1,5 +1,5 @@
 ---
-author: "José Córdoba Caballero"
+author: "SysBioLab"
 output:
   html_document:
     toc: true
