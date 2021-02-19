@@ -18,7 +18,8 @@ void
 Write enrichment files related to functional_hunter results list
 }
 \examples{
-# Use a @functional_hunter or @multienricher result object to create real files
+# Use a @functional_hunter or @multienricher result object to 
+# create real files
 write_enrich_files(list(),"./")
 }
 \keyword{export}

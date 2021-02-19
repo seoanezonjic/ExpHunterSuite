@@ -31,7 +31,8 @@
 #' # Load DE analysis result
 #' data(degh_output)
 #' annots <- "" # Include here wanted ontologies to be used
-#' func_results <- functional_hunter(degh_output,"Mouse",func_annot_db = annots)
+#' func_results <- functional_hunter(hunter_results = degh_output,
+#' model_organism = "Mouse",func_annot_db = annots)
 functional_hunter <- function(
     hunter_results,
     model_organism,

@@ -2,7 +2,8 @@
 % Please edit documentation in R/main_functional_hunter.R
 \name{functional_hunter}
 \alias{functional_hunter}
-\title{This function allows you to perform the Functional analysis with different enrichment corpus.}
+\title{This function allows you to perform the Functional analysis with different
+enrichment corpus.}
 \usage{
 functional_hunter(
   hunter_results,
@@ -31,9 +32,11 @@ functional_hunter(
 
 \item{annot_table}{(OPTIONAL) annotation table to translate gene IDs}
 
-\item{organisms_table}{(OPTIONAL) configuration table for given organism. Use see get_organism_table()}
+\item{organisms_table}{(OPTIONAL) configuration table for given organism.
+Use see get_organism_table()}
 
-\item{input_gene_id}{(OPTIONAL) type og gene IDs given. Allowed: ENSEMBL (E), entrezgene (e), TAIR/Arabidopsis (T), Gene Names (G).}
+\item{input_gene_id}{(OPTIONAL) type og gene IDs given. Allowed: ENSEMBL (E)
+, entrezgene (e), TAIR/Arabidopsis (T), Gene Names (G).}
 
 \item{func_annot_db}{(OPTIONAL) modules to be enriched}
 
@@ -41,9 +44,11 @@ functional_hunter(
 
 \item{custom}{(OPTIONAL) list of dataframes with GMT corpus}
 
-\item{analysis_type}{(OPTIONAL) enrichment type to be performed. Allowed: ORA (o) and GSEA (g)}
+\item{analysis_type}{(OPTIONAL) enrichment type to be performed. Allowed:
+ORA (o) and GSEA (g)}
 
-\item{remote}{(OPTIONAL) remote allowed actions. Are: Biomart query (b) and KEGG enrichment (k)}
+\item{remote}{(OPTIONAL) remote allowed actions. Are: Biomart query (b) and
+KEGG enrichment (k)}
 
 \item{save_query}{(OPTIONAL) flag to indicate if query must be stored}
 
@@ -51,7 +56,8 @@ functional_hunter(
 
 \item{qthreshold}{qvalue threshold}
 
-\item{cores}{cores to be used if parallel features are going to be used. Default: 1}
+\item{cores}{cores to be used if parallel features are going to be used.
+Default: 1}
 
 \item{task_size}{number of elements per packages used}
 
@@ -63,12 +69,14 @@ functional_hunter(
 functional result object with enrichments performed
 }
 \description{
-This function allows you to perform the Functional analysis with different enrichment corpus.
+This function allows you to perform the Functional analysis with different
+enrichment corpus.
 }
 \examples{
 # Load DE analysis result
 data(degh_output)
 annots <- "" # Include here wanted ontologies to be used
-func_results <- functional_hunter(degh_output,"Mouse",func_annot_db = annots)
+func_results <- functional_hunter(hunter_results = degh_output,
+model_organism = "Mouse",func_annot_db = annots)
 }
 \keyword{method}

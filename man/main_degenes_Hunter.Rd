@@ -54,9 +54,11 @@ main_degenes_Hunter(
 
 \item{lfc}{minimum logFold Change}
 
-\item{modules}{modules to be executed. Allowed: DESeq2 (D), NOISeq (N), Limma (L), EdgeR (E), WGCNA (W)}
+\item{modules}{modules to be executed. Allowed: DESeq2 (D), NOISeq (N),
+Limma (L), EdgeR (E), WGCNA (W)}
 
-\item{minpack_common}{minimum of pack that must be significant to tag a gene as significant}
+\item{minpack_common}{minimum of pack that must be significant to tag
+a gene as significant}
 
 \item{model_variables}{custom model}
 
@@ -96,7 +98,8 @@ main_degenes_Hunter(
 expression analysis result object with studies performed
 }
 \description{
-This function allows you to perform the DEG analysis with different algorithms.
+This function allows you to perform the DEG analysis with different
+algorithms.
 }
 \examples{
 data(toc)

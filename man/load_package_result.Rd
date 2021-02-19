@@ -2,7 +2,8 @@
 % Please edit documentation in R/io_handling.R
 \name{load_package_result}
 \alias{load_package_result}
-\title{Loads stored results in DEgenes Hunter expression analysis package folder and returns in compact object}
+\title{Loads stored results in DEgenes Hunter expression analysis package
+folder and returns in compact object}
 \usage{
 load_package_result(pack_path)
 }
@@ -13,6 +14,7 @@ load_package_result(pack_path)
 package info laoded
 }
 \description{
-Loads stored results in DEgenes Hunter expression analysis package folder and returns in compact object
+Loads stored results in DEgenes Hunter expression analysis package
+folder and returns in compact object
 }
 \keyword{input}

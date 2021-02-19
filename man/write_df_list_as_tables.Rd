@@ -23,7 +23,7 @@ Write to disk the results of each diff expression package
 }
 \examples{
 # Typically used with the @all_counts_for_plotting slot of the main output
-deg_res <- list(aa=data.frame(a=1:5,b=1:5), bb=data.frame(a=6:10,b=6:10))
+deg_res <- list(aa=data.frame(a=seq(5),b=seq(5)), bb=data.frame(a=seq(6,10),b=seq(6,10)))
 write_df_list_as_tables(deg_res, prefix="test", root=tempdir())
 }
 \keyword{output}

@@ -2,7 +2,8 @@
 % Please edit documentation in R/main_degsynth.R
 \name{degsynth}
 \alias{degsynth}
-\title{Main function to generate synthetic data using an specific exponential distribution for logFC}
+\title{Main function to generate synthetic data using an specific exponential
+distribution for logFC}
 \usage{
 degsynth(
   outfile = NULL,
@@ -39,7 +40,8 @@ degsynth(
 synthetic data generated
 }
 \description{
-Main function to generate synthetic data using an specific exponential distribution for logFC
+Main function to generate synthetic data using an specific exponential
+distribution for logFC
 }
 \examples{
 syznthetic_dataset <- degsynth()

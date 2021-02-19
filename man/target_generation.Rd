@@ -3,7 +3,8 @@
 \name{target_generation}
 \alias{target_generation}
 \title{Function to generate targets file
-Load target file if it exists, otherwise use the -C and -T flags. Note target takes precedence over target.}
+Load target file if it exists, otherwise use the -C and -T flags.
+Note target takes precedence over target.}
 \usage{
 target_generation(from_file = NULL, ctrl_samples = NULL, treat_samples = NULL)
 }
@@ -19,14 +20,16 @@ targets info loaded
 }
 \description{
 Function to generate targets file
-Load target file if it exists, otherwise use the -C and -T flags. Note target takes precedence over target.
+Load target file if it exists, otherwise use the -C and -T flags.
+Note target takes precedence over target.
 }
 \examples{
 # To generate target or load from file. 
 # Example shows generation based on names of treament/control samples.
 # These should match the column names in the table of counts.
-case_sample_names <- paste("case", 1:5, sep="_")
-control_sample_names <- paste("control", 1:5, sep="_")
-target <- target_generation(ctrl_samples=control_sample_names, treat_samples=case_sample_names)
+case_sample_names <- paste("case", seq(5), sep="_")
+control_sample_names <- paste("control", seq(5), sep="_")
+target <- target_generation(ctrl_samples=control_sample_names, 
+                            treat_samples=case_sample_names)
 }
 \keyword{design}

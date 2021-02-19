@@ -668,7 +668,7 @@ enrich_all_customs <- function(custom_sets = NULL,
 #' @examples
 #' # Will return NULL
 #' enrich_clusters_with_gmt()
-enrich_clusters_with_gmt <- function(custom_set, 
+enrich_clusters_with_gmt <- function(custom_set = NULL, 
                                      genes_in_modules = NULL, 
                                      p_val_threshold, 
                                      cores = 1, 
@@ -676,7 +676,11 @@ enrich_clusters_with_gmt <- function(custom_set,
       if(is.null(genes_in_modules)) {
         warning("no value for genes_in_modules argument given")
         return(NULL)
-      }
+      } 
+      if(is.null(custom_set)){
+        warning("No custom set defined")
+        return(NULL)
+    }
       modules_enrichment <- parallel_list(genes_in_modules, function(genesset) {
         enr <- clusterProfiler::enricher(genesset, 
                                          pvalueCutoff = p_val_threshold, 
@@ -950,9 +954,12 @@ get_organism_table <- function(file = file.path(find.package('ExpHunterSuite'),
 #' @export
 #' @examples
 #' data(degh_output)
-#' genes <- head(rownames(degh_output$raw_filter),1000) # You need to translate to entrez if you want use all ontology types
+#' genes <- head(rownames(degh_output$raw_filter),1000) 
+#' # You need to translate to entrez if you want use all ontology types
 #' ontologies <- "" # Select your wanted ontologies
-#' enrch <- multienricher(genes = genes, ontology = "")
+#' current_organism_info <- subset(organisms_table, 
+#'                          rownames(organisms_table) == "Human")
+#' enrch <- multienricher(genes = genes, ontology = "") # Return NULL.
 multienricher <- function(genes,
                           organism_info,
                           keytype = "ENTREZID",
@@ -965,6 +972,11 @@ multienricher <- function(genes,
                           cores = 1,
                           task_size = 1,
                           verbose = FALSE){
+  # Check
+  if (is.null(organism_info)) {
+    warning("No organism information has been defined")
+    return(NULL)
+  }
   # Initialize
   func_results <- list()
   flags <- list()

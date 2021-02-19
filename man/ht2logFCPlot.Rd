@@ -2,7 +2,8 @@
 % Please edit documentation in R/plotting_functions.R
 \name{ht2logFCPlot}
 \alias{ht2logFCPlot}
-\title{Function to generate scatter plot for each gene in a hunter table and show logFC per package
+\title{Function to generate scatter plot for each gene in a hunter table
+and show logFC per package
 taking into account the variablity between them}
 \usage{
 ht2logFCPlot(
@@ -17,13 +18,16 @@ ht2logFCPlot(
 \arguments{
 \item{ht}{: hunter table dataframe}
 
-\item{var_filter}{: variability threshold to show gene into this graph (low variability will be removed)}
+\item{var_filter}{: variability threshold to show gene into this
+graph (low variability will be removed)}
 
 \item{title}{: plot title}
 
-\item{y_range}{: y limit to be applied. Only a number must be provided. NULL will not fix the axis}
+\item{y_range}{: y limit to be applied. Only a number must be provided.
+NULL will not fix the axis}
 
-\item{top}{: plots only the top N items with more variance. NULL will not filter}
+\item{top}{: plots only the top N items with more variance.
+NULL will not filter}
 
 \item{alpha}{: transparency of dots}
 }
@@ -31,7 +35,8 @@ ht2logFCPlot(
 plot ready to be rendered
 }
 \description{
-Function to generate scatter plot for each gene in a hunter table and show logFC per package
+Function to generate scatter plot for each gene in a hunter table
+and show logFC per package
 taking into account the variablity between them
 }
 \author{

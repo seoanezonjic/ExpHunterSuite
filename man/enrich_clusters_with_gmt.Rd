@@ -5,7 +5,7 @@
 \title{Performs custom enrichments over cluster sets}
 \usage{
 enrich_clusters_with_gmt(
-  custom_set,
+  custom_set = NULL,
   genes_in_modules = NULL,
   p_val_threshold,
   cores = 1,

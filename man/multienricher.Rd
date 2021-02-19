@@ -52,8 +52,11 @@ Perform enrichment of ORA and/or GSEA using a set of genes given
 }
 \examples{
 data(degh_output)
-genes <- head(rownames(degh_output$raw_filter),1000) # You need to translate to entrez if you want use all ontology types
+genes <- head(rownames(degh_output$raw_filter),1000) 
+# You need to translate to entrez if you want use all ontology types
 ontologies <- "" # Select your wanted ontologies
-enrch <- multienricher(genes = genes, ontology = "")
+current_organism_info <- subset(organisms_table, 
+                         rownames(organisms_table) == "Human")
+enrch <- multienricher(genes = genes, ontology = "") # Return NULL.
 }
 \keyword{enrich}

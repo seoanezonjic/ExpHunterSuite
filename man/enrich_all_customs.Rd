@@ -2,7 +2,8 @@
 % Please edit documentation in R/functional_analysis_library.R
 \name{enrich_all_customs}
 \alias{enrich_all_customs}
-\title{Performs several CUSTOM enrichments using ORA method. You can give universes or load GMT files}
+\title{Performs several CUSTOM enrichments using ORA method.
+You can give universes or load GMT files}
 \usage{
 enrich_all_customs(
   custom_sets = NULL,
@@ -27,7 +28,8 @@ enrich_all_customs(
 list with enrichment tables obtained
 }
 \description{
-Performs several CUSTOM enrichments using ORA method. You can give universes or load GMT files
+Performs several CUSTOM enrichments using ORA method.
+You can give universes or load GMT files
 }
 \examples{
 enrich_all_customs()

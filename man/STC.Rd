@@ -2,7 +2,8 @@
 % Please edit documentation in R/simulate_treatment_control.R
 \name{STC}
 \alias{STC}
-\title{Function to Simulate Treatment-Control paired experiments for genes expression count tables. Pipeline inspired on TCC simulateReadCounts function}
+\title{Function to Simulate Treatment-Control paired experiments for genes
+expression count tables. Pipeline inspired on TCC simulateReadCounts function}
 \usage{
 STC(
   Ngene = 1000,
@@ -16,21 +17,31 @@ STC(
 \arguments{
 \item{Ngene}{number of genes to be included in the experiment}
 
-\item{PDEG}{Percentage of Differentially Expressed Genes. If one number is specified, only Up-regulated genes will be simulated. If a vector of two number is given, proportions will be applied for Up and Down regualted simulation respectively}
+\item{PDEG}{Percentage of Differentially Expressed Genes. If one number
+is specified, only Up-regulated genes will be simulated. If a vector of two
+number is given, proportions will be applied for Up and Down regualted
+simulation respectively}
 
-\item{DEG.foldchange}{foldchange to be applied. Can be a number or a function which must accept only a vector and return a vector of the same length with the fold-change values. Warning: NOT LOG FOLD CHANGE}
+\item{DEG.foldchange}{foldchange to be applied. Can be a number or a
+function which must accept only a vector and return a vector of the same
+length with the fold-change values. Warning: NOT LOG FOLD CHANGE}
 
 \item{replicates}{to be ge generated of each group (Treatment and Control)}
 
-\item{bcount}{matrix of genes counts used to simulate. If NULL, arabidopsis dataset used (not from) in TCC package will be loaded}
+\item{bcount}{matrix of genes counts used to simulate. If NULL,
+arabidopsis dataset used (not from) in TCC package will be loaded}
 
-\item{group}{columns to be used as group replicates. If NULL, all columns will be used.}
+\item{group}{columns to be used as group replicates. If NULL,
+all columns will be used.}
 }
 \value{
-a list with COUNT) a simulated gene counts matrix with simulated genes and sample names and TRUEDEG) a vector with real up/down regulated genes
+a list with COUNT) a simulated gene counts matrix with simulated
+genes and sample names and TRUEDEG) a vector with real up/down regulated
+genes
 }
 \description{
-Function to Simulate Treatment-Control paired experiments for genes expression count tables. Pipeline inspired on TCC simulateReadCounts function
+Function to Simulate Treatment-Control paired experiments for genes
+expression count tables. Pipeline inspired on TCC simulateReadCounts function
 }
 \author{
 Fernando Moreno Jabato <jabato(at)uma(dot)es>

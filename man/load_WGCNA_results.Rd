@@ -2,7 +2,8 @@
 % Please edit documentation in R/io_handling.R
 \name{load_WGCNA_results}
 \alias{load_WGCNA_results}
-\title{Loads stored WGCNA results in DEgenes Hunter expression analysis package folder and returns in compact object}
+\title{Loads stored WGCNA results in DEgenes Hunter expression analysis package
+folder and returns in compact object}
 \usage{
 load_WGCNA_results(path, main_deg_table)
 }
@@ -15,6 +16,7 @@ load_WGCNA_results(path, main_deg_table)
 WGCNA results loaded
 }
 \description{
-Loads stored WGCNA results in DEgenes Hunter expression analysis package folder and returns in compact object
+Loads stored WGCNA results in DEgenes Hunter expression analysis package
+folder and returns in compact object
 }
 \keyword{input}

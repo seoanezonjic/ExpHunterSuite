@@ -24,9 +24,11 @@ write_functional_report(
 
 \item{output_files}{output folder.}
 
-\item{fc_colname}{(OPTIONAL) main logFC colname (into hunter_results dataframe)}
+\item{fc_colname}{(OPTIONAL) main logFC colname (into hunter_results
+dataframe)}
 
-\item{organisms_table}{(OPTIONAL) configuration table for given organism. Use see get_organism_table()}
+\item{organisms_table}{(OPTIONAL) configuration table for given organism.
+Use see get_organism_table()}
 
 \item{template_folder}{(OPTIONAL) RMD templates folder}
 
@@ -34,7 +36,8 @@ write_functional_report(
 
 \item{task_size}{number of elements per packages used}
 
-\item{report}{string with reports to be written. Allowed: clusters (c) and functional (f). Default = "fc"}
+\item{report}{string with reports to be written. Allowed: clusters (c)
+and functional (f). Default = "fc"}
 }
 \value{
 void
@@ -46,6 +49,7 @@ This function allows you to report the Functional analysis.
 \examples{
 # Load func and DE results
 data(degh_output)
-func_results <- list() # func_results <- functional_hunter(degh_output,"Mouse")
+func_results <- list() 
+# func_results <- functional_hunter(degh_output,"Mouse")
 write_functional_report(degh_output, func_results)
 }

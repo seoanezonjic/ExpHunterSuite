@@ -2,7 +2,8 @@
 % Please edit documentation in R/functional_analysis_library.R
 \name{translate_id}
 \alias{translate_id}
-\title{Translates a given gene ID using a dictionary}
+\title{Translates a given gene ID using a dictionary. Note: one unknown ID can
+corresponds to many known ids.}
 \usage{
 translate_id(ids_to_translate, annot_table)
 }
@@ -15,6 +16,7 @@ translate_id(ids_to_translate, annot_table)
 translated IDs or NA if it's not possible to translate
 }
 \description{
-Translates a given gene ID using a dictionary
+Translates a given gene ID using a dictionary. Note: one unknown ID can
+corresponds to many known ids.
 }
 \keyword{translate}
