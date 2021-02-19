@@ -71,7 +71,6 @@ main_degenes_Hunter <- function(
     WGCNA_minKMEtoStay = 0.2
   ){
 
-
     modified_input_args <- check_input_main_degenes_Hunter(raw, 
       minlibraries, reads, external_DEA_data, modules, model_variables,
       active_modules, WGCNA_all, minpack_common, target, 
@@ -92,6 +91,7 @@ main_degenes_Hunter <- function(
     ############################################################
     ##                         I/O DATA                       ##
     ############################################################
+
 
     # Infer replicates and group index from target
     index_control_cols <- as.character(target$sample[target$treat == "Ctrl"])
@@ -117,7 +117,12 @@ main_degenes_Hunter <- function(
 
     if(numerics_as_factors == TRUE) { 
       # Now coerce the targets to factors for the multifactorial analysis
-      target <-  data.frame(sapply(target, as.factor), stringsAsFactors=TRUE)
+      invisible(lapply(seq(ncol(target)),function(i){
+        target[,i] <<- as.factor(target[,i])
+      }))
+      # target <-  data.frame(sapply(target, as.factor), 
+        # stringsAsFactors=TRUE)
+
     }
 
     model_formula_text <- prepare_model_text(model_variables, custom_model)

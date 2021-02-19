@@ -46,9 +46,9 @@ build_design_for_WGCNA <- function(target,
         string_factors_index <- colnames(target) %in% string_factors 
 
         target_string_factors <- target[string_factors_index]
-        target_string_factors <- data.frame(sapply(target_string_factors, 
-                                                   as.factor), 
-                                            stringsAsFactors=TRUE)
+        invisible(lapply(seq(ncol(target_string_factors)),function(i){
+          target_string_factors[,i] <<- as.factor(target_string_factors[,i])
+        }))
     }
 
     if(!is.null(numeric_factors)){
@@ -438,13 +438,13 @@ analysis_WGCNA <- function(data,
            sep="\t", quote=FALSE)
 
     cluster_ID<- net$colors
-    Cluster_MM <- sapply(names(cluster_ID), function(x){
+    Cluster_MM <- unlist(lapply(names(cluster_ID), function(x){
         gene_module_cor[x, paste0("Cluster_", cluster_ID[x])]
-    })
-    Cluster_MM_pval <- sapply(names(cluster_ID), function(x){
+    }))
+    Cluster_MM_pval <- unlist(lapply(names(cluster_ID), function(x){
         # Get the MM value
         gene_module_cor_p[x, paste0("Cluster_", cluster_ID[x])] 
-    })
+    }))
 
     # Plot cluster ID vs. ID of cluster with lowest MM p-value for each gene
     MM_Cluster_ID <- apply(gene_module_cor_p, 
@@ -462,8 +462,8 @@ analysis_WGCNA <- function(data,
                                 labels = function(x) paste0("Cluster_", x))
 
     # NEW - get the p value for the cluster id, not the lowest p-value
-    # cluster_cor_pval <- sapply(names(cluster_ID), 
-    #                         function(x) gene_module_cor_p[x,cluster_ID[x]+1])
+    # cluster_cor_pval <- unlist(lapply(names(cluster_ID), 
+    #                         function(x) gene_module_cor_p[x,cluster_ID[x]+1]))
 
     return(list(
             gene_cluster_info = data.frame(ENSEMBL_ID = names(cluster_ID), 

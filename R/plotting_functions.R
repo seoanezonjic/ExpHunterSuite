@@ -272,7 +272,7 @@ extract_legend <- function(a.gplot){
 # https://stackoverflow.com/questions/13649473/(...)
 # (...)add-a-common-legend-for-combined-ggplots  
 # tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(a.gplot))
-  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  leg <- which(unlist(lapply(tmp$grobs, function(x) x$name) == "guide-box"))
   legend <- tmp$grobs[[leg]]
   return(legend)
 }
