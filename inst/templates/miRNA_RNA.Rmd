@@ -53,25 +53,20 @@ cat("## **RNAseq and miRNAseq correlation methods comparison**")
 cat("\nThis plot shows the distributions of correlations between RNAseq and miRNAseq using diferent strategies.
   \n")
 
-# min <- -0.5
-# if (min < corr_cutoff) {
-#   min <- corr_cutoff
-# }
+
 all_cor_dist <- strategies
 all_cor_dist[["all_possible_pairs"]] <- NULL
 strat_names <- names(all_cor_dist)
 all_cor_dist <- lapply(all_cor_dist, function(strategy_data){
    dist <- strategy_data[,c("correlation", "pval")]
-  # dist$cor_thr <- quantile(dist$correlation,probs = .2)
-  # dist$pval_thr <- quantile(dist$pval,probs = .2)
+ 
    return(dist)
   })
 names(all_cor_dist) <- strat_names
 
 
 all_cor_dist <- as.data.frame(data.table::rbindlist(all_cor_dist, use.names=TRUE, idcol= "strategy"))
-# threshold <- unique(all_cor_dist[,c("strategy", "cor_thr")])
-# save(all_cor_dist, all_cor_dist2, file = file.path(opt$output_files, "debug.RData"))
+
 pp <- ggplot2::ggplot(all_cor_dist, ggplot2::aes(x = strategy, y = correlation, fill = strategy)) +
   ggplot2::geom_violin(trim = FALSE, scale = "width",draw_quantiles = c( 0.1, 0.05)) + #ggplot2::ylim(-1.000001, min + 0.00001) +
   ggplot2::geom_hline(yintercept= corr_cutoff) +
@@ -81,15 +76,15 @@ pp
 
 ```
 
-```{r methods_comparison_violin_p, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+```{r methods_comparison_violin_p, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = FALSE}
 
 cat("\n\nThis plot shows the distributions of correlation P values between RNAseq and miRNAseq using diferent strategies.
   \n")
-# pp <- ggplot2::ggplot(all_cor_dist, ggplot2::aes(x = strategy, y = pval, fill = strategy)) +
-#   ggplot2::geom_violin(trim = FALSE, scale = "width") + ggplot2::ylim(-0.0001, 0.1) +
-#   ggplot2::geom_boxplot(width=0.05)+
-#   ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.title.x = ggplot2::element_blank()) 
-# pp
+pp <- ggplot2::ggplot(all_cor_dist, ggplot2::aes(x = strategy, y = pval, fill = strategy)) +
+  ggplot2::geom_violin(trim = FALSE, scale = "width") + ggplot2::ylim(-0.0001, 0.1) +
+  ggplot2::geom_boxplot(width=0.05)+
+  ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.title.x = ggplot2::element_blank()) 
+pp
 
 ```
 
@@ -108,9 +103,7 @@ pp
 filter_stats <- filters_summary[!is.na(filters_summary$p_val), c("strategy", "type", "p_val", "quantile")]
 filter_stats <- stats::reshape(filter_stats, timevar="type", idvar="strategy", direction ="wide")
 filter_stats$targets <- rep(NA, nrow(filter_stats))
-# save(filter_stats, all_strategies, file = file.path(opt$output_files, "debug.RData") )
 prevalent_miRNAs <- miRNAseq[["DH_results"]]$gene_name[miRNAseq[["DH_results"]]$genes_tag == "PREVALENT_DEG"]
-# save(filter_stats, prevalent_miRNAs, strategies, file = file.path(opt$output_files, "debug.RData"))
 for (strategy in unique(filter_stats$strategy)) {
   correlated_pairs <- strategies$all_possible_pairs[strategies[[strategy]]$index, c("miRNAseq", "RNAseq")]
   filter_stats[filter_stats$strategy == strategy, "miRNAs"] <- length(unique(correlated_pairs$miRNAseq))
@@ -120,7 +113,6 @@ for (strategy in unique(filter_stats$strategy)) {
 }
  
 cat("\n\n This table compare P values and Quantile of pairs discovering by strategy. Targets are unique count of genes that correlated with prevalent differential expression miRNAs\n\n")
-# knitr::kable(filter_stats, digits = 3, format.args = list(scientific = TRUE))
   DT::datatable(filter_stats, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
             options = list(
               colReorder = TRUE,
@@ -193,7 +185,6 @@ common_pairs$x_axis <- as.character(common_pairs$x_axis)
 common_pairs$y_axis <- as.character(common_pairs$y_axis)
 
 
-# save(common_pairs, file = file.path(output_files, "test.RData"), envir = environment())
 
 pp <- gg_heatmap(data =  common_pairs, 
             x_axis = "x_axis",
@@ -202,59 +193,57 @@ pp <- gg_heatmap(data =  common_pairs,
             text_plot= "text", 
             labs = FALSE)
 pp
-# q()
-# gc()
+
 ```
 
-```{r roc_curve, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-#   print(valid_strats)
-#   print(roc_data)
-# save(valid_strats, roc_data, file = "/mnt/home/users/bio_267_uma/josecordoba/test/test_miRNA-RNA/test.RData")
-#     roc_predicted <- roc_data$predicted
-#     roc_data$predicted <- NULL
-#     roc_validated <- roc_data$validated
-#     roc_data$validated <- NULL
-#     roc_data <- roc_data[, valid_strats]
+```{r roc_curve, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = FALSE}
+  print(valid_strats)
+  print(roc_data)
+    roc_predicted <- roc_data$predicted
+    roc_data$predicted <- NULL
+    roc_validated <- roc_data$validated
+    roc_data$validated <- NULL
+    roc_data <- roc_data[, valid_strats]
 
 
-#     # roc_data <- as.matrix(roc_data)
-#     cat("\n\nROC curve using multiMiR predicted relations as gold standard\n\n")
-#     pred_pred <- ROCR::prediction(roc_data, labels = matrix(roc_predicted, nrow = length(roc_predicted), ncol = ncol(roc_data)))
-#     perf_roc_pred <- ROCR::performance(pred_pred, "tpr", "fpr")
+    # roc_data <- as.matrix(roc_data)
+    cat("\n\nROC curve using multiMiR predicted relations as gold standard\n\n")
+    pred_pred <- ROCR::prediction(roc_data, labels = matrix(roc_predicted, nrow = length(roc_predicted), ncol = ncol(roc_data)))
+    perf_roc_pred <- ROCR::performance(pred_pred, "tpr", "fpr")
 
-#     plot(perf_roc_pred, main = "ROC")
-#     cat("\n\nPrecision-Recall curve using multiMiR predicted relations as gold standard\n\n")
+    plot(perf_roc_pred, main = "ROC")
+    cat("\n\nPrecision-Recall curve using multiMiR predicted relations as gold standard\n\n")
 
-#     prec_rec_pred <- ROCR::performance(pred_pred, "prec", "rec")
-#     plot(prec_rec_pred, main = "PREC-REC")
+    prec_rec_pred <- ROCR::performance(pred_pred, "prec", "rec")
+    plot(prec_rec_pred, main = "PREC-REC")
 
-#     cat("\n\nROC curve using multiMiR validated relations as gold standard\n\n")
+    cat("\n\nROC curve using multiMiR validated relations as gold standard\n\n")
 
-#     pred_val <- ROCR::prediction(roc_data, labels = matrix(roc_validated, nrow = length(roc_validated), ncol = ncol(roc_data)))
-#     perf_roc_val <- ROCR::performance(pred_val, "tpr", "fpr")
-#     plot(perf_roc_val, main = "ROC")  
+    pred_val <- ROCR::prediction(roc_data, labels = matrix(roc_validated, nrow = length(roc_validated), ncol = ncol(roc_data)))
+    perf_roc_val <- ROCR::performance(pred_val, "tpr", "fpr")
+    plot(perf_roc_val, main = "ROC")  
 
-#     prec_rec_val <- ROCR::performance(pred_val, "prec", "rec")
-#     plot(prec_rec_val, main = "PREC-REC")
+    prec_rec_val <- ROCR::performance(pred_val, "prec", "rec")
+    plot(prec_rec_val, main = "PREC-REC")
 
 ``` 
 
-```{r all_db_dist, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-    # cat("\n\nArea under the curve for different strategies using multiMiR predicted and validated pairs as gold standard\n\n")
-    # predicted_auc <- ROCR::performance(pred_pred, "auc")
-    # predicted_val <- ROCR::performance(pred_val, "auc")
-    # all_auc <- data.frame(strategy = colnames(roc_data),
-    #                       predicted_auc = unlist(predicted_auc@y.values),
-    #                       validated_auc = unlist(predicted_val@y.values)
-    #                       )
+```{r all_db_dist, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = FALSE}
+    cat("\n\nArea under the curve for different strategies using multiMiR predicted and validated pairs as gold standard\n\n")
+    predicted_auc <- ROCR::performance(pred_pred, "auc")
+    predicted_val <- ROCR::performance(pred_val, "auc")
+    all_auc <- data.frame(strategy = colnames(roc_data),
+                          predicted_auc = unlist(predicted_auc@y.values),
+                          validated_auc = unlist(predicted_val@y.values)
+                          )
 
-    # datatable(all_auc, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
-    #         options = list(
-    #           paging = FALSE,
-    #           colReorder = TRUE,
-    #           dom = 'lftBip',
-    #           buttons = c('copy', 'csv', 'excel')
-    #       ))
+    datatable(all_auc, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+            options = list(
+              paging = FALSE,
+              colReorder = TRUE,
+              dom = 'lftBip',
+              buttons = c('copy', 'csv', 'excel')
+          ))
 
 ```
 ```{r db_distr, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
@@ -274,7 +263,6 @@ pp
               dom = 'lftBip',
               buttons = c('copy', 'csv', 'excel')
         ))
-   # knitr::kable(dist_pval, format.args = list(scientific = TRUE))
 
 ```
 ```{r str_diff_predicted, results = 'asis', echo = FALSE, warning = FALSE, eval = FALSE}
@@ -321,7 +309,6 @@ pp
 
 ```{r prec_rec, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
     
-    # prec_recall <- prec_recall[prec_recall$strategy %in% valid_strats,]
     prec_recall$gold_standard <- factor(prec_recall$gold_standard, levels=c("predicted","validated","both"))
 
     for (metric in c("precision", "recall", "F1")) {
@@ -344,7 +331,6 @@ pp
       sec_text <- c(sec_text, knitr::knit_expand("partial/miRNA_cor_methods.Rmd")) # Body
       return(sec_text)
   }))    
-# save(list = ls(all.names = TRUE), file = file.path(opt$output_files, "debug.RData"), envir = environment())
 
 ``` 
 

@@ -81,10 +81,8 @@ summarize_multimir <- function(
     "validated_c" = c("mirecords", "mirtarbase", "tarbase"),
     "predicted_c" = pred_dbs[pred_dbs %in% unlist(selected_predicted_databases)]
     )
-    # for (db_type in names(dbs)) {
     multimir_table[["validated_c"]] <- rowSums(multimir_table[,
         dbs[["validated_c"]]], na.rm = TRUE)
-    # }
     for (pred_db in dbs$predicted_c) {
     multimir_table[is.na(multimir_table[,pred_db]), pred_db] <- 0
     }
@@ -145,8 +143,6 @@ perform_correlations <- function(
     all_pairs_info <- expand.grid(DEGS, DEMS, stringsAsFactors= FALSE, 
         KEEP.OUT.ATTRS = FALSE)
     colnames(all_pairs_info) <- c("RNAseq", "miRNAseq")
-    # all_pairs_info$RNAseq <- as.character(all_pairs_info$RNAseq)
-    # all_pairs_info$miRNAseq <- as.character(all_pairs_info$miRNAseq)
     all_pairs_info$correlation <- -1
     all_pairs_info$pval <- 0
     
@@ -157,7 +153,6 @@ perform_correlations <- function(
 
     RNA_profiles <- RNAseq[[strat_description[1]]]
     miRNA_profiles <- miRNAseq[[strat_description[2]]]
-    # print(strategy)
     print(str(RNA_profiles))
     print(str(miRNA_profiles))
 
@@ -168,7 +163,6 @@ perform_correlations <- function(
     all_pairs_info <- data.table::as.data.table(all_pairs_info)
 
     if (strat_description[1] != "normalized_counts"){
-    # message("expand RNA")
     relevant_genes <- RNAseq$DH_results$relevant_genes
     if (strat_description[1] == "Eigengene_0") {
     relevant_genes <- rep(TRUE, length(relevant_genes))
@@ -178,7 +172,6 @@ perform_correlations <- function(
     }
     
     if (strat_description[2] != "normalized_counts"){
-    # message("expand miRNA")
     relevant_genes <- miRNAseq$DH_results$relevant_genes
     if (strat_description[2] == "Eigengene_0") {
     relevant_genes <- rep(TRUE, length(relevant_genes))
@@ -205,8 +198,7 @@ perform_correlations <- function(
 #' @importFrom WGCNA corPvalueStudent
 #' @importFrom stats cor
 correlate_profiles <- function(RNA_profiles, miRNA_profiles) {
-    # str(RNA_profiles)
-    # str(miRNA_profiles)
+
 
     correlations <- WGCNA::cor(RNA_profiles, miRNA_profiles)
     
@@ -232,7 +224,6 @@ correlate_profiles <- function(RNA_profiles, miRNA_profiles) {
 #' @importFrom dplyr desc between row_number filter arrange group_by
 get_hub_genes_by_MM <- function(normalized_counts, hunter_results, top = 1){
     "%>%" <- magrittr::"%>%"
-    # hunter_results <- hunter_results[hunter_results$relevant_genes,]
 
     hub_genes <- hunter_results %>% 
     dplyr::filter(Cluster_MM_pval <= 0.05) %>% 
@@ -260,7 +251,6 @@ expand_module <- function(all_pairs_info, tag, DH_results){
     partial_expanded <- DH_results %>% dplyr::select(Cluster_ID, gene_name)
     partial_expanded <- data.table::as.data.table(partial_expanded)
     colnames(partial_expanded) <- c("module", tag)
-    # print(head(RNAseq))
     partial_expanded$module <- as.character(partial_expanded$module)
     all_pairs_info <- data.table::as.data.table(all_pairs_info)
     all_pairs_info <- data.table::merge.data.table(x = all_pairs_info, 
@@ -311,9 +301,7 @@ get_db_scores <- function(all_db_info){
     pred_db_score <- data.table::data.table(database = pred_db, 
         r_scores = all_db_info[, pred_db], 
         significant = all_db_info$correlated_pairs)
-    # print("1")
     pred_db_score <- pred_db_score[pred_db_score$r_scores > 0, ]
-    # print("2")
     return(pred_db_score) 
     })
     strats_r_scores <- data.table::rbindlist(strats_r_scores)
@@ -364,18 +352,13 @@ add_randoms <- function(background = NULL,
     all_strategies, 
     db_distribution = data.table(stringsAsFactors = FALSE)){
     background <- data.table::as.data.table(background)
-    # str(filters_summary)
     db_distribution <- list("0" = db_distribution)
     for (strategy_name in unique(filters_summary$strategy)) {
     random_dist <- list()
     message("debug_1")    
-    # sig_pairs <- rep(FALSE, nrow(background))
-    # sig_pairs[as.numeric(all_strategies[
-    #             all_strategies$strategy == strategy_name, "pair_n"])] <- TRUE
-    # strat_background <- background[!sig_pairs,]
+  
     sig_pairs_count <- filters_summary[filters_summary$strategy == 
                 strategy_name & filters_summary$type == "known_miRNAs", "pairs"]
-    # print(sig_pairs_count)
     for( i in seq(permutations)){ 
     message("\tdebug1_1")
     random_indices <- sample(nrow(background), 
@@ -445,14 +428,12 @@ calc_quantile <- function(value, distribution){
 
 pred_stats <- function(predicted, condition){ 
 #takes 2 true/false vectors and returns vector c(precision, recall, f measure)
-    # start_time <- Sys.time()    
     tpositives <- sum(predicted & condition)
     fnegatives <- sum(!predicted & condition)
     fpositives <- sum(predicted & !condition)
     precision <- tpositives / (tpositives + fpositives)
     recall <- tpositives / (tpositives + fnegatives)
     fmeasure <- calc_f_measure(precision, recall)
-    # print(Sys.time() - start_time)
     return(c(precision, recall, fmeasure))
 }
 

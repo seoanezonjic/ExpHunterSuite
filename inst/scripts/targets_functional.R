@@ -98,13 +98,11 @@ current_organism_info <- subset(all_organisms_info, rownames(
     all_organisms_info) %in% opt$organism)  
 nomenclatures <- unlist(strsplit(opt$func_annot_db, ","))
 
-# strategies <- unname(str_names[unlist(strsplit(opt$aproaches, ","))])
 strategy <- str_names[[opt$aproach]]
 
 output_files <- file.path(opt$output_files, strategy)
 dir.create(output_files)
 #Enrichments
-# for (strategy in strategies) {
 message(paste0("\tPerforming functional analysis for ", strategy))
 strategy_folder <- file.path(opt$target_miRNA_results, strategy)
 
@@ -115,8 +113,6 @@ if (!"target_results_table.txt" %in% list.files(strategy_folder)) {
 }
 raw_data <- read.table(file.path(strategy_folder, "target_results_table.txt"), 
     header=TRUE, row.names=NULL, sep="\t")
-# raw_data <- head(raw_data, 100)
-# q()
 
     unique_genes <- unique(raw_data[!raw_data$entrezgene %in% c("", NA), 
         c("entrezgene", "mean_logFCs")])
@@ -152,9 +148,7 @@ if ("g" %in% nomenclatures){
         return(enrich)
     })
     names(enrich_GO) <- GO_subontologies
-    # write.table(as.data.frame(do.call(rbind,lapply(enrich_GO,function(res) {
-    #    as.data.frame(res)}))), file=file.path(paths$root, "GO_CL_ora"), 
-    #        quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+
 }
 if (launch_expanded) {
     for (subont in GO_subontologies) {
@@ -185,8 +179,7 @@ if ("K" %in% nomenclatures) {
                                 ont = "KEGG", 
                                 useInternal = TRUE, 
                                 qvalueCutoff = opt$qthreshold)
-        # write.table(enrich_KEGG, file=file.path(paths$root, "KEGG_results"), 
-        #        quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+        
             
     }
     if (launch_expanded) {
@@ -213,8 +206,7 @@ if ("R" %in% nomenclatures) {
                                 pAdjustMethod = "BH",
                                 ont = "REACT", 
                                 qvalueCutoff = opt$qthreshold)        
-        # write.table(enrich_react, file=file.path(paths$root, "REACT_results"),
-        #        quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")    
+            
     }
     if (launch_expanded) {
         enrichments_ORA_expanded[["REACT"]] <- enrichment_clusters_ORA(
@@ -285,7 +277,6 @@ if (launch_expanded) {
              transpose = FALSE)))
         colnames(RNAseq[['normalized_counts']]) <- c("Sample","Gene","Count")
         
-        # str(miRNAseq[['normalized_counts']])
 
         miRNAseq[['normalized_counts']] <- scale_data_matrix(
             data_matrix = miRNAseq[['normalized_counts']], transpose = FALSE)
@@ -294,8 +285,6 @@ if (launch_expanded) {
         
         if (miRNA_strat == "h") {
             print(miRNA_strat)
-            # str(miRNAseq[["DH_results"]])
-            # str(miRNAseq[["normalized_counts"]])
             hub_miRNAs <- get_hub_genes_by_MM(miRNAseq[["normalized_counts"]], 
                 miRNAseq[["DH_results"]], top = 1)
             
@@ -327,8 +316,7 @@ if (launch_expanded) {
         'targets_global_report.Rmd'),output_file = outf_cls,
          intermediates_dir = output_files)
 }
-# 
-# }
+
 
 
 

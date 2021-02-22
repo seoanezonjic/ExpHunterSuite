@@ -7,75 +7,69 @@
 # => current_organism_info$Bioconductor_DB[1] :: organism database to translate genes
 # => method :: method object
 # => method_name :: method name
-	
-	method_name <- "{{method_name}}"
+  
+  method<- "{{method_name}}"
 
-	all_pairs_strat <- all_strategies[all_strategies$strategy == "{{method_name}}", ]
-	method_table <- all_pairs_strat[all_pairs_strat$validated_c > 0 | all_pairs_strat$predicted_c > 0,]
+ all_pairs_strat <- all_strategies[all_strategies$strategy == method, ]
+method_table <- all_pairs_strat[all_pairs_strat$validated_c > 0 | 
+                              all_pairs_strat$predicted_c > 0,]
 
-	method_table <- cbind(method_table, strategies$all_possible_pairs[method_table$pair_n, c("miRNAseq", "RNAseq")])
-	method_table$miRNA_names <- mirna_names[match(method_table$miRNAseq, mirna_names$Accession), "TargetName"]
-	if (!is.null(gene_id_translation)) {
-		method_table <- merge(method_table, gene_id_translation, by.x = "RNAseq", by.y = "ensembl_gene_id", all.x = TRUE)
-	}
-	if (nrow(method_table) > 0) {
-		# print(message(head(method_table)))
-		DH_results_genes <- match(method_table$RNAseq, RNAseq$DH_results$gene_name)
-		method_table$target_deg_tag <- RNAseq$DH_results[DH_results_genes, "genes_tag"]
+method_table <- cbind(method_table, strategies$all_possible_pairs[method_table$pair_n, c("miRNAseq", "RNAseq")])
+method_table$miRNA_names <- mirna_names[match(method_table$miRNAseq, mirna_names$Accession), "TargetName"]
+if (!is.null(gene_id_translation)) {
+method_table <- merge(method_table, gene_id_translation, by.x = "RNAseq", by.y = "ensembl_gene_id", all.x = TRUE)
+}
+if (nrow(method_table) > 0) {
+DH_results_genes <- match(method_table$RNAseq, RNAseq$DH_results$gene_name)
+method_table$target_deg_tag <- RNAseq$DH_results[DH_results_genes, "genes_tag"]
 
-		DH_results_miRNAs <- match(method_table$miRNAseq, miRNAseq$DH_results$gene_name)
-		approach <- unlist(strsplit("{{method_name}}", "_RNA_vs_miRNA_"))
-		if (approach[2] != "normalized_counts") {
+DH_results_miRNAs <- match(method_table$miRNAseq, miRNAseq$DH_results$gene_name)
+approach <- unlist(strsplit(method, "_RNA_vs_miRNA_"))
+if (approach[2] != "normalized_counts") {
 
-			method_table$miRNA_mod <- miRNAseq$DH_results[DH_results_miRNAs, "Cluster_ID"]		
-			method_table$miRNA_MM <- miRNAseq$DH_results[DH_results_miRNAs, "Cluster_MM"]	
+  method_table$miRNA_mod <- miRNAseq$DH_results[DH_results_miRNAs, "Cluster_ID"]    
+  method_table$miRNA_MM <- miRNAseq$DH_results[DH_results_miRNAs, "Cluster_MM"]  
 
-		}
-		if (approach[1] != "normalized_counts") {
-			
-			# print(DH_results_genes)
-			method_table$RNA_mod <- RNAseq$DH_results[DH_results_genes, "Cluster_ID"]		
-			method_table$RNA_MM <- RNAseq$DH_results[DH_results_genes, "Cluster_MM"]	
+}
+if (approach[1] != "normalized_counts") {
+  
+  method_table$RNA_mod <- RNAseq$DH_results[DH_results_genes, "Cluster_ID"]    
+  method_table$RNA_MM <- RNAseq$DH_results[DH_results_genes, "Cluster_MM"]  
 
-		}
-
-		# match_in_raw <- match(paste0(method_table$RNAseq, method_table$miRNAseq) , paste0(strategies$dd$all_pairs_info$RNAseq, strategies$dd$all_pairs_info$miRNAseq))
-		# ref_strategy <- 
-		# save(strategies, method_table, file = file.path(output_files, "test.RData"))
+}
 
 
-		aux <- as.data.frame(strategies[["normalized_counts_RNA_vs_miRNA_normalized_counts"]][match(method_table$pair_n, strategies[["normalized_counts_RNA_vs_miRNA_normalized_counts"]]$pair_n), c("correlation", "pval")])
-		 # <- as.vector(strategies[["normalized_counts_RNA_vs_miRNA_normalized_counts"]][method_table$pair_n, "pval"])
-		colnames(aux) <- c("raw_cor", "raw_pval")
-		method_table <- cbind(method_table, aux)
-		# method_table <- method_table[,c("miRNA_names", "miRNAseq", "RNAseq","entrezgene", "Symbol", "RNA_mod", "correlation", "raw_cor", "pval", "raw_pval","RNA_MM", "mean_logFCs", "target_deg_tag" )]
-		all_dems_summary <- data.frame()
-		all_dems_info <- data.frame()
-	}
+
+aux <- as.data.frame(strategies[["normalized_counts_RNA_vs_miRNA_normalized_counts"]][match(method_table$pair_n, strategies[["normalized_counts_RNA_vs_miRNA_normalized_counts"]]$pair_n), c("correlation", "pval")])
+colnames(aux) <- c("raw_cor", "raw_pval")
+method_table <- cbind(method_table, aux)
+all_dems_summary <- data.frame()
+all_dems_info <- data.frame()
+}
 ```
 
 
 ```{r "{{method_name}}_cor_miRNA_table_description", eval = nrow(method_table) > 0, results='asis', echo = FALSE, message=FALSE, warning=FALSE}
 
-		cat("### Significant pairs found in multiMiR\n\n")
+cat("### Significant pairs found in multiMiR\n\n")
 
 ```
 
 
 ```{r "{{method_name}}_cor_miRNA_table", eval = nrow(method_table) > 0, echo = FALSE, message=FALSE, warning=FALSE}
 
-		DT::datatable(method_table, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
-	        	options = list(
-		        	colReorder = TRUE,
-		        	dom = 'lftBip',
-		        	buttons = c('copy', 'csv', 'excel')
-        ))
+DT::datatable(method_table, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+        options = list(
+          colReorder = TRUE,
+          dom = 'lftBip',
+          buttons = c('copy', 'csv', 'excel')
+    ))
 ```
 
 
 ```{r "{{method_name}}_cor_miRNA_table_error", eval = ! nrow(method_table) > 0, results='asis', echo = FALSE, message=FALSE, warning=FALSE}
 
-		cat("This method was launched but no significant miRNA-target gene relations were found in multiMiR.\n")
+cat("This method was launched but no significant miRNA-target gene relations were found in multiMiR.\n")
 
 ```
 
@@ -85,41 +79,40 @@
 dems <- unique(miRNAseq$DH_results[miRNAseq$DH_results$genes_tag == "PREVALENT_DEG", "gene_name"])
 all_dems_info <- method_table[method_table$miRNAseq %in% dems, ]
 all_dems_summary <- data.frame( stringsAsFactors = FALSE)
-# rownames(dem_summary) <- dems
 for (mirna in unique(all_dems_info$miRNAseq)) {
-	dem_info <- all_dems_info[all_dems_info$miRNAseq == mirna, ]
-	dem_summary <- data.frame(stringsAsFactors = FALSE,
-								miRNA = mirna,
-								sig_targets = length(unique(dem_info$RNAseq)),
-								targets_in_multimir = length(unique(dem_info$RNAseq[dem_info$predicted_c > 0 | dem_info$validated_c > 0])),
-								pred_targets = length(unique(dem_info$RNAseq[dem_info$predicted_c > 0])),
-								val_targets = length(unique(dem_info$RNAseq[dem_info$validated_c > 0])),
-								pred_and_val_targets = length(unique(dem_info$RNAseq[dem_info$predicted_c > 0 & dem_info$validated_c > 0]))
-							)
-	all_dems_summary <- rbind(all_dems_summary, dem_summary)
+dem_info <- all_dems_info[all_dems_info$miRNAseq == mirna, ]
+dem_summary <- data.frame(stringsAsFactors = FALSE,
+            miRNA = mirna,
+            sig_targets = length(unique(dem_info$RNAseq)),
+            targets_in_multimir = length(unique(dem_info$RNAseq[dem_info$predicted_c > 0 | dem_info$validated_c > 0])),
+            pred_targets = length(unique(dem_info$RNAseq[dem_info$predicted_c > 0])),
+            val_targets = length(unique(dem_info$RNAseq[dem_info$validated_c > 0])),
+            pred_and_val_targets = length(unique(dem_info$RNAseq[dem_info$predicted_c > 0 & dem_info$validated_c > 0]))
+          )
+all_dems_summary <- rbind(all_dems_summary, dem_summary)
 }
 ```
 
 ```{r "{{method_name}}_dem_summary_text", echo = FALSE,  results='asis',message=FALSE, warning=FALSE, eval = nrow(all_dems_summary) > 0}
 
-	cat("### DEMs targets summary\n\n")
+cat("### DEMs targets summary\n\n")
 
 ```
 
 ```{r "{{method_name}}_dem_summary", echo = FALSE, message=FALSE, warning=FALSE, eval = nrow(all_dems_summary) > 0}
 
-	DT::datatable(all_dems_summary, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
-        	options = list(
-	        	colReorder = TRUE,
-	        	dom = 'lftBip',
-	        	buttons = c('copy', 'csv', 'excel')
-        ))
+DT::datatable(all_dems_summary, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+      options = list(
+        colReorder = TRUE,
+        dom = 'lftBip',
+        buttons = c('copy', 'csv', 'excel')
+    ))
 
 ```
 
 ```{r "{{method_name}}_dem_summary_error", echo = FALSE, results='asis', message=FALSE, warning=FALSE, eval = !nrow(all_dems_summary) > 0}
 
-		cat("No significant targets of known DEMs has been found.\n")
+cat("No significant targets of known DEMs has been found.\n")
 
 ```
 
@@ -127,35 +120,33 @@ for (mirna in unique(all_dems_info$miRNAseq)) {
 
 ```{r "{{method_name}}_dem_table_config", echo = FALSE, message=FALSE, warning=FALSE, eval = nrow(all_dems_info) > 0}
 
-	# all_dems_info <- method_table[method_table$miRNAseq %in% dems, ]
-	all_dems_info$mean_logFCs <- RNAseq$DH_results$mean_logFCs[match(all_dems_info$RNAseq, RNAseq$DH_results$gene_name)]
-	# print(message(head(method_table)))
-    outdir <- file.path(output_files, "{{method_name}}")
-    dir.create(outdir)
-	utils::write.table(all_dems_info, file = file.path(outdir, "target_results_table.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+all_dems_info$mean_logFCs <- RNAseq$DH_results$mean_logFCs[match(all_dems_info$RNAseq, RNAseq$DH_results$gene_name)]
+outdir <- file.path(output_files, method)
+dir.create(outdir)
+utils::write.table(all_dems_info, file = file.path(outdir, "target_results_table.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 
 ```
 
 ```{r "{{method_name}}_dem_table_text", results = "asis", echo = FALSE, message=FALSE, warning=FALSE, eval = nrow(all_dems_info) > 0}
 
-	cat("\n### DEMs pairs found in multiMiR.\n")
+cat("\n### DEMs pairs found in multiMiR.\n")
 
 ```
 
 ```{r "{{method_name}}_dem_table", echo = FALSE, message=FALSE, warning=FALSE, eval = nrow(all_dems_info > 0)}
 
-	DT::datatable(all_dems_info, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
-    	options = list(
-        	colReorder = TRUE,
-        	dom = 'lftBip',
-        	buttons = c('copy', 'csv', 'excel')
-    ))
+DT::datatable(all_dems_info, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+  options = list(
+      colReorder = TRUE,
+      dom = 'lftBip',
+      buttons = c('copy', 'csv', 'excel')
+))
 
 ``` 
 
 ```{r "{{method_name}}_dem_table_error", results='asis', echo = FALSE, message=FALSE, warning=FALSE, eval = !nrow(all_dems_info) > 0}
 
-	cat("\nThis method was launched but no significant DEG miRNA-target gene relations were found in multiMiR.\n")
+cat("\nThis method was launched but no significant DEG miRNA-target gene relations were found in multiMiR.\n")
 
 ```
 
@@ -163,36 +154,31 @@ for (mirna in unique(all_dems_info$miRNAseq)) {
 
 ```{r "{{method_name}}_cor_comparison_text", results='asis', echo = FALSE, message=FALSE, warning=FALSE, eval = nrow(all_dems_info) > 0}
 
-	cat("## Correlation comparison\n\n")
+cat("## Correlation comparison\n\n")
 
 ```
 ```{r "{{method_name}}_cor_comparison", echo = FALSE, message=FALSE, warning=FALSE, eval = nrow(all_dems_info) > 0}
-		if ( "{{method_name}}" != "normalized_counts_RNA_vs_miRNA_normalized_counts") {
 
-		# save(all_dems_info, file = file.path(output_files, "test.RData"))
-		# q()
-		}
-	ggplot2::ggplot(all_dems_info, ggplot2::aes(x = correlation, y = raw_cor)) + ggplot2::geom_point() 
-	
+ggplot2::ggplot(all_dems_info, ggplot2::aes(x = correlation, y = raw_cor)) + ggplot2::geom_point() 
+
 ```  
 
 
 
 ```{r "{{method_name}}_score_dist", echo = FALSE, message=FALSE, warning=FALSE, eval = nrow(method_table) > 0}
-	
-	score_dist <- score_filter[["{{method_name}}"]]
 
-	sig_score_dist <- score_dist[score_dist$significant,]
-		# save(score_dist, file = file.path(output_files, "test2.RData"))
+score_dist <- score_filter[[method]]
 
-	ggplot2::ggplot(score_dist, ggplot2::aes(x = r_scores, fill = database)) + ggplot2::geom_boxplot()
+sig_score_dist <- score_dist[score_dist$significant,]
+
+ggplot2::ggplot(score_dist, ggplot2::aes(x = r_scores, fill = database)) + ggplot2::geom_boxplot()
 
 ```
 
 ```{r "{{method_name}}_sig_score_dist", echo = FALSE, message=FALSE, warning=FALSE, eval = nrow(method_table) > 0}
 
-	ggplot2::ggplot(sig_score_dist, ggplot2::aes(x = r_scores, fill = database)) + ggplot2::geom_boxplot()
-	
+ggplot2::ggplot(sig_score_dist, ggplot2::aes(x = r_scores, fill = database)) + ggplot2::geom_boxplot()
+
 ```
 
 

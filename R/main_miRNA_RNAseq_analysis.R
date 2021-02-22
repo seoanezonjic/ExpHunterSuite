@@ -78,8 +78,6 @@ miRNA_RNAseq_analysis <- function(
     RNAseq <- filter_DEGH_data(RNAseq, module_membership_cutoff)
     miRNAseq <- filter_DEGH_data(miRNAseq, module_membership_cutoff)
 
-    ##### DEBUG_CONTROL A
-        time_control <- Sys.time()
 
     gc()
     corrected_positions <- paste0(strategies$all_possible_pairs$RNAseq, 
@@ -113,7 +111,6 @@ miRNA_RNAseq_analysis <- function(
         strategies$all_possible_pairs[actual_strategy$pair_n, 
              strategy] <- actual_strategy$correlated_pairs
     }
-    # save(strategies, file = file.path(output_files, "test4.RData"))
 
     stats_aux <- get_strategies_stats(data = strategies$all_possible_pairs, 
         input_cols= approaches , 
@@ -167,7 +164,7 @@ miRNA_RNAseq_analysis <- function(
                  all_possible_pairs = strategies$all_possible_pairs)
         
         ### Get Ranking Scores 
-        # message("Getting ranking scores")
+        message("Getting ranking scores")
         all_db_info <- strategies$all_possible_pairs[all_pairs_info$pair_n, 
            c("diana_microt", "elmmo", "microcosm", 
              "miranda","mirdb", "pictar", "pita", "targetscan")]
@@ -259,7 +256,6 @@ miRNA_RNAseq_analysis <- function(
         corr_cutoff = corr_cutoff,
         mirna_names = mirna_names,
         gene_id_translation = gene_id_translation,
-        # ref_strategy = ref_strategy,
         score_filter =score_filter,
         fet_pvals = fet_pvals,
         LR_test = LR_test,
