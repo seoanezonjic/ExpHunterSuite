@@ -52,7 +52,8 @@ target_generation <- function(from_file=NULL,
 #' @importFrom utils write.table
 #' @examples
 #' # Typically used with the @all_counts_for_plotting slot of the main output
-#' deg_res <- list(aa=data.frame(a=seq(5),b=seq(5)), bb=data.frame(a=seq(6,10),b=seq(6,10)))
+#' deg_res <- list(aa=data.frame(a=seq(5),b=seq(5)), 
+#'                 bb=data.frame(a=seq(6,10),b=seq(6,10)))
 #' write_df_list_as_tables(deg_res, prefix="test", root=tempdir())
 write_df_list_as_tables <- function(df_list, prefix, root=getwd()) {
   for(pack in names(df_list)) {

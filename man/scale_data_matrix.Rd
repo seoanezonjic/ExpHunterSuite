@@ -9,7 +9,8 @@ scale_data_matrix(data_matrix, transpose = FALSE)
 \arguments{
 \item{data_matrix}{to be scaled}
 
-\item{transpose}{boolena which indicates if matrix must be transposed. Default: FALSE}
+\item{transpose}{boolena which indicates if matrix must be transposed.
+Default: FALSE}
 }
 \value{
 scaled matrix

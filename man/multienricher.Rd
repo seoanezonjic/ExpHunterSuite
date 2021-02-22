@@ -22,13 +22,18 @@ multienricher(
 \arguments{
 \item{genes}{significant genes to be used (vector or list of vectors - clusters)}
 
-\item{organism_info}{organism table info. Must include entries depending on ontologies selected: Bioconductor_DB (GO), KeggCode (KEGG), Reactome_ID (Reactome)}
+\item{organism_info}{organism table info. Must include entries depending on
+ontologies selected: Bioconductor_DB (GO), KeggCode (KEGG), Reactome_ID
+(Reactome)}
 
-\item{keytype}{gene code type. If is a vector, will be used in the same order than ontology items are given}
+\item{keytype}{gene code type. If is a vector, will be used in the same
+order than ontology items are given}
 
-\item{ontology}{string with ontologIDs to be used. Allowed: Gene Ontology (BP: b ; MF: m ; CC: c), KEGG (k), Reactome (r)}
+\item{ontology}{string with ontologIDs to be used. Allowed: Gene Ontology
+(BP: b ; MF: m ; CC: c), KEGG (k), Reactome (r)}
 
-\item{enrichmentType}{enrichment technique to be used. Allowed: ORA (o) and GSEA (g)}
+\item{enrichmentType}{enrichment technique to be used. Allowed: ORA (o) and
+GSEA (g)}
 
 \item{pvalueCutoff}{p-value threshold}
 

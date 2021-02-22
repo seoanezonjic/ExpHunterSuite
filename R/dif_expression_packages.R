@@ -210,7 +210,8 @@ analysis_DESeq2 <- function(data, p_val_cutoff, target, model_formula_text){
                    DESeq2_dataset=dds)))
 }
 
-#' @importFrom edgeR DGEList calcNormFactors estimateDisp exactTest glmQLFit glmQLFTest topTags cpm
+#' @importFrom edgeR DGEList calcNormFactors estimateDisp exactTest glmQLFit 
+#' glmQLFTest topTags cpm
 #' @importFrom stats formula model.matrix
 analysis_edgeR <- function(data, target, model_formula_text){
     # This is the default model_formula_text if nothing else is given.

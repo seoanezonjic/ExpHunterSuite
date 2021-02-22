@@ -1,4 +1,4 @@
-################################# GENERAL FUNCTIONS ##############################################
+################## GENERAL FUNCTIONS ########################
 
 #' Method used to import hidden functions legally for CRAN check
 #' @param pkg package
@@ -161,7 +161,8 @@ save_times <- function(time_control,
 #' @param X R list
 #' @param FUNC Function to execute in each element of the list
 #' @param workers Number of process to use in parallel execution
-#' @param task_size Number of list elements to be executed on each BiocParallel task
+#' @param task_size Number of list elements to be executed on each 
+#' BiocParallel task
 #' @param ... Additional arguments to BiocParallel or to FUNC
 #' @keywords performance
 #' @return list

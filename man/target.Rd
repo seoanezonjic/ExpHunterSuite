@@ -5,7 +5,8 @@
 \alias{target}
 \title{Target data containing sample information for the toc data}
 \format{
-A data.frame of sample information. Rows are samples, columns are different experimental variables/factors
+A data.frame of sample information. Rows are samples, columns are
+different experimental variables/factors
 }
 \usage{
 data(target)

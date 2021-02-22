@@ -5,7 +5,8 @@
 \alias{toc}
 \title{Table of counts dummy dataset for DEgeneHunter examples}
 \format{
-A truncated data.frame of aligned read counts for genes (rows) and samples (columns)
+A truncated data.frame of aligned read counts for genes (rows) and
+samples (columns)
 }
 \usage{
 data(toc)

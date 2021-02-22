@@ -4,7 +4,8 @@
 #'
 #' @usage data(toc)
 #'
-#' @format A truncated data.frame of aligned read counts for genes (rows) and samples (columns)
+#' @format A truncated data.frame of aligned read counts for genes (rows) and 
+#' samples (columns)
 #'
 #' @keywords datasets
 #'
@@ -18,7 +19,8 @@
 #'
 #' @usage data(target)
 #'
-#' @format A data.frame of sample information. Rows are samples, columns are different experimental variables/factors
+#' @format A data.frame of sample information. Rows are samples, columns are 
+#' different experimental variables/factors
 #'
 #' @keywords datasets
 #'

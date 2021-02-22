@@ -27,7 +27,8 @@ enrich_GSEA(
 
 \item{ont}{ontology to be used. Allowed (GO_MF, GO_CC, GO_BP, KEGG, REACT)}
 
-\item{useInternal}{used only for KEGG enrichment, activate internal data usage mode}
+\item{useInternal}{used only for KEGG enrichment, activate internal data
+usage mode}
 }
 \value{
 enrichment performed

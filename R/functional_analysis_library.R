@@ -328,7 +328,8 @@ perform_topGO_local <- function(entrez_targets,
 
 #' Scale a matrix using minimum-maximum method
 #' @param data_matrix to be scaled
-#' @param transpose boolena which indicates if matrix must be transposed. Default: FALSE
+#' @param transpose boolena which indicates if matrix must be transposed. 
+#' Default: FALSE
 #' @keywords method
 #' @return scaled matrix
 scale_data_matrix <- function(data_matrix, transpose = FALSE){
@@ -420,12 +421,14 @@ perform_topGO <- function(attr_name,
 }
 
 
-#' Mutate enrichment object to remove conflict of IDs or Descriptions for fortify
+#' Mutate enrichment object to remove conflict of IDs or Descriptions for
+#' fortify
 #' @param enr enrichment object
 #' @return enrichment object with repeated IDs or Description cleaned
 prepare_for_fortify <- function(enr){
   res <- enr
-  # Check possible categories repetition (same term, different ID => alternative IDs usage)
+  # Check possible categories repetition (same term, 
+  # different ID => alternative IDs usage)
   slotDF <- slotNames(res)[1]
   cats_dict <- slot(res,slotDF)[,c("ID","Description")]
   cats_dict <- unique(cats_dict)
@@ -497,10 +500,12 @@ catched_pairwise_termsim <- function(enr, num_cats = 200){
 #' @param pvalueCutoff p-value threshold
 #' @param pAdjustMethod p-valued adjust method to be applied
 #' @param ont ontology to be used. Allowed (GO_MF, GO_CC, GO_BP, KEGG, REACT)
-#' @param useInternal used only for KEGG enrichment, activate internal data usage mode
+#' @param useInternal used only for KEGG enrichment, activate internal data 
+#' usage mode
 #' @param qvalueCutoff q-value threshold
 #' @param ENRICH_DATA optional enrichment universe already loaded
-#' @param semsim flag to indicate if semantic similitud must be calculated. Necessary for emaplots
+#' @param semsim flag to indicate if semantic similitud must be calculated. 
+#' Necessary for emaplots
 #' @keywords enrich
 #' @return enrichment table obtained
 #' @importFrom clusterProfiler enrichGO enrichKEGG
@@ -723,7 +728,8 @@ load_and_parse_gmt <- function(gmt_file) {
 #' @param pvalueCutoff p-value threshold
 #' @param pAdjustMethod p-value adjust method to be applied
 #' @param ont ontology to be used. Allowed (GO_MF, GO_CC, GO_BP, KEGG, REACT)
-#' @param useInternal used only for KEGG enrichment, activate internal data usage mode
+#' @param useInternal used only for KEGG enrichment, activate internal data 
+#' usage mode
 #' @return enrichment performed
 #' @keywords enrich
 #' @importFrom clusterProfiler gseGO gseKEGG
@@ -792,7 +798,9 @@ enrich_GSEA <- function(geneList,
 #' @param pvalueCutoff p-value threshold
 #' @param pAdjustMethod p-value adjust method to be applied
 #' @param ont ontology to be used
-#' @param useInternal optional KEGG param used to indicate if already downloaded KEGG database must be used or online API must be called. DEfault: FALSE
+#' @param useInternal optional KEGG param used to indicate if already 
+#' downloaded KEGG database must be used or online API must be called.
+#' DEfault: FALSE
 #' @keywords enrich
 #' @return enrichment tables obtained
 perform_GSEA_clusters <- function(all_clusters, 
@@ -825,7 +833,8 @@ perform_GSEA_clusters <- function(all_clusters,
 #' @param pvalueCutoff p-value threshold
 #' @param pAdjustMethod p_value adjust method to be applied
 #' @param ont ontology to be used. Allowed (GO_MF, GO_CC, GO_BP, KEGG, REACT)
-#' @param useInternal used only for KEGG enrichment, activate internal data usage mode
+#' @param useInternal used only for KEGG enrichment, activate internal 
+#' data usage mode
 #' @param qvalueCutoff q-value threshold
 #' @param ENRICH_DATA optional enrichment universe already loaded 
 #' @param cores optional number of parallel cores to be used. See mcapply
@@ -936,10 +945,15 @@ get_organism_table <- function(file = file.path(find.package('ExpHunterSuite'),
 
 #' Perform enrichment of ORA and/or GSEA using a set of genes given
 #' @param genes significant genes to be used (vector or list of vectors - clusters)
-#' @param organism_info organism table info. Must include entries depending on ontologies selected: Bioconductor_DB (GO), KeggCode (KEGG), Reactome_ID (Reactome)
-#' @param keytype gene code type. If is a vector, will be used in the same order than ontology items are given
-#' @param ontology string with ontologIDs to be used. Allowed: Gene Ontology (BP: b ; MF: m ; CC: c), KEGG (k), Reactome (r) 
-#' @param enrichmentType enrichment technique to be used. Allowed: ORA (o) and GSEA (g)
+#' @param organism_info organism table info. Must include entries depending on 
+#' ontologies selected: Bioconductor_DB (GO), KeggCode (KEGG), Reactome_ID 
+#' (Reactome)
+#' @param keytype gene code type. If is a vector, will be used in the same 
+#' order than ontology items are given
+#' @param ontology string with ontologIDs to be used. Allowed: Gene Ontology
+#' (BP: b ; MF: m ; CC: c), KEGG (k), Reactome (r) 
+#' @param enrichmentType enrichment technique to be used. Allowed: ORA (o) and 
+#' GSEA (g)
 #' @param pvalueCutoff p-value threshold
 #' @param pAdjustMethod p-value adjust method to be applied
 #' @param qvalueCutoff q-value threshold. ONLY USED FOR ORA.

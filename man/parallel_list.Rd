@@ -13,7 +13,8 @@ parallel_list(X, FUNC, workers = 2, task_size = 1, ...)
 
 \item{workers}{Number of process to use in parallel execution}
 
-\item{task_size}{Number of list elements to be executed on each BiocParallel task}
+\item{task_size}{Number of list elements to be executed on each
+BiocParallel task}
 
 \item{...}{Additional arguments to BiocParallel or to FUNC}
 }

@@ -2,7 +2,8 @@
 % Please edit documentation in R/functional_analysis_library.R
 \name{prepare_for_fortify}
 \alias{prepare_for_fortify}
-\title{Mutate enrichment object to remove conflict of IDs or Descriptions for fortify}
+\title{Mutate enrichment object to remove conflict of IDs or Descriptions for
+fortify}
 \usage{
 prepare_for_fortify(enr)
 }
@@ -13,5 +14,6 @@ prepare_for_fortify(enr)
 enrichment object with repeated IDs or Description cleaned
 }
 \description{
-Mutate enrichment object to remove conflict of IDs or Descriptions for fortify
+Mutate enrichment object to remove conflict of IDs or Descriptions for
+fortify
 }

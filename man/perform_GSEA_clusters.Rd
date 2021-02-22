@@ -27,7 +27,9 @@ perform_GSEA_clusters(
 
 \item{ont}{ontology to be used}
 
-\item{useInternal}{optional KEGG param used to indicate if already downloaded KEGG database must be used or online API must be called. DEfault: FALSE}
+\item{useInternal}{optional KEGG param used to indicate if already
+downloaded KEGG database must be used or online API must be called.
+DEfault: FALSE}
 }
 \value{
 enrichment tables obtained

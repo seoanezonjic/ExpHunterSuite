@@ -215,7 +215,8 @@ set_standard_size <- function(pp){
   return(pp)
 }
 
-#' @importFrom ggplot2 ggplot aes_string geom_tile theme_minimal theme element_blank element_text scale_fill_gradient2 geom_text
+#' @importFrom ggplot2 ggplot aes_string geom_tile theme_minimal theme 
+#' element_blank element_text scale_fill_gradient2 geom_text
 gg_heatmap <- function(data_table, 
   input = "", 
   traspose = FALSE, 
@@ -292,7 +293,8 @@ extract_legend <- function(a.gplot){
 #' @param alpha : transparency of dots
 #' @return plot ready to be rendered
 #' @author Fernando Moreno Jabato <jabato(at)uma(dot)com>
-#' @importFrom ggplot2 ggplot aes_string geom_point scale_shape_manual ylim xlab ggtitle theme theme_classic element_blank
+#' @importFrom ggplot2 ggplot aes_string geom_point scale_shape_manual ylim 
+#' xlab ggtitle theme theme_classic element_blank
 #' @importFrom stats var
 ht2logFCPlot <- function(ht,
   var_filter = 0.001, 

@@ -31,7 +31,8 @@ enrichment_clusters_ORA(
 
 \item{ont}{ontology to be used. Allowed (GO_MF, GO_CC, GO_BP, KEGG, REACT)}
 
-\item{useInternal}{used only for KEGG enrichment, activate internal data usage mode}
+\item{useInternal}{used only for KEGG enrichment, activate internal
+data usage mode}
 
 \item{qvalueCutoff}{q-value threshold}
 

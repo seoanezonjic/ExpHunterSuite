@@ -170,11 +170,14 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE,
 
 
 #' @importFrom utils assignInNamespace write.table
-#' @importFrom WGCNA pickSoftThreshold blockwiseModules labels2colors plotDendroAndColors moduleEigengenes corPvalueStudent binarizeCategoricalVariable orderMEs
+#' @importFrom WGCNA pickSoftThreshold blockwiseModules labels2colors 
+#' plotDendroAndColors moduleEigengenes corPvalueStudent 
+#' binarizeCategoricalVariable orderMEs
 #' @importFrom grDevices pdf dev.control recordPlot dev.off
 #' @importFrom graphics par text abline
 #' @importFrom stats cor
-#' @importFrom ggplot2 ggplot scale_x_continuous scale_y_continuous geom_count aes_string
+#' @importFrom ggplot2 ggplot scale_x_continuous scale_y_continuous 
+#' geom_count aes_string
 analysis_WGCNA <- function(data,
                           path, 
                           target_numeric_factors, 

@@ -30,13 +30,15 @@ enrichment_ORA(
 
 \item{ont}{ontology to be used. Allowed (GO_MF, GO_CC, GO_BP, KEGG, REACT)}
 
-\item{useInternal}{used only for KEGG enrichment, activate internal data usage mode}
+\item{useInternal}{used only for KEGG enrichment, activate internal data
+usage mode}
 
 \item{qvalueCutoff}{q-value threshold}
 
 \item{ENRICH_DATA}{optional enrichment universe already loaded}
 
-\item{semsim}{flag to indicate if semantic similitud must be calculated. Necessary for emaplots}
+\item{semsim}{flag to indicate if semantic similitud must be calculated.
+Necessary for emaplots}
 }
 \value{
 enrichment table obtained
