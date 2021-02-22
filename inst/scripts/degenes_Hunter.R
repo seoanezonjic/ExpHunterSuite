@@ -149,7 +149,7 @@ option_list <- list(
       " signed Nowick 2). If none, adjacency will be used for clustering.",
       " Default=%default")),
   optparse::make_option(c("--WGCNA_minCoreKME"), type="double", default=0.7, 
-    help=psate0("Minimum module membership threshold to define module core.",
+    help=paste0("Minimum module membership threshold to define module core.",
       " Modules under the threshold will not be considered. Default=%default")),
   optparse::make_option(c("--WGCNA_minCoreKMESize"), type="integer", 
     default=NULL, 
@@ -182,7 +182,7 @@ if (is.null(opt$external_DEA_file)) {
 # Check either C and T columns or target file.
   if( (is.null(opt$Treatment_columns) | is.null(opt$Control_columns)) & 
        is.null(opt$target_file)) {
-    stop(cat(psate0("You must include either the names of the control and",
+    stop(cat(paste0("You must include either the names of the control and",
       " treatment columns or a target file with a treat column.")))
   }
   # In the case of -C/-T AND -t target - give a warning

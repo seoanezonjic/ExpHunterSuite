@@ -20,7 +20,7 @@ multienricher(
 )
 }
 \arguments{
-\item{genes}{significant genes to be used (vector or list of vectors - clusters)}
+\item{genes}{significant genes: vector or list of vectors for each cluster}
 
 \item{organism_info}{organism table info. Must include entries depending on
 ontologies selected: Bioconductor_DB (GO), KeggCode (KEGG), Reactome_ID
@@ -60,8 +60,10 @@ data(degh_output)
 genes <- head(rownames(degh_output$raw_filter),1000) 
 # You need to translate to entrez if you want use all ontology types
 ontologies <- "" # Select your wanted ontologies
+organisms_table <- get_organism_table()
 current_organism_info <- subset(organisms_table, 
                          rownames(organisms_table) == "Human")
-enrch <- multienricher(genes = genes, ontology = "") # Return NULL.
+enrch <- multienricher(genes = genes, organism_info = current_organism_info,
+ontology = "") # Return NULL.
 }
 \keyword{enrich}

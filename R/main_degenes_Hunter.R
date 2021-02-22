@@ -194,15 +194,6 @@ main_degenes_Hunter <- function(
     DE_all_genes <- unite_DEG_pack_results(exp_results, p_val_cutoff, 
                                            lfc, minpack_common)
     
-# if(grepl("P", modules)) { # CASE P: PCIT, TODO: RESTORE FUNCTION, PEDRO 
-#   # TODO : This is not working, variables "DESeq2_counts" 
-#   #  are not being generated inside this function
-#   metrics_pcit <- analysis_diff_correlation(DE_all_genes, DESeq2_counts, 
-#            DESeq2_counts_control, DESeq2_counts_treatment, PCIT_filter=FALSE)
-#   DE_all_genes <- transform(merge(DE_all_genes, metrics_pcit, by.x=0, by.y=0),
-#                             row.names=Row.names, Row.names=NULL)
-# }
-    
     if(grepl("W", modules)) { # Check WGCNA was run and returned proper results
       DE_all_genes <- transform(merge(DE_all_genes, 
           combinations_WGCNA[['WGCNA_all']][['gene_cluster_info']], 
@@ -331,7 +322,7 @@ check_input_main_degenes_Hunter <- function(raw,
     # If factors are specified but WGCNA not selected, throw a warning.
     if((string_factors != "" | numeric_factors != "") & 
        (!grepl("W", modules) | is.null(target))) {
-      warning(psate0("If you wish to use factors for the correlation analysis",
+      warning(paste0("If you wish to use factors for the correlation analysis",
         " you must also run WGCNA and include a target file. The -S",
         " and -N options will be ignored"))
     }

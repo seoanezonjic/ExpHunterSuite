@@ -41,8 +41,8 @@ write_expression_report <- function(exp_results,
     DE_all_genes <- exp_results[['DE_all_genes']] 
 
     outf <- file.path(normalizePath(output_files),"DEG_report.html")
-    rmarkdown::render(file.path(template_folder, 'main_report.Rmd'), 
-                      output_file = outf, intermediates_dir = output_files)	
+    rmarkdown::render(file.path(template_folder, 'main_report.Rmd'),
+                      output_file = outf, intermediates_dir = output_files)
 }
 
 
@@ -74,7 +74,7 @@ write_functional_report <- function(hunter_results,
                                     output_files=getwd(), 
                                     fc_colname="mean_logFCs", 
        organisms_table=NULL, 
-       template_folder = file.path(find.package('ExpHunterSuite'), 'templates'), 
+       template_folder = file.path(find.package('ExpHunterSuite'), 'templates'),
                                     cores = 2,
                                     task_size = 1, 
                                     report = "fc"){
@@ -123,7 +123,7 @@ write_functional_report <- function(hunter_results,
         wgcna_corr_cl_trait <- as.matrix(aux2$module_trait_cor)
         wgcna_count_sample_trait <- as.matrix(aux[,!grepl("^ME",
             colnames(aux))])
-        wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait)        
+        wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait)
     }
     #-
     if(any(grepl("WGCNA_ORA",names(func_results)))){

@@ -103,7 +103,7 @@ samples we obtain the following:
 
 ```{r standard_DEA_model_target, echo=TRUE, results="as.is"}
 target_multi <- data.frame(target,
-	age_group = c("adult", "child", "adult", "child", "adult", "adult", "child"))
+    age_group = c("adult", "child", "adult", "child", "adult", "adult", "child"))
 target_multi
 ```
 

@@ -45,7 +45,7 @@ miRNA_RNAseq_analysis <- function(
     organism_info <- utils::read.table(organism_table_path, 
         header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, 
         fill = NA) 
-    organism_info <- subset(organism_info, organism_info$KeggCode %in% organism)  
+    organism_info <- subset(organism_info, organism_info$KeggCode %in% organism)
 
 
     #Prepare multiMiR

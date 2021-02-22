@@ -15,7 +15,7 @@ option_list <- list(
         help="Tabulated file with information about each sample"),
     optparse::make_option(c("-c", "--cache_mode"), type="logical", 
         default=FALSE, action = "store_true",
-        help=psate0("In this mode each chunk wil be launched in a diferent",
+        help=paste0("In this mode each chunk wil be launched in a diferent",
             " job. You must launch this script many times as chunks you have",
             " divided the data. You can incorporate this mode inside a loop",
             " and check if output/temp/finished exist"))

@@ -50,9 +50,10 @@ unite_DEG_pack_results <- function(exp_results,
   # Add TRUE/FALSE for each DEG package
   for(i in seq(length(all_DE))) {
     all_DE_df[DEG_pack_columns[i]] <- all_DE_df[, 
-                                final_FDR_names[i]] < p_val_cutoff & 
-                                abs(all_DE_df[, final_logFC_names[i]]) >= lfc
-    all_DE_df[DEG_pack_columns[i]][is.na(all_DE_df[DEG_pack_columns[i]])]<-FALSE
+                              final_FDR_names[i]] < p_val_cutoff & 
+                              abs(all_DE_df[, final_logFC_names[i]]) >= lfc
+    all_DE_df[DEG_pack_columns[i]][
+    is.na(all_DE_df[DEG_pack_columns[i]])] <- FALSE
     # Check: if no DE genes for package, give warning
     if(sum(all_DE_df[, DEG_pack_columns[i]]) == 0) 
       warning(paste("No significant", DEG_pack_columns[i], "found"))
@@ -62,7 +63,7 @@ unite_DEG_pack_results <- function(exp_results,
  
   # Calc and add combined FDR-values
   log_FDR <- log(all_DE_df[final_FDR_names]) # Log all final p-values
-  log_FDR[is.na(log_FDR)] <- 0 # any NAs made 0s -> not contribute combined Scor
+  log_FDR[is.na(log_FDR)] <- 0 # any NAs made 0s -> not used combined score 
   if("FDR_NOISeq" %in% final_FDR_names){ # NOISeq can give FDR values of 0 
                                         #- these become 0 when -logged:
     log_FDR[,"FDR_NOISeq"][log_FDR[,"FDR_NOISeq"] == -Inf] <- sort(
@@ -72,7 +73,8 @@ unite_DEG_pack_results <- function(exp_results,
 
   xi_squared <-  -2 * rowSums(log_FDR)
   degrees_freedom <- 2 * length(final_FDR_names)
-  combined_FDR <- stats::pchisq(xi_squared, degrees_freedom, lower.tail = FALSE)
+  combined_FDR <- stats::pchisq(xi_squared, degrees_freedom, 
+                                lower.tail = FALSE)
   all_DE_df[,"combined_FDR"] <- combined_FDR
 
   # Reorder by combined FDR value
@@ -124,7 +126,8 @@ debug_point <- function(file, message = "Debug point",envir = NULL){
 
     envir$debug_message <- message
     on.exit(file.remove(file))
-    save(list = names(envir), file = file, envir = envir, precheck = FALSE)      
+    save(list = names(envir), file = file, 
+         envir = envir, precheck = FALSE)      
     on.exit()
 }
 
@@ -146,7 +149,8 @@ save_times <- function(time_control,
     pp <- ggplot2::ggplot(spent_times_df, ggplot2::aes_string(x = "control", 
                                                               y = "time")) +
           ggplot2::geom_bar(stat = "identity") +
-          ggplot2::theme(axis.text.x=ggplot2::element_text(angle = 25, hjust=1))
+          ggplot2::theme(axis.text.x=ggplot2::element_text(angle = 25, 
+                                                           hjust=1))
     grDevices::pdf(file.path(dirname(output), plot_name))    
       plot(pp)
     grDevices::dev.off()

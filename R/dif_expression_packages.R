@@ -217,7 +217,7 @@ analysis_edgeR <- function(data, target, model_formula_text){
     # This is the default model_formula_text if nothing else is given.
     if(model_formula_text == "~ treat") {
     # Building edgeR object
-        d_edgeR <- edgeR::DGEList(counts=data, group=as.character(target$treat))   
+        d_edgeR <- edgeR::DGEList(counts=data, group=as.character(target$treat))
         d_edgeR <- edgeR::calcNormFactors(d_edgeR)
         d_edgeR <- edgeR::estimateDisp(d_edgeR)
         d_edgeR_DE <- edgeR::exactTest(d_edgeR, dispersion = "auto", 

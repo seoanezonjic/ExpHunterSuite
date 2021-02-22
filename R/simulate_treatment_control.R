@@ -28,8 +28,8 @@ STC <- function(Ngene = 1000,
     # Load & prepare base data
     if(is.null(bcount)){
         # require(TCC)
-        utils::data("arab", package = "TCC")
-        bcount <- arab
+        # utils::data("arab", package = "TCC")
+        bcount <- TCC::arab
         group <- seq(3)
     }
     if(is.null(group)){

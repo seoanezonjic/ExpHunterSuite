@@ -3,7 +3,7 @@
 #' @importFrom diffcoexp diffcoexp
 #' @importFrom utils write.table
 #' @importFrom SummarizedExperiment assay
-vanalysis_diffcoexp <- function(data, path, target) {
+analysis_diffcoexp <- function(data, path, target) {
     dds <- DESeq2::DESeqDataSetFromMatrix(countData = data, 
                                           colData = target["treat"], 
                                           design = ~ treat)
@@ -63,8 +63,8 @@ build_design_for_WGCNA <- function(target,
             if(TRUE %in% numeric_factors_index) {
               target_numeric_factors <- target[numeric_factors_index]
             } else {
-              stop(cat(paste0("Factors specified with the --numeric_factors",
-              " option cannot be found in the target file.\nPlease resubmit.")))
+              stop(cat(paste0("Factors specified with the --numeric_factors ",
+              "option cannot be found in the target file.\nPlease resubmit.")))
             }
         } else {
             target_numeric_factors <- ""
@@ -134,7 +134,7 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE,
                        WGCNA_deepsplit=WGCNA_deepsplit,
                        WGCNA_detectcutHeight=WGCNA_detectcutHeight,
                        WGCNA_mergecutHeight=WGCNA_mergecutHeight,
-                       WGCNA_min_genes_cluster=WGCNA_min_genes_cluster,                    
+                       WGCNA_min_genes_cluster=WGCNA_min_genes_cluster,
                        cor_only=TRUE, 
                        blockwiseNetworkType = WGCNA_blockwiseNetworkType, 
                        blockwiseTOMType = WGCNA_blockwiseTOMType,
@@ -229,7 +229,7 @@ analysis_WGCNA <- function(data,
     }
 
     if(is.na(min_pow_ind)) {
-        warning(paste0("Could not obtain a valid power (beta) value for WGCNA,",
+        warning(paste0("Could not obtain a valid power (beta) value for WGCNA",
             " so the default of 30 will be used - proceed with caution"))
         # assumes 30 will be the largest testable power
         min_pow_ind <- length(sft_mfs_r2) 
@@ -241,7 +241,7 @@ analysis_WGCNA <- function(data,
         grDevices::dev.control(displaylist="enable")
         graphics::par(mfrow = c(1,2));
         cex1 = 0.9;
-    # Scale-free topology fit index as a function of the soft-thresholding power
+    # Scale-free topology fit index as function of the soft-thresholding power
         plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
              xlab="Soft Threshold (power)",
              ylab="Scale Free Topology Model Fit,signed R^2",type="n",
@@ -280,7 +280,7 @@ analysis_WGCNA <- function(data,
         saveTOM_TF <- TRUE
     }
 
-    cor <- WGCNA::cor # This is an issue which has been reported to WGCNA author
+    cor <- WGCNA::cor # This issue has been reported to the WGCNA author
     net <- WGCNA::blockwiseModules(data, power = pow,
         # Increase to memory limit in order to obtain more realistic results
                             maxBlockSize = WGCNA_memory, 
@@ -345,7 +345,7 @@ analysis_WGCNA <- function(data,
         trait <- data.frame(trait, target_numeric_factors)
     }
     if(is.data.frame(target_string_factors)) {
-    # Code to convert the string factors to numeric (1 vs. 0 for each category).
+    # Code to convert string factors to numeric (1 vs. 0 for each category).
     # NOTE YOU NEED A MINIMUM COUNT OF 2 FOR EACH CATEGORY IN THE FACTORS
         binarized_string_factors <- lapply(names(target_string_factors), 
             function(factor_name) {
@@ -411,15 +411,15 @@ analysis_WGCNA <- function(data,
     ####################################################################
     # Report tables: 
     # Genes per module 
-    gene_module_cor <- as.data.frame(WGCNA::cor(data, MEs, use = "p"));
+    gene_module_cor <- as.data.frame(WGCNA::cor(data, MEs, use = "p"))
     gene_module_cor_p <- as.data.frame(WGCNA::corPvalueStudent(
-                                         as.matrix(gene_module_cor), nSamples));
+                                        as.matrix(gene_module_cor), nSamples))
     colnames(gene_module_cor_p) = colnames(gene_module_cor) <- gsub("ME", 
-                                       "Cluster_", colnames(gene_module_cor_p) )
+                                       "Cluster_", colnames(gene_module_cor_p))
     # Genes per trait
     gene_trait_cor <- as.data.frame(WGCNA::cor(data, trait, use = "p"));
     gene_trait_cor_p <- as.data.frame(WGCNA::corPvalueStudent(
-                                          as.matrix(gene_trait_cor), nSamples));
+                                          as.matrix(gene_trait_cor), nSamples))
     # Module per trait 
     # (also produced above for the plot - should give smae results.)
     module_trait_cor = WGCNA::cor(MEs, trait, use = "p")
@@ -469,21 +469,21 @@ analysis_WGCNA <- function(data,
     #                         function(x) gene_module_cor_p[x,cluster_ID[x]+1]))
 
     return(list(
-            gene_cluster_info = data.frame(ENSEMBL_ID = names(cluster_ID), 
-                                           Cluster_ID = as.numeric(cluster_ID),
-                                           Cluster_MM = Cluster_MM,
-                                           Cluster_MM_pval = Cluster_MM_pval),
-            package_objects=list(gene_module_cor = gene_module_cor, 
-                                 gene_module_cor_p = gene_module_cor_p,
-                                 gene_trait_cor = gene_trait_cor, 
-                                 gene_trait_cor_p = gene_trait_cor_p, 
-                                 module_trait_cor = module_trait_cor, 
-                                 module_trait_cor_p = module_trait_cor_p),
-            plot_objects=list(sorted_colours = WGCNA::labels2colors(ME_numeric),
-                              trait_vs_module = moduleTraitCor_df,
-                              trait_and_module = ME_numeric_traits,
-                              power_threshold_effects = power_threshold_effects,
-                              cluster_vs_MM = cluster_vs_MM)
+          gene_cluster_info = data.frame(ENSEMBL_ID = names(cluster_ID), 
+                                         Cluster_ID = as.numeric(cluster_ID),
+                                         Cluster_MM = Cluster_MM,
+                                         Cluster_MM_pval = Cluster_MM_pval),
+          package_objects=list(gene_module_cor = gene_module_cor, 
+                               gene_module_cor_p = gene_module_cor_p,
+                               gene_trait_cor = gene_trait_cor, 
+                               gene_trait_cor_p = gene_trait_cor_p, 
+                               module_trait_cor = module_trait_cor, 
+                               module_trait_cor_p = module_trait_cor_p),
+          plot_objects=list(sorted_colours = WGCNA::labels2colors(ME_numeric),
+                            trait_vs_module = moduleTraitCor_df,
+                            trait_and_module = ME_numeric_traits,
+                            power_threshold_effects = power_threshold_effects,
+                            cluster_vs_MM = cluster_vs_MM)
             )
     )
 }

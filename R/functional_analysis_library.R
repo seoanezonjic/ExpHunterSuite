@@ -328,26 +328,20 @@ perform_topGO_local <- function(entrez_targets,
 
 #' Scale a matrix using minimum-maximum method
 #' @param data_matrix to be scaled
-#' @param transpose boolena which indicates if matrix must be transposed. 
+#' @param transpose boolen flag which indicates if matrix should be transposed. 
 #' Default: FALSE
+#' @importFrom matrixStats rowRanges rowDiffs
 #' @keywords method
 #' @return scaled matrix
-scale_data_matrix <- function(data_matrix, transpose = FALSE){
-  if ( transpose ) {
+scale_data_matrix <- function(data_matrix, transpose = FALSE) {
+  if ( transpose == FALSE) {
     data_matrix <- t(data_matrix)
   } 
-  scaled_counts <- apply(data_matrix, 2, function(column) {
-    minimum <- min(column, na.rm=TRUE)
-    maximum <- max(column, na.rm=TRUE)
-    difference <- maximum - minimum
-    if (difference == 0) { 
-      scaled_column <- column
-    } else {
-      scaled_column <- (column - minimum) / difference
-    }
-    return(scaled_column)
-  })
-  if ( transpose ) {
+  dm_min_max <- matrixStats::rowRanges(data_matrix, na.rm = TRUE)
+  dm_diffs <- matrixStats::rowDiffs(dm_min_max)
+  dm_diffs[dm_diffs == 0] <- 1
+  scaled_counts <- (data_matrix - dm_min_max[,1]) / dm_diffs[,1]
+  if ( transpose == FALSE ) {
     scaled_counts <- t(scaled_counts)
   } 
   return(scaled_counts)
@@ -556,11 +550,11 @@ enrichment_ORA <- function(genes,
                      " Regular version will be used."))
     } else{ # Remove task from code
       if(ont == "GO"){
-  body(enrf)[[ltorem]] <- substitute(GO_DATA <- parent.frame()$ENRICH_DATA)      
+  body(enrf)[[ltorem]] <- substitute(GO_DATA <- parent.frame()$ENRICH_DATA)
       } else if(ont == "KEGG"){
-  body(enrf)[[ltorem]] <- substitute(KEGG_DATA <- parent.frame()$ENRICH_DATA)      
+  body(enrf)[[ltorem]] <- substitute(KEGG_DATA <- parent.frame()$ENRICH_DATA)
       } else if(ont == "REACT"){
-body(enrf)[[ltorem]] <- substitute(Reactome_DATA <- parent.frame()$ENRICH_DATA)              
+body(enrf)[[ltorem]] <- substitute(Reactome_DATA <- parent.frame()$ENRICH_DATA)
       }
     }
   }
@@ -944,7 +938,7 @@ get_organism_table <- function(file = file.path(find.package('ExpHunterSuite'),
 
 
 #' Perform enrichment of ORA and/or GSEA using a set of genes given
-#' @param genes significant genes to be used (vector or list of vectors - clusters)
+#' @param genes significant genes: vector or list of vectors for each cluster
 #' @param organism_info organism table info. Must include entries depending on 
 #' ontologies selected: Bioconductor_DB (GO), KeggCode (KEGG), Reactome_ID 
 #' (Reactome)
@@ -971,9 +965,11 @@ get_organism_table <- function(file = file.path(find.package('ExpHunterSuite'),
 #' genes <- head(rownames(degh_output$raw_filter),1000) 
 #' # You need to translate to entrez if you want use all ontology types
 #' ontologies <- "" # Select your wanted ontologies
+#' organisms_table <- get_organism_table()
 #' current_organism_info <- subset(organisms_table, 
 #'                          rownames(organisms_table) == "Human")
-#' enrch <- multienricher(genes = genes, ontology = "") # Return NULL.
+#' enrch <- multienricher(genes = genes, organism_info = current_organism_info,
+#' ontology = "") # Return NULL.
 multienricher <- function(genes,
                           organism_info,
                           keytype = "ENTREZID",

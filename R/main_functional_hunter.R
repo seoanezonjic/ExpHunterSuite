@@ -422,7 +422,7 @@ functional_hunter <- function(
                         mod,".pdf",sep=""),input_gene_id, output_files)
                 perform_topGO(go_attr_name, neg_logFC_union_DEGs, 
                     input_to_entrezgene, mod, paste("GOgraph_allpos_underex_",
-                        mod,".pdf",sep=""),input_gene_id, output_files)                    
+                        mod,".pdf",sep=""),input_gene_id, output_files)
             }))
         } else { # LOCAL MODE
 
@@ -451,7 +451,7 @@ functional_hunter <- function(
                         mod,sep="_")),current_organism_info$Bioconductor_DB[1])
                 perform_topGO_local(neg_logFC_union_DEGs, reference_ids_union, 
                     mod, file.path(output_files, paste("GO_allpos_underex",
-                        mod,sep="_")),current_organism_info$Bioconductor_DB[1])    
+                        mod,sep="_")),current_organism_info$Bioconductor_DB[1])
             }))
         } # END LOCAL/REMOTE IF
         message("topGO analysis finished")
@@ -492,7 +492,7 @@ functional_hunter <- function(
             if(length(clusters_enr_ora$WGCNA$ORA) > 0){
                 aux <- clusters_enr_ora$WGCNA
                 func_results$WGCNA_ORA <- aux$ORA
-                func_results$WGCNA_ORA_expanded <- aux$ORA_expanded                
+                func_results$WGCNA_ORA_expanded <- aux$ORA_expanded
             }
         }
     }

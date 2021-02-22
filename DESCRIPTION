@@ -90,4 +90,5 @@ Imports:
     graphics,
     utils,
     BiocParallel,
-    MKinfer
+    MKinfer,
+    matrixStats
