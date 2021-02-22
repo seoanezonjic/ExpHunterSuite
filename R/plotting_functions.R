@@ -40,12 +40,12 @@ plot_in_div <- function(g, fig_height=7, fig_width=12,
 
   if(fig_height > max_size){
     fig_height <- max_size
-	}else if(fig_height < min_size){
+    }else if(fig_height < min_size){
     fig_height <- min_size
   }
   if(fig_width > max_size){
     fig_width <- max_size
-	}else if(fig_width < min_size){
+    }else if(fig_width < min_size){
     fig_width <- min_size  
   }
   g_deparsed <- paste0(deparse(function() {g}), collapse = '')
@@ -188,14 +188,14 @@ set_default_width <- function(enrich_obj,
   showCategory = 30, 
   threshold = 30, 
   character_size = 0.04){
-	longer_category <- max(nchar(as.character(get_categories(enrich_obj, 
+    longer_category <- max(nchar(as.character(get_categories(enrich_obj, 
                                                            showCategory))))
-	if(longer_category > threshold){
-		default_width <- default + character_size * longer_category
-	}else{
-		default_width <- default
-	}
-	return(default_width)
+    if(longer_category > threshold){
+        default_width <- default + character_size * longer_category
+    }else{
+        default_width <- default
+    }
+    return(default_width)
 }
 # Prepare resize function
 

@@ -11,7 +11,7 @@
 
 ### Install latest R-Version
 
-Go to page https://cran.r-project.org and install the latest R version on your computer.	
+Go to page https://cran.r-project.org and install the latest R version on your computer.    
 
 ### Install DEgenes Hunter from console (using devtools)
 To install DEgenes Hunter from console, we use the devtools utility to install R packages from GitHub. Please type the following commands:
@@ -24,8 +24,8 @@ To install DEgenes Hunter from console, we use the devtools utility to install R
 Sometimes reactome.db download fails because this package is too large (>400 Mb) and R has a download timeout of 60 seconds by default. 
 
 ``` bash
-	Rscript -e "getOption('timeout')"
-		[1] 60
+    Rscript -e "getOption('timeout')"
+        [1] 60
 ```
 
 This error can be solved by installing reactome.db from source or extending the timeout threshold before installing the ExpHunterSuite package with the command:
@@ -57,13 +57,13 @@ Here we include an example in which the targets file must include the samples (C
 The multifactorial correction (-v and -M) or co-expression analysis using extra measures (-S and -C) require additional information that must be included in targets file. Extra measures are named as _traits_. These options use the _traits_ column names as arguments.
 
 | sample                                | treat        |  age_group |
-|---------------------------------------|--------------|------------|	
+|---------------------------------------|--------------|------------|    
 |     CTL_1                             |     Ctrl     |    adult   | 
 |     CTL_2                             |     Ctrl     |    child   | 
 |     TreatA_1                          |     Treat    |    adult   |
 |     TreatA_2                          |     Treat    |    child   |
 |     TreatB_1                          |     Treat    |    adult   |
-|     TreatB_2                         	|     Treat    |    adult   | 
+|     TreatB_2                             |     Treat    |    adult   | 
 
 Once generated, the expression analysis can be performed using degenes_Hunter.R script. For this, we must call degenes_Hunter.R and give it the following input arguments.
 
@@ -75,58 +75,58 @@ Here we show an example of basic usage:
 
 Mandatory arguments:
 
-	-i | -t 
-	(mandatory) Specify the path to the input counts/mapping table and to the targets file.
+    -i | -t 
+    (mandatory) Specify the path to the input counts/mapping table and to the targets file.
 
-	-i Input read counts file.
-	-t Targets file.
+    -i Input read counts file.
+    -t Targets file.
 
 Differential expresion analysis arguments:
 
     -o Output path.
-	  (optional) Output folder. 
-	  Default = "./hunter_DE_results"
+      (optional) Output folder. 
+      Default = "./hunter_DE_results"
     -r any integer.
-	  (optional) Number of minimum mapped reads required in order to not be filtered out. Lesser number of reads are discarded. 
-	  0 = No filtering. 
-	  By default, reads less than 2 are discarded.
-	-l any integer <= samples provided in the experiment.
-	  (optional) Minimum number of libraries that must have reads of a transcript in order to not to be filtered. 
-	  By default, minimum libraries required are 2.
-	-p value between 0.01 and 0.1
-	  (optional) Adjusted p-value for the differential expression analysis. 
-	  Default = 0.05
-	-f float
-	(optional) Minimum log2 fold change in expression. Please, consider this is on a log2 scale, so a value of 1 would mean a 2 fold change.
-	  Default = 1.
-	-q value between 0.95 and 0.99
-	  (optional) q value threshold for NOISeqBIO analysis. 
-	  Default = 0.95 (recommended)
-	-a "BH" | "bonferroni" | "holm" | "hochberg" | "hommel" | "BY"
-	  (optional) adjust method for the combined nominal p-values. 
-	  By default the BH method is performed.
-	-n name of your experiment
-	  (optional) Your experiment name. 
-	  Default = Experiment1
-	-m D | E | L | N | W
-	  (optional) Differential expression packages to analyse data with.
-	  D = DESeq2, E = edgeR, L = limma, N = NOISeq (NOISeqBIO function within NOISeq package is used), W = WGCNA (this activates the co-expression analysis).
-	  Default = DELN.
-	-c 1-4
-	  (optional) Minimum number of packages to consider a gene as 'Prevalent' DEG.
-	  Default = 4.
-	-e External DEG data file.
-	  (optional) External file with pre-analysed DE data. Must consist of three columns containing p-value, logFC and FDR/p-adjust. Please, respect the columns order.
+      (optional) Number of minimum mapped reads required in order to not be filtered out. Lesser number of reads are discarded. 
+      0 = No filtering. 
+      By default, reads less than 2 are discarded.
+    -l any integer <= samples provided in the experiment.
+      (optional) Minimum number of libraries that must have reads of a transcript in order to not to be filtered. 
+      By default, minimum libraries required are 2.
+    -p value between 0.01 and 0.1
+      (optional) Adjusted p-value for the differential expression analysis. 
+      Default = 0.05
+    -f float
+    (optional) Minimum log2 fold change in expression. Please, consider this is on a log2 scale, so a value of 1 would mean a 2 fold change.
+      Default = 1.
+    -q value between 0.95 and 0.99
+      (optional) q value threshold for NOISeqBIO analysis. 
+      Default = 0.95 (recommended)
+    -a "BH" | "bonferroni" | "holm" | "hochberg" | "hommel" | "BY"
+      (optional) adjust method for the combined nominal p-values. 
+      By default the BH method is performed.
+    -n name of your experiment
+      (optional) Your experiment name. 
+      Default = Experiment1
+    -m D | E | L | N | W
+      (optional) Differential expression packages to analyse data with.
+      D = DESeq2, E = edgeR, L = limma, N = NOISeq (NOISeqBIO function within NOISeq package is used), W = WGCNA (this activates the co-expression analysis).
+      Default = DELN.
+    -c 1-4
+      (optional) Minimum number of packages to consider a gene as 'Prevalent' DEG.
+      Default = 4.
+    -e External DEG data file.
+      (optional) External file with pre-analysed DE data. Must consist of three columns containing p-value, logFC and FDR/p-adjust. Please, respect the columns order.
       Default = NULL.
-	-v model variables
-	  (optional) Variables to include in the model. Must be comma separated and each variable must be a column in the target file.
-	  Default = NULL.
-	-M model_text
-	  Text for this variable will be given directly to the model construction, overwriting the previous configuration.
+    -v model variables
+      (optional) Variables to include in the model. Must be comma separated and each variable must be a column in the target file.
+      Default = NULL.
+    -M model_text
+      Text for this variable will be given directly to the model construction, overwriting the previous configuration.
 
 Co-expression analysis arguments:
-	
-	-b Any integer.
+    
+    -b Any integer.
       Maximum block size value to be given to the WGCNA blockwiseModules function as the maxBlockSize argument.
       Default = 5000.
     --WGCNA_norm_method NOISeq | DESeq2 | edgeR | limma
@@ -227,40 +227,40 @@ To perform the functional enrichment analysis we will use the functional_Hunter.
 Here we show an example of basic usage:
 
 ```sh
-	functional_Hunter.R -i path_to_results -m Organism -o path_to_output
+    functional_Hunter.R -i path_to_results -m Organism -o path_to_output
 ```
 
 Mandatory arguments: 
 
-	-i | -m | -o 
-	(required) Specify the path to the degenes_Hunter.R output folder, the model organism to use and the path to the output folder.
+    -i | -m | -o 
+    (required) Specify the path to the degenes_Hunter.R output folder, the model organism to use and the path to the output folder.
 
-	-i path
-	  Path to the ExpHunterSuite differential expression results.
-	-m organism
-	  Ortologue species to be used as model organism to perform the functional analysis with. Run 'functional_Hunter.R' -L to display all available organisms.
-	-o Output path.
+    -i path
+      Path to the ExpHunterSuite differential expression results.
+    -m organism
+      Ortologue species to be used as model organism to perform the functional analysis with. Run 'functional_Hunter.R' -L to display all available organisms.
+    -o Output path.
 
 Optional input arguments:
 
-	-t input_ID
-	  Input gene IDs of counts table. Available IDs are: ENSEMBL (E), entrezgene (e), TAIR/Arabidopsis (T), Gene Names (G). 
-	  Default = E.
-	-L 
-	  (optional) List all organisms provided.
-	-a tab_file
-	  (optional) Path to file with own annotations for functional analysis.
-	-f G | g | K | R
-	  Nomenclature and enrichment method(s) to use (topGO: G = GO | clusterProfiler: K = KEGG, g = GO, R = Reactome).
-	  Default = gKR.
-	-G M | B | C
+    -t input_ID
+      Input gene IDs of counts table. Available IDs are: ENSEMBL (E), entrezgene (e), TAIR/Arabidopsis (T), Gene Names (G). 
+      Default = E.
+    -L 
+      (optional) List all organisms provided.
+    -a tab_file
+      (optional) Path to file with own annotations for functional analysis.
+    -f G | g | K | R
+      Nomenclature and enrichment method(s) to use (topGO: G = GO | clusterProfiler: K = KEGG, g = GO, R = Reactome).
+      Default = gKR.
+    -G M | B | C
      Gene Ontology sub-classification to perform functional enrichment.
-	  M = Molecular Function (MF), B = Biological Process (BP), C = Celular Components (CC)
-	  Default = MBC.
-	-A analysis_type
-	  Analysis performance (g = Gene Set Enrichment Analysis, o = Over Representation Analysis). 
-	  Default = go.
-	-P float
+      M = Molecular Function (MF), B = Biological Process (BP), C = Celular Components (CC)
+      Default = MBC.
+    -A analysis_type
+      Analysis performance (g = Gene Set Enrichment Analysis, o = Over Representation Analysis). 
+      Default = go.
+    -P float
       Enrichment p-value threshold. 
       Default = 0.1.
     -Q float
@@ -271,11 +271,11 @@ Optional input arguments:
       Default = 1
     -C files
       Files with custom functional annotation database (in GMT format) separated by commas (,)
-	-r mode
-	   Flags to activate remote query from enrichments and genes translation. Use (b) to launch biomaRt translation; (k) to use KEGG remote database. Requires internet connection.
-	   Default = NULL
-	-q 
-	(optional) If indicated, biomaRt query is saved in an .RDS file.
+    -r mode
+       Flags to activate remote query from enrichments and genes translation. Use (b) to launch biomaRt translation; (k) to use KEGG remote database. Requires internet connection.
+       Default = NULL
+    -q 
+    (optional) If indicated, biomaRt query is saved in an .RDS file.
 
 #### DEgenes Hunter functional enrichment examples of use 
 
