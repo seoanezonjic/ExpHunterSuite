@@ -2,8 +2,8 @@
 % Please edit documentation in R/io_handling.R
 \name{load_hunter_folder}
 \alias{load_hunter_folder}
-\title{Loads stored results in DEgenes Hunter expression analysis folder and returns
-in correct object format}
+\title{Loads stored results in DEgenes Hunter expression analysis
+folder and returns in correct object format}
 \usage{
 load_hunter_folder(path = NULL)
 }
@@ -14,8 +14,8 @@ load_hunter_folder(path = NULL)
 hunter expression analysis object loaded
 }
 \description{
-Loads stored results in DEgenes Hunter expression analysis folder and returns
-in correct object format
+Loads stored results in DEgenes Hunter expression analysis
+folder and returns in correct object format
 }
 \examples{
 # Used to load a DE analysis result folder

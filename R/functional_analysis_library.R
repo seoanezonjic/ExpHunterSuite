@@ -41,7 +41,8 @@ exists_graph_file <- function(path, file_name, ext = "pdf"){
 }
 
 
-#' Check if a given list of objects is a correct enrichment result objects list
+#' Check if a given list of objects is a correct 
+#' enrichment result objects list
 #' @param ls variable to be checked
 #' @keywords check
 #' @return true if it is an allowed object or false in other cases
@@ -487,7 +488,8 @@ catched_pairwise_termsim <- function(enr, num_cats = 200){
 
 
 
-#' Performs Over Representation Analysis (ORA) enrichment of specified ontology
+#' Performs Over Representation Analysis (ORA) 
+#' enrichment of specified ontology
 #' @param genes significant genes to be used
 #' @param organism target organism
 #' @param keyType genes code type
@@ -709,7 +711,6 @@ load_and_parse_gmt <- function(gmt_file) {
                                     Gene= genes, 
                                     stringsAsFactors = FALSE)
           return(parsedTerms)
-
     }))
     return(parsed_gmt)
 }

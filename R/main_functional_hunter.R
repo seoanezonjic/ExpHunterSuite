@@ -1,5 +1,5 @@
-#' This function allows you to perform the Functional analysis with different 
-#' enrichment corpus.
+#' Perform Functional analysis with different 
+#' enrichment corpora.
 #' @param hunter_results list with DEG analysis results
 #' @param model_organism organisms which genes are being studied
 #' @param annot_table (OPTIONAL) annotation table to translate gene IDs

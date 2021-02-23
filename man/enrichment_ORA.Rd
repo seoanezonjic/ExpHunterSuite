@@ -2,7 +2,8 @@
 % Please edit documentation in R/functional_analysis_library.R
 \name{enrichment_ORA}
 \alias{enrichment_ORA}
-\title{Performs Over Representation Analysis (ORA) enrichment of specified ontology}
+\title{Performs Over Representation Analysis (ORA)
+enrichment of specified ontology}
 \usage{
 enrichment_ORA(
   genes,
@@ -44,6 +45,7 @@ Necessary for emaplots}
 enrichment table obtained
 }
 \description{
-Performs Over Representation Analysis (ORA) enrichment of specified ontology
+Performs Over Representation Analysis (ORA)
+enrichment of specified ontology
 }
 \keyword{enrich}

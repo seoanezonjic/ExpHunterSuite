@@ -66,8 +66,8 @@ write_df_list_as_tables <- function(df_list, prefix, root=getwd()) {
 }
 
 
-#' Loads stored results in DEgenes Hunter expression analysis folder and returns
-#' in correct object format
+#' Loads stored results in DEgenes Hunter expression analysis 
+#' folder and returns in correct object format
 #' @param path of DGH folder
 #' @return hunter expression analysis object loaded
 #' @keywords input

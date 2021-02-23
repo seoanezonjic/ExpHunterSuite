@@ -2,7 +2,8 @@
 % Please edit documentation in R/functional_analysis_library.R
 \name{check_results_list}
 \alias{check_results_list}
-\title{Check if a given list of objects is a correct enrichment result objects list}
+\title{Check if a given list of objects is a correct
+enrichment result objects list}
 \usage{
 check_results_list(ls)
 }
@@ -13,6 +14,7 @@ check_results_list(ls)
 true if it is an allowed object or false in other cases
 }
 \description{
-Check if a given list of objects is a correct enrichment result objects list
+Check if a given list of objects is a correct
+enrichment result objects list
 }
 \keyword{check}

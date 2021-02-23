@@ -2,8 +2,8 @@
 % Please edit documentation in R/main_functional_hunter.R
 \name{functional_hunter}
 \alias{functional_hunter}
-\title{This function allows you to perform the Functional analysis with different
-enrichment corpus.}
+\title{Perform Functional analysis with different
+enrichment corpora.}
 \usage{
 functional_hunter(
   hunter_results,
@@ -69,8 +69,8 @@ Default: 1}
 functional result object with enrichments performed
 }
 \description{
-This function allows you to perform the Functional analysis with different
-enrichment corpus.
+Perform Functional analysis with different
+enrichment corpora.
 }
 \examples{
 # Load DE analysis result

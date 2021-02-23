@@ -2,7 +2,8 @@
 % Please edit documentation in R/main_degsynth.R
 \name{scale_range}
 \alias{scale_range}
-\title{Funtion used to scale a vector of numeric values from (x_min,x_max) range to
+\title{Funtion used to scale a vector of numeric values from
+(x_min,x_max) range to
 (y_min,y_max) range.
 f : R -> R
 (x_min, x_max) -> (y_min, y_max)
@@ -23,7 +24,8 @@ scale_range(vect, nmin, nmax)
 transformated vector to new range
 }
 \description{
-Funtion used to scale a vector of numeric values from (x_min,x_max) range to
+Funtion used to scale a vector of numeric values from
+(x_min,x_max) range to
 (y_min,y_max) range.
 f : R -> R
 (x_min, x_max) -> (y_min, y_max)
