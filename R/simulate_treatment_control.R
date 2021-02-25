@@ -27,7 +27,7 @@ STC <- function(Ngene = 1000,
     group = NULL){
     # Load & prepare base data
     if(is.null(bcount)){
-        # require(TCC)
+        arab <- NULL
         utils::data("arab", package = "TCC")
         bcount <- arab
         group <- seq(3)

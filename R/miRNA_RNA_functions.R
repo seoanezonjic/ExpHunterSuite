@@ -222,13 +222,14 @@ correlate_profiles <- function(RNA_profiles, miRNA_profiles) {
 
 
 #' @importFrom dplyr desc between row_number filter arrange group_by
+#' @importFrom rlang .data
 get_hub_genes_by_MM <- function(normalized_counts, hunter_results, top = 1){
     "%>%" <- magrittr::"%>%"
 
     hub_genes <- hunter_results %>% 
-    dplyr::filter(Cluster_MM_pval <= 0.05) %>% 
-    dplyr::arrange(dplyr::desc(Cluster_MM)) %>% 
-    dplyr::group_by(Cluster_ID) %>% dplyr::filter(dplyr::between(
+    dplyr::filter(.data$Cluster_MM_pval <= 0.05) %>% 
+    dplyr::arrange(dplyr::desc(.data$Cluster_MM)) %>% 
+    dplyr::group_by(.data$Cluster_ID) %>% dplyr::filter(dplyr::between(
         dplyr::row_number(), 1, top))
 
     hub_genes_profile <- as.matrix(normalized_counts[,
@@ -242,13 +243,15 @@ get_hub_genes_by_MM <- function(normalized_counts, hunter_results, top = 1){
 
 #' @importFrom data.table as.data.table merge.data.table  
 #' @importFrom dplyr select
+#' @importFrom rlang .data
 expand_module <- function(all_pairs_info, tag, DH_results){
     "%>%" <- magrittr::"%>%"
 
     mod_tag <- paste0(tag, "_mod")
     names(all_pairs_info)[names(all_pairs_info)== tag] <- mod_tag
 
-    partial_expanded <- DH_results %>% dplyr::select(Cluster_ID, gene_name)
+    partial_expanded <- DH_results %>% dplyr::select(.data$Cluster_ID,
+    .data$gene_name)
     partial_expanded <- data.table::as.data.table(partial_expanded)
     colnames(partial_expanded) <- c("module", tag)
     partial_expanded$module <- as.character(partial_expanded$module)
@@ -454,10 +457,9 @@ get_entrez_symbol_translations <- function(ensembl_ids, organism_info){
     # Fix names
     colnames(input_to_entrezgene) <- c("ensembl_gene_id", "entrezgene") 
 
-
     input_to_symbol <- id_translation_orgdb(
         input_ids = input_to_entrezgene$entrezgene,
-         organism_db = organism_info$Bioconductor_DB[1],
+        organism_db = organism_info$Bioconductor_DB[1],
     org_var_name = organism_info$Bioconductor_VarName_SYMBOL[1])
     colnames(input_to_symbol) <- c("entrezgene", "Symbol")
     input_to_entrezgene <- data.table::as.data.table(input_to_entrezgene)
@@ -466,3 +468,4 @@ get_entrez_symbol_translations <- function(ensembl_ids, organism_info){
         input_to_symbol, by = "entrezgene", all.x = TRUE)
     return(gene_id_translation)
 }
+

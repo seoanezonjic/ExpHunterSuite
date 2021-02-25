@@ -50,7 +50,7 @@ miRNA_RNAseq_analysis <- function(
 
     #Prepare multiMiR
     load(multimir_db)
-    selected_databases <- strsplit(opt$databases, ",")
+    selected_databases <- strsplit(databases, ",")
     multimir_summary <- summarize_multimir(multimir_summary, 
         selected_predicted_databases = selected_databases, 
         filter_unmaintained= filter_unmaintained)
@@ -190,12 +190,17 @@ miRNA_RNAseq_analysis <- function(
 
     filters_summary <- all_strategies %>%
                         dplyr::group_by(strategy) %>%
-                    dplyr::summarize(known_miRNAs = sum(known_miRNA == TRUE),
-                            novel_miRNAs = sum(known_miRNA == FALSE),
-                            multiMiR = sum(predicted_c > 0 | validated_c > 0),
-                            predicted = sum(predicted_c > 0),
-                            validated = sum(validated_c > 0), 
-                            both  = sum(predicted_c > 0 & validated_c > 0))
+                    dplyr::summarize(known_miRNAs = 
+                        sum(.data$known_miRNA == TRUE),
+                            novel_miRNAs = 
+                            sum(.data$known_miRNA == FALSE),
+                            multiMiR = 
+                            sum(.data$predicted_c > 0 | .data$validated_c > 0),
+                            predicted = 
+                            sum(.data$predicted_c > 0),
+                            validated = sum(.data$validated_c > 0), 
+                            both = 
+                            sum(.data$predicted_c > 0 & .data$validated_c > 0))
     filters_summary <- as.data.frame(filters_summary, stringsAsFactors = FALSE)
     filters_summary <- reshape2::melt(filters_summary)
     names(filters_summary) <- c("strategy", "type", "pairs")
@@ -265,4 +270,3 @@ miRNA_RNAseq_analysis <- function(
 
     return(miRNA_cor_results)
 }
-

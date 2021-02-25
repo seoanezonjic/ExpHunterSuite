@@ -324,7 +324,7 @@ functional_hunter <- function(
     message(paste("IDs used in ORA:",length(likely_degs_entrez)))
     ## TODO => ESTARIA BIEN REFLEJAR ESTA INFORMACION EN EL REPORT
     "%>%" <- magrittr::"%>%"
-    union_DEGs_df <- subset(DEGH_results, genes_tag %in% c("POSSIBLE_DEG", 
+    union_DEGs_df <- subset(DEGH_results, .data$genes_tag %in% c("POSSIBLE_DEG", 
                              "PREVALENT_DEG"))
     union_DEGs <- union_DEGs_df[!is.na(union_DEGs_df$input_IDs), 
                                      "input_IDs"] %>% unique
@@ -387,13 +387,13 @@ functional_hunter <- function(
 
     if (flags$GO) {
         pos_logFC_likely_degs <- subset(likely_degs_df, 
-            likely_degs_df[fc_colname] > 0, !is.na(entrezgene) )$entrezgene
+            likely_degs_df[fc_colname] > 0, !is.na(.data$entrezgene))$entrezgene
         neg_logFC_likely_degs <- subset(likely_degs_df, 
-            likely_degs_df[fc_colname] < 0, !is.na(entrezgene))$entrezgene
+            likely_degs_df[fc_colname] < 0, !is.na(.data$entrezgene))$entrezgene
         pos_logFC_union_DEGs <- subset(union_DEGs_df, 
-            union_DEGs_df[fc_colname] > 0, !is.na(entrezgene))$entrezgene
+            union_DEGs_df[fc_colname] > 0, !is.na(.data$entrezgene))$entrezgene
         neg_logFC_union_DEGs <- subset(union_DEGs_df, 
-            union_DEGs_df[fc_colname] < 0, !is.na(entrezgene))$entrezgene
+            union_DEGs_df[fc_colname] < 0, !is.na(.data$entrezgene))$entrezgene
         # Generate output
         # Check execution mode
         if (remote_actions$biomart) { # REMOTE MODE

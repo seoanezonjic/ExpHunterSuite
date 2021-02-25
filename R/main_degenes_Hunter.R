@@ -34,6 +34,7 @@
 #' @param WGCNA_minKMEtoStay see WGCNA package
 #' @return expression analysis result object with studies performed
 #' @keywords method
+#' @importFrom rlang .data
 #' @export
 #' @examples
 #' data(toc)
@@ -197,7 +198,7 @@ main_degenes_Hunter <- function(
     if(grepl("W", modules)) { # Check WGCNA was run and returned proper results
       DE_all_genes <- transform(merge(DE_all_genes, 
           combinations_WGCNA[['WGCNA_all']][['gene_cluster_info']], 
-          by.x=0, by.y="ENSEMBL_ID"), row.names=Row.names, Row.names=NULL)
+          by.x=0, by.y="ENSEMBL_ID"), row.names=.data$Row.names, Row.names=NULL)
     }
 
     if(grepl("X", modules)) { #results_diffcoexp
