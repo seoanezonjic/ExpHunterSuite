@@ -19,7 +19,7 @@ standard_error <- function(x) {
   sd(x) / sqrt(length(x))
 }
 
-########################################################
+########################################################  
 # Functions to generate output files
 #' @importFrom stats pchisq
 unite_DEG_pack_results <- function(exp_results, 
@@ -62,20 +62,7 @@ unite_DEG_pack_results <- function(exp_results,
   all_DE_df["DEG_counts"] <- rowSums(all_DE_df[DEG_pack_columns], na.rm = TRUE)
  
   # Calc and add combined FDR-values
-  log_FDR <- log(all_DE_df[final_FDR_names]) # Log all final p-values
-  log_FDR[is.na(log_FDR)] <- 0 # any NAs made 0s -> not used combined score 
-  if("FDR_NOISeq" %in% final_FDR_names){ # NOISeq can give FDR values of 0 
-                                        #- these become 0 when -logged:
-    log_FDR[,"FDR_NOISeq"][log_FDR[,"FDR_NOISeq"] == -Inf] <- sort(
-             unique(log_FDR[, "FDR_NOISeq"]))[2]  
-             # Give NOISeq -Inf values smallest possible value
-  }
-
-  xi_squared <-  -2 * rowSums(log_FDR)
-  degrees_freedom <- 2 * length(final_FDR_names)
-  combined_FDR <- stats::pchisq(xi_squared, degrees_freedom, 
-                                lower.tail = FALSE)
-  all_DE_df[,"combined_FDR"] <- combined_FDR
+  all_DE_df$combined_FDR <- vectorial_fisher_method(all_DE_df[final_FDR_names])
 
   # Reorder by combined FDR value
   all_DE_df <- all_DE_df[order(all_DE_df[,"combined_FDR"]), ]

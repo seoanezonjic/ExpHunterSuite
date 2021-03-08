@@ -147,4 +147,26 @@ calc_LRplus_test <- function(c_matrix) {
   return(LR_plus)
 }
 
+#' @importFrom stats pchisp
+vectorial_fisher_method <- function(pval_table){
+    log_pval <- log(pval_table) # Log all final p-values
+    log_pval[is.na(log_pval)] <- 0 # any NAs made 0s -> not used combined score 
+    
+    log_pval <- apply(as.matrix(log_pval), 2, 
+      function (pval_column) { # When p values of 0 are given
+                               #- these become -Inf when logged:   
+                               # This code turn -Inf values 
+                               #- to smallest possible values
+        min_col_val <- sort(unique(pval_column))[2]
+        pval_column[pval_column == -Inf] <- min_col_val
+        return(pval_column)
+    })
+
+    xi_squared <-  -2 * rowSums(log_pval)
+    degrees_freedom <- 2 * ncol(log_pval)
+    combined_FDR <- stats::pchisq(xi_squared, degrees_freedom, 
+                                lower.tail = FALSE)
+    return(combined_FDR)
+}
+
 
