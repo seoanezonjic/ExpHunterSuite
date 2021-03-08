@@ -48,6 +48,21 @@ all_dems_info <- data.frame()
 }
 ```
 
+```{r "{{method_name}}_pval", eval = FALSE}
+    plot_list <- lapply(names(score_comp[[1]]), function(database){
+        label <- paste(database, "\n", 
+                       "p.value = ", score_comp[[method]][[database]]$p.value, "\n", 
+                       "boot.p.value = ", score_comp[[method]][[database]]$boot.p.value)
+        ggplot2::ggplot(score_comp[[method]][[database]]$distribution, ggplot2::aes(x = set, y = score, fill = set)) + 
+        ggplot2::geom_boxplot() + ggplot2::ylim(0, NA) + 
+        # ggplot2::annotate("text", x = "significant", 
+        #                   y = max(score_comp[[method]][[database]]$distribution$score) + 0.5,
+        #                   label = label, size = 3)  +
+        # ggplot2::ggtitle(database) + 
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 20, hjust = 1), plot.title = ggplot2::element_text(size = 10))
+    })
+    gridExtra::grid.arrange(grobs = plot_list, ncol = 3)
+```
 
 ```{r "{{method_name}}_cor_miRNA_table_description", eval = nrow(method_table) > 0, results='asis', echo = FALSE, message=FALSE, warning=FALSE}
 
@@ -167,17 +182,17 @@ ggplot2::ggplot(all_dems_info, ggplot2::aes(x = correlation, y = raw_cor)) + ggp
 
 ```{r "{{method_name}}_score_dist", echo = FALSE, message=FALSE, warning=FALSE, eval = nrow(method_table) > 0}
 
-score_dist <- score_filter[[method]]
+# score_dist <- score_filter[[method]]
 
-sig_score_dist <- score_dist[score_dist$significant,]
+# sig_score_dist <- score_dist[score_dist$significant,]
 
-ggplot2::ggplot(score_dist, ggplot2::aes(x = r_scores, fill = database)) + ggplot2::geom_boxplot()
+# ggplot2::ggplot(score_dist, ggplot2::aes(x = r_scores, fill = database)) + ggplot2::geom_boxplot()
 
 ```
 
 ```{r "{{method_name}}_sig_score_dist", echo = FALSE, message=FALSE, warning=FALSE, eval = nrow(method_table) > 0}
 
-ggplot2::ggplot(sig_score_dist, ggplot2::aes(x = r_scores, fill = database)) + ggplot2::geom_boxplot()
+# ggplot2::ggplot(sig_score_dist, ggplot2::aes(x = r_scores, fill = database)) + ggplot2::geom_boxplot()
 
 ```
 

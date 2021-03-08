@@ -46,13 +46,10 @@ cat(paste0("This report summarizes results from [script_name] execution comparin
     + Hub1_RNA_v_counts_miRNA correlates hub gene profile of RNAseq coexpression modules with with normalized miRNAseq counts.
     + Hub1_RNA_v_Eigen_miRNA correlates hub gene profile of RNAseq coexpression modules with Eigengene profile of miRNAseq coexpression modules.
 
+## **RNAseq and miRNAseq correlation methods comparison**
 
+This plot shows the distributions of correlations between RNAseq and miRNAseq using diferent strategies.
 ```{r methods_comparison_violin_cor, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-
-cat("## **RNAseq and miRNAseq correlation methods comparison**")
-cat("\nThis plot shows the distributions of correlations between RNAseq and miRNAseq using diferent strategies.
-  \n")
-
 
 all_cor_dist <- strategies
 all_cor_dist[["all_possible_pairs"]] <- NULL
@@ -88,9 +85,22 @@ pp
 
 ```
 
+
+## **Overlapping between pairs and databases**
+This plot sumarizes the pairs of a putative nobel miRNA and the pairs of a miRNA found on miRBASE. 
+
+* The pairs with known miRNAs were searched in: 
+  + All multiMiR databases (multiMiR)
+  + Only prediction databases (predicted)
+  + Only validated databases (validated)
+  + Intersection of prediction and validated databases (both)
+
+Overlapping of significant known pairs along the databases were compared with a random subset of significant pairs count from background pairs (all possible relations between RNAseq and miRNA seq input data). 
+The random subsets are tagged as "_random".
+
+
 ```{r methods_comparison_bar, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 
-cat("\n\n This plot shows how strategies are supported by target databases\n\n")
 
 pp <- ggplot2::ggplot(filters_summary, ggplot2::aes(y = pairs, x = strategy, fill = type)) + 
       ggplot2::geom_bar(stat= "identity",position=ggplot2::position_dodge()) +
@@ -99,7 +109,12 @@ pp <- ggplot2::ggplot(filters_summary, ggplot2::aes(y = pairs, x = strategy, fil
       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 20, hjust = 1)) + 
       ggplot2::geom_text(ggplot2::aes(label = pairs), angle = 45, position = ggplot2::position_dodge(width=0.95), size=2, vjust = -2)
 pp
+```
 
+## **Overlapping significance**
+This table shows P values of comparing significant pairs in databases with random distribution (as normal distributin). 
+
+```{r methods_comparison_pval, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 filter_stats <- filters_summary[!is.na(filters_summary$p_val), c("strategy", "type", "p_val", "quantile")]
 filter_stats <- stats::reshape(filter_stats, timevar="type", idvar="strategy", direction ="wide")
 filter_stats$targets <- rep(NA, nrow(filter_stats))
@@ -112,8 +127,7 @@ for (strategy in unique(filter_stats$strategy)) {
   filter_stats[filter_stats$strategy == strategy, "DEMs_targets"] <- length(unique(correlated_pairs[correlated_pairs$miRNAseq %in% prevalent_miRNAs, "RNAseq"]))
 }
  
-cat("\n\n This table compare P values and Quantile of pairs discovering by strategy. Targets are unique count of genes that correlated with prevalent differential expression miRNAs\n\n")
-  DT::datatable(filter_stats, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+  DT::datatable(filter_stats, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
             options = list(
               colReorder = TRUE,
               dom = 'lftBip',
@@ -124,9 +138,10 @@ valid_strats <- filter_stats[filter_stats$p_val.predicted < 0.01 & filter_stats$
 
 ```
 
+## **Association with databases**
+This table shows the association of significant pairs and pairs from multiMiR databases. The association is measured by one tailed Fisher s exast test.
+Lower P value shows that significant correlated pairs are enriched on pairs in databases.
 
-```{r fet_table_info,  echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-``` 
 ```{r fet_table,  echo=FALSE, warning = FALSE, message = FALSE}
     DT::datatable(as.data.frame(fet_pvals), filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
             options = list(
@@ -135,6 +150,8 @@ valid_strats <- filter_stats[filter_stats$p_val.predicted < 0.01 & filter_stats$
               buttons = c('copy', 'csv', 'excel')
         ))
 ```
+
+## **Likelihood ratio for possitive test**  
 
 ```{r LR_test,  echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
     DT::datatable(as.data.frame(LR_test), filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
@@ -145,8 +162,10 @@ valid_strats <- filter_stats[filter_stats$p_val.predicted < 0.01 & filter_stats$
         ))
 ```
 
+## **Likelihood ratio for possitive subjects**
+
 ```{r LR_sub,  echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-    DT::datatable(as.data.frame(LR_test), filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
+    DT::datatable(as.data.frame(LR_sub), filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
             options = list(
               colReorder = TRUE,
               dom = 'lftBip',
@@ -154,6 +173,9 @@ valid_strats <- filter_stats[filter_stats$p_val.predicted < 0.01 & filter_stats$
         ))
 ```
 
+
+## **Strategies overlapping**
+This plot shows shared significant pairs between strategies
 
 ```{r methods_comparison_intersection, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 
@@ -237,7 +259,7 @@ pp
                           validated_auc = unlist(predicted_val@y.values)
                           )
 
-    datatable(all_auc, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+    DT::datatable(all_auc, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
             options = list(
               paging = FALSE,
               colReorder = TRUE,
@@ -246,7 +268,47 @@ pp
           ))
 
 ```
-```{r db_distr, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
+
+```{r score_comp_pval, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
+   DT::datatable(score_comp_pval, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+            options = list(
+              paging = FALSE,
+              colReorder = TRUE,
+              dom = 'lftBip',
+              buttons = c('copy', 'csv', 'excel')
+          ))
+
+```
+## **Significant pairs score**
+Each prediction from multiMiR databases has a prediction score that define the significance of miRNA-target prediction.
+Score distribution of significant correlated pairs were compared with a random score distribution of each database. 
+Significant and random distributions were compared with a one-tiled T test and one-tailed bootstrap T test. 
+P values were integrated with Fisher method.   
+This plot shows -log(P) and red line indicate -log(0.05).
+
+```{r score_comp_pval_log, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
+  ggplot2::ggplot(log_score_comp, ggplot2::aes(x = database, y = p.value, fill = strategy, shape = test_type)) +
+  ggplot2::geom_line() + 
+  ggplot2::geom_point() +
+  ggplot2::geom_line(ggplot2::aes(y = -log(0.05), color = "red")) +
+  ggplot2::geom_text(ggplot2::aes(y= -log(0.05) , label = "-log(0.05)"), vjust= -0.3)
+```
+
+
+
+
+```{r score_comp_bootpval, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
+# save(score_comp_pval, score_comp_boot_pval, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/pmm2_belen/target_miRNA_2020/test.RData")
+   DT::datatable(score_comp_boot_pval, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+            options = list(
+              paging = FALSE,
+              colReorder = TRUE,
+              dom = 'lftBip',
+              buttons = c('copy', 'csv', 'excel')
+          ))
+
+```
+```{r db_distr, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = FALSE}
 
     gg <- ggplot2::ggplot(db_distribution, ggplot2::aes(y = score, x = strategy, fill = step)) +
     ggplot2::geom_boxplot() + ggplot2::ylim(0, NA) + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 20, hjust = 1))
@@ -255,7 +317,7 @@ pp
 
 
 ```
-```{r db_distr_table, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
+```{r db_distr_table, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = FALSE}
    dist_pval <- prediction_dist_pval(db_distribution)
     DT::datatable(dist_pval, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
             options = list(

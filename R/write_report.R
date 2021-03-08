@@ -226,7 +226,10 @@ write_miRNA_cor_report <- function(miRNA_cor_results, template_folder,
     mirna_names <- miRNA_cor_results$mirna_names
     gene_id_translation <- miRNA_cor_results$gene_id_translation
     ref_strategy <- miRNA_cor_results$ref_strategy
-    score_filter <- miRNA_cor_results$score_filter    
+    score_comp_pval <- miRNA_cor_results$score_comp_pval
+    score_comp_boot_pval <- miRNA_cor_results$score_comp_boot_pval
+    score_comp <- miRNA_cor_results$score_comp
+    log_score_comp <- miRNA_cor_results$log_score_comp    
     fet_pvals <- miRNA_cor_results$fet_pvals
     LR_test <- miRNA_cor_results$LR_test
     LR_sub <- miRNA_cor_results$LR_sub

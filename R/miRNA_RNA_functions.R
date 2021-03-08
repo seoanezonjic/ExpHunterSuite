@@ -74,18 +74,15 @@ summarize_multimir <- function(
     ) {
 
     multimir_table <- as.data.frame(multimir_table)
-    pred_dbs <- c("diana_microt", "elmmo", "microcosm", "miranda","mirdb", 
-        "pictar", "pita", "targetscan")
+
 
     dbs <- list(
     "validated_c" = c("mirecords", "mirtarbase", "tarbase"),
-    "predicted_c" = pred_dbs[pred_dbs %in% unlist(selected_predicted_databases)]
+    "predicted_c" = selected_predicted_databases
     )
     multimir_table[["validated_c"]] <- rowSums(multimir_table[,
         dbs[["validated_c"]]], na.rm = TRUE)
-    for (pred_db in dbs$predicted_c) {
-    multimir_table[is.na(multimir_table[,pred_db]), pred_db] <- 0
-    }
+
     multimir_table[["predicted_c"]] <- rowSums(multimir_table[,
         dbs[["predicted_c"]]] > 0, na.rm = TRUE)
 
@@ -132,58 +129,55 @@ parse_approaches <- function(approaches){
 
 perform_correlations <- function(
       strategy = "normalized_counts_RNA_vs_miRNA_normalized_counts", 
-      RNAseq, miRNAseq, corrected_positions, cor_cutoff = 0, 
+      RNAseq, miRNAseq, corrected_positions = NULL, cor_cutoff = 0, 
       pval_cutoff = 0.05){ #correct_positions is a mirna_RNA pairs vector
     
-    if (strategy == "DEGs_vs_DEMs") {
-    DEGS <- miRNAseq$DH_results[miRNAseq$DH_results$genes_tag %in%
-         c("PREVALENT_DEG", "POSSIBLE_DEG"), "gene_name"]
-    DEMS <- miRNAseq$DH_results[miRNAseq$DH_results$genes_tag %in% 
-         c("PREVALENT_DEG", "POSSIBLE_DEG"), "gene_name"]
-    all_pairs_info <- expand.grid(DEGS, DEMS, stringsAsFactors= FALSE, 
-        KEEP.OUT.ATTRS = FALSE)
-    colnames(all_pairs_info) <- c("RNAseq", "miRNAseq")
-    all_pairs_info$correlation <- -1
-    all_pairs_info$pval <- 0
+    if (strategy == "DEGs_RNA_vs_miRNA_DEMs") {
+        DEGS <- RNAseq$DH_results[RNAseq$DH_results$genes_tag %in%
+             c("PREVALENT_DEG", "POSSIBLE_DEG"), "gene_name"]
+        DEMS <- miRNAseq$DH_results[miRNAseq$DH_results$genes_tag %in% 
+             c("PREVALENT_DEG", "POSSIBLE_DEG"), "gene_name"]
+        all_pairs_info <- expand.grid(DEGS, DEMS, stringsAsFactors= FALSE, 
+            KEEP.OUT.ATTRS = FALSE)
+        colnames(all_pairs_info) <- c("RNAseq", "miRNAseq")
+        all_pairs_info$correlation <- -1
+        all_pairs_info$pval <- 0
     
     } else {
-
-
-    strat_description <- unlist(strsplit(strategy, "_RNA_vs_miRNA_"))
-
-    RNA_profiles <- RNAseq[[strat_description[1]]]
-    miRNA_profiles <- miRNAseq[[strat_description[2]]]
-    print(str(RNA_profiles))
-    print(str(miRNA_profiles))
-
-    if (ncol(RNA_profiles) == 0 || ncol(miRNA_profiles) == 0) {
-    return(data.frame(NULL))
-    }
-    all_pairs_info <- correlate_profiles(RNA_profiles, miRNA_profiles)
-    all_pairs_info <- data.table::as.data.table(all_pairs_info)
-
-    if (strat_description[1] != "normalized_counts"){
-    relevant_genes <- RNAseq$DH_results$relevant_genes
-    if (strat_description[1] == "Eigengene_0") {
-    relevant_genes <- rep(TRUE, length(relevant_genes))
-    }
-    all_pairs_info <- expand_module(all_pairs_info = all_pairs_info, 
-        tag = "RNAseq", DH_results = RNAseq$DH_results[relevant_genes, ])
+        strat_description <- unlist(strsplit(strategy, "_RNA_vs_miRNA_"))
+        RNA_profiles <- RNAseq[[strat_description[1]]]
+        miRNA_profiles <- miRNAseq[[strat_description[2]]]
+        print(str(RNA_profiles))
+        print(str(miRNA_profiles))
+        if (ncol(RNA_profiles) == 0 || ncol(miRNA_profiles) == 0) {
+        return(data.frame(NULL))
+        }
+        all_pairs_info <- correlate_profiles(RNA_profiles, miRNA_profiles)
+        all_pairs_info <- data.table::as.data.table(all_pairs_info)
+        if (strat_description[1] != "normalized_counts"){
+            relevant_genes <- RNAseq$DH_results$relevant_genes
+            if (strat_description[1] == "Eigengene_0") {
+                relevant_genes <- rep(TRUE, length(relevant_genes))
+            }
+            all_pairs_info <- expand_module(all_pairs_info = all_pairs_info, 
+                tag = "RNAseq", 
+                DH_results = RNAseq$DH_results[relevant_genes, ])
+        }
+        
+        if (strat_description[2] != "normalized_counts"){
+            relevant_genes <- miRNAseq$DH_results$relevant_genes
+            if (strat_description[2] == "Eigengene_0") {
+                relevant_genes <- rep(TRUE, length(relevant_genes))
+            }
+    
+            all_pairs_info <- expand_module(all_pairs_info = all_pairs_info, 
+                tag = "miRNAseq", 
+                DH_results = miRNAseq$DH_results[relevant_genes, ])
+        }
     }
     
-    if (strat_description[2] != "normalized_counts"){
-    relevant_genes <- miRNAseq$DH_results$relevant_genes
-    if (strat_description[2] == "Eigengene_0") {
-    relevant_genes <- rep(TRUE, length(relevant_genes))
-    }
-
-    all_pairs_info <- expand_module(all_pairs_info = all_pairs_info, 
-        tag = "miRNAseq", DH_results = miRNAseq$DH_results[relevant_genes, ])
-    }
-    }
-
     all_pairs_info$correlated_pairs <- all_pairs_info$correlation <= 
-                 cor_cutoff & all_pairs_info$pval < pval_cutoff
+                     cor_cutoff & all_pairs_info$pval < pval_cutoff
     print(sum(all_pairs_info$correlated_pairs))
     if (!is.null(corrected_positions)){
     all_pairs <- paste0(all_pairs_info$RNAseq, "_", all_pairs_info$miRNAseq)
@@ -276,14 +270,13 @@ add_multimir_info <- function(all_pairs_info, multimir_summary = NULL) {
         suffixes = c("", ""), no.dups = TRUE)
     }
     all_pairs_info <- as.data.frame(all_pairs_info)
-    for (pred_db in c("predicted_c", "validated_c","score","diana_microt", 
-        "elmmo", "microcosm", "miranda","mirdb", "pictar", "pita", 
-        "targetscan")) {
-    all_pairs_info[is.na(all_pairs_info[,pred_db]), pred_db] <- 0
+    for (pred_db in c("predicted_c", "validated_c","score","diana_microt")){
+
+       all_pairs_info[is.na(all_pairs_info[,pred_db]), pred_db] <- 0
 
     }
     for (pred_db in c("mirecords", "mirtarbase", "tarbase")) {
-    all_pairs_info[is.na(all_pairs_info[,pred_db]), pred_db] <- FALSE
+       all_pairs_info[is.na(all_pairs_info[,pred_db]), pred_db] <- FALSE
     }
     all_pairs_info$predicted <- all_pairs_info$predicted_c > 0
     all_pairs_info$validated <- all_pairs_info$validated_c > 0
@@ -353,54 +346,51 @@ add_randoms <- function(background = NULL,
     filters_summary = NULL, 
     permutations = 10, 
     all_strategies, 
-    db_distribution = data.table(stringsAsFactors = FALSE)){
+    db_distribution = data.table::data.table(NULL,stringsAsFactors = FALSE)){
     background <- data.table::as.data.table(background)
     db_distribution <- list("0" = db_distribution)
     for (strategy_name in unique(filters_summary$strategy)) {
     random_dist <- list()
-    message("debug_1")    
   
     sig_pairs_count <- filters_summary[filters_summary$strategy == 
                 strategy_name & filters_summary$type == "known_miRNAs", "pairs"]
-    for( i in seq(permutations)){ 
-    message("\tdebug1_1")
-    random_indices <- sample(nrow(background), 
-        size = sig_pairs_count, replace = FALSE)    
-    random_set <- as.data.frame(background[random_indices,])
-    random_summary <- data.table::data.table(
-        multiMiR = sum(random_set$predicted_c > 0 | random_set$validated_c > 0),
-    predicted = sum(random_set$predicted_c > 0),
-    validated = sum(random_set$validated_c > 0),
-    both= sum(random_set$predicted_c > 0 & random_set$validated_c > 0)
-    )
-    random_dist[[i]] <- random_summary
-    
-    random_score_dist <- data.table::data.table(strategy = strategy_name,
-    step = "predicted_random",
-    score = random_set[random_set$predicted_c > 0, "score"] )
-    
-    db_distribution <- c(db_distribution, list(random_score_dist))
+    for( i in 1:3){  
+       random_indices <- sample(nrow(background), 
+           size = sig_pairs_count, replace = FALSE)    
+       random_set <- as.data.frame(background[random_indices,])
+       random_summary <- data.table::data.table(
+            multiMiR = sum(random_set$predicted_c > 0 |
+                            random_set$validated_c > 0),
+            predicted = sum(random_set$predicted_c > 0),
+            validated = sum(random_set$validated_c > 0),
+            both= sum(random_set$predicted_c > 0 & random_set$validated_c > 0)
+       )
+       random_dist[[i]] <- random_summary
+       
+       random_score_dist <- data.table::data.table(strategy = strategy_name,
+       step = "predicted_random",
+       score = random_set[random_set$predicted_c > 0, "score"] )
+       
+       db_distribution <- c(db_distribution, list(random_score_dist))
     
     }
     random_dist <- as.data.frame(data.table::rbindlist(random_dist))
     
-    message("debug_2")
 
     random_summary <- lapply(c("multiMiR", "predicted", 
         "validated", "both"), function(type){
-    type_dist <- random_dist[, type]
-    type_pairs <- filters_summary[filters_summary$strategy == strategy_name & 
-                                  filters_summary$type == type, "pairs"]
-    data.frame(type = paste0(type, "_random"),
-    pairs = mean(type_dist),
-    sdev = stats::sd(type_dist),
-    strategy = strategy_name,
-    p_val = calc_pval(type_pairs, type_dist),
-    quantile = calc_quantile(type_pairs, type_dist)
-    )
+       type_dist <- random_dist[, type]
+       type_pairs <- filters_summary[filters_summary$strategy == strategy_name & 
+                                     filters_summary$type == type, "pairs"]
+       data.frame(type = paste0(type, "_random"),
+          pairs = mean(type_dist),
+          sdev = stats::sd(type_dist),
+          strategy = strategy_name,
+          p_val = calc_pval(type_pairs, type_dist),
+          quantile = calc_quantile(type_pairs, type_dist)
+       )
     })
     
-    message("debug_4")
     
 
     filters_summary <- as.data.frame(data.table::rbindlist(c(
@@ -469,3 +459,27 @@ get_entrez_symbol_translations <- function(ensembl_ids, organism_info){
     return(gene_id_translation)
 }
 
+parse_db_comparison <- function(score_comp){
+    score_comp_pval <- matrix(1, nrow = length(score_comp), 
+                                 ncol = length(score_comp[[1]]), 
+                                 dimnames = list(names(score_comp), 
+                                                 names(score_comp[[1]])
+                                                )
+                             )
+    score_comp_boot_pval <- matrix(1, nrow = length(score_comp), 
+                                 ncol = length(score_comp[[1]]), 
+                                 dimnames = list(names(score_comp), 
+                                                 names(score_comp[[1]])
+                                                )
+                             )
+    for (strat in names(score_comp)) {
+        for (db in names(score_comp[[strat]])) {
+            score_comp_pval[strat, db] <- 
+                        score_comp[[strat]][[db]]$p.value
+            score_comp_boot_pval[strat, db] <- 
+                        score_comp[[strat]][[db]]$boot.p.value
+        } 
+    }
+    return(list(score_comp_pval = score_comp_pval, 
+        score_comp_boot_pval = score_comp_boot_pval))
+}
