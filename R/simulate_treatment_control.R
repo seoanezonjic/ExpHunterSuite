@@ -28,7 +28,7 @@ STC <- function(Ngene = 1000,
     # Load & prepare base data
     if(is.null(bcount)){
         arab <- NULL
-        utils::data("arab", package = "TCC")
+        utils::data("arab", package = "TCC", envir = environment())
         bcount <- arab
         group <- seq(3)
     }
@@ -46,7 +46,7 @@ STC <- function(Ngene = 1000,
     population <- population[sample(seq(nrow(population)), 
         Ngene, replace = TRUE), ]
     # Define which genes will be DEGs
-    if(is.vector(PDEG)){
+    if(is.vector(PDEG) && length(PDEG) > 1){
         ndeg_pos <- floor(Ngene*abs(PDEG[1]))
         ndeg_neg <- floor(Ngene*abs(PDEG[2]))
     }else{
