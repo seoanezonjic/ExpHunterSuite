@@ -700,9 +700,10 @@ enrich_clusters_with_gmt <- function(custom_set = NULL,
 #' @return GMT loaded info
 #' @keywords file
 #' @export
-#' @example
+#' @examples
 #' gmt_file <- system.file("extData", 
 #' "toy_categories.gmt", package = "ExpHunterSuite")
+#' load_and_parse_gmt(gmt_file)
 load_and_parse_gmt <- function(gmt_file) {
     # Load file
     gmt <- readLines(con = gmt_file)

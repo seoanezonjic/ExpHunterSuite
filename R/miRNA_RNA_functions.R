@@ -354,7 +354,7 @@ add_randoms <- function(background = NULL,
   
     sig_pairs_count <- filters_summary[filters_summary$strategy == 
                 strategy_name & filters_summary$type == "known_miRNAs", "pairs"]
-    for( i in 1:3){  
+    for(i in seq_len(3)){  
        random_indices <- sample(nrow(background), 
            size = sig_pairs_count, replace = FALSE)    
        random_set <- as.data.frame(background[random_indices,])
@@ -380,7 +380,7 @@ add_randoms <- function(background = NULL,
     random_summary <- lapply(c("multiMiR", "predicted", 
         "validated", "both"), function(type){
        type_dist <- random_dist[, type]
-       type_pairs <- filters_summary[filters_summary$strategy == strategy_name & 
+       type_pairs <- filters_summary[filters_summary$strategy == strategy_name &
                                      filters_summary$type == type, "pairs"]
        data.frame(type = paste0(type, "_random"),
           pairs = mean(type_dist),

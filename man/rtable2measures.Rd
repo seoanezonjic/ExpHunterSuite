@@ -32,4 +32,11 @@ metrics table
 \description{
 Calculates emasures from result tables
 }
+\examples{
+htfile <- system.file("extData", 
+"hunter_results_table.txt", package = "ExpHunterSuite")
+realprediction <- system.file("extData", 
+"ground_truth_DE.txt", package = "ExpHunterSuite")
+rtable2measures(htfile, realprediction)
+}
 \keyword{metrics}

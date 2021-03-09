@@ -173,7 +173,8 @@ write_functional_report <- function(hunter_results,
     }
 
 #https://github.com/rstudio/rmarkdown/issues/1632#issuecomment-545824711
-    assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown") 
+    utils::assignInNamespace("clean_tmpfiles", 
+                             clean_tmpfiles_mod, ns = "rmarkdown") 
 
     results_path <- normalizePath(output_files)
     if(grepl("c", report)){

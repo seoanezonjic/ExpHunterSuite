@@ -15,4 +15,9 @@ GMT loaded info
 \description{
 Load a GMT format file and return a dataframe in correct format
 }
+\examples{
+gmt_file <- system.file("extData", 
+"toy_categories.gmt", package = "ExpHunterSuite")
+load_and_parse_gmt(gmt_file)
+}
 \keyword{file}

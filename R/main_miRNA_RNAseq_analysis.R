@@ -173,12 +173,12 @@ organism_table_path = file.path(find.package('ExpHunterSuite'), "inst",
      for (database in selected_databases) {
          background_score <- strategies$all_possible_pairs[, database]
          background_score <- background_score[!is.na(background_score)]
-         sig_pairs <- all_pairs_info[all_pairs_info$correlated_pairs, pair_n]
+         sig_pairs <- all_pairs_info$pair_n[all_pairs_info$correlated_pairs]
          strat_database <- strategies$all_possible_pairs[sig_pairs, database]
          strat_database <- strat_database[!is.na(strat_database)]
  
          naive_bckg <- c()
-         for (i in 1:20 ){
+         for (i in seq_len(20)){
              naive_bckg <- c(naive_bckg, sample(background_score, 
                  size = length(strat_database), replace = FALSE))
          }

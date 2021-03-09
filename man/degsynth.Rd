@@ -44,7 +44,7 @@ Main function to generate synthetic data using an specific exponential
 distribution for logFC
 }
 \examples{
-syznthetic_dataset <- degsynth()
+synthetic_dataset <- degsynth()
 # Returns simulated count dataset and indication of which are DE/not DE
 }
 \keyword{synthetic}

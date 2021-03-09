@@ -104,8 +104,6 @@ get_strategies_stats <- function(data , input_cols, reference_cols) {
       pval_table[icol_name,rcol_name] <- ftest$p.value
       LR_test_matrix[icol_name,rcol_name] <- calc_LRplus_test(c_matrix)
       LR_sub_matrix[icol_name,rcol_name] <- calc_LRplus_subject(c_matrix)
-      # print(c_matrix)
-      # message(ftest$p.value)
       LR_test_matrix[is.na(LR_test_matrix)] <- 0
       LR_sub_matrix[is.na(LR_test_matrix)] <- 0
 
@@ -147,7 +145,7 @@ calc_LRplus_test <- function(c_matrix) {
   return(LR_plus)
 }
 
-#' @importFrom stats pchisp
+#' @importFrom stats pchisq
 vectorial_fisher_method <- function(pval_table){
     log_pval <- log(pval_table) # Log all final p-values
     log_pval[is.na(log_pval)] <- 0 # any NAs made 0s -> not used combined score 

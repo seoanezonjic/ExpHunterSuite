@@ -10,6 +10,12 @@
 #' @return metrics table
 #' @importFrom utils read.table write.table head
 #' @importFrom ROCR prediction performance
+#' @examples 
+#' htfile <- system.file("extData", 
+#' "hunter_results_table.txt", package = "ExpHunterSuite")
+#' realprediction <- system.file("extData", 
+#' "ground_truth_DE.txt", package = "ExpHunterSuite")
+#' rtable2measures(htfile, realprediction)
 rtable2measures <- function(
   htfile,
   realprediction,

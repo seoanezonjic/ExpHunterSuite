@@ -60,7 +60,7 @@ fcfunc <- function(means,fcmin=1.4, fcmax=3, meanlog = 1, sdlog = 0.8){
 #' @return synthetic data generated
 #' @importFrom utils read.table write.table
 #' @examples
-#' syznthetic_dataset <- degsynth()
+#' synthetic_dataset <- degsynth()
 #' # Returns simulated count dataset and indication of which are DE/not DE
 degsynth <- function(
     outfile = NULL,
