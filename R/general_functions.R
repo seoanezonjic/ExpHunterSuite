@@ -21,7 +21,6 @@ standard_error <- function(x) {
 
 ########################################################  
 # Functions to generate output files
-#' @importFrom stats pchisq
 unite_DEG_pack_results <- function(exp_results, 
                                    p_val_cutoff, 
                                   lfc, 
