@@ -19,9 +19,9 @@ option_list <- list(
   optparse::make_option(c("-F", "--formula"), type="character", default = "PL",
     help=paste0("String which indicates if formula must include pvalue columns",
       " (P), logFC columns (L) or both (PL). Default: both")),
-  optparse::make_option(c("-T", "--test"), type="character",
-    help=paste0("Test dataset. If include 'Prediction' column stats will ",
-                "be calculated")),
+  optparse::make_option(c("-T", "--test"), type="character", default = NULL,
+    help=paste0("[OPTIONAL] Test dataset. If include 'Prediction' column stats",
+                " will be calculated")),
   optparse::make_option(c("-s", "--save_session"), type="logical",
     default = FALSE, action = "store_true",
     help="Flag to activa SAVE SESSION mode"),
@@ -88,7 +88,11 @@ if(!is.null(opt$train)){
 if(opt$verbose) message("Loading TESTING dataset")
 
 # Load test set
-test <- read.table(file = opt$test, sep = "\t", header = TRUE)
+testLoaded <- FALSE
+if(!is.null(opt$test)){
+  test <- read.table(file = opt$test, sep = "\t", header = TRUE)
+  testLoaded <- TRUE
+}
 
 #############################################
 ### TRAIN AND TEST 
@@ -118,14 +122,16 @@ if(opt$verbose) message("Training model")
 # Train NB model
 model <- naivebayes::naive_bayes(formula, data = train)
 
-# Verbose point
-if(opt$verbose) message("Predicting over TESTING set")
+if(testLoaded){
+  # Verbose point
+  if(opt$verbose) message("Predicting over TESTING set")
 
-# Predict over dataset
-prediction <- predict(model, test)
-if("Prediction" %in% colnames(test)){
-  tab <- table(test$Prediction, prediction, dnn = c(TRUE,FALSE))
-  prediction_stats <- get_stats_from_cm(tab) 
+  # Predict over dataset
+  prediction <- predict(model, test)
+  if("Prediction" %in% colnames(test)){
+    tab <- table(test$Prediction, prediction, dnn = c(TRUE,FALSE))
+    prediction_stats <- get_stats_from_cm(tab) 
+  }  
 }
 
 #############################################
@@ -135,17 +141,19 @@ if("Prediction" %in% colnames(test)){
 # Verbose point
 if(opt$verbose) message("Exporting results")
 
-# Export prediction
-write.table(prediction,paste(opt$outfile,"pred",sep = "_"), 
-  col.names = FALSE, row.names = FALSE, quote = FALSE)
 # Export model
 save(model,file = paste(opt$outfile,"model.RData",sep = "_"))
 # Export session
 if(opt$save_session){
   save.image(paste(opt$outfile,"session.RData",sep = "_"))
 }
-if("Prediction" %in% colnames(test)){
-  # Export stats over dataset
-  write.table(prediction_stats,paste(opt$outfile,"stats",sep = "_"),
-    row.names = FALSE, quote = FALSE)
+if(testLoaded){
+  # Export prediction
+  write.table(prediction,paste(opt$outfile,"pred",sep = "_"), 
+    col.names = FALSE, row.names = FALSE, quote = FALSE)
+  if("Prediction" %in% colnames(test)){
+    # Export stats over dataset
+    write.table(prediction_stats,paste(opt$outfile,"stats",sep = "_"),
+      row.names = FALSE, quote = FALSE)
+  }  
 }
