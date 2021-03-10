@@ -358,3 +358,43 @@ write_enrich_files <- function(func_results, output_files=getwd()){
         }
     }
 }
+
+
+#' Loads Hunter DEG analysis table and simulated TRUE DEG vector. Concat in
+#' training/testing ML data frame format and returns it.
+#' @param folder where files are placed
+#' @param hunter_table_file DEG analys result table file name
+#' @param prediction_file_regex regex to find TRUE DEG file generated
+#' @return a data frame with DEG result and real predictions column
+#' @export
+#' @examples
+#' # Used to load a synth + DE analysis result folder
+#' ht <- load_synth_dataset() 
+#' # Will return an empty object, you need a correct folder
+load_synth_dataset <- function(
+    folder = NULL,
+    hunter_table_file = "hunter_results_table.txt",
+    prediction_file_regex = "_predv"){
+    # Check
+    if(is.null(folder)){
+      warning("Folder has not been specified. Returning NULL")
+      return(NULL)
+    }
+    # Load hunter table
+    ht <- read.table(file = file.path(folder,hunter_table_file), sep = "\t",
+                     header = TRUE)
+    # Load prediction
+    prediction_file <- list.files(folder)
+    prediction_file <- prediction_file[which(grepl(prediction_file_regex,
+                                                   prediction_file))]
+    if(length(prediction_file) > 1) prediction_file <- prediction_file[1]
+    true_preds <- read.table(file = file.path(folder,prediction_file),
+                             sep = "\t", header = TRUE)
+    # Concat
+    ht$Prediction <- unlist(lapply(seq(nrow(ht)),function(i){
+        return(true_preds[which(true_preds[,1] == rownames(ht)[i])[1],2])
+    }))
+    # Return
+    return(ht)
+}
+

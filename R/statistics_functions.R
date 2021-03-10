@@ -168,3 +168,55 @@ vectorial_fisher_method <- function(pval_table){
 }
 
 
+#' Function to calculate full set of measures from a confusion data frame
+#' @param df confusion dataframe 
+#' @return a data frame with several measures
+#' @export
+#' @examples
+#' df <- data.frame(TP = 4, FP = 3, TN = 2, FN = 1)
+#' stats <- get_stats(df)
+get_stats <- function(df){
+  df$ACC <- acc(df)
+  df$Specificity <- spc(df)
+  df$Precision <- ppv(df)
+  df$Recall <- recall(df)
+  df$FMeasure <- fmeasure(df)
+  return(df)
+}
+
+#' Obtain full set of measures from a confusion matrix
+#' @param cm confusion matrix 
+#' @return a data frame with several measures
+#' @export
+#' @examples
+#' cm <- matrix(c(4,3,2,1), ncol = 2)
+#' rownames(cm) <- c(TRUE,FALSE)
+#' colnames(cm) <- c(TRUE,FALSE)
+#' stats <- get_stats_from_cm(cm)
+get_stats_from_cm <- function(cm){
+  # >>>>>>>[ Real , Pred ]
+  TP <- extract_from_cm(cm,"TRUE","TRUE")
+  FN <- extract_from_cm(cm,"TRUE","FALSE")
+  TN <- extract_from_cm(cm,"FALSE","FALSE")
+  FP <- extract_from_cm(cm,"FALSE","TRUE")
+  df <- data.frame(TP = TP, FP = FP, TN = TN, FN = FN)
+  df <- get_stats(df)
+  return(df)
+}
+
+#' Extract value from confusion matrix
+#' @param cm confusion matrix
+#' @param real slot name
+#' @param pred slot name
+#' @param default to return if value is not available
+#' @return value required or default if it is not available
+extract_from_cm <- function(cm,real,pred,default = 0){
+  value = tryCatch(
+    {
+      return(cm[real,pred])
+    },
+    error = function(cond){
+      return(0)
+    })
+  return(value)
+}
