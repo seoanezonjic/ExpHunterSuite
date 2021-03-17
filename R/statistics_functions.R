@@ -105,7 +105,7 @@ get_strategies_stats <- function(data , input_cols, reference_cols) {
       LR_test_matrix[icol_name,rcol_name] <- calc_LRplus_test(c_matrix)
       LR_sub_matrix[icol_name,rcol_name] <- calc_LRplus_subject(c_matrix)
       LR_test_matrix[is.na(LR_test_matrix)] <- 0
-      LR_sub_matrix[is.na(LR_test_matrix)] <- 0
+      LR_sub_matrix[is.na(LR_sub_matrix)] <- 0
 
     }
   }
