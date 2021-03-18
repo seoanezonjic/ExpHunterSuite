@@ -16,6 +16,8 @@ option_list <- list(
     help="[USE ONE] Folder with synthetic data and DEG analysis result"),
   optparse::make_option(c("-p", "--path"), type="character", default = NULL,
     help="[USE ONE] Path with several synthetic folders"), 
+  optparse::make_option(c("-m", "--model"), type="character", default = NULL,
+    help="[USE ONE] Model RData file. Avoid training process"), 
   optparse::make_option(c("-F", "--formula"), type="character", default = "PL",
     help=paste0("String which indicates if formula must include pvalue columns",
       " (P), logFC columns (L) or both (PL). Default: both")),
@@ -80,6 +82,9 @@ if(!is.null(opt$train)){
     message(paste0("\t",folder))
     return(load_synth_dataset(folder))
   })))
+}else if(!is.null(opt$model)){
+  if(opt$verbose) message("Loading already trained model")
+  load(opt$model)
 }else{
   stop("No training set given. Finishing ...")
 }
@@ -98,36 +103,36 @@ if(!is.null(opt$test)){
 ### TRAIN AND TEST 
 #############################################
 
-# Verbose point
-if(opt$verbose) message("Creating formula")
+if(is.null(opt$model)){
+  # Verbose point
+  if(opt$verbose) message("Creating formula")
 
+  # Prepare formula
+  target_cols <- c()
+  if(grepl("L",opt$formula)){
+    target_cols <- c(target_cols, setdiff(which(grepl("logFC",colnames(train))),
+                                        which(colnames(train) == "mean_logFCs")))
+  }
+  if(grepl("P",opt$formula)){
+    target_cols <- c(target_cols, which(grepl("pvalue",colnames(train))))
+  }
 
-# Prepare formula
-target_cols <- c()
-if(grepl("L",opt$formula)){
-  target_cols <- c(target_cols, setdiff(which(grepl("logFC",colnames(train))),
-                                      which(colnames(train) == "mean_logFCs")))
+  formula_t <- paste0("Prediction ~ ",paste(unique(colnames(train)[target_cols]),
+                    collapse = " + "))
+  formula_t <- as.formula(formula_t)
+
+  # Verbose point
+  if(opt$verbose) message("Training model")
+  # Train NB model
+  model <- naivebayes::naive_bayes(formula_t, data = train)
 }
-if(grepl("P",opt$formula)){
-  target_cols <- c(target_cols, which(grepl("pvalue",colnames(train))))
-}
-
-formula <- paste0("Prediction ~ ",paste(unique(colnames(train)[target_cols]),
-                  collapse = " + "))
-formula <- as.formula(formula)
-
-# Verbose point
-if(opt$verbose) message("Training model")
-
-# Train NB model
-model <- naivebayes::naive_bayes(formula, data = train)
 
 if(testLoaded){
   # Verbose point
   if(opt$verbose) message("Predicting over TESTING set")
 
   # Predict over dataset
-  prediction <- predict(model, test)
+  prediction <- naivebayes:::predict.naive_bayes(model,test)
   if("Prediction" %in% colnames(test)){
     tab <- table(test$Prediction, prediction, dnn = c(TRUE,FALSE))
     prediction_stats <- get_stats_from_cm(tab) 
@@ -142,14 +147,17 @@ if(testLoaded){
 if(opt$verbose) message("Exporting results")
 
 # Export model
-save(model,file = paste(opt$outfile,"model.RData",sep = "_"))
+if(is.null(opt$model)){
+  save(model,file = paste(opt$outfile,"model.RData",sep = "_"))
+}
 # Export session
 if(opt$save_session){
   save.image(paste(opt$outfile,"session.RData",sep = "_"))
 }
 if(testLoaded){
   # Export prediction
-  write.table(prediction,paste(opt$outfile,"pred",sep = "_"), 
+  write.table(cbind(rownames(test),as.character(prediction)),
+    paste(opt$outfile,"pred",sep = "_"), 
     col.names = FALSE, row.names = FALSE, quote = FALSE)
   if("Prediction" %in% colnames(test)){
     # Export stats over dataset
