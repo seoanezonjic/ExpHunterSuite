@@ -21,6 +21,10 @@ option_list <- list(
   optparse::make_option(c("-F", "--formula"), type="character", default = "PL",
     help=paste0("String which indicates if formula must include pvalue columns",
       " (P), logFC columns (L) or both (PL). Default: both")),
+  optparse::make_option(c("-c", "--change"), type="character", default = "",
+    help=paste0("String which indicates if specific columns must be mutated ",
+      "applying: -log to pvalue columns (P), ABS to logFC columns (L) or both",
+      " (PL).")),
   optparse::make_option(c("-T", "--test"), type="character", default = NULL,
     help=paste0("[OPTIONAL] Test dataset. If include 'Prediction' column stats",
                 " will be calculated")),
@@ -54,6 +58,38 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   root_path <- find.package('ExpHunterSuite')
 }
 
+
+#############################################
+### FUNCTIONS 
+#############################################
+transformPvals <- function(df){
+  pvalCols <- which(grepl("pvalue",colnames(df)))
+  invisible(lapply(pvalCols,function(i){
+    df[,i] <<- -log(df[,i])
+  }))
+  return(df)
+}
+
+transformLogFCs <- function(df){
+  logfcCols <- setdiff(which(grepl("logFC",colnames(train))),
+                       which(colnames(train) == "mean_logFCs"))
+  invisible(lapply(logfcCols,function(i){
+    df[,i] <<- abs(df[,i])
+  }))
+  return(df)
+}
+
+transformSet <- function(df,tr){
+  if(grepl("P",tr)){
+    df <- transformPvals(df)
+  }
+  if(grepl("L",tr)){
+    df <- transformLogFCs(df)
+  }
+  return(df)
+}
+
+
 #############################################
 ### LOAD 
 #############################################
@@ -65,7 +101,8 @@ if(!is.null(opt$train)){
   train <- read.table(file = opt$train, sep = "\t", header = TRUE)
 }else if(!is.null(opt$folder)){
   if(opt$verbose) message("Loading TRAINING dataset from folder")
-  train <- load_synth_dataset(opt$folder)
+  train <- transformSet(load_synth_dataset(opt$folder),opt$change)
+
 }else if(!is.null(opt$path)){
   if(opt$verbose) message("Loading TRAINING dataset from paths set")
   target_folder = tryCatch(
@@ -80,7 +117,7 @@ if(!is.null(opt$train)){
                                                         full.names = TRUE),-1), 
                                               function(folder){
     message(paste0("\t",folder))
-    return(load_synth_dataset(folder))
+    return(transformSet(load_synth_dataset(folder),opt$change))
   })))
 }else if(!is.null(opt$model)){
   if(opt$verbose) message("Loading already trained model")
@@ -96,6 +133,7 @@ if(opt$verbose) message("Loading TESTING dataset")
 testLoaded <- FALSE
 if(!is.null(opt$test)){
   test <- read.table(file = opt$test, sep = "\t", header = TRUE)
+  test <- transformSet(test,opt$change)
   testLoaded <- TRUE
 }
 
@@ -111,13 +149,13 @@ if(is.null(opt$model)){
   target_cols <- c()
   if(grepl("L",opt$formula)){
     target_cols <- c(target_cols, setdiff(which(grepl("logFC",colnames(train))),
-                                        which(colnames(train) == "mean_logFCs")))
+                                      which(colnames(train) == "mean_logFCs")))
   }
   if(grepl("P",opt$formula)){
     target_cols <- c(target_cols, which(grepl("pvalue",colnames(train))))
   }
 
-  formula_t <- paste0("Prediction ~ ",paste(unique(colnames(train)[target_cols]),
+  formula_t <-paste0("Prediction ~ ",paste(unique(colnames(train)[target_cols]),
                     collapse = " + "))
   formula_t <- as.formula(formula_t)
 
