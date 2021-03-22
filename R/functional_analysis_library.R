@@ -59,7 +59,6 @@ check_results_list <- function(ls){
             return(FALSE)
           }
         }
-        return(FALSE)
       } else if (is.null(set)) {
         return(FALSE)
       }
