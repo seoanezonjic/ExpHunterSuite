@@ -24,7 +24,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   custom_libraries <- c('main_degenes_Hunter.R', 'io_handling.R', 
     'general_functions.R', 'dif_expression_packages.R', 
     'qc_and_benchmarking_functions.R', 'correlation_packages.R', 
-    'plotting_functions.R', 'write_report.R')
+    'plotting_functions.R', 'write_report.R', "statistics_functions.R")
   for (lib in custom_libraries){
     source(file.path(root_path, 'R', lib))
   }
