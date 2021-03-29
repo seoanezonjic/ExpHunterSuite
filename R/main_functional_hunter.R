@@ -324,7 +324,7 @@ functional_hunter <- function(
     message(paste("IDs used in ORA:",length(likely_degs_entrez)))
     ## TODO => ESTARIA BIEN REFLEJAR ESTA INFORMACION EN EL REPORT
     "%>%" <- magrittr::"%>%"
-    union_DEGs_df <- subset(DEGH_results, .data$genes_tag %in% c("POSSIBLE_DEG",
+    union_DEGs_df <- subset(DEGH_results, genes_tag %in% c("POSSIBLE_DEG",
                              "PREVALENT_DEG"))
     union_DEGs <- union_DEGs_df[!is.na(union_DEGs_df$input_IDs), 
                                      "input_IDs"] %>% unique

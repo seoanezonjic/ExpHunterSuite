@@ -191,7 +191,7 @@ load_package_result <- function(pack_path){
     if(file.exists(file.path(pack_path,paste0("allgenes_",pack_name,".txt")))){
         info[["all_counts_for_plotting"]] <- utils::read.table(
             file.path(pack_path,paste0("allgenes_",pack_name,".txt")), 
-            stringsAsFactors = FALSE)
+            stringsAsFactors = FALSE,  sep="\t")
     }
     return(info)
 }
