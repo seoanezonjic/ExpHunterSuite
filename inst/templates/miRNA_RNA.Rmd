@@ -30,77 +30,160 @@ output:
 </style>
 
 
-# **RNAseq - miRNAseq correlation report**
+# **CoRmiT RNAseq - miRNAseq correlation report**
 
-```{r introduction, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-cat(paste0("This report summarizes results from [script_name] execution comparing **", RNAseq_folder, "** RNAseq data and **", miRNAseq_folder, "** miRNAseq data.
- miRNAseq and RNAseq data has been correlated using different strategies and then compared with databases included in multiMiR.\n\n" ))
+This report summarizes ExpHunterSuite CoRmiT results comparing RNAseq and miRNAseq data and looking for putative miRNA-gene target pairs, 
+representing genes that are silenced by miRNAs.
+
+## **Strategies comparison**
+
+miRNAseq and RNAseq data are compared and correlated using multiple strategies and then compared with multiMiR databases.
+
+* Description of strategies used: 
+```{r print_info, echo = FALSE, warning = FALSE, results = "asis"}
+  sig_strategies <- names(strategies)[! names(strategies) %in% unsig_strategies]
+  cat(parse_strat_text(sig_strategies))
+
 ```
 
+* Three control strategies are also used:
+    + **DEGs_DEMs_permutated:** All possible permutations between differentially expressed genes and differentially expressed miRNAs. Correlation are not performed.
+    + **Eigengene_0_RNA_vs_miRNA_normalized_counts:** Correlation between the Eigengene profile for gene module 0, which contains genes that could not be assigned to any other consistent module and miRNA normalizaed counts.
+    + **normalized_counts_RNA_vs_miRNA_Eigengene_0:** Correlation between gene normalized counts and the Eigengene profile for miRNA module 0, which contains miRNAs that could not be assigned to any other consistent module.
 
-* Strategies description: 
-    + counts_RNA_vs_counts_miRNA correlates normalized RNAseq counts with normalized miRNAseq counts. 
-    + Eigen_RNA_v_Eigen_miRNA correlates Eigengene profile of RNAseq coexpression modules with Eigengene profile of miRNAseq coexpression modules. 
-    + Eigen_RNA_v_Hub1_miRNA correlates Eigengene profile of RNAseq coexpression modules with hub gene profile of miRNAseq coexpression modules. 
-    + Eigen_RNA_v_counts_miRNA correlates Eigengene profile of RNAseq coexpression modules with with normalized miRNAseq counts.
-    + Hub1_RNA_v_counts_miRNA correlates hub gene profile of RNAseq coexpression modules with with normalized miRNAseq counts.
-    + Hub1_RNA_v_Eigen_miRNA correlates hub gene profile of RNAseq coexpression modules with Eigengene profile of miRNAseq coexpression modules.
 
-## **RNAseq and miRNAseq correlation methods comparison**
+Please note that graphics are only displayed for the strategies that were run and for which significant results were found.
 
-This plot shows the distributions of correlations between RNAseq and miRNAseq using diferent strategies.
+```{r sig_unsig, echo = FALSE, warning = FALSE, results = "asis"}
+
+  sig_strats <-  paste0("**", paste(sig_strategies, collapse = "**, **"), "**")
+
+  unsig_strats <- paste0("**", paste(unsig_strategies, collapse = "**, **"), "**")
+
+ cat(paste0("In this report, only the strategies ", sig_strats, " produced signficant results.\n"))
+ if (length(unsig_strategies) > 0){
+  cat(paste0(unsig_strats, " were run, however no signficant correlated pairs were obtained."))
+ } 
+
+```
+
+### **Correlation distributions**
+
+Distributions of correlation values between RNAseq and miRNAseq data obtained using the different strategies.
+Dashed line shows the correlation cut-off below which miRNA-target pairs are considered significant. 
+Horizontal lines within the distributions represent the 90 and 95 percentiles. 
+Note that **DEGs_DEMs_permutated** strategy is not included.
+
+
 ```{r methods_comparison_violin_cor, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 
-all_cor_dist <- strategies
-all_cor_dist[["all_possible_pairs"]] <- NULL
-strat_names <- names(all_cor_dist)
-all_cor_dist <- lapply(all_cor_dist, function(strategy_data){
-   dist <- strategy_data[,c("correlation", "pval")]
- 
-   return(dist)
-  })
-names(all_cor_dist) <- strat_names
-
-
-all_cor_dist <- as.data.frame(data.table::rbindlist(all_cor_dist, use.names=TRUE, idcol= "strategy"))
-
 pp <- ggplot2::ggplot(all_cor_dist, ggplot2::aes(x = strategy, y = correlation, fill = strategy)) +
-  ggplot2::geom_violin(trim = FALSE, scale = "width",draw_quantiles = c( 0.1, 0.05)) + #ggplot2::ylim(-1.000001, min + 0.00001) +
-  ggplot2::geom_hline(yintercept= corr_cutoff) +
-  ggplot2::geom_boxplot(width=0.05)+
-  ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.title.x = ggplot2::element_blank()) 
-pp
+  ggplot2::geom_violin(col = "white",trim = FALSE, scale = "width",draw_quantiles = c( 0.1, 0.05)) + #ggplot2::ylim(-1.000001, min + 0.00001) +
+  ggplot2::geom_hline(yintercept= corr_cutoff, linetype = "dashed", colour = "black") +
+  ggplot2::geom_boxplot(width=0.05)+ ggplot2::ylim(-1, 1)+
+  ggplot2::coord_flip()+
+  ggplot2::theme(axis.text.y = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank()) +
+  ggplot2::labs(fill = "Strategy")
 
+pp 
 ```
 
-```{r methods_comparison_violin_p, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = FALSE}
+### **Pearson's correlation P-values distribution**
 
-cat("\n\nThis plot shows the distributions of correlation P values between RNAseq and miRNAseq using diferent strategies.
-  \n")
+Distributions of correlation P-values between RNAseq and miRNAseq data obtained using the different strategies.
+Note that **DEGs_DEMs_permutated** strategy is not included.
+
+```{r methods_comparison_violin_p, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+
 pp <- ggplot2::ggplot(all_cor_dist, ggplot2::aes(x = strategy, y = pval, fill = strategy)) +
-  ggplot2::geom_violin(trim = FALSE, scale = "width") + ggplot2::ylim(-0.0001, 0.1) +
-  ggplot2::geom_boxplot(width=0.05)+
-  ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.title.x = ggplot2::element_blank()) 
+  ggplot2::geom_violin(trim = FALSE, scale = "width") + 
+  ggplot2::geom_hline(yintercept= p_val_cutoff, linetype = "dashed", colour = "black") +
+  ggplot2::geom_boxplot(width=0.05)+ ggplot2::ylim(-0.01, 1) +
+  ggplot2::coord_flip()+
+  ggplot2::theme(axis.text.y = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank()) +
+  ggplot2::labs(fill = "Strategy")
 pp
 
 ```
 
+### **Strategies overlapping**
 
-## **Overlapping between pairs and databases**
-This plot sumarizes the pairs of a putative nobel miRNA and the pairs of a miRNA found on miRBASE. 
+This table shows the number of significant pairs overlaped between strategies.
 
-* The pairs with known miRNAs were searched in: 
-  + All multiMiR databases (multiMiR)
-  + Only prediction databases (predicted)
-  + Only validated databases (validated)
-  + Intersection of prediction and validated databases (both)
 
-Overlapping of significant known pairs along the databases were compared with a random subset of significant pairs count from background pairs (all possible relations between RNAseq and miRNA seq input data). 
-The random subsets are tagged as "_random".
+
+```{r methods_comparison_intersection, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+ subchunk_count <- 3
+  common_pairs <- sig_pairs[["all"]]
+  sig_pairs[["all"]] <- NULL
+  common_pairs <- as.data.frame(as.table(as.matrix(common_pairs)))
+  names(common_pairs) <- c("x_axis", "y_axis",  "intersection")
+  common_pairs$text <- as.character(common_pairs$intersection)
+  common_pairs$x_axis <- as.character(common_pairs$x_axis)
+  common_pairs$y_axis <- as.character(common_pairs$y_axis)
+  common_pairs[common_pairs$x_axis == common_pairs$y_axis, "text"] <- "-"
+  pp <- gg_heatmap(data =  common_pairs, 
+              x_axis = "x_axis",
+              y_axis= "y_axis",
+              fill = "intersection",
+              text_plot= "text", 
+              labs = FALSE)
+  subchunk_count <- rechunk(pp, counter = subchunk_count, 
+          chunk_options = "echo=FALSE, results = 'asis', warning = FALSE, message = FALSE")
+
+```
+
+### **Strategies overlapping by group databases**
+
+Following tables shows the number of significant pairs included on each group of multiMiR database overlaped between strategies.
+
+MultiMiR databases can be classified based on those containing predicted pairs and experimentally validated pairs.
+We therefore repeated the steps indicated above for the union of **predicted** databases, **validated** databases, and intersection of them **(pred_and_val)**.
+
+
+```{r methods_comparison_intersection_groups, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+
+for (db_group in names(sig_pairs)){
+   common_pairs <- sig_pairs[[db_group]]
+   check_ovlp <- common_pairs
+   diag(check_ovlp) <- 0
+  cat(paste0("#### **Overlap of significant pairs found on ", db_group, " databases**\n\n"))
+   if (any(check_ovlp > 0)){
+       common_pairs <- as.data.frame(as.table(as.matrix(common_pairs)))
+       names(common_pairs) <- c("x_axis", "y_axis",  "intersection")
+       common_pairs$text <- as.character(common_pairs$intersection)
+       common_pairs$x_axis <- as.character(common_pairs$x_axis)
+       common_pairs$y_axis <- as.character(common_pairs$y_axis)
+       common_pairs[common_pairs$x_axis == common_pairs$y_axis, "text"] <- "-"
+       pp <- gg_heatmap(data =  common_pairs, 
+                   x_axis = "x_axis",
+                   y_axis= "y_axis",
+                   fill = "intersection",
+                   text_plot= "text", 
+                   labs = FALSE)
+       subchunk_count <- rechunk(pp, counter = subchunk_count, 
+               chunk_options = "echo=FALSE, results = 'asis', warning = FALSE, message = FALSE")
+   } else {
+       cat(paste0("There were not overlap between significant pairs of strategies on ", db_group, " databases.\n\n"))
+   }
+}
+   
+```
+
+### **Overlap between strategy results and databases**
+
+* This bar chart shows, for each strategy, how many significant miRNA-target pairs:
+  + Include a putative **novel** miRNA
+  + Include a **known** miRNA (present in miRBASE)
+
+It also shows the number of significant pairs involving known miRNAs that are found in gorups of **multiMiR** databases.
+To assess the significance of this number, we select **random** pairs of expressed genes/miRNAs from the 
+experiment, of an equivalent number to the significant pairs including a known miRNA, and note how many of these
+pairs overlap with the multiMiR databases. This is repeated multiple times, and the mean +/- standard deviation are plotted.
+
 
 
 ```{r methods_comparison_bar, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-
 
 pp <- ggplot2::ggplot(filters_summary, ggplot2::aes(y = pairs, x = strategy, fill = type)) + 
       ggplot2::geom_bar(stat= "identity",position=ggplot2::position_dodge()) +
@@ -111,165 +194,81 @@ pp <- ggplot2::ggplot(filters_summary, ggplot2::aes(y = pairs, x = strategy, fil
 pp
 ```
 
-## **Overlapping significance**
-This table shows P values of comparing significant pairs in databases with random distribution (as normal distributin). 
 
-```{r methods_comparison_pval, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-filter_stats <- filters_summary[!is.na(filters_summary$p_val), c("strategy", "type", "p_val", "quantile")]
-filter_stats <- stats::reshape(filter_stats, timevar="type", idvar="strategy", direction ="wide")
-filter_stats$targets <- rep(NA, nrow(filter_stats))
-prevalent_miRNAs <- miRNAseq[["DH_results"]]$gene_name[miRNAseq[["DH_results"]]$genes_tag == "PREVALENT_DEG"]
-for (strategy in unique(filter_stats$strategy)) {
-  correlated_pairs <- strategies$all_possible_pairs[strategies[[strategy]]$index, c("miRNAseq", "RNAseq")]
-  filter_stats[filter_stats$strategy == strategy, "miRNAs"] <- length(unique(correlated_pairs$miRNAseq))
-  filter_stats[filter_stats$strategy == strategy, "targets"] <- length(unique(correlated_pairs$RNAseq))
-  filter_stats[filter_stats$strategy == strategy, "DEMs"] <- length(unique(correlated_pairs[correlated_pairs$miRNAseq %in% prevalent_miRNAs, "miRNAseq"]))
-  filter_stats[filter_stats$strategy == strategy, "DEMs_targets"] <- length(unique(correlated_pairs[correlated_pairs$miRNAseq %in% prevalent_miRNAs, "RNAseq"]))
-}
- 
-  DT::datatable(filter_stats, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
-            options = list(
-              colReorder = TRUE,
-              dom = 'lftBip',
-              buttons = c('copy', 'csv', 'excel')
-        ))
+### **Association with databases**
 
-valid_strats <- filter_stats[filter_stats$p_val.predicted < 0.01 & filter_stats$p_val.validated < 0.01, "strategy"]
+* **Statistical metrics:**
+  + **Accuracy**, **Precision** and **Specificity** were calculated for the overlapping between significant strategies and group of multiMiR databases.
+  + **Fisher exact test significance (-LogPval):** Significant and non-significant pairs were compared in terms of overlap with databases using one-tailed Fisher exact test. P-values are shown for the different strategies and for the different databases considered. -log10(P-values) are represented. Radar plot shows -log10(0.05) threshold with a dashed grey line.
+  + **Likelihood ratio for positive test (LRplus_test):** For each pair, this shows to what extent a significant result indicates an increased probability of being a true miRNA-target pair. It is calculated as the True Positive Rate, calculated as proportion of all pairs in the experiment that overlap with the database that are signficant, divided by the False Positive Rate, calculated as proportion of all pairs in the experiment that do not overlap with the database that are significant.
+  + **Likelihood ratio for positive subjects (LRplus_sub):** Given a true miRNA-target pair, what is the increased probability of obtaining a significant result. It is calculated as the proportion of significant results overlapping with the databases (True positive rate), divided by the proportion of non-signficant results overlapping with the databases (false positive rate).
 
-```
-
-## **Association with databases**
-This table shows the association of significant pairs and pairs from multiMiR databases. The association is measured by one tailed Fisher s exast test.
-Lower P value shows that significant correlated pairs are enriched on pairs in databases.
-
-```{r fet_table,  echo=FALSE, warning = FALSE, message = FALSE}
-    DT::datatable(as.data.frame(fet_pvals), filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
-            options = list(
-              colReorder = TRUE,
-              dom = 'lftBip',
-              buttons = c('copy', 'csv', 'excel')
-        ))
-```
-
-## **Likelihood ratio for possitive test**  
-
-```{r LR_test,  echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-    DT::datatable(as.data.frame(LR_test), filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
-            options = list(
-              colReorder = TRUE,
-              dom = 'lftBip',
-              buttons = c('copy', 'csv', 'excel')
-        ))
-```
-
-## **Likelihood ratio for possitive subjects**
-
-```{r LR_sub,  echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-    DT::datatable(as.data.frame(LR_sub), filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
-            options = list(
-              colReorder = TRUE,
-              dom = 'lftBip',
-              buttons = c('copy', 'csv', 'excel')
-        ))
-```
+*(Radar plots show a threshold of 1 for the Likelihood ratios)*
 
 
-## **Strategies overlapping**
-This plot shows shared significant pairs between strategies
+```{r prec_rec, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 
-```{r methods_comparison_intersection, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-
-
-common_pairs <- matrix(,nrow = length(approaches), ncol = length(approaches))
-
-colnames(common_pairs) <- approaches
-rownames(common_pairs) <- approaches
-
-for (col_strategy in approaches) {
-  strat_pairs <- strategies$all_possible_pairs[all_strategies[all_strategies$strategy == col_strategy, "pair_n"], c("RNAseq", "miRNAseq")]
-
-  col_pairs <- strat_pairs %>% tidyr::unite("pairs", RNAseq:miRNAseq, sep = "", na.rm = FALSE)
-  col_pairs <- col_pairs$pairs
-  for (row_strategy in approaches) {
-    strat_pairs <- strategies$all_possible_pairs[all_strategies[all_strategies$strategy == row_strategy, "pair_n"], c("RNAseq", "miRNAseq")]
-    row_pairs <- strat_pairs %>% tidyr::unite("pairs", RNAseq:miRNAseq, sep = "", na.rm = FALSE)
-    row_pairs <- row_pairs$pairs
-    common_pairs[row_strategy, col_strategy] <- length(intersect(col_pairs, row_pairs))
-  }
-}
-
-common_pairs <- as.data.frame(as.table(as.matrix(common_pairs)))
-
-names(common_pairs) <- c("x_axis", "y_axis",  "intersection")
-
-common_pairs$text <- as.character(common_pairs$intersection)
-common_pairs$x_axis <- as.character(common_pairs$x_axis)
-common_pairs$y_axis <- as.character(common_pairs$y_axis)
-
-
-
-pp <- gg_heatmap(data =  common_pairs, 
-            x_axis = "x_axis",
-            y_axis= "y_axis",
-            fill = "intersection",
-            text_plot= "text", 
-            labs = FALSE)
-pp
+    cont_table_radar <- cont_tables[c("strategy","Accuracy","Precision","Specificity","db_group", "Pvalue", "LRplus_test", "LRplus_sub")]
+    cont_table_radar[,"-LogPval"] <- -log10(cont_table_radar$Pvalue)
+    cont_table_radar$Pvalue <- NULL
+    cont_table_radar <- split(cont_table_radar, cont_table_radar$db_group)
+    thresholds <- data.frame(check.names = FALSE, row.names = "Thresholds", Accuracy = 0, Precision = 0, Specificity = 0, "-LogPval" = -log10(0.05), LRplus_test = 1, LRplus_sub = 1)
+    for(db_group in c("multimir", "predicted","validated", "pred_and_val")){
+      cont_tab <- cont_table_radar[[db_group]]
+      cat(paste0("\n\n#### **", stringr::str_to_title(db_group), " databases**\n\n"))
+      cat(paste0("\n\nThis section sumarizes all metrics computed for each strategy compared with ", db_group, " databases.\n\n"))
+      rownames(cont_tab) <- cont_tab$strategy
+      cont_tab$db_group <- NULL
+      cont_tab$strategy <- NULL
+      COL<- grDevices::colorRampPalette(c("red", "blue", "green", "orange"))(nrow(cont_tab))
+      COL <- c(COL, "#9C9C9C")
+      scales <- matrix(NA,nrow = 2, ncol = ncol(cont_tab) )
+      cont_tab_raw <- cont_tab
+      linetypes <-c(rep(1,nrow(cont_tab)), 2)
+      cont_tab <- rbind(cont_tab, thresholds)
+      scales[1,] <- c(1,1,1, max(cont_tab$LRplus_test), max(cont_tab$LRplus_sub), max(cont_tab[,"-LogPval"]))
+      scales[2,] <- c(0,0,0, min(cont_tab$LRplus_test), min(cont_tab$LRplus_sub), min(cont_tab[,"-LogPval"]))
+      scales <- as.data.frame(scales)
+      dimnames(scales) <- list(c("Max","Min"), colnames(cont_tab))
+      cont_tab_lim <- rbind(scales, cont_tab)
+          par(mfrow = c(1, 2))      
+          fmsb::radarchart(cont_tab_lim, cglcol="grey", maxmin = TRUE, pcol = COL, plty=linetypes )
+          plot.new() 
+          graphics::legend("center", legend = rownames(cont_tab), title = "Strategy", 
+            col = COL, seg.len = 2, border = "transparent", pch = 16, lty = linetypes)
+      if(db_group =="multimir"){
+            p <- recordPlot()
+            subchunk_count <- rechunk(p,
+                         counter = subchunk_count, 
+                         chunk_options = "echo=FALSE, results = 'asis', warning = FALSE, message = FALSE")
+      } 
+      cont_tab$db_group <- NULL
+      subchunk_count <- rechunk(DT::datatable(cont_tab_raw, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
+                                    options = list( paging =TRUE, colReorder = TRUE, dom = 'lftBip',  buttons = c('copy', 'csv', 'excel'))),
+                          counter = subchunk_count, 
+                          chunk_options = "echo=FALSE, results = 'asis', warning = FALSE, message = FALSE")
+    }     
 
 ```
 
-```{r roc_curve, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = FALSE}
-  print(valid_strats)
-  print(roc_data)
-    roc_predicted <- roc_data$predicted
-    roc_data$predicted <- NULL
-    roc_validated <- roc_data$validated
-    roc_data$validated <- NULL
-    roc_data <- roc_data[, valid_strats]
+### **Prediction scores for the significant pairs**
 
 
-    # roc_data <- as.matrix(roc_data)
-    cat("\n\nROC curve using multiMiR predicted relations as gold standard\n\n")
-    pred_pred <- ROCR::prediction(roc_data, labels = matrix(roc_predicted, nrow = length(roc_predicted), ncol = ncol(roc_data)))
-    perf_roc_pred <- ROCR::performance(pred_pred, "tpr", "fpr")
+The pairs in the multiMiR prediction databases are assigned scores that represent confidence in the predicted miRNA-target interaction.  
 
-    plot(perf_roc_pred, main = "ROC")
-    cat("\n\nPrecision-Recall curve using multiMiR predicted relations as gold standard\n\n")
+For each prediction database, the scores for the significant pairs obtained by each strategy were compared with random subsets of pairs.
 
-    prec_rec_pred <- ROCR::performance(pred_pred, "prec", "rec")
-    plot(prec_rec_pred, main = "PREC-REC")
+The comparison was performed using one-tailed T-tests and one-tailed bootstrap T-tests. P-value for both methods are included.
 
-    cat("\n\nROC curve using multiMiR validated relations as gold standard\n\n")
+Lower P-values means that the significant pairs had higher scores than the random subests.
 
-    pred_val <- ROCR::prediction(roc_data, labels = matrix(roc_validated, nrow = length(roc_validated), ncol = ncol(roc_data)))
-    perf_roc_val <- ROCR::performance(pred_val, "tpr", "fpr")
-    plot(perf_roc_val, main = "ROC")  
+The final column of the table shows the combined p-values for all databases, integrated using Fishers method.
 
-    prec_rec_val <- ROCR::performance(pred_val, "prec", "rec")
-    plot(prec_rec_val, main = "PREC-REC")
-
-``` 
-
-```{r all_db_dist, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = FALSE}
-    cat("\n\nArea under the curve for different strategies using multiMiR predicted and validated pairs as gold standard\n\n")
-    predicted_auc <- ROCR::performance(pred_pred, "auc")
-    predicted_val <- ROCR::performance(pred_val, "auc")
-    all_auc <- data.frame(strategy = colnames(roc_data),
-                          predicted_auc = unlist(predicted_auc@y.values),
-                          validated_auc = unlist(predicted_val@y.values)
-                          )
-
-    DT::datatable(all_auc, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
-            options = list(
-              paging = FALSE,
-              colReorder = TRUE,
-              dom = 'lftBip',
-              buttons = c('copy', 'csv', 'excel')
-          ))
-
-```
+#### **One-tailed T-test**
 
 ```{r score_comp_pval, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
+score_comp_pval <- reshape(score_comp[,c("strategy","database","p.value")], idvar = "strategy", timevar = "database", direction = "wide")
+    colnames(score_comp_pval) <- gsub("p.value.", "",colnames(score_comp_pval))
    DT::datatable(score_comp_pval, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
             options = list(
               paging = FALSE,
@@ -279,27 +278,13 @@ pp
           ))
 
 ```
-## **Significant pairs score**
-Each prediction from multiMiR databases has a prediction score that define the significance of miRNA-target prediction.
-Score distribution of significant correlated pairs were compared with a random score distribution of each database. 
-Significant and random distributions were compared with a one-tiled T test and one-tailed bootstrap T test. 
-P values were integrated with Fisher method.   
-This plot shows -log(P) and red line indicate -log(0.05).
 
-```{r score_comp_pval_log, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
-  ggplot2::ggplot(log_score_comp, ggplot2::aes(x = database, y = p.value, fill = strategy, shape = test_type)) +
-  ggplot2::geom_line() + 
-  ggplot2::geom_point() +
-  ggplot2::geom_line(ggplot2::aes(y = -log(0.05), color = "red")) +
-  ggplot2::geom_text(ggplot2::aes(y= -log(0.05) , label = "-log(0.05)"), vjust= -0.3)
-```
-
-
-
+#### **One-tailed bootstrap T-test**
 
 ```{r score_comp_bootpval, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
-# save(score_comp_pval, score_comp_boot_pval, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/pmm2_belen/target_miRNA_2020/test.RData")
-   DT::datatable(score_comp_boot_pval, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+  score_comp_boot_pval <- reshape(score_comp[,c("strategy","database","boot.p.value")], idvar = "strategy", timevar = "database", direction = "wide")
+   colnames(score_comp_boot_pval) <- gsub("boot.p.value.", "",colnames(score_comp_boot_pval))
+  DT::datatable(score_comp_boot_pval, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
             options = list(
               paging = FALSE,
               colReorder = TRUE,
@@ -308,95 +293,77 @@ This plot shows -log(P) and red line indicate -log(0.05).
           ))
 
 ```
-```{r db_distr, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = FALSE}
 
-    gg <- ggplot2::ggplot(db_distribution, ggplot2::aes(y = score, x = strategy, fill = step)) +
-    ggplot2::geom_boxplot() + ggplot2::ylim(0, NA) + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 20, hjust = 1))
+#### **Comparison of p-values obtained between T-test and boostrap T-test**
 
-    plot(gg)
+This plot shows -log(P) values from the T-test and bootstrap T-test. Grey dotted line indicates -log(0.05).
 
+```{r score_comp_pval_log, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
+    log_score_comp_boot <- score_comp[,c("strategy","database","log.boot.p.value")]
+    data.table::setnames(log_score_comp_boot, c("log.boot.p.value"), c("log.p.value"))
+    log_score_comp_boot$test_type <- "boot.t.test"
+    log_score_comp <- score_comp[,c("strategy","database","log.p.value")]
+    log_score_comp$test_type <- "t.test"
+    log_score_comp <- rbind(log_score_comp_boot, log_score_comp)
 
-```
-```{r db_distr_table, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = FALSE}
-   dist_pval <- prediction_dist_pval(db_distribution)
-    DT::datatable(dist_pval, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
-            options = list(
-              colReorder = TRUE,
-              dom = 'lftBip',
-              buttons = c('copy', 'csv', 'excel')
-        ))
-
-```
-```{r str_diff_predicted, results = 'asis', echo = FALSE, warning = FALSE, eval = FALSE}
-  cat("\n\nmiRNA-targets pairs \n\n")
-  venn_data <- lapply(valid_strats, function(strategy){
-    strat_significant_pairs <- all_strategies$strategy == strategy & all_strategies$predicted_c > 0
-
-    pairs <- strategies$all_possible_pairs[all_strategies[strat_significant_pairs, "pair_n"], c("RNAseq", "miRNAseq")] #<- paste0(all_strategies[strat_significant_pairs, "miRNAseq"], all_strategies[strat_significant_pairs, "RNAseq"])
-    pairs <- pairs %>% tidyr::unite("pair", RNAseq:miRNAseq, sep = "", na.rm = FALSE) 
-    pairs <- unique(pairs$pairs)
-    return(pairs)
-    })
-  names(venn_data) <- valid_strats
-  grid::grid.draw(VennDiagram::venn.diagram(x = venn_data,
-  filename = NULL))
+  ggplot2::ggplot(log_score_comp, ggplot2::aes(x = database, y = log.p.value, color = strategy, group = paste0(strategy, test_type))) +
+  ggplot2::geom_line(ggplot2::aes(linetype = test_type)) + 
+  ggplot2::geom_line(ggplot2::aes( y =  -log(0.05), linetype = "-log(0.05)" ), colour = "grey") +
+  # ggplot2::geom_point(size = 1) +
+  ggplot2::labs(linetype = "T test type", colour = "Strategy", group = "Strategy", shape = "T test type") +
+  ggplot2::scale_linetype_manual(values=c("dotted", "dashed", "solid"))+
+  ggplot2::theme(legend.position = "bottom", legend.box = "vertical")
 ```
 
-```{r str_diff_mirna, results = 'asis', echo = FALSE, warning = FALSE,  eval = FALSE}
-  cat("\n\nmiRNA shared\n\n")
 
-  venn_data <- lapply(valid_strats, function(strategy){
-    strat_significant_pairs <- all_strategies$strategy == strategy & all_strategies$predicted_c > 0
-
-    miRNA_ID <- unique(strategies$all_possible_pairs[all_strategies[strat_significant_pairs, "pair_n"], "miRNAseq"])
-    return(miRNA_ID)
-    })
-  names(venn_data) <- valid_strats
-  grid::grid.draw(VennDiagram::venn.diagram(x = venn_data,
-  filename = NULL))
-```
-```{r str_diff_target, results = 'asis', echo = FALSE, warning = FALSE,  eval = FALSE}
-  cat("\n\ntargets shared\n\n")
-
-  venn_data <- lapply(valid_strats, function(strategy){
-    strat_significant_pairs <- all_strategies$strategy == strategy & all_strategies$predicted_c > 0
-
-    RNA_ID <- unique(strategies$all_possible_pairs[all_strategies[strat_significant_pairs, "pair_n"], "RNAseq"])
-    return(RNA_ID)
-    })
-  names(venn_data) <- valid_strats
-  grid::grid.draw(VennDiagram::venn.diagram(x = venn_data,
-  filename = NULL))
-```
-
-```{r prec_rec, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-    
-    prec_recall$gold_standard <- factor(prec_recall$gold_standard, levels=c("predicted","validated","both"))
-
-    for (metric in c("precision", "recall", "F1")) {
-      gg <- ggplot2::ggplot(prec_recall, ggplot2::aes(x = strategy, y = prec_recall[,metric], fill = gold_standard))+
-      ggplot2::geom_bar(stat= "identity",position=ggplot2::position_dodge()) + 
-      ggplot2::ggtitle(metric) + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 20, hjust = 1))
-      cat(paste0("\n\n",metric," comparison for strategies\n\n"))
-      plot(gg)
-    }
-
-
-```
-
+## **Strategies specific results**
 
 ```{r render_partial_reports, echo = FALSE, warning = FALSE}
   curr_out <- ""
 
-  curr_out <- unlist(lapply(approaches ,function(method_name){
-      sec_text <- paste(c("## **", method_name ," correlation method**\n"),collapse="") # Header
+  curr_out <- unlist(lapply(sig_strategies[sig_strategies != "DEGs_DEMs_permutated"] ,function(method_name){
+      sec_text <- paste(c("### **", method_name ," correlation method**\n"),collapse="") # Header
       sec_text <- c(sec_text, knitr::knit_expand("partial/miRNA_cor_methods.Rmd")) # Body
       return(sec_text)
   }))    
 
 ``` 
-
 `r paste(knitr::knit(text = curr_out), collapse = '\n')`
+
+
+## **Score distribution sampling check**
+These plots compare the whole score distribution of background pairs with his subset. If the distributions are very different you have to increase the sample_proportion option.
+
+
+```{r score_sampling, results = "asis", echo = FALSE, warning = FALSE}
+  for (database in selected_predicted_databases) {
+    background_score <- all_pairs[,get(database)]
+
+    # save(background_score, file = "/home/bio267lab/proyectos/target_miRNA_2020/test2.Rdata")
+    background_score <- background_score[!is.na(background_score)]
+    background_score_sample <- background_score[sample(length(background_score), round(length(background_score) * sample_proportion), replace = FALSE)]
+    
+    background_score <- data.frame(background_score)
+    colnames(background_score) <- database
+    background_score_sample <- data.frame(background_score_sample)
+    colnames(background_score_sample) <- database
+    gridExtra::grid.arrange (
+    
+      ggplot2::ggplot(background_score,        ggplot2::aes_(x = as.name(database))) + 
+                                               ggplot2::geom_density() + 
+                                               ggplot2::ggtitle("Complete score distribution")
+                                          ,
+      ggplot2::ggplot(background_score_sample, ggplot2::aes_(x = as.name(database))) + 
+                                               ggplot2::geom_density() + 
+                                               ggplot2::ggtitle("Sampled score distribution"),
+      ncol = 2,
+      top = grid::textGrob(stringr::str_to_title(database),gp=grid::gpar(fontsize=20,font=3)))
+       
+    }
+
+  cat("\n\n")
+```
+
 
 
 

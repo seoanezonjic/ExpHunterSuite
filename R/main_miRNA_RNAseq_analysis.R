@@ -1,25 +1,23 @@
 #' @importFrom utils read.table 
-#' @importFrom miRBaseConverter getAllMiRNAs miRNA_AccessionToName
-#' @importFrom data.table as.data.table rbindlist
-#' @importFrom dplyr summarize group_by
-#' @importFrom reshape2 melt
 #' @importFrom rmarkdown render
-miRNA_RNAseq_analysis <- function(
+coRmiT <- function(
 RNAseq_folder,
 miRNAseq_folder,
 output_files,
-approaches,
+strat_names,
+sample_proportion, 
 organism,
 multimir_db,
 p_val_cutoff,
 corr_cutoff,
 permutations, 
-module_membership_cutoff,
+MM_cutoff,
 report, #this option can be set to default value
 translation_file,
 databases,
 translate_ensembl = FALSE,
-filter_unmaintained,
+filter_db_theshold = 0,
+database_to_filter = NULL,
 mc_cores = 1,
 template_folder = file.path(find.package('ExpHunterSuite'), "templates"),
 organism_table_path = file.path(find.package('ExpHunterSuite'), "inst", 
@@ -29,304 +27,73 @@ organism_table_path = file.path(find.package('ExpHunterSuite'), "inst",
  "%>%" <- magrittr::"%>%"
   pred_dbs <- c("diana_microt", "elmmo", "microcosm",
    "miranda","mirdb", "pictar", "pita", "targetscan")
- 
- 
-     
- dir.create(output_files, recursive = TRUE)
- 
- #parse strategies
- approaches <- c("normalized_counts_RNA_vs_miRNA_normalized_counts", 
-     parse_approaches(unlist(strsplit(approaches, ","))))
- 
- #add naive strategies
- naive_approaches <- c("Eigengene_0_RNA_vs_miRNA_normalized_counts", 
-     "normalized_counts_RNA_vs_miRNA_Eigengene_0", "DEGs_RNA_vs_miRNA_DEMs")
- 
- # approaches <- c(approaches, naive_approaches)
+  
+ #parse strategies and add default strategies
+ strat_names <- c(
+    "normalized_counts_RNA_vs_miRNA_normalized_counts", 
+    "Eigengene_0_RNA_vs_miRNA_normalized_counts", 
+    # "normalized_counts_RNA_vs_miRNA_Eigengene_0", 
+    # # "DEGs_RNA_vs_miRNA_DEMs",
+    "DEGs_DEMs_permutated",
+     parse_strategies(strat_names))
+  
  # Prepare for RNA ID translation
  organism_info <- utils::read.table(organism_table_path, 
-     header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, 
-     fill = NA) 
+    header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, 
+    fill = NA) 
  organism_info <- subset(organism_info, organism_info$KeggCode %in% organism)
- 
- 
+  
  #Prepare multiMiR
- load(multimir_db)
- selected_databases <- unlist(strsplit(databases, ","))
- selected_databases <- pred_dbs[pred_dbs %in% unlist(selected_databases)]
- multimir_summary <- summarize_multimir(multimir_summary, 
-     selected_predicted_databases = selected_databases, 
-     filter_unmaintained= filter_unmaintained)
+ selected_predicted_databases <- unlist(strsplit(databases, ","))
+ selected_predicted_databases <- pred_dbs[pred_dbs %in% unlist(selected_predicted_databases)]
+ multimir <- load_and_parse_multimir(multimir_path = multimir_db, 
+    selected_predicted_databases = selected_predicted_databases, 
+    filter_db_theshold= filter_db_theshold, #filter_db_theshold
+     database_to_filter = database_to_filter  #database_to_filter
+    )
  message("multiMiR database has been parsed and summarized")
  
- 
- 
  #Load and prepare DGH data
- RNAseq <- load_DEGH_information(RNAseq_folder)
+ RNAseq   <- load_DEGH_information(RNAseq_folder)
  miRNAseq <- load_DEGH_information(miRNAseq_folder)
+ message("RNAseq and miRNAseq data has been loaded")
  
- #prepare all possible pairs
- strategies <- list()
+ all_pairs <- prepare_all_pairs(RNAseq = RNAseq, miRNAseq = miRNAseq, 
+    multimir = multimir, organism = organism)
+ multimir <- NULL
+ # Perform strategies
+ miRNA_cor_results <- perform_all_strategies(strat_names = strat_names, 
+    RNAseq = RNAseq, miRNAseq = miRNAseq, corr_cutoff=  corr_cutoff, 
+    p_val_cutoff = p_val_cutoff, MM_cutoff = MM_cutoff,
+    permutations = permutations, all_pairs = all_pairs, 
+    selected_predicted_databases = selected_predicted_databases, 
+    sample_proportion = sample_proportion)
  
- 
- strategies$all_possible_pairs <- expand.grid(
-     colnames(RNAseq$normalized_counts), 
-     colnames(miRNAseq$normalized_counts))
- names(strategies$all_possible_pairs) <- c("RNAseq", "miRNAseq")
- strategies$all_possible_pairs <- add_multimir_info(
-     strategies$all_possible_pairs, multimir_summary = multimir_summary)
- 
- 
- #Filter DGH data
- RNAseq <- filter_DEGH_data(RNAseq, module_membership_cutoff)
- miRNAseq <- filter_DEGH_data(miRNAseq, module_membership_cutoff)
- 
- 
- gc()
- corrected_positions <- paste0(strategies$all_possible_pairs$RNAseq, 
-     "_", strategies$all_possible_pairs$miRNAseq)
- names(corrected_positions) <- seq(length(corrected_positions))
- #this is not a for loop because it can be parallelized with mclapply
- selected_strategies <- lapply(approaches, function(approach){ 
-     message(paste0("\n", approach, " strategy is been performed"))
-     actual_strategy <- perform_correlations(strategy = approach, 
-                                 RNAseq = RNAseq, 
-                                 miRNAseq = miRNAseq, 
-                                 corrected_positions = corrected_positions, 
-                                 cor_cutoff = corr_cutoff, 
-                                 pval_cutoff = p_val_cutoff)
- 
-     strategies$all_possible_pairs[,approach] <- FALSE
-     strategies$all_possible_pairs[actual_strategy$pair_n, 
-           approach] <- actual_strategy$correlated_pairs
-         gc()
-     return(actual_strategy)
- })
- names(selected_strategies) <- approaches
- corrected_positions <- NULL
- 
- 
- strategies <- c(strategies, selected_strategies)
- 
- for (strategy in approaches){
-     actual_strategy <- strategies[[strategy]]
-     strategies$all_possible_pairs[,strategy] <- FALSE
-     strategies$all_possible_pairs[actual_strategy$pair_n, 
-          strategy] <- actual_strategy$correlated_pairs
- }
- 
- stats_aux <- get_strategies_stats(data = strategies$all_possible_pairs, 
-     input_cols= approaches , 
-     reference_cols = c("predicted", "validated", 
-         "pred_and_val", "multimir"))
- fet_pvals <- stats_aux[["pval_table"]]
- LR_test <- stats_aux[["LR_test_matrix"]]
- LR_sub <- stats_aux[["LR_sub_matrix"]]
- stats_aux <- NULL
- 
- all_known_miRNAs <- miRBaseConverter::getAllMiRNAs(version = "v22", 
-     type = "all", species = organism)$Accession
- strategies$all_possible_pairs$known_miRNA <- 
-               strategies$all_possible_pairs$miRNAseq %in% all_known_miRNAs
- 
- #possible_positives: Pairs with RNA and miRNA included in multiMiR. 
- strategies$all_possible_pairs$possible_positives <- 
-         strategies$all_possible_pairs$known_miRNA & 
-         strategies$all_possible_pairs$miRNAseq %in% 
-              multimir_summary$mature_mirna_acc &
-         strategies$all_possible_pairs$RNAseq %in% 
-              multimir_summary$target_ensembl 
- multimir_summary <- NULL
- 
- all_strategies <- list()
- prec_recall <- list()
- score_comp<- list()
- 
- strategies$all_possible_pairs[is.na(
-     strategies$all_possible_pairs$predicted_c), "predicted_c"] <- 0 
- strategies$all_possible_pairs[is.na(
-     strategies$all_possible_pairs$validated_c), "validated_c"] <- 0
- 
- message("PARSING STRATEGIES")
- 
- for (strategy in approaches) {
- 
-     if (sum(strategies[[strategy]]$correlated_pairs) == 0 || 
-         sum(strategies$all_possible_pairs[strategies[[strategy]]$pair_n, 
-             "known_miRNA"]) == 0 ){
-         strategies[[strategy]] <- NULL
-         message(paste0("No significant pairs can be used for",
-             " multimir comparison in strategy:"))
-         next 
-     }
-     all_pairs_info <- data.table::as.data.table(strategies[[strategy]])
- 
-     ### Preparing precision, recall & F1 for correlated pairs
-     prec_recall[[strategy]] <- get_prediction_stats(
-              all_pairs_info = all_pairs_info, 
-              all_possible_pairs = strategies$all_possible_pairs)
-     
-     ### Get Ranking Scores
-     message("Getting scores")
- 
-     db_comp <- list()
-     for (database in selected_databases) {
-         background_score <- strategies$all_possible_pairs[, database]
-         background_score <- background_score[!is.na(background_score)]
-         sig_pairs <- all_pairs_info$pair_n[all_pairs_info$correlated_pairs]
-         strat_database <- strategies$all_possible_pairs[sig_pairs, database]
-         strat_database <- strat_database[!is.na(strat_database)]
- 
-         naive_bckg <- c()
-         for (i in seq_len(20)){
-             naive_bckg <- c(naive_bckg, sample(background_score, 
-                 size = length(strat_database), replace = FALSE))
-         }
-       
-                    str(naive_bckg)
-         str(strat_database)
-         if (length(strat_database)) {
-             res <- MKinfer::boot.t.test(strat_database,
-             y = naive_bckg, alternative = "greater" )
-         } else {
-             res <- data.frame(p.value = 1, boot.p.value = 1)
-             strat_database <- c(0)
-         }      
- 
- 
-         db_dist <- list(significant = data.frame(score = strat_database),
-                         background =  data.frame(score = naive_bckg))
- 
-         db_comp[[database]]$distribution <- data.table::rbindlist(db_dist, 
-                                         use.names = TRUE, idcol = "set")
-         db_comp[[database]]$p.value <- res$p.value
-         db_comp[[database]]$boot.p.value <- res$boot.p.value
- 
-         
-     }
-     score_comp[[strategy]] <- db_comp
- 
-     all_strategies[[strategy]] <- data.table::as.data.table(
-         all_pairs_info[all_pairs_info$correlated_pairs,])
- 
- }
- 
- 
- aux_pval_obj <- parse_db_comparison(score_comp)
- 
- score_comp_pval <- as.data.frame(aux_pval_obj[["score_comp_pval"]])
- score_comp_boot_pval <- as.data.frame(aux_pval_obj[["score_comp_boot_pval"]])
- 
- score_comp_pval$comp_pval <- vectorial_fisher_method(score_comp_pval)
- score_comp_boot_pval$comp_pval <- vectorial_fisher_method(score_comp_boot_pval)
- 
- log_pval <- as.data.frame(-log(as.matrix(score_comp_pval)))
- log_pval$test_type <- "t.test"
- 
- log_boot_pval <- as.data.frame(-log(as.matrix(score_comp_boot_pval)))
- log_boot_pval$test_type <- "bootstrap.t.test"
- 
- log_score_comp <- rbind(log_pval, log_boot_pval)
- log_score_comp$strategy <- rownames(log_score_comp)
- 
- log_score_comp <- reshape2::melt(log_score_comp, 
-                                  id.vars= c("strategy", "test_type"), 
-                                  variable.name = "database", 
-                                  value.name="p.value")
- 
- 
- message("MERGING RESULTS")
- 
- all_strategies <- as.data.frame(data.table::rbindlist(
-     all_strategies, use.names=TRUE, idcol= "strategy"))
- prec_recall <- as.data.frame(data.table::rbindlist(prec_recall, 
-     use.names = TRUE, idcol = "strategy"))
- all_strategies <- cbind(all_strategies, 
-     strategies$all_possible_pairs[as.numeric(all_strategies$pair_n), 
-     c("known_miRNA", "predicted_c", "validated_c")])
- 
- filters_summary <- all_strategies %>%
-                     dplyr::group_by(strategy) %>%
-                 dplyr::summarize(known_miRNAs = 
-                     sum(.data$known_miRNA == TRUE),
-                         novel_miRNAs = 
-                         sum(.data$known_miRNA == FALSE),
-                         multiMiR = 
-                         sum(.data$predicted_c > 0 | .data$validated_c > 0),
-                         predicted = 
-                         sum(.data$predicted_c > 0),
-                         validated = sum(.data$validated_c > 0), 
-                         both = 
-                         sum(.data$predicted_c > 0 & .data$validated_c > 0))
- filters_summary <- as.data.frame(filters_summary, stringsAsFactors = FALSE)
- filters_summary <- reshape2::melt(filters_summary)
- names(filters_summary) <- c("strategy", "type", "pairs")
- filters_summary$type <- as.character(filters_summary$type)
- filters_summary$sdev <- NA
- filters_summary$p_val <- NA
- filters_summary$quantile <- NA
- 
- #generate and merge randoms
- 
- db_distribution <- data.table::data.table(
-     strategy = all_strategies[all_strategies$predicted_c > 0, "strategy"],
-     step = "predicted",
-     score = all_strategies[all_strategies$predicted_c > 0, "score"])
- message("ADDING RANDOMS")
- random_obj <- add_randoms(background = strategies$all_possible_pairs, 
-                                 filters_summary = filters_summary,
-                                 # db_distribution = db_distribution,
-                                 permutations = permutations,
-                                 all_strategies = all_strategies)
- 
- filters_summary <- random_obj[["filters_summary"]]
- db_distribution <- as.data.frame(random_obj[["db_distribution"]])
- 
- 
- random_obj <- NULL
- filters_summary$type <- factor(filters_summary$type, 
-     levels=c("novel_miRNAs","known_miRNAs","multiMiR", "multiMiR_random", 
-         "predicted", "predicted_random", "validated","validated_random", 
-         "both", "both_random"))
- 
- ################# GET IDS TARNSALTIONS
- 
- mirna_names <- unique(strategies$all_possible_pairs$miRNAseq)
- mirna_names <- mirna_names[grepl("MIMAT", mirna_names)]
- mirna_names <- miRBaseConverter::miRNA_AccessionToName(mirna_names, 
-     targetVersion = "v22")
- gene_id_translation <- NULL
- if (! organism_info$Bioconductor_VarName_SYMBOL[1] == "" && 
-     translate_ensembl) {
-     gene_id_translation <- get_entrez_symbol_translations(
-         ensembl_ids = unique(strategies$all_possible_pairs$RNAseq), 
-         organism_info = organism_info)
- } 
- 
- 
- miRNA_cor_results <- list(
-     all_strategies = all_strategies,
-     filters_summary = filters_summary,
+ miRNA_cor_results$cont_tables <- v_get_stats(miRNA_cor_results$cont_tables)
+  
+ miRNA_cor_results$filters_summary$type <- factor(
+    miRNA_cor_results$filters_summary$type, 
+    levels=c("novel_miRNAs","known_miRNAs","multimir", "multimir_random", 
+        "predicted", "predicted_random", "validated","validated_random", 
+        "pred_and_val", "pred_and_val_random"))
+ miRNA_cor_results$score_comp$log.p.value <- -log10( 
+    miRNA_cor_results$score_comp$p.value)
+ miRNA_cor_results$score_comp$log.boot.p.value <- -log10(
+    miRNA_cor_results$score_comp$boot.p.value)
+
+ ################# GET IDS TRANSLATIONS
+ translated_ids <- translate_all_id(
+    miRNA_IDs = miRNA_cor_results$all_pairs$miRNAseq, 
+    RNA_IDs = miRNA_cor_results$all_pairs$RNAseq, 
+    organism_info = organism_info, translate_ensembl = translate_ensembl)
+
+ miRNA_cor_results <- c(
+    miRNA_cor_results,
+    translated_ids,
+    list(
      miRNAseq = miRNAseq,
      RNAseq = RNAseq,
-     strategies = strategies,
-     approaches = approaches,
-     db_distribution = db_distribution,
-     prec_recall = prec_recall,
-     RNAseq_folder = RNAseq_folder,
-     miRNAseq_folder = miRNAseq_folder,
-     corr_cutoff = corr_cutoff,
-     mirna_names = mirna_names,
-     gene_id_translation = gene_id_translation,
-     score_comp = score_comp,
-     score_comp_pval = score_comp_pval,
-     score_comp_boot_pval = score_comp_boot_pval,
-     log_score_comp = log_score_comp,
-     fet_pvals = fet_pvals,
-     LR_test = LR_test,
-     LR_sub = LR_sub
-      
- )
- 
+     selected_predicted_databases = selected_predicted_databases
+ ))
  return(miRNA_cor_results)
 }

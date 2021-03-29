@@ -58,7 +58,8 @@ biocViews: GeneExpressionWorkflow
 Suggests: 
     optparse,
     PerformanceAnalytics,
-    naivebayes
+    naivebayes,
+    TCC
 VignetteBuilder: knitr
 Imports: 
     ReactomePA,
@@ -95,4 +96,6 @@ Imports:
     BiocParallel,
     MKinfer,
     matrixStats,
-    rlang
+    rlang,
+    plyr,
+    tidyr

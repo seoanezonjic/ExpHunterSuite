@@ -85,8 +85,8 @@ prediction_dist_pval <- function(db_distribution) {
 
 #' @importFrom stats sd 
 permutations_stats <- function(
-permutations = 10,
-experiment, 
+permutations = 50,
+db_gs, 
 background, 
 sample_size){
   random_dist <- c()
@@ -94,7 +94,7 @@ sample_size){
     sampled_bckg <- rand_sample_bool(background, 
         sample_size = sample_size)
     random_dist <- c(random_dist, sum(sampled_bckg &  
-                                      experiment))
+                                      db_gs))
   }
   return(data.frame(sdev = stats::sd(random_dist),
                     mean = mean(random_dist)))
@@ -221,10 +221,12 @@ v.fisher.test <- function(df){
 }
 
 #' @importFrom data.table setnames
-v.get_stats <- function(
+v_get_stats <- function(
 df, 
 selected_stats = c("acc", "ppv", "recall", "spc", "fmeasure", 
-                 "LRplus_sub", "LRplus_test", "v.fisher.test")
+                 "LRplus_sub", "LRplus_test", "v.fisher.test"),
+readable_names = TRUE
+
 ){
   stats_names <- data.frame(orig = c("acc", "ppv", "recall", "spc", "fmeasure", 
                                  "LRplus_sub", "LRplus_test", "v.fisher.test"),
@@ -235,6 +237,8 @@ selected_stats = c("acc", "ppv", "recall", "spc", "fmeasure",
   for (stat in stats_names$orig){
     df[,stat] <- get(stat)(df)
   }
-  data.table::setnames(df, stats_names$orig,stats_names$renamed)
+  if (readable_names) {
+    data.table::setnames(df, stats_names$orig,stats_names$renamed)
+  }
   return(df)
 }

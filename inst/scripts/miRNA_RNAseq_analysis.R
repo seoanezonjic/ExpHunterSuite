@@ -44,7 +44,7 @@ option_list <- list(
     optparse::make_option(c("-o", "--output_files"), type="character",
      default=".", 
         help = "Output folder"),
-    optparse::make_option(c("-a", "--approaches"), type="character", 
+    optparse::make_option(c("-S", "--strategies"), type="character", 
         default="EE,Eh,Ed,hd,hE",
         help = paste0("EE = Anticorrelation between RNAseq modules Eigengene",
             " and miRNAseq modules Eigengene, Eh = Anticorrelation between ",
@@ -65,24 +65,27 @@ option_list <- list(
     optparse::make_option(c("-M", "--multimir_db"), type ="character", 
         default=NULL,
         help= "Indicate .RData file with parsed multiMiR data."),
-    optparse::make_option(c("--only_known"), type="logical", default=FALSE, 
-        action = "store_true",
-        help= paste0("Perform analysis only using known miRNAs. Faster but ",
-            "you lose information of novel miRNAs. Only available when a ",
-            "translation file is given")),
     optparse::make_option(c("-p", "--p_val_cutoff"), type="double", 
         default=0.05,
         help="Correlation P value threshold . Default=%default"),
-    optparse::make_option(c("-P", "--permutations"), type="double", default=10,
-        help="Permutations of random tests. Default=%default"),
-    optparse::make_option(c("-c", "--corr_cutoff"), type="double", default=-0.7,
+    optparse::make_option(c("-c", "--corr_cutoff"), type="double", 
+        default=-0.7,
         help="Correlation threshold . Default=%default"),
-    optparse::make_option(c("-u", "--unmaintained_filter"), type="double", 
-        default=1,
-        help=paste0("Minimun predicted and unmaintained databases that must ",
-            "support a pair. Default=%default")),
-    optparse::make_option(c("-C", "--mc_cores"), type="double", default=1,
-        help="Dist. Default=%default"),
+    optparse::make_option(c("-s", "--sample_proportion"), type="double", 
+        default=0.01,
+        help="Score distribution sample proportion. Default=%default"),
+    optparse::make_option(c("-P", "--permutations"), type="double", 
+        default=50,
+        help="Permutations of random tests. Default=%default"),
+    optparse::make_option(c("-u", "--filter_db_theshold"), type="double", 
+        help=paste0("Minimun predicted databases that must ",
+            "support a pair. Default=%default"),
+        default=0),
+    optparse::make_option(c("-f", "--database_to_filter"), type="character", 
+        default=paste0("targetscan,mirdb,diana_microt,elmmo,microcosm,",
+            "miranda,pictar,pita"),
+        help=paste0("Predicted databases that must ",
+            "support a pair on --filter_db_threshold. Default=%default")),
     optparse::make_option(c("--module_membership_cutoff"), type="double", 
         default=0.7,
         help=paste0("This script reject genes with lower module membership to",
@@ -104,33 +107,44 @@ option_list <- list(
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 
+check_and_create_dir(opt$output_files)
 
-dir.create(opt$output_files, recursive = TRUE)
 
-
-miRNA_cor_results <- miRNA_RNAseq_analysis(
+miRNA_cor_results <-  coRmiT( 
     RNAseq_folder=opt$RNAseq_folder,
     miRNAseq_folder=opt$miRNAseq_folder,
     output_files=opt$output_files,
-    approaches=opt$approaches,
+    strat_names=unlist(strsplit(opt$strategies, ",")),
     organism=opt$organism,
     multimir_db=opt$multimir_db,
+    sample_proportion = opt$sample_proportion,
     p_val_cutoff=opt$p_val_cutoff,
     corr_cutoff=opt$corr_cutoff,
-    module_membership_cutoff=opt$module_membership_cutoff,
+    MM_cutoff=opt$module_membership_cutoff,
     permutations = opt$permutations,
     report=opt$report,
     databases = opt$databases,
-    translate_ensembl = opt$translate_ensembl,
+    translate_ensembl = opt$translate_ensembl,  
     mc_cores = opt$mc_cores,
-    filter_unmaintained = opt$unmaintained_filter,
+    filter_db_theshold = opt$filter_db_theshold,
+    database_to_filter = opt$database_to_filter,
+    # filter_unmaintained = opt$unmaintained_filter,
     translation_file = opt$translation_file,
-    #ABAJO file.path(root_path, "R", "organism_table.txt"),
     organism_table_path = organism_table_path, 
     template_folder = template_folder #file.path(root_path, "inst", "templates")
     )
-write_miRNA_cor_report(miRNA_cor_results = miRNA_cor_results, 
-                        template_folder = template_folder, 
-                        output_files = opt$output_files, 
-                        report_name = "miRNA_RNA_comparison.html"
-                        )
+
+# save(miRNA_cor_results, file = "~/proyectos/target_miRNA_2020/test.RData")
+
+# load("~/proyectos/target_miRNA_2020/test.RData")
+
+
+miRNA_cor_results <- c(miRNA_cor_results, 
+    list(report_name =opt$report,
+         template_folder =template_folder,
+         output_files =opt$output_files,
+         p_val_cutoff =opt$p_val_cutoff,
+         corr_cutoff =opt$corr_cutoff,
+         sample_proportion =opt$sample_proportion))
+
+do.call("write_miRNA_cor_report", miRNA_cor_results)

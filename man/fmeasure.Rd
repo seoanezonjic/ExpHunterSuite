@@ -17,8 +17,8 @@ Calculates F measure from a measures dataframe
 }
 \examples{
 df <- data.frame(TP = 4, FP = 3, TN = 2, FN = 1)
-df$Precision <- ppv(df)
-df$Recall <- recall(df)
+df$ppv <- ppv(df)
+df$recall <- recall(df)
 fmeasure(df)
 }
 \keyword{metrics}

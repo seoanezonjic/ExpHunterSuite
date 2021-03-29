@@ -8,6 +8,15 @@ get_unexported_function <- function(pkg, fun){
   return(get(fun, envir = asNamespace(pkg),inherits = FALSE))
 } 
 
+
+check_and_create_dir <- function(folder){
+ folder <- file.path(folder)
+ if (!dir.exists(folder)){
+    dir.create(folder, recursive = TRUE)
+ } 
+}
+
+
 handling_errors <- function(a){
   normalized_counts <- NULL
   expres_diff <- NULL
@@ -195,4 +204,21 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
                  'and a total of', length(fails) , 'items have failed.'))
     }
     return(res)
+}
+
+
+
+rand_sample_bool <- function(bool, sample_size){
+#takes a TRUE FALSE vector and keep only sample_size TRUEs
+    sampled_bool <- rep(FALSE, length(bool)) 
+    random_i <- sample(which(bool == TRUE), 
+                        size = sample_size, 
+                        replace = FALSE)
+    sampled_bool[random_i] <- TRUE
+    return(sampled_bool)
+}
+
+check_and_quit <- function(object){
+  str(object)
+  q()
 }

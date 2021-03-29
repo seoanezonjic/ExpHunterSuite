@@ -210,33 +210,61 @@ write_functional_report <- function(hunter_results,
     }
 }
 
-write_miRNA_cor_report <- function(miRNA_cor_results, template_folder, 
-    output_files, report_name){
-    "%>%" <- magrittr::"%>%"
-
-    all_strategies <- miRNA_cor_results$all_strategies
-    filters_summary <- miRNA_cor_results$filters_summary
-    miRNAseq <- miRNA_cor_results$miRNAseq
-    RNAseq <- miRNA_cor_results$RNAseq
-    strategies <- miRNA_cor_results$strategies
-    approaches <- miRNA_cor_results$approaches
-    db_distribution <- miRNA_cor_results$db_distribution
-    prec_recall <- miRNA_cor_results$prec_recall
-    RNAseq_folder <- miRNA_cor_results$RNAseq_folder
-    miRNAseq_folder <- miRNA_cor_results$miRNAseq_folder
-    corr_cutoff <- miRNA_cor_results$corr_cutoff
-    mirna_names <- miRNA_cor_results$mirna_names
-    gene_id_translation <- miRNA_cor_results$gene_id_translation
-    ref_strategy <- miRNA_cor_results$ref_strategy
-    score_comp_pval <- miRNA_cor_results$score_comp_pval
-    score_comp_boot_pval <- miRNA_cor_results$score_comp_boot_pval
-    score_comp <- miRNA_cor_results$score_comp
-    log_score_comp <- miRNA_cor_results$log_score_comp    
-    fet_pvals <- miRNA_cor_results$fet_pvals
-    LR_test <- miRNA_cor_results$LR_test
-    LR_sub <- miRNA_cor_results$LR_sub
-    rmarkdown::render(file.path(template_folder, 'miRNA_RNA.Rmd'), 
-                  output_file = file.path(output_files, report_name), 
-                  intermediates_dir = output_files)
+#' @importFrom rmarkdown render
+write_miRNA_cor_report <- function(
+report_name,
+template_folder, 
+output_files , 
+p_val_cutoff,
+corr_cutoff, 
+strategies, 
+unsig_strategies,
+cont_tables,
+filters_summary,
+score_comp,
+all_pairs,
+mirna_names,
+gene_id_translation,
+sample_proportion,
+selected_predicted_databases,
+all_cor_dist,
+miRNAseq, 
+RNAseq,
+sig_pairs           
+){
+ "%>%" <- magrittr::"%>%"
+ # print(ls(all.names = TRUE))
+ rmarkdown::render(
+               file.path(template_folder, 'miRNA_RNA.Rmd'), 
+               output_file = file.path(output_files, report_name), 
+               intermediates_dir = output_files)
     
 }
+
+parse_strat_text <- function(strategies){
+  o_text <- c()
+  default_strats <-  c(
+    "Eigengene_0_RNA_vs_miRNA_normalized_counts", 
+    "normalized_counts_RNA_vs_miRNA_Eigengene_0", 
+    "DEGs_RNA_vs_miRNA_DEMs",
+    "DEGs_DEMs_permutated")
+  strategies <- strategies[!strategies %in% default_strats]
+  dictionary <- list(
+    "Eigengene" = "Eigengene profiles for coexpression modules",
+    "hub_1" = "hub gene profile for coexpression modules",
+    "normalized_counts" = "normalized counts"
+    )
+  for (strategy_name in strategies){
+    strategy <- unlist(strsplit(strategy_name, "_RNA_vs_miRNA_"))
+    o_text <- c(o_text,
+      paste0("\t+ **", 
+             strategy_name, 
+             ":** correlates ", 
+             dictionary[[strategy[1]]], 
+             " of RNAseq data with ", 
+             dictionary[[strategy[1]]],
+             " of miRNAseq data."))
+  }
+  return(paste(o_text, collapse = "\n"))
+} 
+

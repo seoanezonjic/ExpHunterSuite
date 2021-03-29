@@ -26,6 +26,33 @@ plot_enrResult_DT <- function(ER){
   ))
 }
 
+
+#' @importFrom stats runif
+rechunk <- function(code, counter = NULL,chunk_options = "") {
+
+   if (chunk_options != ""){
+    chunk_options <- paste0(", ", chunk_options)
+   } 
+   if (!is.null(counter)){
+    counter <- counter + 1
+   } else {
+    counter <- floor(stats::runif(1) * 10000)
+   }
+  if (!is.character(code)){
+   code_deparsed <- paste0(deparse(function() {code}), collapse = '')
+   code_deparsed <- paste0("(", code_deparsed, ")()")
+  } else {
+    code_deparsed <- code
+  }
+   sub_chunk <- paste0("\n```{r sub_chunk_", counter, chunk_options, 
+   "}", "\n", code_deparsed, "\n```\n\n\n")
+
+   cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk), quiet = TRUE))
+   return(counter)
+}
+
+
+
 #' @importFrom knitr knit knit_expand
 #' @importFrom stats runif
 plot_in_div <- function(g, fig_height=7, fig_width=12, 
