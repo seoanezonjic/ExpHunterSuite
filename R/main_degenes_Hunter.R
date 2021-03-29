@@ -196,9 +196,10 @@ main_degenes_Hunter <- function(
                                            lfc, minpack_common)
     
     if(grepl("W", modules)) { # Check WGCNA was run and returned proper results
-      DE_all_genes <- transform(merge(DE_all_genes, 
-          combinations_WGCNA[['WGCNA_all']][['gene_cluster_info']], 
-          by.x=0, by.y="ENSEMBL_ID"), row.names=.data$Row.names, Row.names=NULL)
+      DE_all_genes <- merge(by.x=0, by.y="ENSEMBL_ID", x= DE_all_genes, 
+          y =combinations_WGCNA[['WGCNA_all']][['gene_cluster_info']])
+      rownames(DE_all_genes) <- DE_all_genes$Row.names
+      DE_all_genes$Row.names <- NULL
     }
 
     if(grepl("X", modules)) { #results_diffcoexp

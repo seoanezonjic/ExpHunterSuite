@@ -108,11 +108,7 @@ rtable2measures <- function(
   # Calculate values for
 
   # Calculate measures
-  df_cuts$ACC <- acc(df_cuts)           # Accuracy
-  df_cuts$Precision <- ppv(df_cuts)     # Precision
-  df_cuts$Recall <- recall(df_cuts)     # Recall / sensitivity
-  df_cuts$Specificity <- spc(df_cuts)   # Specificity
-  df_cuts$FMeasure <- fmeasure(df_cuts) # F-measure
+  df_cuts <- get_stats(df_cuts)
 
   #############################################
   ### EXPORT

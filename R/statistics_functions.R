@@ -53,11 +53,11 @@ spc <- function(df){
 #' @export
 #' @examples
 #' df <- data.frame(TP = 4, FP = 3, TN = 2, FN = 1)
-#' df$Precision <- ppv(df)
-#' df$Recall <- recall(df)
+#' df$ppv <- ppv(df)
+#' df$recall <- recall(df)
 #' fmeasure(df)
 fmeasure <- function(df){
-    2 * (df$Precision * df$Recall) / (df$Precision + df$Recall)
+    2 * (df$ppv * df$recall) / (df$ppv + df$recall)
 }
 
 
@@ -83,83 +83,64 @@ prediction_dist_pval <- function(db_distribution) {
   return(dist_pval)
 }
 
-
-
-#' @importFrom stats fisher.test
-get_strategies_stats <- function(data , input_cols, reference_cols) {
-  pval_table <- matrix(NA, ncol = length(reference_cols), 
-    nrow = length(input_cols), dimnames = list(input_cols,reference_cols))
-  LR_test_matrix <- matrix(NA, ncol = length(reference_cols), 
-    nrow = length(input_cols), dimnames = list(input_cols,reference_cols))
-  LR_sub_matrix  <- matrix(NA, ncol = length(reference_cols), 
-    nrow = length(input_cols), dimnames = list(input_cols,reference_cols))
-  for (icol_name in input_cols){
-    for (rcol_name in reference_cols){
-      icol <- data[,icol_name]
-      rcol <- data[,rcol_name]
-      c_matrix <- calc_contingency_matrix(icol, rcol)
-      print(paste0(icol_name, " ", rcol_name))
-      print(c_matrix)
-      ftest <- stats::fisher.test(c_matrix, alternative = "greater")
-      pval_table[icol_name,rcol_name] <- ftest$p.value
-      LR_test_matrix[icol_name,rcol_name] <- calc_LRplus_test(c_matrix)
-      LR_sub_matrix[icol_name,rcol_name] <- calc_LRplus_subject(c_matrix)
-      LR_test_matrix[is.na(LR_test_matrix)] <- 0
-      LR_sub_matrix[is.na(LR_sub_matrix)] <- 0
-
-    }
+#' @importFrom stats sd 
+permutations_stats <- function(
+permutations = 10,
+experiment, 
+background, 
+sample_size){
+  random_dist <- c()
+  for(i in seq_len(permutations)){
+    sampled_bckg <- rand_sample_bool(background, 
+        sample_size = sample_size)
+    random_dist <- c(random_dist, sum(sampled_bckg &  
+                                      experiment))
   }
-  return(list(pval_table = pval_table, LR_test_matrix = LR_test_matrix, 
-    LR_sub_matrix = LR_sub_matrix))
+  return(data.frame(sdev = stats::sd(random_dist),
+                    mean = mean(random_dist)))
+}  
+
+#Calc contingency table from 2 boolean vectors
+calc_ct <- function(experiment, gold_standard){
+  TP <- sum(experiment & gold_standard)
+  FP <- sum(experiment & !gold_standard)
+  TN <- sum(!experiment & !gold_standard)
+  FN <- sum(!experiment & gold_standard)
+
+  cont_table <- data.frame(TP = TP, 
+                        FN = FN, 
+                        FP = FP, 
+                        TN = TN)
+
+  return(cont_table)
 }
 
-calc_contingency_matrix <- function(experiment, gold_standard){
-  tpositives <- sum(experiment & gold_standard)
-  fpositives <- sum(experiment & !gold_standard)
-  tnegatives <- sum(!experiment & !gold_standard)
-  fnegatives <- sum(!experiment & gold_standard)
-
-  c_matrix <- matrix(c(tpositives, fnegatives, fpositives, tnegatives), 
-    nrow = 2 , dimnames = list(experiment =c(TRUE,FALSE), 
-      gold_standard = c(TRUE,FALSE)))
-  return(c_matrix)
+LRplus_sub <- function(df) {
+  (df$TP / (df$TP + df$FP)) / ( df$FN / ( df$FN + df$TN ))
 }
 
-calc_LRplus_subject <- function(c_matrix) {
-  tpositives<- c_matrix[1,1]
-  fpositives <- c_matrix[1,2]
-  tnegatives <- c_matrix[2,2]
-  fnegatives <- c_matrix[2,1]
-  LR_plus <- ( tpositives / ( tpositives + fpositives ) ) / 
-             ( fnegatives / ( fnegatives + tnegatives ))
-  return(LR_plus)
-}
-
-calc_LRplus_test <- function(c_matrix) {
-  tpositives<- c_matrix[1,1]
-  fpositives <- c_matrix[1,2]
-  tnegatives <- c_matrix[2,2]
-  fnegatives <- c_matrix[2,1]
-  LR_plus <- ( tpositives / ( tpositives + fnegatives ) ) / 
-             ( fpositives / ( fpositives + tnegatives ))
-  return(LR_plus)
+LRplus_test <- function(df) {
+  ( df$TP / ( df$TP + df$FN ) ) /  ( df$FP / ( df$FP + df$TN ))
 }
 
 #' @importFrom stats pchisq
 vectorial_fisher_method <- function(pval_table){
     log_pval <- log(pval_table) # Log all final p-values
     log_pval[is.na(log_pval)] <- 0 # any NAs made 0s -> not used combined score 
-    
-    log_pval <- apply(as.matrix(log_pval), 2, 
-      function (pval_column) { # When p values of 0 are given
-                               #- these become -Inf when logged:   
-                               # This code turn -Inf values 
-                               #- to smallest possible values
-        min_col_val <- sort(unique(pval_column))[2]
-        pval_column[pval_column == -Inf] <- min_col_val
-        return(pval_column)
-    })
-
+    if (is.vector(log_pval)){
+      log_pval <- t(matrix(log_pval))
+      log_pval[log_pval == -Inf] <- 10e-200
+    } else {
+       log_pval <- apply(as.matrix(log_pval), 2, 
+         function (pval_column) { # When p values of 0 are given
+                                  #- these become -Inf when logged:   
+                                  # This code turn -Inf values 
+                                  #- to smallest possible values
+           min_col_val <- sort(unique(pval_column))[2]
+           pval_column[pval_column == -Inf] <- min_col_val
+           return(pval_column)
+       })
+    }
     xi_squared <-  -2 * rowSums(log_pval)
     degrees_freedom <- 2 * ncol(log_pval)
     combined_FDR <- stats::pchisq(xi_squared, degrees_freedom, 
@@ -171,16 +152,23 @@ vectorial_fisher_method <- function(pval_table){
 #' Function to calculate full set of measures from a confusion data frame
 #' @param df confusion dataframe 
 #' @return a data frame with several measures
+#' @importFrom data.table setnames
 #' @export
 #' @examples
 #' df <- data.frame(TP = 4, FP = 3, TN = 2, FN = 1)
 #' stats <- get_stats(df)
 get_stats <- function(df){
-  df$ACC <- acc(df)
-  df$Specificity <- spc(df)
-  df$Precision <- ppv(df)
-  df$Recall <- recall(df)
-  df$FMeasure <- fmeasure(df)
+  df$acc <- acc(df)
+  df$spc <- spc(df)
+  df$ppv <- ppv(df)
+  df$recall <- recall(df)
+  df$fmeasure <- fmeasure(df)
+  
+  data.table::setnames(
+     df,
+     c("acc","ppv",      "recall","spc",         "fmeasure"),
+     c("ACC","Precision","Recall","Specificity" ,"FMeasure"))
+
   return(df)
 }
 
@@ -219,4 +207,34 @@ extract_from_cm <- function(cm,real,pred,default = 0){
       return(0)
     })
   return(value)
+}
+
+
+#' @importFrom stats phyper 
+v.fisher.test <- function(df){
+  stats::phyper(
+    q = df$TP -1, 
+    m = df$TP+ df$FN, 
+    n = rowSums(df[,c("TP","FP","TN","FN")])-df$TP-df$FN,
+    k = df$TP+df$FP, 
+    lower.tail = FALSE)
+}
+
+#' @importFrom data.table setnames
+v.get_stats <- function(
+df, 
+selected_stats = c("acc", "ppv", "recall", "spc", "fmeasure", 
+                 "LRplus_sub", "LRplus_test", "v.fisher.test")
+){
+  stats_names <- data.frame(orig = c("acc", "ppv", "recall", "spc", "fmeasure", 
+                                 "LRplus_sub", "LRplus_test", "v.fisher.test"),
+                            renamed = c("Accuracy", "Precision", "Recall", 
+                                 "Specificity", "Fmax", "LRplus_sub", 
+                                 "LRplus_test", "Pvalue"))
+  stats_names <- stats_names[stats_names$orig %in% selected_stats, ]
+  for (stat in stats_names$orig){
+    df[,stat] <- get(stat)(df)
+  }
+  data.table::setnames(df, stats_names$orig,stats_names$renamed)
+  return(df)
 }
