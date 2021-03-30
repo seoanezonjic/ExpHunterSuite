@@ -6,7 +6,7 @@ load_DEGH_information <- function(execution_path){
   DEGH_exec <- list()
   DEGH_exec[['DH_results']] <- utils::read.table(
                                      file.path(execution_path, 
-                                     "Common_results/hunter_results_table.txt"), 
+                                     "Common_results/hunter_results_table.txt"),
                                      header=TRUE, row.names=1, sep="\t")
   DEGH_exec[['DH_results']]$gene_name <- rownames(DEGH_exec[['DH_results']])
   rownames(DEGH_exec[['DH_results']]) <- NULL
@@ -14,14 +14,14 @@ load_DEGH_information <- function(execution_path){
                                  DEGH_exec$DH_results$gene_name != "id",]
   DEGH_exec[['Eigengene']] <- as.matrix(utils::read.table(
                                   file.path(execution_path, 
-                                  "Results_WGCNA/eigen_values_per_samples.txt"), 
+                                  "Results_WGCNA/eigen_values_per_samples.txt"),
                                   header=TRUE, row.names=1, sep="\t"))
   colnames(DEGH_exec[["Eigengene"]]) <- stringr::str_remove(
-                                             colnames(DEGH_exec[["Eigengene"]]), 
+                                             colnames(DEGH_exec[["Eigengene"]]),
                                              "ME")
   DEGH_exec[['normalized_counts']] <- as.matrix(utils::read.table(
                                  file.path(execution_path, 
-                                 "Results_DESeq2/Normalized_counts_DESeq2.txt"), 
+                                 "Results_DESeq2/Normalized_counts_DESeq2.txt"),
                                  header=TRUE, row.names=1, sep="\t"))
   DEGH_exec[['normalized_counts']] <- t(DEGH_exec[['normalized_counts']]) 
   DEGH_exec[['hub_1']] <- get_hub_genes_by_MM(DEGH_exec[['normalized_counts']], 
@@ -139,7 +139,7 @@ sample_proportion = 0.01
  message("Data has been filtered")
  gc()
  std_positions <- tidyr::unite(all_pairs, "pairs", RNAseq:miRNAseq, sep = "_")
- std_positions <- std_positions[, pairs, drop = FALSE]
+ std_positions <- std_positions$pairs
   ###### BUILD EMPTY TABLES
  #Vector with strategies without significant results
  unsig_strategies <- c() 
@@ -171,7 +171,8 @@ sample_proportion = 0.01
    all_stats <- NULL
    score_comp <- rbind(score_comp,
                        score_comparison(
-                        databases = selected_predicted_databases,  all_pairs = all_pairs,
+                        databases = selected_predicted_databases,  
+                        all_pairs = all_pairs,
                         sample_size = sample_proportion, strategy = strategy))
    gc()
  }
@@ -228,7 +229,8 @@ perform_correlations <- function(
     if (!is.null(std_positions)){
      # Add extra column to indicate number of pair in std_positions
      all_pairs_str <- tidyr::unite(all_pairs, "pairs", RNAseq:miRNAseq, 
-                                   sep = "_")[, pairs]
+                                   sep = "_")
+     all_pairs_str <- all_pairs_str$pairs  
      all_pairs$pair_n <- match(all_pairs_str, std_positions) 
      all_pairs[,c("RNAseq", "miRNAseq")] <- NULL
     }

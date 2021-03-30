@@ -41,11 +41,11 @@ organism_table_path = file.path(find.package('ExpHunterSuite'), "inst",
  organism_info <- utils::read.table(organism_table_path, 
     header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, 
     fill = NA) 
- organism_info <- subset(organism_info, organism_info$KeggCode %in% organism)
-  
+ organism_info <- organism_info[organism_info$KeggCode %in% organism,]
  #Prepare multiMiR
  selected_predicted_databases <- unlist(strsplit(databases, ","))
- selected_predicted_databases <- pred_dbs[pred_dbs %in% unlist(selected_predicted_databases)]
+ selected_predicted_databases <- pred_dbs[pred_dbs %in% unlist(
+                                                selected_predicted_databases)]
  multimir <- load_and_parse_multimir(multimir_path = multimir_db, 
     selected_predicted_databases = selected_predicted_databases, 
     filter_db_theshold= filter_db_theshold, #filter_db_theshold

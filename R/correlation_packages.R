@@ -465,8 +465,6 @@ analysis_WGCNA <- function(data,
                                 labels = function(x) paste0("Cluster_", x))
 
     # NEW - get the p value for the cluster id, not the lowest p-value
-    # cluster_cor_pval <- unlist(lapply(names(cluster_ID), 
-    #                         function(x) gene_module_cor_p[x,cluster_ID[x]+1]))
 
     return(list(
           gene_cluster_info = data.frame(ENSEMBL_ID = names(cluster_ID), 

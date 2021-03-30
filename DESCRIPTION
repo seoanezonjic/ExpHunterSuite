@@ -59,6 +59,7 @@ Suggests:
     optparse,
     PerformanceAnalytics,
     naivebayes,
+    reshape2,
     TCC
 VignetteBuilder: knitr
 Imports: 
@@ -73,7 +74,6 @@ Imports:
     DT,
     ggplot2,
     stringr,
-    reshape2,
     WGCNA,
     dplyr,
     AnnotationDbi,
