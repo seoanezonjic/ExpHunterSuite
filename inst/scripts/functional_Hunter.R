@@ -71,7 +71,7 @@ option_list <- list(
     help=paste0("Files with custom functional annotation database ",
         "(in GMT format) separated by commas (,)")),
   optparse::make_option(c("-A", "--analysis_type"), type="character", 
-    default="go",
+    default="o",
     help=paste0("Analysis performance (g = Gene Set Enrichment Analysis,",
     " o = Over Representation Analysis). Default=%default")), # Not Checked
    optparse::make_option(c("-r", "--remote"), ,type = "character", default="",
