@@ -226,6 +226,10 @@ go_flags$GO_SECTION <- any(unlist(go_flags))
 invisible(lapply(go_enrich_vars,function(var_name){
 	go_flags[var_name] <<- exists_enrich_df(var_name)
 }))
+
+if("enrich_go" %in% ls()) {
+  go_flags[["enrich_go"]] <- TRUE
+}
 # Check GO section
 # go_flags$GO_CL_SECTION <- any(unlist(go_flags[go_enrich_vars]))
 go_flags$GO_CL_SECTION <- any(unlist(go_flags[go_enrich_vars]))
