@@ -99,7 +99,7 @@ write_functional_report <- function(hunter_results,
     # -
     if(! "externalDEA" %in% names(hunter_results[["all_data_normalized"]])) {
         norm_counts <- hunter_results[["all_data_normalized"]][["DESeq2"]]
-        scaled_counts <- scale_data_matrix(data_matrix = norm_counts)
+        scaled_counts <- scale_data_matrix(data_matrix = as.matrix(norm_counts))
         scaled_counts_table <- as.data.frame(as.table(scaled_counts))
         colnames(scaled_counts_table) <- c("Gene","Sample","Count")
     }
@@ -120,7 +120,7 @@ write_functional_report <- function(hunter_results,
         wgcna_corr_cl_trait <- as.matrix(aux2$module_trait_cor)
         wgcna_count_sample_trait <- as.matrix(aux[,!grepl("^ME",
             colnames(aux))])
-        wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait)
+        wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait, norm_by_col = TRUE)
     }
     #-
     if(any(grepl("WGCNA_ORA",names(func_results)))){
