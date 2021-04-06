@@ -99,7 +99,6 @@ write_functional_report <- function(hunter_results,
     # -
     if(! "externalDEA" %in% names(hunter_results[["all_data_normalized"]])) {
         norm_counts <- hunter_results[["all_data_normalized"]][["DESeq2"]]
-        print("TEST")
         scaled_counts <- scale_data_matrix(data_matrix = as.matrix(norm_counts))
         scaled_counts_table <- as.data.frame(as.table(scaled_counts))
         colnames(scaled_counts_table) <- c("Gene","Sample","Count")
