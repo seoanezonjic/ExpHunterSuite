@@ -328,20 +328,23 @@ perform_topGO_local <- function(entrez_targets,
 
 #' Scale a matrix using minimum-maximum method
 #' @param data_matrix to be scaled
-#' @param transpose boolen flag which indicates if matrix should be transposed. 
-#' Default: FALSE
+#' @param norm_by_col boolean flag: if true scaling will be performed 
+#' by columns intead of by rows. Default: FALSE
 #' @importFrom matrixStats rowRanges rowDiffs
 #' @keywords method
 #' @return scaled matrix
-scale_data_matrix <- function(data_matrix, transpose = FALSE) {
-  if ( transpose == FALSE) {
+scale_data_matrix <- function(data_matrix, norm_by_col = FALSE) {
+  if ( norm_by_col == TRUE) {
     data_matrix <- t(data_matrix)
   } 
   dm_min_max <- matrixStats::rowRanges(data_matrix, na.rm = TRUE)
-  dm_diffs <- matrixStats::rowDiffs(dm_min_max)
-  dm_diffs[dm_diffs == 0] <- 1
-  scaled_counts <- (data_matrix - dm_min_max[,1]) / dm_diffs[,1]
-  if ( transpose == FALSE ) {
+  dm_diffs <- as.vector(matrixStats::rowDiffs(dm_min_max))
+  dm_mins <- dm_min_max[,1]
+  #when all values are the same in the row, all values are turned to 0.
+  dm_diffs[dm_diffs == 0] <- 1 
+  #main scaling function
+  scaled_counts <- (data_matrix - dm_mins) / dm_diffs
+  if (norm_by_col == TRUE) {
     scaled_counts <- t(scaled_counts)
   } 
   return(scaled_counts)

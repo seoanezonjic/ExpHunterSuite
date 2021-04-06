@@ -273,13 +273,12 @@ if (launch_expanded) {
 
 
         RNAseq[['normalized_counts']] <- as.data.frame(as.table(
-            scale_data_matrix(data_matrix = RNAseq[['normalized_counts']],
-             transpose = FALSE)))
+            scale_data_matrix(data_matrix = as.matrix(RNAseq[['normalized_counts']]))))
         colnames(RNAseq[['normalized_counts']]) <- c("Sample","Gene","Count")
         
 
         miRNAseq[['normalized_counts']] <- scale_data_matrix(
-            data_matrix = miRNAseq[['normalized_counts']], transpose = FALSE)
+            data_matrix = as.matrix(miRNAseq[['normalized_counts']]))
 
         miRNA_strat <- unlist(strsplit(opt$aproaches, ""))[2]
         
