@@ -174,6 +174,8 @@ write_functional_report <- function(hunter_results,
                              clean_tmpfiles_mod, ns = "rmarkdown") 
 
     results_path <- normalizePath(output_files)
+    results_temp <- file.path(paste0(results_path, "_tmp"))
+    check_and_create_dir(results_temp)
     if(grepl("c", report)){
         if (any(grepl("WGCNA",names(func_results)))) { # Clustered
             message("Rendering specific cluster reports")
@@ -184,7 +186,7 @@ write_functional_report <- function(hunter_results,
                 # Generate report
                 rmarkdown::render(file.path(template_folder, 
                     'cl_func_report.Rmd'), output_file = outf_cls_i, 
-                intermediates_dir = results_path, quiet=TRUE)
+                intermediates_dir = file.path(results_temp, cl), quiet=TRUE)
             }, workers = cores, task_size= task_size))
 
             message("\tRendering clustered report")
@@ -194,6 +196,7 @@ write_functional_report <- function(hunter_results,
             intermediates_dir = results_path)
         }        
     }
+    unlink(results_temp, recursive = TRUE)
 
     ############################################################
     ##              GENERATE DEG FUNCTIONAL REPORT            ##
