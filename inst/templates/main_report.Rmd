@@ -574,7 +574,7 @@ corME2 <- corME
 rownames(corME2) <- gsub("^ME", "", rownames(corME2))
 colnames(corME2) <- gsub("^ME", "", colnames(corME2))
 
-mod_traits_net <- corM2igraph(corME2, cor_abs_thr = 0.85)
+mod_traits_net <- corM2igraph(corME2, cor_abs_thr = 0.8)
 
 mod_net <- igraph::graph_from_data_frame(d=mod_traits_net$edges, vertices = mod_traits_net$nodes, directed = FALSE)
 # layout <- igraph::layout_with_fr(mod_net, weights = mod_traits_net$edges$corr * 3 )
@@ -583,14 +583,13 @@ cat("\n### **Correlation network between modules and factors**\n\n")
 
 if (nrow(mod_traits_net$nodes < 2)){
 
-	cat("This plot shows modules (black) and factors (yellow) as nodes. Correlations coefficients over 0.85 (red) and under -0.85 (blue) are represented as edges\n")
+	cat("This plot shows modules (black) and factors (yellow) as nodes. Correlations coefficients over 0.8 (red) and under -0.8 (blue) are represented as edges\n")
 	"%>%" <- magrittr::"%>%"
 	options(ggrepel.max.overlaps = Inf)
 	tg <- tidygraph::as_tbl_graph(mod_net) %>% tidygraph::activate(nodes) %>% dplyr::mutate(label=name)
 	igraph::E(tg)$weight <- igraph::E(tg)$corr
 	test_graph <- tg %>% 
 	ggraph::ggraph(layout = "stress")+  
-	# ggraph::geom_edge_diagonal(alpha = .2, color='white') + 
 	ggraph::geom_edge_fan(ggplot2::aes(colour = ifelse(mod_traits_net$edges$corr_type == "corr", "#FF7272","#9595FF"))) +
 	ggraph::geom_node_text(ggplot2::aes(label = name), 
 	       repel = TRUE, point.padding  = grid::unit(0.2, "lines"), 
@@ -604,14 +603,7 @@ if (nrow(mod_traits_net$nodes < 2)){
 } else {
 	cat("Only 2 modules or factors correlates with higher ansolute correlation coefficient than 0.85.")
 }
-	# igraph::plot.igraph(mod_net, 
-	# 	                edge.color = ifelse(mod_traits_net$edges$corr_type == "corr", "#FF0000","#0000FF"), 
-	# 	                vertex.size=10 ,
-	# 	                # layout = layout, 
-	# 	                vertex.color = ifelse(grepl("_",mod_traits_net$nodes$nodes), "#43CF4C", "white"), 
-	# 	                vertex.frame.color = "white", 
-	# 	                vertex.label.color= "black")
-	# )
+
 
 cat("\n### **Correlation between all clusters and factors**\n")
 
