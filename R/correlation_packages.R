@@ -485,4 +485,15 @@ analysis_WGCNA <- function(data,
             )
     )
 }
+
+corM2igraph <- function(corM, cor_abs_thr = 0.75){
+  cor_df <- data.frame(row=rownames(corM)[row(corM)[upper.tri(corM)]], 
+           col=colnames(corM)[col(corM)[upper.tri(corM)]], 
+           corr=corM[upper.tri(corM)])
+  cor_df$corr_type <- ifelse(c(cor_df$corr) > 0, "corr","anticorr")
+  cor_df$corr <- abs(cor_df$corr)
+  cor_df_fil <- cor_df[cor_df$corr >= cor_abs_thr,]
+  nodes <- data.frame(nodes = unique(c(cor_df_fil$row, cor_df_fil$col)))
+  return(list(nodes = nodes, edges = cor_df_fil))
+}
     
