@@ -4,13 +4,13 @@
 \alias{scale_data_matrix}
 \title{Scale a matrix using minimum-maximum method}
 \usage{
-scale_data_matrix(data_matrix, transpose = FALSE)
+scale_data_matrix(data_matrix, norm_by_col = FALSE)
 }
 \arguments{
 \item{data_matrix}{to be scaled}
 
-\item{transpose}{boolen flag which indicates if matrix should be transposed.
-Default: FALSE}
+\item{norm_by_col}{boolean flag: if true scaling will be performed
+by columns intead of by rows. Default: FALSE}
 }
 \value{
 scaled matrix

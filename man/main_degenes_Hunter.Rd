@@ -18,7 +18,6 @@ main_degenes_Hunter(
   minpack_common = 4,
   model_variables = "",
   numerics_as_factors = TRUE,
-  custom_model = FALSE,
   string_factors = "",
   numeric_factors = "",
   WGCNA_memory = 5000,
@@ -32,7 +31,8 @@ main_degenes_Hunter(
   WGCNA_blockwiseTOMType = "signed",
   WGCNA_minCoreKME = 0.5,
   WGCNA_minCoreKMESize = NULL,
-  WGCNA_minKMEtoStay = 0.2
+  WGCNA_minKMEtoStay = 0.2,
+  multifactorial = ""
 )
 }
 \arguments{
@@ -64,8 +64,6 @@ a gene as significant}
 
 \item{numerics_as_factors}{transform numeric values to factors. Default: TRUE}
 
-\item{custom_model}{boolean of usage of custom model. Default: FALSE}
-
 \item{string_factors}{string factors for WGCNA}
 
 \item{numeric_factors}{numeric factors for WGCNA}
@@ -93,6 +91,8 @@ a gene as significant}
 \item{WGCNA_minCoreKMESize}{see WGCNA package}
 
 \item{WGCNA_minKMEtoStay}{see WGCNA package}
+
+\item{multifactorial}{specify interaction/effect when multifactorial design}
 }
 \value{
 expression analysis result object with studies performed

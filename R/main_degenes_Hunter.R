@@ -17,7 +17,6 @@
 #' a gene as significant
 #' @param model_variables custom model
 #' @param numerics_as_factors transform numeric values to factors. Default: TRUE
-#' @param custom_model boolean of usage of custom model. Default: FALSE
 #' @param string_factors string factors for WGCNA
 #' @param numeric_factors numeric factors for WGCNA
 #' @param WGCNA_memory see WGCNA package
@@ -32,6 +31,7 @@
 #' @param WGCNA_minCoreKME see WGCNA package
 #' @param WGCNA_minCoreKMESize see WGCNA package
 #' @param WGCNA_minKMEtoStay see WGCNA package
+#' @param multifactorial specify interaction/effect when multifactorial design
 #' @return expression analysis result object with studies performed
 #' @keywords method
 #' @importFrom rlang .data
@@ -55,7 +55,6 @@ main_degenes_Hunter <- function(
     minpack_common = 4,
     model_variables = "",
     numerics_as_factors = TRUE,
-    custom_model = FALSE,
     string_factors = "",
     numeric_factors = "",
     WGCNA_memory = 5000,
@@ -69,13 +68,13 @@ main_degenes_Hunter <- function(
     WGCNA_blockwiseTOMType = "signed",
     WGCNA_minCoreKME = 0.5,
     WGCNA_minCoreKMESize = NULL,
-    WGCNA_minKMEtoStay = 0.2
+    WGCNA_minKMEtoStay = 0.2,
+    multifactorial = ""
   ){
-
     modified_input_args <- check_input_main_degenes_Hunter(raw, 
       minlibraries, reads, external_DEA_data, modules, model_variables,
       active_modules, WGCNA_all, minpack_common, target, 
-      custom_model, string_factors, numeric_factors)
+      string_factors, numeric_factors, multifactorial)
     modules <- modified_input_args[['modules']]
     active_modules <- modified_input_args[['active_modules']]
     minpack_common <- modified_input_args[['minpack_common']]
@@ -125,9 +124,12 @@ main_degenes_Hunter <- function(
         # stringsAsFactors=TRUE)
 
     }
-
-    model_formula_text <- prepare_model_text(model_variables, custom_model)
+    model_formula_text <- prepare_model_text(model_variables, 
+                                             multifactorial)
    
+    if(multifactorial != ""){
+      target <- prepare_target_for_multifactorial(target, multifactorial)
+    }
     # Prepare count table for analysis
     #Indexing selected columns from input count dataframe   
     raw <- raw[c(index_control_cols,index_treatmn_cols)]
@@ -143,8 +145,9 @@ main_degenes_Hunter <- function(
    
     exp_results <- perform_expression_analysis(modules, replicatesC, 
                      replicatesT, raw_filter, p_val_cutoff, target, 
-                     model_formula_text, external_DEA_data)
-
+                     model_formula_text, external_DEA_data, 
+                     multifactorial)
+#q()
     #################################################################
     ##                       CORRELATION ANALYSIS                   ##
     ##################################################################
@@ -241,9 +244,9 @@ check_input_main_degenes_Hunter <- function(raw,
                                             WGCNA_all, 
                                             minpack_common, 
                                             target, 
-                                            custom_model, 
                                             string_factors, 
-                                            numeric_factors){
+                                            numeric_factors,
+                                            multifactorial){
     if (minlibraries < 1){
       stop(cat(paste0("Minimum library number to check minimum read counts",
         " cannot be less than 1.\nIf you want to avoid filtering, set",
@@ -285,6 +288,10 @@ check_input_main_degenes_Hunter <- function(raw,
         " design that uses the model_variables option."))
       modules <- gsub("N", "", modules)
     }
+    if(model_variables != "" & multifactorial != ""){
+      stop("Cannot provide both a --multifactorial design and additional vars",
+        "via --model_variables")
+    }
 
     active_modules <- nchar(modules)
     if(grepl("W", modules)) {
@@ -317,10 +324,7 @@ check_input_main_degenes_Hunter <- function(raw,
       stop(cat(paste0("You should not include a -v value if you do not",
         " have a target table file.")))
     }
-    if(custom_model == TRUE & model_variables == "") {
-      stop(cat(paste0("If you wish to use a custom model you must provide a",
-        " value for the model_variables option.")))
-    }
+
     # If factors are specified but WGCNA not selected, throw a warning.
     if((string_factors != "" | numeric_factors != "") & 
        (!grepl("W", modules) | is.null(target))) {
@@ -366,19 +370,46 @@ filter_count <- function(reads,
     return(raw)
 }
 
-prepare_model_text <- function(model_variables, custom_model=FALSE){
+prepare_model_text <- function(model_variables, 
+                               multifactorial){
     # Prepare model text
     if(model_variables != "") {
-      if(custom_model == TRUE) {
-        model_formula_text <- model_variables
-      } else {
-        model_variables_unlist <- unlist(strsplit(model_variables, ","))
-        model_formula_text <- paste("~", paste(model_variables_unlist, 
-                                     "+", collapse=" "), "treat")
-      }
+      model_variables_unlist <- unlist(strsplit(model_variables, ","))
+      model_formula_text <- paste("~", paste(model_variables_unlist, 
+                                  "+", collapse=" "), "treat")
+    } else if (multifactorial != "") {
+      mf_text <- split_mf_text(multifactorial)
+      mf_factor_A <- mf_text[[1]]
+      mf_factor_B <- mf_text[[2]]
+      model_formula_text <- paste0("~ ", mf_factor_B, " + ", 
+                         mf_factor_A, " + ", mf_factor_B,":", mf_factor_A)
     } else {
       model_formula_text <- "~ treat"
     }
     cat("Model for gene expression analysis is:", model_formula_text, "\n")
     return(model_formula_text)
+}
+
+split_mf_text <- function(multifactorial) {
+      factors_contrast <- strsplit(multifactorial,":")[[1]]
+      factors <- strsplit(factors_contrast[1], ",")[[1]]
+      mf_factorA <- factors[1]
+      mf_factorB <- factors[2]
+      contrast_varA_varB <- strsplit(factors_contrast[2],",")[[1]]
+      mf_contrast <- contrast_varA_varB[1]
+      mf_varA <- contrast_varA_varB[2]
+      mf_varB <- contrast_varA_varB[3]
+      return(list(mf_factorA=mf_factorA, mf_factorB=mf_factorB, 
+        mf_contrast=mf_contrast, mf_varA=mf_varA, mf_varB=mf_varB))
+}
+
+prepare_target_for_multifactorial <- function(target, multifactorial) {
+  mf_text <- split_mf_text(multifactorial)
+  target[, mf_text[["mf_factorA"]]] <- stats::relevel(
+                                             target[,mf_text[["mf_factorA"]]],
+                                             mf_text[["mf_varA"]])
+  target[, mf_text[["mf_factorB"]]] <- stats::relevel(
+                                             target[,mf_text[["mf_factorB"]]],
+                                             mf_text[["mf_varB"]])
+  return(target)
 }

@@ -91,18 +91,13 @@ option_list <- list(
   optparse::make_option(c("-v", "--model_variables"), type="character", 
     default="",
     help=paste0("Variables to include in the model. Must be comma separated",
-      " and each variable must be a column in the target_file, or the model",
-      " can be specified precisely if the custom_model flag is TRUE")),
+      " and each variable must be a column in the target_file")),
   optparse::make_option(c("-n", "--numerics_as_factors"), type="logical", 
     default=TRUE,
     help=paste0("If TRUE, numeric variables in the target file specified",
       " in the DEG model be treated as distinct factors, i.e. categories.",
       " If FALSE, they will be considered as numeric and their values will be",
       " taken into account in the DEG model.")),
-  optparse::make_option(c("-M", "--custom_model"), type="logical", 
-    default=FALSE,
-    help=paste0("If true, text in the model_variables variable will be",
-      " passed directly to the model construction")),
   optparse::make_option(c("-S", "--string_factors"), type="character", 
     default="",
     help=paste0("Columns in the target file to be used as categorical",
@@ -158,7 +153,12 @@ option_list <- list(
       " WGCNA_min_genes_cluster/3).")),
   optparse::make_option(c("--WGCNA_minKMEtoStay"), type="double", default=0.5, 
     help=paste0("Minimun module membership of a gene to be kept in module.",
-      " Default=%default"))
+      " Default=%default")),
+  optparse::make_option(c("--multifactorial"), type="character", default="", 
+        help=paste0("Currently only a 2x2 factorial design is possible, must be specified in the following manner: FactorA,FactorB:contrast. Contrast can be either",
+      "\"interaction,baseA,baseB\" if we are interestied in the interaction between the two factors, where baseA and baseB should be the base levels for each factor",
+      "Alternatively, Contrast can be specificed in the form \"effect,baseA,groupB\", where the baseA should be the level in FactorA that should be used as the base for FC calculation,",
+      "and groupB represents the level in Factor B that represents the group we are looking for the change in."))
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 #############################################################################
@@ -232,7 +232,6 @@ final_results <- main_degenes_Hunter(
   minpack_common=opt$minpack_common,
   model_variables=opt$model_variables,
   numerics_as_factors=opt$numerics_as_factors,
-  custom_model=opt$custom_model,
   string_factors=opt$string_factors,
   numeric_factors=opt$numeric_factors,
   WGCNA_memory=opt$WGCNA_memory,
@@ -246,7 +245,8 @@ final_results <- main_degenes_Hunter(
   WGCNA_blockwiseTOMType=opt$WGCNA_blockwiseTOMType,
   WGCNA_minCoreKME=opt$WGCNA_minCoreKME,
   WGCNA_minCoreKMESize=opt$WGCNA_minCoreKMESize,
-  WGCNA_minKMEtoStay = opt$WGCNA_minKMEtoStay
+  WGCNA_minKMEtoStay = opt$WGCNA_minKMEtoStay,
+  multifactorial = opt$multifactorial
 )
 
 #############################################################################
