@@ -123,6 +123,10 @@ LRplus_test <- function(df) {
   ( df$TP / ( df$TP + df$FN ) ) /  ( df$FP / ( df$FP + df$TN ))
 }
 
+odds_ratio <- function(df){
+  (df$TP/df$FP)/(df$FN / df$TN)
+}
+
 #' @importFrom stats pchisq
 vectorial_fisher_method <- function(pval_table){
     log_pval <- log(pval_table) # Log all final p-values
@@ -224,15 +228,15 @@ v.fisher.test <- function(df){
 v_get_stats <- function(
 df, 
 selected_stats = c("acc", "ppv", "recall", "spc", "fmeasure", 
-                 "LRplus_sub", "LRplus_test", "v.fisher.test"),
+                 "LRplus_sub", "LRplus_test", "v.fisher.test", "odds_ratio"),
 readable_names = TRUE
 
 ){
   stats_names <- data.frame(orig = c("acc", "ppv", "recall", "spc", "fmeasure", 
-                                 "LRplus_sub", "LRplus_test", "v.fisher.test"),
+                                 "LRplus_sub", "LRplus_test", "v.fisher.test", "odds_ratio"),
                             renamed = c("Accuracy", "Precision", "Recall", 
                                  "Specificity", "Fmax", "LRplus_sub", 
-                                 "LRplus_test", "Pvalue"))
+                                 "LRplus_test", "Pvalue", "Odds_ratio"))
   stats_names <- stats_names[stats_names$orig %in% selected_stats, ]
   for (stat in stats_names$orig){
     df[,stat] <- get(stat)(df)
@@ -241,4 +245,39 @@ readable_names = TRUE
     data.table::setnames(df, stats_names$orig,stats_names$renamed)
   }
   return(df)
+}
+
+#' @importFrom stats ecdf
+calc_quantile <- function(value, distribution){
+    Fn <-  stats::ecdf(distribution)
+    quantile <- 1- Fn(value)
+    return(quantile)
+}
+
+#' Takes boolean vectors of same length and numeric vector of weights 
+# false_weights, penalization for values without weights 
+# > 0.5 is reward and > 0.5 penalization
+weighted_cont_table <- function(
+ experiment,
+ gold_standard, 
+ weights, 
+ background_weights = NULL,
+ false_weights = 1
+){
+   if (is.null(background_weights)){
+     background_weights <- weights
+   }
+   weights <- calc_quantile(weights, background_weights)
+   weights <- 1 - weights 
+   weights[is.na(weights)] <- false_weights
+   weights <- rep(1, length(weights))
+   TP <- sum(weights[experiment & gold_standard])
+   FP <- sum(weights[experiment & !gold_standard])
+   TN <- sum(weights[!experiment & !gold_standard])
+   FN <- sum(weights[!experiment & gold_standard])
+   cont_table <- data.frame(TP = TP, 
+                            FN = FN, 
+                            FP = FP, 
+                            TN = TN)
+   return(cont_table)
 }
