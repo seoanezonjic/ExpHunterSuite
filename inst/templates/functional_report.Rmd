@@ -687,7 +687,6 @@ for (onto in names(go_main_enrich)) {
 		go_pp <- enrichplot::heatplot(enrich_go_gsea_symb, showCategory=n_category, foldChange=geneList)
 		width_size <- calc_width(enrich_go_gsea_symb)
 		height_size <- calc_height(enrich_go_gsea_symb) 
-		save(enrich_go_gsea_symb, file = "enrich_go_gsea_symb.Rdata")
 		plot_in_div(go_pp, height_size, width_size)
 
 		cat("\n\n**Ridgeplot**\n\n",
