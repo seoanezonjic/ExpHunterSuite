@@ -583,7 +583,7 @@ cat("\n### **Correlation network between modules and factors**\n\n")
 
 if (nrow(mod_traits_net$nodes < 2)){
 
-	cat("This plot shows modules (black) and factors (yellow) as nodes. Correlations coefficients over 0.8 (red) and under -0.8 (blue) are represented as edges\n")
+	cat("This plot shows modules (black) and factors (green) as nodes. Correlations coefficients over 0.8 (red) and under -0.8 (blue) are represented as edges\n")
 	"%>%" <- magrittr::"%>%"
 	options(ggrepel.max.overlaps = Inf)
 	tg <- tidygraph::as_tbl_graph(mod_net) %>% tidygraph::activate(nodes) %>% dplyr::mutate(label=name)
