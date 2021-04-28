@@ -58,15 +58,19 @@ strat_data_table$mean_logFCs <- RNAseq$DH_results$mean_logFCs[match(strat_data_t
 
 
 
-```{r "{{method_name}}_cor_miRNA_table", echo = FALSE, message=FALSE, warning=FALSE}
+```{r "{{method_name}}_cor_miRNA_table", echo = FALSE, message=FALSE, warning=FALSE, results = "asis"}
+if (nrow(strat_data_table) > 20000){
+  cat(paste0("\n\nThis strategy finds too many significant pairs. Please check ", method, "/targets_results_table.txt. \n\n"))
 
-DT::datatable(strat_data_table, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+} else {
+  DT::datatable(strat_data_table, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
         options = list(
           paging = TRUE,
           colReorder = TRUE,
           dom = 'lftBip',
           buttons = c('copy', 'csv', 'excel')
     ))
+}
 # strat_data <- data.frame()
 ```
 
@@ -120,7 +124,7 @@ DT::datatable(all_miRNA_summary, filter = 'top', rownames = FALSE, extensions = 
 
 outdir <- file.path(output_files, method)
 check_and_create_dir(outdir)
-utils::write.table(strat_data, file = file.path(outdir, "target_results_table.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+utils::write.table(strat_data_table, file = file.path(outdir, "target_results_table.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 
 ```
 

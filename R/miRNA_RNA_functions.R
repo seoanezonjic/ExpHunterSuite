@@ -93,11 +93,16 @@ load_and_parse_multimir <- function(
       rowSums(!is.na(multimir_table[,database_to_filter])
       ) > filter_db_theshold | multimir_table$validated_c > 0,]
     }
-    return(data.table::as.data.table(multimir_table))
+    raw_databases_scores <- lapply(selected_predicted_databases, function(database){
+      database_scores <- multimir_table[,database]
+      database_scores <- database_scores[!is.na(database_scores)]
+      })
+    names(raw_databases_scores) <- selected_predicted_databases
+    return(list(raw_databases_scores = raw_databases_scores,
+    multimir_table = data.table::as.data.table(multimir_table)))
 }
 
 parse_strategies <- function(strategies){
-
     strat_equivalence <- list(
     "d" = "normalized_counts",
     "E" = "Eigengene",
@@ -124,6 +129,7 @@ RNAseq,
 miRNAseq, 
 all_pairs,
 selected_predicted_databases,
+raw_databases_scores,
 corr_cutoff = -0.8, 
 p_val_cutoff = 0.05,
 MM_cutoff = 0.7,
@@ -149,6 +155,9 @@ sample_proportion = 0.01
  filters_summary <- data.frame()
  #Dataframe with stats from prediction scores comparison
  score_comp<- data.frame()
+ #Dataframe with weighted fisher pvalues
+ p_fisher <- data.frame()
+
  ####PERFORM STRATEGIES
  for(strategy in strat_names){ 
    message(paste0("\n", strategy, " strategy is been performed"))
@@ -169,6 +178,22 @@ sample_proportion = 0.01
    filters_summary <- plyr::rbind.fill(filters_summary,all_stats$strat_summary)
    cont_tables <- rbind(cont_tables, all_stats$strat_cts)
    all_stats <- NULL
+   pred_cont_tables <- calc_pred_ctables(
+                            all_pairs =all_pairs, 
+                            strategy= strategy,
+                            selected_predicted_databases = selected_predicted_databases)
+   # , 
+   #                          raw_databases_scores = raw_databases_scores)
+ 
+   pred_cont_tables$fisher.p.value <- v.fisher.test(pred_cont_tables)
+   pred_fisher <- pred_cont_tables[,c("database", "fisher.p.value")]
+   pred_comb_pval <- vectorial_fisher_method(pred_fisher$fisher.p.value)
+   pred_fisher <- rbind(pred_fisher, 
+                        data.frame(database = "comb_pval",
+                                   fisher.p.value = pred_comb_pval
+                              ))
+   pred_fisher$strategy <- strategy
+   p_fisher <- rbind(p_fisher, pred_fisher)
    score_comp <- rbind(score_comp,
                        score_comparison(
                         databases = selected_predicted_databases,  
@@ -180,12 +205,13 @@ sample_proportion = 0.01
   stop("There is not significant pairs for any strategy selected.")
  } 
   all_cor_dist <- parse_correlations(strategies)
-
+  # score_comp <- merge(w_fisher, score_comp, by = c("database", "strategy"), all = TRUE)  
   sig_pairs <- get_sig_pairs(strategies, all_pairs)
  miRNA_cor_results <- list(strategies = strategies,
      unsig_strategies =  unsig_strategies, cont_tables = cont_tables,
      filters_summary = filters_summary, score_comp = score_comp,
-     all_pairs = all_pairs, all_cor_dist = all_cor_dist, sig_pairs = sig_pairs)
+     all_pairs = all_pairs, all_cor_dist = all_cor_dist, sig_pairs = sig_pairs,
+     p_fisher = p_fisher, raw_databases_scores = raw_databases_scores)
 }
 
 #' @importFrom data.table as.data.table
@@ -228,7 +254,8 @@ perform_correlations <- function(
                                      all_pairs$pval < pval_cutoff
     if (!is.null(std_positions)){
      # Add extra column to indicate number of pair in std_positions
-     all_pairs_str <- tidyr::unite(all_pairs, "pairs", RNAseq:miRNAseq, 
+     all_pairs_str <- all_pairs[,c("RNAseq", "miRNAseq")]
+     all_pairs_str <- tidyr::unite(all_pairs_str, "pairs", RNAseq:miRNAseq, 
                                    sep = "_")
      all_pairs_str <- all_pairs_str$pairs  
      all_pairs$pair_n <- match(all_pairs_str, std_positions) 
@@ -254,7 +281,6 @@ perform_deg_dem_strat <- function(RNAseq, miRNAseq){
 #' @importFrom WGCNA corPvalueStudent
 #' @importFrom stats cor
 correlate_profiles <- function(RNA_profiles, miRNA_profiles) {
-
 
     correlations <- WGCNA::cor(RNA_profiles, miRNA_profiles)
     nSamples <- nrow(RNA_profiles)
@@ -339,8 +365,6 @@ add_multimir_info <- function(all_pairs, multiMiR = NULL) {
        all_pairs[is.na(all_pairs[,pred_db]), pred_db] <- FALSE
     }
 
-    # pred_db <- c("mirecords", "mirtarbase", "tarbase")
-    # all_pairs[is.na(all_pairs[,pred_db]), pred_db] <- FALSE
 
     all_pairs$predicted <- all_pairs$predicted_c > 0
     all_pairs$validated <- all_pairs$validated_c > 0
@@ -350,113 +374,6 @@ add_multimir_info <- function(all_pairs, multiMiR = NULL) {
     all_pairs <- data.table::as.data.table(all_pairs)
  
     return(all_pairs)
-}
-
-#' @importFrom data.table as.data.table rbindlist
-get_db_scores <- function(all_db_info){
-    all_db_info <- as.data.frame(all_db_info)
-    all_pred_dbs <- c("diana_microt", "elmmo", "microcosm", 
-        "miranda","mirdb", "pictar", "pita", "targetscan")
-    strats_r_scores <- lapply(all_pred_dbs, function(pred_db){
-    pred_db_score <- data.table::data.table(database = pred_db, 
-        r_scores = all_db_info[, pred_db], 
-        significant = all_db_info$correlated_pairs)
-    pred_db_score <- pred_db_score[pred_db_score$r_scores > 0, ]
-    return(pred_db_score) 
-    })
-    strats_r_scores <- data.table::rbindlist(strats_r_scores)
-    return(as.data.frame(strats_r_scores))
-}
-
-
-
-get_module_genes <- function(hunter_results, module_name, column_name){
-    module_genes <- hunter_results[["gene_name"]][
-             hunter_results[["Cluster_ID"]] == module_name]
-
-    module_genes <- data.frame(module = rep(module_name, length(module_genes)),
-                               genes = module_genes)
-    colnames(module_genes) <- c("module", column_name)
-    return(module_genes)
-}
-
-#' @importFrom data.table data.table rbindlist as.data.table
-#' @importFrom stats sd 
-add_randoms <- function(background = NULL, 
-    filters_summary = NULL, 
-    permutations = 10, 
-    all_strategies, 
-    db_distribution = data.table::data.table(NULL,stringsAsFactors = FALSE)){
-    background <- data.table::as.data.table(background)
-    db_distribution <- list("0" = db_distribution)
-    for (strategy_name in unique(filters_summary$strategy)) {
-    random_dist <- list()
-  
-    sig_pairs_count <- filters_summary[filters_summary$strategy == 
-                strategy_name & filters_summary$type == "known_miRNAs", "pairs"]
-    for(i in seq_len(10)){  
-       random_indices <- sample(nrow(background), 
-           size = sig_pairs_count, replace = FALSE)    
-       random_set <- as.data.frame(background[random_indices,])
-       random_summary <- data.table::data.table(
-            multiMiR = sum(random_set$predicted_c > 0 |
-                            random_set$validated_c > 0),
-            predicted = sum(random_set$predicted_c > 0),
-            validated = sum(random_set$validated_c > 0),
-            both= sum(random_set$predicted_c > 0 & random_set$validated_c > 0)
-       )
-       random_dist[[i]] <- random_summary
-       
-       random_score_dist <- data.table::data.table(strategy = strategy_name,
-       step = "predicted_random",
-       score = random_set[random_set$predicted_c > 0, "score"] )
-       
-       db_distribution <- c(db_distribution, list(random_score_dist))
-    
-    }
-    random_dist <- as.data.frame(data.table::rbindlist(random_dist))
-    
-
-    random_summary <- lapply(c("multiMiR", "predicted", 
-        "validated", "both"), function(type){
-       type_dist <- random_dist[, type]
-       type_pairs <- filters_summary[filters_summary$strategy == strategy_name &
-                                     filters_summary$type == type, "pairs"]
-       data.frame(type = paste0(type, "_random"),
-          pairs = round(mean(type_dist), 3),
-          sdev = stats::sd(type_dist),
-          strategy = strategy_name,
-          p_val = calc_pval(type_pairs, type_dist),
-          quantile = calc_quantile(type_pairs, type_dist)
-       )
-    })
-    
-    
-
-    filters_summary <- as.data.frame(data.table::rbindlist(c(
-        list(filters_summary), random_summary), use.names=TRUE))    
-    }
-    db_distribution <- data.table::rbindlist(db_distribution, use.names=TRUE)
-    gc()
-    random_obj <- list("filters_summary" = filters_summary,
-    "db_distribution" = db_distribution)
-    return(random_obj)
-}
-
-
-#' @importFrom stats sd pnorm
-calc_pval <- function(value, distribution){
-    d_mean <- mean(distribution)
-    d_sd <- stats::sd(distribution)
-    pval <- 1 - stats::pnorm(value, mean = d_mean, sd = d_sd)
-    return(pval)
-}
-
-#' @importFrom stats ecdf
-calc_quantile <- function(value, distribution){
-    Fn <-  stats::ecdf(distribution)
-    quantile <- 1 - Fn(value)
-    return(quantile)
 }
 
 
@@ -482,32 +399,6 @@ get_entrez_symbol_translations <- function(ensembl_ids, organism_info){
     return(gene_id_translation)
 }
 
-parse_db_comparison <- function(score_comp){
-    score_comp_pval <- matrix(1, nrow = length(score_comp), 
-                                 ncol = length(score_comp[[1]]), 
-                                 dimnames = list(names(score_comp), 
-                                                 names(score_comp[[1]])
-                                                )
-                             )
-    score_comp_boot_pval <- matrix(1, nrow = length(score_comp), 
-                                 ncol = length(score_comp[[1]]), 
-                                 dimnames = list(names(score_comp), 
-                                                 names(score_comp[[1]])
-                                                )
-                             )
-    for (strat in names(score_comp)) {
-        for (db in names(score_comp[[strat]])) {
-            score_comp_pval[strat, db] <- 
-                        score_comp[[strat]][[db]]$p.value
-            score_comp_boot_pval[strat, db] <- 
-                        score_comp[[strat]][[db]]$boot.p.value
-        } 
-    }
-    return(list(score_comp_pval = score_comp_pval, 
-        score_comp_boot_pval = score_comp_boot_pval))
-}
-
-
 score_comparison <- function(databases, all_pairs, sample_size, strategy){
   db_comp <- data.frame()
   all_pairs <- data.table::as.data.table(all_pairs)
@@ -516,23 +407,30 @@ score_comparison <- function(databases, all_pairs, sample_size, strategy){
     bckg_scores <- bckg_scores[!is.na(bckg_scores)]
     strat_scores <- all_pairs[get(strategy), get(database)] #Revise that
     strat_scores <- strat_scores[!is.na(strat_scores)]
+
     sampled_bckg <- sample(bckg_scores, 
             size = length(bckg_scores) * sample_size, replace = FALSE)
     res <- data.frame(p.value = 1, boot.p.value = 1)
     if (length(strat_scores) > 1) {
-        res <- MKinfer::boot.t.test(strat_scores,
-        y = sampled_bckg, alternative = "greater" )
+      # res <- boot.t.test.2(x = sampled_bckg, y = bckg_scores, 
+        res <- boot.t.test.2(x = strat_scores, y = bckg_scores, 
+          alternative = "greater", 
+          vectorial = FALSE, 
+          R = 1000,
+          chunk_size = 100)
     } 
     actual_db_comp <- data.frame(
                         database = database,
                         strategy = strategy,
                         boot.p.value = res$boot.p.value,
                         p.value = res$p.value)
-    for (pval_type in c("p.value", "boot.p.value")) {
-        if (actual_db_comp[[pval_type]] < 1e-16) {
-            actual_db_comp[[pval_type]] <- 1e-16
-        }
-    }     
+    if (actual_db_comp$boot.p.value == 0){
+      if(actual_db_comp$p.value == 0){
+        actual_db_comp[,c("boot.p.value", "p.value")] <- 1e-16
+      } else {
+        actual_db_comp$boot.p.value <- actual_db_comp$p.value
+      }
+    }
     db_comp <- rbind(db_comp,actual_db_comp) 
   }
   db_comp <- rbind(
@@ -545,13 +443,15 @@ score_comparison <- function(databases, all_pairs, sample_size, strategy){
   return(db_comp)
 }
 
+
+
 #' @importFrom plyr rbind.fill
 #' @importFrom data.table setnames
 get_stats_by_group <- function(
 all_pairs, 
 strategy, 
 permutations = 50, 
-db_groups = c("predicted", "validated", "pred_and_val", "multimir")
+db_groups = c("predicted", "validated", "pred_and_val")
 ){
  strat_cts <- data.frame() #contingency table
  known_miRNAs_c <- sum(all_pairs[,get(strategy) & known_miRNA])
@@ -677,4 +577,24 @@ get_sig_pairs <- function(strategies, all_pairs){
   }
   names(all_overlap) <- groups_db
   return(all_overlap)
+}
+
+
+calc_pred_ctables <- function(
+ all_pairs,
+ strategy,
+ selected_predicted_databases)
+{
+ cont_tables <- data.frame()
+ for (database in selected_predicted_databases){
+   # background_weights <- raw_databases_scores[[database]]
+   # background_weights <- background_weights[!is.na(background_weights)]
+   c_table <- calc_ct(experiment = all_pairs[,get(strategy)],
+                       gold_standard = !is.na(all_pairs[,get(database)]))
+                       # weights = all_pairs[,get(database)],
+                       # background_weights = background_weights)
+   c_table$database <- database
+   cont_tables <- rbind(cont_tables, c_table)
+ }
+ return(cont_tables)
 }

@@ -229,7 +229,9 @@ selected_predicted_databases,
 all_cor_dist,
 miRNAseq, 
 RNAseq,
-sig_pairs           
+sig_pairs,
+raw_databases_scores,
+p_fisher           
 ){
  "%>%" <- magrittr::"%>%"
  # print(ls(all.names = TRUE))

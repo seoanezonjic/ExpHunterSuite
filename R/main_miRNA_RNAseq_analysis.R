@@ -46,11 +46,16 @@ organism_table_path = file.path(find.package('ExpHunterSuite'), "inst",
  selected_predicted_databases <- unlist(strsplit(databases, ","))
  selected_predicted_databases <- pred_dbs[pred_dbs %in% unlist(
                                                 selected_predicted_databases)]
- multimir <- load_and_parse_multimir(multimir_path = multimir_db, 
+ if (!is.null(database_to_filter)){
+    database_to_filter <- unlist(strsplit(database_to_filter, ","))
+ }
+ multimir_info <- load_and_parse_multimir(multimir_path = multimir_db, 
     selected_predicted_databases = selected_predicted_databases, 
     filter_db_theshold= filter_db_theshold, #filter_db_theshold
      database_to_filter = database_to_filter  #database_to_filter
     )
+ multimir <- multimir_info[["multimir_table"]]
+ raw_databases_scores <- multimir_info[["raw_databases_scores"]]
  message("multiMiR database has been parsed and summarized")
  
  #Load and prepare DGH data
@@ -67,7 +72,8 @@ organism_table_path = file.path(find.package('ExpHunterSuite'), "inst",
     p_val_cutoff = p_val_cutoff, MM_cutoff = MM_cutoff,
     permutations = permutations, all_pairs = all_pairs, 
     selected_predicted_databases = selected_predicted_databases, 
-    sample_proportion = sample_proportion)
+    sample_proportion = sample_proportion, 
+    raw_databases_scores=raw_databases_scores)
  
  miRNA_cor_results$cont_tables <- v_get_stats(miRNA_cor_results$cont_tables)
   
@@ -80,6 +86,9 @@ organism_table_path = file.path(find.package('ExpHunterSuite'), "inst",
     miRNA_cor_results$score_comp$p.value)
  miRNA_cor_results$score_comp$log.boot.p.value <- -log10(
     miRNA_cor_results$score_comp$boot.p.value)
+ 
+ miRNA_cor_results$p_fisher$fisher.log.p.value <- -log10( 
+    miRNA_cor_results$p_fisher$fisher.p.value)
 
  ################# GET IDS TRANSLATIONS
  translated_ids <- translate_all_id(

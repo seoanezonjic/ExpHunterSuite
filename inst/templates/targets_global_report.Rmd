@@ -65,24 +65,25 @@ cat("## **KEGG analysis**\n")
 ```
 ```{r kegg_ora, results='asis', echo=FALSE, eval = executed[["KEGG"]], message = FALSE}
 
-save.image(file = file.path(debug_folder, "debug.RData"))
+# save.image(file = file.path(debug_folder, "debug.RData"))
 
 
 cat("### **Over Representation Analysis**\n",
-	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+	"The ORA method takes genes of each module and performs a Fisher exact test for each term of the selected functional category.\n\n")
 
 plot_enrResult_DT(enrichments_ORA$KEGG)
 
 
-cat(
-	"**Dotplot**\n\n", 
-	"WRITE THIS TEXT >>>>.\n\n"
-)
-message("Printing dotplot")
-cat(length(get_categories(enrichments_ORA$KEGG)))
-pp <- dotplot(enrichments_ORA$KEGG, showCategory=n_category) 
-pp <- set_standard_size(pp)
-plot_in_div(pp, calc_height(enrichments_ORA$KEGG), calc_width(enrichments_ORA$KEGG))
+# cat(
+# 	"**Dotplot**\n\n", 
+# 	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
+# 		The X axis represents the gene ratio and the dot size the number of genes  associated to the functional term.\n\n"
+# )
+
+# cat(length(get_categories(enrichments_ORA$KEGG)))
+# pp <- enrichplot::dotplot(enrichments_ORA$KEGG, showCategory=n_category) 
+# pp <- set_standard_size(pp)
+# plot_in_div(pp, calc_height(enrichments_ORA$KEGG), calc_width(enrichments_ORA$KEGG))
 
 
 
@@ -97,11 +98,13 @@ pp <- clusters_heatplot(enrichments_ORA$KEGG@compareClusterResult)
 pp <- set_standard_size(pp)
 plot_in_div(pp, calc_height(enrichments_ORA$KEGG), calc_width(enrichments_ORA$KEGG))
 
+# save(enrichments_ORA, file = "/home/bio267lab/proyectos/target_miRNA_2020/test_func.RData")
+# q()
 cat('\n\n**Enrich Map plot**\n\n', 
 	'WRITE THIS TEXT >>>>.\n\n'
 )
 
-pp <- emapplot(enrichments_ORA$KEGG, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
+pp <- enrichplot::emapplot(enrichments_ORA$KEGG, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
 plot_in_div(pp, fig_width = calc_width(enrichments_ORA$KEGG))
 
 
@@ -114,7 +117,7 @@ plot_in_div(pp, fig_width = calc_width(enrichments_ORA$KEGG))
 cat("## **Reactome analysis**\n")
 ```
 ```{r reac_ora, results='asis', echo=FALSE, eval = executed[["REACT"]]}
-save.image(file = file.path(debug_folder, "debug.RData"))
+# save.image(file = file.path(debug_folder, "debug.RData"))
 
 cat("### **Over Representation Analysis**\n",
 	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
@@ -122,15 +125,16 @@ cat("### **Over Representation Analysis**\n",
 plot_enrResult_DT(enrichments_ORA$REACT)
 
 
-cat(
-	"**Dotplot**\n\n", 
-	"WRITE THIS TEXT >>>>.\n\n"
-)
-cat(length(get_categories(enrichments_ORA$REACT)))
+# cat(
+# 	"**Dotplot**\n\n", 
+# 	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
+# 		The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+# )
+# cat(length(get_categories(enrichments_ORA$REACT)))
 
-pp <- dotplot(enrichments_ORA$REACT, showCategory=n_category)  
-pp <- set_standard_size(pp)
-plot_in_div(pp, calc_height(enrichments_ORA$REACT), calc_width(enrichments_ORA$REACT))
+# pp <- enrichplot::dotplot(enrichments_ORA$REACT, showCategory=n_category)  
+# pp <- set_standard_size(pp)
+# plot_in_div(pp, calc_height(enrichments_ORA$REACT), calc_width(enrichments_ORA$REACT))
 
 
 cat(
@@ -145,7 +149,7 @@ plot_in_div(pp, calc_height(enrichments_ORA$REACT),calc_width(enrichments_ORA$RE
 cat('\n\n**Enrich Map plot**\n\n', 
 	'WRITE THIS TEXT >>>>.\n\n'
 )
-pp <- emapplot(enrichments_ORA$REACT, showCategory=n_category, pie="count", pie_scale=1.5, layout="kk")
+pp <- enrichplot::emapplot(enrichments_ORA$REACT, showCategory=n_category, pie="count", pie_scale=1.5, layout="kk")
 plot_in_div(pp, fig_width = calc_width(enrichments_ORA$REACT))
 
 
@@ -166,15 +170,16 @@ cat("### **[BP] Over Representation Analysis**\n",
 plot_enrResult_DT(enrichments_ORA$GO_BP)
 
 
-cat(
-	"**Dotplot**\n\n", 
-	"WRITE THIS TEXT >>>>.\n\n"
-)
-cat(length(unique(get_categories(enrichments_ORA$GO_BP, showCategory = n_category))))
+# cat(
+# 	"**Dotplot**\n\n", 
+# 	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
+# 		The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+# )
+# cat(length(unique(get_categories(enrichments_ORA$GO_BP, showCategory = n_category))))
 
-pp <- dotplot(enrichments_ORA$GO_BP, showCategory=n_category)  
-pp <- set_standard_size(pp)
-plot_in_div(pp, calc_height(enrichments_ORA$GO_BP, showCategory=n_category), calc_width(enrichments_ORA$GO_BP))
+# pp <- enrichplot::dotplot(enrichments_ORA$GO_BP, showCategory=n_category)  
+# pp <- set_standard_size(pp)
+# plot_in_div(pp, calc_height(enrichments_ORA$GO_BP, showCategory=n_category), calc_width(enrichments_ORA$GO_BP))
 
 
 cat(
@@ -189,7 +194,7 @@ plot_in_div(pp, calc_height(enrichments_ORA$GO_BP),calc_width(enrichments_ORA$GO
 cat('\n\n**Enrich Map plot**\n\n', 
 	'WRITE THIS TEXT >>>>.\n\n'
 )
-pp <- emapplot(enrichments_ORA$GO_BP, showCategory=n_category, pie="count", pie_scale=1.5, layout="kk")
+pp <- enrichplot::emapplot(enrichments_ORA$GO_BP, showCategory=n_category, pie="count", pie_scale=1.5, layout="kk")
 plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_BP))
 
 
@@ -203,13 +208,14 @@ cat("### **[MF] Over Representation Analysis**\n",
 plot_enrResult_DT(enrichments_ORA$GO_MF)
 
 
-cat(
-	"**Dotplot**\n\n", 
-	"WRITE THIS TEXT >>>>.\n\n"
-)
-pp <- dotplot(enrichments_ORA$GO_MF, showCategory=n_category)  
-pp <- set_standard_size(pp)
-plot_in_div(pp, calc_height(enrichments_ORA$GO_MF), calc_width(enrichments_ORA$GO_MF))
+# cat(
+# 	"**Dotplot**\n\n", 
+# 	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
+# 		The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+# )
+# pp <- enrichplot::dotplot(enrichments_ORA$GO_MF, showCategory=n_category)  
+# pp <- set_standard_size(pp)
+# plot_in_div(pp, calc_height(enrichments_ORA$GO_MF), calc_width(enrichments_ORA$GO_MF))
 
 cat(
 	"**Heatmap**\n\n", 
@@ -223,7 +229,7 @@ plot_in_div(pp, calc_height(enrichments_ORA$GO_MF), calc_width(enrichments_ORA$G
 cat('\n\n**Enrich Map plot**\n\n', 
 	'WRITE THIS TEXT >>>>.\n\n'
 )
-pp <- emapplot(enrichments_ORA$GO_MF, showCategory=n_category, pie="count", pie_scale=1.5, layout="kk")
+pp <- enrichplot::emapplot(enrichments_ORA$GO_MF, showCategory=n_category, pie="count", pie_scale=1.5, layout="kk")
 plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_MF))
 # cat(
 # 	"**CNetplot**\n\n", 
@@ -242,14 +248,15 @@ cat("### **[CC] Over Representation Analysis**\n",
 plot_enrResult_DT(enrichments_ORA$GO_CC)
 
 
-cat(
-	"**Dotplot**\n\n", 
-	"WRITE THIS TEXT >>>>.\n\n"
-)
+# cat(
+# 	"**Dotplot**\n\n", 
+# 	"The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
+# 		The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n"
+# )
 
-pp <- dotplot(enrichments_ORA$GO_CC, showCategory=n_category)  
-pp <- set_standard_size(pp)
-plot_in_div(pp, calc_height(enrichments_ORA$GO_CC),calc_width(enrichments_ORA$GO_CC))
+# pp <- enrichplot::dotplot(enrichments_ORA$GO_CC, showCategory=n_category)  
+# pp <- set_standard_size(pp)
+# plot_in_div(pp, calc_height(enrichments_ORA$GO_CC),calc_width(enrichments_ORA$GO_CC))
 
 
 cat(
@@ -265,7 +272,7 @@ plot_in_div(pp, calc_height(enrichments_ORA$GO_CC),calc_width(enrichments_ORA$GO
 cat('\n\n**Enrich Map plot**\n\n', 
 	'WRITE THIS TEXT >>>>.\n\n'
 )
-pp <- emapplot(enrichments_ORA$GO_CC, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
+pp <- enrichplot::emapplot(enrichments_ORA$GO_CC, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
 plot_in_div(pp, fig_width = calc_width(enrichments_ORA$GO_CC))
 
 ```
@@ -297,13 +304,14 @@ invisible(lapply(seq_along(custom_targets_ORA),function(i){
 				
 				plot_enrResult_DT(res)
 
-				cat(
-					'**Dotplot**\n\n', 
-					'WRITE THIS TEXT >>>>.\n\n'
-				)
-				pp <- dotplot(res, showCategory=n_category)   
-				pp <- set_standard_size(pp)
-				plot_in_div( pp, calc_height(res),calc_width(res))
+		# 		cat(
+		# 			'**Dotplot**\n\n', 
+		# 			'The plot shows the top functional terms in descendant order by gene ratio. This ratio is the proportion of the known genes for a given functional term that are identified in the expression data. The color represents the associated adjusted pvalue. 
+		# The X axis represents the gene ratio and the dot size the number of DEG genes associated to the functional term.\n\n'
+		# 		)
+		# 		pp <- enrichplot::dotplot(res, showCategory=n_category)   
+		# 		pp <- set_standard_size(pp)
+		# 		plot_in_div( pp, calc_height(res),calc_width(res))
 
 				cat(
 					'**Heatmap**\n\n', 
@@ -318,7 +326,7 @@ invisible(lapply(seq_along(custom_targets_ORA),function(i){
 					'The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 					The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n'
 				)
-				pp <- emapplot(res, showCategory=n_category,pie='count', pie_scale=1.5, layout='kk')
+				pp <- enrichplot::emapplot(res, showCategory=n_category,pie='count', pie_scale=1.5, layout='kk')
 				plot_in_div(pp, fig_width = calc_width(res))
 		"
 

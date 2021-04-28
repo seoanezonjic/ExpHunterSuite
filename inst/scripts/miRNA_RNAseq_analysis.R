@@ -15,7 +15,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
     custom_libraries <- c("plotting_functions.R", "write_report.R", 
         "general_functions.R",  "statistics_functions.R", 
         "miRNA_RNA_functions.R", "functional_analysis_library.R", 
-        "main_miRNA_RNAseq_analysis.R")
+        "main_miRNA_RNAseq_analysis.R", "mkinfer_modified.R")
     for (lib in custom_libraries){
         source(file.path(root_path, 'R', lib))
       }
@@ -128,17 +128,16 @@ miRNA_cor_results <-  coRmiT(
     mc_cores = opt$mc_cores,
     filter_db_theshold = opt$filter_db_theshold,
     database_to_filter = opt$database_to_filter,
-    # filter_unmaintained = opt$unmaintained_filter,
     translation_file = opt$translation_file,
     organism_table_path = organism_table_path, 
     template_folder = template_folder #file.path(root_path, "inst", "templates")
     )
 
-# save(miRNA_cor_results, file = "~/proyectos/target_miRNA_2020/test.RData")
+# save(miRNA_cor_results, file = "~/proyectos/target_miRNA_2020/test2.RData")
+# q()
+# load("~/proyectos/target_miRNA_2020/test2.RData")
 
-# load("~/proyectos/target_miRNA_2020/test.RData")
-
-
+miRNA_cor_results$weighted_c_table <- NULL
 miRNA_cor_results <- c(miRNA_cor_results, 
     list(report_name =opt$report,
          template_folder =template_folder,
