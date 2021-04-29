@@ -13,9 +13,19 @@ full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),
 main_path_script <- dirname(full.fpath)
 
 
+root_path <- file.path(main_path_script, '..', '..')
+  # Load custom libraries
+custom_libraries <- c('functional_analysis_library.R', 
+                      'plotting_functions.R',
+                      'general_functions.R')
+for (lib in custom_libraries){
+  source(file.path(root_path, 'R', lib))
+}
+template_folder <- file.path(root_path, 'inst', 'templates')
+
+
 #Loading libraries  
-suppressPackageStartupMessages(require(optparse))
-suppressPackageStartupMessages(require(knitr))
+# suppressPackageStartupMessages(require(knitr))
 
 
 #############################################
@@ -26,22 +36,21 @@ suppressPackageStartupMessages(require(knitr))
 #------------------------------------------------
 
 option_list <- list(
-  make_option(c("-i", "--input_hunter_folder"), type="character",
+  optparse::make_option(c("-i", "--input_hunter_folder"), type="character",
     help="DEgenes Hunter's differential expression analysis output folder"), 
-  make_option(c("-o", "--output_files"), type="character", default="results",
-    help="Output path. Default=%default")
+  optparse::make_option(c("-o", "--output_files"), type="character", 
+    default="results", help="Output path. Default=%default")
 )
-opt <- parse_args(OptionParser(option_list=option_list))
+opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
+results_path <- opt$output_files
 
 ############ CREATE FOLDERS #########3
-paths <- list()
-dir.create(opt$output_files)
-paths$root <-opt$output_files
 
-source(file.path(main_path_script, 'lib', 'functional_analysis_library.R'))
-source(file.path(main_path_script, 'lib', 'plotting_functions.R'))
+# source(file.path(main_path_script, '../../R', 'functional_analysis_library.R'))
+# source(file.path(main_path_script, '../../R', 'plotting_functions.R'))
 
+check_and_create_dir(opt$output_files)
 #############################################
 ### LOAD AND PARSE 
 #############################################
@@ -62,7 +71,6 @@ if(length(aux) > 0){
 ####
 # LOAD NORMALIZED COUNTS
 ####
-    # LOAD NORMALIZED COUNTS
     norm_counts <- as.matrix(read.table(file.path(opt$input_hunter_folder, 
         "Results_DESeq2", "Normalized_counts_DESeq2.txt"), header=TRUE, 
         row.names=1, sep="\t", stringsAsFactors = FALSE))
@@ -95,7 +103,8 @@ if(length(aux) > 0){
     wgcna_count_sample_trait <- as.matrix(read.table(file.path(
         opt$input_hunter_folder, "Results_WGCNA", "sample_trait.txt"), 
         header=TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE))
-    wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait, norm_by_col = TRUE)
+    wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait, 
+        norm_by_col = TRUE)
 
 
 # Obtain clusters
@@ -113,14 +122,14 @@ names(clgenes) <- cls
 ############################################################
 ##                    GENERATE REPORT                     ##
 ############################################################
-results_path <- normalizePath(paths$root)
 
-invisible(lapply(cls,function(cl){
+
+for (cl in cls){
     # Take output name
     aux <- paste0("cl_func_",cl,".html")
     outf_cls_i <- file.path(results_path, aux)
     # Generate report
-    rmarkdown::render(file.path(main_path_script, 'templates', 
+    rmarkdown::render(file.path(template_folder, 
         'corrprofiles_report.Rmd'), output_file = outf_cls_i, 
         intermediates_dir = results_path)
-}))
+}
