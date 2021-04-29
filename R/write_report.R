@@ -269,3 +269,85 @@ parse_strat_text <- function(strategies){
   return(paste(o_text, collapse = "\n"))
 } 
 
+write_functional_targets <- function(
+    enrich_GO,
+    enrich_KEGG,
+    enrich_react,
+    launch_default,
+    launch_expanded,
+    output_files,
+    strategy,
+    enrichments_ORA_expanded,
+    RNAseq_folder,
+    miRNAseq_folder,
+    templates_folder,
+    nomenclatures,
+    current_organism_info,
+    geneList,
+    enrich_custom = NULL,
+    strat,
+    unique_miRNAs,
+    raw_data,
+    cores,
+    task_size
+
+){
+    message("\tRendering regular report")
+    output_path <- file.path(output_files, "targets_functional")
+    results_temp <- file.path(paste0(output_path, "_tmp"))
+    check_and_create_dir(output_path)
+    check_and_create_dir(results_temp)
+    if (launch_default) {
+        outf <- file.path(output_path, paste0(strategy, 
+            "_targets_functional.html"))
+
+        rmarkdown::render(file.path(templates_folder, 
+            'targets_functional.Rmd'), output_file = outf, 
+            intermediates_dir = results_temp)
+    }
+    if (launch_expanded) {
+        message("Rendering specific miRNA reports")
+        enrichments_ORA <- lapply(enrichments_ORA_expanded, clusterProfiler::merge_result)
+        enrichments_ORA <- lapply(enrichments_ORA, function(res){
+                             if(nrow(res@compareClusterResult) > 0)
+                                res <- catched_pairwise_termsim(res, 200)
+                             return(res)
+                             })
+        RNAseq <- load_DEGH_information(RNAseq_folder)
+        miRNAseq <- load_DEGH_information(miRNAseq_folder)
+        RNAseq[['normalized_counts']] <- as.data.frame(as.table(
+            scale_data_matrix(data_matrix = as.matrix(RNAseq[['normalized_counts']]))))
+        colnames(RNAseq[['normalized_counts']]) <- c("Sample","Gene","Count")
+        miRNAseq[['normalized_counts']] <- scale_data_matrix(
+            data_matrix = as.matrix(miRNAseq[['normalized_counts']]))
+        miRNA_strat <- unlist(strsplit(strat, ""))[2]
+        if (miRNA_strat == "h") {
+            hub_miRNAs <- get_hub_genes_by_MM(miRNAseq[["normalized_counts"]], 
+            miRNAseq[["DH_results"]], top = 1)
+        } else if (miRNA_strat == "E") {
+            miRNAseq$Eigengene <- as.data.frame(as.table(miRNAseq$Eigengene), 
+                               stringsAsFactors = FALSE)
+            colnames(miRNAseq$Eigengene) <- c("Sample","Cluster_ID","Count") 
+            tgt_eigvalues_gnorm <- miRNAseq$Eigengene
+            tgt_eigvalues_gnorm$Count <- (tgt_eigvalues_gnorm$Count + 1) / 2 
+        }
+        unique_miRNAs <- unique_miRNAs[!is.na(unique_miRNAs)]
+
+        # invisible(parallel_list(unique_miRNAs, function(miRNA) {
+        #     # Take output name
+        #     target_outf <- file.path(output_path, paste0("targets_", 
+        #         miRNA,".html"))
+        #     # Generate report
+        #     rmarkdown::render(file.path(templates_folder, 
+        #         'miRNA_target_func.Rmd'), output_file = target_outf, 
+        #     intermediates_dir = file.path(results_temp, miRNA), quiet=TRUE)
+            
+        # }, workers = cores, task_size= task_size))
+        message("\tRendering merged miRNA report")
+        outf_cls <- file.path(output_path, "expanded_targets_func.html")
+        rmarkdown::render(file.path(templates_folder, 
+            'targets_global_report.Rmd'),output_file = outf_cls,
+             intermediates_dir = results_temp)
+    }
+    unlink(results_temp, recursive = TRUE)
+}

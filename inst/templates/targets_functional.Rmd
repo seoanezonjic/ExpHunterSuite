@@ -117,7 +117,7 @@ cat("\n\n**Heatplot**\n\n",
   "Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 )
 
-pp <- heatplot(enrich_KEGG_symb, showCategory=n_category, foldChange=geneList)
+pp <- enrichplot::heatplot(enrich_KEGG_symb, showCategory=n_category, foldChange=geneList)
 width_size <- calc_width(enrich_KEGG_symb)
 height_size <- calc_height(enrich_KEGG_symb) 
 
@@ -222,7 +222,7 @@ for (onto in names(enrich_GO)) {
     cat("\n\n**Heatplot**\n\n", 
       "Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
     )
-    go_pp <- heatplot(enrich_GO_ora_symb, showCategory=n_category, foldChange=geneList)
+    go_pp <- enrichplot::heatplot(enrich_GO_ora_symb, showCategory=n_category, foldChange=geneList)
     width_size <- calc_width(enrich_GO_ora_symb)
     height_size <- calc_height(enrich_GO_ora_symb) 
     plot_in_div(go_pp, height_size, width_size)
@@ -306,7 +306,7 @@ for (onto in names(enrich_GO)) {
 #   cat("\n\n**Heatplot**\n\n", 
 #     "Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 #   )
-#   go_pp  <- heatplot(enr_go_symb, showCategory=n_category, foldChange=geneList)
+#   go_pp  <- enrichplot::heatplot(enr_go_symb, showCategory=n_category, foldChange=geneList)
 #   width_size <- calc_width(enr_go_symb)
 #   height_size <- calc_height(enr_go_symb) 
 #   plot_in_div(go_pp, height_size, width_size)
@@ -390,7 +390,7 @@ if (check_categories(enrich_react, min_categories = 1)) {
 cat("\n\n**Heatplot**\n\n", 
   "Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 )
-pp <- heatplot(enrich_react_symb, showCategory=n_category, foldChange=geneList)
+pp <- enrichplot::heatplot(enrich_react_symb, showCategory=n_category, foldChange=geneList)
 width_size <- calc_width(enrich_react_symb)
 height_size <- calc_height(enrich_react_symb)
 plot_in_div(pp, height_size, width_size)
@@ -483,7 +483,7 @@ invisible(lapply(seq_along(enrich_custom),function(i){
         cat('\n\n**Heatplot**\n\n', 
           'Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n'
         )
-        pp <- heatplot(enr_custom, showCategory=n_category, foldChange=geneList)
+        pp <- enrichplot::heatplot(enr_custom, showCategory=n_category, foldChange=geneList)
         width_size <- calc_width(enr_custom)
         height_size <- calc_height(enr_custom)
         plot_in_div(pp, height_size, width_size)
