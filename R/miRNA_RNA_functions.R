@@ -173,6 +173,8 @@ sample_proportion = 0.01
    }
    all_pairs[,strategy] <- FALSE
    all_pairs[strategy_data$pair_n, strategy] <- strategy_data$correlated_pairs
+   all_pairs[strategy_data$pair_n, paste0(strategy,"_correlation")] <- strategy_data$correlation
+
    all_stats <- get_stats_by_group(all_pairs = all_pairs, strategy = strategy,
                                    permutations = permutations)
    filters_summary <- plyr::rbind.fill(filters_summary,all_stats$strat_summary)
@@ -408,11 +410,11 @@ score_comparison <- function(databases, all_pairs, sample_size, strategy){
     strat_scores <- all_pairs[get(strategy), get(database)] #Revise that
     strat_scores <- strat_scores[!is.na(strat_scores)]
 
-    sampled_bckg <- sample(bckg_scores, 
-            size = length(bckg_scores) * sample_size, replace = FALSE)
+    # sampled_bckg <- sample(bckg_scores, 
+    #         size = 100, replace = FALSE)
+      # res <- stats::t.test(x = sampled_bckg, y = bckg_scores, 
     res <- data.frame(p.value = 1, boot.p.value = 1)
     if (length(strat_scores) > 1) {
-      # res <- boot.t.test.2(x = sampled_bckg, y = bckg_scores, 
         res <- boot.t.test.2(x = strat_scores, y = bckg_scores, 
           alternative = "greater", 
           vectorial = FALSE, 

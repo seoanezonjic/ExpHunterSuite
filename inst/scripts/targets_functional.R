@@ -17,7 +17,7 @@ main_path_script <- dirname(full.fpath)
 root_path <- file.path(main_path_script, '..', '..')
 custom_libraries <- c('functional_analysis_library.R', 'plotting_functions.R',
                       'miRNA_RNA_functions.R','general_functions.R',
-                      'main_target_functional.R', 'write_report.R')
+                      'main_target_functional.R', 'write_report.R', 'io_handling.R')
 
 for (lib in custom_libraries){
     source(file.path(root_path, 'R', lib))
@@ -78,14 +78,45 @@ option_list <- list(
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 opt$help <- NULL
+opt$output_files <- file.path(opt$output_files, "targets_functional")
+
 
 #  save(target_func_results, file = "/home/bio267lab/proyectos/target_miRNA_2020/test_func_2.RData")
 # q()
 # load("/home/bio267lab/proyectos/target_miRNA_2020/test_func_2.RData")
 target_func_results <- do.call("main_targets_functional", opt)
+
+
+for (funsys in c("enrich_GO", "enrich_react", "enrich_KEGG")){
+    if (is.null(target_func_results[[funsys]]))
+        next
+    if (funsys == "enrich_GO"){
+        for (subont in c("MF", "BP", "CC")) {
+          utils::write.table(target_func_results[[funsys]][[subont]], 
+                file=file.path(opt$output_files, paste0("targets_", unlist(strsplit(funsys, "_"))[2], "_", subont, "_enrichment")), 
+                quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+        }
+    } else {
+      utils::write.table(target_func_results[[funsys]], 
+        file=file.path(opt$output_files, paste0("targets_", unlist(strsplit(funsys, "_"))[2], "_enrichment")), 
+        quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+    
+    }
+} 
+   
+
+
+for (funsys in names(target_func_results$enrichments_ORA)){
+    utils::write.table(target_func_results$enrichments_ORA[[funsys]], 
+                file=file.path(opt$output_files, paste0("miRNAs_targets_", funsys, "_enrichments")), 
+                quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+}
+
+
+# q()
 target_func_results$enrich_custom <- NULL
 target_func_results <- c(target_func_results,
-    list(output_files = opt$output_files,
+    list(output_path = opt$output_files,
          RNAseq_folder = opt$RNAseq_folder,
          miRNAseq_folder = opt$miRNAseq_folder,
          templates_folder = templates_folder,

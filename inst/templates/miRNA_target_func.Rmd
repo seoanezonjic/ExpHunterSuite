@@ -50,8 +50,9 @@ cl <- miRNA #this is for make compatible ora_enrichResult.Rmd
 
 
 ## **General description**
-This report contains all the functional information that was requested by the options when targets_functional.R was executed.
-The functional categories can be:
+Functional information for the `r miRNA` putative target genes.
+
+Over representation analysis (ORA) was performed for the following functional systems:
 
 * KEGG pathways
 * GO:
@@ -61,8 +62,7 @@ The functional categories can be:
 * Reactome pathways
 * Custom nomenclature
 
-Some sections will not show if there are not sinficative results. Each category is analysed using Over representation analysis (ORA).
-The ORA method takes a group of significative miRNA targets and performs a hypergeometric test for each term of the selected functional category.
+The ORA method performs an enrichment of functional terms in putative target genes by a Fisher exact test.
 
 
 ```{r expression_profiles, echo = FALSE, message = FALSE, warning = FALSE, eval = !is.null(opt$RNAseq_folder) && !is.null(opt$RNAseq_folder) }

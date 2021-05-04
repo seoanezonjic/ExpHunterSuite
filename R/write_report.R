@@ -275,7 +275,7 @@ write_functional_targets <- function(
     enrich_react,
     launch_default,
     launch_expanded,
-    output_files,
+    output_path,
     strategy,
     enrichments_ORA_expanded,
     RNAseq_folder,
@@ -293,7 +293,6 @@ write_functional_targets <- function(
 
 ){
     message("\tRendering regular report")
-    output_path <- file.path(output_files, "targets_functional")
     results_temp <- file.path(paste0(output_path, "_tmp"))
     check_and_create_dir(output_path)
     check_and_create_dir(results_temp)
@@ -305,14 +304,10 @@ write_functional_targets <- function(
             'targets_functional.Rmd'), output_file = outf, 
             intermediates_dir = results_temp)
     }
+   
     if (launch_expanded) {
         message("Rendering specific miRNA reports")
-        enrichments_ORA <- lapply(enrichments_ORA_expanded, clusterProfiler::merge_result)
-        enrichments_ORA <- lapply(enrichments_ORA, function(res){
-                             if(nrow(res@compareClusterResult) > 0)
-                                res <- catched_pairwise_termsim(res, 200)
-                             return(res)
-                             })
+     
         RNAseq <- load_DEGH_information(RNAseq_folder)
         miRNAseq <- load_DEGH_information(miRNAseq_folder)
         RNAseq[['normalized_counts']] <- as.data.frame(as.table(
@@ -333,16 +328,16 @@ write_functional_targets <- function(
         }
         unique_miRNAs <- unique_miRNAs[!is.na(unique_miRNAs)]
 
-        # invisible(parallel_list(unique_miRNAs, function(miRNA) {
-        #     # Take output name
-        #     target_outf <- file.path(output_path, paste0("targets_", 
-        #         miRNA,".html"))
-        #     # Generate report
-        #     rmarkdown::render(file.path(templates_folder, 
-        #         'miRNA_target_func.Rmd'), output_file = target_outf, 
-        #     intermediates_dir = file.path(results_temp, miRNA), quiet=TRUE)
+        invisible(parallel_list(unique_miRNAs, function(miRNA) {
+            # Take output name
+            target_outf <- file.path(output_path, paste0("targets_", 
+                miRNA,".html"))
+            # Generate report
+            rmarkdown::render(file.path(templates_folder, 
+                'miRNA_target_func.Rmd'), output_file = target_outf, 
+            intermediates_dir = file.path(results_temp, miRNA), quiet=TRUE)
             
-        # }, workers = cores, task_size= task_size))
+        }, workers = cores, task_size= task_size))
         message("\tRendering merged miRNA report")
         outf_cls <- file.path(output_path, "expanded_targets_func.html")
         rmarkdown::render(file.path(templates_folder, 

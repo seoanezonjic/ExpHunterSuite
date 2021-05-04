@@ -30,36 +30,39 @@ output:
 </style>
 
 
-# **CoRmiT RNAseq - miRNAseq correlation report**
+# **CoRmiT: RNAseq - miRNAseq correlation report**
 
-This report summarizes ExpHunterSuite CoRmiT results comparing RNAseq and miRNAseq data and looking for putative miRNA-gene target pairs, 
-representing genes that are silenced by miRNAs.
+This report summarizes the results of ExpHunterSuite CoRmiT, comparing RNAseq and miRNAseq data and looking for putative miRNA-gene target interactions based on different strategies.
 
 ## **Strategies comparison**
 
-miRNAseq and RNAseq data are compared and correlated using multiple strategies and then compared with multiMiR databases.
+miRNAseq and RNAseq data are compared and expression levels correlated using multiple strategies. 
+Correlated miRNA-mRNA pairs are known **significant pairs** representing putative miRNA-mRNA target interactions. 
+Results are then compared with multiMiR databases.
 
-* Description of strategies used: 
+* Brief description of strategies used: 
 ```{r print_info, echo = FALSE, warning = FALSE, results = "asis"}
   sig_strategies <- names(strategies)[! names(strategies) %in% unsig_strategies]
   cat(parse_strat_text(sig_strategies))
 
   mock_strategies <-   c("Eigengene_0_RNA_vs_miRNA_normalized_counts", 
       # "normalized_counts_RNA_vs_miRNA_Eigengene_0", 
-      # # "DEGs_RNA_vs_miRNA_DEMs",
+      # "DEGs_RNA_vs_miRNA_DEMs",
       "DEGs_DEMs_permutated")
 
 ```
 
-* Three control strategies are also used:
-    + **DEGs_DEMs_permutated:** All possible permutations between differentially expressed genes and differentially expressed miRNAs. Correlation are not performed.
-    + **Eigengene_0_RNA_vs_miRNA_normalized_counts:** Correlation between the Eigengene profile for gene module 0, which contains genes that could not be assigned to any other consistent module and miRNA normalizaed counts.
-    + **normalized_counts_RNA_vs_miRNA_Eigengene_0:** Correlation between gene normalized counts and the Eigengene profile for miRNA module 0, which contains miRNAs that could not be assigned to any other consistent module.
+* Three **control strategies** are also used:
+    + **DEGs_DEMs_permutated:** All possible permutations between differentially expressed genes and differentially expressed miRNAs. Correlation is not performed.
+    + **Eigengene_0_RNA_vs_miRNA_normalized_counts:** Correlation between the Eigengene profile for gene module 0, which contains genes that could not be assigned to any other module and miRNA normalized counts.
 
-Please note that graphics are only displayed for the strategies that were run and for which significant results were found. Moreover control strategies are artificial strategies should not be taken into account for the choice of strategies.  
+Graphics are only displayed for the strategies that were run and for which significant results were found. 
+The **control strategies** are artifical strategies used for comparison with the real strategies in terms of performance.
+Their results should not be considered for miRNA-gene target selection.
 
 ```{r sig_unsig, echo = FALSE, warning = FALSE, results = "asis"}
 
+    # + **normalized_counts_RNA_vs_miRNA_Eigengene_0:** Correlation between gene normalized counts and the Eigengene profile for miRNA module 0, which contains miRNAs that could not be assigned to any other module.
   sig_strats <-  paste0("**", paste(sig_strategies, collapse = "**, **"), "**")
 
   unsig_strats <- paste0("**", paste(unsig_strategies, collapse = "**, **"), "**")
@@ -73,10 +76,10 @@ Please note that graphics are only displayed for the strategies that were run an
 
 ### **Correlation distributions**
 
-Distributions of correlation values between RNAseq and miRNAseq data obtained using the different strategies.
+Distributions of correlation values between miRNAs and target genes obtained using the different strategies.
 Dashed line shows the correlation cut-off below which miRNA-target pairs are considered significant. 
-Horizontal lines within the distributions represent the 90 and 95 percentiles. 
-Note that **DEGs_DEMs_permutated** strategy is not included.
+Horizontal white lines within the distributions represent the 90 and 95 percentiles. 
+The **DEGs_DEMs_permutated** strategy is not included.
 
 
 ```{r methods_comparison_violin_cor, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
@@ -92,10 +95,11 @@ pp <- ggplot2::ggplot(all_cor_dist, ggplot2::aes(x = strategy, y = correlation, 
 pp 
 ```
 
-### **Pearson's correlation P-values distribution**
+### **Pearson's correlation p-values distribution**
 
-Distributions of correlation P-values between RNAseq and miRNAseq data obtained using the different strategies.
-Note that **DEGs_DEMs_permutated** strategy is not included.
+Distributions of correlation p-values between miRNAs and target genes obtained using the different strategies.
+The dashed line represents a p-value of 0.05
+The **DEGs_DEMs_permutated** strategy is not included.
 
 ```{r methods_comparison_violin_p, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 
@@ -110,10 +114,9 @@ pp
 
 ```
 
-### **Strategies overlapping**
+### **Overlapping strategies**
 
-This table shows the number of significant pairs overlaped between strategies.
-
+This table shows the number of **significant pairs** overlapping between strategies.
 
 
 ```{r methods_comparison_intersection, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
@@ -137,12 +140,12 @@ This table shows the number of significant pairs overlaped between strategies.
 
 ```
 
-### **Strategies overlapping by group databases**
+### **Overlapping strategies for different database groups**
 
-Following tables shows the number of significant pairs included on each group of multiMiR database overlaped between strategies.
+The following tables shows the number of significant pairs that were found in multiMiR database groups for each strategy, and their overlap.
 
-MultiMiR databases can be classified based on those containing predicted pairs and experimentally validated pairs.
-We therefore repeated the steps indicated above for the union of **predicted** databases, **validated** databases, and intersection of them **(pred_and_val)**.
+MultiMiR pairs can be classified based on which kind of database they appear in. The two main groups are **predicted** pairs and experimentally **validated** pairs.
+We therefore repeated the steps indicated above for the union of **predicted** databases, **validated** databases, and their intersection **(pred_and_val)**.
 
 
 ```{r methods_comparison_intersection_groups, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
@@ -151,7 +154,7 @@ for (db_group in names(sig_pairs)){
    common_pairs <- sig_pairs[[db_group]]
    check_ovlp <- common_pairs
    diag(check_ovlp) <- 0
-  cat(paste0("#### **Overlap of significant pairs found on ", db_group, " databases**\n\n"))
+  cat(paste0("#### **Overlap of significant pairs found on ", stringr::str_to_title(db_group), " databases**\n\n"))
    if (any(check_ovlp > 0)){
        common_pairs <- as.data.frame(as.table(as.matrix(common_pairs)))
        names(common_pairs) <- c("x_axis", "y_axis",  "intersection")
@@ -168,20 +171,20 @@ for (db_group in names(sig_pairs)){
        subchunk_count <- rechunk(pp, counter = subchunk_count, 
                chunk_options = "echo=FALSE, results = 'asis', warning = FALSE, message = FALSE")
    } else {
-       cat(paste0("There were not overlap between significant pairs of strategies on ", db_group, " databases.\n\n"))
+       cat(paste0("There were not overlap between significant pairs of strategies for ", db_group, " databases.\n\n"))
    }
 }
    
 ```
 
-### **Overlap between strategy results and databases**
+### **Comparison of the overlap between strategy results and databases**
 
 * This bar chart shows, for each strategy, how many significant miRNA-target pairs:
   + Include a putative **novel** miRNA
   + Include a **known** miRNA (present in miRBASE)
 
-It also shows the number of significant pairs involving known miRNAs that are found in gorups of **multiMiR** databases.
-To assess the significance of this number, we select **random** pairs of expressed genes/miRNAs from the 
+It also shows the number of significant pairs involving known miRNAs that are found in the different groups of multiMiR databases.
+To put these numbers in context, we also select **random** pairs of expressed genes/miRNAs from the 
 experiment, of an equivalent number to the significant pairs including a known miRNA, and note how many of these
 pairs overlap with the multiMiR databases. This is repeated multiple times, and the mean +/- standard deviation are plotted.
 
@@ -198,10 +201,13 @@ pp <- ggplot2::ggplot(filters_summary, ggplot2::aes(y = pairs, x = strategy, fil
 pp
 ```
 
-### **Fisher exact test significance ** 
+### **Significance of the overlap**
 
-Significant and non-significant pairs were compared in terms of overlap with databases using one-tailed Fisher exact test. For prediction databases the test were performed idependently for each prediction database and then, the P-values were combined using Fisher combined probability test (**predicted**). Pairs found in validation databases (**validated**) and validated pairs thar are also predicted by any database (**pred_and_val**) were tested all together. P-values are shown for the different strategies and for the different group of databases. 
--log10(P-values) are represented. -log10(0.05) threshold is represented as a dashed grey line. 
+Significant and non-significant pairs were compared in terms of overlap with databases using one-tailed Fisher exact test. 
+For prediction databases the test were performed idependently for each prediction database. The p-values were then combined using Fisher combined probability test (**predicted**). 
+Pairs found in the validation databases (**validated**) and validated pairs that are also predicted by any database (**pred_and_val**) were grouped together. 
+P-values are shown for the different strategies and for the different group of databases. 
+-log10(P-values) are shown. The -log10(0.05) threshold is represented as a dashed grey line. 
 
 
 ```{r fisher, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
@@ -222,7 +228,7 @@ Significant and non-significant pairs were compared in terms of overlap with dat
     ggplot2::geom_line() + 
     ggplot2::geom_line(ggplot2::aes( y =  -log10(0.05), linetype = "-log10(0.05)") , colour = "grey") +
     ggplot2::geom_point(size = 1) +
-    ggplot2::labs(colour = "Strategy", linetype = "-log10(0.05)", y = "-log10(P-value)", x = "Pairs group") +
+    ggplot2::labs(colour = "Strategy", linetype = "-log10(0.05)", y = "-log10(p)", x = "Pairs group") +
     ggplot2::scale_linetype_manual(values=c("dashed", "solid"))+
     ggplot2::theme(legend.position = "bottom", legend.box = "vertical")
     strat_fisher_sig <- cont_tables %>% dplyr::group_by(strategy) %>% dplyr::summarise(significant = all(Pvalue <= 0.05))
@@ -231,9 +237,11 @@ Significant and non-significant pairs were compared in terms of overlap with dat
 
 ```
 
-#### **Significance Scatterplot**
+#### **Comparison of predicted and validated groups**
 
-This plot compares significance on Fisher exact test of every strategy for **predicted** and **validated** pairs on databases. -Log10(P-value) is represented on each axis. -Log10(0.05) thresholds is represented as black dashed lines.
+This plot compares the p-values of the Fisher exact tests performed for each strategy for the **predicted** and **validated** pairs. 
+-Log10(p-value) is shown on each axis.
+-Log10(0.05) is represented as a black dashed line.
 
 
 ```{r fisher_scatter, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
@@ -244,54 +252,56 @@ This plot compares significance on Fisher exact test of every strategy for **pre
    ggplot2::ggplot(fisher_test_scatter,ggplot2::aes(y = predicted, x = validated, fill = strategy, color = strategy)) + 
    ggplot2::geom_point()+
    ggplot2::geom_hline(yintercept = -log10(0.05), linetype = "dashed") + 
-   ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") 
+   ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
+   ggplot2::labs(x = "Validated -log10(p)", y = "Predicted -log10(p)", color = "Strategy", fill = "Strategy")
 
 
 ```
 
-#### **Fisher exact test P-values table**
+#### **Fisher exact test p-values table**
 
 ```{r fisher_table, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-
   fisher_test_raw <- tidyr::spread(fisher_test_raw, db_group, Pvalue)
-    DT::datatable(fisher_test_raw, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
-            options = list(
-              paging = FALSE,
-              colReorder = TRUE,
-              dom = 'lftBip',
-              buttons = c('copy', 'csv', 'excel')
-          ))
-
+  DT::datatable(fisher_test_raw, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+          options = list(
+            paging = FALSE,
+            colReorder = TRUE,
+            dom = 'lftBip',
+            buttons = c('copy', 'csv', 'excel')
+  ))
 ```
-**NOTE:** Only strategies with significant P-values on all test will be used for the following plots.
+**NOTE:** Only strategies with significant p-values in all tests will be used for the following plots.
 
 
+### **Odds ratios for the different strategies**
 
-### **Significant strategies dotplot**
 
-
-The plot shows the significant strategies in descendant order by Odds ratio (OR). 
-For this case OR is a measure of the association between strategy and pairs in databases. OR > 1 means association while OR = 1 means independence.
-The color represents the P-value on Fisher exact test. 
-The X axis represents the OR and the dot size the number of pairs associated with the group of database.
+The plot shows the significant strategies ordered by Odds ratio (OR). 
+OR can be thought of as a measure of the association between a given strategy and pairs in the databases. 
+OR > 1 represents association while OR = 1 means independence.
+The color represents the p-value from the Fisher exact test.
+The X-axis represents the OR and the dot size the number of pairs associated with the group of databases.
 
 ```{r dotplot, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 
 cont_tables <- cont_tables[! cont_tables$strategy %in% unsig_strategies,]
-
 splitted_c_tables <- split(cont_tables, cont_tables$db_group)
+for (db_group in c("predicted", "validated")){
+  cat(paste0("#### Comparison with ", stringr::str_to_title(db_group), " pairs\n\n"))
+  filtered_cont <- splitted_c_tables[[db_group]]
+  idx <- order(filtered_cont$Odds_ratio, decreasing = TRUE)
+  filtered_cont$strategy <- factor(filtered_cont$strategy,
+                            levels=rev(unique(filtered_cont$strategy[idx])))
 
-pred_cont <- splitted_c_tables[["predicted"]]
-
-idx <- order(pred_cont$Odds_ratio, decreasing = TRUE)
-pred_cont$strategy <- factor(pred_cont$strategy,
-                          levels=rev(unique(pred_cont$strategy[idx])))
-
-ggplot2::ggplot(pred_cont, ggplot2::aes(x = Odds_ratio, y = strategy)) +
-ggplot2::geom_point(ggplot2::aes(color = Pvalue, size = TP)) + 
-ggrepel::geom_text_repel(ggplot2::aes(label = as.character(TP))) +
-ggplot2::scale_color_continuous(low="red", high="blue", name = "Pvalue", guide=ggplot2::guide_colorbar(reverse=TRUE))+
-ggplot2::guides(size = FALSE)
+  pp <- ggplot2::ggplot(filtered_cont, ggplot2::aes(x = Odds_ratio, y = strategy)) +
+  ggplot2::geom_point(ggplot2::aes(color = Pvalue, size = TP)) + 
+  ggrepel::geom_text_repel(ggplot2::aes(label = as.character(TP))) +
+  ggplot2::scale_color_continuous(low="red", high="blue", name = "Pvalue", guide=ggplot2::guide_colorbar(reverse=TRUE))+
+  ggplot2::guides(size = FALSE)
+  
+  plot(pp)
+  cat("\n\n")
+}
 
 
 ```
@@ -303,7 +313,7 @@ cat("
 ### **Association with databases**
 
 * **Statistical metrics:**
-  + **Accuracy**, **Precision** and **Specificity** were calculated for the overlapping between significant strategies and group of multiMiR databases.
+  + **Accuracy**, **Precision** and **Specificity** were calculated based on the overlap between significant strategies and group of multiMiR databases.
   + **Likelihood ratio for positive test (LRplus_test):** For each pair, this shows to what extent a significant result indicates an increased probability of being a true miRNA-target pair. It is calculated as the True Positive Rate, calculated as proportion of all pairs in the experiment that overlap with the database that are signficant, divided by the False Positive Rate, calculated as proportion of all pairs in the experiment that do not overlap with the database that are significant.
   + **Likelihood ratio for positive subjects (LRplus_sub):** Given a true miRNA-target pair, what is the increased probability of obtaining a significant result. It is calculated as the proportion of significant results overlapping with the databases (True positive rate), divided by the proportion of non-signficant results overlapping with the databases (false positive rate).
 
@@ -353,15 +363,13 @@ cat("
 ### **Prediction scores for the significant pairs**
 
 
-The pairs in the multiMiR prediction databases are assigned scores that represent confidence in the predicted miRNA-target interaction.  
-
-For each prediction database, the scores for the significant pairs obtained by each strategy were compared with random subsets of pairs.
+The pairs in the multiMiR prediction databases are assigned scores that represent confidence in the predicted miRNA-target interaction.
+For each prediction database, the scores for the significant pairs obtained by each strategy were compared with the scores in the **background**.
+The **background** score distribution is the prediction score distribution of all possible pairs that can be generated combining all input data.
 
 The comparison was performed using one-tailed bootstrap T-tests. 
-
-Lower P-values means that the significant pairs had higher scores in the database.
-
-The final column of the table shows the combined P-values for all databases, integrated using Fishers method.
+Lower p-values means that the significant pairs had higher scores in the database.
+The final column of the table shows the combined p-values for all databases, integrated using Fishers method.
 
 
 ```{r score_comp_pval, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = FALSE}
@@ -410,9 +418,9 @@ The final column of the table shows the combined P-values for all databases, int
   #         ))
 ```
 
-#### **Comparison of p-values obtained between T-test and boostrap T-test**
+#### **Comparison of p-values obtained in boostrap T-test**
 
-This plot shows -log(P) values from the T-test and bootstrap T-test. Grey dotted line indicates -log10(0.05). **comb_pval** is the combination of all P-values using Fisher combined probability test.
+This plot shows -log(p) values from the T-test and bootstrap T-test. Grey dotted line indicates -log10(0.05). **comb_pval** is the combination of all p-values using Fisher combined probability test.
 
 ```{r score_comp_pval_log, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
   log_score_comp <- score_comp[,c("strategy","database","log.boot.p.value")]
@@ -423,7 +431,7 @@ This plot shows -log(P) values from the T-test and bootstrap T-test. Grey dotted
   ggplot2::ggplot(log_score_comp, ggplot2::aes(x = database, y = logPval, color = strategy, group = strategy)) +
   ggplot2::geom_line() + 
   ggplot2::geom_line(ggplot2::aes( y =  -log10(0.05), linetype = "-log(0.05)" ), colour = "grey") +
-  ggplot2::labs(colour = "Strategy", group = "Strategy", y = "-Log(P-value)", linetype = "Threshold", y = "Database") +
+  ggplot2::labs(colour = "Strategy", group = "Strategy", y = "-log(p)", linetype = "Threshold", y = "Database") +
   ggplot2::scale_linetype_manual(values=c("dashed", "solid")) #+
   # ggplot2::theme(legend.position = "bottom", legend.box = "vertical") + 
   # ggplot2::guides(color = ggplot2::guide_legend(title.position = "top"))
@@ -445,11 +453,11 @@ This plot shows -log(P) values from the T-test and bootstrap T-test. Grey dotted
 `r paste(knitr::knit(text = curr_out), collapse = '\n')`
 
 
-### **Fisher exact test significance (only for prediction databases)** 
+## **Fisher exact test significance (only for prediction databases)** 
 
-Significant and non-significant pairs were compared in terms of overlap with databases using one-tailed Fisher exact test. 
+Significant and non-significant pairs were compared in terms of overlap with databases using one-tailed Fisher exact tests. 
 P-values are shown for the different strategies and for the different databases considered. 
--log10(P-values) are represented. -log10(0.05) threshold is represented as a dashed grey line. **comb_pval** is the combination of all P-values using Fisher combined probability test.
+-log10(p) are represented. The -log10(0.05) threshold is represented as a dashed grey line. **comb_pval** is the combination of all p-values using Fisher combined probability test.
 
 ```{r p_fisher, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
     
@@ -459,7 +467,7 @@ P-values are shown for the different strategies and for the different databases 
     ggplot2::geom_line() + 
     ggplot2::geom_line(ggplot2::aes( y =  -log10(0.05), linetype = "-log10(0.05)") , colour = "grey") +
     ggplot2::geom_point(size = 1) +
-    ggplot2::labs(colour = "Strategy", linetype = "-log10(0.05)", y = "-log10(P-value)", x = "Database") +
+    ggplot2::labs(colour = "Strategy", linetype = "-log10(0.05)", y = "-log10(p)", x = "Database") +
     ggplot2::scale_linetype_manual(values=c("dashed", "solid"))+
     ggplot2::theme(legend.position = "bottom", legend.box = "vertical")
 
@@ -470,7 +478,7 @@ P-values are shown for the different strategies and for the different databases 
   p_fisher <- tidyr::spread(p_fisher, database, Pvalue)
     DT::datatable(p_fisher, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
             options = list(
-              paging = FALSE,
+              paging = TRUE,
               colReorder = TRUE,
               dom = 'lftBip',
               buttons = c('copy', 'csv', 'excel')
@@ -498,13 +506,19 @@ These plots compare the whole score distribution of background pairs with his su
                                           ,
       ggplot2::ggplot(background_score, ggplot2::aes_(x = as.name(database))) + 
                                                ggplot2::geom_density() + 
-                                               ggplot2::ggtitle("Sampled score distribution"),
+                                               ggplot2::ggtitle("Background score distribution"),
       ncol = 2,
       top = grid::textGrob(stringr::str_to_title(database),gp=grid::gpar(fontsize=20,font=3)))
        
     }
 
   cat("\n\n")
+```
+
+### **Values of options used to run CorMiT**
+First column contains the option names; second column contains the given values for each option in this run.
+```{r opt_vals, echo = FALSE, warning = FALSE}
+knitr::kable(cbind(opt))
 ```
 
 

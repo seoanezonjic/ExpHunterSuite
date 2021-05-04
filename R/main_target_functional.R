@@ -50,6 +50,7 @@ str_names <- list("dd" = "normalized_counts_RNA_vs_miRNA_normalized_counts",
     raw_data <- read.table(file.path(strategy_folder, 
                                     "target_results_table.txt"), 
         header=TRUE, row.names=NULL, sep="\t")
+     str(raw_data)
         unique_genes <- unique(raw_data[!raw_data$entrezgene %in% c("", NA), 
             c("entrezgene", "mean_logFCs")])
         enrich_genes <- unique_genes$entrezgene
@@ -57,10 +58,18 @@ str_names <- list("dd" = "normalized_counts_RNA_vs_miRNA_normalized_counts",
         names(geneList) <- unique_genes$entrezgene
 
     if (launch_expanded) {
+        
         unique_miRNAs <- unique(raw_data$miRNA_names)
+        unique_miRNAs <- c(unique_miRNAs, raw_data[is.na(raw_data$miRNA_names), "miRNAseq"])      
         expanded_targets <- lapply(unique_miRNAs, function(miRNA){
-                mirna_targets <- raw_data[raw_data$miRNA_names == miRNA, 
+                miRNA_check <- raw_data$miRNA_names == miRNA
+                if(any(miRNA_check)){
+                    mirna_targets <- raw_data[raw_data$miRNA_names == miRNA, 
                 "entrezgene"]
+                } else {
+                    mirna_targets <- raw_data[raw_data$miRNAseq == miRNA, 
+                "entrezgene"]
+                }
                 return(unique(mirna_targets))
             })
         names(expanded_targets) <- unique_miRNAs
@@ -158,6 +167,13 @@ str_names <- list("dd" = "normalized_counts_RNA_vs_miRNA_normalized_counts",
 
     }
 
+    enrichments_ORA <- lapply(enrichments_ORA_expanded, clusterProfiler::merge_result)
+    enrichments_ORA <- lapply(enrichments_ORA, function(res){
+                             if(nrow(res@compareClusterResult) > 0)
+                                res <- catched_pairwise_termsim(res, 200)
+                             return(res)
+                             })
+   
     enrich_custom <- NULL
     if (custom != "") {
         message("\tPerforming custom enrichments")
@@ -179,7 +195,7 @@ str_names <- list("dd" = "normalized_counts_RNA_vs_miRNA_normalized_counts",
             custom_targets_ORA <- lapply(custom_cls_ORA_expanded, merge_result)
         }
     }
-   
+
     return(
         target_func_results <- 
         list(enrich_GO = enrich_GO,
@@ -189,7 +205,7 @@ str_names <- list("dd" = "normalized_counts_RNA_vs_miRNA_normalized_counts",
         launch_default = launch_default,
         launch_expanded = launch_expanded,
         strategy = strategy,
-        enrichments_ORA_expanded = enr_ORA_expanded,
+        enrichments_ORA = enrichments_ORA,
         nomenclatures = nomenclatures,
         current_organism_info = curr_org_info,
         geneList = geneList,

@@ -133,9 +133,9 @@ miRNA_cor_results <-  coRmiT(
     template_folder = template_folder #file.path(root_path, "inst", "templates")
     )
 
-# save(miRNA_cor_results, file = "~/proyectos/target_miRNA_2020/test2.RData")
+# save(miRNA_cor_results, file = "~/proyectos/target_miRNA_2020/test3.RData")
 # q()
-# load("~/proyectos/target_miRNA_2020/test2.RData")
+# load("~/proyectos/target_miRNA_2020/miRNA_cor.RData")
 
 miRNA_cor_results$weighted_c_table <- NULL
 miRNA_cor_results <- c(miRNA_cor_results, 

@@ -8,22 +8,32 @@
 # => method :: method object
 # => method_name :: method name
   
-method<- "{{method_name}}"
+method <- "{{method_name}}"
 
 strat_pairs <- all_pairs[, get(method)]
 strat_data <- all_pairs[strat_pairs,]
 strat_data$miRNA_names <- mirna_names[match(strat_data$miRNAseq, mirna_names$Accession), "TargetName"]
 strat_data <- merge(strat_data, gene_id_translation, by.x = "RNAseq", by.y = "ensembl_gene_id", all.x = TRUE)
 
+# q()
+strat_data <- as.data.frame(strat_data)
+data.table::setnames(strat_data, paste0(method, "_correlation"), "Correlation")
+selected_cols <- c("miRNA_names", "miRNAseq","Symbol","RNAseq", "predicted", "validated", "multimir","pred_and_val","predicted_c", "validated_c","entrezgene", "Correlation")
+strat_data <- strat_data[,selected_cols]
 
-strat_data <- strat_data[,c("miRNA_names", "miRNAseq","Symbol","RNAseq", "predicted", "validated", "multimir","pred_and_val","predicted_c", "validated_c","entrezgene")]
-
-strat_data_table <- strat_data[,c("miRNA_names", "miRNAseq","Symbol","RNAseq", "predicted_c", "validated_c","entrezgene")]
-
+strat_data_table <- strat_data[,c("miRNA_names", "miRNAseq","Symbol","RNAseq", "predicted_c", "validated_c","entrezgene", "Correlation")]
 
 
 DH_results_genes <- match(strat_data_table$RNAseq, RNAseq$DH_results$gene_name)
-strat_data_table$target_deg_tag <- RNAseq$DH_results[DH_results_genes, "genes_tag"]
+DH_results_miRNA <- match(strat_data_table$miRNAseq, miRNAseq$DH_results$gene_name)
+
+strat_data_table$DEG_tag_target <- RNAseq$DH_results[DH_results_genes, "genes_tag"]
+strat_data_table$Target_log2FC <- RNAseq$DH_results$mean_logFCs[DH_results_genes]
+
+strat_data_table$DEM_tag_miRNA <- miRNAseq$DH_results[DH_results_miRNA, "genes_tag"]
+strat_data_table$miRNA_log2FC <- miRNAseq$DH_results$mean_logFCs[DH_results_miRNA]
+
+
 
 DH_results_miRNAs <- match(strat_data_table$miRNAseq, miRNAseq$DH_results$gene_name)
 approach <- unlist(strsplit(method, "_RNA_vs_miRNA_"))
@@ -39,10 +49,11 @@ if (approach[1] != "normalized_counts") {
   strat_data_table$RNA_MM <- RNAseq$DH_results[DH_results_genes, "Cluster_MM"]  
 
 }
-strat_data_table$mean_logFCs <- RNAseq$DH_results$mean_logFCs[match(strat_data_table$RNAseq, RNAseq$DH_results$gene_name)]
 
-
-
+strat_data_table2 <- strat_data_table
+data.table::setnames(strat_data_table, 
+  c("miRNA_names", "miRNAseq", "Symbol",       "RNAseq",   "predicted_c",       "validated_c",       "entrezgene"),
+  c("miRNA",       "miRNA_ID", "Symbol_target","Target_ID","Predicted_DB_count","Validated_DB_count","ENTREZGENE_target"))
 
 # aux <- as.data.frame(
 #   strategies[["normalized_counts_RNA_vs_miRNA_normalized_counts"]][match(
@@ -87,18 +98,24 @@ cat("This method was launched but no significant miRNA-target gene relations wer
 # dems <- unique(miRNAseq$DH_results[miRNAseq$DH_results$genes_tag == "PREVALENT_DEG", "gene_name"])
 # strat_data <- strat_data[strat_data$miRNAseq %in% dems, ]
 all_miRNA_summary <- data.frame( stringsAsFactors = FALSE)
-for (mirna in unique(strat_data$miRNA_names)) {
-   mirna_info <- strat_data[strat_data$miRNA_names == mirna, ]
+for (mirna_name in unique(paste0(strat_data$miRNA_names, "_",strat_data$miRNAseq))) {
+   mirna_name <- unlist(strsplit(mirna_name, "_"))
+   mirna <- mirna_name[1]
+   mirna_id <- mirna_name[2]
+   mirna_info <- strat_data[strat_data$miRNAseq == mirna_id, ]
+
 #    save(mirna_info, file = "~/proyectos/target_miRNA_2020/test4.RData")
 # q()
+
    dem_summary <- data.frame(stringsAsFactors = FALSE,
                miRNA = mirna,
-               sig_targets = length(unique(mirna_info$RNAseq)),
-               targets_in_multimir = length(unique(mirna_info$RNAseq[mirna_info$multimir])),
-               pred_targets = length(unique(mirna_info$RNAseq[mirna_info$predicted])),
-               val_targets = length(unique(mirna_info$RNAseq[mirna_info$validated])),
-               pred_and_val_targets = length(unique(mirna_info$RNAseq[mirna_info$pred_and_val]))
-             )
+               miRNA_ID = mirna_id,
+               Significant_targets = length(unique(mirna_info$RNAseq)),
+               Targets_in_multiMiR = length(unique(mirna_info$RNAseq[mirna_info$multimir])),
+               Predicted_targets = length(unique(mirna_info$RNAseq[mirna_info$predicted])),
+               Validated_targets = length(unique(mirna_info$RNAseq[mirna_info$validated]))
+               )
+  
    all_miRNA_summary <- rbind(all_miRNA_summary, dem_summary)
 }
 ```
@@ -112,7 +129,8 @@ cat("### Strategy miRNAs summary\n\n")
 ```{r "{{method_name}}_dem_summary", echo = FALSE, message=FALSE, warning=FALSE}
 
 DT::datatable(all_miRNA_summary, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
-      options = list(
+      options = list(          paging = TRUE,
+        paging = TRUE,
         colReorder = TRUE,
         dom = 'lftBip',
         buttons = c('copy', 'csv', 'excel')
@@ -124,8 +142,9 @@ DT::datatable(all_miRNA_summary, filter = 'top', rownames = FALSE, extensions = 
 
 outdir <- file.path(output_files, method)
 check_and_create_dir(outdir)
-utils::write.table(strat_data_table, file = file.path(outdir, "target_results_table.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+utils::write.table(strat_data_table2, file = file.path(outdir, "target_results_table.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 
+utils::write.table(all_miRNA_summary, file = file.path(outdir, "all_miRNA_summary.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 ```
 
 
