@@ -210,7 +210,7 @@ analysis_DESeq2 <- function(data, p_val_cutoff, target, model_formula_text,
 
     if(multifactorial != "") {
       mf_options <- get_mf_DE_options(package_name="DESeq2", package_object=dds,
-                                      multifactorial=multifactorial)
+                                      multifactorial=multifactorial, target=target)
       all_DESeq2_genes <- do.call(DESeq2::results, 
                                 c(object=dds, alpha = p_val_cutoff, mf_options))
     } else {
@@ -245,7 +245,8 @@ analysis_edgeR <- function(data, target, model_formula_text, multifactorial){
       if(multifactorial != "") {
         mf_options <- get_mf_DE_options(package_name="edgeR", 
                                         package_object=d_edgeR_DE,
-                                        multifactorial=multifactorial)
+                                        multifactorial=multifactorial,
+                                        target=target)
         d_edgeR_DE <- do.call(edgeR::glmQLFTest, 
                               list(glmfit=d_edgeR_DE, unlist(mf_options)))
       } else {
@@ -281,7 +282,8 @@ analysis_limma <- function(data, target, model_formula_text, multifactorial){
     if(multifactorial != "") {
       mf_options <- get_mf_DE_options(package_name="limma", 
                                       package_object=model_design,
-                                      multifactorial=multifactorial)
+                                      multifactorial=multifactorial,
+                                      target=target)
       todos_limma <- do.call(limma::topTable, list(fit=fit2, adjust.method="BH",
                                 number=nrow(fit2), unlist(mf_options)))
     } else {
@@ -329,30 +331,33 @@ analysis_NOISeq <- function(data, target){
     return(list(normalized_counts, expres_diff_all, all_NOISeq))
 }
 
-get_mf_DE_options <- function(package_name, package_object, multifactorial) {
+get_mf_DE_options <- function(package_name, package_object, multifactorial, target) {
   mf_text <- split_mf_text(multifactorial)
   
   if(package_name == "DESeq2") {
     if(mf_text[["mf_contrast"]] == "interaction") {
-        mf_opt <- DESeq2::resultsNames(package_object)[4]
+        mf_opt <- list(name=DESeq2::resultsNames(package_object)[4])
     } else if (mf_text[["mf_contrast"]] == "effect") {
+
         mf_opt <- DESeq2::resultsNames(package_object)[3]
+        mf_opt <- list(contrast=c(
+          mf_text[["mf_factorA"]],
+          levels(target[, mf_text[["mf_factorA"]]])[2],
+           mf_text[["mf_varA"]]
+        ))
     }
-  } else if (package_name == "edgeR") { 
+  } else if (package_name %in% c("edgeR","limma")) { 
     if(mf_text[["mf_contrast"]] == "interaction") {
-      mf_opt <- colnames(package_object)[4]
+      mf_opt <- list(name=colnames(package_object)[4])
     } else if (mf_text[["mf_contrast"]] == "effect") {
-      mf_opt <- colnames(package_object)[3]
-    } 
-  } else if(package_name == "limma") {
-      if(mf_text[["mf_contrast"]] == "interaction") {
-      mf_opt <- colnames(package_object)[4]
-    } else if (mf_text[["mf_contrast"]] == "effect") {
-      mf_opt <- colnames(package_object)[3]
+      mf_opt <- list(name=paste0(
+          mf_text[["mf_factorA"]],
+          levels(target[, mf_text[["mf_factorA"]]])[2]
+      ))
     }
   }
   if(! exists("mf_opt")) stop("Check multifactorial arguments flag valid")
-  return(list(name=mf_opt))    
+  return(mf_opt)
 }
 
 # Dummy function to convert external, already processed/analysed data into 
