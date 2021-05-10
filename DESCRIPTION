@@ -60,7 +60,9 @@ Suggests:
     PerformanceAnalytics,
     naivebayes,
     reshape2,
-    TCC
+    TCC,
+    org.Hs.eg.db,
+    org.Mm.eg.db
 VignetteBuilder: knitr
 Imports: 
     ReactomePA,
