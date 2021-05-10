@@ -68,19 +68,23 @@ The ORA method performs an enrichment of functional terms in putative target gen
 ```{r expression_profiles, echo = FALSE, message = FALSE, warning = FALSE, eval = !is.null(opt$RNAseq_folder) && !is.null(opt$RNAseq_folder) }
 
 # Load genes expressions
-targets <- unique(raw_data[raw_data$miRNA_names == miRNA, "RNAseq"])
+targets <- unique(raw_data[raw_data$miRNA == miRNA, "Target_ID"])
 
-tgt_indx <- which(RNAseq[['normalized_counts']]$Gene %in% targets)
+targets_profiles <- RNAseq$normalized_counts[,colnames(RNAseq$normalized_counts) %in% targets]
+
 # Prepare regular cluster info
 
-miRNA_id <- unique(raw_data[raw_data$miRNA_names == miRNA, "miRNAseq"])
+miRNA_id <- unique(raw_data[raw_data$miRNA == miRNA, "miRNA_ID"])
 miRNA_id <- miRNA_id[!is.na(miRNA_id)] # sometimes a miRNA has no mapping in multimiR
 miRNA_mod <- miRNAseq$DH_results[miRNAseq$DH_results$gene_name == miRNA_id, "Cluster_ID"]
 # save(list = ls(all.names = TRUE),file = "/home/bio267lab/proyectos/target_miRNA_2020/test_func.RData")
 #   save(enr_go, file = "/home/bio267lab/proyectos/target_miRNA_2020/test_func.RData")
 
 if (miRNA_strat == "d") {
-  Count <- miRNAseq[['normalized_counts']][, miRNA_id]
+  # save(miRNAseq,miRNA_id, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/test.RData")
+  # q()
+  # Count <- miRNAseq[['normalized_counts']][, miRNA_id]
+  Count <- scale_data_matrix(as.matrix(miRNAseq[['normalized_counts']][, miRNA_id]), norm_by_col = TRUE)[,1]
   miRNA_profile <- as.data.frame(Count)
   miRNA_profile$Sample <- rownames(miRNA_profile)
   miRNA_profile$type <- paste0(miRNA_id, " normalized profile")
@@ -111,9 +115,17 @@ if (miRNA_strat == "d") {
 # message(cl_profile)
 # q()
 # Plot
+# targets_profiles <- RNAseq$normalized_counts[tgt_indx, ]
+        # save(enr_ORA_expanded, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/test.RData")
 
+# save(miRNA_profile, targets_profiles, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/test.RData")
+# q()
+targets_profiles <- as.data.frame(as.table(scale_data_matrix(data_matrix = targets_profiles, norm_by_col = TRUE)))
+        colnames(targets_profiles) <- c("Sample","Gene","Count")
+# save(targets, RNAseq,file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/test.RData")
+# q()
 pp <- ggplot2::ggplot(mapping = ggplot2::aes(x = Sample)) + 
-    ggplot2::geom_line(data = RNAseq$normalized_counts[tgt_indx, ], alpha = 0.05, mapping = ggplot2::aes(y = Count, group = Gene)) +
+    ggplot2::geom_line(data = targets_profiles, alpha = 0.05, mapping = ggplot2::aes(y = Count, group = Gene)) +
     ggplot2::geom_line(data = miRNA_profile, mapping = ggplot2::aes(y = Count, group = type), color = "blue", linetype = "dashed", size = 0.5) +
     # scale_y_continuous(sec.axis = sec_axis(~.*2-1, name = "miRNA-targets correlation")) +
       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 30, hjust = 1))

@@ -37,43 +37,43 @@ str_names <- list("dd" = "normalized_counts_RNA_vs_miRNA_normalized_counts",
     strategy <- str_names[[strat]]
 
     output_files <- file.path(output_files, strategy)
-    dir.create(output_files)
+    check_and_create_dir(output_files)
     #Enrichments
     message(paste0("\tPerforming functional analysis for ", strategy))
     strategy_folder <- file.path(target_miRNA_results, strategy)
 
     if (!"target_results_table.txt" %in% list.files(strategy_folder)) {
-        warning(paste0("No files have been found in results folder for ", 
+        stop(paste0("No files have been found in results folder for ", 
             strategy, " strategy. Aborting..."))
-        next
     }
     raw_data <- read.table(file.path(strategy_folder, 
                                     "target_results_table.txt"), 
         header=TRUE, row.names=NULL, sep="\t")
      str(raw_data)
-        unique_genes <- unique(raw_data[!raw_data$entrezgene %in% c("", NA), 
-            c("entrezgene", "mean_logFCs")])
-        enrich_genes <- unique_genes$entrezgene
-        geneList <- unique_genes$mean_logFCs
-        names(geneList) <- unique_genes$entrezgene
+        unique_genes <- unique(raw_data[!raw_data$ENTREZGENE_target %in% c("", NA), 
+            c("ENTREZGENE_target", "Target_log2FC")])
+        enrich_genes <- unique_genes$ENTREZGENE_target
+        geneList <- unique_genes$Target_log2FC
+        names(geneList) <- unique_genes$ENTREZGENE_target
 
     if (launch_expanded) {
         
-        unique_miRNAs <- unique(raw_data$miRNA_names)
-        unique_miRNAs <- c(unique_miRNAs, raw_data[is.na(raw_data$miRNA_names), "miRNAseq"])      
+        unique_miRNAs <- unique(raw_data$miRNA)
+        unique_miRNAs <- c(unique_miRNAs, raw_data[is.na(raw_data$miRNA), "miRNAseq"])      
         expanded_targets <- lapply(unique_miRNAs, function(miRNA){
-                miRNA_check <- raw_data$miRNA_names == miRNA
+                miRNA_check <- raw_data$miRNA == miRNA
                 if(any(miRNA_check)){
-                    mirna_targets <- raw_data[raw_data$miRNA_names == miRNA, 
-                "entrezgene"]
+                    mirna_targets <- raw_data[raw_data$miRNA == miRNA, 
+                "ENTREZGENE_target"]
                 } else {
                     mirna_targets <- raw_data[raw_data$miRNAseq == miRNA, 
-                "entrezgene"]
+                "ENTREZGENE_target"]
                 }
                 return(unique(mirna_targets))
             })
         names(expanded_targets) <- unique_miRNAs
         enr_ORA_expanded <- list()
+
     }
 
     if ("g" %in% nomenclatures){
@@ -167,7 +167,7 @@ str_names <- list("dd" = "normalized_counts_RNA_vs_miRNA_normalized_counts",
 
     }
 
-    enrichments_ORA <- lapply(enrichments_ORA_expanded, clusterProfiler::merge_result)
+    enrichments_ORA <- lapply(enr_ORA_expanded, clusterProfiler::merge_result)
     enrichments_ORA <- lapply(enrichments_ORA, function(res){
                              if(nrow(res@compareClusterResult) > 0)
                                 res <- catched_pairwise_termsim(res, 200)
@@ -202,6 +202,7 @@ str_names <- list("dd" = "normalized_counts_RNA_vs_miRNA_normalized_counts",
         enrich_KEGG = enrich_KEGG,
         enrich_react = enrich_react,
         # enrich_custom = enrich_custom,
+        enrichments_ORA_expanded = enr_ORA_expanded,
         launch_default = launch_default,
         launch_expanded = launch_expanded,
         strategy = strategy,

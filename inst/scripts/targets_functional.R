@@ -81,36 +81,36 @@ opt$help <- NULL
 opt$output_files <- file.path(opt$output_files, "targets_functional")
 
 
-#  save(target_func_results, file = "/home/bio267lab/proyectos/target_miRNA_2020/test_func_2.RData")
+load("/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/test_func_2.RData")
+# target_func_results <- do.call("main_targets_functional", opt)
+ # save(target_func_results, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/test_func_2.RData")
 # q()
-# load("/home/bio267lab/proyectos/target_miRNA_2020/test_func_2.RData")
-target_func_results <- do.call("main_targets_functional", opt)
 
 
-for (funsys in c("enrich_GO", "enrich_react", "enrich_KEGG")){
-    if (is.null(target_func_results[[funsys]]))
-        next
-    if (funsys == "enrich_GO"){
-        for (subont in c("MF", "BP", "CC")) {
-          utils::write.table(target_func_results[[funsys]][[subont]], 
-                file=file.path(opt$output_files, paste0("targets_", unlist(strsplit(funsys, "_"))[2], "_", subont, "_enrichment")), 
-                quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-        }
-    } else {
-      utils::write.table(target_func_results[[funsys]], 
-        file=file.path(opt$output_files, paste0("targets_", unlist(strsplit(funsys, "_"))[2], "_enrichment")), 
-        quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+# for (funsys in c("enrich_GO", "enrich_react", "enrich_KEGG")){
+#     if (is.null(target_func_results[[funsys]]))
+#         next
+#     if (funsys == "enrich_GO"){
+#         for (subont in c("MF", "BP", "CC")) {
+#           utils::write.table(target_func_results[[funsys]][[subont]], 
+#                 file=file.path(opt$output_files, paste0("targets_", unlist(strsplit(funsys, "_"))[2], "_", subont, "_enrichment")), 
+#                 quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+#         }
+#     } else {
+#       utils::write.table(target_func_results[[funsys]], 
+#         file=file.path(opt$output_files, paste0("targets_", unlist(strsplit(funsys, "_"))[2], "_enrichment")), 
+#         quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
     
-    }
-} 
+#     }
+# } 
    
 
 
-for (funsys in names(target_func_results$enrichments_ORA)){
-    utils::write.table(target_func_results$enrichments_ORA[[funsys]], 
-                file=file.path(opt$output_files, paste0("miRNAs_targets_", funsys, "_enrichments")), 
-                quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-}
+# for (funsys in names(target_func_results$enrichments_ORA)){
+#     utils::write.table(target_func_results$enrichments_ORA[[funsys]], 
+#                 file=file.path(opt$output_files, paste0("miRNAs_targets_", funsys, "_enrichments")), 
+#                 quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+# }
 
 
 # q()

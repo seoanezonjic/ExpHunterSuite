@@ -227,9 +227,8 @@ perform_correlations <- function(
                                           miRNAseq$DH_results)
     } else {
         strat_description <- unlist(strsplit(strategy, "_RNA_vs_miRNA_"))
-        RNA_profiles <- RNAseq[[strat_description[1]]]
-        miRNA_profiles <- miRNAseq[[strat_description[2]]]
-
+        RNA_profiles <- as.matrix(RNAseq[[strat_description[1]]])
+        miRNA_profiles <- as.matrix(miRNAseq[[strat_description[2]]])
         if (ncol(RNA_profiles) == 0 || ncol(miRNA_profiles) == 0) {
           return(data.frame(NULL))
         }
@@ -412,9 +411,9 @@ score_comparison <- function(databases, all_pairs, sample_size, strategy){
 
     # sampled_bckg <- sample(bckg_scores, 
     #         size = 100, replace = FALSE)
-      # res <- stats::t.test(x = sampled_bckg, y = bckg_scores, 
     res <- data.frame(p.value = 1, boot.p.value = 1)
     if (length(strat_scores) > 1) {
+      # res <- stats::t.test(x = strat_scores, y = bckg_scores, 
         res <- boot.t.test.2(x = strat_scores, y = bckg_scores, 
           alternative = "greater", 
           vectorial = FALSE, 

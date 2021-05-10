@@ -278,6 +278,7 @@ write_functional_targets <- function(
     output_path,
     strategy,
     enrichments_ORA_expanded,
+    enrichments_ORA,
     RNAseq_folder,
     miRNAseq_folder,
     templates_folder,
@@ -310,11 +311,6 @@ write_functional_targets <- function(
      
         RNAseq <- load_DEGH_information(RNAseq_folder)
         miRNAseq <- load_DEGH_information(miRNAseq_folder)
-        RNAseq[['normalized_counts']] <- as.data.frame(as.table(
-            scale_data_matrix(data_matrix = as.matrix(RNAseq[['normalized_counts']]))))
-        colnames(RNAseq[['normalized_counts']]) <- c("Sample","Gene","Count")
-        miRNAseq[['normalized_counts']] <- scale_data_matrix(
-            data_matrix = as.matrix(miRNAseq[['normalized_counts']]))
         miRNA_strat <- unlist(strsplit(strat, ""))[2]
         if (miRNA_strat == "h") {
             hub_miRNAs <- get_hub_genes_by_MM(miRNAseq[["normalized_counts"]], 
