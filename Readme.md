@@ -54,7 +54,7 @@ Once installed, DEgenes Hunter performs the expression analysis from a raw count
     Note: we recommend to use ENSEMBL identifiers for the functional analysis.
 
 Here we include an example in which the targets file must include the samples (CTL, TreatA and TreatB), the samples condition (Ctrl or Treat) and to which age_group they belong (adult or child). 
-The multifactorial correction (-v and -M) or co-expression analysis using extra measures (-S and -C) require additional information that must be included in targets file. Extra measures are named as _traits_. These options use the _traits_ column names as arguments.
+The correction including additional factors (-v and -M) or co-expression analysis using extra measures (-S and -C) require additional information that must be included in targets file. Extra measures are named as _traits_. These options use the _traits_ column names as arguments.
 
 | sample                                | treat        |  age_group |
 |---------------------------------------|--------------|------------|    
@@ -63,7 +63,7 @@ The multifactorial correction (-v and -M) or co-expression analysis using extra 
 |     TreatA_1                          |     Treat    |    adult   |
 |     TreatA_2                          |     Treat    |    child   |
 |     TreatB_1                          |     Treat    |    adult   |
-|     TreatB_2                             |     Treat    |    adult   | 
+|     TreatB_2                          |     Treat    |    adult   | 
 
 Once generated, the expression analysis can be performed using degenes_Hunter.R script. For this, we must call degenes_Hunter.R and give it the following input arguments.
 
@@ -172,17 +172,14 @@ In the case of performing the co-expression analysis with WGCNA, it will be crea
 
 #### Non-canonical usage scenarios: 
 
-##### A. Differential expression corrected by extra factor (multifactorial)
+##### A. Differential expression corrected by extra factors
 
-In some experiments, the RNA-seq samples can have several attributes (variables). In the previous example, one of these variables is defined in the targets file as age_group. We can analyze the standard differential expression through treatment and control classification (default treat column). However, results can be altered by the biological variablility from different proportion of child and adults in groups. In these cases, the differential expression model can be completed by adding -v age_group. Full model can be customized using -M option.
+RNA-seq samples can have several additional attributes in addition to the treatment/control status required to detect differential expression. In the previous example, one of these variables is defined in the targets file as age_group. It is possible to include these attribute in the model design as additional factors to control for. In these cases, the differential expression model can be completed by adding the additional argument -v <factors>, e.g. -v age_group
 
-An example of code for this multifactorial analysis can be used as follows:
+An example of code for this analysis is the follows:
 
 ```bash
-    #Both commands do the same
     degenes_Hunter.R -t path_to_target_file -i path_to_counts_table -v age_group -o path_to_results
-
-    degenes_Hunter.R -t path_to_target_file -i path_to_counts_table -M "~ treat + age_group" -o path_to_results
 ```
 
 ##### B. Genes co-expression analysis with WGCNA
@@ -216,6 +213,60 @@ To run DEgenes Hunter using a pre-calculated gene list, the following command ca
 ```bash
     degenes_Hunter.R  -m "F" -t path_to_targets_file -i path_to_normalized_table -e path_to_precalculated_deg_file -o path_to_results
 ```
+
+##### E. Multifactorial (2x2) analysis to look for interactions between factors and effects in distinct groups
+
+Currently only a 2x2 factorial design is possible for interactions, and 2xn for group effects. 
+
+In the case of a 2x2 design, if we consider the following experimental design, similar to the one shown above:
+
+| sample    | treat |  age_group  |
+|-----------|-------|-------------|
+| ad_CTL_1  | Ctrl  |  ad         |
+| ad_CTL_2  | Ctrl  |  ad         |
+| ad_CTL_3  | Ctrl  |  ad         |
+| ch_CTL_1  | Ctrl  |  ch         |
+| ch_CTL_2  | Ctrl  |  ch         |
+| ch_CTL_3  | Ctrl  |  ch         |
+| ad_TRT_1  | Treat |  ad         |
+| ad_TRT_2  | Treat |  ad         |
+| ad_TRT_3  | Treat |  ad         |
+| ch_TRT_1  | Treat |  ch         |
+| ch_TRT_2  | Treat |  ch         |
+| ch_TRT_3  | Treat |  ch         |
+
+We can look for an interaction between treatment and age_group, the effects of treatment in a specific age group, or the differences between adults and children among untreated or treated samples.
+
+Interaction can be thought of seeing whether the effect of treatment is different between age groups.
+
+The required contrast (i.e. interaction or effect) must be specified in the following manner, via the flag --multifactorial:
+
+"FactorA,FactorB:contrast"
+
+In the case of an interaction between the factors, the contrast should be specified as "interaction,baseA,baseB", where baseA and baseB should be the base levels for each factor. The resulting logFC values detected by this contrast would represent [numA_numB - baseA_numB] - [numA_baseB - baseA_baseB] with numA/B representing the non-base levels for the factorA.
+
+So, for our example, if one wished to see the interaction between treatment and age_group they should use the following:
+
+```bash
+degenes_Hunter.R -m "DEL" -i path_to_normalized_table -t path_to_targets_file -o results_2x2_interaction --multifactorial "treat,age_group:interaction,Ctrl,ch"
+```
+
+In the case of the effects of one factor in a group of samples specified by another factor, the contrast should be specified in the form "effect,baseA,groupB, where the baseA should be the level in FactorA that should be used as the base for FC calculation, and groupB represents the level in Factor B that is the group we are looking for the change in.
+
+So, for our example if one wished to see the effect of treatment in children only, they should use the following:
+
+```bash
+degenes_Hunter.R -m "DEL" -i path_to_normalized_table -t path_to_targets_file -o results_2x2_effect_treat_ch --multifactorial "treat,age_group:effect,Ctrl,ch"
+```
+
+Similarly, if they wished to see the difference between age groups in the ctrl samples, they should use the following:
+
+```bash
+degenes_Hunter.R -m "DEL" -i path_to_normalized_table -t path_to_targets_file -o results_2x2_effect_age_ctrl --multifactorial "age_group,treat:effect,ch,Ctrl"
+```
+
+Note FactorB in the effects contrast can have more than 2 groups.
+
 
 ### 2. Command line scripts for functional enrichment analysis.
 
