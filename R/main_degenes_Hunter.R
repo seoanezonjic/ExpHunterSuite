@@ -44,6 +44,7 @@
 main_degenes_Hunter <- function(
     raw = NULL,
     target = NULL,
+    count_var_quantile = 0,
     external_DEA_data = NULL,
     output_files = getwd(),
     reads = 2,
@@ -137,6 +138,12 @@ main_degenes_Hunter <- function(
 
     raw_filter <- filter_count(reads, minlibraries, raw, filter_type, 
                                index_control_cols, index_treatmn_cols)
+
+    var_filter <- filter_by_variance(raw_filter, 
+                                     q_filter = count_var_quantile, 
+                                     target = target)
+    raw_filter <- var_filter[["fil_count_mtrx"]]
+
     
     ############################################################
     ##             PERFORM EXPRESION ANALYSIS                 ##
@@ -226,6 +233,7 @@ main_degenes_Hunter <- function(
     final_results[['replicatesC']] <- replicatesC
     final_results[['replicatesT']] <- replicatesT
     final_results[['final_main_params']] <- final_main_params
+    final_results[["var_filter"]] <- var_filter
     if(!is.null(combinations_WGCNA)){
       final_results <- c(final_results, combinations_WGCNA)
     }
@@ -368,6 +376,24 @@ filter_count <- function(reads,
       }
     }
     return(raw)
+}
+
+#' @importFrom matrixStats rowVars
+#' @importFrom stats quantile formula
+#' @importFrom DESeq2 DESeqDataSetFromMatrix DESeq counts
+filter_by_variance <- function(count_matrix, q_filter, target){
+
+  dds <- DESeq2::DESeqDataSetFromMatrix(countData = count_matrix,
+                                  colData = target,
+                                  design = stats::formula("~ treat"))
+  dds <- DESeq2::DESeq(dds)
+  normalized_counts <-DESeq2::counts(dds, normalized=TRUE)
+  variances <- matrixStats::rowVars(normalized_counts)
+  threshold <- stats::quantile(variances, q_filter)
+  fil_count_mtrx <- count_matrix[variances >= threshold,]
+  return(list(fil_count_mtrx = fil_count_mtrx, 
+    variance_dis = variances, 
+     thr = q_filter))
 }
 
 prepare_model_text <- function(model_variables, 

@@ -38,7 +38,9 @@ write_expression_report <- function(exp_results,
     all_data_normalized <- exp_results[['all_data_normalized']] 
     replicatesC <- exp_results[['replicatesC']] 
     replicatesT <- exp_results[['replicatesT']] 
-    DE_all_genes <- exp_results[['DE_all_genes']] 
+    DE_all_genes <- exp_results[['DE_all_genes']]
+    final_results <- exp_results[['final_results']] 
+    var_filter <-  exp_results[['var_filter']] 
 
     outf <- file.path(normalizePath(output_files),"DEG_report.html")
     rmarkdown::render(file.path(template_folder, 'main_report.Rmd'),
@@ -120,7 +122,8 @@ write_functional_report <- function(hunter_results,
         wgcna_corr_cl_trait <- as.matrix(aux2$module_trait_cor)
         wgcna_count_sample_trait <- as.matrix(aux[,!grepl("^ME",
             colnames(aux))])
-        wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait, norm_by_col = TRUE)
+        wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait, 
+            norm_by_col = TRUE)
     }
     #-
     if(any(grepl("WGCNA_ORA",names(func_results)))){
@@ -234,11 +237,11 @@ raw_databases_scores,
 p_fisher           
 ){
  "%>%" <- magrittr::"%>%"
- # print(ls(all.names = TRUE))
+
  rmarkdown::render(
                file.path(template_folder, 'miRNA_RNA.Rmd'), 
                output_file = file.path(output_files, report_name), 
-               intermediates_dir = output_files)
+               intermediates_dir = file.path(output_files))
     
 }
 

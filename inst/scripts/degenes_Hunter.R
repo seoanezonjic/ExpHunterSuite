@@ -51,6 +51,8 @@ option_list <- list(
     help=paste0("Used in filtering. Reads (counts per million mapped reads)",
       " per gene per sample must be higher than this value to count towards",
       " the --minlibraries value. Default=%default. 0 = No filtering")),
+  optparse::make_option(c("--count_var_quantile"), type="double", default=0, 
+    help=paste0("Proportion (0-1 value) of low variance genes to filter out. Default=%default")),
   optparse::make_option(c("-l", "--minlibraries"), type="integer", default=2,
     help=paste0("For each gene, the minimum number of samples that must have",
       " more than --reads. Default=%default")),
@@ -223,6 +225,7 @@ if (grepl("F", opt$modules)) {
 final_results <- main_degenes_Hunter(
   target=target,
   raw=raw_count_table,
+  count_var_quantile=opt$count_var_quantile,
   external_DEA_data=external_DEA_data,
   output_files=opt$output_files,
   reads=opt$reads,

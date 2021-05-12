@@ -107,7 +107,7 @@ gplots::heatmap.2(x = res, col = col, symm = TRUE, margins = rep(max(nchar(colna
 ### **Principal Component Analysis**
 This is a PCA plot of the count values following rlog normalization from the DESeq2 package:
 
-```{r pca_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo = FALSE}
+```{r pca_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo = FALSE, results = "asis", warning = FALSE, message = FALSE}
 coldata_df <- data.frame(cond = design_vector,
                            each = colnames(raw_filter),
                            row.names = colnames(raw_filter), stringsAsFactors=TRUE)
@@ -117,13 +117,15 @@ rld <- DESeq2::rlog(dds, blind=FALSE)
 
 pcaData <- DESeq2::plotPCA(rld, intgroup=c("cond"), returnData = TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
-ggplot2::ggplot(pcaData, ggplot2::aes(x = PC1, y = PC2, color = name, shape = cond)) +
+pca_plot <- ggplot2::ggplot(pcaData, ggplot2::aes(x = PC1, y = PC2, color = name, shape = cond)) +
   ggplot2::geom_point(size =3) +
-  ggplot2::geom_text(ggplot2::aes(label=name),hjust=0, vjust=0) +
+  ggrepel::geom_text_repel(ggplot2::aes(label=name),vjust="inward",hjust="inward") +
   ggplot2::xlab(paste0("PC1: ", percentVar[1], "% variance")) +
   ggplot2::ylab(paste0("PC2: ", percentVar[2], "% variance")) +
   ggplot2::coord_fixed() +
-  ggplot2::theme(legend.position = "none")
+  ggplot2::theme(legend.position="none")
+plot_counter <- plot_in_div(pca_plot)
+# +theme(legend.position="bottom", legend.box = "horizontal")
 
 ggplot2::ggplot(pcaData, ggplot2::aes(x = PC1, y = PC2, color = name, shape = cond)) +
   ggplot2::geom_point(size =3) +
@@ -166,6 +168,20 @@ to_plot <- boxplot(all_data_normalized[[1]],
 					cex.axis=0.8, 
 					notch=TRUE, 
 					col=(c(rep("gold",replicatesC),rep("darkgreen",replicatesT))))
+```
+
+## Gene counts variance distribution
+
+Variance of gene counts across samples are represented. Genes with lower variance than selected threshold (dashed grey line) were filtered out. 
+
+```{r variance_dist, echo = FALSE, warning = FALSE, message = FALSE}
+
+gene_count_var <- data.frame(variance =var_filter[["variance_dis"]])
+
+ggplot2::ggplot(gene_count_var, ggplot2::aes(x = variance))+
+ggplot2::geom_density() + 
+ggplot2::geom_vline(xintercept = var_filter[["thr"]], linetype="dashed", 
+                color = "grey")
 ```
 
 
@@ -253,14 +269,12 @@ limma::vennDiagram(intersections, circle.col = grDevices::rainbow(length(sets)))
 var_thr <- 0.01
 ```
 
-```{r logFCplots, echo = FALSE}
+```{r logFCplots, echo = FALSE, results = "asis"}
 pp <- ht2logFCPlot(DE_all_genes, var_filter = var_thr, title = paste0("(variance threshold >= ",var_thr,")"))
-if(!is.null(pp)){
-	cat(paste0("This graph shows logFC calculated (y-axis) for each package (points) and gene (x-axis). Only genes with variability over ", var_thr, " will be plotted. This representation allows to user to observe the behaviour of each DE package and detect when one of them has atypical results."))
+	cat(paste0("\nThis graph shows logFC calculated (y-axis) for each package (points) and gene (x-axis). Only genes with variability over ", var_thr, " will be plotted. This representation allows to user to observe the behaviour of each DE package and detect when one of them has atypical results.\n"))
 	plot(pp)
-}
 ```
-
+a
 
 ### **FDR gene-wise benchmarking**
 
@@ -307,7 +321,7 @@ cat("### **DESeq2 normalization effects**:
 This plot compares the effective library size with raw library size")
 ```
 
-```{r DESeq2_conditional_block_ELS_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE}
+```{r DESeq2_conditional_block_ELS_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, warning = FALSE, message = FALSE}
 	deseq_object <- package_objects[['DESeq2']]
 	
 	effective_lib_size <- DESeq2::sizeFactors(package_objects[['DESeq2']][['DESeq2_dataset']])
