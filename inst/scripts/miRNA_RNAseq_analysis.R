@@ -110,38 +110,38 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 check_and_create_dir(opt$output_files)
 
 
-miRNA_cor_results <-  coRmiT( 
-    RNAseq_folder=opt$RNAseq_folder,
-    miRNAseq_folder=opt$miRNAseq_folder,
-    output_files=opt$output_files,
-    strat_names=unlist(strsplit(opt$strategies, ",")),
-    organism=opt$organism,
-    multimir_db=opt$multimir_db,
-    sample_proportion = opt$sample_proportion,
-    p_val_cutoff=opt$p_val_cutoff,
-    corr_cutoff=opt$corr_cutoff,
-    MM_cutoff=opt$module_membership_cutoff,
-    permutations = opt$permutations,
-    report=opt$report,
-    databases = opt$databases,
-    translate_ensembl = opt$translate_ensembl,  
-    mc_cores = opt$mc_cores,
-    filter_db_theshold = opt$filter_db_theshold,
-    database_to_filter = opt$database_to_filter,
-    translation_file = opt$translation_file,
-    organism_table_path = organism_table_path, 
-    template_folder = template_folder #file.path(root_path, "inst", "templates")
-    )
+# miRNA_cor_results <-  coRmiT( 
+#     RNAseq_folder=opt$RNAseq_folder,
+#     miRNAseq_folder=opt$miRNAseq_folder,
+#     output_files=opt$output_files,
+#     strat_names=unlist(strsplit(opt$strategies, ",")),
+#     organism=opt$organism,
+#     multimir_db=opt$multimir_db,
+#     sample_proportion = opt$sample_proportion,
+#     p_val_cutoff=opt$p_val_cutoff,
+#     corr_cutoff=opt$corr_cutoff,
+#     MM_cutoff=opt$module_membership_cutoff,
+#     permutations = opt$permutations,
+#     report=opt$report,
+#     databases = opt$databases,
+#     translate_ensembl = opt$translate_ensembl,  
+#     mc_cores = opt$mc_cores,
+#     filter_db_theshold = opt$filter_db_theshold,
+#     database_to_filter = opt$database_to_filter,
+#     translation_file = opt$translation_file,
+#     organism_table_path = organism_table_path, 
+#     template_folder = template_folder #file.path(root_path, "inst", "templates")
+#     )
 
-# save(miRNA_cor_results, file = "~/proyectos/target_miRNA_2020/test3.RData")
+# save(miRNA_cor_results, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA_wf/miRNA_RNAseq_analysis.R_0005/test3.RData")
 # q()
-# load("~/proyectos/target_miRNA_2020/miRNA_cor.RData")
+load("/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA_wf/miRNA_RNAseq_analysis.R_0005/test3.RData")
 
 miRNA_cor_results$weighted_c_table <- NULL
 miRNA_cor_results <- c(miRNA_cor_results, 
     list(report_name =opt$report,
          template_folder =template_folder,
-         output_files =opt$output_files,
+         output_files =normalizePath(opt$output_files),
          p_val_cutoff =opt$p_val_cutoff,
          corr_cutoff =opt$corr_cutoff,
          sample_proportion =opt$sample_proportion))

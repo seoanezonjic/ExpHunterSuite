@@ -95,7 +95,9 @@ organism_table_path = file.path(find.package('ExpHunterSuite'), "inst",
     miRNA_IDs = miRNA_cor_results$all_pairs$miRNAseq, 
     RNA_IDs = miRNA_cor_results$all_pairs$RNAseq, 
     organism_info = organism_info, translate_ensembl = translate_ensembl)
- write.table(miRNA_cor_results$cont_tables, file.path(output_files, "strategies_stats.txt"), quote=FALSE, col.names=TRUE, sep="\t")
+ write.table(miRNA_cor_results$cont_tables, 
+    file.path(output_files, "strategies_stats.txt"), 
+    quote=FALSE, col.names=TRUE, sep="\t")
  
  miRNA_cor_results <- c(
     miRNA_cor_results,

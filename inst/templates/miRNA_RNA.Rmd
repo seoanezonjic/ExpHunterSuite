@@ -233,7 +233,8 @@ P-values are shown for the different strategies and for the different group of d
     ggplot2::theme(legend.position = "bottom", legend.box = "vertical")
     strat_fisher_sig <- cont_tables %>% dplyr::group_by(strategy) %>% dplyr::summarise(significant = all(Pvalue <= 0.05))
     unsig_strategies <- c(unsig_strategies, strat_fisher_sig[!strat_fisher_sig$significant, "strategy"])
-    sig_strategies <- names(strategies)[! names(strategies) %in% unsig_strategies]
+    sig_strategies <- names(strategies)[! names(strategies) %in% c(unsig_strategies, mock_strategies)]
+
 
 ```
 
@@ -486,30 +487,29 @@ P-values are shown for the different strategies and for the different databases 
 ```
 
 ## **Score distribution sampling check**
-These plots compare the whole score distribution of background pairs with his subset. 
+These plots compare the full score distribution of the prediction databases (black dashed line), the scores of all possible pairs (**background pairs**) in the expression data (black solid line) and the scores of strategy **significant pairs** (legend). 
 
-```{r score_sampling, results = "asis", echo = FALSE, warning = FALSE}
+```{r score_sampling, results = "asis", echo = FALSE, warning = FALSE, message = FALSE}
   for (database in selected_predicted_databases) {
+    cat(paste0("\n\n## **",stringr::str_to_title(database),"**\n"))
     raw_score <- data.frame(x = raw_databases_scores[[database]])
     data.table::setnames(raw_score, "x", database)
     background_score <- all_pairs[,get(database)]
     background_score <- background_score[!is.na(background_score)]
-    
-    background_score <- data.frame(background_score)
-    colnames(background_score) <- database
-
-    gridExtra::grid.arrange (
-    
-      ggplot2::ggplot(raw_score,        ggplot2::aes_(x = as.name(database))) + 
-                                               ggplot2::geom_density() + 
-                                               ggplot2::ggtitle("Complete score distribution")
-                                          ,
-      ggplot2::ggplot(background_score, ggplot2::aes_(x = as.name(database))) + 
-                                               ggplot2::geom_density() + 
-                                               ggplot2::ggtitle("Background score distribution"),
-      ncol = 2,
-      top = grid::textGrob(stringr::str_to_title(database),gp=grid::gpar(fontsize=20,font=3)))
-       
+    background_score <- data.frame(score = background_score)
+    strat_scores <- lapply(c(sig_strategies, "DEGs_DEMs_permutated"), function(strategy){
+           all_strategy_score <- all_pairs[get(strategy), get(database)]
+           all_strategy_score <- all_strategy_score[!is.na(all_strategy_score)]
+           if (length(all_strategy_score) == 0) all_strategy_score <- NA
+           return(data.frame(score = all_strategy_score, strategy = strategy,stringsAsFactors = TRUE))
+      })
+    strat_scores <-  data.table::rbindlist(strat_scores)
+    dists <- ggplot2::ggplot() +       
+    ggplot2::geom_density(data = raw_score, ggplot2::aes_(x = as.name(database)), linetype = "dashed") + 
+    ggplot2::geom_density(data = background_score, ggplot2::aes(x = score)) + 
+    ggplot2::geom_density(data = strat_scores, ggplot2::aes(x = score, color = strategy))
+    plot(dists) 
+     # cat("\n\n")
     }
 
   cat("\n\n")

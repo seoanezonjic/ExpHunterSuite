@@ -14,6 +14,7 @@ mode,
 cores,
 task_size
 ){
+no_pkg_messages <- suppressPackageStartupMessages
 
 str_names <- list("dd" = "normalized_counts_RNA_vs_miRNA_normalized_counts",  
                   "EE" = "Eigengene_RNA_vs_miRNA_Eigengene" ,
@@ -50,8 +51,10 @@ str_names <- list("dd" = "normalized_counts_RNA_vs_miRNA_normalized_counts",
                                     "target_results_table.txt"), 
         header=TRUE, row.names=NULL, sep="\t")
      str(raw_data)
-        unique_genes <- unique(raw_data[!raw_data$ENTREZGENE_target %in% c("", NA), 
+        unique_genes <- 
+        unique(raw_data[!raw_data$ENTREZGENE_target %in% c("", NA), 
             c("ENTREZGENE_target", "Target_log2FC")])
+        
         enrich_genes <- unique_genes$ENTREZGENE_target
         geneList <- unique_genes$Target_log2FC
         names(geneList) <- unique_genes$ENTREZGENE_target
@@ -59,7 +62,8 @@ str_names <- list("dd" = "normalized_counts_RNA_vs_miRNA_normalized_counts",
     if (launch_expanded) {
         
         unique_miRNAs <- unique(raw_data$miRNA)
-        unique_miRNAs <- c(unique_miRNAs, raw_data[is.na(raw_data$miRNA), "miRNAseq"])      
+        unique_miRNAs <- c(unique_miRNAs, 
+                           raw_data[is.na(raw_data$miRNA), "miRNAseq"])      
         expanded_targets <- lapply(unique_miRNAs, function(miRNA){
                 miRNA_check <- raw_data$miRNA == miRNA
                 if(any(miRNA_check)){

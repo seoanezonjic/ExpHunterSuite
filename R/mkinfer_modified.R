@@ -1,16 +1,27 @@
-boot.t.test.2 <- function(x, y = NULL, alternative = c("two.sided", "less", "greater"), 
-                        mu = 0, paired = FALSE, var.equal = FALSE, 
-                        conf.level = 0.95, R = 9999, symmetric = FALSE, vectorial = TRUE, chunk_size = 2,...){
+#' @importFrom stats complete.cases pt qt quantile setNames
+boot.t.test.2 <- function(
+x, 
+y = NULL, 
+alternative = c("two.sided", "less", "greater"), 
+mu = 0, 
+paired = FALSE, 
+var.equal = FALSE, 
+conf.level = 0.95, 
+R = 9999, 
+symmetric = FALSE, 
+vectorial = TRUE, 
+chunk_size = 2, ...){
   alternative <- match.arg(alternative)
   if(!missing(mu) && (length(mu) != 1 || is.na(mu))) 
     stop("'mu' must be a single number")
-  if(!missing(conf.level) && (length(conf.level) != 1 || !is.finite(conf.level) || 
+  if(!missing(conf.level) && (length(conf.level) != 1 || 
+                                !is.finite(conf.level) || 
                                conf.level < 0 || conf.level > 1)) 
     stop("'conf.level' must be a single number between 0 and 1")
   if(!is.null(y)){
     dname <- paste(deparse(substitute(x)), "and", deparse(substitute(y)))
     if (paired) 
-      xok <- yok <- complete.cases(x, y)
+      xok <- yok <- stats::complete.cases(x, y)
     else{
       yok <- !is.na(y)
       xok <- !is.na(x)
@@ -39,8 +50,19 @@ boot.t.test.2 <- function(x, y = NULL, alternative = c("two.sided", "less", "gre
     if (stderr < 10 * .Machine$double.eps * abs(mx)) 
       stop("data are essentially constant")
     tstat <- (mx - mu)/stderr
-    method <- if (paired) "Bootstrapped Paired t-test" else "Bootstrapped One Sample t-test"
-    estimate <- setNames(mx, if (paired) "mean of the differences" else "mean of x")
+
+    if (paired) {
+      method <- "Bootstrapped Paired t-test" 
+    } else {
+      method <- "Bootstrapped One Sample t-test"
+    }
+
+    if (paired){
+      mean_name <- "mean of the differences" 
+    } else{
+      mean_name <-"mean of x"
+    }
+    estimate <- stats::setNames(mx,mean_name)
     x.cent <- x - mx
     X <- matrix(sample(x.cent, size = nx*R, replace = TRUE), nrow = R)
     MX <- rowMeans(X)
@@ -58,7 +80,9 @@ boot.t.test.2 <- function(x, y = NULL, alternative = c("two.sided", "less", "gre
       stop("not enough observations")
     my <- mean(y)
     vy <- var(y)
-    method <- paste("Bootstrapped", paste(if (!var.equal) "Welch", "Two Sample t-test"))
+
+    method <- paste("Bootstrapped", paste(if (!var.equal) "Welch", 
+      "Two Sample t-test"))
     estimate <- c(mx, my)
     names(estimate) <- c("mean of x", "mean of y")
     if(var.equal){
@@ -72,7 +96,7 @@ boot.t.test.2 <- function(x, y = NULL, alternative = c("two.sided", "less", "gre
       stderr <- sqrt(v * (1/nx + 1/ny))
       z <- c(x, y)
       Z <- matrix(sample(z, size = (nx+ny)*R, replace = TRUE), nrow = R)
-      X <- Z[,1:nx]
+      X <- Z[,seq(nx)]
       Y <- Z[,(nx+1):(nx+ny)]
       MX <- rowMeans(X)
       MY <- rowMeans(Y)
@@ -122,25 +146,25 @@ boot.t.test.2 <- function(x, y = NULL, alternative = c("two.sided", "less", "gre
     TSTAT <- (MX - MY)/STDERR
   }
   if (alternative == "less") {
-    pval <- pt(tstat, df)
+    pval <- stats::pt(tstat, df)
     boot.pval <- mean(TSTAT < tstat)
-    cint <- c(-Inf, tstat + qt(conf.level, df))
-    boot.cint <- c(-Inf, quantile(EFF, conf.level))
+    cint <- c(-Inf, tstat + stats::qt(conf.level, df))
+    boot.cint <- c(-Inf, stats::quantile(EFF, conf.level))
   }else if(alternative == "greater") {
     boot.pval <- mean(TSTAT > tstat)
-    pval <- pt(tstat, df, lower.tail = FALSE)
-    cint <- c(tstat - qt(conf.level, df), Inf)
-    boot.cint <- c(quantile(EFF, 1-conf.level), Inf)
+    pval <- stats::pt(tstat, df, lower.tail = FALSE)
+    cint <- c(tstat - stats::qt(conf.level, df), Inf)
+    boot.cint <- c(stats::quantile(EFF, 1-conf.level), Inf)
   }else{
-    pval <- 2 * pt(-abs(tstat), df)
+    pval <- 2 * stats::pt(-abs(tstat), df)
     if(symmetric)
       boot.pval <- mean(abs(TSTAT) > abs(tstat))
     else
       boot.pval <- 2*min(mean(TSTAT <= tstat), mean(TSTAT > tstat))
     alpha <- 1 - conf.level
-    cint <- qt(1 - alpha/2, df)
+    cint <- stats::qt(1 - alpha/2, df)
     cint <- tstat + c(-cint, cint)
-    boot.cint <- quantile(EFF, c(alpha/2, 1-alpha/2))
+    boot.cint <- stats::quantile(EFF, c(alpha/2, 1-alpha/2))
   }
   cint <- mu + cint * stderr
   names(tstat) <- "t"
@@ -159,7 +183,8 @@ boot.t.test.2 <- function(x, y = NULL, alternative = c("two.sided", "less", "gre
 }
 perm_mean_sd <- function(all_values, sample_size){
          X_length <- length(all_values)
-         X <- matrix(sample(all_values, size = X_length*sample_size, replace = TRUE), nrow = sample_size)
+         X <- matrix(sample(all_values, size = X_length*sample_size, 
+          replace = TRUE), nrow = sample_size)
          MX <- rowMeans(X)
          VX <- rowSums((X-MX)^2)/(X_length-1)
          data.frame(M = MX,V = VX)

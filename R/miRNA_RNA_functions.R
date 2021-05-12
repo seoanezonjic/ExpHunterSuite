@@ -93,9 +93,10 @@ load_and_parse_multimir <- function(
       rowSums(!is.na(multimir_table[,database_to_filter])
       ) > filter_db_theshold | multimir_table$validated_c > 0,]
     }
-    raw_databases_scores <- lapply(selected_predicted_databases, function(database){
-      database_scores <- multimir_table[,database]
-      database_scores <- database_scores[!is.na(database_scores)]
+    raw_databases_scores <- lapply(selected_predicted_databases, 
+      function(database){
+          database_scores <- multimir_table[,database]
+          database_scores <- database_scores[!is.na(database_scores)]
       })
     names(raw_databases_scores) <- selected_predicted_databases
     return(list(raw_databases_scores = raw_databases_scores,
@@ -173,7 +174,8 @@ sample_proportion = 0.01
    }
    all_pairs[,strategy] <- FALSE
    all_pairs[strategy_data$pair_n, strategy] <- strategy_data$correlated_pairs
-   all_pairs[strategy_data$pair_n, paste0(strategy,"_correlation")] <- strategy_data$correlation
+   all_pairs[strategy_data$pair_n, 
+              paste0(strategy,"_correlation")] <- strategy_data$correlation
 
    all_stats <- get_stats_by_group(all_pairs = all_pairs, strategy = strategy,
                                    permutations = permutations)
@@ -181,9 +183,9 @@ sample_proportion = 0.01
    cont_tables <- rbind(cont_tables, all_stats$strat_cts)
    all_stats <- NULL
    pred_cont_tables <- calc_pred_ctables(
-                            all_pairs =all_pairs, 
-                            strategy= strategy,
-                            selected_predicted_databases = selected_predicted_databases)
+                 all_pairs =all_pairs, 
+                 strategy= strategy,
+                 selected_predicted_databases = selected_predicted_databases)
    # , 
    #                          raw_databases_scores = raw_databases_scores)
  
@@ -207,7 +209,6 @@ sample_proportion = 0.01
   stop("There is not significant pairs for any strategy selected.")
  } 
   all_cor_dist <- parse_correlations(strategies)
-  # score_comp <- merge(w_fisher, score_comp, by = c("database", "strategy"), all = TRUE)  
   sig_pairs <- get_sig_pairs(strategies, all_pairs)
  miRNA_cor_results <- list(strategies = strategies,
      unsig_strategies =  unsig_strategies, cont_tables = cont_tables,

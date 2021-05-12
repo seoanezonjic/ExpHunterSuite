@@ -210,7 +210,8 @@ analysis_DESeq2 <- function(data, p_val_cutoff, target, model_formula_text,
 
     if(multifactorial != "") {
       mf_options <- get_mf_DE_options(package_name="DESeq2", package_object=dds,
-                                      multifactorial=multifactorial, target=target)
+                                      multifactorial=multifactorial, 
+                                      target=target)
       all_DESeq2_genes <- do.call(DESeq2::results, 
                                 c(object=dds, alpha = p_val_cutoff, mf_options))
     } else {
@@ -331,7 +332,11 @@ analysis_NOISeq <- function(data, target){
     return(list(normalized_counts, expres_diff_all, all_NOISeq))
 }
 
-get_mf_DE_options <- function(package_name, package_object, multifactorial, target) {
+get_mf_DE_options <- function(
+  package_name, 
+  package_object, 
+  multifactorial, 
+  target) {
   mf_text <- split_mf_text(multifactorial)
   
   if(package_name == "DESeq2") {

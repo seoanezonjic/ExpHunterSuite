@@ -2,8 +2,6 @@
 
 #' @import dplyr
 
-no_pkg_messages <- suppressPackageStartupMessages
-suppressPackageStartupMessages(library(optparse)) 
 
  
  #### NOTAS PARA EL SCRIPT

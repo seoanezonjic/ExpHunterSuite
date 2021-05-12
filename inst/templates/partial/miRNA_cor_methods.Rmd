@@ -138,6 +138,29 @@ DT::datatable(all_miRNA_summary, filter = 'top', rownames = FALSE, extensions = 
 
 ```
 
+
+
+
+```{r "{{method_name}}_dem_modules", echo = FALSE, message = FALSE, warning = FALSE, eval = approach[1] %in% c("Eigengene", "hub_1")}
+"%>%" <- magrittr::"%>%"
+
+all_miRNA_mod_summary <- strat_data_table %>% 
+                            dplyr::group_by(miRNA, miRNA_ID, RNA_mod) %>% 
+                            dplyr::summarise(Significant_targets = length(Target_ID), 
+                                      Targets_in_multiMiR = sum(Predicted_DB_count > 0 | Validated_DB_count > 0), 
+                                      Predicted_targets = sum(Predicted_DB_count > 0), 
+                                      Validated_targets = sum(Validated_DB_count > 0))
+all_miRNA_mod_summary <- as.data.frame(all_miRNA_mod_summary)
+
+DT::datatable(all_miRNA_mod_summary, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+      options = list(          paging = TRUE,
+        paging = TRUE,
+        colReorder = TRUE,
+        dom = 'lftBip',
+        buttons = c('copy', 'csv', 'excel')
+    ))
+```
+
 ```{r "{{method_name}}_dem_table_config", echo = FALSE, message=FALSE, warning=FALSE}
 
 outdir <- file.path(output_files, method)

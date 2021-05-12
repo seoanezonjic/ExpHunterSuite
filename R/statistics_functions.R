@@ -233,7 +233,8 @@ readable_names = TRUE
 
 ){
   stats_names <- data.frame(orig = c("acc", "ppv", "recall", "spc", "fmeasure", 
-                                 "LRplus_sub", "LRplus_test", "v.fisher.test", "odds_ratio"),
+                                 "LRplus_sub", "LRplus_test", "v.fisher.test", 
+                                 "odds_ratio"),
                             renamed = c("Accuracy", "Precision", "Recall", 
                                  "Specificity", "Fmax", "LRplus_sub", 
                                  "LRplus_test", "Pvalue", "Odds_ratio"))
@@ -254,7 +255,7 @@ calc_quantile <- function(value, distribution){
     return(quantile)
 }
 
-#' Takes boolean vectors of same length and numeric vector of weights 
+# Takes boolean vectors of same length and numeric vector of weights 
 # false_weights, penalization for values without weights 
 # > 0.5 is reward and > 0.5 penalization
 weighted_cont_table <- function(

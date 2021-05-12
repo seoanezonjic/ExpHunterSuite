@@ -498,7 +498,7 @@ cat("\n\n**Rank plot**\n\n",
 	"The enrichment score evolution trought the ranked genes by fold-change are show for the top functional terms. 
 	Y axis shows the enrichment score and the X axis shows the genes ranked by fold-change.\n\n"
 )
-pp <- enrichplot::gseaplot2(enrich_gsea, geneSetID=ifelse(nrow(enrich_gsea@result) < 4, seq(nrow(enrich_gsea@result)), 1:4), title = enrich_gsea$Description[1], pvalue_table = TRUE)
+pp <- enrichplot::gseaplot2(enrich_gsea, geneSetID=ifelse(nrow(enrich_gsea@result) < 4, seq(nrow(enrich_gsea@result)), seq(4)), title = enrich_gsea$Description[1], pvalue_table = TRUE)
 
 plot_in_div(pp, fig_width = default_width)
 
@@ -700,7 +700,7 @@ for (onto in names(go_main_enrich)) {
 			"The enrichment score evolution trought the ranked genes by fold-change are show for the top functional terms. 
 			Y axis shows the enrichment score and the X axis shows the genes ranked by fold-change.\n\n"
 		)
-		go_pp <- enrichplot::gseaplot2(enrich_go_gsea[[onto]], geneSetID=ifelse(nrow(enrich_go_gsea[[onto]]@result) < 4, seq(nrow(enrich_go_gsea[[onto]]@result)), 1:4), pvalue_table = TRUE) 
+		go_pp <- enrichplot::gseaplot2(enrich_go_gsea[[onto]], geneSetID=ifelse(nrow(enrich_go_gsea[[onto]]@result) < 4, seq(nrow(enrich_go_gsea[[onto]]@result)), seq(4)), pvalue_table = TRUE) 
 		plot_in_div(go_pp, fig_width = default_width)
 		cat("\n \n")
 	}
@@ -1071,7 +1071,7 @@ cat("\n\n**Rank plot**\n\n",
 	"The enrichment score evolution trought the ranked genes by fold-change are show for the top functional terms. 
 	Y axis shows the enrichment score and the X axis shows the genes ranked by fold-change.\n\n"
 )
-pp <- enrichplot::gseaplot2(enrich_react_gsea, geneSetID=ifelse(nrow(enrich_react_gsea@result) < 4, seq(nrow(enrich_react_gsea@result)), 1:4), title = enrich_react_gsea$Description[1], pvalue_table = TRUE)
+pp <- enrichplot::gseaplot2(enrich_react_gsea, geneSetID=ifelse(nrow(enrich_react_gsea@result) < 4, seq(nrow(enrich_react_gsea@result)), seq(4)), title = enrich_react_gsea$Description[1], pvalue_table = TRUE)
 plot_in_div(pp, fig_width = default_width)
 
 
