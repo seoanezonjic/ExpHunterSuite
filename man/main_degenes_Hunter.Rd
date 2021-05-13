@@ -7,6 +7,7 @@
 main_degenes_Hunter(
   raw = NULL,
   target = NULL,
+  count_var_quantile = 0,
   external_DEA_data = NULL,
   output_files = getwd(),
   reads = 2,
@@ -39,6 +40,8 @@ main_degenes_Hunter(
 \item{raw}{Dataframe with raw counts per sample and feature}
 
 \item{target}{set with control and treatment information}
+
+\item{count_var_quantile}{quantile variance threshold}
 
 \item{external_DEA_data}{external DEA set}
 

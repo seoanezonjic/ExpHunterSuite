@@ -5,6 +5,7 @@
 #' @param raw Dataframe with raw counts per sample and feature
 #' @param target set with control and treatment information
 #' @param external_DEA_data external DEA set 
+#' @param count_var_quantile quantile variance threshold
 #' @param output_files otput files path
 #' @param reads set of reads
 #' @param minlibraries minimum of libraries to use a set of data
