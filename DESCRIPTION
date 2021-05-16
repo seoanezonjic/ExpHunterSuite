@@ -1,6 +1,6 @@
 Package: ExpHunterSuite
 Title: Package For The Comprehensive Analysis Of Transcriptomic Data
-Version: 0.99.14
+Version: 0.99.15
 Authors@R: 
     c(person(given = "James",
            family = "Perkins",
@@ -48,7 +48,7 @@ Authors@R:
            comment = c(ORCID = "0000-0003-0327-1837"))
     )
 Description: The ExpHunterSuite implements a comprehensive protocol for the analysis of transcriptional data using established *R* packages and combining their results. It covers all key steps in DEG detection, CEG detection and functional analysis for RNA-seq data. It has been implemented as an R package containing functions that can be run interactively. In addition, it also contains scripts that wrap the functions and can be run directly from the command line.
-Depends: R (>= 4.0.0)
+Depends: R (>= 4.1.0)
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
