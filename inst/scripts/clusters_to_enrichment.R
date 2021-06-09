@@ -1,26 +1,26 @@
 #!/usr/bin/env Rscript
 
-# options(warn=1)
-# if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
-#   # Obtain this script directory
-#   full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile), 
-#                  error=function(e) # works when using R CMD
-#                 normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
-#                   commandArgs())], '='))[2]))
-#   main_path_script <- dirname(full.fpath)
-#   root_path <- file.path(main_path_script, '..', '..')
-#   # Load custom libraries
-#   custom_libraries <- c('io_handling.R', 
-#     'functional_analysis_library.R')
-#   for (lib in custom_libraries){
-#     source(file.path(root_path, 'R', lib))
-#   }
-#   template_folder <- file.path(root_path, 'inst', 'templates')
-# }else{
-#   require('ExpHunterSuite')
-#   root_path <- find.package('ExpHunterSuite')
-#   template_folder <- file.path(root_path, 'templates')
-# }
+options(warn=1)
+if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
+  # Obtain this script directory
+  full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile), 
+                 error=function(e) # works when using R CMD
+                normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
+                  commandArgs())], '='))[2]))
+  main_path_script <- dirname(full.fpath)
+  root_path <- file.path(main_path_script, '..', '..')
+  # Load custom libraries
+  custom_libraries <- c('general_functions.R', 
+    'functional_analysis_library.R')
+  for (lib in custom_libraries){
+    source(file.path(root_path, 'R', lib))
+  }
+  template_folder <- file.path(root_path, 'inst', 'templates')
+}else{
+  require('ExpHunterSuite')
+  root_path <- find.package('ExpHunterSuite')
+  template_folder <- file.path(root_path, 'templates')
+}
 
 
 col <- c("#89C5DA", "#DA5724", "#74D944", "#CE50CA", "#3F4921", "#C0717C", "#CBD588", "#5F7FC7", 
@@ -50,7 +50,7 @@ multienricher <- function(funsys, cluster_genes_list, task_size, workers, pvalcu
     patter_to_remove <- "GO_DATA *<-"
     ltorem <- grep(patter_to_remove, body(enrf))
     body(enrf)[[ltorem]] <- substitute(GO_DATA <- ENRICH_DATA)
-    enriched_cats <- ExpHunterSuite:::parallel_list(cluster_genes_list, function(cl_genes){
+    enriched_cats <- parallel_list(cluster_genes_list, function(cl_genes){
        enr <- enrf(gene = cl_genes,
                    OrgDb         = org.Hs.eg.db::org.Hs.eg.db,
                    pAdjustMethod = "BH", ont = funsys,
@@ -72,7 +72,7 @@ parse_cluster_results <- function(enrichments_ORA, simplify_results = TRUE){
         enr_obj@fun <- "enrichGO"
         # enr_obj <- clusterProfiler::simplify(enr_obj) 
       } 
-      enr_obj <- ExpHunterSuite:::catched_pairwise_termsim(enr_obj, 200)
+      enr_obj <- catched_pairwise_termsim(enr_obj, 200)
     }                              
     enrichments_ORA_tr[[funsys]] <- enr_obj 
   }
@@ -114,7 +114,6 @@ option_list <- list(
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 ##################################### INITIALIZE ##
-library(optparse)
 library(clusterProfiler)
 library(org.Hs.eg.db)
 library(AnnotationDbi)
@@ -169,31 +168,26 @@ if (!file.exists(temp_file) || opt$force) {
 }
 
 for (funsys in names(enrichments_ORA)){
-print(funsys)
   for (cluster in names(enrichments_ORA[[funsys]])){
     cl_path <- file.path(output_path, paste0(cluster,"_cl_enr"))
     if (!dir.exists(cl_path)){
       dir.create(cl_path, recursive = TRUE)
     } 
     enr <-enrichments_ORA[[funsys]][[cluster]]
-    print(cluster)
-    # save(enr, file = "test.RData")
     if (length(enr$Description) < 3 ) next
-    enr <- ExpHunterSuite:::catched_pairwise_termsim(enr, 200)
-      pp <- enrichplot::emapplot(enr, showCategory= n_category, layout = "kk")    
+    enr <- catched_pairwise_termsim(enr, 200)
+    pp <- enrichplot::emapplot(enr, showCategory= n_category, layout = "kk")    
     ggplot2::ggsave(filename = file.path(cl_path,paste0(cluster,"_emaplot_",funsys,"_",opt$output_file,".png")), pp, width = 30, height = 30, dpi = 300, units = "cm", device='png')
+    
     if (!is.null(opt$gene_mapping)){
-  print(str(gene_mapping[[cluster]]))
-
       pp <- enrichplot::cnetplot(enr, showCategory= n_category, foldChange = gene_mapping[[cluster]]) + ggplot2::scale_colour_gradient(name = gane_mapping_name, low = "#AFCAFF",breaks=unique(gene_mapping[[cluster]]),high = "#00359C") 
     } else {
       pp <- enrichplot::cnetplot(enr, showCategory= n_category)
     }
     ggplot2::ggsave(filename = file.path(cl_path,paste0(cluster,"_cnetplot_",funsys,"_",opt$output_file,".png")), pp, width = 30, height = 30, dpi = 300, units = "cm", device='png')
-
   }
 }
-    q()   
+
 write_fun_enrichments(enrichments_ORA, output_path, all_funsys)
 enrichments_ORA <- parse_cluster_results(enrichments_ORA, simplify_results = TRUE)
 
