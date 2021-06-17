@@ -35,6 +35,8 @@ filter_DEGH_data <- function(DGH_data, MM_cutoff){
     all_degs <- DGH_results$genes_tag %in% c("PREVALENT_DEG", "POSSIBLE_DEG")
     modules_with_DEGS <- unique(DGH_results[all_degs & 
         DGH_results$Cluster_MM >= MM_cutoff, "Cluster_ID"])
+    #Removing module 0
+    modules_with_DEGS <- modules_with_DEGS[modules_with_DEGS != 0]
 
     candidate_not_deg <- DGH_results$Cluster_ID %in% modules_with_DEGS &
                                        DGH_results$genes_tag == "NOT_DEG" &
