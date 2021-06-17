@@ -79,8 +79,8 @@ opt$help <- NULL
 opt$output_files <- file.path(opt$output_files, "targets_functional")
 
 
-load("/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/test_func_2.RData")
-# target_func_results <- do.call("main_targets_functional", opt)
+# load("/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/test_func_2.RData")
+target_func_results <- do.call("main_targets_functional", opt)
  # save(target_func_results, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/test_func_2.RData")
 # q()
 
