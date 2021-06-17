@@ -60,17 +60,18 @@ str_names <- list("dd" = "normalized_counts_RNA_vs_miRNA_normalized_counts",
         names(geneList) <- unique_genes$ENTREZGENE_target
 
     if (launch_expanded) {
-        
-        unique_miRNAs <- unique(raw_data$miRNA)
-        unique_miRNAs <- c(unique_miRNAs, 
-                           raw_data[is.na(raw_data$miRNA), "miRNAseq"])      
+        all_miRNA <- raw_data$miRNA
+        all_miRNA[is.na(all_miRNA)] <- raw_data[is.na(all_miRNA), "miRNA_ID"]
+        unique_miRNAs <-unique(all_miRNA)
         expanded_targets <- lapply(unique_miRNAs, function(miRNA){
-                miRNA_check <- raw_data$miRNA == miRNA
+                # miRNA_check <- all_miRNA == miRNA
+                miRNA_check <- all_miRNA == miRNA & !is.na(raw_data$miRNA) 
+          
                 if(any(miRNA_check)){
                     mirna_targets <- raw_data[raw_data$miRNA == miRNA, 
                 "ENTREZGENE_target"]
                 } else {
-                    mirna_targets <- raw_data[raw_data$miRNAseq == miRNA, 
+                    mirna_targets <- raw_data[raw_data$miRNA_ID == miRNA, 
                 "ENTREZGENE_target"]
                 }
                 return(unique(mirna_targets))
@@ -170,7 +171,8 @@ str_names <- list("dd" = "normalized_counts_RNA_vs_miRNA_normalized_counts",
         }
 
     }
-
+    # save(enr_ORA_expanded, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA/test_fun.RData")
+    # q()
     enrichments_ORA <- lapply(enr_ORA_expanded, clusterProfiler::merge_result)
     enrichments_ORA <- lapply(enrichments_ORA, function(res){
                              if(nrow(res@compareClusterResult) > 0)
