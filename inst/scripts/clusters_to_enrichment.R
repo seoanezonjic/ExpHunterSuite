@@ -11,17 +11,20 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
   custom_libraries <- c('general_functions.R', 
-    'functional_analysis_library.R')
+    'functional_analysis_library.R','plotting_functions.R')
   for (lib in custom_libraries){
     source(file.path(root_path, 'R', lib))
   }
   template_folder <- file.path(root_path, 'inst', 'templates')
+  organisms_table_file <- file.path(root_path, "inst", "external_data", 
+        "organism_table.txt")
 }else{
   require('ExpHunterSuite')
   root_path <- find.package('ExpHunterSuite')
   template_folder <- file.path(root_path, 'templates')
+  organisms_table_file <- file.path(root_path, "external_data", 
+        "organism_table.txt")
 }
-
 
 col <- c("#89C5DA", "#DA5724", "#74D944", "#CE50CA", "#3F4921", "#C0717C", "#CBD588", "#5F7FC7", 
          "#673770", "#D3D93E", "#38333E", "#508578", "#D7C1B1", "#689030", "#AD6F3B", "#CD9BCD", 
@@ -29,12 +32,12 @@ col <- c("#89C5DA", "#DA5724", "#74D944", "#CE50CA", "#3F4921", "#C0717C", "#CBD
          "#8A7C64", "#599861")
 
 
-convert_ids_to_entrez <- function(ids, gene_keytype){
-  possible_ids <- columns(org.Hs.eg.db)
+convert_ids_to_entrez <- function(ids, gene_keytype, org_db){
+  possible_ids <- AnnotationDbi::columns(org_db)
   if(! gene_keytype %in% possible_ids) 
     stop(paste(c("gene keytype must be one of the following:", possible_ids), collapse=" "))
   ids <- tryCatch(
-    ids <- mapIds(org.Hs.eg.db, keys=ids, column="ENTREZID", keytype=gene_keytype),
+    ids <- AnnotationDbi::mapIds(org_db, keys=ids, column="ENTREZID", keytype=gene_keytype),
     error=function(cond){
       ids <- NULL
     }
@@ -42,19 +45,55 @@ convert_ids_to_entrez <- function(ids, gene_keytype){
   return(ids[!is.na(ids)])
 }
 
-multienricher <- function(funsys, cluster_genes_list, task_size, workers, pvalcutoff = 0.05, qvalcutoff = 0.02, readable = TRUE){
+
+get_organism_id <- function(organism_info, funsys){
+  if(funsys %in% c("BP","CC","MF")){
+    org_id <- organism_info$Bioconductor_DB[1]
+  }else if(funsys == "KEGG"){
+    org_id <- organism_info$KeggCode[1]
+  }else if(funsys == "REACT"){
+    org_id <- organism_info$Reactome_ID[1]
+  }
+  return(org_id)
+}
+
+
+
+get_org_db <- function(current_organism_info){
+  org_db <- current_organism_info$Bioconductor_DB[1]
+  org_db <- eval(parse(text = paste0(org_db,"::",org_db)))
+  return(org_db)
+}
+
+
+multienricher_2 <- function(funsys, cluster_genes_list, organism_info,org_db = NULL,task_size, workers, pvalcutoff = 0.05, qvalcutoff = 0.02, readable = TRUE){
   enrichments_ORA <- list()
+  if (is.null(org_db)){
+    org_db <- get_org_db(current_organism_info)
+  }
+
   for(funsys in all_funsys) {
-    ENRICH_DATA <- clusterProfiler:::get_GO_data(org.Hs.eg.db::org.Hs.eg.db, funsys, "ENTREZID")
-    enrf <- clusterProfiler::enrichGO
-    patter_to_remove <- "GO_DATA *<-"
-    ltorem <- grep(patter_to_remove, body(enrf))
-    body(enrf)[[ltorem]] <- substitute(GO_DATA <- ENRICH_DATA)
+    if (funsys %in% c("CC","BP","MF")){
+      enrf <- clusterProfiler::enrichGO
+      get_enr_data <- get("get_GO_data", envir = asNamespace("clusterProfiler"),inherits = FALSE)
+      pattern_to_remove <- "GO_DATA *<-"
+      ENRICH_DATA <- get_enr_data(org_db, funsys, "ENTREZID")
+      ltorem <- grep(pattern_to_remove, body(enrf))
+      body(enrf)[[ltorem]] <- substitute(GO_DATA <- ENRICH_DATA)
+
+    } else  if (funsys == "REACT"){
+    
+    }else if (funsys == "KEGG"){
+
+    }
+    params <- list(OrgDb = org_db,
+                   pAdjustMethod = "BH",minGSSize = 5, ont = funsys,
+                   pvalueCutoff  = pvalcutoff, qvalueCutoff = qvalcutoff, readable = readable) #Now Param is configured Only for GO
     enriched_cats <- parallel_list(cluster_genes_list, function(cl_genes){
-       enr <- enrf(gene = cl_genes,
-                   OrgDb         = org.Hs.eg.db::org.Hs.eg.db,
-                   pAdjustMethod = "BH", ont = funsys,
-                   pvalueCutoff  = pvalcutoff, qvalueCutoff = qvalcutoff, readable = readable)
+
+      print(str(cl_genes))
+       params_cl <- c(params, list(gene = cl_genes) )
+       enr <- do.call("enrf", params_cl)
       }, 
       workers= workers, task_size = task_size
     )
@@ -70,7 +109,7 @@ parse_cluster_results <- function(enrichments_ORA, simplify_results = TRUE){
     if(nrow(enr_obj@compareClusterResult) > 0){
       if (funsys %in% c("MF", "CC", "BP") && simplify_results){
         enr_obj@fun <- "enrichGO"
-        # enr_obj <- clusterProfiler::simplify(enr_obj) 
+        enr_obj <- clusterProfiler::simplify(enr_obj) 
       } 
       enr_obj <- catched_pairwise_termsim(enr_obj, 200)
     }                              
@@ -91,21 +130,81 @@ write_fun_enrichments <- function(enrichments_ORA, output_path, all_funsys){
   }
 }
 
+parse_results_for_report <- function(enrichments, simplify_results = FALSE){
+  enrichments_for_reports <- list()
+  for (funsys in names(enrichments)){
+    for (cluster in names(enrichments[[funsys]])){
+      if (is.null(enrichments_for_reports[[cluster]]))
+      enrichments_for_reports[[cluster]] <- list()
+      enr <- enrichments[[funsys]][[cluster]]
+      if (simplify_results)
+        enr <- clusterProfiler::simplify(enr) 
+      if (length(enr$Description) < 3 ) next
+      enr <- catched_pairwise_termsim(enr, 200)
+      enrichments_for_reports[[cluster]][[funsys]] <- enr 
+    }
+  }
+  return(enrichments_for_reports)
+}
+
+
+parse_mappings <- function(gene_mapping, org_db, keytype){
+  cl_genes_mapping <- read.table(gene_mapping, header=TRUE)
+  gane_mapping_name <- colnames(cl_genes_mapping)[3]
+  ids <- AnnotationDbi::select(org_db , keys=cl_genes_mapping[,2], column="ENTREZID", keytype=keytype)
+  ids <- unique(ids)
+  cl_genes_mapping <- merge(cl_genes_mapping, ids, by.x = "geneid", by.y = keytype)
+  cl_genes_mapping <- cl_genes_mapping[!is.na(cl_genes_mapping$ENTREZID),]
+  gene_mapping <- cl_genes_mapping[,2:4]
+  gene_mapping <- split(gene_mapping, gene_mapping$cluster)
+  gene_mapping <-lapply(gene_mapping, function(cluster_mapping){
+    gene_map <- cluster_mapping[,gane_mapping_name]
+    names(gene_map) <- cluster_mapping$ENTREZID
+    return(gene_map)
+  })
+  return(list(gane_mapping_name = gane_mapping_name, gene_mapping = gene_mapping))
+}
+
+write_func_cluster_report <- function(enrichments_for_reports, output_path, gene_mapping){
+  temp_path <- file.path(output_path, "temp")
+  dir.create(temp_path) #perform parallel
+  for (cluster in names(enrichments_for_reports)){
+      # cluster_enrichments <- enrichments_for_reports[[cluster]]
+      geneList <- NULL
+      if (!is.null(gene_mapping)){ 
+        geneList <- gene_mapping[[cluster]]
+      }
+      outfile <- file.path(output_path, paste0(cluster, "_func_report.html"))
+      temp_path_cl <- file.path(temp_path, paste0(cluster,"_temp"))
+      rmarkdown::render(file.path(template_folder, 
+                  'clusters_to_enrichment.Rmd'),output_file = outfile, 
+              intermediates_dir = temp_path_cl)
+  }
+  unlink(temp_path, recursive = TRUE)
+}
+
+
 option_list <- list(
   optparse::make_option(c("-i", "--input_file"), type="character", default=NULL,
                         help="2 columns - cluster and comma separated gene ids"),
   optparse::make_option(c("-w", "--workers"), type="integer", default=1,
-                        help="number of processes for parallel execution"),
+                        help="number of processes for parallel execution. Default=%default"),
   optparse::make_option(c("-p", "--pvalcutoff"), type="double", default=0.05,
-                        help="Cutoff for P value and adjusted P value for enrichments"),
+                        help="Cutoff for P value and adjusted P value for enrichments. Default=%default"),
   optparse::make_option(c("-q", "--qvalcutoff"), type="double", default=0.02,
-                        help="Cutoff for Q value for enrichments"),
+                        help="Cutoff for Q value for enrichments. Default=%default"),
   optparse::make_option(c("-t", "--task_size"), type="integer", default=1,
-                        help="number of clusters per task"),
+                        help="number of clusters per task. Default=%default"),
   optparse::make_option(c("-F", "--force"), type="logical", default=FALSE, 
                         action = "store_true", help="Ignore temporal files"),
+  optparse::make_option(c("-f", "--funsys"), type="character", default="BP,MF,CC", 
+                        help="Funsys to execute: MF => GO Molecular Function, BP => GO Biological Process, CC => GO Celular Coponent. Default=%default"),
+  optparse::make_option(c("-O", "--model_organism"), type="character", default="Human", 
+                        help="Model organism. Human or Mouse"),
+  optparse::make_option(c("-d", "--description_file"), type="character", default=NULL,
+                        help="Markdown file describing of the enriched clusters."),
   optparse::make_option(c("-k", "--gene_keytype"), type="character", default="ENTREZID",
-                        help="What identifier is being used for the genes in the clusters?"),
+                        help="What identifier is being used for the genes in the clusters?. Default=%default"),
   optparse::make_option(c("-g", "--gene_mapping"), type="character", default=NULL,
                         help="3 columns tabular file- Cluster - InputGeneID - NumericGeneMapping. Header must be indicated as cluster - geneid - [numeric_mapping]"),
   optparse::make_option(c("-o", "--output_file"), type="character", default="results",
@@ -115,49 +214,45 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 ##################################### INITIALIZE ##
 library(clusterProfiler)
-library(org.Hs.eg.db)
-library(AnnotationDbi)
 output_path <- paste0(opt$output_file, "_functional_enrichment")
 dir.create(output_path)
 output_path <- normalizePath(output_path)
 temp_file <- file.path(output_path, "enr_tmp.RData")
 all_funsys <- c("MF", "CC", "BP") 
 n_category <- 30
+organisms_table <- get_organism_table(organisms_table_file)
+current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
+gene_mapping <- NULL
+org_db <- get_org_db(current_organism_info)
 #################################### MAIN ##
 
+
 if (!is.null(opt$gene_mapping)){
-  cl_genes_mapping <- read.table(opt$gene_mapping, header=TRUE)
-  gane_mapping_name <- colnames(cl_genes_mapping)[3]
-  ids <- select(org.Hs.eg.db, keys=cl_genes_mapping[,2], column="ENTREZID", keytype=opt$gene_keytype)
-  ids <- unique(ids)
-  cl_genes_mapping <- merge(cl_genes_mapping, ids, by.x = "geneid", by.y = opt$gene_keytype)
-  cl_genes_mapping <- cl_genes_mapping[!is.na(cl_genes_mapping$ENTREZID),]
-  gene_mapping <- cl_genes_mapping[,2:4]
-  gene_mapping <- split(gene_mapping, gene_mapping$cluster)
-  gene_mapping <-lapply(gene_mapping, function(cluster_mapping){
-    gene_map <- cluster_mapping[,gane_mapping_name]
-    names(gene_map) <- cluster_mapping$ENTREZID
-    return(gene_map)
-  })
-
+  parsed_mappings <- parse_mappings(opt$gene_mapping, org_db, opt$gene_keytype)
+  gene_mapping <- parsed_mappings[["gene_mapping"]]
+  gane_mapping_name <-  parsed_mappings[["gane_mapping_name"]]
 }
-
-
 
 if (!file.exists(temp_file) || opt$force) {
 
   cluster_genes <- read.table(opt$input_file, header=FALSE)
   cluster_genes_list <- strsplit(cluster_genes[,2], ",")
+  print(str(cluster_genes_list))
   if(opt$gene_keytype != "ENTREZID") {
-    cluster_genes_list <- sapply(cluster_genes_list, function(x){
+    cluster_genes_list <- lapply(cluster_genes_list, function(x){
                                       convert_ids_to_entrez(ids=x, 
-                                                            gene_keytype=opt$gene_keytype)}) 
+                                                            gene_keytype=opt$gene_keytype,
+                                                            org_db = org_db)}) 
   }
-  names(cluster_genes_list) <- cluster_genes[,1]
+    print(str(cluster_genes_list))
 
-  enrichments_ORA <- multienricher(funsys =  all_funsys, 
+  names(cluster_genes_list) <- cluster_genes[,1]
+  print(str(cluster_genes_list))
+
+  enrichments_ORA <- multienricher_2(funsys =  all_funsys, 
                                   cluster_genes_list =  cluster_genes_list, 
                                   task_size = opt$task_size, 
+                                  org_db= org_db,
                                   workers = opt$workers, 
                                   pvalcutoff =  opt$pvalcutoff, 
                                   qvalcutoff = opt$qvalcutoff)
@@ -167,46 +262,20 @@ if (!file.exists(temp_file) || opt$force) {
   load(temp_file)
 }
 
-for (funsys in names(enrichments_ORA)){
-  for (cluster in names(enrichments_ORA[[funsys]])){
-    cl_path <- file.path(output_path, paste0(cluster,"_cl_enr"))
-    if (!dir.exists(cl_path)){
-      dir.create(cl_path, recursive = TRUE)
-    } 
-    enr <-enrichments_ORA[[funsys]][[cluster]]
-    if (length(enr$Description) < 3 ) next
-    enr <- catched_pairwise_termsim(enr, 200)
-    pp <- enrichplot::emapplot(enr, showCategory= n_category, layout = "kk")    
-    ggplot2::ggsave(filename = file.path(cl_path,paste0(cluster,"_emaplot_",funsys,"_",opt$output_file,".png")), pp, width = 30, height = 30, dpi = 300, units = "cm", device='png')
-    
-    if (!is.null(opt$gene_mapping)){
-      pp <- enrichplot::cnetplot(enr, showCategory= n_category, foldChange = gene_mapping[[cluster]]) + ggplot2::scale_colour_gradient(name = gane_mapping_name, low = "#AFCAFF",breaks=unique(gene_mapping[[cluster]]),high = "#00359C") 
-    } else {
-      pp <- enrichplot::cnetplot(enr, showCategory= n_category)
-    }
-    ggplot2::ggsave(filename = file.path(cl_path,paste0(cluster,"_cnetplot_",funsys,"_",opt$output_file,".png")), pp, width = 30, height = 30, dpi = 300, units = "cm", device='png')
-  }
-}
-
+enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
 write_fun_enrichments(enrichments_ORA, output_path, all_funsys)
-enrichments_ORA <- parse_cluster_results(enrichments_ORA, simplify_results = TRUE)
+enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = TRUE)
 
-for (funsys in names(enrichments_ORA)){
-  if (length(unique(enrichments_ORA[[funsys]]@compareClusterResult$Description)) < 2 ) next
+for (funsys in names(enrichments_ORA_merged)){
+  if (length(unique(enrichments_ORA_merged[[funsys]]@compareClusterResult$Description)) < 2 ) next
 
-  pp <- enrichplot::emapplot(enrichments_ORA[[funsys]], showCategory= n_category, pie="Count", layout = "kk")# + ggplot2::scale_fill_manual(values = col)
+  pp <- enrichplot::emapplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, pie="Count", layout = "lgl")# + ggplot2::scale_fill_manual(values = col)
 
   ggplot2::ggsave(filename = file.path(output_path,paste0("emaplot_",funsys,"_",opt$output_file,".png")), pp, width = 30, height = 30, dpi = 300, units = "cm", device='png')
 
-  pp <- enrichplot::dotplot(enrichments_ORA[[funsys]], showCategory= n_category)
+  pp <- enrichplot::dotplot(enrichments_ORA_merged[[funsys]], showCategory= n_category)
   ggplot2::ggsave(filename = file.path(output_path,paste0("dotplot_",funsys,"_",opt$output_file,".png")), pp, width = 60, height = 40, dpi = 300, units = "cm", device='png')
 
 }
-   
+write_func_cluster_report(enrichments_for_reports,output_path,gene_mapping)
 
-# organisms_table <- ExpHunterSuite::get_organism_table()
-# current_organism_info <- subset(organisms_table, rownames(organisms_table) == "Human")
-# system.time(
-# enriched_cats4 <- ExpHunterSuite::multienricher(cluster_genes_list, organism_info = current_organism_info
-# , ontology="m", pvalueCutoff = 0.05, pAdjustMethod = "BH")
-# )
