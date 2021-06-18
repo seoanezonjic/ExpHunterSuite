@@ -162,6 +162,10 @@ topgenes <- DEGH_results[topindx,c("Symbol",targetcols,patterncols,"mean_logFCs"
 botgenes <- DEGH_results[botindx,c("Symbol",targetcols,patterncols,"mean_logFCs",colnames(DEGH_results)[1])]
 # Sort
 
+# Check the are ACTUALLY POSITIVE
+topgenes <- topgenes[topgenes$mean_logFCs > 0,]
+botgenes <- botgenes[botgenes$mean_logFCs < 0,]
+
 # Message
 cat("## **Top genes**\n")
 cat(paste(c("Table of signifcant genes. Variables taken into account are being shown into table (except gene symbols/ID). Top of positive (",nrow(topgenes)," items) and negative (",nrow(botgenes)," items) are being shown in two different tables\n"), collapse = ""))

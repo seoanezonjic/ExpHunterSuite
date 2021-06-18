@@ -137,14 +137,18 @@ main_degenes_Hunter <- function(
     raw <- raw[c(index_control_cols,index_treatmn_cols)]
     raw[is.na(raw)] <- 0 # Substitute NA values
 
-    raw_filter <- filter_count(reads, minlibraries, raw, filter_type, 
+    if(grepl("F", modules)) {
+      raw_filter <- raw
+      var_filter <- NA
+    } else {
+      raw_filter <- filter_count(reads, minlibraries, raw, filter_type, 
                                index_control_cols, index_treatmn_cols)
 
-    var_filter <- filter_by_variance(raw_filter, 
+      var_filter <- filter_by_variance(raw_filter, 
                                      q_filter = count_var_quantile, 
                                      target = target)
-    raw_filter <- var_filter[["fil_count_mtrx"]]
-
+      raw_filter <- var_filter[["fil_count_mtrx"]]
+    }
     
     ############################################################
     ##             PERFORM EXPRESION ANALYSIS                 ##
@@ -279,7 +283,7 @@ check_input_main_degenes_Hunter <- function(raw,
       if(is.null(raw)) {
         warning(paste0("External DEA dataframe given but no count data",
           " - creating a blank one"))
-        raw <- as.data.frame(matrix(1, 
+        raw <- as.data.frame(matrix(sample(1:100, nrow(external_DEA_data)*nrow(target),replace=TRUE), 
                                     nrow=nrow(external_DEA_data), 
                                     ncol=nrow(target), 
                                   dimnames = list(row.names(external_DEA_data), 

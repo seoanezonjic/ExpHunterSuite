@@ -167,10 +167,11 @@ perform_expression_analysis <- function(modules,
       package_objects[['externalDEA']] <- results[[3]]
 
       # Result Plot Visualization
+
       if (!is.null(all_counts_for_plotting[['externalDEA']])){
-        all_pvalue_names   <- c(all_pvalue_names, names(external_DEA_data)[1])
-        all_LFC_names      <- c(all_LFC_names, names(external_DEA_data)[2])
-        all_FDR_names      <- c(all_FDR_names, names(external_DEA_data)[3])
+        all_pvalue_names   <- c(all_pvalue_names, "P.Value")
+        all_LFC_names      <- c(all_LFC_names, "logFC")
+        all_FDR_names      <- c(all_FDR_names, "adj.P.Val")
         final_pvalue_names <- c(final_pvalue_names, 'pvalue_externalDEA')
         final_logFC_names  <- c(final_logFC_names, 'logFC_externalDEA')
         final_FDR_names    <- c(final_FDR_names, 'FDR_externalDEA')

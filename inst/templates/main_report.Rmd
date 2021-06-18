@@ -174,7 +174,7 @@ to_plot <- boxplot(all_data_normalized[[1]],
 
 Variance of gene counts across samples are represented. Genes with lower variance than selected threshold (dashed grey line) were filtered out. 
 
-```{r variance_dist, echo = FALSE, warning = FALSE, message = FALSE}
+```{r variance_dist, echo = FALSE, eval=!grepl("F", opt$modules), warning = FALSE, message = FALSE}
 
 gene_count_var <- data.frame(variance =var_filter[["variance_dis"]])
 
@@ -269,7 +269,7 @@ limma::vennDiagram(intersections, circle.col = grDevices::rainbow(length(sets)))
 var_thr <- 0.01
 ```
 
-```{r logFCplots, echo = FALSE, results = "asis"}
+```{r logFCplots, echo = FALSE, eval=!grepl("F", opt$modules), results = "asis"}
 pp <- ht2logFCPlot(DE_all_genes, var_filter = var_thr, title = paste0("(variance threshold >= ",var_thr,")"))
 	cat(paste0("\nThis graph shows logFC calculated (y-axis) for each package (points) and gene (x-axis). Only genes with variability over ", var_thr, " will be plotted. This representation allows to user to observe the behaviour of each DE package and detect when one of them has atypical results.\n"))
 	plot(pp)
