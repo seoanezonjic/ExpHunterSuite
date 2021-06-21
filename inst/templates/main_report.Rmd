@@ -1,5 +1,5 @@
 ---
-author: "Fernando Moreno Jabato"
+title: "ExpHunterSuite: Differential Expression Report"
 output:
   html_document:
     toc: true
@@ -28,8 +28,6 @@ output:
    
   }   
 </style>
-
-# **DEgenes Hunter - Differential expression analysis report**
 
 ## **Details of the input data**
 

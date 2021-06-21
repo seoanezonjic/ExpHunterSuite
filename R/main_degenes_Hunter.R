@@ -137,18 +137,14 @@ main_degenes_Hunter <- function(
     raw <- raw[c(index_control_cols,index_treatmn_cols)]
     raw[is.na(raw)] <- 0 # Substitute NA values
 
-    if(grepl("F", modules)) {
-      raw_filter <- raw
-      var_filter <- NA
-    } else {
-      raw_filter <- filter_count(reads, minlibraries, raw, filter_type, 
+    raw_filter <- filter_count(reads, minlibraries, raw, filter_type, 
                                index_control_cols, index_treatmn_cols)
 
-      var_filter <- filter_by_variance(raw_filter, 
+    var_filter <- filter_by_variance(raw_filter, 
                                      q_filter = count_var_quantile, 
                                      target = target)
-      raw_filter <- var_filter[["fil_count_mtrx"]]
-    }
+    raw_filter <- var_filter[["fil_count_mtrx"]]
+
     
     ############################################################
     ##             PERFORM EXPRESION ANALYSIS                 ##
