@@ -379,26 +379,28 @@ ht2logFCPlot <- function(ht,
 
   # Plot
   # Check special cases
-  if(!is.null(y_range)){
+  # if(!is.null(y_range)){
+  #   pp <- ggplot2::ggplot(df_logfc, ggplot2::aes_string(x = "Gene", 
+  #     y = "logFC", colour = "Package")) + 
+  #       ggplot2::geom_point(alpha = alpha, 
+  #         ggplot2::aes_string(shape = "Type")) +
+  #       ggplot2::scale_shape_manual(values=c(16, 17)) +
+  #       ggplot2::ylim(c(-abs(y_range),abs(y_range))) 
+  # }else{
     pp <- ggplot2::ggplot(df_logfc, ggplot2::aes_string(x = "Gene", 
-      y = "logFC", colour = "Package")) + 
-        ggplot2::geom_point(alpha = alpha, 
-          ggplot2::aes_string(shape = "Type")) +
-        ggplot2::scale_shape_manual(values=c(16, 17)) +
-        ggplot2::ylim(c(-abs(y_range),abs(y_range))) 
-  }else{
-    pp <- ggplot2::ggplot(df_logfc, ggplot2::aes_string(x = "Gene", 
-      y = "logFC", colour = "Package")) + 
+      y = "logFC", colour = "Package", shape = "Package")) + 
         ggplot2::geom_point(alpha = alpha) 
-  }
+  # }
   pp <- pp + 
     ggplot2::xlab(paste0("Gene (",100 - round(aux_vars/length(
       unique(rownames(ht))),4)*100,
-    "% of genes has not significant variability)")) + 
+    "% of genes have lower variability than the threshold)")) + 
     ggplot2::ggtitle(title) + 
     ggplot2::theme_classic() + 
     ggplot2::theme(axis.text.x=ggplot2::element_blank(),
-        axis.ticks.x=ggplot2::element_blank())
+        axis.ticks.x=ggplot2::element_blank()) +
+    ggplot2::geom_hline(yintercept = 0,linetype="dashed", color = "#636363")
+ #   ggplot2::scale_color_manual(values = c('#d7191c','#fdae61','#2c7bb6','#ffffbf','#abd9e9'))
   # Return
   return(pp)
 }
