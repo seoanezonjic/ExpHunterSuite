@@ -397,7 +397,7 @@ ht2logFCPlot <- function(ht,
     "% of genes have lower variability than the threshold)")) + 
     ggplot2::ggtitle(title) + 
     ggplot2::theme_classic() + 
-    ggplot2::theme(axis.text.x=ggplot2::element_blank(),
+    ggplot2::theme(text = ggplot2::element_text(size = 14),axis.text.x=ggplot2::element_blank(),
         axis.ticks.x=ggplot2::element_blank()) +
     ggplot2::geom_hline(yintercept = 0,linetype="dashed", color = "#636363")
  #   ggplot2::scale_color_manual(values = c('#d7191c','#fdae61','#2c7bb6','#ffffbf','#abd9e9'))

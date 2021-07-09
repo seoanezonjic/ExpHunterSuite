@@ -272,11 +272,10 @@ pp <- ht2logFCPlot(DE_all_genes, var_filter = var_thr, title = paste0("(variance
 	cat(paste0("\nThis graph shows logFC calculated (y-axis) for each package (points) and gene (x-axis). Only genes with variability over ", var_thr, " will be plotted. This representation allows to user to observe the behaviour of each DE package and detect when one of them has atypical results.\n"))
 	plot(pp)
 ```
-a
 
 ### **FDR gene-wise benchmarking**
 
-Benchmark of false positive calling (Image extracted from {"padj\_prevalent\_DEGs.pdf"} file):
+Benchmark of false positive calling:
 
 Boxplot of FDR values among all genes with an FDR <= 0.05 in at least one DE detection package
 
