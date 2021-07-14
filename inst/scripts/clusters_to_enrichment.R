@@ -262,8 +262,8 @@ if (!file.exists(temp_file) || opt$force) {
   load(temp_file)
 }
 
-# enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
-#write_fun_enrichments(enrichments_ORA, output_path, all_funsys)
+enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
+write_fun_enrichments(enrichments_ORA, output_path, all_funsys)
 enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = TRUE)
 
 for (funsys in names(enrichments_ORA_merged)){
@@ -273,21 +273,9 @@ for (funsys in names(enrichments_ORA_merged)){
 
   ggplot2::ggsave(filename = file.path(output_path,paste0("emaplot_",funsys,"_",opt$output_file,".png")), pp, width = 30, height = 30, dpi = 300, units = "cm", device='png')
 
-  ### pp <- enrichplot::dotplot(enrichments_ORA_merged[[funsys]], showCategory= n_category)
-  ### ggplot2::ggsave(filename = file.path(output_path,paste0("dotplot_",funsys,"_",opt$output_file,".png")), pp, width = 60, height = 40, dpi = 300, units = "cm", device='png')
+  pp <- enrichplot::dotplot(enrichments_ORA_merged[[funsys]], showCategory= n_category)
+  ggplot2::ggsave(filename = file.path(output_path,paste0("dotplot_",funsys,"_",opt$output_file,".png")), pp, width = 60, height = 40, dpi = 300, units = "cm", device='png')
 
 }
-#write_func_cluster_report(enrichments_for_reports,output_path,gene_mapping)
+write_func_cluster_report(enrichments_for_reports,output_path,gene_mapping)
 
-
-# *Installation and dependencies:*
-
-# 1: Clone this repository*
-
-#         $ git clone https://github.com/JoseCorCab/cohortAnalyzer_wf.git
-
-# 2: Install PETS tool following the instuctions from https://github.com/ElenaRojano/pets.git
-
-# 3: Install ExpHunter suite following the instructions from https://github.com/seoanezonjic/ExpHunterSuite.git
-
-# *Setting and launching*
