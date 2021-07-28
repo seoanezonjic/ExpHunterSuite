@@ -102,11 +102,15 @@ multienricher_2 <- function(funsys, cluster_genes_list, organism_info,org_db = N
   return(enrichments_ORA)
 }
 
-parse_cluster_results <- function(enrichments_ORA, simplify_results = TRUE){
+parse_cluster_results <- function(enrichments_ORA, simplify_results = TRUE, clean_parentals = FALSE){
   enrichments_ORA_tr <- list()
   for (funsys in names(enrichments_ORA)){
     enr_obj <- clusterProfiler::merge_result(enrichments_ORA[[funsys]])
     if(nrow(enr_obj@compareClusterResult) > 0){
+      if (funsys %in% c("MF", "CC", "BP") && clean_parentals){
+        enr_obj@fun <- "enrichGO"
+        enr_obj <- clean_all_parentals(enr_obj, subont = funsys) 
+      } 
       if (funsys %in% c("MF", "CC", "BP") && simplify_results){
         enr_obj@fun <- "enrichGO"
         enr_obj <- clusterProfiler::simplify(enr_obj) 
@@ -117,6 +121,59 @@ parse_cluster_results <- function(enrichments_ORA, simplify_results = TRUE){
   }
   return(enrichments_ORA_tr)
 }
+
+
+clean_all_parentals <- function(enr_obj, subont){
+  GO_ancestors <-  utils::getAnywhere(paste0("GO",subont,"ANCESTOR"))
+  GO_ancestors <- as.list(GO_ancestors$objs[[1]])
+  GO_ancestors <- GO_ancestors[!is.na(GO_ancestors)]
+
+  enrich_obj <- enr_obj@compareClusterResult
+  pre_hamming_m <- matrix(0, nrow = length(unique(enrich_obj$Cluster)), 
+                              ncol = length(unique(enrich_obj$ID)), 
+                            dimnames= list(unique(enrich_obj$Cluster), 
+                                          unique(enrich_obj$ID)))
+  for(pair in seq(nrow(enrich_obj))){
+    pair_text <- enrich_obj[pair, c("Cluster","ID")]
+    pair_text$Cluster <- as.character(pair_text$Cluster)
+    pre_hamming_m[pair_text[1,1], pair_text[1,2]] <- 1
+  }
+  hamming_matrix <- hamming_binary(pre_hamming_m)
+  hamming_0 <- as.data.frame(as.table(hamming_matrix)) 
+  hamming_0 <- hamming_0[hamming_0[,3] == 0,c(1,2)]
+  hamming_0 <- hamming_0[hamming_0[,1] != hamming_0[,2], ]
+  hamming_0[] <- lapply(hamming_0, "as.character")
+  terms_to_discard <- c()
+  for(pair in seq(nrow(hamming_0))){
+    possible_parentals <- unlist(hamming_0[pair, c(1,2)])
+    parental <- are_parentals(possible_parentals[1], possible_parentals[2], GO_ancestors)
+    if (!is.na(parental)){
+      terms_to_discard  <- c(terms_to_discard,parental)
+    }
+  }
+  enr_obj@compareClusterResult <- enrich_obj[
+             enrich_obj$ID %in% terms_to_discard,]
+  return(enr_obj)
+}
+
+are_parentals <- function(term_A, term_B, GO_ancestors){
+  parental <- NA
+   if (term_A %in% GO_ancestors[[term_B]]){
+     parental <- term_A
+  } else if (term_B %in% GO_ancestors[[term_A]]) {
+    parental <- term_B
+  }
+  return(parental)
+}
+
+hamming_binary <- function(X, Y = NULL) {
+    if (is.null(Y)) {
+        D <- t(1 - X) %*% X
+        D + t(D)
+    } else {
+        t(1 - X) %*% Y + t(X) %*% (1 - Y)
+    }
+} #taken from https://johanndejong.wordpress.com/2015/10/02/faster-hamming-distance-in-r-2/
 
 write_fun_enrichments <- function(enrichments_ORA, output_path, all_funsys){
   for(funsys in all_funsys) {
@@ -199,7 +256,9 @@ option_list <- list(
                         action = "store_true", help="Ignore temporal files"),
   optparse::make_option(c("-f", "--funsys"), type="character", default="BP,MF,CC", 
                         help="Funsys to execute: MF => GO Molecular Function, BP => GO Biological Process, CC => GO Celular Coponent. Default=%default"),
-  optparse::make_option(c("-O", "--model_organism"), type="character", default="Human", 
+  optparse::make_option(c("-c", "--clean_parentals"), type="logical", default=FALSE, 
+                        action = "store_true", help="Clean parentals GO terms that appears on the same clusters than child."),
+    optparse::make_option(c("-O", "--model_organism"), type="character", default="Human", 
                         help="Model organism. Human or Mouse"),
   optparse::make_option(c("-d", "--description_file"), type="character", default=NULL,
                         help="Markdown file describing of the enriched clusters."),
@@ -264,7 +323,7 @@ if (!file.exists(temp_file) || opt$force) {
 
 enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
 write_fun_enrichments(enrichments_ORA, output_path, all_funsys)
-enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = TRUE)
+enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = TRUE, clean_parentals = opt$clean_parentals)
 
 for (funsys in names(enrichments_ORA_merged)){
   if (length(unique(enrichments_ORA_merged[[funsys]]@compareClusterResult$Description)) < 2 ) next
