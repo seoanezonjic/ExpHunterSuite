@@ -102,7 +102,7 @@ multienricher_2 <- function(funsys, cluster_genes_list, organism_info,org_db = N
   return(enrichments_ORA)
 }
 
-parse_cluster_results <- function(enrichments_ORA, simplify_results = TRUE, clean_parentals = FALSE){
+parse_cluster_results <- function(enrichments_ORA, simplify_results, clean_parentals){
   enrichments_ORA_tr <- list()
   for (funsys in names(enrichments_ORA)){
     enr_obj <- clusterProfiler::merge_result(enrichments_ORA[[funsys]])
@@ -124,6 +124,7 @@ parse_cluster_results <- function(enrichments_ORA, simplify_results = TRUE, clea
 
 
 clean_all_parentals <- function(enr_obj, subont){
+   ##ADD control for enrichresults or comparecluster
   if (subont=="BP"){
     GO_ancestors <- GO.db::GOBPANCESTOR
   } else if (subont=="MF"){
@@ -263,6 +264,8 @@ option_list <- list(
                         help="Funsys to execute: MF => GO Molecular Function, BP => GO Biological Process, CC => GO Celular Coponent. Default=%default"),
   optparse::make_option(c("-c", "--clean_parentals"), type="logical", default=FALSE, 
                         action = "store_true", help="Clean parentals GO terms that appears on the same clusters than child."),
+  optparse::make_option(c("-s", "--simplify"), type="logical", default=FALSE, 
+                        action = "store_true", help="Apply simplify function from cluster profiler to enrichment."),
     optparse::make_option(c("-O", "--model_organism"), type="character", default="Human", 
                         help="Model organism. Human or Mouse"),
   optparse::make_option(c("-d", "--description_file"), type="character", default=NULL,
@@ -328,7 +331,7 @@ if (!file.exists(temp_file) || opt$force) {
 
 enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
 write_fun_enrichments(enrichments_ORA, output_path, all_funsys)
-enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = TRUE, clean_parentals = opt$clean_parentals)
+enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
 
 for (funsys in names(enrichments_ORA_merged)){
   if (length(unique(enrichments_ORA_merged[[funsys]]@compareClusterResult$Description)) < 2 ) next
