@@ -124,8 +124,14 @@ parse_cluster_results <- function(enrichments_ORA, simplify_results = TRUE, clea
 
 
 clean_all_parentals <- function(enr_obj, subont){
-  GO_ancestors <-  utils::getAnywhere(paste0("GO",subont,"ANCESTOR"))
-  GO_ancestors <- as.list(GO_ancestors$objs[[1]])
+  if (subont=="BP"){
+    GO_ancestors <- GO.db::GOBPANCESTOR
+  } else if (subont=="MF"){
+    GO_ancestors <-  GO.db::GOMFANCESTOR
+  } else if (subont=="CC"){
+    GO_ancestors <- GO.db::GOCCANCESTOR
+  }
+  GO_ancestors <- as.list(GO_ancestors)
   GO_ancestors <- GO_ancestors[!is.na(GO_ancestors)]
 
   enrich_obj <- enr_obj@compareClusterResult
@@ -151,8 +157,7 @@ clean_all_parentals <- function(enr_obj, subont){
       terms_to_discard  <- c(terms_to_discard,parental)
     }
   }
-  enr_obj@compareClusterResult <- enrich_obj[
-             enrich_obj$ID %in% terms_to_discard,]
+  enr_obj@compareClusterResult <- enrich_obj[!enrich_obj$ID %in% terms_to_discard,]
   return(enr_obj)
 }
 
