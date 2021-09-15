@@ -130,7 +130,7 @@ if (!is.null(opt$custom)) {
 
 
 if(opt$List_organisms){
-    # print(as.character(rownames(all_organisms_info)))
+    print(as.character(rownames(organisms_table)))
     message('Check this list and choose one model species.')
 }else{
     func_results <- functional_hunter(
