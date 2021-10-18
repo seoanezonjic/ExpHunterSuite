@@ -1,8 +1,0 @@
-treat_Ctrl	treat_Treat
-CTL_1	1	0
-CTL_2	1	0
-CTL_3	1	0
-CTL_4	1	0
-epm2a_1	0	1
-epm2a_2	0	1
-epm2a_3	0	1
