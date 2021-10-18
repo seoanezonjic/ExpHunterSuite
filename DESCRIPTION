@@ -62,7 +62,8 @@ Suggests:
     reshape2,
     TCC,
     org.Hs.eg.db,
-    org.Mm.eg.db
+    org.Mm.eg.db,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Imports: 
     ReactomePA,
@@ -101,3 +102,4 @@ Imports:
     rlang,
     plyr,
     tidyr
+Config/testthat/edition: 3
