@@ -925,16 +925,18 @@ get_organismID_byOnto <- function(organism_info, ont){
 
 
 #' Table with information abaut all organism available
-#' @param file to be loaded. Default: internal organism table
+#' @param file to be loaded. If none given, internal organism table loaded
 #' @return organism table
 #' @keywords method
 #' @export
 #' @importFrom utils read.table
 #' @examples
 #' ot <- get_organism_table()
-get_organism_table <- function(file = file.path(find.package('ExpHunterSuite'), 
-                                       "external_data", 
-                                       "organism_table.txt")){
+get_organism_table <- function(file = NULL){
+  if(is.null(file)) {
+    file <- system.file("external_data", "organism_table.txt", 
+                          package="ExpHunterSuite")
+  }
   return(utils::read.table(file, 
                            header = TRUE, 
                            row.names=1, 
