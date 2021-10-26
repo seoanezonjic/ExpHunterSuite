@@ -16,8 +16,8 @@ test_that("main expression function works", {
                                   minpack_common=1)
   # IMPORTANT: SECTION TO CREATE THE GROUND TRUTH OUTPUT TO PERFORM THE TEST
   # Only uncomment this section when you need to regenerate it, i.e. new version of Bioc
-  precomp_degh_out <- degh_out
-  save(precomp_degh_out, file="../../../ExpHunterSuite/inst/extData/precomp_expression_results.RData")
+  #precomp_degh_out <- degh_out
+  #save(precomp_degh_out, file="../../../ExpHunterSuite/inst/extData/testdata/precomp_expression_results.RData")
 
   # Code to obtain a small table of counts
   #degs <- row.names(degh_out$DE_all_genes)[degh_out$DE_all_genes$genes_tag == "PREVALENT_DEG"][1:6]
@@ -25,8 +25,9 @@ test_that("main expression function works", {
   #toc_min_file <- "../../../ExpHunterSuite/inst/extData/table_of_counts_min.txt"
   #write.table(toc_min, file=toc_min_file, quote=FALSE, sep="\t")
 
-  precomp_degh_res_file <- system.file("extData", "precomp_expression_results.RData", 
+  precomp_degh_res_file <- system.file("extData", "testdata", "precomp_expression_results.RData", 
   	                      package="ExpHunterSuite")
+  print(precomp_degh_res_file)
   load(precomp_degh_res_file)
   save(list = ls(all.names = TRUE), file = "~/environment1.RData")
 
@@ -58,7 +59,7 @@ test_that("main expression function works", {
 # })
 
 test_that("writing expression report works", {
-  precomp_degh_res_file <- system.file("extData", "precomp_expression_results.RData", 
+  precomp_degh_res_file <- system.file("extData", "testdata", "precomp_expression_results.RData", 
                           package="ExpHunterSuite")
   load(precomp_degh_res_file)
   # write_expression_report(exp_results=precomp_degh_out)
