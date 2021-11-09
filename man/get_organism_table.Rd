@@ -4,13 +4,10 @@
 \alias{get_organism_table}
 \title{Table with information abaut all organism available}
 \usage{
-get_organism_table(
-  file = file.path(find.package("ExpHunterSuite"), "external_data",
-    "organism_table.txt")
-)
+get_organism_table(file = NULL)
 }
 \arguments{
-\item{file}{to be loaded. Default: internal organism table}
+\item{file}{to be loaded. If none given, internal organism table loaded}
 }
 \value{
 organism table

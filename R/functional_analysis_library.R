@@ -704,7 +704,7 @@ enrich_clusters_with_gmt <- function(custom_set = NULL,
 #' @export
 #' @examples
 #' gmt_file <- system.file("extData", 
-#' "toy_categories.gmt", package = "ExpHunterSuite")
+#' "toy_categories_1.gmt", package = "ExpHunterSuite")
 #' load_and_parse_gmt(gmt_file)
 load_and_parse_gmt <- function(gmt_file) {
     # Load file
@@ -712,7 +712,7 @@ load_and_parse_gmt <- function(gmt_file) {
     gmt_list <- strsplit(gmt, "\t")
     parsed_gmt <- do.call(rbind, lapply(gmt_list, function(category) {
           category_name <- category[1]
-          genes <-category[3:length(category)]
+          genes <- category[3:length(category)]
           parsedTerms <- data.frame(Term = category_name, 
                                     Gene= genes, 
                                     stringsAsFactors = FALSE)
