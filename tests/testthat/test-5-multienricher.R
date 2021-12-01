@@ -1,66 +1,3 @@
-# test_that("Multienricher with a list is faster than rerunning", {
-
-
-# entrez_to_enrich_GO_react <- c("13853", "16819", "12266", "497097", "19062")
-
-# entrez_to_enrich_kegg <- c("16176", "18049", "18211", "193034", "277328")
-
-#   organisms_table <- get_organism_table()
-#   current_organism_info <- subset(organisms_table, 
-#                            rownames(organisms_table) == "Mouse")
-#   start_time <- proc.time()
-#   kegg_file_mouse <- paste0("../../../kegg_db_", current_organism_info$KeggCode[1], ".rds")
-#   new_res_all <- ExpHunterSuite::multienricher_ora(all_funsys=c("KEGG"),
-#      genes_list=list(entrez_to_enrich_kegg, entrez_to_enrich_kegg, entrez_to_enrich_kegg,entrez_to_enrich_kegg, entrez_to_enrich_kegg, entrez_to_enrich_kegg,
-# entrez_to_enrich_kegg, entrez_to_enrich_kegg, entrez_to_enrich_kegg,entrez_to_enrich_kegg, entrez_to_enrich_kegg, entrez_to_enrich_kegg,
-#       # entrez_to_enrich_GO_react, entrez_to_enrich_GO_react, entrez_to_enrich_GO_react,
-#       # entrez_to_enrich_GO_react, entrez_to_enrich_GO_react, entrez_to_enrich_GO_react,
-#       entrez_to_enrich_kegg), 
-#      organism_info = current_organism_info,
-#      pvalueCutoff = 0.05, qvalueCutoff = 0.2,  kegg_file=kegg_file_mouse
-#    )
-#   end_time <- proc.time()
-#   new_time_taken <- end_time - start_time
-#   cat(new_time_taken, file="~/kegg_new_time_taken_10.txt")
-
-
-#  start_time <- proc.time()
-#   for(i in 1:13) {
-#   # packet_res_GO <- clusterProfiler::enrichGO(gene=entrez_to_enrich_GO_react, 
-#   #    OrgDb= "org.Mm.eg.db", 
-#   #    pAdjustMethod = "BH",
-#   #    ont = "BP",
-#   #    pvalueCutoff  = 0.05, qvalueCutoff = 0.2, 
-#   #    readable = TRUE)
-#   # packet_res_react <- ReactomePA::enrichPathway(gene=entrez_to_enrich_GO_react, 
-#   #    organism      = "mouse",
-#   #    pvalueCutoff  = 0.05,
-#   #    pAdjustMethod = "BH",
-#   #    qvalueCutoff  = 0.2,
-#   #    readable = TRUE)
-
-
-#    packet_res_KEGG <- clusterProfiler::enrichKEGG(gene=entrez_to_enrich_kegg,
-#      organism      = "mmu",
-#      pvalueCutoff  = 0.05,
-#      pAdjustMethod = "BH",
-#      qvalueCutoff  = 0.2,
-#      use_internal_data = FALSE
-#    )
-#   }
-#   end_time <- proc.time()
-#   pack_time_taken <- end_time - start_time
-#   cat(pack_time_taken, file="~/kegg_pack_time_taken_10.txt")
-
-#   save(list = ls(all.names = TRUE), file = "~/environment_test5.RData")
-#   # testthat::expect_identical(object=packet_res_GO, expected=new_res_all[["BP"]][[3]])
-#   testthat::expect_identical(object=packet_res_KEGG, expected=new_res_all[["KEGG"]][[3]])
-#   # testthat::expect_identical(object=packet_res_react, expected=new_res_all[["Reactome"]][[3]])
-
-# })
-
-
-
 test_that("Multienricher gives same results as running packets separately", {
 
   entrez_to_enrich_GO_react <- c("13853", "16819", "12266", "497097", "19062")
@@ -171,4 +108,65 @@ test_that("Multienricher gives same results as running packets separately using 
   testthat::expect_identical(object=packet_res_KEGG, expected=new_res_all[["KEGG"]][[1]])
 
 })
+
+# test_that("Multienricher with a list is faster than rerunning", {
+
+
+# entrez_to_enrich_GO_react <- c("13853", "16819", "12266", "497097", "19062")
+
+# entrez_to_enrich_kegg <- c("16176", "18049", "18211", "193034", "277328")
+
+#   organisms_table <- get_organism_table()
+#   current_organism_info <- subset(organisms_table, 
+#                            rownames(organisms_table) == "Mouse")
+#   start_time <- proc.time()
+#   kegg_file_mouse <- paste0("../../../kegg_db_", current_organism_info$KeggCode[1], ".rds")
+#   new_res_all <- ExpHunterSuite::multienricher_ora(all_funsys=c("KEGG"),
+#      genes_list=list(entrez_to_enrich_kegg, entrez_to_enrich_kegg, entrez_to_enrich_kegg,entrez_to_enrich_kegg, entrez_to_enrich_kegg, entrez_to_enrich_kegg,
+# entrez_to_enrich_kegg, entrez_to_enrich_kegg, entrez_to_enrich_kegg,entrez_to_enrich_kegg, entrez_to_enrich_kegg, entrez_to_enrich_kegg,
+#       # entrez_to_enrich_GO_react, entrez_to_enrich_GO_react, entrez_to_enrich_GO_react,
+#       # entrez_to_enrich_GO_react, entrez_to_enrich_GO_react, entrez_to_enrich_GO_react,
+#       entrez_to_enrich_kegg), 
+#      organism_info = current_organism_info,
+#      pvalueCutoff = 0.05, qvalueCutoff = 0.2,  kegg_file=kegg_file_mouse
+#    )
+#   end_time <- proc.time()
+#   new_time_taken <- end_time - start_time
+#   cat(new_time_taken, file="~/kegg_new_time_taken_10.txt")
+
+
+#  start_time <- proc.time()
+#   for(i in 1:13) {
+#   # packet_res_GO <- clusterProfiler::enrichGO(gene=entrez_to_enrich_GO_react, 
+#   #    OrgDb= "org.Mm.eg.db", 
+#   #    pAdjustMethod = "BH",
+#   #    ont = "BP",
+#   #    pvalueCutoff  = 0.05, qvalueCutoff = 0.2, 
+#   #    readable = TRUE)
+#   # packet_res_react <- ReactomePA::enrichPathway(gene=entrez_to_enrich_GO_react, 
+#   #    organism      = "mouse",
+#   #    pvalueCutoff  = 0.05,
+#   #    pAdjustMethod = "BH",
+#   #    qvalueCutoff  = 0.2,
+#   #    readable = TRUE)
+
+
+#    packet_res_KEGG <- clusterProfiler::enrichKEGG(gene=entrez_to_enrich_kegg,
+#      organism      = "mmu",
+#      pvalueCutoff  = 0.05,
+#      pAdjustMethod = "BH",
+#      qvalueCutoff  = 0.2,
+#      use_internal_data = FALSE
+#    )
+#   }
+#   end_time <- proc.time()
+#   pack_time_taken <- end_time - start_time
+#   cat(pack_time_taken, file="~/kegg_pack_time_taken_10.txt")
+
+#   save(list = ls(all.names = TRUE), file = "~/environment_test5.RData")
+#   # testthat::expect_identical(object=packet_res_GO, expected=new_res_all[["BP"]][[3]])
+#   testthat::expect_identical(object=packet_res_KEGG, expected=new_res_all[["KEGG"]][[3]])
+#   # testthat::expect_identical(object=packet_res_react, expected=new_res_all[["Reactome"]][[3]])
+
+# })
 

@@ -10,6 +10,11 @@ multienricher_topGO(
   universe = NULL,
   organism_info,
   gene_id = "entrez",
+  algorithm = "classic",
+  statistic = "fisher",
+  nodeSize = 5,
+  task_size = 1,
+  workers = 1,
   ...
 )
 }

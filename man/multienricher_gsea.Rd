@@ -5,7 +5,7 @@
 \title{Perform gsea enrichment analysis of a list of genes}
 \usage{
 multienricher_gsea(
-  all_funsys,
+  all_funsys = NULL,
   genes_list,
   organism_info,
   org_db = NULL,
