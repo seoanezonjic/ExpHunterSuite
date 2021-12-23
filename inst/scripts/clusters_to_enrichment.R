@@ -274,6 +274,8 @@ option_list <- list(
                         help="What identifier is being used for the genes in the clusters?. Default=%default"),
   optparse::make_option(c("-g", "--gene_mapping"), type="character", default=NULL,
                         help="3 columns tabular file- Cluster - InputGeneID - NumericGeneMapping. Header must be indicated as cluster - geneid - [numeric_mapping]"),
+   optparse::make_option(c("-G", "--group_results"), type="logical", default=FALSE, 
+                        action = "store_true", help="Functions are gropuped in most frequent words in emaplots."),
   optparse::make_option(c("-o", "--output_file"), type="character", default="results",
                         help="Define the output path.")
 )
@@ -336,7 +338,14 @@ enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_result
 for (funsys in names(enrichments_ORA_merged)){
   if (length(unique(enrichments_ORA_merged[[funsys]]@compareClusterResult$Description)) < 2 ) next
 
-  pp <- enrichplot::emapplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, pie="Count", layout = "kk")# + ggplot2::scale_fill_manual(values = col)
+  if (opt$group_results == TRUE){
+    pp <- enrichplot::emapplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, pie="Count", layout = "nicely", 
+                shadowtext = FALSE, node_label = "group", group_category = TRUE, 
+                nCluster = min(floor(nrow(enrichments_ORA_merged[[funsys]])/7), 20), nWords = 6, repel = TRUE)
+  }else{
+    pp <- enrichplot::emapplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, pie="Count", layout = "nicely", 
+                shadowtext = FALSE, repel = TRUE)
+  }
 
   ggplot2::ggsave(filename = file.path(output_path,paste0("emaplot_",funsys,"_",opt$output_file,".png")), pp, width = 30, height = 30, dpi = 300, units = "cm", device='png')
 
