@@ -91,7 +91,6 @@ multienricher_2 <- function(funsys, cluster_genes_list, organism_info,org_db = N
                    pvalueCutoff  = pvalcutoff, qvalueCutoff = qvalcutoff, readable = readable) #Now Param is configured Only for GO
     enriched_cats <- parallel_list(cluster_genes_list, function(cl_genes){
 
-      print(str(cl_genes))
        params_cl <- c(params, list(gene = cl_genes) )
        enr <- do.call("enrf", params_cl)
       }, 
@@ -232,7 +231,6 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path, gene
   temp_path <- file.path(output_path, "temp")
   dir.create(temp_path) #perform parallel
   for (cluster in names(enrichments_for_reports)){
-      # cluster_enrichments <- enrichments_for_reports[[cluster]]
       geneList <- NULL
       if (!is.null(gene_mapping)){ 
         geneList <- gene_mapping[[cluster]]
@@ -247,6 +245,180 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path, gene
 }
 
 
+summarize_categories <- function(all_enrichments, sim_thr = 0.7, common_name = "significant"){
+   enrichment_summary <- list()
+
+  clusterized_terms <- clusterize_terms(all_enrichments, threshold = sim_thr, common_name = common_name)
+  for (funsys in names(clusterized_terms)){
+      enrichments_cl <- all_enrichments[[funsys]]
+
+    combined_enrichments <- combine_terms_by_cluster(enrichments_cl@compareClusterResult, clusterized_terms[[funsys]])
+
+    combined_enrichments_tmp <-  reshape2::acast(combined_enrichments, term_cluster~cluster, value.var="p.adjust", fill = 1)
+    combined_enrichments <- apply(combined_enrichments_tmp, 2, FUN=as.numeric)
+    dimnames(combined_enrichments) <- dimnames(combined_enrichments_tmp)
+    enrichment_summary[[funsys]] <- combined_enrichments
+  }
+  return(enrichment_summary)
+}
+
+clusterize_terms <- function(all_enrichments, threshold = 0.7, common_name = "significant"){
+  clusterized_terms <- list()
+  for (funsys in names(all_enrichments)){
+    if (funsys=="BP"){
+      GO_parents <- GO.db::GOBPPARENTS
+      GO_ancestor <- GO.db::GOBPANCESTOR
+    } else if (funsys=="MF"){
+      GO_parents <-  GO.db::GOMFPARENTS
+      GO_ancestor <-  GO.db::GOMFANCESTOR
+    } else if (funsys=="CC"){
+      GO_parents <- GO.db::GOCCPARENTS
+      GO_ancestor <- GO.db::GOCCANCESTOR
+    }
+
+    GO_ancestor <- as.list(GO_ancestor)
+    GO_parents <- as.list(GO_parents)
+    for (ancestor in names(GO_ancestor)){
+      GO_ancestor[[ancestor]] <- c(GO_ancestor[[ancestor]], ancestor)
+    }
+    paths <- calc_all_paths(ids = unique(names(GO_parents)), GO_parents = GO_parents)
+    levels <- unlist(lapply(paths, function(id){min(lengths(id))}))
+
+    enrichments_cl <- all_enrichments[[funsys]]
+    term_sim <- enrichments_cl@termsim
+    term_sim <- Matrix::forceSymmetric(term_sim, uplo="U")
+    term_dis <- as.dist(1 - term_sim)
+    term_clust <- fastcluster::hclust(term_dis, method = "average")
+    threshold = 1 - threshold
+    clust_term <- cutree(term_clust, h = threshold)
+    cluster_names <- lapply(clust_term, function(cluster) {
+       terms_in_cl <- names(clust_term)[clust_term == cluster]
+       cluster_enrichments <- enrichments_cl@compareClusterResult
+       cluster_enrichments <- cluster_enrichments[cluster_enrichments$Description %in% terms_in_cl,]
+       if (common_name == "ancestor") {
+       #   main_name <- get_common_ancestor(unique(cluster_enrichments$ID), GO_offspring)
+        #  main_name <- get_common_ancestor_path(unique(cluster_enrichments$ID), GO_parents)
+          main_name <- get_common_ancestor_final(unique(cluster_enrichments$ID), GO_ancestor = GO_ancestor, levels = levels)
+       } else if (common_name == "significant"){
+          main_name <- cluster_enrichments[which.min(cluster_enrichments$p.adjust), "Description"]
+       } 
+       return(main_name)
+    })
+    clust_term <- unlist(cluster_names)
+
+    clusterized_terms[[funsys]] <- clust_term
+  }
+  return(clusterized_terms)
+}
+
+
+
+
+combine_terms_by_cluster <- function(clusters_enr, term_clustering) {
+  combined_terms <- data.frame()
+  
+  for (cluster in unique(clusters_enr$Cluster)) {
+    clusters_enr$Description <- as.character(clusters_enr$Description)
+    cluster_terms <- clusters_enr[clusters_enr$Cluster == cluster, "Description"]
+    term_clusters <- unique(term_clustering[names(term_clustering) %in% cluster_terms])
+    for (term_cluster in term_clusters) {
+      clustered_terms <- names(term_clustering)[term_clustering == term_cluster]
+      combined_terms <- rbind(combined_terms, 
+        c(cluster, term_cluster, min(clusters_enr[clusters_enr$Description %in% clustered_terms, "p.adjust"])))
+    }
+  }
+  colnames(combined_terms) <- c("cluster", "term_cluster", "p.adjust")
+  return(combined_terms)
+}
+
+
+get_common_ancestor_final <- function(terms, GO_ancestor, levels, common_ancestor_method = "lowest"){
+  terms_ancestors <- GO_ancestor[terms]
+  common_ancestors <- Reduce(intersect, terms_ancestors)
+  common_ancestors <- levels[names(levels) %in% common_ancestors]
+  common_ancestor <- NULL
+  if (common_ancestor_method == "lowest") {
+      common_ancestors <- sort(common_ancestors,  decreasing = TRUE)
+  } else if (common_ancestor_method == "highest") {
+      common_ancestors <- sort(common_ancestors,  decreasing = FALSE)
+  }
+
+  common_ancestor <- common_ancestors[1]
+
+  if (common_ancestor > 2) {
+      
+      common_ancestor <- get_GOid_term(names(common_ancestor))
+
+  } else {
+      common_ancestor <- "to_remove"
+  }
+  return(common_ancestor)
+}
+
+get_all_parentals <- function(term, GO_parents, relative_level = 0){
+  all_parents <- GO_parents[[term]]
+  isa_parents <- all_parents[names(all_parents) == "isa"]
+  term_level <- data.frame(term = term, 
+                               relative_level = relative_level)
+  if (any(isa_parents %in% "all")) {
+    return(term_level)
+  } else {
+    all_branches <- term_level
+    for (parent in isa_parents) {
+      parental_branches <- get_all_parentals(term = parent, 
+                                             GO_parents = GO_parents, 
+                                             relative_level = (relative_level + 1))
+      all_branches <- rbind(all_branches, parental_branches)
+    }
+    return(all_branches)
+  }
+}
+
+
+
+get_GOid_term <- function(GOid){
+ term <- AnnotationDbi::Term(GO.db::GOTERM[GOid])
+ names(term) <- NULL
+ return(term)
+}
+
+
+cluster_enr_to_matrix <- function(compareClusterResult){
+   compareClusterResult <- compareClusterResult[,c("Cluster", "Description", "p.adjust")]
+    compareClusterResult_tmp <-  reshape2::acast(compareClusterResult, Description~Cluster, value.var="p.adjust", fill = 1)
+    compareClusterResult <- apply(compareClusterResult_tmp, 2, FUN=as.numeric)
+    dimnames(compareClusterResult) <- dimnames(compareClusterResult_tmp)
+    return(compareClusterResult_tmp)
+}
+
+calc_all_paths <- function(ids, GO_parents){
+    env <- environment()
+    paths <- list()
+    calc_path(ids = ids, GO_parents = GO_parents, env = env)
+    return(paths)
+}
+
+calc_path <- function(ids, GO_parents, env){
+  for (id in ids) {
+    if (is.null(env$paths[[id]])) {
+      env$paths[[id]] <- list()
+      direct_ancestors <- GO_parents[[id]]
+      direct_ancestors <- direct_ancestors[names(direct_ancestors) == "isa"]
+      if (length(direct_ancestors) == 0) {
+        env$paths[[id]] <- c(env$paths[[id]], list(c(id)))
+      } else {
+        for (anc in direct_ancestors) {
+          calc_path(ids = anc, GO_parents = GO_parents,env = env)
+          env$paths[[id]] <- c(env$paths[[id]], 
+                               lapply(env$paths[[anc]], function(path){
+                                c(id,unlist(path))}))
+        }
+      }
+    }
+  }
+}
+
+########################## OPTIONS
 option_list <- list(
   optparse::make_option(c("-i", "--input_file"), type="character", default=NULL,
                         help="2 columns - cluster and comma separated gene ids"),
@@ -266,15 +438,21 @@ option_list <- list(
                         action = "store_true", help="Clean parentals GO terms that appears on the same clusters than child."),
   optparse::make_option(c("-s", "--simplify"), type="logical", default=FALSE, 
                         action = "store_true", help="Apply simplify function from cluster profiler to enrichment."),
-    optparse::make_option(c("-O", "--model_organism"), type="character", default="Human", 
+  optparse::make_option(c("-O", "--model_organism"), type="character", default="Human", 
                         help="Model organism. Human or Mouse"),
+  optparse::make_option(c("-M", "--mode"), type="character", default="D", 
+                        help="String indicating report modes to execute. R: Generate report for each cluster and all clusters combined. P: Plots (dotplot and emaplot) combining all cluster enrichments. S: Summary mode (sumamrized categories heatmap)"),
+  optparse::make_option(c("-S", "--sim_thr"), type="double", default=0.7,
+                        help="Similarity cutoff for grouping categories in Summary mode. Default=%default"),
+  optparse::make_option(c("-C", "--common_name"), type="character", default="significant", 
+                        help="Name of the term groups. 'significant' to use the most significant term of each group. 'ancestor' to use the common ancestor of the group"),
   optparse::make_option(c("-d", "--description_file"), type="character", default=NULL,
                         help="Markdown file describing of the enriched clusters."),
   optparse::make_option(c("-k", "--gene_keytype"), type="character", default="ENTREZID",
                         help="What identifier is being used for the genes in the clusters?. Default=%default"),
   optparse::make_option(c("-g", "--gene_mapping"), type="character", default=NULL,
                         help="3 columns tabular file- Cluster - InputGeneID - NumericGeneMapping. Header must be indicated as cluster - geneid - [numeric_mapping]"),
-   optparse::make_option(c("-G", "--group_results"), type="logical", default=FALSE, 
+  optparse::make_option(c("-G", "--group_results"), type="logical", default=FALSE, 
                         action = "store_true", help="Functions are gropuped in most frequent words in emaplots."),
   optparse::make_option(c("-o", "--output_file"), type="character", default="results",
                         help="Define the output path.")
@@ -293,6 +471,7 @@ organisms_table <- get_organism_table(organisms_table_file)
 current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
 gene_mapping <- NULL
 org_db <- get_org_db(current_organism_info)
+
 #################################### MAIN ##
 
 
@@ -306,17 +485,14 @@ if (!file.exists(temp_file) || opt$force) {
 
   cluster_genes <- read.table(opt$input_file, header=FALSE)
   cluster_genes_list <- strsplit(cluster_genes[,2], ",")
-  print(str(cluster_genes_list))
   if(opt$gene_keytype != "ENTREZID") {
     cluster_genes_list <- lapply(cluster_genes_list, function(x){
                                       convert_ids_to_entrez(ids=x, 
                                                             gene_keytype=opt$gene_keytype,
                                                             org_db = org_db)}) 
   }
-    print(str(cluster_genes_list))
 
   names(cluster_genes_list) <- cluster_genes[,1]
-  print(str(cluster_genes_list))
 
   enrichments_ORA <- multienricher_2(funsys =  all_funsys, 
                                   cluster_genes_list =  cluster_genes_list, 
@@ -331,27 +507,69 @@ if (!file.exists(temp_file) || opt$force) {
   load(temp_file)
 }
 
-enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
-write_fun_enrichments(enrichments_ORA, output_path, all_funsys)
 enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
 
-for (funsys in names(enrichments_ORA_merged)){
-  if (length(unique(enrichments_ORA_merged[[funsys]]@compareClusterResult$Description)) < 2 ) next
+if (grepl("R", opt$mode)){
+    enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
+    write_fun_enrichments(enrichments_ORA, output_path, all_funsys)
+    write_func_cluster_report(enrichments_for_reports,output_path,gene_mapping)
+}
 
-  if (opt$group_results == TRUE){
-    pp <- enrichplot::emapplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, pie="Count", layout = "nicely", 
-                shadowtext = FALSE, node_label = "group", group_category = TRUE, 
-                nCluster = min(floor(nrow(enrichments_ORA_merged[[funsys]])/7), 20), nWords = 6, repel = TRUE)
-  }else{
-    pp <- enrichplot::emapplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, pie="Count", layout = "nicely", 
-                shadowtext = FALSE, repel = TRUE)
+if (grepl("P", opt$mode)) {
+  for (funsys in names(enrichments_ORA_merged)){
+    if (length(unique(enrichments_ORA_merged[[funsys]]@compareClusterResult$Description)) < 2 ) next
+
+    if (opt$group_results == TRUE){
+      pp <- enrichplot::emapplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, pie="Count", layout = "nicely", 
+                  shadowtext = FALSE, node_label = "group", group_category = TRUE, 
+                  nCluster = min(floor(nrow(enrichments_ORA_merged[[funsys]])/7), 20), nWords = 6, repel = TRUE)
+    }else{
+      pp <- enrichplot::emapplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, pie="Count", layout = "nicely", 
+                  shadowtext = FALSE, repel = TRUE)
+    }
+
+    ggplot2::ggsave(filename = file.path(output_path,paste0("emaplot_",funsys,"_",opt$output_file,".png")), pp, width = 30, height = 30, dpi = 300, units = "cm", device='png')
+
+    pp <- enrichplot::dotplot(enrichments_ORA_merged[[funsys]], showCategory= n_category)
+    ggplot2::ggsave(filename = file.path(output_path,paste0("dotplot_",funsys,"_",opt$output_file,".png")), pp, width = 60, height = 40, dpi = 300, units = "cm", device='png')
+
+  }
+}
+
+
+
+
+if (grepl("S", opt$mode)){
+  sum_enrichments <- summarize_categories(enrichments_ORA_merged, sim_thr = opt$sim_thr,common_name = opt$common_name)
+ 
+  for (funsys in names(sum_enrichments)) {
+    sum_table <- sum_enrichments[[funsys]]
+    sum_table <- (sum_table > opt$pvalcutoff) + 0
+    save(sum_table, file = "test.RData")
+    sum_table <- sum_table[rownames(sum_table) != "to_remove",]
+    heatmaply::heatmaply(sum_table, grid_color = "gray50",
+                                    grid_width = 0.00001,
+                                    dendrogram = "column",
+                                    scale_fill_gradient_fun = ggplot2::scale_fill_gradient2(
+                                    low = "#EE8291", 
+                                    high = "white", 
+                                    midpoint = 0.5, 
+                                    limits = c(0, 1)),
+                                    file = file.path(output_path, paste0("sum_",funsys,'_heatmap.html')))
+ 
+    all_enrichments <- cluster_enr_to_matrix(enrichments_ORA_merged[[funsys]]@compareClusterResult)
+    all_enrichments <- (all_enrichments > opt$pvalcutoff) + 0 
+    heatmaply::heatmaply(all_enrichments, grid_color = "gray50",
+                                    grid_width = 0.00001,
+                                    dendrogram = "column",
+                                    scale_fill_gradient_fun = ggplot2::scale_fill_gradient2(
+                                    low = "#EE8291", 
+                                    high = "white", 
+                                    midpoint = 0.5, 
+                                    limits = c(0, 1)),
+                                    file = file.path(output_path, paste0("full_",funsys,'_heatmap.html')))
+  
   }
 
-  ggplot2::ggsave(filename = file.path(output_path,paste0("emaplot_",funsys,"_",opt$output_file,".png")), pp, width = 30, height = 30, dpi = 300, units = "cm", device='png')
-
-  pp <- enrichplot::dotplot(enrichments_ORA_merged[[funsys]], showCategory= n_category)
-  ggplot2::ggsave(filename = file.path(output_path,paste0("dotplot_",funsys,"_",opt$output_file,".png")), pp, width = 60, height = 40, dpi = 300, units = "cm", device='png')
-
 }
-write_func_cluster_report(enrichments_for_reports,output_path,gene_mapping)
 
