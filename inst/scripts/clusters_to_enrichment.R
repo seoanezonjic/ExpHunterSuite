@@ -251,9 +251,7 @@ summarize_categories <- function(all_enrichments, sim_thr = 0.7, common_name = "
   clusterized_terms <- clusterize_terms(all_enrichments, threshold = sim_thr, common_name = common_name)
   for (funsys in names(clusterized_terms)){
       enrichments_cl <- all_enrichments[[funsys]]
-
     combined_enrichments <- combine_terms_by_cluster(enrichments_cl@compareClusterResult, clusterized_terms[[funsys]])
-
     combined_enrichments_tmp <-  reshape2::acast(combined_enrichments, term_cluster~cluster, value.var="p.adjust", fill = 1)
     combined_enrichments <- apply(combined_enrichments_tmp, 2, FUN=as.numeric)
     dimnames(combined_enrichments) <- dimnames(combined_enrichments_tmp)
@@ -296,9 +294,7 @@ clusterize_terms <- function(all_enrichments, threshold = 0.7, common_name = "si
        cluster_enrichments <- enrichments_cl@compareClusterResult
        cluster_enrichments <- cluster_enrichments[cluster_enrichments$Description %in% terms_in_cl,]
        if (common_name == "ancestor") {
-       #   main_name <- get_common_ancestor(unique(cluster_enrichments$ID), GO_offspring)
-        #  main_name <- get_common_ancestor_path(unique(cluster_enrichments$ID), GO_parents)
-          main_name <- get_common_ancestor_final(unique(cluster_enrichments$ID), GO_ancestor = GO_ancestor, levels = levels)
+          main_name <- get_common_ancestor(unique(cluster_enrichments$ID), GO_ancestor = GO_ancestor, levels = levels)
        } else if (common_name == "significant"){
           main_name <- cluster_enrichments[which.min(cluster_enrichments$p.adjust), "Description"]
        } 
@@ -316,7 +312,6 @@ clusterize_terms <- function(all_enrichments, threshold = 0.7, common_name = "si
 
 combine_terms_by_cluster <- function(clusters_enr, term_clustering) {
   combined_terms <- data.frame()
-  
   for (cluster in unique(clusters_enr$Cluster)) {
     clusters_enr$Description <- as.character(clusters_enr$Description)
     cluster_terms <- clusters_enr[clusters_enr$Cluster == cluster, "Description"]
@@ -332,7 +327,7 @@ combine_terms_by_cluster <- function(clusters_enr, term_clustering) {
 }
 
 
-get_common_ancestor_final <- function(terms, GO_ancestor, levels, common_ancestor_method = "lowest"){
+get_common_ancestor <- function(terms, GO_ancestor, levels, common_ancestor_method = "lowest"){
   terms_ancestors <- GO_ancestor[terms]
   common_ancestors <- Reduce(intersect, terms_ancestors)
   common_ancestors <- levels[names(levels) %in% common_ancestors]
@@ -344,10 +339,9 @@ get_common_ancestor_final <- function(terms, GO_ancestor, levels, common_ancesto
   }
 
   common_ancestor <- common_ancestors[1]
-
   if (common_ancestor > 2) {
       
-      common_ancestor <- get_GOid_term(names(common_ancestor))
+      common_ancestor <- names(common_ancestor) #get_GOid_term(names(common_ancestor))
 
   } else {
       common_ancestor <- "to_remove"
@@ -376,7 +370,7 @@ get_all_parentals <- function(term, GO_parents, relative_level = 0){
 
 
 
-get_GOid_term <- function(GOid){
+get_GOid_term <- function(GOid, output = "term"){
  term <- AnnotationDbi::Term(GO.db::GOTERM[GOid])
  names(term) <- NULL
  return(term)
@@ -418,6 +412,56 @@ calc_path <- function(ids, GO_parents, env){
   }
 }
 
+vectdist <- function(vectA, vectB){
+  # VectA and B must have same length. Exception not handled
+  return(sqrt(sum((vectA - vectB)^2)))
+}
+
+toDistances <- function(vectors_matrix, rows = TRUE){
+  if(!rows){
+    vectors_matrix = t(vectors_matrix)
+  }
+  # Calc similitudes of rows
+  numItems = nrow(vectors_matrix)
+  Mdist = matrix(Inf,nrow = numItems, ncol = numItems)
+  invisible(lapply(seq(numItems), function(i){
+    if(i != numItems){
+      invisible(lapply(seq(i+1, numItems), function(j){
+        v = vectdist(vectors_matrix[i,],vectors_matrix[j,])
+        Mdist[i,j] <<- v
+        Mdist[j,i] <<- v
+      }))
+    }
+    Mdist[i,i] <<- 0
+  }))
+  return(Mdist)
+}
+
+
+clean_parentals_in_matrix <- function(enrichment_mx, subont){
+  if (subont=="BP"){
+    GO_ancestors <- GO.db::GOBPANCESTOR
+  } else if (subont=="MF"){
+    GO_ancestors <-  GO.db::GOMFANCESTOR
+  } else if (subont=="CC"){
+    GO_ancestors <- GO.db::GOCCANCESTOR
+  }
+  for (cluster in colnames(enrichment_mx)) {
+
+    enriched_cats <- rownames(enrichment_mx)
+    for (category_ref in enriched_cats){
+       parental_terms <- enriched_cats %in% GO_ancestors[[category_ref]]
+
+       if (any(parental_terms)) {
+
+          enrichment_mx[parental_terms, cluster] <- 1
+       }
+
+    }
+  }
+
+return(enrichment_mx)
+}
 ########################## OPTIONS
 option_list <- list(
   optparse::make_option(c("-i", "--input_file"), type="character", default=NULL,
@@ -530,7 +574,7 @@ if (grepl("P", opt$mode)) {
 
     ggplot2::ggsave(filename = file.path(output_path,paste0("emaplot_",funsys,"_",opt$output_file,".png")), pp, width = 30, height = 30, dpi = 300, units = "cm", device='png')
 
-    pp <- enrichplot::dotplot(enrichments_ORA_merged[[funsys]], showCategory= n_category)
+    pp <- enrichplot::dotplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, label_format = 70)
     ggplot2::ggsave(filename = file.path(output_path,paste0("dotplot_",funsys,"_",opt$output_file,".png")), pp, width = 60, height = 40, dpi = 300, units = "cm", device='png')
 
   }
@@ -545,29 +589,56 @@ if (grepl("S", opt$mode)){
   for (funsys in names(sum_enrichments)) {
     sum_table <- sum_enrichments[[funsys]]
     sum_table <- (sum_table > opt$pvalcutoff) + 0
-    save(sum_table, file = "test.RData")
     sum_table <- sum_table[rownames(sum_table) != "to_remove",]
-    heatmaply::heatmaply(sum_table, grid_color = "gray50",
-                                    grid_width = 0.00001,
-                                    dendrogram = "column",
-                                    scale_fill_gradient_fun = ggplot2::scale_fill_gradient2(
-                                    low = "#EE8291", 
-                                    high = "white", 
-                                    midpoint = 0.5, 
-                                    limits = c(0, 1)),
-                                    file = file.path(output_path, paste0("sum_",funsys,'_heatmap.html')))
+    sum_table_to_plot <- sum_table
+    rownames(sum_table_to_plot) <- get_GOid_term(rownames(sum_table_to_plot))
+    heatmaply::heatmaply(sum_table_to_plot, 
+                         grid_color = "gray50",
+                         seriate = "mean",
+                         grid_width = 0.00001,
+                         dendrogram = "both",
+                         scale_fill_gradient_fun = ggplot2::scale_fill_gradient2(
+                         low = "#EE8291", 
+                         high = "white", 
+                         midpoint = 0.5, 
+                         limits = c(0, 1)),
+                         file = file.path(output_path, paste0("sum_",funsys,'_heatmap.html')))
  
+
+    sum_table_clean <-  clean_parentals_in_matrix(sum_table, funsys)
+    rownames(sum_table_clean) <- get_GOid_term(rownames(sum_table_clean))
+    sum_table_clean <- sum_table_clean[rowSums(sum_table_clean < opt$pvalcutoff) != 0,]
+
+    heatmaply::heatmaply(sum_table_clean, 
+                         grid_color = "gray50",
+                         seriate = "mean",
+                         grid_width = 0.00001,
+                         fontsize_row = 11,
+                          fontsize_col = 13,
+                         dendrogram = "both",
+                         scale_fill_gradient_fun = ggplot2::scale_fill_gradient2(
+                         low = "#EE8291", 
+                         high = "white", 
+                         midpoint = 0.5, 
+                         limits = c(0, 1)),
+                         file = file.path(output_path, paste0("sum_clean_",funsys,'_heatmap.html')))
+
+
+
     all_enrichments <- cluster_enr_to_matrix(enrichments_ORA_merged[[funsys]]@compareClusterResult)
     all_enrichments <- (all_enrichments > opt$pvalcutoff) + 0 
-    heatmaply::heatmaply(all_enrichments, grid_color = "gray50",
-                                    grid_width = 0.00001,
-                                    dendrogram = "column",
-                                    scale_fill_gradient_fun = ggplot2::scale_fill_gradient2(
-                                    low = "#EE8291", 
-                                    high = "white", 
-                                    midpoint = 0.5, 
-                                    limits = c(0, 1)),
-                                    file = file.path(output_path, paste0("full_",funsys,'_heatmap.html')))
+
+    heatmaply::heatmaply(all_enrichments, 
+                        grid_color = "gray50",
+                        seriate = "mean",
+                        dendrogram = "both",
+                        grid_width = 0.00001,
+                        scale_fill_gradient_fun = ggplot2::scale_fill_gradient2(
+                        low = "#EE8291", 
+                        high = "white", 
+                        midpoint = 0.5, 
+                        limits = c(0, 1)),
+                        file = file.path(output_path, paste0("full_",funsys,'_heatmap.html')))
   
   }
 
