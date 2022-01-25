@@ -118,13 +118,11 @@ if (!file.exists(temp_file) || opt$force) {
                                   workers = opt$workers, 
                                   pvalcutoff =  opt$pvalcutoff, 
                                   qvalcutoff = opt$qvalcutoff)
-  save(enrichments_ORA, file = temp_file)
+ enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
+  save(enrichments_ORA,enrichments_ORA_merged, file = temp_file)
 
 } else {
   load(temp_file)
-enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
-  save(enrichments_ORA,enrichments_ORA_merged, file = temp_file)
-q()
 }
 
 
