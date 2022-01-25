@@ -49,6 +49,8 @@ option_list <- list(
                         action = "store_true", help="Ignore temporal files"),
   optparse::make_option(c("-f", "--funsys"), type="character", default="BP,MF,CC", 
                         help="Funsys to execute: MF => GO Molecular Function, BP => GO Biological Process, CC => GO Celular Coponent. Default=%default"),
+  optparse::make_option(c("--showCategories"), type="integer", default=30, 
+                        help="Number of top categories to show on clusterProfiler dorplot and emaplot"),
   optparse::make_option(c("-c", "--clean_parentals"), type="logical", default=FALSE, 
                         action = "store_true", help="Clean parentals GO terms that appears on the same clusters than child."),
   optparse::make_option(c("-s", "--simplify"), type="logical", default=FALSE, 
@@ -83,7 +85,7 @@ dir.create(output_path)
 output_path <- normalizePath(output_path)
 temp_file <- file.path(output_path, "enr_tmp.RData")
 all_funsys <- c("MF", "CC", "BP") 
-n_category <- 30
+n_category <- opt$showCategories
 organisms_table <- get_organism_table(organisms_table_file)
 current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
 gene_mapping <- NULL
@@ -126,7 +128,6 @@ if (!file.exists(temp_file) || opt$force) {
 }
 
 
-enrichments_ORA_merged <- filter_top_categories(enrichments_ORA_merged, opt$top_categories)
 
 if (grepl("R", opt$mode)){
     enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
@@ -157,6 +158,7 @@ if (grepl("P", opt$mode)) {
 
 
 
+enrichments_ORA_merged <- filter_top_categories(enrichments_ORA_merged, opt$top_categories)
 
 if (grepl("S", opt$mode)){
   sum_enrichments <- summarize_categories(enrichments_ORA_merged, sim_thr = opt$sim_thr,common_name = opt$common_name)
