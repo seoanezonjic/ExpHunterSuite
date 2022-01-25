@@ -216,7 +216,7 @@ summarize_categories <- function(all_enrichments, sim_thr = 0.7, common_name = "
 
   clusterized_terms <- clusterize_terms(all_enrichments, threshold = sim_thr, common_name = common_name)
   for (funsys in names(clusterized_terms)){
-      enrichments_cl <- all_enrichments[[funsys]]
+    enrichments_cl <- all_enrichments[[funsys]]
     combined_enrichments <- combine_terms_by_cluster(enrichments_cl@compareClusterResult, clusterized_terms[[funsys]])
     combined_enrichments_tmp <-  reshape2::acast(combined_enrichments, term_cluster~cluster, value.var="p.adjust", fill = 1)
     combined_enrichments <- apply(combined_enrichments_tmp, 2, FUN=as.numeric)
@@ -251,10 +251,12 @@ clusterize_terms <- function(all_enrichments, threshold = 0.7, common_name = "si
     enrichments_cl <- all_enrichments[[funsys]]
     term_sim <- enrichments_cl@termsim
     term_sim <- Matrix::forceSymmetric(term_sim, uplo="U")
+    term_sim[is.na(term_sim)] <- 0
     term_dis <- as.dist(1 - term_sim)
     term_clust <- fastcluster::hclust(term_dis, method = "average")
     threshold = 1 - threshold
     clust_term <- cutree(term_clust, h = threshold)
+
     cluster_names <- lapply(clust_term, function(cluster) {
        terms_in_cl <- names(clust_term)[clust_term == cluster]
        cluster_enrichments <- enrichments_cl@compareClusterResult
@@ -305,6 +307,7 @@ get_common_ancestor <- function(terms, GO_ancestor, levels, common_ancestor_meth
   }
 
   common_ancestor <- common_ancestors[1]
+
   if (common_ancestor > 2) {
       
       common_ancestor <- names(common_ancestor) #get_GOid_term(names(common_ancestor))
@@ -427,4 +430,17 @@ clean_parentals_in_matrix <- function(enrichment_mx, subont){
   }
 
 return(enrichment_mx)
+}
+
+
+filter_top_categories <- function(enrichments_ORA_merged, top_c = 50){
+    for (funsys in names(enrichments_ORA_merged)){
+      filtered_enrichments <- enrichments_ORA_merged[[funsys]]@compareClusterResult
+      filtered_enrichments <- filtered_enrichments[order(filtered_enrichments$p.adjust, decreasing = FALSE), ]
+      filtered_enrichments <- Reduce(rbind,by(filtered_enrichments,filtered_enrichments["Cluster"],head,n = top_c))
+      filtered_terms <- unique(filtered_enrichments$Description)
+      enrichments_ORA_merged[[funsys]]@compareClusterResult <- filtered_enrichments
+      enrichments_ORA_merged[[funsys]]@termsim <- enrichments_ORA_merged[[funsys]]@termsim[filtered_terms,filtered_terms]
+    }
+    return(enrichments_ORA_merged)
 }

@@ -61,6 +61,8 @@ option_list <- list(
                         help="Similarity cutoff for grouping categories in Summary mode. Default=%default"),
   optparse::make_option(c("-C", "--common_name"), type="character", default="ancestor", 
                         help="Name of the term groups. 'significant' to use the most significant term of each group. 'ancestor' to use the common ancestor of the group"),
+  optparse::make_option(c("-T", "--top_categories"), type="integer", default=50,
+                        help="Number of top categories for each cluster. Default=%default"),
   optparse::make_option(c("-d", "--description_file"), type="character", default=NULL,
                         help="Markdown file describing of the enriched clusters."),
   optparse::make_option(c("-k", "--gene_keytype"), type="character", default="ENTREZID",
@@ -120,9 +122,12 @@ if (!file.exists(temp_file) || opt$force) {
 
 } else {
   load(temp_file)
-}
 
+}
 enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
+
+
+enrichments_ORA_merged <- filter_top_categories(enrichments_ORA_merged, opt$top_categories)
 
 if (grepl("R", opt$mode)){
     enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
@@ -158,6 +163,7 @@ if (grepl("S", opt$mode)){
   sum_enrichments <- summarize_categories(enrichments_ORA_merged, sim_thr = opt$sim_thr,common_name = opt$common_name)
  
   for (funsys in names(sum_enrichments)) {
+
     sum_table <- sum_enrichments[[funsys]]
     sum_table <- (sum_table > opt$pvalcutoff) + 0
     sum_table <- sum_table[rownames(sum_table) != "to_remove",]
