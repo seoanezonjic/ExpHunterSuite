@@ -122,9 +122,10 @@ if (!file.exists(temp_file) || opt$force) {
 
 } else {
   load(temp_file)
-
-}
 enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
+  save(enrichments_ORA,enrichments_ORA_merged, file = temp_file)
+q()
+}
 
 
 enrichments_ORA_merged <- filter_top_categories(enrichments_ORA_merged, opt$top_categories)
