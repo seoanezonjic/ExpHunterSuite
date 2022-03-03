@@ -86,33 +86,34 @@ test_that("Multienricher gsea gives same results as running packets separately",
     scoreType = "pos",
     seed=TRUE)
 
-  packet_res_KEGG <- clusterProfiler::gseKEGG(geneList=genes, 
-    organism      = "mmu",
-    pvalueCutoff  = 0.05,
-    pAdjustMethod = "BH",
-    scoreType = "pos",
-    use_internal_data = FALSE,
-    seed = TRUE)
+  # packet_res_KEGG <- clusterProfiler::gseKEGG(geneList=genes, 
+  #   organism      = "mmu",
+  #   pvalueCutoff  = 0.05,
+  #   pAdjustMethod = "BH",
+  #   scoreType = "pos",
+  #   use_internal_data = FALSE,
+  #   seed = TRUE)
 
 
   organisms_table <- get_organism_table()
   current_organism_info <- subset(organisms_table, 
                           rownames(organisms_table) == "Mouse")
   #set.seed(123) 
-  kegg_file_mouse <- paste0("../../../kegg_db_", current_organism_info$KeggCode[1], ".rds")
-  download_latest_kegg_db(organism="mmu", file=kegg_file_mouse)
-  new_res_all <- ExpHunterSuite::multienricher_gsea(all_funsys=c("KEGG", "MF", "Reactome"),
+  # kegg_file_mouse <- paste0("../../../kegg_db_", current_organism_info$KeggCode[1], ".rds")
+  # download_latest_kegg_db(organism="mmu", file=kegg_file_mouse)
+#  new_res_all <- ExpHunterSuite::multienricher_gsea(all_funsys=c("KEGG", "MF", "Reactome"),
+  new_res_all <- ExpHunterSuite::multienricher_gsea(all_funsys=c("MF", "Reactome"),
     genes_list=list(genes,genes), 
     organism_info = current_organism_info,
     kegg_file=kegg_file_mouse,
     pvalueCutoff = 0.05, scoreType="pos", seed=TRUE
   )
 
-  save(list = ls(all.names = TRUE), file = "~/environment_test7.RData")
+  # save(list = ls(all.names = TRUE), file = "~/environment_test7.RData")
 
   testthat::expect_identical(object=packet_res_GO, expected=new_res_all[["MF"]][[1]])
   testthat::expect_identical(object=packet_res_reactome, expected=new_res_all[["Reactome"]][[1]])
-   testthat::expect_identical(object=packet_res_KEGG, expected=new_res_all[["KEGG"]][[1]])
+#   testthat::expect_identical(object=packet_res_KEGG, expected=new_res_all[["KEGG"]][[1]])
 })
 
 # test_that("Multienricher gsea with custom gene sets gives same results as running packets separately", {

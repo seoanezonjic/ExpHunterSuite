@@ -123,7 +123,7 @@ test_that("Multienricher gsea gives same results as running packets separately w
 # cat(pack_time_taken, file="~/pack_topgo_time_taken_5.txt")
 
 
-  save(list = ls(all.names = TRUE), file = "~/environment_test8.RData")
+  # save(list = ls(all.names = TRUE), file = "~/environment_test8.RData")
 
   testthat::expect_identical(object=resultFis, expected=new_res_tg[["BP"]][[2]])
 

@@ -30,7 +30,7 @@ test_that("main functional enrichment function works GO and Reactome - mouse", {
                           package="ExpHunterSuite")
   load(precomp_fh_ext_file)
 
-  save(list = ls(all.names = TRUE), file = "~/environment_test4.RData")
+  # save(list = ls(all.names = TRUE), file = "~/environment_test4.RData")
   expect_equivalent(fh_ext_out, precomp_fh_ext_out)
 
 })

@@ -10,12 +10,11 @@ main_functional_hunter(
   model_organism,
   annot_table = NULL,
   organisms_table = get_organism_table(),
-  input_gene_id = "E",
-  func_annot_db = "gKR",
-  GO_subont = "BMC",
+  input_gene_id = "ENSEMBL",
   custom = NULL,
-  analysis_type = "o",
-  remote = "",
+  enrich_dbs = c("MF", "Reactome"),
+  enrich_methods = "ORA",
+  annotation_source = "orgdb",
   save_query = FALSE,
   pthreshold = 0.1,
   qthreshold = 0.2,
@@ -38,17 +37,7 @@ Use see get_organism_table()}
 \item{input_gene_id}{(OPTIONAL) type og gene IDs given. Allowed: ENSEMBL (E)
 , entrezgene (e), TAIR/Arabidopsis (T), Gene Names (G).}
 
-\item{func_annot_db}{(OPTIONAL) modules to be enriched}
-
-\item{GO_subont}{(OPTIONAL) specific GO subontologies to be enriched}
-
 \item{custom}{(OPTIONAL) list of dataframes with GMT corpus}
-
-\item{analysis_type}{(OPTIONAL) enrichment type to be performed. Allowed:
-ORA (o) and GSEA (g)}
-
-\item{remote}{(OPTIONAL) remote allowed actions. Are: Biomart query (b) and
-KEGG enrichment (k)}
 
 \item{save_query}{(OPTIONAL) flag to indicate if query must be stored}
 
@@ -64,6 +53,16 @@ Default: 1}
 \item{output_files}{output folder}
 
 \item{fc_colname}{main logFC colname (into hunter_results dataframe)}
+
+\item{func_annot_db}{(OPTIONAL) modules to be enriched}
+
+\item{GO_subont}{(OPTIONAL) specific GO subontologies to be enriched}
+
+\item{analysis_type}{(OPTIONAL) enrichment type to be performed. Allowed:
+ORA (o) and GSEA (g)}
+
+\item{remote}{(OPTIONAL) remote allowed actions. Are: Biomart query (b) and
+KEGG enrichment (k)}
 }
 \value{
 functional result object with enrichments performed

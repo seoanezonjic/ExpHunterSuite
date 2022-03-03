@@ -268,17 +268,17 @@ check_input_main_degenes_Hunter <- function(raw,
     }
 
     if (!is.null(external_DEA_data)) {
-      warning("External DEA dataframe given.")
+      message("External DEA dataframe given.")
       if(is.null(target)){
         warning(paste0("External DEA dataframe given but no target",
-          " - creating a blank one"))
+          " - creating a dummy one"))
         target <- data.frame(samples=c("case_dummy_1", "case_dummy_2", 
                                        "control_dummy_1", "control_dummy2"), 
                              treat=c("Treat","Treat", "Ctrl", "Ctrl"))
       }
       if(is.null(raw)) {
         warning(paste0("External DEA dataframe given but no count data",
-          " - creating a blank one"))
+          " - creating a dummy one"))
         raw <- as.data.frame(matrix(sample(1:100, nrow(external_DEA_data)*nrow(target),replace=TRUE), 
                                     nrow=nrow(external_DEA_data), 
                                     ncol=nrow(target), 

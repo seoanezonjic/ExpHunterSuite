@@ -14,8 +14,8 @@ multienricher_gsea(
   pvalueCutoff = 0.05,
   pAdjustMethod = "BH",
   kegg_file = NULL,
-  all_custom_sets = NULL,
-  readable = TRUE,
+  custom_sets = NULL,
+  readable = FALSE,
   ...
 )
 }

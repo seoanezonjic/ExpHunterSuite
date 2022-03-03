@@ -24,6 +24,6 @@ test_that("main expression function works with 0 DEGs", {
   load(precomp_degh_res_file)
 
   testthat::expect_equivalent(degh_out, precomp_degh_out)
-  save(list = ls(all.names = TRUE), file = "~/environment_test3.RData")
+  # save(list = ls(all.names = TRUE), file = "~/environment_test3.RData")
 
 })

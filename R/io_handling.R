@@ -359,6 +359,71 @@ write_enrich_files <- function(func_results, output_files=getwd()){
     }
 }
 
+write_table_ehs <- function(x, file) {
+    utils::write.table(x=x, file=file, quote=FALSE, col.names=TRUE, 
+        row.names = FALSE, sep="\t")
+}
+write_enrich_tables <- function(func_res_tables, method_type, output_files){
+    for(res in names(func_res_tables)) {
+        print("enrich tables for")
+        print(res)
+        print("filename")
+        filename <- file.path(output_files, 
+                paste(res, method_type, "results", sep="_"))
+        print(filename)
+        write_table_ehs(func_res_tables[[res]], file=filename)
+    }
+}
+
+write_enrich_files_new <- function(func_results, output_files=getwd()){
+    if(!dir.exists(output_files)) dir.create(output_files)
+    final_params <- func_results$final_main_params[! names(func_results$final_main_params) %in%
+        c("hunter_results", "organisms_table", "annot_table", "custom")]
+    write_table_ehs(data.frame(A = names(final_params), 
+                               B = sapply(final_params, paste, collapse=" ")), 
+                       file = file.path(output_files,"functional_opt.txt"))
+
+    if("ORA" %in% names(func_results)) {
+        write_enrich_tables(func_results$ORA, "ORA", output_files)
+    }
+    if("GSEA" %in% names(func_results)) {
+        write_enrich_tables(func_results$GSEA, "GSEA", output_files)
+    }
+    if("DEGH_results_annot" %in% names(func_results)) 
+        write_table_ehs(func_results$DEGH_results_annot, 
+                           file=file.path(output_files, 
+                                          "hunter_results_table_annotated.txt"))
+
+    fortify.compareClusterResult <- get_unexported_function("enrichplot", 
+                                         "fortify.compareClusterResult")
+    if("WGCNA_ORA" %in% names(func_results)){
+        fortified_ora <- lapply(func_results$WGCNA_ORA, fortify.compareClusterResult)
+        write_enrich_tables(func_results$ORA, "ORA", output_files)
+    }
+    if("WGCNA_GSEA" %in% names(func_results)){
+        for (enrichment_i in seq(length(func_results$WGCNA_GSEA))) {
+            df <- func_results$WGCNA_GSEA[[enrichment_i]]@compareClusterResult
+            utils::write.table(df, 
+                   file=file.path(output_files, 
+                            paste0(names(func_results$WGCNA_GSEA[enrichment_i]),
+                                   "_cls_gsea")), 
+                   quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+        }
+    }
+    if("WGCNA_CUSTOM" %in% names(func_results)){
+        for(i in seq(length(func_results$WGCNA_CUSTOM))) {
+            df <- fortify.compareClusterResult(func_results$WGCNA_CUSTOM[[i]])
+            utils::write.table(df, 
+                    file=file.path(output_files, 
+                                   paste0(basename(
+                                           names(func_results$WGCNA_CUSTOM)[i]),
+                                          "_cls_ora")), 
+                    quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+        }
+    }
+}
+
+
 
 #' Loads Hunter DEG analysis table and simulated TRUE DEG vector. Concat in
 #' training/testing ML data frame format and returns it.

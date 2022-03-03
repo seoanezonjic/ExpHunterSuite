@@ -1,42 +1,121 @@
+add_translated_gene_ids <- function(DEGH_results, input_ids, input_gene_id, gene_translation_tables) {
+        input_to_entrezgene <- gene_translation_tables[["input_to_entrezgene"]]    
+        input_to_symbol <- gene_translation_tables[["input_to_symbol"]]    
+
+        if(!is.null(input_to_symbol)) {
+          DEGH_results <- data.frame(SYMBOL = input_to_symbol[
+            match(input_ids, input_to_symbol[[input_gene_id]]), "SYMBOL"], 
+            DEGH_results)
+         }
+         DEGH_results <- data.frame(ENTREZID = input_to_entrezgene[
+           match(input_ids, input_to_entrezgene[[input_gene_id]]), "ENTREZID"], 
+           DEGH_results)
+         DEGH_results <- data.frame(input_IDs=input_ids, DEGH_results)
+    }
+
+get_sig_genes <- function(DEGH_results) {
+    prev_genes <- DEGH_results[DEGH_results$genes_tag == "PREVALENT_DEG" &
+                               !is.na(DEGH_results$ENTREZID), "ENTREZID"]
+                               "%>%" <- magrittr::"%>%"
+    ## TODO => ESTARIA BIEN REFLEJAR ESTA INFORMACION EN EL REPORT
+    union_DEGs_df <- subset(DEGH_results, genes_tag %in% c("POSSIBLE_DEG",
+                         "PREVALENT_DEG"))
+    union_DEGs <- union_DEGs_df[!is.na(union_DEGs_df$input_IDs), 
+                                 "input_IDs"] %>% unique
+    return(list(prev_genes=prev_genes, union_DEGs_df=union_DEGs_df,
+        union_DEGs=union_DEGs))
+}
+
+get_gene_lists <- function(DEGH_results, fc_colname) {
+    geneList <- DEGH_results[!is.na(DEGH_results$ENTREZID),  fc_colname]
+    names(geneList) <- DEGH_results[!is.na(DEGH_results$ENTREZID), "ENTREZID"]
+    geneList <- sort(geneList, decreasing = TRUE)
+    return(geneList)
+}
+
+get_sig_genes_cl <- function(DEGH_results) {
+    cls <- unique(DEGH_results$Cluster_ID)
+    # DELETE GREY MODULE
+    if (any(c(0,"grey") %in% cls)) {
+        cls <- cls[!cls %in% c(0,"grey")]
+    } else {
+        warning("Module Zero/Grey not found")
+    }
+
+    clgenes <- lapply(cls,function(cl) { # Find
+        unique(DEGH_results$ENTREZID[which(DEGH_results$Cluster_ID == 
+                                              cl)])
+    }) 
+    names(clgenes) <- cls
+    return(clgenes)
+}
+
+get_gene_lists_cl <- function(DEGH_results, fc_colname) {
+    # JRP - note we don't delete grey module for GSEA, any reason?
+    DEGH_res_list <- split(DEGH_results, DEGH_results$Cluster_ID)
+    lapply(DEGH_res_list, function(x) get_gene_lists(x, fc_colname))
+}
+
+
+
+
 get_org_db <- function(current_organism_info) {
   org_db <- current_organism_info$Bioconductor_DB[1]
   org_db <- eval(parse(text = paste0(org_db,"::",org_db)))
   return(org_db)
 }
 
+check_id_valid_orgdb <- function(gene_id, id_type="input", organism_info, outcome_action="stop") {
+  org_db <- get_org_db(organism_info)
+  if(id_type == "input") possible_ids <- AnnotationDbi::keytypes(org_db)
+  else possible_ids <- AnnotationDbi::columns(org_db)
 
-  check_id_valid_orgdb <- function(gene_id, id_type="input", organism_info, outcome_action="stop") {
-          print("we")
-    org_db <- get_org_db(organism_info)
-         print("wa")
-    if(id_type == "input") possible_ids <- AnnotationDbi::keytypes(org_db)
-    else possible_ids <- AnnotationDbi::columns(org_db)
-
-    if(! gene_id %in% possible_ids) {
-      if(outcome_action=="stop") {
-        stop(paste(c("gene id must be one of the following:", possible_ids), collapse=" "))
-      } else if(outcome_action=="warn") {
-        warning(paste(c("gene id must be one of the following:", possible_ids), collapse=" "))
-        return(FALSE)
-      }
+  if(! gene_id %in% possible_ids) {
+    if(outcome_action=="stop") {
+      stop(paste(c("gene id must be one of the following:", possible_ids), collapse=" "))
+    } else if(outcome_action=="warn") {
+      warning(paste(c("gene id must be one of the following:", possible_ids), collapse=" "))
+      return(FALSE)
     }
-    return(TRUE)
   }
+  return(TRUE)
+}
 
-get_translation_tables_bm <- function(input_gene_id, DEGH_results, current_organism_info) {
+#' Translates a given gene ID using a dictionary. Note: one unknown ID can
+#' corresponds to many known ids. 
+#' @param ids_to_translate set of IDs to be translated
+#' @param annot_table dictionary to translate IDs
+#' @keywords translate
+#' @return translated IDs or NA if it's not possible to translate
+translate_from_table <- function(ids_to_translate, annot_table){ 
+  translated_ids <- unlist(lapply(ids_to_translate, function(id){
+    indx <- which(annot_table[,2] == id)
+    if(length(indx) == 0){
+      return(NA)
+    } else{
+      return(annot_table[indx[1],1])
+    }
+  }))
+  return(translated_ids)
+}
+
+get_translation_tables_bm <- function(input_gene_id, input_ids, current_organism_info) {
   if(input_gene_id == "ENTREZID") {
-    input_to_entrezgene <- data.frame(input=row.names(DEGH_results), 
-                                      ENTREZID=row.names(DEGH_results))
+    input_to_entrezgene <- data.frame(input=input_ids, 
+                                      ENTREZID=input_ids)
   } else {
     # Check input gene ID valid
+    print("OK")
     check_id_valid_orgdb(gene_id=input_gene_id, id_type="input", organism_info=current_organism_info, outcome_action="stop")
-        input_to_entrezgene <- translate_ids_orgdb(input_genes=row.names(DEGH_results), 
+
+        input_to_entrezgene <- translate_ids_orgdb(input_genes=input_ids, 
         input_id=input_gene_id, organism_info = current_organism_info) 
   }
-  symbol_output_available <- check_id_valid_orgdb(gene_id=input_gene_id, id_type="output", organism_info=current_organism_info, outcome_action="warning")
+  symbol_output_available <- check_id_valid_orgdb(gene_id=input_gene_id, id_type="output", 
+                                                  organism_info=current_organism_info, outcome_action="warning")
             
   if(symbol_output_available == TRUE) {
-    input_to_symbol <- translate_ids_orgdb(input_genes=row.names(DEGH_results), 
+    input_to_symbol <- translate_ids_orgdb(input_genes=input_ids, 
     input_id=input_gene_id, output_id="SYMBOL", organism_info = current_organism_info)
   } else {
     input_to_symbol <- NULL
@@ -44,26 +123,19 @@ get_translation_tables_bm <- function(input_gene_id, DEGH_results, current_organ
   return(list(input_to_entrezgene = input_to_entrezgene, input_to_symbol = input_to_symbol))
 }
 
-    translate_ids_orgdb <- function(input_genes, input_id, output_id="ENTREZID", organism_info){
-         print("we")
-         org_db <- get_org_db(organism_info)
-         print("wa")
-#         input_genes <- c("ENSMUSG00000051951", "ENSMUSG00000103377", "ENSMUSG00000103025", 
-# "ENSMUSG00000103201", "ENSMUSG00000055493", "ENSMUSG00000024164", 
-# "ENSMUSG00000026822", "ENSMUSG00000097971", "ENSMUSG00000069516", 
-# "ENSMUSG00000073418")
-#         input_id <- "ENSEMBL"
-#         output_id <- "ENTREZID"
-        possible_ids <- AnnotationDbi::columns(org_db)
-        if(! input_id %in% possible_ids) 
-        stop(paste(c("gene keytype must be one of the following:", possible_ids), collapse=" "))
-        ids <- tryCatch(
-        ids <- AnnotationDbi::select(org_db, keys=input_genes, column=output_id, keytype=input_id),
-        error=function(cond){
+translate_ids_orgdb <- function(input_genes, input_id, output_id="ENTREZID", organism_info){
+  org_db <- get_org_db(organism_info)
+
+  possible_ids <- AnnotationDbi::columns(org_db)
+  if(! input_id %in% possible_ids) 
+    stop(paste(c("gene keytype must be one of the following:", possible_ids), collapse=" "))
+
+    ids <- tryCatch(
+      ids <- AnnotationDbi::select(org_db, keys=input_genes, column=output_id, keytype=input_id),
+      error=function(cond){
             ids <- NULL
         }
-        )
-    #    return(ids)
+    )
     return(ids[!is.na(ids[,2]),])
     }
 
@@ -82,9 +154,15 @@ multienricher_topGO <- function(all_funsys, genes_list, universe=NULL, organism_
   algorithm = "classic", statistic = "fisher", nodeSize = 5, task_size=1, 
   workers=1, ...){
 
- org_db <- organism_info$Bioconductor_DB[1]
- enrichments_topGO <- list()
+  unlisted_input_flag <- FALSE
+  if(! is.list(genes_list)) {
+    unlisted_input_flag <- TRUE
+    genes_list <- list(genes_list)
+  }
 
+ org_db <- organism_info$Bioconductor_DB[1]
+ enrichments_topGO <- vector("list", length(all_funsys))
+ names(enrichments_topGO) <- all_funsys
  for(funsys in all_funsys) {
   if (funsys %in% c("CC","BP","MF")){
     if(is.null(universe)) {
@@ -115,7 +193,8 @@ multienricher_topGO <- function(all_funsys, genes_list, universe=NULL, organism_
       l_GOdata <- topGO::updateGenes(object = GOdata, geneList = geneList)
       resultFis <- topGO::runTest(l_GOdata, algorithm = algorithm, statistic = statistic)
     }, workers = workers, task_size = task_size )
-
+    
+    if(unlisted_input_flag) enriched_cats <- enriched_cats[[1]]
     enrichments_topGO[[funsys]] <- enriched_cats
   }
   return(enrichments_topGO)
@@ -125,21 +204,33 @@ multienricher_topGO <- function(all_funsys, genes_list, universe=NULL, organism_
 #' @export
 multienricher_gsea <- function(all_funsys=NULL, genes_list, organism_info, org_db = NULL, task_size=1, 
   workers=1, pvalueCutoff = 0.05, pAdjustMethod = "BH", kegg_file=NULL, 
-  all_custom_sets=NULL, readable=TRUE, ...){
+  custom_sets=NULL, readable=FALSE, ...){
+
+  unlisted_input_flag <- FALSE
+  if(! is.list(genes_list)) {
+    print("BLAH")
+    print("BLAH")
+    unlisted_input_flag <- TRUE
+    genes_list <- list(genes_list)
+  }
+
 
   common_params <- list(pvalueCutoff = pvalueCutoff, 
     pAdjustMethod = pAdjustMethod, ...)
 
-  if(! is.null(all_custom_sets)) {
-    if(is.null(names(all_custom_sets))) stop("Custom sets enrichment object must be a named list")
-    all_funsys <- c(all_funsys, names(all_custom_sets))
+  if(! is.null(custom_sets)) {
+    if(is.null(names(custom_sets))) stop("Custom sets enrichment object must be a named list")
+    all_funsys <- c(all_funsys, names(custom_sets))
   }
 
-  enrichments_gsea <- list()
+  enrichments_gsea <- vector("list", length(all_funsys))
+  names(enrichments_gsea) <- all_funsys
+
   for(funsys in all_funsys) {
-  
+    print(funsys)
     if (funsys %in% c("CC","BP","MF")){
       org_db <- get_org_db(organism_info)
+      ord_gb <- "org.Mm.eg.db"
       enrf <- prepare_enrichment_GO(enrichment_type="gsea", subont = funsys, org_db = org_db)
       specific_params <- list(OrgDb = org_db, ont = funsys)
     } else  if (funsys == "Reactome"){
@@ -151,19 +242,22 @@ multienricher_gsea <- function(all_funsys=NULL, genes_list, organism_info, org_d
       enrf <- prepare_enrichment_KEGG(enrichment_type="gsea", kegg_file = kegg_file)
       specific_params <- list(organism = organism_info$KeggCode[1])
 
-    } else if (funsys %in% names(all_custom_sets)) {
+    } else if (funsys %in% names(custom_sets)) {
       enrf <- clusterProfiler::GSEA
-      specific_params <- list(TERM2GENE = all_custom_sets[[funsys]])
+      specific_params <- list(TERM2GENE = custom_sets[[funsys]])
     } else {
       stop("funsys", funsys, "not recognized")
     }
 
-    save(list = ls(all.names = TRUE), file = "~/environment_gsea.RData")
+    #save(list = ls(all.names = TRUE), file = "~/environment_gsea.RData")
 
     #l_genes <- genes_list[[1]]
     print("parallel list for")
     print(funsys)
     print(names(genes_list))
+    print("is genes_list a list?")
+    print(is.list(genes_list))
+    library("ReactomePA")
     enriched_cats <- parallel_list(genes_list, function(l_genes){
       print("ltest")
        params_genes <- c(specific_params, common_params, list(gene = l_genes))
@@ -171,23 +265,22 @@ multienricher_gsea <- function(all_funsys=NULL, genes_list, organism_info, org_d
       }, 
       workers= workers, task_size = task_size
     )
-
+    if(unlisted_input_flag) enriched_cats <- enriched_cats[[1]]
     enrichments_gsea[[funsys]] <- enriched_cats
-
   }
   return(enrichments_gsea)
 }
 
 prepare_enrichment_GO <- function(enrichment_type, subont, org_db) {
- if(enrichment_type == "ora") enrf <- clusterProfiler::enrichGO
- if(enrichment_type == "gsea") enrf <- clusterProfiler::gseGO
+  if(enrichment_type == "ora")   enrf <- clusterProfiler::enrichGO
+  if(enrichment_type == "gsea") enrf <- clusterProfiler::gseGO
 
- get_enr_data <- get("get_GO_data", envir = asNamespace("clusterProfiler"), inherits = FALSE)      
- pattern_to_remove  <- "GO_DATA *<-"
- ENRICH_DATA <- get_enr_data(org_db, subont, "ENTREZID")
- ltorem <- grep(pattern_to_remove, body(enrf))
- body(enrf)[[ltorem]] <- substitute(GO_DATA <- ENRICH_DATA)
- return(enrf)
+  get_enr_data <- get("get_GO_data", envir = asNamespace("clusterProfiler"), inherits = FALSE)      
+  pattern_to_remove  <- "GO_DATA *<-"
+  ENRICH_DATA <- get_enr_data(org_db, subont, "ENTREZID")
+  ltorem <- grep(pattern_to_remove, body(enrf))
+  body(enrf)[[ltorem]] <- substitute(GO_DATA <- ENRICH_DATA)
+  return(enrf)
 }
 
 prepare_enrichment_Reactome <- function(enrichment_type, reactome_id) {
@@ -215,44 +308,60 @@ prepare_enrichment_KEGG <- function(enrichment_type, kegg_file) {
   return(enrf)
 }
 
+
+check_multienricher_input <- function(genes_list, custom_sets) {
+  unlisted_input_flag <- FALSE
+  if(! is.list(genes_list)) {
+    unlisted_input_flag <- TRUE
+    genes_list <- list(genes_list)
+  }
+
+  if(! is.null(custom_sets)) {
+  if(is.null(names(custom_sets))) stop("Custom sets enrichment object must be a named list")
+    all_funsys <- c(all_funsys, names(custom_sets))
+  }
+}
+
 #' Perform ORA enrichment analysis of a list of genes
 #' @export
 multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL, organism_info, org_db = NULL, task_size=1, 
   workers=1, pvalueCutoff = 0.05, qvalueCutoff = 0.2, pAdjustMethod = "BH", kegg_file=NULL, 
-  all_custom_sets=NULL, readable=FALSE, ...){
-cat("first")
+  custom_sets=NULL, readable=FALSE, ...){
+
+  unlisted_input_flag <- FALSE
+  if(! is.list(genes_list)) {
+    unlisted_input_flag <- TRUE
+    genes_list <- list(genes_list)
+  }
+
   common_params <- list(universe = universe, pvalueCutoff = pvalueCutoff, qvalueCutoff = qvalueCutoff, 
     pAdjustMethod = pAdjustMethod, ...)
 
-  if(! is.null(all_custom_sets)) {
-    if(is.null(names(all_custom_sets))) stop("Custom sets enrichment object must be a named list")
-    all_funsys <- c(all_funsys, names(all_custom_sets))
+  if(! is.null(custom_sets)) {
+    if(is.null(names(custom_sets))) stop("Custom sets enrichment object must be a named list")
+    all_funsys <- c(all_funsys, names(custom_sets))
   }
 
-  enrichments_ORA <- list()
-cat("out")
+  enrichments_ORA <- vector("list", length(all_funsys))
+  names(enrichments_ORA) <- all_funsys
   for(funsys in all_funsys) {
-cat(funsys)
     if (funsys %in% c("CC","BP","MF")){
-      cat("here\n")
       org_db <- get_org_db(organism_info)
       enrf <- prepare_enrichment_GO(enrichment_type="ora", subont = funsys, org_db = org_db)
       specific_params <- list(OrgDb = org_db, ont = funsys, readable = readable)
 
     } else  if (funsys == "Reactome"){
-
       enrf <- prepare_enrichment_Reactome(enrichment_type="ora", reactome_id = organism_info$Reactome_ID[1])
       specific_params <- list(organism = organism_info$Reactome_ID[1], readable = readable)
 
     } else if (funsys == "KEGG"){
-
       enrf <- prepare_enrichment_KEGG(enrichment_type="ora", kegg_file = kegg_file)
       specific_params <- list(organism = organism_info$KeggCode[1])
                        
-    } else if (funsys %in% names(all_custom_sets)) {
-
+    } else if (funsys %in% names(custom_sets)) {
+      print("here")
       enrf <- clusterProfiler::enricher
-      specific_params <- list(TERM2GENE = all_custom_sets[[funsys]])
+      specific_params <- list(TERM2GENE = custom_sets[[funsys]])
 
     } else {
       stop("funsys", funsys, "not recognized")
@@ -265,7 +374,48 @@ cat(funsys)
       }, 
       workers= workers, task_size = task_size
     )
+    if(unlisted_input_flag) enriched_cats <- enriched_cats[[1]]
     enrichments_ORA[[funsys]] <- enriched_cats
   }
+  save(list = ls(all.names = TRUE), file = "~/environment_ora.RData")
+
   return(enrichments_ORA)
 }
+
+merge_clusters <- function(results_list) {
+  merged_clusters <- lapply(results_list, clusterProfiler::merge_result)
+}
+
+add_term_sim_ora <- function(deg_enr_ora) {
+  enr_with_termsim <- list()
+  for(funsys in names(deg_enr_ora)) {
+    enrichment <- deg_enr_ora[[funsys]]
+    
+    if(is.list(enrichment)) {
+      print("list time")
+      enr_with_termsim[[funsys]] <- sapply(enrichment, function(enr) {
+              print("enr:")
+              print(enr)
+              print("/enr")
+
+        if(nrow(enr) > 0) {
+          return(enrichplot::pairwise_termsim(enr))
+        } else {
+          return(enr)
+        }
+      })
+    } else {
+      print("elsie")
+      #print(enrichment)
+      if(nrow(enrichment) > 0) {
+        print("here now")
+        enr_with_termsim[[funsys]] <- enrichplot::pairwise_termsim(enrichment)
+      } else {
+        print("or here")
+        enr_with_termsim[[funsys]] <- enrichment
+      }
+    }
+  }
+  return(enr_with_termsim)
+}
+

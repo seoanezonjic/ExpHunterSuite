@@ -29,7 +29,7 @@ test_that("main expression function works", {
   	                      package="ExpHunterSuite")
   print(precomp_degh_res_file)
   load(precomp_degh_res_file)
-  save(list = ls(all.names = TRUE), file = "~/environment1.RData")
+  # save(list = ls(all.names = TRUE), file = "~/environment1.RData")
 
   testthat::expect_equivalent(degh_out, precomp_degh_out)
 })
