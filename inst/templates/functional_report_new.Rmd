@@ -1,0 +1,66 @@
+---  
+title: "ExpHunterSuite: Functional Report"
+author: "SysBioLab"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+    fig_width: 12
+---
+
+<style type='text/css'>
+    body .main-container {
+        max-width: 90%;
+
+    }
+
+    .plot_real_size {
+      overflow: scroll;
+      max-height: 600px;
+    }
+
+    .plot_real_size img{
+      max-width: none;
+      max-height: none;
+    }
+
+    embed {
+   
+  }   
+</style>
+
+```{r child="func_initial_details.Rmd"}
+```
+```{r child="func_top_genes.Rmd"}
+```
+
+```{r ORA_analysis, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+# JRP - to reuse Jose's bits
+gene_set <- "ORA"
+res <- list()
+for(funsys in names(flags_ora)) {
+
+#res <- lapply(func_results_new$ORA, function(x) {
+#  print(typeof(x))
+  if(flags_ora[[funsys]] == TRUE) {
+    enrich_obj <- func_results$ORA[[funsys]]
+   #   res[[funsys]] <- knitr::knit_child(
+   #     "ora_plots_all_objects.Rmd", envir = environment(), quiet = TRUE
+   # )
+message("testing here")
+    exp_res <- knitr::knit_expand("ora_plots_all_objects.Rmd")
+    res[[funsys]] <- knitr::knit(text=exp_res, quiet = FALSE)
+  } else {
+    cat("## **YOU SHALL NOT PASS**")
+  }
+}
+cat(unlist(res), sep = '\n')
+
+```
+
+## **Values of options used to run Functional Hunter**
+First column contains the option names; second column contains the given values for each option in this run.
+```{r opt_vals, echo = FALSE}
+#knitr::kable(cbind(func_results$final_main_params))
+```

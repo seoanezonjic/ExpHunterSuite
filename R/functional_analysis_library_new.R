@@ -105,7 +105,6 @@ get_translation_tables_bm <- function(input_gene_id, input_ids, current_organism
                                       ENTREZID=input_ids)
   } else {
     # Check input gene ID valid
-    print("OK")
     check_id_valid_orgdb(gene_id=input_gene_id, id_type="input", organism_info=current_organism_info, outcome_action="stop")
 
         input_to_entrezgene <- translate_ids_orgdb(input_genes=input_ids, 
@@ -208,8 +207,6 @@ multienricher_gsea <- function(all_funsys=NULL, genes_list, organism_info, org_d
 
   unlisted_input_flag <- FALSE
   if(! is.list(genes_list)) {
-    print("BLAH")
-    print("BLAH")
     unlisted_input_flag <- TRUE
     genes_list <- list(genes_list)
   }
@@ -227,7 +224,6 @@ multienricher_gsea <- function(all_funsys=NULL, genes_list, organism_info, org_d
   names(enrichments_gsea) <- all_funsys
 
   for(funsys in all_funsys) {
-    print(funsys)
     if (funsys %in% c("CC","BP","MF")){
       org_db <- get_org_db(organism_info)
       ord_gb <- "org.Mm.eg.db"
@@ -249,17 +245,8 @@ multienricher_gsea <- function(all_funsys=NULL, genes_list, organism_info, org_d
       stop("funsys", funsys, "not recognized")
     }
 
-    #save(list = ls(all.names = TRUE), file = "~/environment_gsea.RData")
-
-    #l_genes <- genes_list[[1]]
-    print("parallel list for")
-    print(funsys)
-    print(names(genes_list))
-    print("is genes_list a list?")
-    print(is.list(genes_list))
     library("ReactomePA")
     enriched_cats <- parallel_list(genes_list, function(l_genes){
-      print("ltest")
        params_genes <- c(specific_params, common_params, list(gene = l_genes))
        enriched_cats <- do.call("enrf", params_genes)
       }, 
@@ -296,7 +283,10 @@ prepare_enrichment_Reactome <- function(enrichment_type, reactome_id) {
 }
 
 prepare_enrichment_KEGG <- function(enrichment_type, kegg_file) {
-  if(! file.exists(kegg_file)) stop("kegg_file not found. Please download using download_latest_kegg_db or if using script ensure not using remote mode")
+  print("here")
+  print("kegg_file")
+  if(is.null(kegg_file) || ! file.exists(kegg_file) ) stop("kegg_file not found or not provided. 
+  It can be downloaded using download_latest_kegg_db()")
 
   if(enrichment_type == "ora") enrf <- clusterProfiler::enrichKEGG
   if(enrichment_type == "gsea") enrf <- clusterProfiler::gseKEGG
@@ -359,14 +349,12 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL, organi
       specific_params <- list(organism = organism_info$KeggCode[1])
                        
     } else if (funsys %in% names(custom_sets)) {
-      print("here")
       enrf <- clusterProfiler::enricher
       specific_params <- list(TERM2GENE = custom_sets[[funsys]])
 
     } else {
       stop("funsys", funsys, "not recognized")
     }
-    save(list = ls(all.names = TRUE), file = "~/environment_ora.RData")
 
     enriched_cats <- parallel_list(genes_list, function(l_genes){
        params_genes <- c(specific_params, common_params, list(gene = l_genes))
@@ -377,7 +365,6 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL, organi
     if(unlisted_input_flag) enriched_cats <- enriched_cats[[1]]
     enrichments_ORA[[funsys]] <- enriched_cats
   }
-  save(list = ls(all.names = TRUE), file = "~/environment_ora.RData")
 
   return(enrichments_ORA)
 }
@@ -390,32 +377,50 @@ add_term_sim_ora <- function(deg_enr_ora) {
   enr_with_termsim <- list()
   for(funsys in names(deg_enr_ora)) {
     enrichment <- deg_enr_ora[[funsys]]
-    
     if(is.list(enrichment)) {
-      print("list time")
       enr_with_termsim[[funsys]] <- sapply(enrichment, function(enr) {
-              print("enr:")
-              print(enr)
-              print("/enr")
-
         if(nrow(enr) > 0) {
-          return(enrichplot::pairwise_termsim(enr))
+#         return(catched_pairwise_termsim(enr))
+          return(trycatch_pairwise_termsim(enr))
         } else {
           return(enr)
         }
       })
     } else {
-      print("elsie")
-      #print(enrichment)
       if(nrow(enrichment) > 0) {
-        print("here now")
-        enr_with_termsim[[funsys]] <- enrichplot::pairwise_termsim(enrichment)
+        enr_with_termsim[[funsys]] <- trycatch_pairwise_termsim(enrichment)
+        #enr_with_termsim[[funsys]] <- catched_pairwise_termsim(enrichment)
       } else {
-        print("or here")
         enr_with_termsim[[funsys]] <- enrichment
       }
     }
   }
   return(enr_with_termsim)
+}
+
+#' if pairwise_termsim throws an error, remove dup cat descriptions
+#' Only seems to be a problem with Reactome - to study further
+#' Further investigation re: number of cats also required
+#' @param enr enrichment object to be studied
+#' @param num_cats number of categories to be shown
+#' @return enrichment object after add termsim info
+#' @importFrom enrichplot pairwise_termsim
+trycatch_pairwise_termsim <- function(enr, num_cats = 200){
+  enr <- tryCatch(
+  {
+    enr <-enrichplot::pairwise_termsim(enr)
+  },
+    error = function(cond){
+    message("ERROR ADDING TERM SIMILARITY TO ENRICHMENT OBJECT")
+    message(cond)
+    message("ATTEMPTING TO FIX BY REMOVING DUPLICATED ID DESCRIPTIONS")
+    ccr <- enr@compareClusterResult
+    unique_desc_id <- unique(ccr[c("ID","Description")])
+    IDs_with_dupl_desc <- unique_desc_id$ID[duplicated(unique_desc_id$Description)]
+    enr@compareClusterResult <- ccr[! ccr$ID %in% IDs_with_dupl_desc, ]
+
+    enrichplot::pairwise_termsim(enr)
+  })
+  return(enr)
 }
 

@@ -44,6 +44,7 @@ main_functional_hunter <- function(
     custom = NULL,
     #analysis_type = "o", #g
     enrich_dbs = c("MF", "Reactome"),
+    kegg_data_file = "",
     enrich_methods = "ORA",
     # remote = "",
     annotation_source = "orgdb", # Other option Biomart, to be added
@@ -61,7 +62,6 @@ main_functional_hunter <- function(
     ##                INITIAL SETUP                           ## 
     ##                                                        ##
     ############################################################
-
 
     # Get initial parameters
     final_main_params <- as.list(environment(), all=TRUE)
@@ -89,11 +89,18 @@ main_functional_hunter <- function(
     DEGH_results <- hunter_results$DE_all_genes
     DEGH_results <- DEGH_results[DEGH_results$genes_tag != "FILTERED_OUT", ]
 
+
+
+    # Chapuza to replicate previous 
+    func_results$flags <- list(GO_cp    = any(c("MF","BP","CC") %in% enrich_dbs),
+                  REACT = "Reactome" %in% enrich_dbs,
+                  KEGG = "KEGG" %in% enrich_dbs,
+                  GSEA  = "GSEA" %in% enrich_methods,
+                  ORA   = "ORA" %in% enrich_methods)
     clusters_flag <- "Cluster_ID" %in% colnames(DEGH_results)
     # JRP to remove - needed for testing.
     if(clusters_flag) func_results$flags$WGCNA <- TRUE
     else func_results$flags$WGCNA <- FALSE
-
     ##############################################################
     ##                                                          ##
     ##  LOAD COMPLEMENTARY FILES AND ADD ENTREZ AND SYMBOL IDs  ## 
@@ -131,10 +138,7 @@ main_functional_hunter <- function(
 
         cl_genes <- get_sig_genes_cl(DEGH_results)
         cl_geneList <- get_gene_lists_cl(DEGH_results, fc_colname)
-        print("type of name:")
         cl_geneList <- cl_geneList[! names(cl_geneList) == 0]
-                print("type of name:")
-
     }
 
     ############################################################
@@ -144,11 +148,13 @@ main_functional_hunter <- function(
     ############################################################
 
     if("ORA" %in% enrich_methods){
-
+timings <- list()
+timings[["multi_enrich"]] <- system.time(
         deg_enr_ora  <- multienricher_ora(all_funsys=enrich_dbs, 
             genes=prev_genes, organism_info = current_organism_info, 
             pvalueCutoff = pthreshold, qvalueCutoff = qthreshold, 
-            custom_sets=custom)
+            custom_sets=custom, kegg_file = kegg_data_file)
+        )
         deg_enr_ora <- add_term_sim_ora(deg_enr_ora)
 
         # JRP TO MAKE OUTPUT LIKE PREVIOUS
@@ -159,27 +165,23 @@ main_functional_hunter <- function(
                                          names(func_results$ORA))
 
         if(clusters_flag){
+
+timings[["clusters_time"]] <- system.time(
             clusters_enr_ora <- multienricher_ora(all_funsys=enrich_dbs, 
                 genes=cl_genes, organism_info = current_organism_info, 
                 pvalueCutoff = pthreshold, qvalueCutoff = qthreshold, 
-                custom_sets=custom) 
-
+                custom_sets=custom, kegg_file = kegg_data_file) 
+            )
+timings[["merge_time"]] <- system.time(
             clusters_enr_ora_compact <- merge_clusters(clusters_enr_ora)
+            )
+timings[["add_term_sim_compact"]] <- system.time(
             func_results$WGCNA_ORA <- add_term_sim_ora(clusters_enr_ora_compact)
+            )
+timings[["add_term_sim_extended"]] <- system.time(
             func_results$WGCNA_ORA_expanded <- add_term_sim_ora(clusters_enr_ora)
-            
-            # JRP TO MAKE OUTPUT LIKE PREVIOUS
-            #if(any(! names(deg_enr_ora) %in% enrich_dbs)) {
-            #     func_results$WGCNA_CUSTOM_expanded <- 
-            #       clusters_enr_ora[! names(clusters_enr_ora) %in% enrich_dbs]
-            #     func_results$WGCNA_CUSTOM <- 
-            #       clusters_enr_ora_compact[
-            #         ! names(clusters_enr_ora_compact) %in% enrich_dbs]
-            # #}
-            # func_results$WGCNA_ORA_expanded <- clusters_enr_ora[
-            #   names(clusters_enr_ora) %in% enrich_dbs]
-            # func_results$WGCNA_ORA <- clusters_enr_ora_compact[
-            #   names(clusters_enr_ora_compact) %in% enrich_dbs]
+)
+save(timings, file="~/timings_new.RData")
 
             # JRP TO MAKE OUTPUT LIKE PREVIOUS
             names(func_results$WGCNA_ORA_expanded) <-  gsub("(MF|BP|CC)", 
@@ -208,7 +210,6 @@ main_functional_hunter <- function(
 
       if (clusters_flag) {
 
-        print("GSEA clusters")
         #names(cl_geneList) <- letters[1:length(cl_geneList)]
             clusters_enr_gsea <- multienricher_gsea(all_funsys=enrich_dbs, 
                 genes_list = cl_geneList , 
@@ -229,6 +230,7 @@ main_functional_hunter <- function(
                                          names(func_results$WGCNA_GSEA_expanded)) 
             names(func_results$WGCNA_GSEA_expanded) <-  gsub("Reactome", "REACT", 
                                          names(func_results$WGCNA_GSEA_expanded))
+
         }
     }
 

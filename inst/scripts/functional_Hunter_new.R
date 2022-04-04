@@ -14,7 +14,8 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
     custom_libraries <- c('general_functions.R', 
         'functional_analysis_library.R', 'plotting_functions.R', 
         'main_functional_hunter.R', "io_handling.R", "plotting_functions.R", 
-        "write_report.R", "main_functional_hunter_new.R", "functional_analysis_library_new.R")
+        "write_report.R", "main_functional_hunter_new.R", "functional_analysis_library_new.R",
+        "write_report_new.R")
     for (lib in custom_libraries){
         source(file.path(root_path, 'R', lib))
     }
@@ -62,6 +63,9 @@ option_list <- list(
     help=paste0("Functional annotation database and enrichment method(s) to",
         " use (topGO: G = GO | clusterProfiler: K = KEGG, g = GO, R = ",
         "Reactome). [Default=%default]")),
+  optparse::make_option(c("-k", "--kegg_data_file"), ,type = "character", default=NULL,
+    help=paste0("KEGG database file. Can download with download_latest_kegg_db().",
+        "If not required but not provided, it will be downloaded to working directory")), 
   optparse::make_option(c("-G", "--GO_subont"), type="character",
     default=c("BMC"),
     help=paste0("GO sub-ontologies to use for functional analysis ",
@@ -97,8 +101,6 @@ option_list <- list(
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
-
-
 # # Special IDs
 fc_colname <- "mean_logFCs"
 
@@ -111,7 +113,7 @@ paths$root <- opt$output_files
 organisms_table <- get_organism_table(organisms_table_file)
 
 # Load Hunter Folder
-hunter_results <- load_hunter_folder(opt$input_hunter_folder)
+hunter_results <- load_hunter_folder_new(opt$input_hunter_folder)
 if(is.null(opt$annot_file)){
     annot_table <- NULL
 }else{
@@ -127,7 +129,7 @@ if (!is.null(opt$custom)) {
 }else{
     all_custom_gmt <- NULL
 }
-names(all_custom_gmt) <- basename(names(all_custom_gmt))
+# names(all_custom_gmt) <- basename(names(all_custom_gmt))
 
 if(opt$input_gene_id == "e") input_gene_id <- "ENTREZID"
 if(opt$input_gene_id == "E") input_gene_id <- "ENSEMBL"
@@ -163,12 +165,41 @@ if(opt$List_organisms){
     print(as.character(rownames(organisms_table)))
     message('Check this list and choose one model species.')
 }else{
-    func_results_new <- main_functional_hunter(
+
+print("first")
+print(enrich_dbs)
+print(opt$kegg_data_file)
+print("second")
+
+print("WORKING DIR:::")
+print(getwd())
+print(":::WORKED DIR")
+
+if("KEGG" %in% enrich_dbs && is.null(opt$kegg_data_file)) {
+    print("whoa")
+  if(! curl::has_internet()) stop("no internet buddy")
+  # download_latest_kegg_db(organism="mmu", file=kegg_file_mouse)
+  organisms_table <- get_organism_table(organisms_table_file)
+  print("a horse")
+  print(opt$model_organism)
+  print("or donkey")
+  current_organism_info <- subset(organisms_table, 
+                          rownames(organisms_table) == opt$model_organism)
+  kegg_data_file <- paste0(current_organism_info$KeggCode[1], ".rds")
+  download_latest_kegg_db(organism="mmu", file=kegg_data_file)
+} else {
+    kegg_data_file <- opt$kegg_data_file
+}
+print(kegg_data_file)
+
+print("TIME OF NEW MAIN:")
+print(system.time(func_results_new <- main_functional_hunter(
         hunter_results = hunter_results,
         model_organism = opt$model_organism,
         annot_table = annot_table,
         input_gene_id = input_gene_id,
         enrich_dbs = enrich_dbs,
+        kegg_data_file = kegg_data_file,
         enrich_methods = enrich_methods,
         custom = all_custom_gmt,
         # JRP: TO SORT
@@ -182,20 +213,35 @@ if(opt$List_organisms){
         output_files = opt$output_files,
         organisms_table = organisms_table,
         fc_colname = fc_colname)
-save(func_results_new, file="func_results_new.RData")
+))
+print("NEW MAIN FINISHED")
 
-load("func_results_new.RData")
-#q()
-    # Write outputs
-    write_enrich_files_new(func_results_new, opt$output_files)
+ save(func_results_new, file="func_results_new_trycatched.RData")
 
-    write_functional_report(hunter_results = hunter_results, 
+load("func_results_new_trycatched.RData")
+
+#     # Write outputs
+print("TIME OF NEW FILES:")
+
+print(system.time(write_enrich_files_new(func_results_new, opt$output_files)
+))
+    # write_functional_report(hunter_results = hunter_results, 
+    #                         func_results = func_results_new, 
+    #                         output_files = opt$output_files,
+    #                         organisms_table = organisms_table,
+    #                         template_folder = template_folder,
+    #                         cores =  opt$cores,
+    #                         task_size = opt$task_size,
+    #                         report = "fc")
+
+print("TIME OF NEW REPORT:")
+print(system.time(write_functional_report_new(hunter_results = hunter_results, 
                             func_results = func_results_new, 
                             output_files = opt$output_files,
                             organisms_table = organisms_table,
                             template_folder = template_folder,
                             cores =  opt$cores,
                             task_size = opt$task_size,
-                            report = "fc")
-
+                            report = "fci")
+))
 }

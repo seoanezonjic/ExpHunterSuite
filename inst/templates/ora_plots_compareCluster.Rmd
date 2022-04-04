@@ -1,0 +1,65 @@
+## `r funsys` Cluster Analysis
+
+This is chapter 1.
+the banas is `r typeof(enrich_obj)`
+```{r, include = FALSE}
+ 
+# Load necessary packages
+require(ggplot2)
+require(knitr)
+require(clusterProfiler)
+
+has_enrr <- function(enrich){nrow(enrich) > 0}
+
+```
+
+
+
+```{r  "{{funsys}}_compareCluster", echo=TRUE, results='asis', message=FALSE, echo=FALSE}
+#```{r echo=TRUE, results='asis', message=FALSE, echo=FALSE}
+
+n_category <- 30
+# plot_enrResult_DT(enrich_obj)
+cat(paste("### **", funsys, " Over Representation Analysis**"), "\n",
+	"The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.\n\n")
+
+plot_enrResult_DT(enrich_obj)
+
+
+cat(
+	"**Dotplot**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+pp <- enrichplot::dotplot(enrich_obj, showCategory=n_category)  
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrich_obj), calc_width(enrich_obj))
+
+cat(
+	"**Heatmap**\n\n", 
+	"WRITE THIS TEXT >>>>.\n\n"
+)
+
+pp <- clusters_heatplot(enrich_obj@compareClusterResult) 
+pp <- set_standard_size(pp)
+plot_in_div(pp, calc_height(enrich_obj), calc_width(enrich_obj))
+
+if(has_enrr(enrich_obj)){
+	cat('\n\n**Enrich Map plot**\n\n',
+		'The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
+		The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n'
+	)
+	pp <- enrichplot::emapplot(enrich_obj, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
+	plot_in_div(pp, fig_width = calc_width(enrich_obj))
+}else{
+	cat('\n\n**Enrich Map plot**\n\n', 
+		'There is no relevant enrichment results to plot.\n\n')
+}
+# cat(
+# 	"**CNetplot**\n\n", 
+# 	"WRITE THIS TEXT >>>>.\n\n"
+# )
+# pp <- cnetplot(enrichments_ORA$GO_MF, showCategory = n_category)
+# plot_in_div(pp, calc_height(enrichments_ORA$GO_MF), calc_width(enrichments_ORA$GO_MF))
+
+```
+

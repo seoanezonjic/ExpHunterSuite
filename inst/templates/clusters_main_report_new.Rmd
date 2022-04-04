@@ -1,0 +1,54 @@
+---
+author: "Fernando Moreno Jabato"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+    fig_width: 12
+---
+
+<style type='text/css'>
+    body .main-container {
+        max-width: 90%;
+
+    }
+
+    .plot_real_size {
+    	overflow: scroll;
+  		max-height: 600px;
+  	}
+
+    .plot_real_size img{
+    	max-width: none;
+    	max-height: none;
+    }
+
+    embed {
+   
+  }   
+</style>
+
+```{r multiple_children, echo=FALSE, results='asis'}
+res <- list()
+for(funsys in names(flags_cluster)) {
+
+  if(flags_cluster[[funsys]] == TRUE) {
+    enrich_obj <- func_results_new$WGCNA_ORA[[funsys]]
+#    res[[funsys]] <- knitr::knit_child(
+#      "ora_plots_compareCluster.Rmd", envir = environment(), quiet = TRUE
+#	)
+	res[[funsys]] <- knitr::knit_expand(
+       "ora_plots_compareCluster.Rmd"
+    )
+  } else {
+    cat("## **YOU SHALL NOT PASS**")
+  }
+}
+save(list = ls(all.names = TRUE), file = "~/environment_clust.RData")
+
+# cat(unlist(res), sep = '\n')
+
+```
+
+`r paste(knitr::knit(text = unlist(res)), collapse = '\n')`

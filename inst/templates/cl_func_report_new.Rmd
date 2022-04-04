@@ -1,0 +1,80 @@
+---  
+title: "ExpHunterSuite: Module Specific Report"
+author: "SysBioLab"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+    fig_width: 12
+---
+
+<style type='text/css'>
+    body .main-container {
+        max-width: 90%;
+
+    }
+
+    .plot_real_size {
+      overflow: scroll;
+      max-height: 600px;
+    }
+
+    .plot_real_size img{
+      max-width: none;
+      max-height: none;
+    }
+
+    embed {
+   
+  }   
+</style>
+
+```{r child="func_initial_details.Rmd"}
+```
+
+```{r child="partial/corr_cl_stats_new.Rmd"}
+```
+
+```{r ORA_analysis, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+# JRP - to reuse Jose's bits
+gene_set <- "ORA"
+res <- list()
+for(funsys in names(cl_flags_ora)) {
+
+#res <- lapply(func_results_new$ORA, function(x) {
+#  print(typeof(x))
+  if(cl_flags_ora[[funsys]] == TRUE) {
+    func_clusters <- func_results$WGCNA_ORA_expanded[[funsys]]
+    enrich_obj <- func_clusters[[which(names(func_clusters) == cl)]]
+   #   res[[funsys]] <- knitr::knit_child(
+   #     "ora_plots_all_objects.Rmd", envir = environment(), quiet = TRUE
+   # )
+
+message("testing here")
+    exp_res <- knitr::knit_expand("ora_plots_all_objects.Rmd")
+    res[[funsys]] <- knitr::knit(text=exp_res, quiet = TRUE)
+  } else {
+    cat("## **YOU SHALL NOT PASS**")
+  }
+}
+cat(unlist(res), sep = '\n')
+
+```
+
+
+
+```{r load_ORA_customResults, echo = FALSE}
+curr_out <- ""
+
+if(exists("custom_cls_ORA")){
+  # Per each custom category defined, perform enrichment
+  curr_out <- unlist(lapply(names(custom_cls_ORA),function(cat){
+    sec_text <- paste(c("## **",basename(cat)," custom enrichment results**\n"),collapse="") # Header
+    sec_text <- c(sec_text,knitr::knit_expand("partial/ora_customEnrichResult.Rmd")) # Body
+    return(sec_text)
+  }))
+}
+```
+`r paste(knitr::knit(text = curr_out), collapse = '\n')`
+

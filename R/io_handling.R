@@ -65,7 +65,30 @@ write_df_list_as_tables <- function(df_list, prefix, root=getwd()) {
   }
 }
 
+load_hunter_folder_new <- function(path = NULL){
+    packages_results <- list.dirs(path,recursive=FALSE)
+    packages_results <- packages_results[grepl("Results_",packages_results)]
+    packages_results <- packages_results[!grepl("WGCNA$",packages_results)]
 
+    dgh_exp_results <- list()
+    dgh_exp_results[["DE_all_genes"]] <- utils::read.table(
+        file.path(path,"Common_results","hunter_results_table.txt"))
+
+    dgh_exp_results[["sample_groups"]] <- utils::read.table(
+        file.path(path,"control_treatment.txt"))
+
+    WGCNA_res <- load_WGCNA_results(path,dgh_exp_results[["DE_all_genes"]])
+    if(length(WGCNA_res) > 0) dgh_exp_results[["WGCNA_all"]] <- WGCNA_res
+
+    dgh_exp_results[["all_data_normalized"]] <- lapply(packages_results, function(pack_path) {
+        #pack_name <- utils::tail(unlist(strsplit(pack_path,"_")),1)
+        exp_matrix_path <- grep("Norm", dir(file.path(pack_path)), value=TRUE)
+        exp_matrix <- utils::read.table(file.path(pack_path, exp_matrix_path))
+        return(exp_matrix)
+    })
+    names(dgh_exp_results[["all_data_normalized"]]) <- sapply(strsplit(packages_results,"_"), tail, 1)
+    return(dgh_exp_results)
+}
 #' Loads stored results in DEgenes Hunter expression analysis 
 #' folder and returns in correct object format
 #' @param path of DGH folder
@@ -363,15 +386,13 @@ write_table_ehs <- function(x, file) {
     utils::write.table(x=x, file=file, quote=FALSE, col.names=TRUE, 
         row.names = FALSE, sep="\t")
 }
+
 write_enrich_tables <- function(func_res_tables, method_type, output_files){
     for(res in names(func_res_tables)) {
-        print("enrich tables for")
-        print(res)
-        print("filename")
         filename <- file.path(output_files, 
                 paste(res, method_type, "results", sep="_"))
-        print(filename)
-        write_table_ehs(func_res_tables[[res]], file=filename)
+        res_to_print <- func_res_tables[[res]]
+        write_table_ehs(res_to_print, file=filename)
     }
 }
 
@@ -396,21 +417,31 @@ write_enrich_files_new <- function(func_results, output_files=getwd()){
 
     fortify.compareClusterResult <- get_unexported_function("enrichplot", 
                                          "fortify.compareClusterResult")
-    if("WGCNA_ORA" %in% names(func_results)){
-        fortified_ora <- lapply(func_results$WGCNA_ORA, fortify.compareClusterResult)
-        write_enrich_tables(func_results$ORA, "ORA", output_files)
-    }
-    if("WGCNA_GSEA" %in% names(func_results)){
-        for (enrichment_i in seq(length(func_results$WGCNA_GSEA))) {
-            df <- func_results$WGCNA_GSEA[[enrichment_i]]@compareClusterResult
-            utils::write.table(df, 
-                   file=file.path(output_files, 
-                            paste0(names(func_results$WGCNA_GSEA[enrichment_i]),
-                                   "_cls_gsea")), 
-                   quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+    if("WGCNA_ORA" %in% names(func_results)) {
+        fortified_ora <- lapply(func_results$WGCNA_ORA, enrichplot:::fortify.compareClusterResult)
+        write_enrich_tables(fortified_ora, "cls_ORA", output_files)
+
+        lapply(names(func_results$WGCNA_ORA_expanded), function(funsys) {
+            func_res <- func_results$WGCNA_ORA_expanded[[funsys]]
+            # func_res <- lapply(func_res, function(x) { DOSE::setReadable(x, 'org.Hs.eg.db', 'ENTREZID') })
+            write_enrich_tables(func_res, 
+                paste0(funsys, "_cluster"), output_files)
+        })
+
+
+        for(cl in unique(func_results$DEGH_results_annot$Cluster_ID)) {
+            DEGH_res_cl <- func_results$DEGH_results_annot[func_results$DEGH_results_annot$Cluster_ID == cl,]
+              
+            write_table_ehs(DEGH_res_cl[DEGH_res_cl$genes_tag == "PREVALENT_DEG", 
+                                c("Symbol", "entrezgene", "mean_logFCs", "combined_FDR")],
+                            file=file.path(output_files, paste0("cluster_", cl, "_DEGs.txt")))
         }
     }
-    if("WGCNA_CUSTOM" %in% names(func_results)){
+    if("WGCNA_GSEA" %in% names(func_results)){
+        write_enrich_tables(func_results$WGCNA_GSEA, "cls_gsea", output_files)
+    }
+
+    if("WGCNA_CUSTOM" %in% names(func_results)) {
         for(i in seq(length(func_results$WGCNA_CUSTOM))) {
             df <- fortify.compareClusterResult(func_results$WGCNA_CUSTOM[[i]])
             utils::write.table(df, 
