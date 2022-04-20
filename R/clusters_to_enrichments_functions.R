@@ -148,9 +148,11 @@ hamming_binary <- function(X, Y = NULL) {
 
 write_fun_enrichments <- function(enrichments_ORA, output_path, all_funsys){
   for(funsys in all_funsys) {
+    print(funsys)
     enriched_cats <- enrichments_ORA[[funsys]]
     enriched_cats_dfs <- lapply(enriched_cats, data.frame)
     enriched_cats_bound <- data.table::rbindlist(enriched_cats_dfs, use.names= TRUE, idcol= "Cluster_ID" )
+    print(str(enriched_cats_bound))
     if (nrow(enriched_cats_bound) == 0) next 
     utils::write.table(enriched_cats_bound, 
                        file=file.path(output_path, paste0("enrichment_",funsys,".csv")),
@@ -165,8 +167,10 @@ parse_results_for_report <- function(enrichments, simplify_results = FALSE){
       if (is.null(enrichments_for_reports[[cluster]]))
       enrichments_for_reports[[cluster]] <- list()
       enr <- enrichments[[funsys]][[cluster]]
-      if (simplify_results)
-        enr <- clusterProfiler::simplify(enr) 
+      if (funsys %in% c("CC","MF","BP")){
+        if (simplify_results)
+          enr <- clusterProfiler::simplify(enr) 
+      }   
       if (length(enr$Description) < 3 ) next
       enr <- catched_pairwise_termsim(enr, 200)
       enrichments_for_reports[[cluster]][[funsys]] <- enr 

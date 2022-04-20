@@ -11,7 +11,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
   custom_libraries <- c('general_functions.R', 
-    'functional_analysis_library.R','plotting_functions.R', "clusters_to_enrichments_functions.R")
+    'functional_analysis_library.R', 'functional_analysis_library_new.R', 'plotting_functions.R', "clusters_to_enrichments_functions.R")
   for (lib in custom_libraries){
     source(file.path(root_path, 'R', lib))
   }
@@ -49,6 +49,8 @@ option_list <- list(
                         action = "store_true", help="Ignore temporal files"),
   optparse::make_option(c("-f", "--funsys"), type="character", default="BP,MF,CC", 
                         help="Funsys to execute: MF => GO Molecular Function, BP => GO Biological Process, CC => GO Celular Coponent. Default=%default"),
+  optparse::make_option(c("--custom"), type="character", default=NULL,
+                        help="Comma separated path of custom enrichment sets."),
   optparse::make_option(c("--showCategories"), type="integer", default=30, 
                         help="Number of top categories to show on clusterProfiler dorplot and emaplot"),
   optparse::make_option(c("-c", "--clean_parentals"), type="logical", default=FALSE, 
@@ -90,6 +92,14 @@ organisms_table <- get_organism_table(organisms_table_file)
 current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
 gene_mapping <- NULL
 org_db <- get_org_db(current_organism_info)
+# Load customs
+all_custom_gmt <- NULL
+if (!is.null(opt$custom)) {
+    custom_files <- unlist(strsplit(opt$custom, ","))
+    all_custom_gmt <- lapply(custom_files, load_and_parse_gmt)
+    names(all_custom_gmt) <- custom_files
+}
+names(all_custom_gmt) <- basename(names(all_custom_gmt))
 
 #################################### MAIN ##
 
@@ -113,14 +123,18 @@ if (!file.exists(temp_file) || opt$force) {
 
   names(cluster_genes_list) <- cluster_genes[,1]
 
-  enrichments_ORA <- multienricher_2(funsys =  all_funsys, 
-                                  cluster_genes_list =  cluster_genes_list, 
+  enrichments_ORA <- multienricher_ora(all_funsys =  all_funsys, 
+                                  genes_list =  cluster_genes_list, 
                                   task_size = opt$task_size, 
-                                  org_db= org_db,
+                                  organism_info= current_organism_info,
                                   workers = opt$workers, 
-                                  pvalcutoff =  opt$pvalcutoff, 
-                                  qvalcutoff = opt$qvalcutoff)
+                                  pvalueCutoff =  opt$pvalcutoff, 
+                                  qvalueCutoff = opt$qvalcutoff,
+                                  custom = all_custom_gmt)
  enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
+ if (!is.null(opt$custom))
+  all_funsys <- c(all_funsys, names(all_custom_gmt))
+
   save(enrichments_ORA,enrichments_ORA_merged, file = temp_file)
 
 } else {
@@ -128,9 +142,9 @@ if (!file.exists(temp_file) || opt$force) {
 }
 
 
-
 if (grepl("R", opt$mode)){
     enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
+    save(enrichments_for_reports, file = file.path(output_path, "enr_tmp2.RData"))
     write_fun_enrichments(enrichments_ORA, output_path, all_funsys)
     write_func_cluster_report(enrichments_for_reports,output_path,gene_mapping)
 }

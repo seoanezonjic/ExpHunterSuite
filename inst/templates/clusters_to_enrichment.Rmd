@@ -47,10 +47,13 @@ expanded_report <- ""
 # Per each category defined, perform enrichment
 
 for (funsys in names(enrichments_for_reports[[gene_set]])){
-	if (funsys %in% c("BP", "CC", "MF"))
-		funsys_txt <- paste0("Gene Onthology ", funsys)
-    funsysTitleText <- paste0("## **",funsys_txt," enrichment results**\n") # Header
-    expanded_report <- c(expanded_report, funsysTitleText, knitr::knit_expand("partial/ora_enrichResult_new.Rmd")) # Body
+	if (funsys %in% c("BP", "CC", "MF")){
+	 funsys_txt <- paste0("Gene Onthology ", funsys)
+  } else {
+    funsys_txt <- funsys
+  }
+  funsysTitleText <- paste0("## **",funsys_txt," enrichment results**\n") # Header
+  expanded_report <- c(expanded_report, funsysTitleText, knitr::knit_expand("partial/ora_enrichResult_new.Rmd")) # Body
 }  
 
 ```
