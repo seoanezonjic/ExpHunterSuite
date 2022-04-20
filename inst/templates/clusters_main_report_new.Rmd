@@ -30,6 +30,9 @@ output:
 </style>
 
 ```{r multiple_children, echo=FALSE, results='asis'}
+require(ggplot2)
+require(knitr)
+require(clusterProfiler)
 res <- list()
 for(funsys in names(flags_cluster)) {
 
@@ -42,10 +45,9 @@ for(funsys in names(flags_cluster)) {
        "ora_plots_compareCluster.Rmd"
     )
   } else {
-    cat("## **YOU SHALL NOT PASS**")
+    res[[funsys]] <- paste0("## **No enrichment found for", funsys, "**\n")
   }
 }
-save(list = ls(all.names = TRUE), file = "~/environment_clust.RData")
 
 # cat(unlist(res), sep = '\n')
 

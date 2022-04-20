@@ -30,17 +30,28 @@ output:
   }   
 </style>
 
+```{r config, include=FALSE, message=FALSE}
+require(ggplot2)
+require(knitr)
+require(clusterProfiler)
+require(enrichplot)
+require(DOSE)
+```
+
 ```{r child="func_initial_details.Rmd"}
 ```
 ```{r child="func_top_genes.Rmd"}
 ```
 
 ```{r ORA_analysis, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+# Load necessary packages
+
 # JRP - to reuse Jose's bits
 gene_set <- "ORA"
-res <- list()
+res_ora <- list()
 for(funsys in names(flags_ora)) {
 
+# print(funsys)
 #res <- lapply(func_results_new$ORA, function(x) {
 #  print(typeof(x))
   if(flags_ora[[funsys]] == TRUE) {
@@ -48,14 +59,35 @@ for(funsys in names(flags_ora)) {
    #   res[[funsys]] <- knitr::knit_child(
    #     "ora_plots_all_objects.Rmd", envir = environment(), quiet = TRUE
    # )
-message("testing here")
     exp_res <- knitr::knit_expand("ora_plots_all_objects.Rmd")
-    res[[funsys]] <- knitr::knit(text=exp_res, quiet = FALSE)
+    res_ora[[funsys]] <- knitr::knit(text=exp_res, quiet=TRUE)
   } else {
-    cat("## **YOU SHALL NOT PASS**")
+    res_ora[[funsys]] <- paste0("## **No enrichment found for", funsys, "**\n")
   }
 }
-cat(unlist(res), sep = '\n')
+cat(unlist(res_ora), sep = '\n')
+
+# res_gsea <- list()
+# for(funsys in names(flags_gsea)) {
+#     cat(paste0("## **flags_gsea", funsys, "**\n"))
+
+
+# #res <- lapply(func_results_new$ORA, function(x) {
+# #  print(typeof(x))
+#   if(flags_gsea[[funsys]] == TRUE) {
+#     enrich_obj <- func_results$GSEA[[funsys]]
+#     print(enrich_obj)
+#    #   res[[funsys]] <- knitr::knit_child(
+#    #     "ora_plots_all_objects.Rmd", envir = environment(), quiet = TRUE
+#    # )
+# cat("testing here")
+#     exp_res <- knitr::knit_expand("gsea_plots_all_objects.Rmd")
+#     res_gsea[[funsys]] <- knitr::knit(text=exp_res)
+#   } else {
+#     cat(paste0("## **No enrichment found for", funsys, "**\n"))
+#   }
+# }
+# cat(unlist(res_gsea), sep = '\n')
 
 ```
 

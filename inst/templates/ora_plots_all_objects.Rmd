@@ -1,14 +1,4 @@
-```{r "{{funsys}}_init", include = FALSE}
- 
-# Load necessary packages
-require(ggplot2)
-require(knitr)
-require(clusterProfiler)
-
-```
-
-```{r "{{funsys}}_plots", echo=FALSE, results='asis', warning=FALSE, message=FALSE}
-message("starting")
+```{r "{{funsys}}_plots", echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 n_category <- 30
 default_width <- set_default_width(enrich_obj = enrich_obj, showCategory=n_category)
 # plot_in_div <- plot()
@@ -23,16 +13,13 @@ cat(
 	"The plot shows the functional top significative terms in ascendant order by adjusted pvalue. The color represents the associated adjusted pvalue. 
 	The X axis represents the proportion of the known genes for a given functional term that are identified in the expression data.\n\n"
 )
-message("before bp")
 
 # In very rare situations the graphics::barplot method leads to problems - would love to know why
 go_pp <- graphics::barplot(enrich_obj, showCategory=n_category)
 #go_pp <- enrichplot:::barplot.enrichResult(enrich_obj, showCategory=n_category)
 
-message("during bp")
 plot_in_div(go_pp, fig_width = default_width)
 
-message("after bp")
 
 
 cat("\n\n**Dotplot**\n\n",
@@ -46,12 +33,12 @@ cat("\n\n**Gene-Concept Network**\n\n",
 	"The network connects the top functional terms (brown nodes) to their associated genes (grey or colored nodes).
 	The size of the functional terms shows the number of connected genes.\n\n"
 )
-enrich_go_ora_symb <- DOSE::setReadable(enrich_obj, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
+# enrich_go_ora_symb <- DOSE::setReadable(enrich_obj, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
 #enrich_go_ora_symb <- enrich_obj
 # save(list = ls(all.names = TRUE), file = "~/report_old.RData")
 
-if(length(get_genes(enrich_go_ora_symb)) <= 200){
-	go_pp <- enrichplot::cnetplot(enrich_go_ora_symb, showCategory=n_category, foldChange=fc_vector) +
+if(length(get_genes(enrich_obj)) <= 200){
+	go_pp <- enrichplot::cnetplot(enrich_obj, showCategory=n_category, foldChange=fc_vector) +
 	 		 ggplot2::scale_color_gradient2(name = "fold change", low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
 	plot_in_div(go_pp, fig_width = default_width)
 }else{
@@ -62,7 +49,7 @@ cat("\n\n**Enrich Map plot**\n\n",
 	"The network connects the top functional terms (nodes) between them trought their associates genes (grey edges, thickness represents the number of shared genes.).
 	The size of the functional terms shows the number of connected genes and the color the adjusted pvalue of the functional term.\n\n"
 )
-if (check_categories(enrich_obj, min_categories = 1)) {
+if (nrow(as.data.frame(enrich_obj) > 1)) {
 	go_pp <- enrichplot::emapplot(enrich_obj, showCategory=n_category)
 	plot_in_div(go_pp, fig_width = default_width)
 } else {
@@ -71,15 +58,15 @@ if (check_categories(enrich_obj, min_categories = 1)) {
 cat("\n\n**Heatplot**\n\n", 
 	"Top functional terms are show in the Y axis whereas in the X axis are show the associated genes to them. The coloured squares indicates the fold change value.\n\n"
 )
-go_pp <- enrichplot::heatplot(enrich_go_ora_symb, showCategory=n_category, foldChange=fc_vector)
-width_size <- calc_width(enrich_go_ora_symb)
-height_size <- calc_height(enrich_go_ora_symb) 
+go_pp <- enrichplot::heatplot(enrich_obj, showCategory=n_category, foldChange=fc_vector)
+width_size <- calc_width(enrich_obj)
+height_size <- calc_height(enrich_obj) 
 plot_in_div(go_pp, height_size, width_size)
 
 cat("\n\n**Upsetplot**\n\n", 
 	"Top functional terms are listed the Y axis with the number of genes associated to them (Set size). Each column of dots marks one cluster of functional terms. The X axis indicates how many genes are shared exclusively for the members of one cluster.\n\n"
 )
-if(length(get_categories(enrich_obj))>=2){ # Needs, at least, two categories
+if (nrow(as.data.frame(enrich_obj) > 1)){ # Needs, at least, two categories
 	go_pp <- enrichplot::upsetplot(enrich_obj, n=n_category)
 	plot_in_div(go_pp, fig_width = default_width)
 	cat("\n \n")

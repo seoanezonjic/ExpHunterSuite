@@ -161,7 +161,7 @@ calc_width <- function(enrich_obj,
   character_width = 3, 
   legend_size = 1){
   enrich_obj_class <- class(enrich_obj)[1]
-  if(enrich_obj_class == "enrichResult"){
+  if(enrich_obj_class %in% c("enrichResult", "gseaResult")){
     longer_x_element <- length(get_genes(enrich_obj, showCategory))
   }else if(enrich_obj_class == "compareClusterResult"){
       longer_x_element <- length(get_clusters(enrich_obj))
@@ -185,7 +185,7 @@ calc_height <- function(enrich_obj,
   gene_character_size = 3, 
   category_name_size = 0.1){
   enrich_obj_class <- class(enrich_obj)[1]
-  if(enrich_obj_class == "enrichResult"){
+  if(enrich_obj_class  %in% c("enrichResult", "gseaResult")){
     plot_area_elements <- max(nchar(as.character(get_genes(enrich_obj, 
       showCategory = showCategory))))
   }else if(enrich_obj_class == "compareClusterResult"){

@@ -38,6 +38,9 @@ output:
 
 ```{r ORA_analysis, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 # JRP - to reuse Jose's bits
+require(ggplot2)
+require(knitr)
+require(clusterProfiler)
 gene_set <- "ORA"
 res <- list()
 for(funsys in names(cl_flags_ora)) {
@@ -55,7 +58,7 @@ message("testing here")
     exp_res <- knitr::knit_expand("ora_plots_all_objects.Rmd")
     res[[funsys]] <- knitr::knit(text=exp_res, quiet = TRUE)
   } else {
-    cat("## **YOU SHALL NOT PASS**")
+    res[[funsys]] <- paste0("## **No enrichment found for", funsys, "**\n")
   }
 }
 cat(unlist(res), sep = '\n')

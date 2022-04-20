@@ -172,7 +172,6 @@ multienricher_topGO <- function(all_funsys, genes_list, universe=NULL, organism_
     geneList <- factor(as.integer(universe %in% genes_list[[1]]))
     names(geneList) <- universe
      
-    save(list = ls(all.names = TRUE), file = "~/environment_topgo.RData")
 
     # Necessary to create environment variables used in the initialization of the topGOdata object.
     topGO::groupGOTerms()
@@ -184,7 +183,6 @@ multienricher_topGO <- function(all_funsys, genes_list, universe=NULL, organism_
                  annotationFun = topGO::annFUN.org,
                  ID = gene_id)
     }
-    save(list = ls(all.names = TRUE), file = "~/environment_topgo.RData")
 
     enriched_cats <- parallel_list(genes_list, function(l_genes) {
       geneList <- factor(as.integer(universe %in% l_genes))
@@ -203,7 +201,7 @@ multienricher_topGO <- function(all_funsys, genes_list, universe=NULL, organism_
 #' @export
 multienricher_gsea <- function(all_funsys=NULL, genes_list, organism_info, org_db = NULL, task_size=1, 
   workers=1, pvalueCutoff = 0.05, pAdjustMethod = "BH", kegg_file=NULL, 
-  custom_sets=NULL, readable=FALSE, ...){
+  custom_sets=NULL, readable=FALSE, symbols_in_plots=TRUE, ...){
 
   unlisted_input_flag <- FALSE
   if(! is.list(genes_list)) {
@@ -226,7 +224,7 @@ multienricher_gsea <- function(all_funsys=NULL, genes_list, organism_info, org_d
   for(funsys in all_funsys) {
     if (funsys %in% c("CC","BP","MF")){
       org_db <- get_org_db(organism_info)
-      ord_gb <- "org.Mm.eg.db"
+#      ord_gb <- "org.Mm.eg.db"
       enrf <- prepare_enrichment_GO(enrichment_type="gsea", subont = funsys, org_db = org_db)
       specific_params <- list(OrgDb = org_db, ont = funsys)
     } else  if (funsys == "Reactome"){
@@ -252,6 +250,10 @@ multienricher_gsea <- function(all_funsys=NULL, genes_list, organism_info, org_d
       }, 
       workers= workers, task_size = task_size
     )
+    # enriched_cats <- lapply(enriched_cats, function(x) { 
+    #   DOSE::setReadable(x, OrgDb = org_db, 
+    #     keyType="ENTREZID")
+    # })
     if(unlisted_input_flag) enriched_cats <- enriched_cats[[1]]
     enrichments_gsea[[funsys]] <- enriched_cats
   }
@@ -283,8 +285,6 @@ prepare_enrichment_Reactome <- function(enrichment_type, reactome_id) {
 }
 
 prepare_enrichment_KEGG <- function(enrichment_type, kegg_file) {
-  print("here")
-  print("kegg_file")
   if(is.null(kegg_file) || ! file.exists(kegg_file) ) stop("kegg_file not found or not provided. 
   It can be downloaded using download_latest_kegg_db()")
 
@@ -316,7 +316,7 @@ check_multienricher_input <- function(genes_list, custom_sets) {
 #' @export
 multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL, organism_info, org_db = NULL, task_size=1, 
   workers=1, pvalueCutoff = 0.05, qvalueCutoff = 0.2, pAdjustMethod = "BH", kegg_file=NULL, 
-  custom_sets=NULL, readable=FALSE, ...){
+  custom_sets=NULL, readable=FALSE, symbols_in_plots=TRUE, ...){
 
   unlisted_input_flag <- FALSE
   if(! is.list(genes_list)) {
@@ -332,11 +332,12 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL, organi
     all_funsys <- c(all_funsys, names(custom_sets))
   }
 
+  org_db <- get_org_db(organism_info)
+
   enrichments_ORA <- vector("list", length(all_funsys))
   names(enrichments_ORA) <- all_funsys
   for(funsys in all_funsys) {
     if (funsys %in% c("CC","BP","MF")){
-      org_db <- get_org_db(organism_info)
       enrf <- prepare_enrichment_GO(enrichment_type="ora", subont = funsys, org_db = org_db)
       specific_params <- list(OrgDb = org_db, ont = funsys, readable = readable)
 
@@ -362,6 +363,11 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL, organi
       }, 
       workers= workers, task_size = task_size
     )
+    enriched_cats <- lapply(enriched_cats, function(x) { 
+      DOSE::setReadable(x, OrgDb = org_db, 
+        keyType="ENTREZID")
+    })
+
     if(unlisted_input_flag) enriched_cats <- enriched_cats[[1]]
     enrichments_ORA[[funsys]] <- enriched_cats
   }
