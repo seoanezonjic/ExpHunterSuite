@@ -11,6 +11,18 @@ convert_ids_to_entrez <- function(ids, gene_keytype, org_db){
   return(ids[!is.na(ids)])
 }
 
+translate_gmt <- function(gmt, gene_keytype, org_db){
+  splitted_gmt <- split(gmt$Gene, gmt$Term)
+  tr_splitted_gmt <- lapply(splitted_gmt, function(x){
+                      convert_ids_to_entrez(ids=x, 
+                                            gene_keytype=gene_keytype,
+                                            org_db = org_db)})
+  
+  translated_gmt <- lapply(tr_splitted_gmt, as.data.frame)
+  translated_gmt <- as.data.frame(data.table::rbindlist(translated_gmt , use.names = TRUE, idcol = TRUE))
+  names(translated_gmt) <- c("Term","Gene")
+  return(translated_gmt)
+}
 
 get_organism_id <- function(organism_info, funsys){
   if(funsys %in% c("BP","CC","MF")){
@@ -148,12 +160,9 @@ hamming_binary <- function(X, Y = NULL) {
 
 write_fun_enrichments <- function(enrichments_ORA, output_path, all_funsys){
   for(funsys in all_funsys) {
-    print(funsys)
     enriched_cats <- enrichments_ORA[[funsys]]
     enriched_cats_dfs <- lapply(enriched_cats, data.frame)
     enriched_cats_bound <- data.table::rbindlist(enriched_cats_dfs, use.names= TRUE, idcol= "Cluster_ID" )
-    print(str(enriched_cats_bound))
-    if (nrow(enriched_cats_bound) == 0) next 
     utils::write.table(enriched_cats_bound, 
                        file=file.path(output_path, paste0("enrichment_",funsys,".csv")),
                        quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
@@ -171,8 +180,9 @@ parse_results_for_report <- function(enrichments, simplify_results = FALSE){
         if (simplify_results)
           enr <- clusterProfiler::simplify(enr) 
       }   
-      if (length(enr$Description) < 3 ) next
+      if (length(enr$Description) > 2 ) 
       enr <- catched_pairwise_termsim(enr, 200)
+      
       enrichments_for_reports[[cluster]][[funsys]] <- enr 
     }
   }

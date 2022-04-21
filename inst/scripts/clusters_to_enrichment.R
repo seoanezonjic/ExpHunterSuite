@@ -71,6 +71,8 @@ option_list <- list(
                         help="Markdown file describing of the enriched clusters."),
   optparse::make_option(c("-k", "--gene_keytype"), type="character", default="ENTREZID",
                         help="What identifier is being used for the genes in the clusters?. Default=%default"),
+  optparse::make_option(c("--gmt_id"), type="character", default="ENTREZID",
+                        help="What identifier is being used for the genes in the custom gmt file. Default=%default"),
   optparse::make_option(c("-g", "--gene_mapping"), type="character", default=NULL,
                         help="3 columns tabular file- Cluster - InputGeneID - NumericGeneMapping. Header must be indicated as cluster - geneid - [numeric_mapping]"),
   optparse::make_option(c("-G", "--group_results"), type="logical", default=FALSE, 
@@ -86,7 +88,7 @@ output_path <- paste0(opt$output_file, "_functional_enrichment")
 dir.create(output_path)
 output_path <- normalizePath(output_path)
 temp_file <- file.path(output_path, "enr_tmp.RData")
-all_funsys <- c("MF", "CC", "BP") 
+all_funsys <- unlist(strsplit(opt$funsys, ",")) 
 n_category <- opt$showCategories
 organisms_table <- get_organism_table(organisms_table_file)
 current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
@@ -98,10 +100,18 @@ if (!is.null(opt$custom)) {
     custom_files <- unlist(strsplit(opt$custom, ","))
     all_custom_gmt <- lapply(custom_files, load_and_parse_gmt)
     names(all_custom_gmt) <- custom_files
-}
-names(all_custom_gmt) <- basename(names(all_custom_gmt))
+  names(all_custom_gmt) <- basename(names(all_custom_gmt))
 
-#################################### MAIN ##
+  if(opt$gmt_id != "ENTREZID") {
+    all_custom_gmt <- lapply(all_custom_gmt, function(gmt){
+        tr_gmt <- translate_gmt(gmt, opt$gmt_id, org_db)
+        return(tr_gmt)
+      })
+    
+  }
+}
+
+################################### MAIN ##
 
 
 if (!is.null(opt$gene_mapping)){
@@ -132,19 +142,18 @@ if (!file.exists(temp_file) || opt$force) {
                                   qvalueCutoff = opt$qvalcutoff,
                                   custom = all_custom_gmt)
  enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
- if (!is.null(opt$custom))
-  all_funsys <- c(all_funsys, names(all_custom_gmt))
-
   save(enrichments_ORA,enrichments_ORA_merged, file = temp_file)
 
 } else {
   load(temp_file)
 }
 
+if (!is.null(opt$custom))
+  all_funsys <- c(all_funsys, names(all_custom_gmt))
+
 
 if (grepl("R", opt$mode)){
     enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
-    save(enrichments_for_reports, file = file.path(output_path, "enr_tmp2.RData"))
     write_fun_enrichments(enrichments_ORA, output_path, all_funsys)
     write_func_cluster_report(enrichments_for_reports,output_path,gene_mapping)
 }

@@ -356,13 +356,14 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL, organi
     } else {
       stop("funsys", funsys, "not recognized")
     }
-
+    #save(genes_list, enrf, specific_params, common_params, file = "/mnt/scratch/users/bio_267_uma/josecordoba/claudia_prot/unique_prots/get_cdf_table.rb_0000/test.Rdata")
     enriched_cats <- parallel_list(genes_list, function(l_genes){
        params_genes <- c(specific_params, common_params, list(gene = l_genes))
        enr <- do.call("enrf", params_genes)
       }, 
       workers= workers, task_size = task_size
     )
+    enriched_cats[sapply(enriched_cats, is.null)] <- NULL
     enriched_cats <- lapply(enriched_cats, function(x) { 
       DOSE::setReadable(x, OrgDb = org_db, 
         keyType="ENTREZID")
