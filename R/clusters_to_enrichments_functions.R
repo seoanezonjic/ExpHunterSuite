@@ -158,8 +158,8 @@ hamming_binary <- function(X, Y = NULL) {
     }
 } #taken from https://johanndejong.wordpress.com/2015/10/02/faster-hamming-distance-in-r-2/
 
-write_fun_enrichments <- function(enrichments_ORA, output_path, all_funsys){
-  for(funsys in all_funsys) {
+write_fun_enrichments <- function(enrichments_ORA, output_path){
+  for(funsys in names(enrichments_ORA)) {
     enriched_cats <- enrichments_ORA[[funsys]]
     enriched_cats_dfs <- lapply(enriched_cats, data.frame)
     enriched_cats_bound <- data.table::rbindlist(enriched_cats_dfs, use.names= TRUE, idcol= "Cluster_ID" )
@@ -182,7 +182,7 @@ parse_results_for_report <- function(enrichments, simplify_results = FALSE){
       }   
       if (length(enr$Description) > 2 ) 
       enr <- catched_pairwise_termsim(enr, 200)
-      
+
       enrichments_for_reports[[cluster]][[funsys]] <- enr 
     }
   }
@@ -448,8 +448,10 @@ return(enrichment_mx)
 
 
 filter_top_categories <- function(enrichments_ORA_merged, top_c = 50){
+
     for (funsys in names(enrichments_ORA_merged)){
       filtered_enrichments <- enrichments_ORA_merged[[funsys]]@compareClusterResult
+      if (nrow(filtered_enrichments) == 0)next 
       filtered_enrichments <- filtered_enrichments[order(filtered_enrichments$p.adjust, decreasing = FALSE), ]
       filtered_enrichments <- Reduce(rbind,by(filtered_enrichments,filtered_enrichments["Cluster"],head,n = top_c))
       filtered_terms <- unique(filtered_enrichments$Description)
