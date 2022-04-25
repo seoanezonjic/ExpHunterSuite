@@ -61,6 +61,8 @@ option_list <- list(
                         help="Model organism. Human or Mouse"),
   optparse::make_option(c("-M", "--mode"), type="character", default="PR", 
                         help="String indicating report modes to execute. R: Generate report for each cluster and all clusters combined. P: Plots (dotplot and emaplot) combining all cluster enrichments. S: Summary mode (sumamrized categories heatmap)"),
+  optparse::make_option(c("-B", "--background"), type="character", default="default", 
+                        help="String indicating background set for enrichments. 'input', 'funsys', 'both' and 'default' are the available options. Default = 'default'"),
   optparse::make_option(c("-S", "--sim_thr"), type="double", default=0.7,
                         help="Similarity cutoff for grouping categories in Summary mode. Default=%default"),
   optparse::make_option(c("-C", "--common_name"), type="character", default="ancestor", 
@@ -88,7 +90,13 @@ output_path <- paste0(opt$output_file, "_functional_enrichment")
 dir.create(output_path)
 output_path <- normalizePath(output_path)
 temp_file <- file.path(output_path, "enr_tmp.RData")
-all_funsys <- unlist(strsplit(opt$funsys, ",")) 
+
+if(opt$funsys != ""){
+
+  opt$funsys <- unlist(strsplit(opt$funsys, ",")) 
+} else {
+  opt$funsys <-  NULL
+}
 n_category <- opt$showCategories
 organisms_table <- get_organism_table(organisms_table_file)
 current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
@@ -97,9 +105,9 @@ org_db <- get_org_db(current_organism_info)
 # Load customs
 all_custom_gmt <- NULL
 if (!is.null(opt$custom)) {
-    custom_files <- unlist(strsplit(opt$custom, ","))
-    all_custom_gmt <- lapply(custom_files, load_and_parse_gmt)
-    names(all_custom_gmt) <- custom_files
+  custom_files <- unlist(strsplit(opt$custom, ","))
+  all_custom_gmt <- lapply(custom_files, load_and_parse_gmt)
+  names(all_custom_gmt) <- custom_files
   names(all_custom_gmt) <- basename(names(all_custom_gmt))
 
   if(opt$gmt_id != "ENTREZID") {
@@ -107,9 +115,9 @@ if (!is.null(opt$custom)) {
         tr_gmt <- translate_gmt(gmt, opt$gmt_id, org_db)
         return(tr_gmt)
       })
-    
   }
 }
+
 
 ################################### MAIN ##
 
@@ -124,6 +132,7 @@ if (!file.exists(temp_file) || opt$force) {
 
   cluster_genes <- read.table(opt$input_file, header=FALSE)
   cluster_genes_list <- strsplit(cluster_genes[,2], ",")
+
   if(opt$gene_keytype != "ENTREZID") {
     cluster_genes_list <- lapply(cluster_genes_list, function(x){
                                       convert_ids_to_entrez(ids=x, 
@@ -133,33 +142,44 @@ if (!file.exists(temp_file) || opt$force) {
 
   names(cluster_genes_list) <- cluster_genes[,1]
 
-  enrichments_ORA <- multienricher_ora(all_funsys =  all_funsys, 
+
+  background <- c() 
+  if (opt$background %in% c("input", "both")) {
+    background <- c(background, unique(unlist(cluster_genes_list)))
+  } 
+
+  if (opt$background %in% c("funsys", "both")){
+
+    background <- c(background,data.table::rbindlist(all_custom_gmt , use.names = TRUE, idcol = TRUE)$Gene)
+    background <- unique(background)
+  }
+
+  enrichments_ORA <- multienricher_ora(all_funsys =  opt$funsys, 
                                   genes_list =  cluster_genes_list, 
                                   task_size = opt$task_size, 
                                   organism_info= current_organism_info,
                                   workers = opt$workers, 
                                   pvalueCutoff =  opt$pvalcutoff, 
                                   qvalueCutoff = opt$qvalcutoff,
-                                  custom = all_custom_gmt)
- enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
+                                  custom = all_custom_gmt,
+                                  universe = background)
+  enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
   save(enrichments_ORA,enrichments_ORA_merged, file = temp_file)
 
 } else {
   load(temp_file)
 }
 
-if (!is.null(opt$custom))
-  all_funsys <- c(all_funsys, names(all_custom_gmt))
-
 
 if (grepl("R", opt$mode)){
     enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
-    write_fun_enrichments(enrichments_ORA, output_path, all_funsys)
+    write_fun_enrichments(enrichments_ORA, output_path)
     write_func_cluster_report(enrichments_for_reports,output_path,gene_mapping)
 }
 
-if (grepl("P", opt$mode)) {
-  for (funsys in names(enrichments_ORA_merged)){
+
+if (grepl("P", opt$mode) && opt$funsys != '') {
+  for (funsys in names(opt$funsys)){
     if (length(unique(enrichments_ORA_merged[[funsys]]@compareClusterResult$Description)) < 2 ) next
 
     if (opt$group_results == TRUE){
@@ -179,11 +199,9 @@ if (grepl("P", opt$mode)) {
   }
 }
 
-
-
 enrichments_ORA_merged <- filter_top_categories(enrichments_ORA_merged, opt$top_categories)
 
-if (grepl("S", opt$mode)){
+if (grepl("S", opt$mode) && opt$funsys != ""){
   sum_enrichments <- summarize_categories(enrichments_ORA_merged, sim_thr = opt$sim_thr,common_name = opt$common_name)
  
   for (funsys in names(sum_enrichments)) {
