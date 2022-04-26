@@ -16,10 +16,10 @@ enrichment_results <- enrichments_for_reports[["{{gene_set}}"]][["{{funsys}}"]]
 
 n_category <- 30
 default_width <- set_default_width(enrich_obj = enrichment_results, showCategory=n_category)
-# save(enrichment_results, file = "/mnt/scratch/users/bio_267_uma/josecordoba/phenotypes/cohortAnalyzer_wf/wf_performance/clusters_to_enrichment.R_0001/test.RData")
-# q()
-if(length(get_categories(enrichment_results))>=2){ # Needs, at least, two categories
+
+if(length(get_categories(enrichment_results))>2){ # Needs, at least, two categories
 	# Main label 
+	save(enrichment_results, file = "/mnt/scratch/users/bio_267_uma/josecordoba/claudia_prot/unique_prots/get_cdf_table.rb_0000/test.Rdata")
 	cat("### **{{funsys}} - Over Representation Analysis**\n",
 		"The ORA method takes a group of significant genes and performs a Fisher's exact test for each term of the selected functional category.\n\n"
 	)
@@ -57,7 +57,7 @@ if(length(get_categories(enrichment_results))>=2){ # Needs, at least, two catego
 	}else{
 		cat("\n\nCnetplot is not readable because more than 150 genes has been enriched in this nomenclature, so is not printed\n\n")
 	}
-
+	save(enrichment_results, file = "test.RData")
 	cat("\n\n**Enrich Map plot**\n\n", 
 	  "The top functional categories (nodes), connected if they share genes. Edge thickness represents the number of shared genes.
 	  Nodes size represents the number of significant genes within the category.\n\n"

@@ -158,8 +158,8 @@ hamming_binary <- function(X, Y = NULL) {
     }
 } #taken from https://johanndejong.wordpress.com/2015/10/02/faster-hamming-distance-in-r-2/
 
-write_fun_enrichments <- function(enrichments_ORA, output_path){
-  for(funsys in names(enrichments_ORA)) {
+write_fun_enrichments <- function(enrichments_ORA, output_path, all_funsys){
+  for(funsys in all_funsys) {
     enriched_cats <- enrichments_ORA[[funsys]]
     enriched_cats_dfs <- lapply(enriched_cats, data.frame)
     enriched_cats_bound <- data.table::rbindlist(enriched_cats_dfs, use.names= TRUE, idcol= "Cluster_ID" )
