@@ -137,8 +137,10 @@ main_degenes_Hunter <- function(
     raw <- raw[c(index_control_cols,index_treatmn_cols)]
     raw[is.na(raw)] <- 0 # Substitute NA values
 
-    raw_filter <- filter_count(reads, minlibraries, raw, filter_type, 
+    filtered_data <- filter_count(reads, minlibraries, raw, filter_type, 
                                index_control_cols, index_treatmn_cols)
+    raw_filter <- filtered_data[["raw"]]
+    cpm_table <- filtered_data[["cpm_table"]]
 
     var_filter <- filter_by_variance(raw_filter, 
                                      q_filter = count_var_quantile, 
@@ -225,6 +227,7 @@ main_degenes_Hunter <- function(
     DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
 
     final_results <- list()
+    final_results[['cpm_table']] <- cpm_table
     final_results[['raw_filter']] <- raw_filter
     final_results[['sample_groups']] <- sample_groups
     final_results[['DE_all_genes']] <- DE_all_genes
@@ -355,13 +358,14 @@ filter_count <- function(reads,
                          index_control_cols, 
                          index_treatmn_cols){
     # Prepare filtered set
+    cpm_table <- edgeR::cpm(raw)
     if(reads != 0){
       if (filter_type == "separate") {
         # genes with cpm greater than --reads value for 
         # at least --minlibrariess samples for either case or control samples
-        to_keep_control <- rowSums(edgeR::cpm(raw[index_control_cols]) > 
+        to_keep_control <- rowSums(cpm_table[, index_control_cols] > 
                                 reads) >= minlibraries
-        to_keep_treatment <- rowSums(edgeR::cpm(raw[index_treatmn_cols]) >
+        to_keep_treatment <- rowSums(cpm_table[, index_treatmn_cols] >
                                   reads) >= minlibraries
         # Keep if at least minlibraries in either of them
         keep_cpm <- to_keep_control | to_keep_treatment 
@@ -369,14 +373,14 @@ filter_count <- function(reads,
       } else if (filter_type == "global") {
         # genes with cpm greater than --reads value for
         # at least --minlibrariess samples
-        keep_cpm <- rowSums(edgeR::cpm(raw) > reads) >= minlibraries 
+        keep_cpm <- rowSums(cpm_table > reads) >= minlibraries 
         raw <- raw[keep_cpm,] # Filter out count data frame
       } else {
         warning("Unrecognized minimum read filter type. No filter will be used")
         raw <- raw
       }
     }
-    return(raw)
+    return(list(raw=raw, cpm_table=cpm_table))
 }
 
 #' @importFrom matrixStats rowVars
