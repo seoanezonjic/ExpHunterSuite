@@ -41,6 +41,7 @@ write_expression_report <- function(exp_results,
     DE_all_genes <- exp_results[['DE_all_genes']]
     final_results <- exp_results[['final_results']] 
     var_filter <-  exp_results[['var_filter']] 
+    cpm_table <- exp_results[['cpm_table']] 
 
     outf <- file.path(normalizePath(output_files),"DEG_report.html")
     rmarkdown::render(file.path(template_folder, 'main_report.Rmd'),
