@@ -144,29 +144,42 @@ The samples are shown in the 2D plane and distributed by their first two princip
 
 These boxplots show the distributions of count data before and after normalization (shown for normalization method `r names(all_data_normalized)[1]`):
 
+Representation of cpm unfiltered data:
+```{r density_distribution_cpm, echo = FALSE, warning=FALSE}
+cpm_no_zeros <- cpm_table[! rowSums(cpm_table) == 0, ]
+log2cpm <- log2(cpm_no_zeros + 1)
+cpm_long <- reshape2::melt(log2cpm, measure.vars=colnames(log2cpm))
+
+ggplot2::ggplot(cpm_long, ggplot2::aes(x = value, colour=Var2)) + ggplot2::geom_density() +
+ggplot2::xlab(expression(log[2](cpm + 1))) +
+ggplot2::geom_vline(xintercept = log2( opt$reads + 1))
+
+```
+
+
 Before normalization:
 
-```{r box_before_norm, echo = FALSE, warning=FALSE}
-max_mean <- max(apply(raw_filter, MARGIN = 2, function(x) mean(x, na.rm=TRUE)))
-to_plot <- boxplot(raw_filter,
-					ylim=c(0, max_mean*10), 
-					cex.lab=0.8, 
-					cex.axis=0.8, 
-					notch=TRUE, 
-					col=(c(rep("gold",replicatesC),rep("darkgreen",replicatesT))))
+```{r density_distribution_raw, echo = FALSE, warning=FALSE}
+log2raw_counts <- log2(raw_filter + 1)
+raw_long <- reshape2::melt(log2raw_counts, measure.vars=colnames(log2raw_counts))
+
+ggplot2::ggplot(raw_long, ggplot2::aes(x = value, colour=variable)) + ggplot2::geom_density() +
+ggplot2::xlab(expression(log[2](count + 1)))
+
 ```
+
 
 After normalization:
 
-```{r box_after_norm, echo = FALSE, warning=FALSE}
-max_mean <- max(apply(all_data_normalized[[1]], MARGIN = 2, function(x) mean(x, na.rm=TRUE)))
-to_plot <- boxplot(all_data_normalized[[1]],  
-					ylim=c(0, max_mean*10), 
-					cex.lab=0.8, 
-					cex.axis=0.8, 
-					notch=TRUE, 
-					col=(c(rep("gold",replicatesC),rep("darkgreen",replicatesT))))
+```{r density_distribution_norm, echo = FALSE, warning=FALSE}
+log2norm_counts <- log2(all_data_normalized[[1]] + 1)
+norm_long <- reshape2::melt(log2norm_counts, measure.vars=colnames(log2norm_counts))
+
+ggplot2::ggplot(norm_long, ggplot2::aes(x = value, colour=variable)) + ggplot2::geom_density() +
+ggplot2::xlab(expression(log[2](count + 1)))
+
 ```
+
 
 ## Gene counts variance distribution
 
