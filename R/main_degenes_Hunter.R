@@ -157,7 +157,7 @@ main_degenes_Hunter <- function(
                      replicatesT, raw_filter, p_val_cutoff, target, 
                      model_formula_text, external_DEA_data, 
                      multifactorial)
-#q()
+
     #################################################################
     ##                       CORRELATION ANALYSIS                   ##
     ##################################################################
@@ -213,6 +213,19 @@ main_degenes_Hunter <- function(
           y =combinations_WGCNA[['WGCNA_all']][['gene_cluster_info']])
       rownames(DE_all_genes) <- DE_all_genes$Row.names
       DE_all_genes$Row.names <- NULL
+    }
+
+    if(grepl("P", modules)) { # CASE P: PCIT, TODO: RESTORE FUNCTION, PEDRO 
+      # TODO : This is not working, variables "DESeq2_counts" are not being generated inside this function
+      all_data_normalized <- exp_results[['all_data_normalized']]$DESeq2
+      raw <- raw[c(index_control_cols,index_treatmn_cols)]
+      metrics_pcit <- analysis_diff_correlation(
+        DE_all_genes, 
+        all_data_normalized, 
+        all_data_normalized[index_control_cols], 
+        all_data_normalized[index_treatmn_cols], 
+        PCIT_filter=FALSE)
+      DE_all_genes <- transform(merge(DE_all_genes, metrics_pcit, by.x=0, by.y=0), row.names=Row.names, Row.names=NULL)
     }
 
     if(grepl("X", modules)) { #results_diffcoexp
@@ -305,24 +318,14 @@ check_input_main_degenes_Hunter <- function(raw,
         "via --model_variables")
     }
 
-    active_modules <- nchar(modules)
-    if(grepl("W", modules)) {
-      active_modules <- active_modules - 1
-    }
-    if(grepl("P", modules)) {
-      if (WGCNA_all == FALSE) {
-        message(paste0("WGCNA only for controls an treatments is not",
-          " activated (--WGCNA_all option) and is needed for PCIT analysis.",
-          " Disabling PCIT execution"))
-        modules <- gsub("P", "", modules)
-      } else {
-        active_modules <- active_modules - 1
-      }
-    }
-    if(grepl("X", modules)) {
-      active_modules <- active_modules - 1
+    if(grepl('P', modules) && !grepl('D', modules)){
+      modules <- paste0(modules, 'D')
     }
 
+    active_modules <- nchar(modules)
+    user_modules <- unlist(strsplit(modules, '')) # TODO. Maybe use this variable for checks perfomed before
+    active_modules <- active_modules - sum(grepl("[WPX]", user_modules)) # Remove from module count modules that are not involved in differential expresion
+    
     if(minpack_common > active_modules){
       minpack_common <- active_modules
       warning(paste0("The number of active modules is lower than the thresold",
