@@ -498,7 +498,8 @@ corM2igraph <- function(corM, cor_abs_thr = 0.75){
 }
     
 #' @importFrom stats cor
-analysis_diff_correlation <- function(all_genes_stats, data, control, treat, PCIT_filter){
+#' @importFrom CeTF PCIT
+analysis_diff_correlation <- function(all_genes_stats, data, control, treat, PCIT_filter=FALSE){
     # DE and PIF calculation, see "Microarray data processing, normalization and differential expression" in https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
     # DE => Diff exp, PIF =>Phenotypic Impact Factor
     nonZeroVal <- 10^-5
@@ -519,13 +520,13 @@ analysis_diff_correlation <- function(all_genes_stats, data, control, treat, PCI
     metrics$control_average <- control_average
     metrics$pif <- average * metrics$de
 
-    control <- stats::cor(t(control)) # Compute correlations
-    treat <- stats::cor(t(treat)) # Compute correlations
-
-    # if(PCIT_filter == TRUE) {
-    #     control <- do_pcit(control)
-    #     treat <- do_pcit(treat)
-    # }
+    if(!PCIT_filter) {
+        control <- stats::cor(t(control)) # Compute correlations
+        treat <- stats::cor(t(treat)) # Compute correlations
+    }else{
+        control <- CeTF::PCIT(control, tolType = "mean")$adj_sig
+        treat <- CeTF::PCIT(treat, tolType = "mean")$adj_sig
+    }
 
     #diferential_wiring: https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
     dw <- control - treat
@@ -579,17 +580,3 @@ compute_rif2 <- function(g, data, deg_stats, control_r, treat_r){ #eq 5
     rif <- sum(rif_control - rif_treat)/length(rif_treat)
     return(rif)
 }
-
-# #' @importFrom PCIT pcit idx idxInvert
-# do_pcit <- function(cor_mat){
-#         result <- PCIT::pcit(cor_mat) # Check correlations by PCIT
-#         signif <- PCIT::idx(result) # Get significative correlations (vector with linear index of matrix, not pairs of coordinates)
-#         nonsignif <- PCIT::idxInvert(nrow(cor_mat), signif) # Get NON significative correlations (vector with linear index of matrix, not pairs of coordinates)
-#         n_elements <- nrow(cor_mat)
-#         # plotCorCoeff(cor_mat, list("PCIT Meaningful" = signif), col=c("red")) #TODO make conditional, I think that is important for reports
-#         cor_mat[nonsignif] <- 0
-#         # Warning: number of edges and signif length are NOT equal because the diagonal and one matrix triangle are discarded
-#         #message(paste('Significative corr', (length(signif) - n_elements) / 2, sep="\t"))
-#         #message(paste('NON significative', length(nonsignif) / 2, sep="\t"))
-#         return(cor_mat)
-# }

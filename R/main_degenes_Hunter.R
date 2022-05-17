@@ -215,17 +215,18 @@ main_degenes_Hunter <- function(
       DE_all_genes$Row.names <- NULL
     }
 
+    correlation_metrics <- NULL
     if(grepl("P", modules)) { # CASE P: PCIT, TODO: RESTORE FUNCTION, PEDRO 
       # TODO : This is not working, variables "DESeq2_counts" are not being generated inside this function
       all_data_normalized <- exp_results[['all_data_normalized']]$DESeq2
       raw <- raw[c(index_control_cols,index_treatmn_cols)]
-      metrics_pcit <- analysis_diff_correlation(
+      correlation_metrics <- analysis_diff_correlation(
         DE_all_genes, 
         all_data_normalized, 
         all_data_normalized[index_control_cols], 
         all_data_normalized[index_treatmn_cols], 
-        PCIT_filter=FALSE)
-      DE_all_genes <- transform(merge(DE_all_genes, metrics_pcit, by.x=0, by.y=0), row.names=Row.names, Row.names=NULL)
+        PCIT_filter=FALSE) # The analysis is very very slow, so we disable it
+      DE_all_genes <- transform(merge(DE_all_genes, correlation_metrics, by.x=0, by.y=0), row.names=Row.names, Row.names=NULL)
     }
 
     if(grepl("X", modules)) { #results_diffcoexp

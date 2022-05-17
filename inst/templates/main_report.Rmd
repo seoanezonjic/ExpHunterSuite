@@ -666,7 +666,7 @@ ggplot2::ggplot(DCG_plot_df, ggplot2::aes(x=DCG_ratio, y=mean_logFCs, colour=DCG
 ```
 
 
-```{r PCIT_conditional_block_head, eval=grepl("P", opt$modules), echo=FALSE, results='asis'}
+```{r PCIT_conditional_block_head, eval=!is.null(DE_all_genes[['rif1']]), echo=FALSE, results='asis'}
 cat("### **PCIT Results**
 
 Plots of some of the various metrics computed in the PCIT implementation. Better explanation and more plots to be added at a later date:"
@@ -674,7 +674,7 @@ Plots of some of the various metrics computed in the PCIT implementation. Better
 )
 ```
 
-```{r PCIT_conditional_block_plot, eval=grepl("P", opt$modules), echo=FALSE, warning=FALSE, message=FALSE}
+```{r PCIT_conditional_block_plot, eval=!is.null(DE_all_genes[['rif1']]), echo=FALSE, warning=FALSE, message=FALSE}
     ggplot2::ggplot(DE_all_genes, ggplot2::aes(x=ctrl_cn)) +
               ggplot2::geom_density()
     ggplot2::ggplot(DE_all_genes, ggplot2::aes(x=treat_cn)) +

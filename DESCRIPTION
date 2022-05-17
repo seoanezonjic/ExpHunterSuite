@@ -74,6 +74,7 @@ Imports:
     topGO,
     clusterProfiler,
     diffcoexp,
+    CeTF,
     DT,
     ggplot2,
     stringr,
