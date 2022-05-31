@@ -10,7 +10,6 @@ ht2logFCPlot(
   ht,
   var_filter = 0.001,
   title = "Filtered logFC",
-  y_range = NULL,
   top = 50,
   alpha = 0.5
 )
@@ -22,9 +21,6 @@ ht2logFCPlot(
 graph (low variability will be removed)}
 
 \item{title}{: plot title}
-
-\item{y_range}{: y limit to be applied. Only a number must be provided.
-NULL will not fix the axis}
 
 \item{top}{: plots only the top N items with more variance.
 NULL will not filter}

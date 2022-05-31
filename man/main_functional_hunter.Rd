@@ -13,6 +13,7 @@ main_functional_hunter(
   input_gene_id = "ENSEMBL",
   custom = NULL,
   enrich_dbs = c("MF", "Reactome"),
+  kegg_data_file = "",
   enrich_methods = "ORA",
   annotation_source = "orgdb",
   save_query = FALSE,

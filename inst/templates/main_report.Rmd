@@ -280,11 +280,16 @@ limma::vennDiagram(intersections, circle.col = grDevices::rainbow(length(sets)))
 var_thr <- 0.01
 ```
 
-```{r logFCplots, echo = FALSE, eval=(!grepl("F", opt$modules) && nchar(stringr::str_remove_all(opt$modules, "[WXP]")) > 1), results = "asis"}
-	pp <- ht2logFCPlot(DE_all_genes, var_filter = var_thr, title = paste0("(variance threshold >= ",var_thr,")"))
-	cat(paste0("\nThis graph shows logFC calculated (y-axis) for each package (points) and gene (x-axis). Only genes with variability over ", var_thr, " will be plotted. This representation allows to user to observe the behaviour of each DE package and detect when one of them has atypical results.\n"))
-	plot(pp)
+```{r logFCplots, echo = FALSE, eval=(!grepl("F", opt$modules) && nchar(stringr::str_remove(opt$modules, "W")) > 1), results = "asis"}
+
+  cat(paste0("\n### **Plot showing variability between different DEG detection methods in terms of logFC calculation**"))
+  cat(paste0("\nThis graph shows logFC calculated (y-axis) for each package (points) and gene (x-axis). Only genes with variability over ", var_thr, " will be plotted. This representation allows to user to observe the behaviour of each DE package and see if one of them has atypical results.\n"))
+  cat(paste0("\nIf there are no genes showing sufficient variance in estimated logFC accross methods, no plot will be produced and a warning message will be given.\n\n"))
+
+  pp <- ht2logFCPlot(DE_all_genes, var_filter = var_thr, title = paste0("(variance threshold >= ",var_thr,")"))
+	print(pp)
 ```
+
 
 ### **FDR gene-wise benchmarking**
 
@@ -548,7 +553,7 @@ cat("### Module Membership distribution\n"
   			ggplot2::scale_fill_gradient(low = "#9FCBFC", high =  "#0067DC")
 	gg
 
-````
+```
 
 
 

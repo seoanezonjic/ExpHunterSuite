@@ -313,8 +313,6 @@ extract_legend <- function(a.gplot){
 #' @param var_filter : variability threshold to show gene into this
 #' graph (low variability will be removed)
 #' @param title : plot title
-#' @param y_range : y limit to be applied. Only a number must be provided.
-#' NULL will not fix the axis
 #' @param top : plots only the top N items with more variance.
 #' NULL will not filter
 #' @param alpha : transparency of dots
@@ -326,73 +324,32 @@ extract_legend <- function(a.gplot){
 ht2logFCPlot <- function(ht,
   var_filter = 0.001, 
   title = "Filtered logFC", 
-  y_range = NULL, 
   top = 50, 
   alpha = 0.5){
-  gene_names <- rownames(ht)
-  target_cols <- which(grepl("logFC_",colnames(ht)))
-  aux_pack <- gsub("logFC_","",colnames(ht))
-  df_logfc <- data.frame(Gene = character(),
-              Package = character(),
-              logFC = numeric(),
-              stringsAsFactors = FALSE)
-  invisible(lapply(target_cols,function(j){
-    df_logfc <<- rbind(df_logfc,data.frame(Gene = gene_names,
-                        Package = rep(aux_pack[j],length(gene_names)),
-                        logFC = ht[,j],
-                        stringsAsFactors = FALSE))
-  }))
-  nas <- which(is.na(df_logfc$logFC))
-  if(length(nas) > 0) df_logfc <- df_logfc[-nas,]
-  # Calculate var
-  gene_names <- unique(df_logfc$Gene)
-  vars <- unlist(lapply(seq_along(gene_names),function(i){
-    stats::var(df_logfc$logFC[which(df_logfc$Gene == gene_names[i])])
-  }))
-  names(vars) <- gene_names
-  vars <- sort(vars, decreasing = TRUE)
-  vars <- vars[vars > var_filter]
-  # Check
-  if(length(vars) <= 0){
-    return(NULL)
-  }
-  aux_vars <- length(vars)
-  if(!is.null(top)){
-    if(top <= length(vars)) vars <- vars[seq(top)]
-  }
-  df_logfc$Gene <- factor(df_logfc$Gene, levels = names(vars))
-  df_logfc <- df_logfc[-which(is.na(df_logfc$Gene)),]
-  # Check special cases
-  if(!is.null(y_range)){
-    df_logfc$Type <- unlist(lapply(df_logfc$logFC,function(lgfc){
-      ifelse(abs(lgfc) <= abs(y_range),"Regular","Outlier")
-    }))
-    invisible(lapply(which(df_logfc$Type == "Outlier"),function(i){
-      if(df_logfc$logFC[i] < 0){
-        df_logfc$logFC[i] <<- -abs(y_range) 
-      }else{
-        df_logfc$logFC[i] <<- abs(y_range)
-      }
-    }))
-    df_logfc$Type <- factor(df_logfc$Type, levels = c("Regular","Outlier"))
-  }
 
-  # Plot
-  # Check special cases
-  # if(!is.null(y_range)){
-  #   pp <- ggplot2::ggplot(df_logfc, ggplot2::aes_string(x = "Gene", 
-  #     y = "logFC", colour = "Package")) + 
-  #       ggplot2::geom_point(alpha = alpha, 
-  #         ggplot2::aes_string(shape = "Type")) +
-  #       ggplot2::scale_shape_manual(values=c(16, 17)) +
-  #       ggplot2::ylim(c(-abs(y_range),abs(y_range))) 
-  # }else{
-    pp <- ggplot2::ggplot(df_logfc, ggplot2::aes_string(x = "Gene", 
+  logFC_columns <- grep("logFC_", colnames(ht), value=TRUE)
+  logFCs_tab <- data.frame(gene_name=row.names(ht), ht[,logFC_columns])
+  logFCs_tab <- logFCs_tab[! apply(logFCs_tab, 1, anyNA), ]
+  logFCs_tab$var <- apply(logFCs_tab[,-1], 1, var)
+  variable_genes <- logFCs_tab[logFCs_tab$var > var_filter, "gene_name"]
+  logFCs_tab <- logFCs_tab[variable_genes, ]
+  logFCs_tab <- logFCs_tab[order(logFCs_tab$var, decreasing=TRUE), ]
+  if(nrow(logFCs_tab) > top) logFCs_tab <- logFCs_tab[seq(top), ]  
+  logFCs_tab$gene_name <- factor(logFCs_tab$gene_name, 
+    levels = logFCs_tab$gene_name[order(logFCs_tab$var, decreasing=TRUE)])
+
+  if( length(variable_genes) == 0) return(paste("No genes have variance greater than", 
+                                                var_filter))
+
+  plot_tab <- reshape2::melt(logFCs_tab, id="gene_name", measure.vars=logFC_columns)
+  names(plot_tab) <- c("Gene", "Package", "logFC")
+  plot_tab$Package <- gsub("logFC_", "", plot_tab$Package)
+
+  pp <- ggplot2::ggplot(plot_tab, ggplot2::aes_string(x = "Gene", 
       y = "logFC", colour = "Package", shape = "Package")) + 
         ggplot2::geom_point(alpha = alpha) 
-  # }
   pp <- pp + 
-    ggplot2::xlab(paste0("Gene (",100 - round(aux_vars/length(
+    ggplot2::xlab(paste0("Gene (",100 - round(length(variable_genes)/length(
       unique(rownames(ht))),4)*100,
     "% of genes have lower variability than the threshold)")) + 
     ggplot2::ggtitle(title) + 
@@ -400,9 +357,5 @@ ht2logFCPlot <- function(ht,
     ggplot2::theme(text = ggplot2::element_text(size = 14),axis.text.x=ggplot2::element_blank(),
         axis.ticks.x=ggplot2::element_blank()) +
     ggplot2::geom_hline(yintercept = 0,linetype="dashed", color = "#636363")
- #   ggplot2::scale_color_manual(values = c('#d7191c','#fdae61','#2c7bb6','#ffffbf','#abd9e9'))
-  # Return
   return(pp)
 }
-
-

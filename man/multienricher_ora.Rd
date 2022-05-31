@@ -18,6 +18,7 @@ multienricher_ora(
   kegg_file = NULL,
   custom_sets = NULL,
   readable = FALSE,
+  symbols_in_plots = TRUE,
   ...
 )
 }
