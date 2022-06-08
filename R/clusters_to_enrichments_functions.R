@@ -231,9 +231,7 @@ assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
                clean=TRUE, intermediates_dir = temp_path_cl, envir=test_env)
   }, workers=workers, task_size=task_size)
   # temp files not deleted properly in parallel - if someone knows a cleaner way- change it
-  print("files to delete")
-  print(grep("*_temp", dir(template_folder), value=TRUE))
-  unlink(file.path(template_folder, grep("*_temp", dir(template_folder), value=TRUE)))
+  unlink(list.files(temp_path_cl, pattern="_temp$", full.names=TRUE))
 }
 
 

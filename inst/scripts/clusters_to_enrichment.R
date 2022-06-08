@@ -10,7 +10,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   main_path_script <- dirname(full.fpath)
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
-  custom_libraries <- c('general_functions.R', 
+  custom_libraries <- c('general_functions.R', "io_handling.R",
     'functional_analysis_library.R', 'functional_analysis_library_new.R', 'plotting_functions.R', "clusters_to_enrichments_functions.R")
   for (lib in custom_libraries){
     source(file.path(root_path, 'R', lib))
@@ -114,17 +114,9 @@ if (!is.null(opt$custom)) {
   }
 }
 
-if("KEGG" %in% all_funsys && is.null(opt$kegg_data_file)) {
-  if(! curl::has_internet()) stop("No internet access to download KEGG file")
-  # print(opt$model_organism)
-  #current_organism_info <- subset(organisms_table, 
-  #                        rownames(organisms_table) == opt$model_organism)
-  kegg_code <- current_organism_info$KeggCode[1]
-  kegg_data_file <- paste0(kegg_code, "_KEGG.rds")
-
-  download_latest_kegg_db(organism=kegg_code, file=kegg_data_file)
-} else {
-    kegg_data_file <- opt$kegg_data_file
+if("KEGG" %in% all_funsys) {
+  kegg_data_file <- get_kegg_db_path(opt$kegg_data_file, current_organism_info=current_organism_info)
+  if(! file.exists(kegg_data_file)) stop(paste("KEGG file:", kegg_data_file, "not found"))
 }
 
 ################################### MAIN ##

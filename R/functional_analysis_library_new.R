@@ -336,7 +336,6 @@ print("multi time")
       specific_params <- list(organism = organism_info$Reactome_ID[1], readable = readable)
 
     } else if (funsys == "KEGG"){
-      print("kegging it")
       enrf <- prepare_enrichment_KEGG(enrichment_type="ora", kegg_file = kegg_file)
       specific_params <- list(organism = organism_info$KeggCode[1])
                        
@@ -347,7 +346,6 @@ print("multi time")
     } else {
       stop("funsys", funsys, "not recognized")
     }
-    print(paste("workers:", workers))
     # print()
     #save(genes_list, enrf, specific_params, common_params, file = "/mnt/scratch/users/bio_267_uma/josecordoba/claudia_prot/unique_prots/get_cdf_table.rb_0000/test.Rdata")
     enriched_cats <- parallel_list(genes_list, function(l_genes){

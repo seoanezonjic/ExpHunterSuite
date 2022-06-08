@@ -40,9 +40,7 @@ if(! file.exists(kegg_files_path)) dir.create(kegg_files_path)
 
 organisms_table <- get_organism_table(organisms_table_file)
 current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
-print("current_organism_info:")
-print(current_organism_info)
+
 kegg_data_file <- get_kegg_db_path(opt$kegg_data_file, current_organism_info=current_organism_info)
-print("kegg_data_file:")
-print(kegg_data_file)
+
 download_latest_kegg_db(current_organism_info, kegg_data_file)
