@@ -227,7 +227,7 @@ assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
     outfile <- file.path(output_path, paste0(cluster, "_func_report.html"))
     test_env <- list2env(list(func_results=func_results, cl_flags_ora=cl_flags_ora))
     rmarkdown::render(file.path(template_folder, 
-                   'clusters_to_enrichment_new.Rmd'), output_file = outfile, 
+                   'clusters_to_enrichment.Rmd'), output_file = outfile, 
                clean=TRUE, intermediates_dir = temp_path_cl, envir=test_env)
   }, workers=workers, task_size=task_size)
   # temp files not deleted properly in parallel - if someone knows a cleaner way- change it
