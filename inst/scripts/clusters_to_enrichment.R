@@ -18,7 +18,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   template_folder <- file.path(root_path, 'inst', 'templates')
   organisms_table_file <- file.path(root_path, "inst", "external_data", 
         "organism_table.txt")
-}else{
+} else {
   require('ExpHunterSuite')
   root_path <- find.package('ExpHunterSuite')
   template_folder <- file.path(root_path, 'templates')
@@ -48,7 +48,10 @@ option_list <- list(
   optparse::make_option(c("-F", "--force"), type="logical", default=FALSE, 
                         action = "store_true", help="Ignore temporal files"),
   optparse::make_option(c("-f", "--funsys"), type="character", default="BP,MF,CC", 
-                        help="Funsys to execute: MF => GO Molecular Function, BP => GO Biological Process, CC => GO Celular Coponent. Default=%default"),
+                        help="Funsys to execute: MF => GO Molecular Function, BP => GO Biological Process, CC => GO Celular Coponent, KEGG => KEGG. Default=%default"),
+  optparse::make_option(c("-K", "--kegg_data_file"), ,type = "character", default=NULL,
+                        help=paste0("KEGG database file. Can download with download_latest_kegg_db().",
+                          "If required but not provided, it will be downloaded to the current working directory")), 
   optparse::make_option(c("--custom"), type="character", default=NULL,
                         help="Comma separated path of custom enrichment sets."),
   optparse::make_option(c("--showCategories"), type="integer", default=30, 
@@ -88,7 +91,7 @@ output_path <- paste0(opt$output_file, "_functional_enrichment")
 dir.create(output_path)
 output_path <- normalizePath(output_path)
 temp_file <- file.path(output_path, "enr_tmp.RData")
-all_funsys <- unlist(strsplit(opt$funsys, ",")) 
+all_funsys <- unlist(strsplit(opt$funsys, ","))
 n_category <- opt$showCategories
 organisms_table <- get_organism_table(organisms_table_file)
 current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
@@ -111,8 +114,20 @@ if (!is.null(opt$custom)) {
   }
 }
 
-################################### MAIN ##
+if("KEGG" %in% all_funsys && is.null(opt$kegg_data_file)) {
+  if(! curl::has_internet()) stop("No internet access to download KEGG file")
+  # print(opt$model_organism)
+  #current_organism_info <- subset(organisms_table, 
+  #                        rownames(organisms_table) == opt$model_organism)
+  kegg_code <- current_organism_info$KeggCode[1]
+  kegg_data_file <- paste0(kegg_code, "_KEGG.rds")
 
+  download_latest_kegg_db(organism=kegg_code, file=kegg_data_file)
+} else {
+    kegg_data_file <- opt$kegg_data_file
+}
+
+################################### MAIN ##
 
 if (!is.null(opt$gene_mapping)){
   parsed_mappings <- parse_mappings(opt$gene_mapping, org_db, opt$gene_keytype)
@@ -132,7 +147,6 @@ if (!file.exists(temp_file) || opt$force) {
   }
 
   names(cluster_genes_list) <- cluster_genes[,1]
-
   enrichments_ORA <- multienricher_ora(all_funsys =  all_funsys, 
                                   genes_list =  cluster_genes_list, 
                                   task_size = opt$task_size, 
@@ -140,8 +154,11 @@ if (!file.exists(temp_file) || opt$force) {
                                   workers = opt$workers, 
                                   pvalueCutoff =  opt$pvalcutoff, 
                                   qvalueCutoff = opt$qvalcutoff,
-                                  custom = all_custom_gmt)
- enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
+                                  custom = all_custom_gmt,
+                                  kegg_file = kegg_data_file)
+
+
+  enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
   save(enrichments_ORA,enrichments_ORA_merged, file = temp_file)
 
 } else {
@@ -155,8 +172,11 @@ if (!is.null(opt$custom))
 if (grepl("R", opt$mode)){
     enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
     write_fun_enrichments(enrichments_ORA, output_path, all_funsys)
-    write_func_cluster_report(enrichments_for_reports,output_path,gene_mapping)
+    write_func_cluster_report(enrichments_for_reports,output_path,gene_mapping, workers = opt$workers, task_size = opt$task_size)
 }
+
+if (grepl("P", opt$mode) || grepl("S", opt$mode)) 
+  enrichments_ORA_merged <- filter_top_categories(enrichments_ORA_merged, opt$top_categories)
 
 if (grepl("P", opt$mode)) {
   for (funsys in names(enrichments_ORA_merged)){
@@ -181,11 +201,19 @@ if (grepl("P", opt$mode)) {
 
 
 
-enrichments_ORA_merged <- filter_top_categories(enrichments_ORA_merged, opt$top_categories)
 
 if (grepl("S", opt$mode)){
+
+# So that it doesn't break with non GO categories
+enrichments_ORA_merged <- enrichments_ORA_merged[names(enrichments_ORA_merged) %in% c("BP","MF","CC")]
+
+  print("time summarize categories")
+
+  print(system.time(
   sum_enrichments <- summarize_categories(enrichments_ORA_merged, sim_thr = opt$sim_thr,common_name = opt$common_name)
- 
+ ))
+        save(list = ls(all.names = TRUE), file = "environment_to_summarize.RData")
+
   for (funsys in names(sum_enrichments)) {
 
     sum_table <- sum_enrichments[[funsys]]
@@ -205,9 +233,15 @@ if (grepl("S", opt$mode)){
                          limits = c(0, 1)),
                          file = file.path(output_path, paste0("sum_",funsys,'_heatmap.html')))
  
-
+ print("time clean parentals")
+print(system.time(
     sum_table_clean <-  clean_parentals_in_matrix(sum_table, funsys)
+    ))
+print("time get goid")
+print(system.time(
+
     rownames(sum_table_clean) <- get_GOid_term(rownames(sum_table_clean))
+))
     sum_table_clean <- sum_table_clean[rowSums(sum_table_clean < opt$pvalcutoff) != 0,]
 
     heatmaply::heatmaply(sum_table_clean, 
@@ -225,8 +259,10 @@ if (grepl("S", opt$mode)){
                          file = file.path(output_path, paste0("sum_clean_",funsys,'_heatmap.html')))
 
 
-
+print("cluster enr to matrix")
+print(system.time(
     all_enrichments <- cluster_enr_to_matrix(enrichments_ORA_merged[[funsys]]@compareClusterResult)
+))
     all_enrichments <- (all_enrichments > opt$pvalcutoff) + 0 
 
     heatmaply::heatmaply(all_enrichments, 

@@ -33,29 +33,27 @@ output:
 
 
 ```{r main_init, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'} 
-gene_set <- cluster
 if (!is.null(opt$description)){
-	cat(opt$description)
+  cat(opt$description)
 }
 
 ```
 
-
 ```{r render_partial, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'} 
 
-expanded_report <- ""
-# Per each category defined, perform enrichment
-
-for (funsys in names(enrichments_for_reports[[gene_set]])){
-	if (funsys %in% c("BP", "CC", "MF")){
-	 funsys_txt <- paste0("Gene Onthology ", funsys)
+res <- list()
+for(funsys in names(cl_flags_ora)) {
+  if(cl_flags_ora[[funsys]] == TRUE) {
+    func_clusters <- func_results[[funsys]]
+    enrich_obj <- func_clusters
+    exp_res <- knitr::knit_expand("ora_plots_all_objects.Rmd")
+    res[[funsys]] <- knitr::knit(text=exp_res, quiet = TRUE)
   } else {
-    funsys_txt <- funsys
+    res[[funsys]] <- paste0("## **No enrichment found for", funsys, "**\n")
   }
-  funsysTitleText <- paste0("## **",funsys_txt," enrichment results**\n") # Header
-  expanded_report <- c(expanded_report, funsysTitleText, knitr::knit_expand("partial/ora_enrichResult_new.Rmd")) # Body
-}  
+}
+
+cat(unlist(res), sep = '\n')
 
 ```
 
-`r paste(knitr::knit(text = expanded_report), collapse = '\n')`

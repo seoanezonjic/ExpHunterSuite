@@ -5,7 +5,7 @@
 #require(clusterProfiler)
 ```
 
-## ** YY Used data in this analysis**
+## **Used data in this analysis**
 Specifically, in this experiment set, known experiment labels are:
 
 `r paste(knitr::knit(text = paste(sample_classes, collapse = "\n")), collapse = "\n")`

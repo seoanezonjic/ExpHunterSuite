@@ -82,7 +82,9 @@ multienricher_2 <- function(funsys, cluster_genes_list, organism_info,org_db = N
 parse_cluster_results <- function(enrichments_ORA, simplify_results, clean_parentals){
   enrichments_ORA_tr <- list()
   for (funsys in names(enrichments_ORA)){
+
     enr_obj <- clusterProfiler::merge_result(enrichments_ORA[[funsys]])
+
     if(nrow(enr_obj@compareClusterResult) > 0){
       if (funsys %in% c("MF", "CC", "BP") && clean_parentals){
         enr_obj@fun <- "enrichGO"
@@ -117,25 +119,28 @@ clean_all_parentals <- function(enr_obj, subont){
                               ncol = length(unique(enrich_obj$ID)), 
                             dimnames= list(unique(enrich_obj$Cluster), 
                                           unique(enrich_obj$ID)))
+
   for(pair in seq(nrow(enrich_obj))){
     pair_text <- enrich_obj[pair, c("Cluster","ID")]
     pair_text$Cluster <- as.character(pair_text$Cluster)
     pre_hamming_m[pair_text[1,1], pair_text[1,2]] <- 1
   }
+
   hamming_matrix <- hamming_binary(pre_hamming_m)
   hamming_0 <- as.data.frame(as.table(hamming_matrix)) 
   hamming_0 <- hamming_0[hamming_0[,3] == 0,c(1,2)]
   hamming_0 <- hamming_0[hamming_0[,1] != hamming_0[,2], ]
   hamming_0[] <- lapply(hamming_0, "as.character")
   terms_to_discard <- c()
-  for(pair in seq(nrow(hamming_0))){
-    possible_parentals <- unlist(hamming_0[pair, c(1,2)])
-    parental <- are_parentals(possible_parentals[1], possible_parentals[2], GO_ancestors)
-    if (!is.na(parental)){
-      terms_to_discard  <- c(terms_to_discard,parental)
-    }
-  }
-  enr_obj@compareClusterResult <- enrich_obj[!enrich_obj$ID %in% terms_to_discard,]
+
+  hamming_DT <- data.table::setDT(hamming_0, key="Var1")
+  to_remove_lapply <- lapply(unique(hamming_DT$Var1), function(id) {
+    ancs <- GO_ancestors[[id]]
+    id_pairs <- hamming_DT[hamming_DT$Var1 == id,]$Var2
+    ancs[ancs %in% id_pairs]
+  })
+  to_remove_lapply <- unique(unlist(to_remove_lapply))
+  enr_obj@compareClusterResult <- enrich_obj[!enrich_obj$ID %in% to_remove_lapply,]
   return(enr_obj)
 }
 
@@ -177,12 +182,11 @@ parse_results_for_report <- function(enrichments, simplify_results = FALSE){
       enrichments_for_reports[[cluster]] <- list()
       enr <- enrichments[[funsys]][[cluster]]
       if (funsys %in% c("CC","MF","BP")){
-        if (simplify_results)
+        if (simplify_results) 
           enr <- clusterProfiler::simplify(enr) 
       }   
       if (length(enr$Description) > 2 ) 
       enr <- catched_pairwise_termsim(enr, 200)
-
       enrichments_for_reports[[cluster]][[funsys]] <- enr 
     }
   }
@@ -207,28 +211,35 @@ parse_mappings <- function(gene_mapping, org_db, keytype){
   return(list(gane_mapping_name = gane_mapping_name, gene_mapping = gene_mapping))
 }
 
-write_func_cluster_report <- function(enrichments_for_reports, output_path, gene_mapping){
-  temp_path <- file.path(output_path, "temp")
-  dir.create(temp_path) #perform parallel
-  for (cluster in names(enrichments_for_reports)){
-      geneList <- NULL
-      if (!is.null(gene_mapping)){ 
-        geneList <- gene_mapping[[cluster]]
-      }
-      outfile <- file.path(output_path, paste0(cluster, "_func_report.html"))
-      temp_path_cl <- file.path(temp_path, paste0(cluster,"_temp"))
-      rmarkdown::render(file.path(template_folder, 
-                  'clusters_to_enrichment.Rmd'),output_file = outfile, 
-              intermediates_dir = temp_path_cl)
-  }
-  unlink(temp_path, recursive = TRUE)
+write_func_cluster_report <- function(enrichments_for_reports, output_path, gene_mapping, workers, task_size){
+clean_tmpfiles_mod <- function() {
+  message("Calling clean_tmpfiles_mod()")
+}
+
+assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
+  #temp_path <- file.path(output_path, "temp")
+  #dir.create(temp_path) #perform parallel
+
+  parallel_list(names(enrichments_for_reports), function(cluster) {
+    temp_path_cl <- file.path(output_path, paste0(cluster,"_temp"))
+    func_results <- enrichments_for_reports[[cluster]]
+    cl_flags_ora <- sapply(func_results, nrow) > 0
+    outfile <- file.path(output_path, paste0(cluster, "_func_report.html"))
+    test_env <- list2env(list(func_results=func_results, cl_flags_ora=cl_flags_ora))
+    rmarkdown::render(file.path(template_folder, 
+                   'clusters_to_enrichment_new.Rmd'), output_file = outfile, 
+               clean=TRUE, intermediates_dir = temp_path_cl, envir=test_env)
+  }, workers=workers, task_size=task_size)
+  # temp files not deleted properly in parallel - if someone knows a cleaner way- change it
+  unlink(file.path(template_folder, grep("*_temp", dir(template_folder), value=TRUE)))
 }
 
 
 summarize_categories <- function(all_enrichments, sim_thr = 0.7, common_name = "significant"){
    enrichment_summary <- list()
-
+  print("before clusterized_terms")
   clusterized_terms <- clusterize_terms(all_enrichments, threshold = sim_thr, common_name = common_name)
+  print("after clusterized_terms")
   for (funsys in names(clusterized_terms)){
     enrichments_cl <- all_enrichments[[funsys]]
     combined_enrichments <- combine_terms_by_cluster(enrichments_cl@compareClusterResult, clusterized_terms[[funsys]])
@@ -451,9 +462,9 @@ filter_top_categories <- function(enrichments_ORA_merged, top_c = 50){
 
     for (funsys in names(enrichments_ORA_merged)){
       filtered_enrichments <- enrichments_ORA_merged[[funsys]]@compareClusterResult
-      if (nrow(filtered_enrichments) == 0)next 
+      if (nrow(filtered_enrichments) == 0) next 
       filtered_enrichments <- filtered_enrichments[order(filtered_enrichments$p.adjust, decreasing = FALSE), ]
-      filtered_enrichments <- Reduce(rbind,by(filtered_enrichments,filtered_enrichments["Cluster"],head,n = top_c))
+      filtered_enrichments <- Reduce(rbind,by(filtered_enrichments,filtered_enrichments["Cluster"], head, n = top_c))
       filtered_terms <- unique(filtered_enrichments$Description)
       enrichments_ORA_merged[[funsys]]@compareClusterResult <- filtered_enrichments
       enrichments_ORA_merged[[funsys]]@termsim <- enrichments_ORA_merged[[funsys]]@termsim[filtered_terms,filtered_terms]
