@@ -271,6 +271,34 @@ load_WGCNA_results <- function(path, main_deg_table){
     return(info)
 }
 
+#' get path for KEGG db for downloading/usage
+#' @param kegg_data_file file path. if null, inst/kegg_data_files will be used
+#' @param current_organism_info information for the organism, including KEGG code
+get_kegg_db_path <- function(kegg_data_file, current_organism_info){
+  if(is.null(kegg_data_file)) {
+    kegg_code <- current_organism_info$KeggCode[1]
+    kegg_data_file <- paste0(kegg_code, "_KEGG.rds")
+
+    if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ) {
+      # Root path must be defined outside function i.e. in script that calls it
+      kegg_data_file <- file.path(root_path, 'inst', 'kegg_data_files', kegg_data_file)
+    }
+    else { 
+      kegg_data_file <- system.file("kegg_data_files", kegg_data_file, package="ExpHunterSuite")
+    }
+  }
+  return(kegg_data_file)
+}
+
+#' download kegg db for a given organism
+#' @param current_organism_info organism info for which to download the file
+#' @param file where to save the file
+download_latest_kegg_db <- function(current_organism_info, file) {
+  organism <- current_organism_info$KeggCode[1]
+  prepare_KEGG <- get("prepare_KEGG", envir=asNamespace("clusterProfiler"), inherits = FALSE)
+  ENRICH_DATA <- prepare_KEGG(organism, "KEGG", "kegg")
+  saveRDS(ENRICH_DATA, file=file)
+}
 
 #' Write enrichment files related to functional_hunter results list
 #' @param func_results functional enrichment results

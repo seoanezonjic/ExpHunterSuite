@@ -11,7 +11,7 @@ add_translated_gene_ids <- function(DEGH_results, input_ids, input_gene_id, gene
            match(input_ids, input_to_entrezgene[[input_gene_id]]), "ENTREZID"], 
            DEGH_results)
          DEGH_results <- data.frame(input_IDs=input_ids, DEGH_results)
-    }
+}
 
 get_sig_genes <- function(DEGH_results) {
     prev_genes <- DEGH_results[DEGH_results$genes_tag == "PREVALENT_DEG" &
@@ -55,9 +55,6 @@ get_gene_lists_cl <- function(DEGH_results, fc_colname) {
     DEGH_res_list <- split(DEGH_results, DEGH_results$Cluster_ID)
     lapply(DEGH_res_list, function(x) get_gene_lists(x, fc_colname))
 }
-
-
-
 
 get_org_db <- function(current_organism_info) {
   org_db <- current_organism_info$Bioconductor_DB[1]
@@ -137,13 +134,6 @@ translate_ids_orgdb <- function(input_genes, input_id, output_id="ENTREZID", org
     )
     return(ids[!is.na(ids[,2]),])
     }
-
-download_latest_kegg_db <- function(organism=hsa, file) {
-  prepare_KEGG <- get("prepare_KEGG", envir=asNamespace("clusterProfiler"), inherits = FALSE)
-  ENRICH_DATA <- prepare_KEGG(organism, "KEGG", "kegg")
-  saveRDS(ENRICH_DATA, file=file)
-}
-
   
 #' Perform topGO enrichment analysis of a list of genes
 #' @export
@@ -317,7 +307,7 @@ check_multienricher_input <- function(genes_list, custom_sets) {
 multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL, organism_info, org_db = NULL, task_size=1, 
   workers=1, pvalueCutoff = 0.05, qvalueCutoff = 0.2, pAdjustMethod = "BH", kegg_file=NULL, 
   custom_sets=NULL, readable=FALSE, symbols_in_plots=TRUE, ...){
-
+print("multi time")
   unlisted_input_flag <- FALSE
   if(! is.list(genes_list)) {
     unlisted_input_flag <- TRUE
@@ -346,6 +336,7 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL, organi
       specific_params <- list(organism = organism_info$Reactome_ID[1], readable = readable)
 
     } else if (funsys == "KEGG"){
+      print("kegging it")
       enrf <- prepare_enrichment_KEGG(enrichment_type="ora", kegg_file = kegg_file)
       specific_params <- list(organism = organism_info$KeggCode[1])
                        
@@ -356,6 +347,8 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL, organi
     } else {
       stop("funsys", funsys, "not recognized")
     }
+    print(paste("workers:", workers))
+    # print()
     #save(genes_list, enrf, specific_params, common_params, file = "/mnt/scratch/users/bio_267_uma/josecordoba/claudia_prot/unique_prots/get_cdf_table.rb_0000/test.Rdata")
     enriched_cats <- parallel_list(genes_list, function(l_genes){
        params_genes <- c(specific_params, common_params, list(gene = l_genes))
