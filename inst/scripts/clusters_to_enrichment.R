@@ -204,7 +204,7 @@ enrichments_ORA_merged <- enrichments_ORA_merged[names(enrichments_ORA_merged) %
   print(system.time(
   sum_enrichments <- summarize_categories(enrichments_ORA_merged, sim_thr = opt$sim_thr,common_name = opt$common_name)
  ))
-        save(list = ls(all.names = TRUE), file = "environment_to_summarize.RData")
+        # save(list = ls(all.names = TRUE), file = "environment_to_summarize.RData")
 
   for (funsys in names(sum_enrichments)) {
 

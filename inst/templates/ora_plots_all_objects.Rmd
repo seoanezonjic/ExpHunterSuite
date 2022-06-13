@@ -39,8 +39,8 @@ cat("\n\n**Enrich Map plot**\n\n",
   "The top functional categories (nodes), connected if they share genes. Edge thickness represents the number of shared genes.
 	  Nodes size represents the number of significant genes within the category.\n\n"
 )
-#print(nrow(as.data.frame(enrich_obj)))
-if (nrow(as.data.frame(enrich_obj)) > 1) {
+
+if (nrow(as.data.frame(enrich_obj)) > 2) {
 	go_pp <- enrichplot::emapplot(enrich_obj, showCategory=n_category)
 	invisible(plot_in_div(go_pp, fig_width = default_width))
 } else {

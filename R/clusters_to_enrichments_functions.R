@@ -238,9 +238,13 @@ assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
 
 summarize_categories <- function(all_enrichments, sim_thr = 0.7, common_name = "significant"){
    enrichment_summary <- list()
-  print("before clusterized_terms")
+       # save(list = ls(all.names = TRUE), file = "summarize_environment.RData")
+
+     print("time clusterize_terms")
+     print(system.time(
   clusterized_terms <- clusterize_terms(all_enrichments, threshold = sim_thr, common_name = common_name)
-  print("after clusterized_terms")
+))
+
   for (funsys in names(clusterized_terms)){
     enrichments_cl <- all_enrichments[[funsys]]
     combined_enrichments <- combine_terms_by_cluster(enrichments_cl@compareClusterResult, clusterized_terms[[funsys]])
@@ -253,6 +257,8 @@ summarize_categories <- function(all_enrichments, sim_thr = 0.7, common_name = "
 }
 
 clusterize_terms <- function(all_enrichments, threshold = 0.7, common_name = "significant"){
+    # save(list = ls(all.names = TRUE), file = "clusterize_environment.RData")
+
   clusterized_terms <- list()
   for (funsys in names(all_enrichments)){
     if (funsys=="BP"){
@@ -271,8 +277,12 @@ clusterize_terms <- function(all_enrichments, threshold = 0.7, common_name = "si
     for (ancestor in names(GO_ancestor)){
       GO_ancestor[[ancestor]] <- c(GO_ancestor[[ancestor]], ancestor)
     }
+    print("time calc_all_paths")
+     print(system.time(
     paths <- calc_all_paths(ids = unique(names(GO_parents)), GO_parents = GO_parents)
+    ))
     levels <- unlist(lapply(paths, function(id){min(lengths(id))}))
+    # save(list = ls(all.names = TRUE), file = "paths_environment.RData")
 
     enrichments_cl <- all_enrichments[[funsys]]
     term_sim <- enrichments_cl@termsim
