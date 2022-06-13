@@ -129,7 +129,7 @@ if (!is.null(opt$gene_mapping)){
 
 if (!file.exists(temp_file) || opt$force) {
 
-  cluster_genes <- read.table(opt$input_file, header=FALSE)
+  cluster_genes <- read.table(opt$input_file, header=FALSE, sep="\t")
   cluster_genes_list <- strsplit(cluster_genes[,2], ",")
   if(opt$gene_keytype != "ENTREZID") {
     cluster_genes_list <- lapply(cluster_genes_list, function(x){
