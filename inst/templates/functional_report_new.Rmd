@@ -44,55 +44,45 @@ require(DOSE)
 ```
 
 ```{r ORA_analysis, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
-# Load necessary packages
 
-# JRP - to reuse Jose's bits
-gene_set <- "ORA"
+
+ee1 <- proc.time()
 res_ora <- list()
 for(funsys in names(flags_ora)) {
-
-# print(funsys)
-#res <- lapply(func_results_new$ORA, function(x) {
-#  print(typeof(x))
   if(flags_ora[[funsys]] == TRUE) {
     enrich_obj <- func_results$ORA[[funsys]]
-   #   res[[funsys]] <- knitr::knit_child(
-   #     "ora_plots_all_objects.Rmd", envir = environment(), quiet = TRUE
-   # )
     exp_res <- knitr::knit_expand("ora_plots_all_objects.Rmd")
     res_ora[[funsys]] <- knitr::knit(text=exp_res, quiet=TRUE)
   } else {
-    res_ora[[funsys]] <- paste0("## **No enrichment found for", funsys, "**\n")
+    res_ora[[funsys]] <- paste0("## **No enrichment found for ", funsys, "**\n")
   }
 }
 cat(unlist(res_ora), sep = '\n')
+message("time1")
+message(proc.time()[3] - ee1[3])
 
-# res_gsea <- list()
-# for(funsys in names(flags_gsea)) {
-#     cat(paste0("## **flags_gsea", funsys, "**\n"))
-
-
-# #res <- lapply(func_results_new$ORA, function(x) {
-# #  print(typeof(x))
-#   if(flags_gsea[[funsys]] == TRUE) {
-#     enrich_obj <- func_results$GSEA[[funsys]]
-#     print(enrich_obj)
-#    #   res[[funsys]] <- knitr::knit_child(
-#    #     "ora_plots_all_objects.Rmd", envir = environment(), quiet = TRUE
-#    # )
-# cat("testing here")
-#     exp_res <- knitr::knit_expand("gsea_plots_all_objects.Rmd")
-#     res_gsea[[funsys]] <- knitr::knit(text=exp_res)
-#   } else {
-#     cat(paste0("## **No enrichment found for", funsys, "**\n"))
-#   }
-# }
-# cat(unlist(res_gsea), sep = '\n')
+ee2 <- proc.time()
+res_gsea <- list()
+for(funsys in names(flags_gsea)) {
+  if(flags_gsea[[funsys]] == TRUE) {
+    enrich_obj <- func_results$GSEA[[funsys]]
+    exp_res <- knitr::knit_expand("gsea_plots_all_objects.Rmd")
+    res_gsea[[funsys]] <- knitr::knit(text=exp_res, quiet=TRUE)
+  } else {
+    res_gsea[[funsys]] <- paste0("## **No enrichment found for ", funsys, "**\n")
+  }
+}
+cat(unlist(res_gsea), sep = '\n')
+message("time gsea")
+message(proc.time()[3] - ee2[3])
 
 ```
 
-## **Values of options used to run Functional Hunter**
-First column contains the option names; second column contains the given values for each option in this run.
-```{r opt_vals, echo = FALSE}
-#knitr::kable(cbind(func_results$final_main_params))
+## **Values of options passed to the Functional Hunter main function**
+First column contains the option names; second column contains the given values for each option.
+Note that large data objects (e.g. expression results, 
+  organism table and custom annotation files) are not shown.
+```{r opt_vals, echo = FALSE, results='asis'}
+final_main_params <- func_results$final_main_params[! sapply(func_results$final_main_params, is.list)]
+print(knitr::kable(cbind(final_main_params)))
 ```

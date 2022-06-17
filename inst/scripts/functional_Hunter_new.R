@@ -175,21 +175,14 @@ print("WORKING DIR:::")
 print(getwd())
 print(":::WORKED DIR")
 
-if("KEGG" %in% enrich_dbs && is.null(opt$kegg_data_file)) {
-    print("whoa")
-  if(! curl::has_internet()) stop("no internet buddy")
-  # download_latest_kegg_db(organism="mmu", file=kegg_file_mouse)
-  organisms_table <- get_organism_table(organisms_table_file)
-  print("a horse")
-  print(opt$model_organism)
-  print("or donkey")
-  current_organism_info <- subset(organisms_table, 
-                          rownames(organisms_table) == opt$model_organism)
-  kegg_data_file <- paste0(current_organism_info$KeggCode[1], ".rds")
-  download_latest_kegg_db(organism="mmu", file=kegg_data_file)
-} else {
-    kegg_data_file <- opt$kegg_data_file
+kegg_data_file <- opt$kegg_data_file
+if("KEGG" %in% enrich_dbs) {
+  kegg_data_file <- get_kegg_db_path(opt$kegg_data_file, current_organism_info=current_organism_info)
+  if(! file.exists(kegg_data_file)) stop(paste("KEGG file:", kegg_data_file, "not found"))
 }
+
+
+
 print(kegg_data_file)
 
 print("TIME OF NEW MAIN:")

@@ -194,11 +194,11 @@ main_functional_hunter <- function(
         deg_enr_gsea <- add_term_sim_ora(deg_enr_gsea)
         func_results$GSEA <- deg_enr_gsea
   
-        func_results$GSEA <- deg_enr_gsea[names(deg_enr_gsea) %in% enrich_dbs]        
-        names(func_results$GSEA) <-  gsub("(MF|BP|CC)", "GO_\\1", 
-                                         names(func_results$GSEA)) 
-        names(func_results$GSEA) <-  gsub("Reactome", "REACT", 
-                                         names(func_results$GSEA))
+        # func_results$GSEA <- deg_enr_gsea[names(deg_enr_gsea) %in% enrich_dbs]        
+        # names(func_results$GSEA) <-  gsub("(MF|BP|CC)", "GO_\\1", 
+        #                                  names(func_results$GSEA)) 
+        # names(func_results$GSEA) <-  gsub("Reactome", "REACT", 
+        #                                  names(func_results$GSEA))
 
       if (clusters_flag) {
             message("GSEA not performed on clusters as non-sensical")

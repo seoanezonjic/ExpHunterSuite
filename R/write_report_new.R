@@ -93,7 +93,7 @@ write_functional_report_new <- function(hunter_results,
             outf_cls <- file.path(results_path, "clusters_func_report_new.html")
             rmarkdown::render(file.path(template_folder, 
               'clusters_main_report_new.Rmd'),output_file = outf_cls, 
-              intermediates_dir = results_path)
+              intermediates_dir = results_path, clean=FALSE)
         }
     }
 

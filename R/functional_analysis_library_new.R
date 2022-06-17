@@ -210,11 +210,10 @@ multienricher_gsea <- function(all_funsys=NULL, genes_list, organism_info, org_d
 
   enrichments_gsea <- vector("list", length(all_funsys))
   names(enrichments_gsea) <- all_funsys
-
+  org_db <- get_org_db(organism_info)
   for(funsys in all_funsys) {
     if (funsys %in% c("CC","BP","MF")){
-      org_db <- get_org_db(organism_info)
-#      ord_gb <- "org.Mm.eg.db"
+
       enrf <- prepare_enrichment_GO(enrichment_type="gsea", subont = funsys, org_db = org_db)
       specific_params <- list(OrgDb = org_db, ont = funsys)
     } else  if (funsys == "Reactome"){
@@ -240,13 +239,17 @@ multienricher_gsea <- function(all_funsys=NULL, genes_list, organism_info, org_d
       }, 
       workers= workers, task_size = task_size
     )
+    # enriched_cats[sapply(enriched_cats, is.null)] <- NULL
     # enriched_cats <- lapply(enriched_cats, function(x) { 
-    #   DOSE::setReadable(x, OrgDb = org_db, 
-    #     keyType="ENTREZID")
+    #    DOSE::setReadable(x, OrgDb = org_db, 
+    #    keyType="ENTREZID")
     # })
+
     if(unlisted_input_flag) enriched_cats <- enriched_cats[[1]]
     enrichments_gsea[[funsys]] <- enriched_cats
   }
+  save(enrichments_gsea, file=paste0("~/", funsys, "_enrichments_gsea.RData"))
+
   return(enrichments_gsea)
 }
 

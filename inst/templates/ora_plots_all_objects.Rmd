@@ -1,10 +1,10 @@
-```{r "{{funsys}}_plots", echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+```{r "{{funsys}}_plots_ora", echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 n_category <- 30
 default_width <- set_default_width(enrich_obj = enrich_obj, showCategory=n_category)
 
 if(! exists("fc_vector")) fc_vector <- NULL
 # Add main label
-cat("### **{{funsys}} - Over Representation Analysis**\n",
+cat("## **{{funsys}} - Over Representation Analysis**\n",
 		"The ORA method takes a group of significant genes and performs a Fisher's exact test for each term of the selected functional category.\n\n"
 )
 
