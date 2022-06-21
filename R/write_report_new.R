@@ -33,7 +33,7 @@ write_functional_report_new <- function(hunter_results,
                                     task_size = 1, 
                                     report = "fc"){
 
-    if(!any(grepl("WGCNA", names(func_results_new))) && grepl("c|i", report)) {
+    if(!any(grepl("WGCNA", names(func_results))) && grepl("c|i", report)) {
         message("Cluster reports chosen but no cluster results available. Reports wont be plotted")
     }
 

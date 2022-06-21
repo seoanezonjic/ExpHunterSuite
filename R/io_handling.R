@@ -442,11 +442,18 @@ write_enrich_files_new <- function(func_results, output_files=getwd()){
         write_table_ehs(func_results$DEGH_results_annot, 
                            file=file.path(output_files, 
                                           "hunter_results_table_annotated.txt"))
-
     fortify.compareClusterResult <- get_unexported_function("enrichplot", 
                                          "fortify.compareClusterResult")
     if("WGCNA_ORA" %in% names(func_results)) {
-        fortified_ora <- lapply(func_results$WGCNA_ORA, enrichplot:::fortify.compareClusterResult)
+
+        fortified_ora <- lapply(func_results$WGCNA_ORA, function(enr_res) {
+          if(nrow(enr_res@compareClusterResult) > 0) {
+              fortified_enr_res <- enrichplot:::fortify.compareClusterResult(enr_res)
+          } else {
+              fortified_enr_res <- data.frame()
+          }
+          return(fortified_enr_res)
+        })
         write_enrich_tables(fortified_ora, "cls_ORA", output_files)
 
         lapply(names(func_results$WGCNA_ORA_expanded), function(funsys) {
@@ -465,10 +472,7 @@ write_enrich_files_new <- function(func_results, output_files=getwd()){
                             file=file.path(output_files, paste0("cluster_", cl, "_DEGs.txt")))
         }
     }
-    if("WGCNA_GSEA" %in% names(func_results)){
-        write_enrich_tables(func_results$WGCNA_GSEA, "cls_gsea", output_files)
-    }
-
+    # To check
     if("WGCNA_CUSTOM" %in% names(func_results)) {
         for(i in seq(length(func_results$WGCNA_CUSTOM))) {
             df <- fortify.compareClusterResult(func_results$WGCNA_CUSTOM[[i]])

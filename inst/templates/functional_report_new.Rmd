@@ -54,7 +54,7 @@ for(funsys in names(flags_ora)) {
     exp_res <- knitr::knit_expand("ora_plots_all_objects.Rmd")
     res_ora[[funsys]] <- knitr::knit(text=exp_res, quiet=TRUE)
   } else {
-    res_ora[[funsys]] <- paste0("## **No enrichment found for ", funsys, "**\n")
+    res_ora[[funsys]] <- paste0("## **No ORA enrichment found for ", funsys, "**\n")
   }
 }
 cat(unlist(res_ora), sep = '\n')
@@ -69,7 +69,7 @@ for(funsys in names(flags_gsea)) {
     exp_res <- knitr::knit_expand("gsea_plots_all_objects.Rmd")
     res_gsea[[funsys]] <- knitr::knit(text=exp_res, quiet=TRUE)
   } else {
-    res_gsea[[funsys]] <- paste0("## **No enrichment found for ", funsys, "**\n")
+    res_gsea[[funsys]] <- paste0("## **No GSEA enrichment found for ", funsys, "**\n")
   }
 }
 cat(unlist(res_gsea), sep = '\n')

@@ -45,16 +45,9 @@ gene_set <- "ORA"
 res <- list()
 for(funsys in names(cl_flags_ora)) {
 
-#res <- lapply(func_results_new$ORA, function(x) {
-#  print(typeof(x))
   if(cl_flags_ora[[funsys]] == TRUE) {
     func_clusters <- func_results$WGCNA_ORA_expanded[[funsys]]
     enrich_obj <- func_clusters[[which(names(func_clusters) == cl)]]
-   #   res[[funsys]] <- knitr::knit_child(
-   #     "ora_plots_all_objects.Rmd", envir = environment(), quiet = TRUE
-   # )
-
-message("testing here")
     exp_res <- knitr::knit_expand("ora_plots_all_objects.Rmd")
     res[[funsys]] <- knitr::knit(text=exp_res, quiet = TRUE)
   } else {

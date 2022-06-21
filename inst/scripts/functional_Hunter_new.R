@@ -166,17 +166,9 @@ if(opt$List_organisms){
     message('Check this list and choose one model species.')
 }else{
 
-print("first")
-print(enrich_dbs)
-print(opt$kegg_data_file)
-print("second")
-
-print("WORKING DIR:::")
-print(getwd())
-print(":::WORKED DIR")
-
 kegg_data_file <- opt$kegg_data_file
 if("KEGG" %in% enrich_dbs) {
+  current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
   kegg_data_file <- get_kegg_db_path(opt$kegg_data_file, current_organism_info=current_organism_info)
   if(! file.exists(kegg_data_file)) stop(paste("KEGG file:", kegg_data_file, "not found"))
 }
@@ -209,8 +201,7 @@ print(system.time(func_results_new <- main_functional_hunter(
 ))
 print("NEW MAIN FINISHED")
 
- save(func_results_new, file="func_results_new_trycatched.RData")
-
+save(func_results_new, file="func_results_new_trycatched.RData")
 load("func_results_new_trycatched.RData")
 
 #     # Write outputs

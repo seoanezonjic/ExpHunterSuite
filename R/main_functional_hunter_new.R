@@ -188,7 +188,7 @@ main_functional_hunter <- function(
     if("GSEA" %in% enrich_methods){
         deg_enr_gsea <- multienricher_gsea(all_funsys=enrich_dbs, 
             genes_list=geneList, 
-            organism_info = current_organism_info, 
+            organism_info = current_organism_info, kegg_file = kegg_data_file,
             pvalueCutoff = pthreshold, symbols_in_plots=TRUE)
 
         deg_enr_gsea <- add_term_sim_ora(deg_enr_gsea)

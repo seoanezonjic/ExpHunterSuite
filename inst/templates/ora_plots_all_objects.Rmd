@@ -44,7 +44,7 @@ if (nrow(as.data.frame(enrich_obj)) > 2) {
 	go_pp <- enrichplot::emapplot(enrich_obj, showCategory=n_category)
 	invisible(plot_in_div(go_pp, fig_width = default_width))
 } else {
-	cat("\nThis graph can not be plotted because only one functional category was enriched\n")
+	cat("\nThis graph can not be plotted because fewer than two functional categories were enriched\n")
 }
 cat("\n\n**Heatplot**\n\n", 
 	  "Significant genes (x-axis) and the functional categories in which they appear." 
