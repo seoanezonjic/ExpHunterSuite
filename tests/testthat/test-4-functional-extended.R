@@ -8,31 +8,15 @@ test_that("main functional enrichment function works GO and Reactome - mouse", {
                           package="ExpHunterSuite")
   organisms_table <- get_organism_table(organisms_table_file)
 
-  fh_ext_out <- functional_hunter( #Perform enrichment analysis
+  fh_ext_out <- main_functional_hunter( #Perform enrichment analysis
          precomp_degh_out,
          'Mouse', # Use specified organism database 
          organisms_table = organisms_table,
-         func_annot_db = "gR", # Enrichment analysis for GO, KEGG and Reactome
-         GO_subont = "BMC",
-         analysis_type= "o" # Use overepresentation analysis only (Not GSEA)
+         enrich_dbs = c("MF", "BP","Reactome"), # Enrichment analysis for GO, KEGG and Reactome
+         enrich_methods = "ORA",
   )
-
-  # IMPORTANT: SECTION TO CREATE THE GROUND TRUTH OUTPUT TO PERFORM THE TEST
-  # Only uncomment this section when you need to regenerate it, i.e. new version of Bioc
-  #precomp_fh_ext_out <- fh_ext_out
-  #save(precomp_fh_ext_out, file="../../../ExpHunterSuite/inst/extData/testdata/precomp_fh_ext_out.RData")
-  # For the future - when we can't compare the objects directly - check the tables of enriched functions  
-  #go_cc_res <- as.data.frame(fh_ext_out$ORA[["GO_CC"]])
-  #go_react_res <- as.data.frame(fh_ext_out$ORA[["REACT"]])
-  #save(go_cc_res, go_react_res, file="../../../ExpHunterSuite/inst/extData/testdata/fh_ext_enrich_tables.RData")
-
-  precomp_fh_ext_file <- system.file("extData", "testdata", "precomp_fh_ext_out.RData", 
-                          package="ExpHunterSuite")
-  load(precomp_fh_ext_file)
-
-  # save(list = ls(all.names = TRUE), file = "~/environment_test4.RData")
-  expect_equivalent(fh_ext_out, precomp_fh_ext_out)
-
+  expect_equivalent(nrow(fh_ext_out$ORA$Reactome), 12)
+  
 })
 
 # test_that("main functional enrichment function works when no DEGs", {

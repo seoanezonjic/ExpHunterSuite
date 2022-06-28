@@ -20,7 +20,6 @@ default_width <- set_default_width(enrich_obj = enrich_obj, showCategory=n_categ
 	)
 	# We must do it this way until we can figure out what's up with ridgePlot
 	enrich_go_gsea_symb <- DOSE::setReadable(enrich_obj, OrgDb = current_organism_info$Bioconductor_DB[1], keyType="ENTREZID")
-    # save(enrich_go_gsea_symb, enrich_obj, file=paste0("~/", funsys, "_enrich_objs.RData"))
 
 	if(length(get_genes(enrich_go_gsea_symb)) <= 200){
 		go_pp <- enrichplot::cnetplot(enrich_go_gsea_symb, showCategory=n_category, foldChange=fc_vector) +

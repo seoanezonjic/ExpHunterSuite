@@ -123,13 +123,14 @@ names(clgenes) <- cls
 ##                    GENERATE REPORT                     ##
 ############################################################
 
-
+DEGH_results_orig <- DEGH_results # Necessary to reuse the initial details properly
 for (cl in cls){
     # Take output name
     aux <- paste0("cl_func_",cl,".html")
     outf_cls_i <- file.path(results_path, aux)
     # Generate report
+    DEGH_results <- DEGH_results_orig[which(DEGH_results_orig$Cluster_ID == cl), ]
     rmarkdown::render(file.path(template_folder, 
-        'corrprofiles_report.Rmd'), output_file = outf_cls_i, 
+        'cl_func_report.Rmd'), output_file = outf_cls_i, 
         intermediates_dir = results_path)
 }

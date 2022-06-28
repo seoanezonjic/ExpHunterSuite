@@ -10,7 +10,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   main_path_script <- dirname(full.fpath)
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
-  custom_libraries <- c('io_handling.R', "functional_analysis_library.R", "functional_analysis_library_new.R")
+  custom_libraries <- c('io_handling.R', "functional_analysis_library.R")
   for (lib in custom_libraries){
     source(file.path(root_path, 'R', lib))
   }

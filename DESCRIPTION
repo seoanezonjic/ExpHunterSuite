@@ -93,7 +93,6 @@ Imports:
     magrittr,
     SummarizedExperiment,
     miRBaseConverter,
-    pbapply,
     grDevices,
     graphics,
     utils,
@@ -102,5 +101,9 @@ Imports:
     matrixStats,
     rlang,
     plyr,
-    tidyr
+    tidyr,
+    GO.db,
+    Matrix,
+    fastcluster,
+    DOSE
 Config/testthat/edition: 3

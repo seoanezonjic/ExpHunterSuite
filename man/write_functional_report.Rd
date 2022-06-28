@@ -50,6 +50,6 @@ This function allows you to report the Functional analysis.
 # Load func and DE results
 data(degh_output)
 func_results <- list() 
-# func_results <- functional_hunter(degh_output,"Mouse")
+func_results <- main_functional_hunter(degh_output, "Mouse")
 write_functional_report(degh_output, func_results)
 }

@@ -11,7 +11,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
   custom_libraries <- c('general_functions.R', "io_handling.R",
-    'functional_analysis_library.R', 'functional_analysis_library_new.R', 'plotting_functions.R', "clusters_to_enrichments_functions.R")
+    'functional_analysis_library.R', 'plotting_functions.R', "clusters_to_enrichments_functions.R")
   for (lib in custom_libraries){
     source(file.path(root_path, 'R', lib))
   }
@@ -164,7 +164,8 @@ if (!is.null(opt$custom))
 if (grepl("R", opt$mode)){
     enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
     write_fun_enrichments(enrichments_ORA, output_path, all_funsys)
-    write_func_cluster_report(enrichments_for_reports,output_path,gene_mapping, workers = opt$workers, task_size = opt$task_size)
+    write_func_cluster_report(enrichments_for_reports,output_path,gene_mapping, 
+      workers = opt$workers, task_size = opt$task_size, template_folder=template_folder)
 }
 
 if (grepl("P", opt$mode) || grepl("S", opt$mode)) 

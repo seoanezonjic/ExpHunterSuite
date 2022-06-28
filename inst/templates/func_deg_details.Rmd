@@ -1,0 +1,6 @@
+Statistics about input results obtained from DEGenes Expression Hunter are:
+```{r table_exp_flags_other, echo = FALSE}
+  cl_table <- as.data.frame(table(DEGH_results$genes_tag))
+  names(cl_table) <- c("Gene_tag","Genes")
+  knitr::kable(cl_table)
+```

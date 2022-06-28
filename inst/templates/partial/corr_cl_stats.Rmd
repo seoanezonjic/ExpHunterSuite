@@ -1,4 +1,4 @@
-```{r "{{cl}}_corr_stats_config", include = FALSE}
+```{r "corr_stats_config", include = FALSE}
 # ###########################################
 # ################# READ ME #################
 # ###########################################
@@ -23,15 +23,17 @@ n_category <- 30
 pval_thr_forFeatures <- 0.05
 
 ```
+## **Profiles data**
 
 
-```{r "{{cl}}_explore_genes", echo = FALSE, message = FALSE}
+```{r "explore_genes", echo = FALSE, message = FALSE}
 # Load genes expressions
-cl_i_genes <- unique(rownames(DEGH_results)[which(DEGH_results$Cluster_ID == {{cl}})])
+#cl_i_genes <- unique(rownames(DEGH_results)[which(DEGH_results$Cluster_ID == {{cl}})])
+cl_i_genes <- unique(rownames(DEGH_results))
 # cl_i_genes <- clgenes[[as.character({{cl}})]]
 tgt_indx <- which(scaled_counts_table$Gene %in% cl_i_genes)
 # Prepare regular cluster info
-cl_profile <- cl_eigvalues_gnorm[cl_eigvalues_gnorm$Cluster_ID == paste0("ME", {{cl}}),]
+cl_profile <- cl_eigvalues_gnorm[cl_eigvalues_gnorm$Cluster_ID == paste0("ME", cl),]
 # message(cl_profile)
 # cl_profile <- cl_eigvalues_gnorm[grepl(paste(c("ME",{{cl}},"$"),collapse=""), cl_eigvalues_gnorm$Cluster_ID),]
 # message(cl_profile)
@@ -45,14 +47,14 @@ pp <- ggplot2::ggplot(mapping = ggplot2::aes(x = Sample)) +
 plot(pp)
 ```
 
-```{r "{{cl}}_wgcna_corr", echo = FALSE, results = 'asis'}
+```{r "wgcna_corr", echo = FALSE, results = 'asis'}
 # Take pval of Cluster-Treats
-clpvals <- wgcna_pval_cl_trait[paste0("Cluster_",{{cl}}),]
-clcorrs <- wgcna_corr_cl_trait[paste0("Cluster_",{{cl}}),]
+clpvals <- wgcna_pval_cl_trait[paste0("Cluster_", cl),]
+clcorrs <- wgcna_corr_cl_trait[paste0("Cluster_", cl),]
 # Filter
 clpvals <- clpvals[clpvals <= pval_thr_forFeatures]
 ```
-```{r "{{cl}}_wgcna_corr_pl1", echo = FALSE, results = 'asis', eval = length(clpvals) > 0}
+```{r "wgcna_corr_pl1", echo = FALSE, results = 'asis', eval = length(clpvals) > 0}
 cat(paste0("After apply a threshold of ",pval_thr_forFeatures," over cluster correlation with Traits following relationships have been signifcant observed:"))
 clcorrs <- clcorrs[names(clpvals)]
 # Transform
@@ -70,7 +72,7 @@ pp <- ggplot2::ggplot(cltraits,ggplot2::aes(x = Trait, y = Cl_Trait_Corr, color 
 	  ggplot2::ylim(c(-1,1))
 plot(pp)
 ```
-```{r "{{cl}}_wgcna_corr_pl2", echo = FALSE, results = 'asis', eval = length(clpvals) > 0}
+```{r "wgcna_corr_pl2", echo = FALSE, results = 'asis', eval = length(clpvals) > 0}
 cat("\nTEXTHERE:\n")
 # Prepare Sample-Trait correlations
 smtraits <- as.matrix(wgcna_count_sample_trait[,as.character(cltraits$Trait)])
@@ -79,7 +81,7 @@ colnames(smtraits) <- cltraits$Trait
 smtraits <- as.data.frame(as.table(smtraits))
 colnames(smtraits) <- c("Sample","Trait","Correlation")
 colnames(cl_profile) <- colnames(smtraits)
-cl_profile$Trait <- rep(paste0("Cluster_",{{cl}}),nrow(cl_profile))
+cl_profile$Trait <- rep(paste0("Cluster_",cl),nrow(cl_profile))
 # smtraits <- rbind(smtraits,cl_profile)
 
 pp2 <- ggplot2::ggplot(smtraits, ggplot2::aes(x = Sample, y = Correlation, group = Trait, color = Trait)) +
@@ -91,7 +93,7 @@ pp2 <- ggplot2::ggplot(smtraits, ggplot2::aes(x = Sample, y = Correlation, group
       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 30, hjust = 1))
 plot(pp2)
 ```
-```{r "{{cl}}_wgcna_corr_plERR", echo = FALSE, results = 'asis', eval = length(clpvals) <= 0}
+```{r "wgcna_corr_plERR", echo = FALSE, results = 'asis', eval = length(clpvals) <= 0}
 cat(paste0("After apply a threshold of ",pval_thr_forFeatures," over cluster correlation with Traits **any correlation have been tagged as significant**"))
 ```
 

@@ -1,9 +1,11 @@
 convert_ids_to_entrez <- function(ids, gene_keytype, org_db){
   possible_ids <- AnnotationDbi::columns(org_db)
   if(! gene_keytype %in% possible_ids) 
-    stop(paste(c("gene keytype must be one of the following:", possible_ids), collapse=" "))
+    stop(paste(c("gene keytype must be one of the following:", possible_ids), 
+      collapse=" "))
   ids <- tryCatch(
-    ids <- AnnotationDbi::mapIds(org_db, keys=ids, column="ENTREZID", keytype=gene_keytype),
+    ids <- AnnotationDbi::mapIds(org_db, keys=ids, column="ENTREZID", 
+      keytype=gene_keytype),
     error=function(cond){
       ids <- NULL
     }
@@ -19,7 +21,8 @@ translate_gmt <- function(gmt, gene_keytype, org_db){
                                             org_db = org_db)})
   
   translated_gmt <- lapply(tr_splitted_gmt, as.data.frame)
-  translated_gmt <- as.data.frame(data.table::rbindlist(translated_gmt , use.names = TRUE, idcol = TRUE))
+  translated_gmt <- as.data.frame(data.table::rbindlist(translated_gmt , 
+    use.names = TRUE, idcol = TRUE))
   names(translated_gmt) <- c("Term","Gene")
   return(translated_gmt)
 }
@@ -43,43 +46,8 @@ get_org_db <- function(current_organism_info){
   return(org_db)
 }
 
-
-multienricher_2 <- function(funsys, cluster_genes_list, organism_info,org_db = NULL,task_size, workers, pvalcutoff = 0.05, qvalcutoff = 0.02, readable = TRUE){
-  enrichments_ORA <- list()
-  if (is.null(org_db)){
-    org_db <- get_org_db(current_organism_info)
-  }
-
-  for(funsys in all_funsys) {
-    if (funsys %in% c("CC","BP","MF")){
-      enrf <- clusterProfiler::enrichGO
-      get_enr_data <- get("get_GO_data", envir = asNamespace("clusterProfiler"),inherits = FALSE)
-      pattern_to_remove <- "GO_DATA *<-"
-      ENRICH_DATA <- get_enr_data(org_db, funsys, "ENTREZID")
-      ltorem <- grep(pattern_to_remove, body(enrf))
-      body(enrf)[[ltorem]] <- substitute(GO_DATA <- ENRICH_DATA)
-
-    } else  if (funsys == "REACT"){
-    
-    }else if (funsys == "KEGG"){
-
-    }
-    params <- list(OrgDb = org_db,
-                   pAdjustMethod = "BH",minGSSize = 5, ont = funsys,
-                   pvalueCutoff  = pvalcutoff, qvalueCutoff = qvalcutoff, readable = readable) #Now Param is configured Only for GO
-    enriched_cats <- parallel_list(cluster_genes_list, function(cl_genes){
-
-       params_cl <- c(params, list(gene = cl_genes) )
-       enr <- do.call("enrf", params_cl)
-      }, 
-      workers= workers, task_size = task_size
-    )
-    enrichments_ORA[[funsys]] <- enriched_cats
-  }
-  return(enrichments_ORA)
-}
-
-parse_cluster_results <- function(enrichments_ORA, simplify_results, clean_parentals){
+parse_cluster_results <- function(enrichments_ORA, simplify_results, 
+  clean_parentals){
   enrichments_ORA_tr <- list()
   for (funsys in names(enrichments_ORA)){
 
@@ -102,6 +70,7 @@ parse_cluster_results <- function(enrichments_ORA, simplify_results, clean_paren
 }
 
 
+#' @importFrom GO.db GOBPANCESTOR GOMFANCESTOR GOCCANCESTOR
 clean_all_parentals <- function(enr_obj, subont){
    ##ADD control for enrichresults or comparecluster
   if (subont=="BP"){
@@ -140,7 +109,8 @@ clean_all_parentals <- function(enr_obj, subont){
     ancs[ancs %in% id_pairs]
   })
   to_remove_lapply <- unique(unlist(to_remove_lapply))
-  enr_obj@compareClusterResult <- enrich_obj[!enrich_obj$ID %in% to_remove_lapply,]
+  enr_obj@compareClusterResult <- 
+    enrich_obj[!enrich_obj$ID %in% to_remove_lapply,]
   return(enr_obj)
 }
 
@@ -161,15 +131,18 @@ hamming_binary <- function(X, Y = NULL) {
     } else {
         t(1 - X) %*% Y + t(X) %*% (1 - Y)
     }
-} #taken from https://johanndejong.wordpress.com/2015/10/02/faster-hamming-distance-in-r-2/
+} # from https://johanndejong.wordpress.com/
+  #2015/10/02/faster-hamming-distance-in-r-2/
 
 write_fun_enrichments <- function(enrichments_ORA, output_path, all_funsys){
   for(funsys in all_funsys) {
     enriched_cats <- enrichments_ORA[[funsys]]
     enriched_cats_dfs <- lapply(enriched_cats, data.frame)
-    enriched_cats_bound <- data.table::rbindlist(enriched_cats_dfs, use.names= TRUE, idcol= "Cluster_ID" )
+    enriched_cats_bound <- data.table::rbindlist(enriched_cats_dfs, 
+      use.names= TRUE, idcol= "Cluster_ID" )
     utils::write.table(enriched_cats_bound, 
-                       file=file.path(output_path, paste0("enrichment_",funsys,".csv")),
+                       file=file.path(output_path, 
+                        paste0("enrichment_",funsys,".csv")),
                        quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
   }
 }
@@ -197,9 +170,11 @@ parse_results_for_report <- function(enrichments, simplify_results = FALSE){
 parse_mappings <- function(gene_mapping, org_db, keytype){
   cl_genes_mapping <- read.table(gene_mapping, header=TRUE)
   gane_mapping_name <- colnames(cl_genes_mapping)[3]
-  ids <- AnnotationDbi::select(org_db , keys=cl_genes_mapping[,2], column="ENTREZID", keytype=keytype)
+  ids <- AnnotationDbi::select(org_db , keys=cl_genes_mapping[,2], 
+    column="ENTREZID", keytype=keytype)
   ids <- unique(ids)
-  cl_genes_mapping <- merge(cl_genes_mapping, ids, by.x = "geneid", by.y = keytype)
+  cl_genes_mapping <- merge(cl_genes_mapping, ids, by.x = "geneid", 
+    by.y = keytype)
   cl_genes_mapping <- cl_genes_mapping[!is.na(cl_genes_mapping$ENTREZID),]
   gene_mapping <- cl_genes_mapping[,2:4]
   gene_mapping <- split(gene_mapping, gene_mapping$cluster)
@@ -208,15 +183,17 @@ parse_mappings <- function(gene_mapping, org_db, keytype){
     names(gene_map) <- cluster_mapping$ENTREZID
     return(gene_map)
   })
-  return(list(gane_mapping_name = gane_mapping_name, gene_mapping = gene_mapping))
+  return(list(gane_mapping_name = gane_mapping_name, 
+    gene_mapping = gene_mapping))
 }
 
-write_func_cluster_report <- function(enrichments_for_reports, output_path, gene_mapping, workers, task_size){
-clean_tmpfiles_mod <- function() {
-  message("Calling clean_tmpfiles_mod()")
-}
+write_func_cluster_report <- function(enrichments_for_reports, output_path, 
+  gene_mapping, workers, task_size, template_folder){
+  clean_tmpfiles_mod <- function() {
+    message("Calling clean_tmpfiles_mod()")
+  }
 
-assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
+  assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
   #temp_path <- file.path(output_path, "temp")
   #dir.create(temp_path) #perform parallel
 
@@ -225,30 +202,35 @@ assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
     func_results <- enrichments_for_reports[[cluster]]
     cl_flags_ora <- sapply(func_results, nrow) > 0
     outfile <- file.path(output_path, paste0(cluster, "_func_report.html"))
-    test_env <- list2env(list(func_results=func_results, cl_flags_ora=cl_flags_ora))
+    test_env <- list2env(list(func_results=func_results, 
+      cl_flags_ora=cl_flags_ora))
     rmarkdown::render(file.path(template_folder, 
                    'clusters_to_enrichment.Rmd'), output_file = outfile, 
                clean=TRUE, intermediates_dir = temp_path_cl, envir=test_env)
   }, workers=workers, task_size=task_size)
-  # temp files not deleted properly in parallel - if someone knows a cleaner way- change it
-  #print(list.files(output_path, pattern="_temp$", full.names=TRUE))
-  unlink(list.files(output_path, pattern="_temp$", full.names=TRUE), recursive=TRUE)
+  # temp files not deleted properly in parallel 
+  unlink(list.files(output_path, pattern="_temp$", full.names=TRUE), 
+    recursive=TRUE)
 }
 
 
-summarize_categories <- function(all_enrichments, sim_thr = 0.7, common_name = "significant"){
+summarize_categories <- function(all_enrichments, sim_thr = 0.7, 
+  common_name = "significant"){
    enrichment_summary <- list()
        # save(list = ls(all.names = TRUE), file = "summarize_environment.RData")
 
      print("time clusterize_terms")
      print(system.time(
-  clusterized_terms <- clusterize_terms(all_enrichments, threshold = sim_thr, common_name = common_name)
+  clusterized_terms <- clusterize_terms(all_enrichments, threshold = sim_thr, 
+    common_name = common_name)
 ))
 
   for (funsys in names(clusterized_terms)){
     enrichments_cl <- all_enrichments[[funsys]]
-    combined_enrichments <- combine_terms_by_cluster(enrichments_cl@compareClusterResult, clusterized_terms[[funsys]])
-    combined_enrichments_tmp <-  reshape2::acast(combined_enrichments, term_cluster~cluster, value.var="p.adjust", fill = 1)
+    combined_enrichments <- combine_terms_by_cluster(
+      enrichments_cl@compareClusterResult, clusterized_terms[[funsys]])
+    combined_enrichments_tmp <-  reshape2::acast(combined_enrichments, 
+      term_cluster~cluster, value.var="p.adjust", fill = 1)
     combined_enrichments <- apply(combined_enrichments_tmp, 2, FUN=as.numeric)
     dimnames(combined_enrichments) <- dimnames(combined_enrichments_tmp)
     enrichment_summary[[funsys]] <- combined_enrichments
@@ -256,9 +238,13 @@ summarize_categories <- function(all_enrichments, sim_thr = 0.7, common_name = "
   return(enrichment_summary)
 }
 
-clusterize_terms <- function(all_enrichments, threshold = 0.7, common_name = "significant"){
+#' @importFrom stats as.dist
+#' @importFrom Matrix forceSymmetric
+#' @importFrom fastcluster hclust
+#' @importFrom GO.db GOBPPARENTS GOBPANCESTOR GOMFPARENTS GOMFANCESTOR GOCCPARENTS GOCCANCESTOR
+clusterize_terms <- function(all_enrichments, threshold = 0.7, 
+  common_name = "significant"){
     # save(list = ls(all.names = TRUE), file = "clusterize_environment.RData")
-
   clusterized_terms <- list()
   for (funsys in names(all_enrichments)){
     if (funsys=="BP"){
@@ -279,28 +265,31 @@ clusterize_terms <- function(all_enrichments, threshold = 0.7, common_name = "si
     }
     print("time calc_all_paths")
      print(system.time(
-    paths <- calc_all_paths(ids = unique(names(GO_parents)), GO_parents = GO_parents)
+    paths <- calc_all_paths(ids = unique(names(GO_parents)), 
+      GO_parents = GO_parents)
     ))
     levels <- unlist(lapply(paths, function(id){min(lengths(id))}))
-    # save(list = ls(all.names = TRUE), file = "paths_environment.RData")
 
     enrichments_cl <- all_enrichments[[funsys]]
     term_sim <- enrichments_cl@termsim
     term_sim <- Matrix::forceSymmetric(term_sim, uplo="U")
     term_sim[is.na(term_sim)] <- 0
-    term_dis <- as.dist(1 - term_sim)
+    term_dis <- stats::as.dist(1 - term_sim)
     term_clust <- fastcluster::hclust(term_dis, method = "average")
     threshold = 1 - threshold
-    clust_term <- cutree(term_clust, h = threshold)
+    clust_term <- stats::cutree(term_clust, h = threshold)
 
     cluster_names <- lapply(clust_term, function(cluster) {
        terms_in_cl <- names(clust_term)[clust_term == cluster]
        cluster_enrichments <- enrichments_cl@compareClusterResult
-       cluster_enrichments <- cluster_enrichments[cluster_enrichments$Description %in% terms_in_cl,]
+       cluster_enrichments <- cluster_enrichments[
+         cluster_enrichments$Description %in% terms_in_cl,]
        if (common_name == "ancestor") {
-          main_name <- get_common_ancestor(unique(cluster_enrichments$ID), GO_ancestor = GO_ancestor, levels = levels)
+          main_name <- get_common_ancestor(unique(cluster_enrichments$ID), 
+            GO_ancestor = GO_ancestor, levels = levels)
        } else if (common_name == "significant"){
-          main_name <- cluster_enrichments[which.min(cluster_enrichments$p.adjust), "Description"]
+          main_name <- cluster_enrichments[which.min(
+            cluster_enrichments$p.adjust), "Description"]
        } 
        return(main_name)
     })
@@ -318,12 +307,15 @@ combine_terms_by_cluster <- function(clusters_enr, term_clustering) {
   combined_terms <- data.frame()
   for (cluster in unique(clusters_enr$Cluster)) {
     clusters_enr$Description <- as.character(clusters_enr$Description)
-    cluster_terms <- clusters_enr[clusters_enr$Cluster == cluster, "Description"]
-    term_clusters <- unique(term_clustering[names(term_clustering) %in% cluster_terms])
+    cluster_terms <- clusters_enr[clusters_enr$Cluster == cluster, 
+                                   "Description"]
+    term_clusters <- unique(term_clustering[names(term_clustering) 
+      %in% cluster_terms])
     for (term_cluster in term_clusters) {
       clustered_terms <- names(term_clustering)[term_clustering == term_cluster]
       combined_terms <- rbind(combined_terms, 
-        c(cluster, term_cluster, min(clusters_enr[clusters_enr$Description %in% clustered_terms, "p.adjust"])))
+        c(cluster, term_cluster, min(clusters_enr[clusters_enr$Description %in% 
+                                    clustered_terms, "p.adjust"])))
     }
   }
   colnames(combined_terms) <- c("cluster", "term_cluster", "p.adjust")
@@ -331,7 +323,8 @@ combine_terms_by_cluster <- function(clusters_enr, term_clustering) {
 }
 
 
-get_common_ancestor <- function(terms, GO_ancestor, levels, common_ancestor_method = "lowest"){
+get_common_ancestor <- function(terms, GO_ancestor, levels, 
+  common_ancestor_method = "lowest"){
   terms_ancestors <- GO_ancestor[terms]
   common_ancestors <- Reduce(intersect, terms_ancestors)
   common_ancestors <- levels[names(levels) %in% common_ancestors]
@@ -345,8 +338,8 @@ get_common_ancestor <- function(terms, GO_ancestor, levels, common_ancestor_meth
   common_ancestor <- common_ancestors[1]
 
   if (common_ancestor > 2) {
-      
-      common_ancestor <- names(common_ancestor) #get_GOid_term(names(common_ancestor))
+      #get_GOid_term(names(common_ancestor))
+      common_ancestor <- names(common_ancestor) 
 
   } else {
       common_ancestor <- "to_remove"
@@ -366,7 +359,8 @@ get_all_parentals <- function(term, GO_parents, relative_level = 0){
     for (parent in isa_parents) {
       parental_branches <- get_all_parentals(term = parent, 
                                              GO_parents = GO_parents, 
-                                             relative_level = (relative_level + 1))
+                                             relative_level = (
+                                              relative_level + 1))
       all_branches <- rbind(all_branches, parental_branches)
     }
     return(all_branches)
@@ -374,7 +368,7 @@ get_all_parentals <- function(term, GO_parents, relative_level = 0){
 }
 
 
-
+#' @importFrom GO.db GOTERM
 get_GOid_term <- function(GOid, output = "term"){
  term <- AnnotationDbi::Term(GO.db::GOTERM[GOid])
  names(term) <- NULL
@@ -383,8 +377,10 @@ get_GOid_term <- function(GOid, output = "term"){
 
 
 cluster_enr_to_matrix <- function(compareClusterResult){
-   compareClusterResult <- compareClusterResult[,c("Cluster", "Description", "p.adjust")]
-    compareClusterResult_tmp <-  reshape2::acast(compareClusterResult, Description~Cluster, value.var="p.adjust", fill = 1)
+   compareClusterResult <- compareClusterResult[,c("Cluster", "Description", 
+    "p.adjust")]
+    compareClusterResult_tmp <-  reshape2::acast(compareClusterResult, 
+      Description~Cluster, value.var="p.adjust", fill = 1)
     compareClusterResult <- apply(compareClusterResult_tmp, 2, FUN=as.numeric)
     dimnames(compareClusterResult) <- dimnames(compareClusterResult_tmp)
     return(compareClusterResult_tmp)
@@ -442,7 +438,7 @@ toDistances <- function(vectors_matrix, rows = TRUE){
   return(Mdist)
 }
 
-
+#' @importFrom GO.db GOBPANCESTOR GOMFANCESTOR GOCCANCESTOR
 clean_parentals_in_matrix <- function(enrichment_mx, subont){
   if (subont=="BP"){
     GO_ancestors <- GO.db::GOBPANCESTOR
@@ -472,13 +468,18 @@ return(enrichment_mx)
 filter_top_categories <- function(enrichments_ORA_merged, top_c = 50){
 
     for (funsys in names(enrichments_ORA_merged)){
-      filtered_enrichments <- enrichments_ORA_merged[[funsys]]@compareClusterResult
+      filtered_enrichments <- 
+        enrichments_ORA_merged[[funsys]]@compareClusterResult
       if (nrow(filtered_enrichments) == 0) next 
-      filtered_enrichments <- filtered_enrichments[order(filtered_enrichments$p.adjust, decreasing = FALSE), ]
-      filtered_enrichments <- Reduce(rbind,by(filtered_enrichments,filtered_enrichments["Cluster"], head, n = top_c))
+      filtered_enrichments <- filtered_enrichments[order(
+        filtered_enrichments$p.adjust, decreasing = FALSE), ]
+      filtered_enrichments <- Reduce(rbind,by(
+        filtered_enrichments,filtered_enrichments["Cluster"], head, n = top_c))
       filtered_terms <- unique(filtered_enrichments$Description)
-      enrichments_ORA_merged[[funsys]]@compareClusterResult <- filtered_enrichments
-      enrichments_ORA_merged[[funsys]]@termsim <- enrichments_ORA_merged[[funsys]]@termsim[filtered_terms,filtered_terms]
+      enrichments_ORA_merged[[funsys]]@compareClusterResult <- 
+        filtered_enrichments
+      enrichments_ORA_merged[[funsys]]@termsim <- 
+        enrichments_ORA_merged[[funsys]]@termsim[filtered_terms,filtered_terms]
     }
     return(enrichments_ORA_merged)
 }

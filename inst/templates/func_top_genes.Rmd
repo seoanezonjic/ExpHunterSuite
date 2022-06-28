@@ -26,12 +26,14 @@ top_bot_genes_list <- lapply(DEG_cols, function(DEG_col) {
 
 all_top_IDs <- unique(unlist(sapply(top_bot_genes_list, "[", 1)))
 all_bot_IDs <- unique(unlist(sapply(top_bot_genes_list, "[", 2)))
-topgenes <- DEGH_results[all_top_IDs, c("input_IDs", FC_cols, "mean_logFCs", "Symbol")]
-botgenes <- DEGH_results[all_bot_IDs, c("input_IDs", FC_cols, "mean_logFCs", "Symbol")]
+topgenes <- DEGH_results[all_top_IDs, c("input_IDs", FC_cols, "mean_logFCs", "SYMBOL")]
+botgenes <- DEGH_results[all_bot_IDs, c("input_IDs", FC_cols, "mean_logFCs", "SYMBOL")]
 
-if(!is.null(annot_table)) {
-	topgenes$original_ids <- row.names(topgenes)
-	botgenes$original_ids <- row.names(botgenes)
+if(exists("annot_table")) {
+    if(!is.null(annot_table)) {
+	    topgenes$original_ids <- row.names(topgenes)
+	    botgenes$original_ids <- row.names(botgenes)
+    }
 }
 
 # Message
