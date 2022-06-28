@@ -2,7 +2,6 @@
 #############################################
 ############## FUNCTIONAL HUNTER ###########
 #############################################
-print("start new")
 if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
     full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  
                error=function(e) # works when using R CMD
@@ -151,10 +150,7 @@ if("KEGG" %in% enrich_dbs) {
     if(! file.exists(kegg_data_file)) stop(paste("KEGG file:", kegg_data_file, "not found"))
 }
 
-
-
-print("TIME OF NEW MAIN:")
-print(system.time(func_results <- main_functional_hunter(
+func_results <- main_functional_hunter(
        hunter_results = hunter_results,
        model_organism = opt$model_organism,
        annot_table = annot_table,
@@ -171,21 +167,10 @@ print(system.time(func_results <- main_functional_hunter(
        output_files = opt$output_files,
        organisms_table = organisms_table,
        fc_colname = fc_colname)
-))
-print("NEW MAIN FINISHED")
 
-#save(func_results, file="func_results_trycatched.RData")
-#load("func_results_trycatched.RData")
+write_enrich_files(func_results, opt$output_files)
 
-print("TIME OF NEW FILES:")
-
-print(system.time(write_enrich_files(func_results, opt$output_files)
-))
-print("NEW FILES FINISHED")
-
-
-print("TIME OF NEW REPORT:")
-print(system.time(write_functional_report(hunter_results = hunter_results, 
+write_functional_report(hunter_results = hunter_results, 
                             func_results = func_results, 
                             output_files = opt$output_files,
                             organisms_table = organisms_table,
@@ -193,6 +178,5 @@ print(system.time(write_functional_report(hunter_results = hunter_results,
                             cores =  opt$cores,
                             task_size = opt$task_size,
                             report = "fci")
-))
-print("NEW REPORT FINISHED")
+
 
