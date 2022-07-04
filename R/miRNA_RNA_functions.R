@@ -30,36 +30,43 @@ load_DEGH_information <- function(execution_path){
 }
 
 
-filter_DEGH_data <- function(DGH_data, MM_cutoff){
+filter_DEGH_data <- function(DGH_data, MM_cutoff, tag_filter){
+
+    print(tag_filter)
     DGH_results <- DGH_data$DH_results 
-    all_degs <- DGH_results$genes_tag %in% c("PREVALENT_DEG", "POSSIBLE_DEG")
-    modules_with_DEGS <- unique(DGH_results[all_degs & 
-        DGH_results$Cluster_MM >= MM_cutoff, "Cluster_ID"])
-    #Removing module 0
-    modules_with_DEGS <- modules_with_DEGS[modules_with_DEGS != 0]
+    if (tag_filter == "prevalent") {
+        tags_to_filter <- c("PREVALENT_DEG")
+    } else {
+        tags_to_filter <- c("PREVALENT_DEG", "POSSIBLE_DEG")
+    }
+    
+    all_degs <- DGH_results$genes_tag %in% tags_to_filter
+    DGH_data$Eigengene_0 <- DGH_data$Eigengene[,"0", drop = FALSE]
+    if (tag_filter == "putative") {
+        modules_with_DEGS <- unique(DGH_results[all_degs & 
+            DGH_results$Cluster_MM >= MM_cutoff, "Cluster_ID"])
+        #Removing module 0
+        modules_with_DEGS <- modules_with_DEGS[modules_with_DEGS != 0]
+        DGH_data$Eigengene <- DGH_data$Eigengene[,
+               colnames(DGH_data$Eigengene) %in% modules_with_DEGS]
+        DGH_data$hub_1 <- DGH_data$hub_1[,
+               colnames(DGH_data$hub_1) %in% modules_with_DEGS]
+        
+        candidate_not_deg <- DGH_results$Cluster_ID %in% modules_with_DEGS &
+                                           DGH_results$genes_tag == "NOT_DEG" &
+                                           DGH_results$Cluster_MM >= MM_cutoff
+        candidate_not_deg <- DGH_results[candidate_not_deg, "gene_name"]
+        relevant_genes <- c(candidate_not_deg, DGH_results[all_degs, "gene_name"]) 
 
-    candidate_not_deg <- DGH_results$Cluster_ID %in% modules_with_DEGS &
-                                       DGH_results$genes_tag == "NOT_DEG" &
-                                       DGH_results$Cluster_MM >= MM_cutoff
-
-    candidate_not_deg <- DGH_results[candidate_not_deg, "gene_name"]
-
-    relevant_genes <- c(candidate_not_deg, DGH_results[all_degs, "gene_name"]) 
+    }else {
+        relevant_genes <- DGH_results[all_degs, "gene_name"] 
+    }
 
     DGH_data$DH_results$relevant_genes <- DGH_results$gene_name %in% 
                                              relevant_genes
-    
     DGH_data$normalized_counts <- DGH_data$normalized_counts[, 
                     colnames(DGH_data$normalized_counts) %in% relevant_genes ]
-
-
-    DGH_data$Eigengene_0 <- DGH_data$Eigengene[,"0", drop = FALSE]
-
-    DGH_data$Eigengene <- DGH_data$Eigengene[,
-               colnames(DGH_data$Eigengene) %in% modules_with_DEGS]
-    DGH_data$hub_1 <- DGH_data$hub_1[,
-               colnames(DGH_data$hub_1) %in% modules_with_DEGS]
-
+                    
     return(DGH_data)
 }
 
@@ -131,20 +138,23 @@ strat_names,
 RNAseq, 
 miRNAseq, 
 all_pairs,
+tag_filter,
 selected_predicted_databases,
 raw_databases_scores,
 corr_cutoff = -0.8, 
 p_val_cutoff = 0.05,
 MM_cutoff = 0.7,
 permutations = 10, 
-sample_proportion = 0.01
+sample_proportion = 0.01,
+corr_type
 ){
  ######### PREPARE PAIRS SCAFOLD
  strategies <- list()
- 
+ tag_filter <- unlist(strsplit(tag_filter, ","))
+ print(tag_filter)
  ###### FILTER DGH DATA
- RNAseq <- filter_DEGH_data(RNAseq, MM_cutoff)
- miRNAseq <- filter_DEGH_data(miRNAseq, MM_cutoff)
+ RNAseq <- filter_DEGH_data(RNAseq, MM_cutoff, tag_filter[1])
+ miRNAseq <- filter_DEGH_data(miRNAseq, MM_cutoff, tag_filter[2])
  message("Data has been filtered")
  gc()
  std_positions <- tidyr::unite(all_pairs, "pairs", RNAseq:miRNAseq, sep = "_")
@@ -167,7 +177,7 @@ sample_proportion = 0.01
     strategy_data <- perform_correlations(strategy = strategy, 
                         RNAseq = RNAseq, miRNAseq = miRNAseq, 
                         std_positions = std_positions, 
-                        cor_cutoff = corr_cutoff, pval_cutoff = p_val_cutoff)
+                        cor_cutoff = corr_cutoff, pval_cutoff = p_val_cutoff, corr_type  = corr_type)
    strategy_data <- data.table::as.data.table(strategy_data)
    strategies[[strategy]] <- strategy_data
    if (sum(strategy_data$correlated_pairs) == 0){
@@ -223,11 +233,11 @@ sample_proportion = 0.01
 perform_correlations <- function(
       strategy = "normalized_counts_RNA_vs_miRNA_normalized_counts", 
       RNAseq, miRNAseq, std_positions = NULL, cor_cutoff = 0, 
-      pval_cutoff = 0.05){ #correct_positions is a mirna_RNA pairs vector
+      pval_cutoff = 0.05, corr_type){ #correct_positions is a mirna_RNA pairs vector
     # the parsed strategy name text is used to subset RNAseq/miRNAseq obects
     if (strategy == "DEGs_DEMs_permutated"){
         all_pairs <- perform_deg_dem_strat(RNAseq$DH_results,
-                                          miRNAseq$DH_results)
+                                          miRNAseq$DH_results, corr_type = corr_type)
     } else {
         strat_description <- unlist(strsplit(strategy, "_RNA_vs_miRNA_"))
         RNA_profiles <- as.matrix(RNAseq[[strat_description[1]]])
@@ -254,8 +264,17 @@ perform_correlations <- function(
         }
     }
     all_pairs <- data.table::as.data.table(all_pairs)
-    all_pairs$correlated_pairs <- all_pairs$correlation <= cor_cutoff & 
+
+    if(corr_type == "higher"){
+            all_pairs$correlated_pairs <- all_pairs$correlation >= cor_cutoff & 
                                      all_pairs$pval < pval_cutoff
+    } else if ( corr_type  == "lower"){
+            all_pairs$correlated_pairs <- all_pairs$correlation <= cor_cutoff & 
+                                    all_pairs$pval < pval_cutoff
+    } else {
+        stop("Non valid --corr_type arguments")
+    }
+
     if (!is.null(std_positions)){
      # Add extra column to indicate number of pair in std_positions
      all_pairs_str <- all_pairs[,c("RNAseq", "miRNAseq")]
@@ -268,7 +287,7 @@ perform_correlations <- function(
     return(all_pairs)
 }
 
-perform_deg_dem_strat <- function(RNAseq, miRNAseq){
+perform_deg_dem_strat <- function(RNAseq, miRNAseq, corr_type){
     DEGS <- RNAseq[RNAseq$genes_tag %in%
      c("PREVALENT_DEG", "POSSIBLE_DEG"), "gene_name"]
     DEMS <- miRNAseq[miRNAseq$genes_tag %in% 
@@ -277,7 +296,11 @@ perform_deg_dem_strat <- function(RNAseq, miRNAseq){
                                stringsAsFactors= FALSE, 
                                KEEP.OUT.ATTRS = FALSE)
     colnames(all_pairs) <- c("RNAseq", "miRNAseq")
-    all_pairs$correlation <- -1
+    if (corr_type == "higher"){
+       all_pairs$correlation <- 1
+    } else if (corr_type == "lower"){
+       all_pairs$correlation <- -1
+    }
     all_pairs$pval <- 0
     return(all_pairs)
 }

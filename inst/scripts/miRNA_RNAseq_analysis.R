@@ -59,6 +59,9 @@ option_list <- list(
             "miranda,pictar,pita"),
         help = paste0("Set prediction databases included on multiMiR",
             " to use as gold standard.")),
+    optparse::make_option("--tag_filter target_tag,miRNA_tag", type="character", 
+        default=paste0("putative,putative"),
+        help = paste0("Set filter type for RNAseq and miRNAseq input data by comma separated string. Available options are: 'prevalent' to use only PREVALENT_DEG. 'all_possible' to use all PREVALENT_DEG and POSIBLE_DEG. 'putative' to use PREVALENT_DEG, POSIBLE_DEG and miRNA or RNAs that correlates with their expression profile.")),
     optparse::make_option(c("--organism"), type ="character", default="hsa",
         help= paste0("Reference organism to use. Available 'hsa' for human",
             " and 'mmu' for mouse.")),
@@ -68,6 +71,9 @@ option_list <- list(
     optparse::make_option(c("-p", "--p_val_cutoff"), type="double", 
         default=0.05,
         help="Correlation P value threshold . Default=%default"),
+    optparse::make_option("--corr_type TYPE", type="character", 
+        default=paste0("lower"),
+        help = paste0("Set if correlations are [lower] or [higher] than the --p_val_cutoff. Default=%default")),
     optparse::make_option(c("-c", "--corr_cutoff"), type="double", 
         default=-0.7,
         help="Correlation threshold . Default=%default"),
@@ -109,7 +115,6 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 check_and_create_dir(opt$output_files)
 
-
 miRNA_cor_results <-  coRmiT( 
     RNAseq_folder=opt$RNAseq_folder,
     miRNAseq_folder=opt$miRNAseq_folder,
@@ -126,16 +131,21 @@ miRNA_cor_results <-  coRmiT(
     databases = opt$databases,
     translate_ensembl = opt$translate_ensembl,  
     mc_cores = opt$mc_cores,
+    tag_filter = opt$tag_filter,
     filter_db_theshold = opt$filter_db_theshold,
     database_to_filter = opt$database_to_filter,
     translation_file = opt$translation_file,
     organism_table_path = organism_table_path, 
+    corr_type = opt$corr_type,
     template_folder = template_folder #file.path(root_path, "inst", "templates")
     )
+miRNA_cor_results$all_pairs$RNAseq_mod <- miRNA_cor_results$RNAseq$DH_results[match(miRNA_cor_results$all_pairs$RNAseq, miRNA_cor_results$RNAseq$DH_results$gene_name),"Cluster_ID"]
 
-# save(miRNA_cor_results, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA_wf/miRNA_RNAseq_analysis.R_0005/test3.RData")
+
+#  save(miRNA_cor_results, file = file.path(normalizePath(opt$output_files),"debug.RData"))
 # q()
-# load("/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA_wf/miRNA_RNAseq_analysis.R_0005/test3.RData")
+# load(file.path(normalizePath(opt$output_files),"debug.RData"))
+
 
 miRNA_cor_results$weighted_c_table <- NULL
 miRNA_cor_results <- c(miRNA_cor_results, 

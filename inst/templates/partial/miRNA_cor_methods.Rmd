@@ -9,6 +9,8 @@
 # => method_name :: method name
   
 method <- "{{method_name}}"
+outdir <- file.path(output_files, method)
+check_and_create_dir(outdir)
 
 strat_pairs <- all_pairs[, get(method)]
 strat_data <- all_pairs[strat_pairs,]
@@ -55,15 +57,6 @@ data.table::setnames(strat_data_table,
   c("miRNA_names", "miRNAseq", "Symbol",       "RNAseq",   "predicted_c",       "validated_c",       "entrezgene"),
   c("miRNA",       "miRNA_ID", "Symbol_target","Target_ID","Predicted_DB_count","Validated_DB_count","ENTREZGENE_target"))
 
-# aux <- as.data.frame(
-#   strategies[["normalized_counts_RNA_vs_miRNA_normalized_counts"]][match(
-#     rownames(strat_data)[strat_data[,strat_pairs]], 
-#     strategies[["normalized_counts_RNA_vs_miRNA_normalized_counts"]]$pair_n), c("correlation", "pval")])
-
-# colnames(aux) <- c("raw_cor", "raw_pval")
-# strat_data <- cbind(strat_data, aux)
-# all_miRNA_summary <- data.frame()
-# strat_data <- data.frame()
 
 ```
 
@@ -95,8 +88,6 @@ cat("This method was launched but no significant miRNA-target gene relations wer
 
 ```{r "{{method_name}}_dem_summary_config", echo = FALSE, message=FALSE, warning=FALSE}
 
-# dems <- unique(miRNAseq$DH_results[miRNAseq$DH_results$genes_tag == "PREVALENT_DEG", "gene_name"])
-# strat_data <- strat_data[strat_data$miRNAseq %in% dems, ]
 all_miRNA_summary <- data.frame( stringsAsFactors = FALSE)
 for (mirna_name in unique(paste0(strat_data$miRNA_names, "_",strat_data$miRNAseq))) {
    mirna_name <- unlist(strsplit(mirna_name, "_"))
@@ -104,8 +95,6 @@ for (mirna_name in unique(paste0(strat_data$miRNA_names, "_",strat_data$miRNAseq
    mirna_id <- mirna_name[2]
    mirna_info <- strat_data[strat_data$miRNAseq == mirna_id, ]
 
-#    save(mirna_info, file = "~/proyectos/target_miRNA_2020/test4.RData")
-# q()
 
    dem_summary <- data.frame(stringsAsFactors = FALSE,
                miRNA = mirna,
@@ -143,14 +132,26 @@ DT::datatable(all_miRNA_summary, filter = 'top', rownames = FALSE, extensions = 
 
 ```{r "{{method_name}}_dem_modules", echo = FALSE, message = FALSE, warning = FALSE, eval = approach[1] %in% c("Eigengene", "hub_1")}
 "%>%" <- magrittr::"%>%"
-
+odds_ratio <- function(df){
+  (df$TP/df$FP)/(df$FN / df$TN)
+}
 all_miRNA_mod_summary <- strat_data_table %>% 
                             dplyr::group_by(miRNA, miRNA_ID, RNA_mod) %>% 
                             dplyr::summarise(Significant_targets = length(Target_ID), 
                                       Targets_in_multiMiR = sum(Predicted_DB_count > 0 | Validated_DB_count > 0), 
                                       Predicted_targets = sum(Predicted_DB_count > 0), 
                                       Validated_targets = sum(Validated_DB_count > 0))
+
 all_miRNA_mod_summary <- as.data.frame(all_miRNA_mod_summary)
+
+all_miRNA_mod_summary$Pred_percentage <- all_miRNA_mod_summary$Predicted_targets / all_miRNA_mod_summary$Significant_targets
+all_miRNA_mod_summary$Val_percentage <- all_miRNA_mod_summary$Validated_targets / all_miRNA_mod_summary$Significant_targets
+# save(all_miRNA_mod_summary, strat_data_table, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/target_miRNA_wf/miRNA_RNAseq_analysis.R_0002/test_mod.RData")
+# q()
+
+
+
+utils::write.table(all_miRNA_mod_summary, file = file.path(outdir, "all_miRNA_mod_summary.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 
 DT::datatable(all_miRNA_mod_summary, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
       options = list(          paging = TRUE,
@@ -159,15 +160,18 @@ DT::datatable(all_miRNA_mod_summary, filter = 'top', rownames = FALSE, extension
         dom = 'lftBip',
         buttons = c('copy', 'csv', 'excel')
     ))
+
+
+
+
 ```
 
 ```{r "{{method_name}}_dem_table_config", echo = FALSE, message=FALSE, warning=FALSE}
 
-outdir <- file.path(output_files, method)
-check_and_create_dir(outdir)
 utils::write.table(strat_data_table2, file = file.path(outdir, "target_results_table.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 
 utils::write.table(all_miRNA_summary, file = file.path(outdir, "all_miRNA_summary.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+
 ```
 
 

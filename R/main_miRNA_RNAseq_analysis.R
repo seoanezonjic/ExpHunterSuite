@@ -19,6 +19,8 @@ translate_ensembl = FALSE,
 filter_db_theshold = 0,
 database_to_filter = NULL,
 mc_cores = 1,
+tag_filter,
+corr_type,
 template_folder = file.path(find.package('ExpHunterSuite'), "templates"),
 organism_table_path = file.path(find.package('ExpHunterSuite'), "inst", 
     "external_data", "organism_table.txt") 
@@ -72,8 +74,8 @@ organism_table_path = file.path(find.package('ExpHunterSuite'), "inst",
     p_val_cutoff = p_val_cutoff, MM_cutoff = MM_cutoff,
     permutations = permutations, all_pairs = all_pairs, 
     selected_predicted_databases = selected_predicted_databases, 
-    sample_proportion = sample_proportion, 
-    raw_databases_scores=raw_databases_scores)
+    tag_filter = tag_filter, sample_proportion = sample_proportion, 
+    raw_databases_scores=raw_databases_scores, corr_type = corr_type)
  
  miRNA_cor_results$cont_tables <- v_get_stats(miRNA_cor_results$cont_tables)
   

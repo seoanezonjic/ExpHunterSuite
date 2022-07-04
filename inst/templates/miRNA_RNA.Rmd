@@ -497,7 +497,10 @@ These plots compare the full score distribution of the prediction databases (bla
     background_score <- all_pairs[,get(database)]
     background_score <- background_score[!is.na(background_score)]
     background_score <- data.frame(score = background_score)
-    strat_scores <- lapply(c(sig_strategies, "DEGs_DEMs_permutated"), function(strategy){
+    strats_to_use <- sig_strategies
+    if (any(grepl("DEGs_DEMs_permutated", sig_strategies)))
+          strats_to_use <- c(strats_to_use, "DEGs_DEMs_permutated")
+    strat_scores <- lapply(strats_to_use, function(strategy){
            all_strategy_score <- all_pairs[get(strategy), get(database)]
            all_strategy_score <- all_strategy_score[!is.na(all_strategy_score)]
            if (length(all_strategy_score) == 0) all_strategy_score <- NA
