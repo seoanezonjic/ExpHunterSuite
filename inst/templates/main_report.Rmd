@@ -56,7 +56,7 @@ Here we show scatterplots comparing expression levels for all genes between the 
 
 These plots will only be produced when the total number of samples to compare within a group is less than or equal to 10.
 
-```{r corr_plot_control, echo = FALSE, fig.height=12, fig.width=12, eval=length(index_control_cols) <= 10, results='asis'}
+```{r corr_plot_control, echo = FALSE, fig.height=12, fig.width=12, eval=length(index_control_cols) <= 10, results='asis', warning = FALSE}
 
 cat("### **Correlation between control samples:**
 Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.
@@ -66,7 +66,7 @@ PerformanceAnalytics::chart.Correlation(raw_filter[index_control_cols], histogra
 
 ```
 
-```{r corr_plot_treatment, echo = FALSE, fig.height=12, fig.width=12, eval=length(index_treatmn_cols) <= 10, results='asis'}
+```{r corr_plot_treatment, echo = FALSE, fig.height=12, fig.width=12, eval=length(index_treatmn_cols) <= 10, results='asis', warning = FALSE}
 
 cat("### **Correlation between treatment samples:**
 Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.
@@ -78,7 +78,7 @@ PerformanceAnalytics::chart.Correlation(raw_filter[index_treatmn_cols], histogra
 ```
 
 
-```{r corr_plot_all , echo = FALSE, fig.height=12, fig.width=12, eval=length(index_control_cols) + length(index_treatmn_cols) <= 10, results='asis'}
+```{r corr_plot_all , echo = FALSE, fig.height=12, fig.width=12, eval=length(index_control_cols) + length(index_treatmn_cols) <= 10, results='asis', warning = FALSE}
 
 
 cat("### **Correlation between samples: All vs all replicates**
