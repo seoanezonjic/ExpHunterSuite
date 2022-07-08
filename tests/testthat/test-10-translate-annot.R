@@ -13,25 +13,6 @@ test_that("new main functional enrichment with translation", {
                                   modules="F",
                                   lfc=4)
 
-     fh_out <- functional_hunter( #Perform enrichment analysis
-    hunter_results = degh_out,
-    model_organism = 'Zebrafish',
-    annot_table = annot_table,
-    organisms_table = get_organism_table(),
-    input_gene_id = "E",
-    func_annot_db = "gR",
-    GO_subont = "BM",
-    custom = NULL,
-    analysis_type = "o", #g
-    remote = "",
-    save_query = FALSE,
-    pthreshold = 0.1,
-    qthreshold = 0.2,
-    cores = 1,
-    task_size = 1,
-    output_files = "results",
-    fc_colname = "mean_logFCs"
-  )
 
   # save(list = ls(all.names = TRUE), file = "~/environment_test10.RData")
 
@@ -47,7 +28,6 @@ test_that("new main functional enrichment with translation", {
     enrich_dbs = c("BP", "MF", "Reactome"),
     enrich_methods = c("ORA"),
     custom = NULL,
-    save_query = FALSE,
     pthreshold = 0.1,
     qthreshold = 0.2,
     cores = 1,
@@ -56,7 +36,5 @@ test_that("new main functional enrichment with translation", {
     fc_colname = "mean_logFCs"
   )
 
-  # save(list = ls(all.names = TRUE), file = "~/environment_test10.RData")
-  testthat::expect_identical(fh_out_new$ORA, fh_out$ORA)
-
+  testthat::expect_equal(nrow(fh_out_new$ORA$BP), 51)
 })

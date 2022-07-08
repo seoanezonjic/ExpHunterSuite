@@ -15,8 +15,7 @@ test_that("main functional enrichment function works GO and Reactome - mouse", {
          enrich_dbs = c("MF", "BP","Reactome"), # Enrichment analysis for GO, KEGG and Reactome
          enrich_methods = "ORA",
   )
-  expect_equivalent(nrow(fh_ext_out$ORA$Reactome), 12)
-  
+  expect_equal(nrow(fh_ext_out$ORA$Reactome), 12)
 })
 
 # test_that("main functional enrichment function works when no DEGs", {

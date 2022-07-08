@@ -1,108 +1,3 @@
-test_that("main functional enrichment function works ora", {
-
-  precomp_degh_res_file <- system.file("extData", "testdata", "precomp_expression_results.RData", 
-                           package="ExpHunterSuite")
-  load(precomp_degh_res_file)
-  
-   
-  fh_out_new <- main_functional_hunter( #Perform enrichment analysis
-    hunter_results = precomp_degh_out,
-    model_organism = 'Mouse',
-    annot_table = NULL,
-    organisms_table = get_organism_table(),
-    input_gene_id = "ENSEMBL",
-    #func_annot_db = "gR",
-    #GO_subont = "C",
-    #analysis_type = "o", #g
-    enrich_dbs = c("MF"),
-    #enrich_methods = c("ora", "gsea", "topGO")
-    enrich_methods = "ORA",
-    custom = NULL,
-    save_query = FALSE,
-    pthreshold = 0.001,
-    qthreshold = 0.002,
-    cores = 1,
-    task_size = 1,
-    output_files = "results",
-    fc_colname = "mean_logFCs"
-  )
-
-  fh_out <- functional_hunter( #Perform enrichment analysis
-    hunter_results = precomp_degh_out,
-    model_organism = 'Mouse',
-    annot_table = NULL,
-    organisms_table = get_organism_table(),
-    input_gene_id = "E",
-    func_annot_db = "g",
-    GO_subont = "M",
-    custom = NULL,
-    analysis_type = "o", #g
-    remote = "",
-    save_query = FALSE,
-    pthreshold = 0.001,
-    qthreshold = 0.002,
-    cores = 1,
-    task_size = 1,
-    output_files = "results",
-    fc_colname = "mean_logFCs"
-  )
-
-  # save(list = ls(all.names = TRUE), file = "~/environment_test9.RData")
-  testthat::expect_identical(fh_out$ORA, fh_out_new$ORA)
-  testthat::expect_identical(fh_out$ORA[["GO_MF"]],  fh_out_new$ORA$GO_MF)
-  testthat::expect_identical(fh_out$ORA$REACT,  fh_out_new$ORA$REACT)
-  testthat::expect_true(all(fh_out_new$DEGH_results_annot == fh_out$DEGH_results_annot, na.rm=TRUE))
-
-
-  fh_out_new <- main_functional_hunter( #Perform enrichment analysis
-    hunter_results = precomp_degh_out,
-    model_organism = 'Mouse',
-    annot_table = NULL,
-    organisms_table = get_organism_table(),
-    input_gene_id = "ENSEMBL",
-    #func_annot_db = "gR",
-    #GO_subont = "C",
-    #analysis_type = "o", #g
-    enrich_dbs = c("MF", "Reactome"),
-    #enrich_methods = c("ora", "gsea", "topGO")
-    enrich_methods = "ORA",
-    custom = NULL,
-    save_query = FALSE,
-    pthreshold = 0.001,
-    qthreshold = 0.001,
-    cores = 1,
-    task_size = 1,
-    output_files = "results",
-    fc_colname = "mean_logFCs"
-  )
-
-  fh_out <- functional_hunter( #Perform enrichment analysis
-    hunter_results = precomp_degh_out,
-    model_organism = 'Mouse',
-    annot_table = NULL,
-    organisms_table = get_organism_table(),
-    input_gene_id = "E",
-    func_annot_db = "gR",
-    GO_subont = "M",
-    custom = NULL,
-    analysis_type = "o", #g
-    remote = "",
-    save_query = FALSE,
-    pthreshold = 0.001,
-    qthreshold = 0.001,
-    cores = 1,
-    task_size = 1,
-    output_files = "results",
-    fc_colname = "mean_logFCs"
-  )
-
-  # save(list = ls(all.names = TRUE), file = "~/environment_test9_2.RData")
-  testthat::expect_identical(fh_out$ORA, fh_out_new$ORA)
-  testthat::expect_identical(fh_out$ORA[["GO_MF"]],  fh_out_new$ORA$GO_MF)
-  testthat::expect_identical(fh_out$ORA$REACT,  fh_out_new$ORA$REACT)
-
-})
-
 test_that("main functional enrichment function works gsea", {
 
   precomp_degh_res_file <- system.file("extData", "testdata", "precomp_expression_results.RData", 
@@ -181,7 +76,7 @@ test_that("main functional enrichment function works gsea", {
 
   set.seed(123)
 
-  fh_out_new <- ExpHunterSuite::main_functional_hunter( #Perform enrichment analysis
+  fh_out <- ExpHunterSuite::main_functional_hunter( #Perform enrichment analysis
     hunter_results = precomp_degh_out,
     model_organism = 'Mouse',
     annot_table = NULL,
@@ -195,7 +90,6 @@ test_that("main functional enrichment function works gsea", {
     enrich_methods = "GSEA",
     #remote = "",
     annotation_source = "orgdb", # Other option Biomart, to be added
-    save_query = FALSE,
     pthreshold = 0.1,
     qthreshold = 0.2,
     cores = 1,
@@ -203,31 +97,8 @@ test_that("main functional enrichment function works gsea", {
     output_files = "results",
     fc_colname = "mean_logFCs"
   )
-
-  set.seed(123)
-
-  fh_out <- ExpHunterSuite::functional_hunter( #Perform enrichment analysis
-    hunter_results = precomp_degh_out,
-    model_organism = 'Mouse',
-    annot_table = NULL,
-    organisms_table = get_organism_table(),
-    input_gene_id = "e",
-    func_annot_db = "gR",
-    GO_subont = "M",
-    custom = NULL,
-    analysis_type = "g", #g
-    remote = "",
-    save_query = FALSE,
-    pthreshold = 0.1,
-    qthreshold = 0.2,
-    cores = 1,
-    task_size = 1,
-    output_files = "results",
-    fc_colname = "mean_logFCs"
-  )
-
-  testthat::expect_identical(fh_out$GSEA$GO_MF,  fh_out_new$GSEA$GO_MF)
-  testthat::expect_identical(fh_out$GSEA$REACT,  fh_out_new$GSEA$REACT)
-  # save(list = ls(all.names = TRUE), file = "~/environment_test9_3.RData")
-
+  testthat::expect_equal(nrow(fh_out$GSEA$Reactome), 24)
+  testthat::expect_equal(as.data.frame(fh_out$GSEA$Reactome)[["ID"]][1:2],  
+   c("R-MMU-5578775", "R-MMU-111931"))
+ 
 })

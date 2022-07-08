@@ -14,7 +14,7 @@ test_that("main expression function works with 0 DEGs", {
                                   modules="D",
                                   minpack_common=1)
 
- testthat::expect_equivalent(row.names(degh_out$DE_all_genes)[1:3], 
+ testthat::expect_equal(row.names(degh_out$DE_all_genes)[1:3], 
   c("ENSMUSG00000051951", "ENSMUSG00000102348", "ENSMUSG00000103201"))
 
 })

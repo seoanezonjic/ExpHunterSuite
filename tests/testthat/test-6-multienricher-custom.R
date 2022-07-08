@@ -29,13 +29,12 @@ test_that("Multienricher custom category gives same results as old and packet im
 
   # save(list = ls(all.names = TRUE), file = "~/environment_test6.RData")
 
-  new_res_all <- ExpHunterSuite::multienricher_ora( 
-    genes_list=list(genes), minGSSize = 3,
+ res_all <- ExpHunterSuite::multienricher_ora( 
+    genes_list=genes, minGSSize = 3, organism_info = current_organism_info,
   	custom_sets = list(custom_term2gene_1 = custom_term2gene_1, custom_term2gene_2 = custom_term2gene_2),
-    qvalueCutoff  = 0.2, pvalueCutoff = 0.2)
+    qvalueCutoff  = 0.2, pvalueCutoff = 0.2, readable=FALSE, return_all=TRUE)
 
-  # save(list = ls(all.names = TRUE), file = "~/environment_test6.RData")
-  testthat::expect_identical(packet_res_custom_1, new_res_all[["custom_term2gene_1"]][[1]])
-  testthat::expect_identical(packet_res_custom_2, new_res_all[["custom_term2gene_2"]][[1]])
+  testthat::expect_equal(packet_res_custom_1, res_all[["custom_term2gene_1"]])
+  testthat::expect_equal(packet_res_custom_2, res_all[["custom_term2gene_2"]])
 
 })

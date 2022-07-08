@@ -358,7 +358,7 @@ write.table(final_results[['DE_all_genes']], "hunter_results_table.txt", quote=F
 write_expression_report(final_results) # Generate friendly html report with expresion data.
 
 
-func_results <- functional_hunter( #Perform enrichment analisys
+func_results <- main_functional_hunter( #Perform enrichment analisys
         final_results,
         'Mouse', #Use specified organism database
         func_annot_db = "R", #Perform enrichment analysis using only Reactome nomenclature

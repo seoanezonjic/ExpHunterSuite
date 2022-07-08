@@ -14,6 +14,7 @@ test_that("main functional enrichment function works Reactome", {
          enrich_dbs = c("MF", "BP","Reactome"), # Enrichment analysis for GO, KEGG and Reactome
          enrich_methods = "ORA",
   )
-  expect_equivalent(nrow(as.data.frame(fh_out$ORA$MF)), 18)
-  expect_equivalent(as.data.frame(fh_out$ORA$BP)[1:2,"ID"], c("GO:0043277", "GO:0010876"))
+
+  testthat::expect_equal(nrow(as.data.frame(fh_out$ORA$MF)), 22)
+  testthat::expect_equal(as.data.frame(fh_out$ORA$BP)[1:2,"ID"], c("GO:0043277", "GO:0006911"))
 })
