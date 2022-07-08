@@ -93,7 +93,9 @@ option_list <- list(
         " Default : %default")),  
   optparse::make_option(c("-o", "--output_files"), type="character", 
     default="results",
-    help="Output path. Default=%default")
+    help="Output path. Default=%default"),
+  optparse::make_option(c("-u", "--universe"), type="character", default=NULL, 
+    help="Background genes for enrichment. Default all. Alternative = expressed")
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
@@ -166,7 +168,8 @@ func_results <- main_functional_hunter(
        task_size = opt$task_size,
        output_files = opt$output_files,
        organisms_table = organisms_table,
-       fc_colname = fc_colname)
+       fc_colname = fc_colname,
+       universe = opt$universe)
 
 write_enrich_files(func_results, opt$output_files)
 

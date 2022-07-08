@@ -21,7 +21,8 @@ main_functional_hunter(
   cores = 1,
   task_size = 1,
   output_files = "results",
-  fc_colname = "mean_logFCs"
+  fc_colname = "mean_logFCs",
+  universe = NULL
 )
 }
 \arguments{
@@ -62,6 +63,8 @@ Default: 1}
 \item{output_files}{output folder}
 
 \item{fc_colname}{main logFC colname (into hunter_results dataframe)}
+
+\item{universe}{whether to use all genes as the background, or expressed only}
 }
 \value{
 functional result object with enrichments performed

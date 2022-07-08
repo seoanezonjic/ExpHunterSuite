@@ -20,6 +20,7 @@
 #' @param task_size number of elements per packages used
 #' @param output_files output folder
 #' @param fc_colname main logFC colname (into hunter_results dataframe)
+#' @param universe whether to use all genes as the background, or expressed only
 #' @return functional result object with enrichments performed
 #' @keywords method
 #' @export
@@ -46,7 +47,8 @@ main_functional_hunter <- function(
     cores = 1,
     task_size = 1,
     output_files = "results",
-    fc_colname = "mean_logFCs"
+    fc_colname = "mean_logFCs",
+    universe = NULL
     ){
 
     ############################################################
@@ -121,6 +123,12 @@ main_functional_hunter <- function(
         cl_geneList <- cl_geneList[! names(cl_geneList) == 0]
     }
 
+    if(! is.null(universe)) {
+        if(universe == "expressed") {
+            universe <- DEGH_results$ENTREZID[DEGH_results$genes_tag != "FILTERED_OUT"]
+        }
+    }
+
     ############################################################
     ##                                                        ##
     ##                     PERFORM ENRICHMENTS                ## 
@@ -139,18 +147,19 @@ main_functional_hunter <- function(
     }
 
     if("ORA" %in% enrich_methods){
-        deg_enr_ora  <- multienricher_ora(all_funsys=enrich_dbs, 
-            genes_list=prev_genes, organism_info = current_organism_info, 
+        deg_enr_ora  <- multienricher_ora(all_funsys = enrich_dbs, 
+            genes_list = prev_genes, organism_info = current_organism_info, 
             pvalueCutoff = pthreshold, qvalueCutoff = qthreshold, 
-            custom_sets=custom, kegg_file = kegg_data_file,
-            return_all=TRUE)
+            custom_sets = custom, kegg_file = kegg_data_file,
+            return_all = TRUE, universe = universe)
         func_results$ORA  <- add_term_sim_ora(deg_enr_ora)
 
         if(clusters_flag){
             clusters_enr_ora <- multienricher_ora(all_funsys=enrich_dbs, 
                 genes_list=cl_genes, organism_info = current_organism_info, 
                 pvalueCutoff = pthreshold, qvalueCutoff = qthreshold, 
-                custom_sets=custom, kegg_file = kegg_data_file, workers=cores, task_size=task_size)
+                custom_sets=custom, kegg_file = kegg_data_file, workers=cores, 
+                task_size=task_size, universe=universe)
             
             clusters_enr_ora_compact <- merge_clusters(clusters_enr_ora)
             func_results$WGCNA_ORA <- add_term_sim_ora(clusters_enr_ora_compact)
@@ -163,11 +172,6 @@ main_functional_hunter <- function(
     ##                     EXPORT DATA                        ## 
     ##                                                        ##
     ############################################################
-
-    # JRP Silly thing to rename columns to use original report template
-    # Coordinate with Jose to avoid need for this.
-    #names(DEGH_results)[names(DEGH_results) %in% c("ENTREZID", "SYMBOL")] 
-    #                    <- c("entrezgene", "Symbol")
 
     # Reorder rows by combined FDR
     DEGH_results <- DEGH_results[order(DEGH_results[,"combined_FDR"]),] 

@@ -17,7 +17,7 @@ multienricher_ora(
   pAdjustMethod = "BH",
   kegg_file = NULL,
   custom_sets = NULL,
-  readable = FALSE,
+  readable = TRUE,
   return_all = FALSE,
   ...
 )

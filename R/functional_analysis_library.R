@@ -866,7 +866,7 @@ prepare_enrichment_KEGG <- function(enrichment_type, kegg_file) {
 multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL, 
   organism_info, org_db = NULL, task_size=1, workers=1, pvalueCutoff = 0.05, 
   qvalueCutoff = 0.2, pAdjustMethod = "BH", kegg_file=NULL, 
-  custom_sets=NULL, readable=FALSE, return_all=FALSE, ...){
+  custom_sets=NULL, readable=TRUE, return_all=FALSE, ...){
 
   unlisted_input_flag <- FALSE
   if(! is.list(genes_list)) {
@@ -891,13 +891,12 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL,
     if (funsys %in% c("CC","BP","MF")){
       enrf <- prepare_enrichment_GO(enrichment_type="ora", subont = funsys, 
         org_db = org_db)
-      specific_params <- list(OrgDb = org_db, ont = funsys, readable = FALSE)
+      specific_params <- list(OrgDb = org_db, ont = funsys)
 
     } else  if (funsys == "Reactome"){
       enrf <- prepare_enrichment_Reactome(enrichment_type="ora", 
         reactome_id = organism_info$Reactome_ID[1])
-      specific_params <- list(organism = organism_info$Reactome_ID[1], 
-        readable = FALSE)
+      specific_params <- list(organism = organism_info$Reactome_ID[1])
 
     } else if (funsys == "KEGG"){
       enrf <- prepare_enrichment_KEGG(enrichment_type="ora", 
@@ -920,17 +919,18 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL,
     # save(enriched_cats, file=paste0("enriched_cats_", funsys, ".RData"))
     if(return_all == FALSE) enriched_cats[sapply(enriched_cats,is.null)] <- NULL
 
-    enriched_cats <- lapply(enriched_cats, function(x) { 
-      if(! is.null(x)) return(
-        DOSE::setReadable(x, OrgDb = org_db, 
-        keyType="ENTREZID")
-        ) 
-      else return(data.frame())
-    })
+    if(readable == TRUE) {
+      enriched_cats <- lapply(enriched_cats, function(x) { 
+        if(! is.null(x)) return(
+          DOSE::setReadable(x, OrgDb = org_db, 
+          keyType="ENTREZID")
+          )
+        else return(data.frame())
+      })
+    }
     if(unlisted_input_flag) enriched_cats <- enriched_cats[[1]]    
     enrichments_ORA[[funsys]] <- enriched_cats
   }
-
   return(enrichments_ORA)
 }
 
