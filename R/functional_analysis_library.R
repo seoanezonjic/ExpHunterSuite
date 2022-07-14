@@ -928,6 +928,13 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL,
         else return(data.frame())
       })
     }
+    # Remove species name from reactome enrichment
+    if(funsys == "Reactome") { 
+      enriched_cats <- lapply(enriched_cats, function(enr) {
+        enr@result[,"Description"] <- gsub("^.+\\r: ", "", enr@result[,"Description"])
+        return(enr)
+      })
+    }
     if(unlisted_input_flag) enriched_cats <- enriched_cats[[1]]    
     enrichments_ORA[[funsys]] <- enriched_cats
   }

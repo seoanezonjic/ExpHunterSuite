@@ -170,9 +170,6 @@ write_functional_report <- function(hunter_results,
         wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait, 
           norm_by_col = TRUE)
 
-        results_temp <- file.path(paste0(results_path, "_tmp"))
-        check_and_create_dir(results_temp)
-
         message("\tRendering specific cluster reports")
         parallel_list(cls, function(cl) {
         #lapply(cls, function(cl) {

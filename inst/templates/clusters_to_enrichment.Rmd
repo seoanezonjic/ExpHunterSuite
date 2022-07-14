@@ -50,7 +50,7 @@ for(funsys in names(cl_flags_ora)) {
     exp_res <- knitr::knit_expand("ora_plots_all_objects.Rmd")
     res[[funsys]] <- knitr::knit(text=exp_res, quiet = TRUE)
   } else {
-    res[[funsys]] <- paste0("### **",funsys," - Over Representation Analysis**\nNo enrichment found for ", funsys,"\n")
+    res[[funsys]] <- paste0("## **",funsys," - Over Representation Analysis**\nNo enrichment found for ", funsys,"\n")
   }
 }
 
