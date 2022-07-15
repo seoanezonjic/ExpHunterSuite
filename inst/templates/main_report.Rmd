@@ -280,7 +280,7 @@ limma::vennDiagram(intersections, circle.col = grDevices::rainbow(length(sets)))
 var_thr <- 0.01
 ```
 
-```{r logFCplots, echo = FALSE, eval=(!grepl("F", opt$modules) && nchar(stringr::str_remove(opt$modules, "W")) > 1), results = "asis"}
+```{r logFCplots, echo = FALSE, eval=(!grepl("F", opt$modules) && sum(grepl("logFC_", colnames(DE_all_genes))) > 1), results = "asis"}
 
   cat(paste0("\n### **Plot showing variability between different DEG detection methods in terms of logFC calculation**"))
   cat(paste0("\nThis graph shows logFC calculated (y-axis) for each package (points) and gene (x-axis). Only genes with variability over ", var_thr, " will be plotted. This representation allows to user to observe the behaviour of each DE package and see if one of them has atypical results.\n"))

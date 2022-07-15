@@ -87,7 +87,8 @@ main_degenes_Hunter <- function(
       'minpack_common' = minpack_common,
       'p_val_cutoff' = p_val_cutoff,
       'lfc' = lfc,
-      'modules' = modules
+      'modules' = modules,
+      'active_modules' = active_modules
     )
 
     ############################################################
@@ -326,7 +327,8 @@ check_input_main_degenes_Hunter <- function(raw,
     active_modules <- nchar(modules)
     user_modules <- unlist(strsplit(modules, '')) # TODO. Maybe use this variable for checks perfomed before
     active_modules <- active_modules - sum(grepl("[WPX]", user_modules)) # Remove from module count modules that are not involved in differential expresion
-    
+    if(sum(target$treat == "Ctrl") < 3 | sum(target$treat == "Treat") < 3)
+          active_modules <- active_modules - sum(grepl("[LN]", user_modules))
     if(minpack_common > active_modules){
       minpack_common <- active_modules
       warning(paste0("The number of active modules is lower than the thresold",
