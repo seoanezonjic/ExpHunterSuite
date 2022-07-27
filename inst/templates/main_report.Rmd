@@ -216,6 +216,10 @@ All counts were normalizated by DESeq2 algorithm. This count were scaled by log1
 
 ```
 
+```{r top_n_expression, results='asis', echo=FALSE, warning=FALSE, message=FALSE}
+	cat("\n\n### **Percentages of reads per sample mapping to the most highly expressed genes **\n\n")
+	make_top_n_expression_table(count_data=raw_filter, n=5)
+```
 
 ## **DEgenes Hunter results**
 

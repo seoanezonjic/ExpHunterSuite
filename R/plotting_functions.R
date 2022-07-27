@@ -306,6 +306,18 @@ extract_legend <- function(a.gplot){
 }
 
 
+make_top_n_expression_table <- function(count_data, n=5) {
+  top_n_index <- order(rowSums(count_data), decreasing=TRUE)[1:n]
+  sample_totals <- colSums(count_data)
+  top_n_count <- count_data[top_n_index, ]
+  top_n_perc <- apply(top_n_count, 1, function(x) { 
+    round(x / sample_totals * 100, 3)
+  })
+  knitr::kable(t(top_n_perc))
+}
+
+
+
 #' Function to generate scatter plot for each gene in a hunter table
 #' and show logFC per package
 #' taking into account the variablity between them
