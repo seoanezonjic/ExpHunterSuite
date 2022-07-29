@@ -111,9 +111,9 @@ write_functional_report <- function(hunter_results,
                       "] ", x[2]))
 
     fc_vector <- func_results$DEGH_results_annot[
-       !is.na(func_results$DEGH_results_annot$entrezgene), fc_colname]
+       !is.na(func_results$DEGH_results_annot$ENTREZID), fc_colname]
     names(fc_vector) <- func_results$DEGH_results_annot[
-       !is.na(func_results$DEGH_results_annot$entrezgene), "entrezgene"]
+       !is.na(func_results$DEGH_results_annot$ENTREZID), "ENTREZID"]
 
     enrichments_ORA <- func_results$WGCNA_ORA
     DEGH_results <- func_results$DEGH_results_annot
@@ -177,8 +177,6 @@ write_functional_report <- function(hunter_results,
               nrow(x[[which(names(x) == cl)]]) != 0 
             })
             temp_path_cl <- file.path(results_path, paste0(cl,"_temp_cl_rep"))
-            print("temp path:")
-            print(temp_path_cl)
             outf_cls_i <- file.path(results_path, paste0("cl_func_",cl,".html"))
             DEGH_results <- DEGH_results[which(DEGH_results$Cluster_ID == cl), ]
             rmarkdown::render(file.path(template_folder, 

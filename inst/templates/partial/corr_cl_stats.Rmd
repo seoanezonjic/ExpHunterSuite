@@ -73,7 +73,7 @@ pp <- ggplot2::ggplot(cltraits,ggplot2::aes(x = Trait, y = Cl_Trait_Corr, color 
 plot(pp)
 ```
 ```{r "wgcna_corr_pl2", echo = FALSE, results = 'asis', eval = length(clpvals) > 0}
-cat("\nTEXTHERE:\n")
+# cat("\nTEXTHERE:\n")
 # Prepare Sample-Trait correlations
 smtraits <- as.matrix(wgcna_count_sample_trait[,as.character(cltraits$Trait)])
 rownames(smtraits) <- rownames(wgcna_count_sample_trait)
