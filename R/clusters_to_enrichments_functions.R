@@ -52,7 +52,6 @@ parse_cluster_results <- function(enrichments_ORA, simplify_results,
   for (funsys in names(enrichments_ORA)){
 
     enr_obj <- clusterProfiler::merge_result(enrichments_ORA[[funsys]])
-
     if(nrow(enr_obj@compareClusterResult) > 0){
       if (funsys %in% c("MF", "CC", "BP") && clean_parentals){
         enr_obj@fun <- "enrichGO"
@@ -134,18 +133,6 @@ hamming_binary <- function(X, Y = NULL) {
 } # from https://johanndejong.wordpress.com/
   #2015/10/02/faster-hamming-distance-in-r-2/
 
-write_fun_enrichments <- function(enrichments_ORA, output_path, all_funsys){
-  for(funsys in all_funsys) {
-    enriched_cats <- enrichments_ORA[[funsys]]
-    enriched_cats_dfs <- lapply(enriched_cats, data.frame)
-    enriched_cats_bound <- data.table::rbindlist(enriched_cats_dfs, 
-      use.names= TRUE, idcol= "Cluster_ID" )
-    utils::write.table(enriched_cats_bound, 
-                       file=file.path(output_path, 
-                        paste0("enrichment_",funsys,".csv")),
-                       quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
-  }
-}
 
 parse_results_for_report <- function(enrichments, simplify_results = FALSE){
   enrichments_for_reports <- list()
@@ -192,7 +179,6 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
   clean_tmpfiles_mod <- function() {
     message("Calling clean_tmpfiles_mod()")
   }
-
   assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
   #temp_path <- file.path(output_path, "temp")
   #dir.create(temp_path) #perform parallel

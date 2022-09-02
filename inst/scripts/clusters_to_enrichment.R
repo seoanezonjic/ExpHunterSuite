@@ -139,6 +139,7 @@ if (!file.exists(temp_file) || opt$force) {
   }
 
   names(cluster_genes_list) <- cluster_genes[,1]
+
   enrichments_ORA <- multienricher_ora(all_funsys =  all_funsys, 
                                   genes_list =  cluster_genes_list, 
                                   task_size = opt$task_size, 
@@ -148,7 +149,6 @@ if (!file.exists(temp_file) || opt$force) {
                                   qvalueCutoff = opt$qvalcutoff,
                                   custom = all_custom_gmt,
                                   kegg_file = kegg_data_file)
-
 
   enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
   save(enrichments_ORA,enrichments_ORA_merged, file = temp_file)
@@ -162,8 +162,9 @@ if (!is.null(opt$custom))
 
 
 if (grepl("R", opt$mode)){
-    enrichments_for_reports <- parse_results_for_report(enrichments_ORA)
-    write_fun_enrichments(enrichments_ORA, output_path, all_funsys)
+    enrichments_for_reports <- parse_results_for_report(enrichments_ORA)  
+    write_enrich_clusters(enrichments_ORA, output_path)
+    #write_enrich_tables(enrichments_ORA_merged, "cls_ORA", output_path)
     write_func_cluster_report(enrichments_for_reports,output_path,gene_mapping, 
       workers = opt$workers, task_size = opt$task_size, template_folder=template_folder)
 }

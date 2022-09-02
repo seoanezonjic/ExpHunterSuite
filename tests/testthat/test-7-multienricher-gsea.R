@@ -112,7 +112,7 @@ test_that("Multienricher gsea gives same results as running packets separately",
   # save(list = ls(all.names = TRUE), file = "~/environment_test7.RData")
 
   testthat::expect_identical(object=packet_res_GO, expected=new_res_all[["MF"]][[1]])
-  testthat::expect_identical(object=packet_res_reactome, expected=new_res_all[["Reactome"]][[1]])
+  # testthat::expect_identical(object=packet_res_reactome, expected=new_res_all[["Reactome"]][[1]])
 #   testthat::expect_identical(object=packet_res_KEGG, expected=new_res_all[["KEGG"]][[1]])
 })
 

@@ -182,55 +182,45 @@ write_enrich_tables <- function(func_res_tables, method_type, output_files){
         write_table_ehs(res_to_print, file=filename)
     }
 }
+write_enrich_clusters <- function(func_clusters, output_path) {
+    lapply(names(func_clusters), function(funsys) {
+      func_res <- func_clusters[[funsys]]
+      write_enrich_tables(func_res, 
+        paste0(funsys, "_cluster"), output_path)
+    })
+}
 
-write_enrich_files <- function(func_results, output_files=getwd()){
-    if(!dir.exists(output_files)) dir.create(output_files)
+write_enrich_files <- function(func_results, output_path=getwd()){
+    if(!dir.exists(output_path)) dir.create(output_path)
     final_params <- func_results$final_main_params[! names(func_results$final_main_params) %in%
         c("hunter_results", "organisms_table", "annot_table", "custom")]
     write_table_ehs(data.frame(A = names(final_params), 
                                B = sapply(final_params, paste, collapse=" ")), 
-                       file = file.path(output_files,"functional_opt.txt"))
+                       file = file.path(output_path,"functional_opt.txt"))
 
     if("ORA" %in% names(func_results)) {
-        write_enrich_tables(func_results$ORA, "ORA", output_files)
+        write_enrich_tables(func_results$ORA, "ORA", output_path)
     }
     if("GSEA" %in% names(func_results)) {
-        write_enrich_tables(func_results$GSEA, "GSEA", output_files)
+        write_enrich_tables(func_results$GSEA, "GSEA", output_path)
     }
     if("DEGH_results_annot" %in% names(func_results)) 
         write_table_ehs(func_results$DEGH_results_annot, 
-                           file=file.path(output_files, 
+                           file=file.path(output_path, 
                                           "hunter_results_table_annotated.txt"))
-    fortify.compareClusterResult <- get_unexported_function("enrichplot", 
-                                         "fortify.compareClusterResult")
-    # if("WGCNA_ORA" %in% names(func_results)) {
+    if("WGCNA_ORA" %in% names(func_results)) {
 
-    #     fortified_ora <- lapply(func_results$WGCNA_ORA, function(enr_res) {
-    #       if(nrow(enr_res@compareClusterResult) > 0) {
-    #           fortified_enr_res <- enrichplot:::fortify.compareClusterResult(enr_res)
-    #       } else {
-    #           fortified_enr_res <- data.frame()
-    #       }
-    #       return(fortified_enr_res)
-    #     })
-    #     write_enrich_tables(fortified_ora, "cls_ORA", output_files)
+        # write_enrich_clusters(func_results$WGCNA_ORA_expanded, output_path)
+        # func_res_cls <- lapply(func_results$WGCNA_ORA, as.data.frame)
+        # write_enrich_tables(func_res_cls, "cls_ORA", output_path)
 
-    #     lapply(names(func_results$WGCNA_ORA_expanded), function(funsys) {
-    #         func_res <- func_results$WGCNA_ORA_expanded[[funsys]]
-    #         # func_res <- lapply(func_res, function(x) { DOSE::setReadable(x, 'org.Hs.eg.db', 'ENTREZID') })
-    #         write_enrich_tables(func_res, 
-    #             paste0(funsys, "_cluster"), output_files)
-    #     })
-
-
-    #     for(cl in unique(func_results$DEGH_results_annot$Cluster_ID)) {
-    #         DEGH_res_cl <- func_results$DEGH_results_annot[func_results$DEGH_results_annot$Cluster_ID == cl,]
-              
-    #         write_table_ehs(DEGH_res_cl[DEGH_res_cl$genes_tag == "PREVALENT_DEG", 
-    #                             c("Symbol", "entrezgene", "mean_logFCs", "combined_FDR")],
-    #                         file=file.path(output_files, paste0("cluster_", cl, "_DEGs.txt")))
-    #     }
-    # }
+        # for(cl in unique(func_results$DEGH_results_annot$Cluster_ID)) {
+        #     DEGH_res_cl <- func_results$DEGH_results_annot[func_results$DEGH_results_annot$Cluster_ID == cl,]              
+        #     write_table_ehs(DEGH_res_cl[DEGH_res_cl$genes_tag == "PREVALENT_DEG", 
+        #                         c("Symbol", "entrezgene", "mean_logFCs", "combined_FDR")],
+        #                     file=file.path(output_files, paste0("cluster_", cl, "_DEGs.txt")))
+        # }
+    }
 }
 
 
