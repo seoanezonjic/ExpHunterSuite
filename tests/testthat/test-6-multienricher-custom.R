@@ -27,8 +27,6 @@ test_that("Multienricher custom category gives same results as old and packet im
                             minGSSize = 3,
                             TERM2GENE = custom_term2gene_2)
 
-  # save(list = ls(all.names = TRUE), file = "~/environment_test6.RData")
-
  res_all <- ExpHunterSuite::multienricher_ora( 
     genes_list=genes, minGSSize = 3, organism_info = current_organism_info,
   	custom_sets = list(custom_term2gene_1 = custom_term2gene_1, custom_term2gene_2 = custom_term2gene_2),

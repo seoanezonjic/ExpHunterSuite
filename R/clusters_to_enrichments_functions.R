@@ -1,51 +1,3 @@
-convert_ids_to_entrez <- function(ids, gene_keytype, org_db){
-  possible_ids <- AnnotationDbi::columns(org_db)
-  if(! gene_keytype %in% possible_ids) 
-    stop(paste(c("gene keytype must be one of the following:", possible_ids), 
-      collapse=" "))
-  ids <- tryCatch(
-    ids <- AnnotationDbi::mapIds(org_db, keys=ids, column="ENTREZID", 
-      keytype=gene_keytype),
-    error=function(cond){
-      ids <- NULL
-    }
-  )
-  return(ids[!is.na(ids)])
-}
-
-translate_gmt <- function(gmt, gene_keytype, org_db){
-  splitted_gmt <- split(gmt$Gene, gmt$Term)
-  tr_splitted_gmt <- lapply(splitted_gmt, function(x){
-                      convert_ids_to_entrez(ids=x, 
-                                            gene_keytype=gene_keytype,
-                                            org_db = org_db)})
-  
-  translated_gmt <- lapply(tr_splitted_gmt, as.data.frame)
-  translated_gmt <- as.data.frame(data.table::rbindlist(translated_gmt , 
-    use.names = TRUE, idcol = TRUE))
-  names(translated_gmt) <- c("Term","Gene")
-  return(translated_gmt)
-}
-
-get_organism_id <- function(organism_info, funsys){
-  if(funsys %in% c("BP","CC","MF")){
-    org_id <- organism_info$Bioconductor_DB[1]
-  }else if(funsys == "KEGG"){
-    org_id <- organism_info$KeggCode[1]
-  }else if(funsys == "REACT"){
-    org_id <- organism_info$Reactome_ID[1]
-  }
-  return(org_id)
-}
-
-
-
-get_org_db <- function(current_organism_info){
-  org_db <- current_organism_info$Bioconductor_DB[1]
-  org_db <- eval(parse(text = paste0(org_db,"::",org_db)))
-  return(org_db)
-}
-
 parse_cluster_results <- function(enrichments_ORA, simplify_results, 
   clean_parentals){
   enrichments_ORA_tr <- list()
@@ -172,31 +124,6 @@ parse_mappings <- function(gene_mapping, org_db, keytype){
   })
   return(list(gane_mapping_name = gane_mapping_name, 
     gene_mapping = gene_mapping))
-}
-
-write_func_cluster_report <- function(enrichments_for_reports, output_path, 
-  gene_mapping, workers, task_size, template_folder){
-  clean_tmpfiles_mod <- function() {
-    message("Calling clean_tmpfiles_mod()")
-  }
-  assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
-  #temp_path <- file.path(output_path, "temp")
-  #dir.create(temp_path) #perform parallel
-
-  parallel_list(names(enrichments_for_reports), function(cluster) {
-    temp_path_cl <- file.path(output_path, paste0(cluster,"_temp"))
-    func_results <- enrichments_for_reports[[cluster]]
-    cl_flags_ora <- sapply(func_results, nrow) > 0
-    outfile <- file.path(output_path, paste0(cluster, "_func_report.html"))
-    test_env <- list2env(list(func_results=func_results, 
-      cl_flags_ora=cl_flags_ora))
-    rmarkdown::render(file.path(template_folder, 
-                   'clusters_to_enrichment.Rmd'), output_file = outfile, 
-               clean=TRUE, intermediates_dir = temp_path_cl, envir=test_env)
-  }, workers=workers, task_size=task_size)
-  # temp files not deleted properly in parallel 
-  unlink(list.files(output_path, pattern="_temp$", full.names=TRUE), 
-    recursive=TRUE)
 }
 
 

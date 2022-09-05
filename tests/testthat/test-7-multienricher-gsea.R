@@ -86,22 +86,10 @@ test_that("Multienricher gsea gives same results as running packets separately",
     scoreType = "pos",
     seed=TRUE)
 
-  # packet_res_KEGG <- clusterProfiler::gseKEGG(geneList=genes, 
-  #   organism      = "mmu",
-  #   pvalueCutoff  = 0.05,
-  #   pAdjustMethod = "BH",
-  #   scoreType = "pos",
-  #   use_internal_data = FALSE,
-  #   seed = TRUE)
-
-
   organisms_table <- get_organism_table()
   current_organism_info <- subset(organisms_table, 
                           rownames(organisms_table) == "Mouse")
-  #set.seed(123) 
-  # kegg_file_mouse <- paste0("../../../kegg_db_", current_organism_info$KeggCode[1], ".rds")
-  # download_latest_kegg_db(organism="mmu", file=kegg_file_mouse)
-#  new_res_all <- ExpHunterSuite::multienricher_gsea(all_funsys=c("KEGG", "MF", "Reactome"),
+
   new_res_all <- ExpHunterSuite::multienricher_gsea(all_funsys=c("MF", "Reactome"),
     genes_list=list(genes,genes), 
     organism_info = current_organism_info,
@@ -109,40 +97,5 @@ test_that("Multienricher gsea gives same results as running packets separately",
     pvalueCutoff = 0.05, scoreType="pos", seed=TRUE
   )
 
-  # save(list = ls(all.names = TRUE), file = "~/environment_test7.RData")
-
   testthat::expect_identical(object=packet_res_GO, expected=new_res_all[["MF"]][[1]])
-  # testthat::expect_identical(object=packet_res_reactome, expected=new_res_all[["Reactome"]][[1]])
-#   testthat::expect_identical(object=packet_res_KEGG, expected=new_res_all[["KEGG"]][[1]])
 })
-
-# test_that("Multienricher gsea with custom gene sets gives same results as running packets separately", {
-
-
-# all_genes <- c("GeneA", "GeneE", "GeneG", "GeneB", "GeneC", "GeneD", "GeneF")
-
-#   ranked_genes <- rev(seq_along(all_genes))
-#   names(ranked_genes) <- all_genes
-#   genes <- ranked_genes
-
-#   gmt_file_1 <- system.file("extData", "toy_categories_1.gmt", package = "ExpHunterSuite")
-#   gmt_file_2 <- system.file("extData", "toy_categories_2.gmt", package = "ExpHunterSuite")
-
-#   custom_term2gene_1 <- ExpHunterSuite::load_and_parse_gmt(gmt_file_1)
-#   custom_term2gene_2 <- ExpHunterSuite::load_and_parse_gmt(gmt_file_2)
-# save(list = ls(all.names = TRUE), file = "~/environment_test7.RData")
-#   packet_res_custom_1 <- clusterProfiler::GSEA(genes, 
-#                           pvalueCutoff  = 0.1,
-#                           pAdjustMethod = "BH",
-#                           maxGSSize=100, minGSSize=3,
-#                           scoreType = "pos",
-#                           seed = TRUE, TERM2GENE = custom_term2gene_1)
-
-#   new_res_custom <- ExpHunterSuite::multienricher_gsea(all_custom_sets = 
-#     list(custom_term2gene_1 = custom_term2gene_1, custom_term2gene_2 = custom_term2gene_2),
-#      genes_list=list(genes,genes), 
-#      pvalueCutoff  = 0.1,
-#      minGSSize=3, maxGSSize=100, scoreType="pos", seed=TRUE
-#    )
-#   testthat::expect_identical(object=packet_res_custom_1, expected=new_res_custom[["custom_term2gene_1"]][[1]])
-# })

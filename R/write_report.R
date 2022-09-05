@@ -125,8 +125,6 @@ write_functional_report <- function(hunter_results,
     scaled_counts_table <- as.data.frame(as.table(scaled_counts))
     colnames(scaled_counts_table) <- c("Gene","Sample","Count")
 
-    rm("func_results")
-
     if(grepl("f", report)){
         message("\tRendering regular report")
         outf <- file.path(results_path, "functional_report.html")
@@ -143,7 +141,7 @@ write_functional_report <- function(hunter_results,
             names(flags_cluster) <- names(enrichments_ORA)
             outf_cls <- file.path(results_path, "clusters_func_report.html")
             rmarkdown::render(file.path(template_folder, 
-              'clusters_main_report.Rmd'),output_file = outf_cls, 
+              'clusters_main_report.Rmd'), output_file = outf_cls, 
               intermediates_dir = results_path)
         }
     }
@@ -321,4 +319,30 @@ write_functional_targets <- function(
              intermediates_dir = results_temp)
     }
     unlink(results_temp, recursive = TRUE)
+}
+
+
+write_func_cluster_report <- function(enrichments_for_reports, output_path, 
+  gene_mapping, workers, task_size, template_folder){
+  clean_tmpfiles_mod <- function() {
+    message("Calling clean_tmpfiles_mod()")
+  }
+  assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
+  #temp_path <- file.path(output_path, "temp")
+  #dir.create(temp_path) #perform parallel
+
+  parallel_list(names(enrichments_for_reports), function(cluster) {
+    temp_path_cl <- file.path(output_path, paste0(cluster,"_temp"))
+    func_results <- enrichments_for_reports[[cluster]]
+    cl_flags_ora <- sapply(func_results, nrow) > 0
+    outfile <- file.path(output_path, paste0(cluster, "_func_report.html"))
+    test_env <- list2env(list(func_results=func_results, 
+      cl_flags_ora=cl_flags_ora))
+    rmarkdown::render(file.path(template_folder, 
+                   'clusters_to_enrichment.Rmd'), output_file = outfile, 
+               clean=TRUE, intermediates_dir = temp_path_cl, envir=test_env)
+  }, workers=workers, task_size=task_size)
+  # temp files not deleted properly in parallel 
+  unlink(list.files(output_path, pattern="_temp$", full.names=TRUE), 
+    recursive=TRUE)
 }

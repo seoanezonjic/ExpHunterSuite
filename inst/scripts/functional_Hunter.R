@@ -70,6 +70,8 @@ option_list <- list(
   optparse::make_option(c("-C", "--custom"), ,type = "character", default=NULL,
     help=paste0("Files with custom functional annotation database ",
         "(in GMT format) separated by commas (,)")),
+  optparse::make_option(c("--gmt_id"), type="character", default="ENTREZID",
+    help="What identifier is being used for the genes in the custom gmt file. Default=%default"),
   optparse::make_option(c("-A", "--analysis_type"), type="character", 
     default="o",
     help=paste0("Analysis performance (g = Gene Set Enrichment Analysis,",
@@ -118,12 +120,21 @@ if(is.null(opt$annot_file)) {
         sep="\t", stringsAsFactors = FALSE, quote = "")
 }
 
+current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
+org_db <- get_org_db(current_organism_info)
+all_custom_gmt <- NULL
 if (!is.null(opt$custom)) {
     custom_files <- unlist(strsplit(opt$custom, ","))
     all_custom_gmt <- lapply(custom_files, load_and_parse_gmt)
     names(all_custom_gmt) <- custom_files
-}else{
-    all_custom_gmt <- NULL
+    names(all_custom_gmt) <- basename(names(all_custom_gmt))
+
+  if(opt$gmt_id != "ENTREZID") {
+    all_custom_gmt <- lapply(all_custom_gmt, function(gmt){
+        tr_gmt <- translate_gmt(gmt, opt$gmt_id, org_db)
+        return(tr_gmt)
+    })
+  }
 }
 
 if(opt$input_gene_id == "e") input_gene_id <- "ENTREZID"
@@ -147,7 +158,6 @@ if(grepl("g", opt$analysis_type)) enrich_methods <- c(enrich_methods, "GSEA")
 
 kegg_data_file <- opt$kegg_data_file
 if("KEGG" %in% enrich_dbs) {
-    current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
     kegg_data_file <- get_kegg_db_path(opt$kegg_data_file, current_organism_info=current_organism_info)
     if(! file.exists(kegg_data_file)) stop(paste("KEGG file:", kegg_data_file, "not found"))
 }

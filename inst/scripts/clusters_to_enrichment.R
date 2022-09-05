@@ -11,7 +11,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
   custom_libraries <- c('general_functions.R', "io_handling.R",
-    'functional_analysis_library.R', 'plotting_functions.R', "clusters_to_enrichments_functions.R")
+    'functional_analysis_library.R', 'plotting_functions.R', "clusters_to_enrichments_functions.R", "write_report.R")
   for (lib in custom_libraries){
     source(file.path(root_path, 'R', lib))
   }
@@ -39,9 +39,9 @@ option_list <- list(
                         help="2 columns - cluster and comma separated gene ids"),
   optparse::make_option(c("-w", "--workers"), type="integer", default=1,
                         help="number of processes for parallel execution. Default=%default"),
-  optparse::make_option(c("-p", "--pvalcutoff"), type="double", default=0.05,
+  optparse::make_option(c("-p", "--pvalcutoff"), type="double", default=0.1,
                         help="Cutoff for P value and adjusted P value for enrichments. Default=%default"),
-  optparse::make_option(c("-q", "--qvalcutoff"), type="double", default=0.02,
+  optparse::make_option(c("-q", "--qvalcutoff"), type="double", default=0.2,
                         help="Cutoff for Q value for enrichments. Default=%default"),
   optparse::make_option(c("-t", "--task_size"), type="integer", default=1,
                         help="number of clusters per task. Default=%default"),
@@ -95,22 +95,23 @@ all_funsys <- unlist(strsplit(opt$funsys, ","))
 n_category <- opt$showCategories
 organisms_table <- get_organism_table(organisms_table_file)
 current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
+print(current_organism_info)
 gene_mapping <- NULL
 org_db <- get_org_db(current_organism_info)
 # Load customs
 all_custom_gmt <- NULL
+
 if (!is.null(opt$custom)) {
     custom_files <- unlist(strsplit(opt$custom, ","))
     all_custom_gmt <- lapply(custom_files, load_and_parse_gmt)
     names(all_custom_gmt) <- custom_files
-  names(all_custom_gmt) <- basename(names(all_custom_gmt))
+    names(all_custom_gmt) <- basename(names(all_custom_gmt))
 
   if(opt$gmt_id != "ENTREZID") {
     all_custom_gmt <- lapply(all_custom_gmt, function(gmt){
         tr_gmt <- translate_gmt(gmt, opt$gmt_id, org_db)
         return(tr_gmt)
-      })
-    
+    })
   }
 }
 
@@ -133,9 +134,9 @@ if (!file.exists(temp_file) || opt$force) {
   cluster_genes_list <- strsplit(cluster_genes[,2], ",")
   if(opt$gene_keytype != "ENTREZID") {
     cluster_genes_list <- lapply(cluster_genes_list, function(x){
-                                      convert_ids_to_entrez(ids=x, 
-                                                            gene_keytype=opt$gene_keytype,
-                                                            org_db = org_db)}) 
+                                      translate_ids_orgdb(ids=x, 
+                                                            input_id=opt$gene_keytype,
+                                                            org_db = org_db, just_output_ids=TRUE)}) 
   }
 
   names(cluster_genes_list) <- cluster_genes[,1]
@@ -160,12 +161,10 @@ if (!file.exists(temp_file) || opt$force) {
 if (!is.null(opt$custom))
   all_funsys <- c(all_funsys, names(all_custom_gmt))
 
-
 if (grepl("R", opt$mode)){
     enrichments_for_reports <- parse_results_for_report(enrichments_ORA)  
     write_enrich_clusters(enrichments_ORA, output_path)
-    #write_enrich_tables(enrichments_ORA_merged, "cls_ORA", output_path)
-    write_func_cluster_report(enrichments_for_reports,output_path,gene_mapping, 
+    write_func_cluster_report(enrichments_for_reports, output_path,gene_mapping, 
       workers = opt$workers, task_size = opt$task_size, template_folder=template_folder)
 }
 
@@ -192,9 +191,6 @@ if (grepl("P", opt$mode)) {
 
   }
 }
-
-
-
 
 if (grepl("S", opt$mode)){
 

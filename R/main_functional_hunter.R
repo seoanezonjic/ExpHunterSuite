@@ -159,7 +159,7 @@ main_functional_hunter <- function(
                 genes_list=cl_genes, organism_info = current_organism_info, 
                 pvalueCutoff = pthreshold, qvalueCutoff = qthreshold, 
                 custom_sets=custom, kegg_file = kegg_data_file, workers=cores, 
-                task_size=task_size, universe=universe)
+                task_size=task_size, return_all = TRUE, universe=universe)
             
             clusters_enr_ora_compact <- merge_clusters(clusters_enr_ora)
             func_results$WGCNA_ORA <- add_term_sim_ora(clusters_enr_ora_compact)

@@ -5,12 +5,9 @@ test_that("main functional enrichment function works Reactome", {
   load(precomp_degh_res_file)
   organisms_table_file <- system.file("external_data", "organism_table.txt", 
                           package="ExpHunterSuite")
-#  organisms_table <- get_organism_table(organisms_table_file)
-
   fh_out <- main_functional_hunter( #Perform enrichment analysis
          precomp_degh_out,
          'Mouse', # Use specified organism database 
-#         organisms_table = organisms_table,
          enrich_dbs = c("MF", "BP","Reactome"), # Enrichment analysis for GO, KEGG and Reactome
          enrich_methods = "ORA",
   )

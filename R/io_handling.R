@@ -190,6 +190,17 @@ write_enrich_clusters <- function(func_clusters, output_path) {
     })
 }
 
+#' Write enrichment files related to functional_hunter results list
+#' @param func_results functional enrichment results
+#' @param output_files output folder path
+#' @return void
+#' @keywords export
+#' @export
+#' @importFrom utils write.table
+#' @examples
+#' # Use a @functional_hunter or @multienricher result object to 
+#' # create real files
+#' write_enrich_files(list(),"./")
 write_enrich_files <- function(func_results, output_path=getwd()){
     if(!dir.exists(output_path)) dir.create(output_path)
     final_params <- func_results$final_main_params[! names(func_results$final_main_params) %in%

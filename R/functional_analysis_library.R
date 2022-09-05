@@ -625,6 +625,7 @@ translate_from_table <- function(ids_to_translate, annot_table){
 }
 
 get_translation_tables_orgdb <- function(input_gene_id, input_ids, current_organism_info) {
+  org_db <- get_org_db(current_organism_info)
   if(input_gene_id == "ENTREZID") {
     input_to_entrezgene <- data.frame(input=input_ids, 
                                       ENTREZID=input_ids)
@@ -632,37 +633,52 @@ get_translation_tables_orgdb <- function(input_gene_id, input_ids, current_organ
     # Check input gene ID valid
     check_id_valid_orgdb(gene_id=input_gene_id, id_type="input", organism_info=current_organism_info, outcome_action="stop")
 
-        input_to_entrezgene <- translate_ids_orgdb(input_genes=input_ids, 
-        input_id=input_gene_id, organism_info = current_organism_info) 
+        input_to_entrezgene <- translate_ids_orgdb(ids=input_ids, 
+        input_id=input_gene_id, org_db=org_db) 
   }
   symbol_output_available <- check_id_valid_orgdb(gene_id=input_gene_id, id_type="output", 
                                                   organism_info=current_organism_info, outcome_action="warning")
             
   if(symbol_output_available == TRUE) {
-    input_to_symbol <- translate_ids_orgdb(input_genes=input_ids, 
-    input_id=input_gene_id, output_id="SYMBOL", organism_info = current_organism_info)
+    input_to_symbol <- translate_ids_orgdb(ids=input_ids, 
+    input_id=input_gene_id, output_id="SYMBOL", org_db=org_db)
   } else {
     input_to_symbol <- NULL
   }
   return(list(input_to_entrezgene = input_to_entrezgene, input_to_symbol = input_to_symbol))
 }
 
-translate_ids_orgdb <- function(input_genes, input_id, output_id="ENTREZID", organism_info){
-  org_db <- get_org_db(organism_info)
-
+translate_ids_orgdb <- function(ids, input_id, output_id="ENTREZID", org_db=org_db, just_output_ids=FALSE){
   possible_ids <- AnnotationDbi::columns(org_db)
   if(! input_id %in% possible_ids) 
     stop(paste(c("gene keytype must be one of the following:", possible_ids), collapse=" "))
-
     ids <- tryCatch(
-      ids <- AnnotationDbi::select(org_db, keys=input_genes, column=output_id, keytype=input_id),
+      ids <- AnnotationDbi::select(org_db, keys=ids, column=output_id, keytype=input_id),
       error=function(cond){
             ids <- NULL
         }
     )
-    return(ids[!is.na(ids[,2]),])
+    ids <- ids[!is.na(ids[,2]),]
+    if(just_output_ids == TRUE) {
+      return(unique(ids[,2]))
+    } else {
+      return(ids)
     }
+}
 
+translate_gmt <- function(gmt, gene_keytype, org_db){
+  splitted_gmt <- split(gmt$Gene, gmt$Term)
+  tr_splitted_gmt  <- lapply(splitted_gmt, function(x) {
+                      tr_table <- translate_ids_orgdb(ids=x, 
+                                            input_id=gene_keytype,
+                                            org_db = org_db)
+                      return(unique(tr_table[,2])) })
+  translated_gmt <- lapply(tr_splitted_gmt, as.data.frame)
+  translated_gmt <- as.data.frame(data.table::rbindlist(translated_gmt , 
+    use.names = TRUE, idcol = TRUE))
+  names(translated_gmt) <- c("Term","Gene")
+  return(translated_gmt)
+}
 
 #' Perform topGO enrichment analysis of a list of genes
 #' @param all_funsys vector of funsys to use (e.g. MF, Reatcome)
@@ -882,9 +898,9 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL,
     if(is.null(names(custom_sets))) stop("Custom sets enrichment object must be a named list")
     all_funsys <- c(all_funsys, names(custom_sets))
   }
-
-  org_db <- get_org_db(organism_info)
-
+  if (is.null(org_db)) {
+    org_db <- get_org_db(organism_info)
+  }
   enrichments_ORA <- vector("list", length(all_funsys))
   names(enrichments_ORA) <- all_funsys
   for(funsys in all_funsys) {
