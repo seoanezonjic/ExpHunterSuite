@@ -97,7 +97,18 @@ option_list <- list(
     default="results",
     help="Output path. Default=%default"),
   optparse::make_option(c("-u", "--universe"), type="character", default=NULL, 
-    help="Background genes for enrichment. Default all. Alternative = expressed")
+    help="Background genes for enrichment. Default all. Alternative = expressed"),
+  optparse::make_option("--clean_parentals", type="logical", default=FALSE, 
+    action = "store_true", help="Clean parentals GO terms that appears on the same clusters as child."),
+  optparse::make_option("--simplify", type="logical", default=FALSE, 
+    action = "store_true", help="Apply simplify function from cluster profiler to enrichment."),
+  optparse::make_option("--showCategories", type="integer", default=30, 
+    help="Number of top categories to show on clusterProfiler dotplot and emaplot"),
+  optparse::make_option(c("-T", "--top_categories"), type="integer", default=50,
+    help="Number of top categories for each cluster. Default=%default"),
+  optparse::make_option("--group_results", type="logical", default=FALSE, 
+    action = "store_true", help="Functions are grouped in most frequent words in emaplots.")
+
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
@@ -179,7 +190,11 @@ func_results <- main_functional_hunter(
        output_files = opt$output_files,
        organisms_table = organisms_table,
        fc_colname = fc_colname,
-       universe = opt$universe)
+       universe = opt$universe,
+       clean_parentals = opt$clean_parentals,
+       simplify = opt$simplify,
+       top_categories = opt$top_categories
+)
 
 write_enrich_files(func_results, opt$output_files)
 
@@ -190,6 +205,9 @@ write_functional_report(hunter_results = hunter_results,
                             template_folder = template_folder,
                             cores =  opt$cores,
                             task_size = opt$task_size,
-                            report = "fci")
+                            report = "fci",
+                            showCategories = opt$showCategories,
+                            group_results = opt$group_results
+)
 
 

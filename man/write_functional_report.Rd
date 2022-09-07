@@ -14,7 +14,9 @@ write_functional_report(
   template_folder = file.path(find.package("ExpHunterSuite"), "templates"),
   cores = 2,
   task_size = 1,
-  report = "fc"
+  report = "fc",
+  showCategories = 30,
+  group_results = FALSE
 )
 }
 \arguments{

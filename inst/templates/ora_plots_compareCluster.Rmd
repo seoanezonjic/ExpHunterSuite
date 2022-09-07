@@ -1,5 +1,4 @@
 ```{r  "{{funsys}}_compareCluster", echo=TRUE, results='asis', message=FALSE, echo=FALSE}
-n_category <- 30
 default_width <- set_default_width(enrich_obj = enrich_obj, showCategory = n_category)
 
 cat(paste0("## **", funsys, " Over Representation Analysis**"), "\n",
@@ -12,7 +11,7 @@ cat("\n\n**Dotplot**\n\n",
         "The most highly signficant categories in descending in categories of gene ratio, defined as the proportion of significant genes that are found in the functional category.
          The x-axis represents the gene ratio and the dot size the number of genes associated with the functional category.\n\n"
 )
-pp <- enrichplot::dotplot(enrich_obj, showCategory=n_category)  
+pp <- enrichplot::dotplot(enrich_obj, showCategory=showCategories)  
 pp <- set_standard_size(pp)
 invisible(plot_in_div(pp, calc_height(enrich_obj), calc_width(enrich_obj)))
 
@@ -28,13 +27,21 @@ cat("\n\n**Enrich Map plot**\n\n",
   "The top functional categories (nodes), connected if they share genes. Edge thickness represents the number of shared genes.
 	  Nodes size represents the number of significant genes within the category.\n\n"
 )
+
+
 if (nrow(as.data.frame(enrich_obj)) > 2) {
-	pp <- enrichplot::emapplot(enrich_obj, showCategory=n_category,pie="count", pie_scale=1.5, layout="kk")
+	if(group_results == TRUE)
+	  pp <- enrichplot::emapplot(enrich_obj, showCategory=showCategories, pie="Count", layout = "nicely", 
+                  shadowtext = FALSE, node_label = "group", group_category = TRUE, 
+                  nCluster = min(floor(nrow(enrich_obj)/7), 20), nWords = 6, repel = TRUE)
+	else 
+	  pp <- enrichplot::emapplot(enrich_obj, showCategory= showCategories, pie="Count", layout = "nicely", 
+                  shadowtext = FALSE, repel = TRUE)
 	invisible(plot_in_div(pp, fig_width = calc_width(enrich_obj)))
-}else{
+
+} else {
 	cat("\nThis graph can not be plotted because fewer than two functional categories were enriched\n")
 }
-
 
 ```
 

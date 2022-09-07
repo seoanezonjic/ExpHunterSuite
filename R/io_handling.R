@@ -185,8 +185,11 @@ write_enrich_tables <- function(func_res_tables, method_type, output_files){
 write_enrich_clusters <- function(func_clusters, output_path) {
     lapply(names(func_clusters), function(funsys) {
       func_res <- func_clusters[[funsys]]
-      write_enrich_tables(func_res, 
-        paste0(funsys, "_cluster"), output_path)
+      merged_func_res <- clusterProfiler::merge_result(func_res)
+      write_table_ehs(merged_func_res,
+        file=file.path(output_path, paste0("enrichment_", funsys, ".csv")))
+      # write_enrich_tables(func_res, 
+      #   paste0(funsys, "_cluster"), output_path)
     })
 }
 
@@ -201,7 +204,7 @@ write_enrich_clusters <- function(func_clusters, output_path) {
 #' # Use a @functional_hunter or @multienricher result object to 
 #' # create real files
 #' write_enrich_files(list(),"./")
-write_enrich_files <- function(func_results, output_path=getwd()){
+write_enrich_files <- function(func_results, output_path=getwd()) {
     if(!dir.exists(output_path)) dir.create(output_path)
     final_params <- func_results$final_main_params[! names(func_results$final_main_params) %in%
         c("hunter_results", "organisms_table", "annot_table", "custom")]
@@ -220,8 +223,7 @@ write_enrich_files <- function(func_results, output_path=getwd()){
                            file=file.path(output_path, 
                                           "hunter_results_table_annotated.txt"))
     if("WGCNA_ORA" %in% names(func_results)) {
-
-        # write_enrich_clusters(func_results$WGCNA_ORA_expanded, output_path)
+        write_enrich_clusters(func_results$WGCNA_ORA_expanded, output_path)
         # func_res_cls <- lapply(func_results$WGCNA_ORA, as.data.frame)
         # write_enrich_tables(func_res_cls, "cls_ORA", output_path)
 

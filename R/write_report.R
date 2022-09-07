@@ -48,6 +48,23 @@ write_expression_report <- function(exp_results,
                       output_file = outf, intermediates_dir = output_files)
 }
 
+
+
+write_merged_cluster_report <- function(enrichments_ORA, results_path, template_folder, 
+    sample_classes, DEGH_results, showCategories, group_results) {
+    message("\tRendering full cluster reports")
+    if(is.null(enrichments_ORA)) {
+        message("No WGCNA ORA results, not printing cluster report")
+    } else {
+        flags_cluster <- sapply(enrichments_ORA, function(x) nrow(x@compareClusterResult)) != 0
+        names(flags_cluster) <- names(enrichments_ORA)
+        outf_cls <- file.path(results_path, "clusters_func_report.html")
+        rmarkdown::render(file.path(template_folder, 
+          'clusters_main_report.Rmd'), output_file = outf_cls, 
+          intermediates_dir = results_path)
+    }
+}
+
 #' Write Main DEgenes Hunter functional report
 #' This function allows you to report the Functional analysis.
 #' @param hunter_results DEG analysis results
@@ -79,9 +96,13 @@ write_functional_report <- function(hunter_results,
                                     template_folder = file.path(find.package('ExpHunterSuite'), 'templates'),
                                     cores = 2,
                                     task_size = 1, 
-                                    report = "fc"){
+                                    report = "fc",
+                                    showCategories = 30,
+                                    group_results = FALSE
+                                    ){
     # report <- "i"
             # TO parallelize properly
+
     clean_tmpfiles_mod <- function() {
       message("Calling clean_tmpfiles_mod()")
     }
@@ -133,17 +154,8 @@ write_functional_report <- function(hunter_results,
     }
 
     if(grepl("c", report)){
-        message("\tRendering full cluster reports")
-        if(is.null(enrichments_ORA)) {
-            message("No WGCNA ORA results, not printing cluster report")
-        } else {
-            flags_cluster <- sapply(enrichments_ORA, function(x) nrow(x@compareClusterResult)) != 0
-            names(flags_cluster) <- names(enrichments_ORA)
-            outf_cls <- file.path(results_path, "clusters_func_report.html")
-            rmarkdown::render(file.path(template_folder, 
-              'clusters_main_report.Rmd'), output_file = outf_cls, 
-              intermediates_dir = results_path)
-        }
+        write_merged_cluster_report(enrichments_ORA, results_path, template_folder, 
+            sample_classes, DEGH_results, showCategories, group_results)
     }
 
     if(grepl("i", report)) {

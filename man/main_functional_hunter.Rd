@@ -22,7 +22,10 @@ main_functional_hunter(
   task_size = 1,
   output_files = "results",
   fc_colname = "mean_logFCs",
-  universe = NULL
+  universe = NULL,
+  clean_parentals = FALSE,
+  simplify = FALSE,
+  top_categories = 50
 )
 }
 \arguments{

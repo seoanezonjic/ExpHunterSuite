@@ -48,7 +48,10 @@ main_functional_hunter <- function(
     task_size = 1,
     output_files = "results",
     fc_colname = "mean_logFCs",
-    universe = NULL
+    universe = NULL,
+    clean_parentals = FALSE,
+    simplify = FALSE,
+    top_categories = 50
     ){
 
     ############################################################
@@ -160,9 +163,12 @@ main_functional_hunter <- function(
                 pvalueCutoff = pthreshold, qvalueCutoff = qthreshold, 
                 custom_sets=custom, kegg_file = kegg_data_file, workers=cores, 
                 task_size=task_size, return_all = TRUE, universe=universe)
-            
-            clusters_enr_ora_compact <- merge_clusters(clusters_enr_ora)
-            func_results$WGCNA_ORA <- add_term_sim_ora(clusters_enr_ora_compact)
+
+            clusters_enr_ora_merged<- process_cp_list(clusters_enr_ora, simplify, clean_parentals)
+            clusters_enr_ora_merged <- filter_top_categories(clusters_enr_ora_merged, top_categories)
+
+            func_results$WGCNA_ORA <- clusters_enr_ora_merged
+
             func_results$WGCNA_ORA_expanded <- add_term_sim_ora(clusters_enr_ora)
         }
     }

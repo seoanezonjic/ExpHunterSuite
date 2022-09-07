@@ -55,7 +55,7 @@ option_list <- list(
   optparse::make_option(c("--custom"), type="character", default=NULL,
                         help="Comma separated path of custom enrichment sets."),
   optparse::make_option(c("--showCategories"), type="integer", default=30, 
-                        help="Number of top categories to show on clusterProfiler dorplot and emaplot"),
+                        help="Number of top categories to show on clusterProfiler dotplot and emaplot"),
   optparse::make_option(c("-c", "--clean_parentals"), type="logical", default=FALSE, 
                         action = "store_true", help="Clean parentals GO terms that appears on the same clusters than child."),
   optparse::make_option(c("-s", "--simplify"), type="logical", default=FALSE, 
@@ -79,7 +79,7 @@ option_list <- list(
   optparse::make_option(c("-g", "--gene_mapping"), type="character", default=NULL,
                         help="3 columns tabular file- Cluster - InputGeneID - NumericGeneMapping. Header must be indicated as cluster - geneid - [numeric_mapping]"),
   optparse::make_option(c("-G", "--group_results"), type="logical", default=FALSE, 
-                        action = "store_true", help="Functions are gropuped in most frequent words in emaplots."),
+                        action = "store_true", help="Functions are grouped in most frequent words in emaplots."),
   optparse::make_option(c("-o", "--output_file"), type="character", default="results",
                         help="Define the output path.")
 )
@@ -151,7 +151,7 @@ if (!file.exists(temp_file) || opt$force) {
                                   custom = all_custom_gmt,
                                   kegg_file = kegg_data_file)
 
-  enrichments_ORA_merged <- parse_cluster_results(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
+  enrichments_ORA_merged <- process_cp_list(enrichments_ORA, simplify_results = opt$simplify, clean_parentals = opt$clean_parentals)
   save(enrichments_ORA,enrichments_ORA_merged, file = temp_file)
 
 } else {
@@ -268,6 +268,5 @@ print(system.time(
                         file = file.path(output_path, paste0("full_",funsys,'_heatmap.html')))
   
   }
-
 }
 

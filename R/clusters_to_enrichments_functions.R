@@ -1,70 +1,3 @@
-parse_cluster_results <- function(enrichments_ORA, simplify_results, 
-  clean_parentals){
-  enrichments_ORA_tr <- list()
-  for (funsys in names(enrichments_ORA)){
-
-    enr_obj <- clusterProfiler::merge_result(enrichments_ORA[[funsys]])
-    if(nrow(enr_obj@compareClusterResult) > 0){
-      if (funsys %in% c("MF", "CC", "BP") && clean_parentals){
-        enr_obj@fun <- "enrichGO"
-        enr_obj <- clean_all_parentals(enr_obj, subont = funsys) 
-      } 
-      if (funsys %in% c("MF", "CC", "BP") && simplify_results){
-        enr_obj@fun <- "enrichGO"
-        enr_obj <- clusterProfiler::simplify(enr_obj) 
-      } 
-      enr_obj <- catched_pairwise_termsim(enr_obj, 200)
-    }                              
-    enrichments_ORA_tr[[funsys]] <- enr_obj 
-  }
-  return(enrichments_ORA_tr)
-}
-
-
-#' @importFrom GO.db GOBPANCESTOR GOMFANCESTOR GOCCANCESTOR
-clean_all_parentals <- function(enr_obj, subont){
-   ##ADD control for enrichresults or comparecluster
-  if (subont=="BP"){
-    GO_ancestors <- GO.db::GOBPANCESTOR
-  } else if (subont=="MF"){
-    GO_ancestors <-  GO.db::GOMFANCESTOR
-  } else if (subont=="CC"){
-    GO_ancestors <- GO.db::GOCCANCESTOR
-  }
-  GO_ancestors <- as.list(GO_ancestors)
-  GO_ancestors <- GO_ancestors[!is.na(GO_ancestors)]
-
-  enrich_obj <- enr_obj@compareClusterResult
-  pre_hamming_m <- matrix(0, nrow = length(unique(enrich_obj$Cluster)), 
-                              ncol = length(unique(enrich_obj$ID)), 
-                            dimnames= list(unique(enrich_obj$Cluster), 
-                                          unique(enrich_obj$ID)))
-
-  for(pair in seq(nrow(enrich_obj))){
-    pair_text <- enrich_obj[pair, c("Cluster","ID")]
-    pair_text$Cluster <- as.character(pair_text$Cluster)
-    pre_hamming_m[pair_text[1,1], pair_text[1,2]] <- 1
-  }
-
-  hamming_matrix <- hamming_binary(pre_hamming_m)
-  hamming_0 <- as.data.frame(as.table(hamming_matrix)) 
-  hamming_0 <- hamming_0[hamming_0[,3] == 0,c(1,2)]
-  hamming_0 <- hamming_0[hamming_0[,1] != hamming_0[,2], ]
-  hamming_0[] <- lapply(hamming_0, "as.character")
-  terms_to_discard <- c()
-
-  hamming_DT <- data.table::setDT(hamming_0, key="Var1")
-  to_remove_lapply <- lapply(unique(hamming_DT$Var1), function(id) {
-    ancs <- GO_ancestors[[id]]
-    id_pairs <- hamming_DT[hamming_DT$Var1 == id,]$Var2
-    ancs[ancs %in% id_pairs]
-  })
-  to_remove_lapply <- unique(unlist(to_remove_lapply))
-  enr_obj@compareClusterResult <- 
-    enrich_obj[!enrich_obj$ID %in% to_remove_lapply,]
-  return(enr_obj)
-}
-
 are_parentals <- function(term_A, term_B, GO_ancestors){
   parental <- NA
    if (term_A %in% GO_ancestors[[term_B]]){
@@ -74,17 +7,6 @@ are_parentals <- function(term_A, term_B, GO_ancestors){
   }
   return(parental)
 }
-
-hamming_binary <- function(X, Y = NULL) {
-    if (is.null(Y)) {
-        D <- t(1 - X) %*% X
-        D + t(D)
-    } else {
-        t(1 - X) %*% Y + t(X) %*% (1 - Y)
-    }
-} # from https://johanndejong.wordpress.com/
-  #2015/10/02/faster-hamming-distance-in-r-2/
-
 
 parse_results_for_report <- function(enrichments, simplify_results = FALSE){
   enrichments_for_reports <- list()
@@ -377,22 +299,3 @@ clean_parentals_in_matrix <- function(enrichment_mx, subont){
 return(enrichment_mx)
 }
 
-
-filter_top_categories <- function(enrichments_ORA_merged, top_c = 50){
-
-    for (funsys in names(enrichments_ORA_merged)){
-      filtered_enrichments <- 
-        enrichments_ORA_merged[[funsys]]@compareClusterResult
-      if (nrow(filtered_enrichments) == 0) next 
-      filtered_enrichments <- filtered_enrichments[order(
-        filtered_enrichments$p.adjust, decreasing = FALSE), ]
-      filtered_enrichments <- Reduce(rbind,by(
-        filtered_enrichments,filtered_enrichments["Cluster"], head, n = top_c))
-      filtered_terms <- unique(filtered_enrichments$Description)
-      enrichments_ORA_merged[[funsys]]@compareClusterResult <- 
-        filtered_enrichments
-      enrichments_ORA_merged[[funsys]]@termsim <- 
-        enrichments_ORA_merged[[funsys]]@termsim[filtered_terms,filtered_terms]
-    }
-    return(enrichments_ORA_merged)
-}
