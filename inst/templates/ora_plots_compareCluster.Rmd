@@ -11,7 +11,8 @@ cat("\n\n**Dotplot**\n\n",
         "The most highly signficant categories in descending in categories of gene ratio, defined as the proportion of significant genes that are found in the functional category.
          The x-axis represents the gene ratio and the dot size the number of genes associated with the functional category.\n\n"
 )
-pp <- enrichplot::dotplot(enrich_obj, showCategory=showCategories)  
+pp <- enrichplot::dotplot(enrich_obj, showCategory=showCategories) 
+
 pp <- set_standard_size(pp)
 invisible(plot_in_div(pp, calc_height(enrich_obj), calc_width(enrich_obj)))
 

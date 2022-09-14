@@ -54,6 +54,7 @@ for(funsys in names(cl_flags_ora)) {
   if(cl_flags_ora[[funsys]] == TRUE) {
     func_clusters <- func_results$WGCNA_ORA_expanded[[funsys]]
     enrich_obj <- func_clusters[[which(names(func_clusters) == cl)]]
+    gene_attribute_name <- "fold change"
     exp_res <- knitr::knit_expand("ora_plots_all_objects.Rmd")
     res[[funsys]] <- knitr::knit(text=exp_res, quiet = TRUE)
   } else {

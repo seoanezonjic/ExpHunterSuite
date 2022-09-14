@@ -21,6 +21,11 @@
 #' @param output_files output folder
 #' @param fc_colname main logFC colname (into hunter_results dataframe)
 #' @param universe whether to use all genes as the background, or expressed only
+#' @param simplify simplify the merged enrichments
+#' @param clean_parentals clean parental terms in merged enrichment
+#' @param top_categories numbers of categories from each cluster to use for merge
+#' @param sim_thr value to use when combining similar categories in summary mode
+#' @param summary_common_name 'significant' to use the most significant term to label each summarized group
 #' @return functional result object with enrichments performed
 #' @keywords method
 #' @export
@@ -51,7 +56,9 @@ main_functional_hunter <- function(
     universe = NULL,
     clean_parentals = FALSE,
     simplify = FALSE,
-    top_categories = 50
+    top_categories = 50,
+    sim_thr = NULL,
+    summary_common_name = "ancestor"
     ){
 
     ############################################################
@@ -166,10 +173,13 @@ main_functional_hunter <- function(
 
             clusters_enr_ora_merged<- process_cp_list(clusters_enr_ora, simplify, clean_parentals)
             clusters_enr_ora_merged <- filter_top_categories(clusters_enr_ora_merged, top_categories)
-
             func_results$WGCNA_ORA <- clusters_enr_ora_merged
-
             func_results$WGCNA_ORA_expanded <- add_term_sim_ora(clusters_enr_ora)
+
+            # TO improve and add to reports
+            if(! is.null(sim_thr))
+              func_results$summarized_ora <- summarize_merged_ora(clusters_enr_ora_merged, 
+                  sim_thr, summary_common_name, pthreshold)
         }
     }
 

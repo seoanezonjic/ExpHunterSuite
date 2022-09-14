@@ -49,9 +49,51 @@ write_expression_report <- function(exp_results,
 }
 
 
+#' @importFrom heatmaply heatmaply
+write_summarize_heatmaps <- function(summarized_ORA, output_path) {
+  for (funsys in names(summarized_ORA)) {
+   summ_ora_funsys <- summarized_ORA[[funsys]]
+   heatmaply::heatmaply(summ_ora_funsys$summ_enr_table, 
+                         grid_color = "gray50",
+                         seriate = "mean",
+                         grid_width = 0.00001,
+                         dendrogram = "both",
+                         scale_fill_gradient_fun = ggplot2::scale_fill_gradient2(
+                         low = "#EE8291", 
+                         high = "white", 
+                         midpoint = 0.5, 
+                         limits = c(0, 1)),
+                         file = file.path(output_path, paste0("summ_",funsys,'_heatmap.html')))
+    heatmaply::heatmaply(summ_ora_funsys$summ_enr_clean, 
+                         grid_color = "gray50",
+                         seriate = "mean",
+                         grid_width = 0.00001,
+                         fontsize_row = 11,
+                          fontsize_col = 13,
+                         dendrogram = "both",
+                         scale_fill_gradient_fun = ggplot2::scale_fill_gradient2(
+                         low = "#EE8291", 
+                         high = "white", 
+                         midpoint = 0.5, 
+                         limits = c(0, 1)),
+                         file = file.path(output_path, paste0("summ_rem_parent_",funsys,'_heatmap.html')))
+    heatmaply::heatmaply(summ_ora_funsys$full_enr_table, 
+                        grid_color = "gray50",
+                        seriate = "mean",
+                        dendrogram = "both",
+                        grid_width = 0.00001,
+                        scale_fill_gradient_fun = ggplot2::scale_fill_gradient2(
+                        low = "#EE8291", 
+                        high = "white", 
+                        midpoint = 0.5, 
+                        limits = c(0, 1)),
+                        file = file.path(output_path, paste0("full_",funsys,'_heatmap.html')))
+  }
+}
+
 
 write_merged_cluster_report <- function(enrichments_ORA, results_path, template_folder, 
-    sample_classes, DEGH_results, showCategories, group_results) {
+    sample_classes=NULL, DEGH_results=NULL, showCategories, group_results) {
     message("\tRendering full cluster reports")
     if(is.null(enrichments_ORA)) {
         message("No WGCNA ORA results, not printing cluster report")
@@ -64,6 +106,92 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path, template_
           intermediates_dir = results_path)
     }
 }
+
+
+#' Write Main clusters to enrichment output
+#' This function allows you to report the Functional analysis.
+#' @param output_path output folder
+#' @param output_file output file name for heatmaps
+#' @param mode type of output to produce
+#' @param enrichments_ORA list of enrich results for all clusters
+#' @param enrichments_ORA_merged merged enrich results
+#' @param task_size number of elements per packages used
+#' @param workers (OPTIONAL) cores for parallel features
+#' @param template_folder (OPTIONAL) RMD templates folder
+#' @param top_categories numbers of categories from each cluster to use for merge
+#' @param group_results experimental - whether to group results in the emap plot
+#' @param n_category number of categories in the figures (per cluster)
+#' @param sim_thr value to use when combining similar categories in summary mode
+#' @param summary_common_name 'significant' to use the most significant term to label each summarized group
+#' 'ancestor' to use the common ancestor of the group"
+#' @param pvalcutoff used to select terms for summarizing
+#' @param gene_attributes named list of attributes e.g. FCs for emap plot coloured nodes (genes)
+#' @param gene_attribute_name name for the legend in the emap plot for the nodes (genes)
+#' @return void
+#' @importFrom enrichplot emapplot
+#' @importFrom enrichplot dotplot
+#' @importFrom ggplot2 ggsave
+#' @export
+write_clusters_to_enrichment <- function( 
+  output_path="results",
+  output_file="results",
+  mode="PR",
+  enrichments_ORA=NULL,
+  enrichments_ORA_merged=NULL,
+  task_size = 1,
+  workers = 1,
+  template_folder = template_folder,
+  top_categories = 50,
+  group_results = opt$group_results,
+  n_category = 30,
+  sim_thr = 0.7, 
+  summary_common_name = "ancestor", 
+  pvalcutoff = 0.1,
+  gene_attributes=NULL,
+  gene_attribute_name=NULL) {
+
+  if (grepl("R", mode)){
+      enrichments_for_reports <- parse_results_for_report(enrichments_ORA)  
+      write_enrich_clusters(enrichments_ORA, output_path)
+      write_func_cluster_report(enrichments_for_reports, output_path, gene_attributes, 
+        workers = workers, task_size = task_size, template_folder=template_folder, gene_attribute_name=gene_attribute_name)
+  }
+
+  if (grepl("P", mode) || grepl("S", mode)) 
+    enrichments_ORA_merged <- filter_top_categories(enrichments_ORA_merged, top_categories)
+
+  if (grepl("P", mode)) {
+    for (funsys in names(enrichments_ORA_merged)){
+      if (length(unique(enrichments_ORA_merged[[funsys]]@compareClusterResult$Description)) < 2 ) next
+
+      if (group_results == TRUE){
+        pp <- enrichplot::emapplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, pie="Count", layout = "nicely", 
+                    shadowtext = FALSE, node_label = "group", group_category = TRUE, 
+                    nCluster = min(floor(nrow(enrichments_ORA_merged[[funsys]])/7), 20), nWords = 6, repel = TRUE)
+      }else{
+        pp <- enrichplot::emapplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, pie="Count", layout = "nicely", 
+                    shadowtext = FALSE, repel = TRUE)
+      }
+
+      ggplot2::ggsave(filename = file.path(output_path,paste0("emaplot_",funsys,"_", output_file,".png")), pp, width = 30, height = 30, dpi = 300, units = "cm", device='png')
+
+      pp <- enrichplot::dotplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, label_format = 70)
+      ggplot2::ggsave(filename = file.path(output_path,paste0("dotplot_",funsys,"_", output_file,".png")), pp, width = 60, height = 40, dpi = 300, units = "cm", device='png')
+
+    }
+  }
+
+  if (grepl("S", mode)){
+    summarized_merged_ora <- summarize_merged_ora(enrichments_ORA_merged, sim_thr, summary_common_name, pvalcutoff)
+    write_summarize_heatmaps(summarized_merged_ora, output_path)
+  }
+  if(grepl("R", mode)) {
+    write_merged_cluster_report(enrichments_ORA_merged, results_path=output_path, template_folder, 
+            showCategories=n_category, group_results=group_results)
+  }
+}
+
+
 
 #' Write Main DEgenes Hunter functional report
 #' This function allows you to report the Functional analysis.
@@ -78,6 +206,8 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path, template_
 #'  dataframe)
 #' @param task_size number of elements per packages used
 #' @param report string with reports to be written. Allowed: clusters (c)
+#' @param showCategories number of categories in the figures (per cluster) 
+#' @param group_results experimental - whether to group results in the emap plot
 #'  and functional (f). Default = "fc"
 #' @return void
 #' @importFrom rmarkdown render
@@ -102,7 +232,6 @@ write_functional_report <- function(hunter_results,
                                     ){
     # report <- "i"
             # TO parallelize properly
-
     clean_tmpfiles_mod <- function() {
       message("Calling clean_tmpfiles_mod()")
     }
@@ -152,10 +281,12 @@ write_functional_report <- function(hunter_results,
         rmarkdown::render(file.path(template_folder, 'functional_report.Rmd'), 
             output_file = outf, intermediates_dir = results_path)        
     }
+    save(list = ls(all.names = TRUE), file = "~/before_clustering.RData")
 
     if(grepl("c", report)){
         write_merged_cluster_report(enrichments_ORA, results_path, template_folder, 
             sample_classes, DEGH_results, showCategories, group_results)
+        write_summarize_heatmaps(func_results$summarized_ora, results_path)
     }
 
     if(grepl("i", report)) {
@@ -335,18 +466,17 @@ write_functional_targets <- function(
 
 
 write_func_cluster_report <- function(enrichments_for_reports, output_path, 
-  gene_mapping, workers, task_size, template_folder){
+  gene_attributes, workers, task_size, template_folder, gene_attribute_name="fold change"){
   clean_tmpfiles_mod <- function() {
     message("Calling clean_tmpfiles_mod()")
   }
   assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
-  #temp_path <- file.path(output_path, "temp")
-  #dir.create(temp_path) #perform parallel
 
   parallel_list(names(enrichments_for_reports), function(cluster) {
     temp_path_cl <- file.path(output_path, paste0(cluster,"_temp"))
     func_results <- enrichments_for_reports[[cluster]]
     cl_flags_ora <- sapply(func_results, nrow) > 0
+    fc_vector <- gene_attributes[[cluster]]
     outfile <- file.path(output_path, paste0(cluster, "_func_report.html"))
     test_env <- list2env(list(func_results=func_results, 
       cl_flags_ora=cl_flags_ora))

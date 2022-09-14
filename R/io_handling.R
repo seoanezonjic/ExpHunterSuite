@@ -195,7 +195,7 @@ write_enrich_clusters <- function(func_clusters, output_path) {
 
 #' Write enrichment files related to functional_hunter results list
 #' @param func_results functional enrichment results
-#' @param output_files output folder path
+#' @param output_path output folder path
 #' @return void
 #' @keywords export
 #' @export

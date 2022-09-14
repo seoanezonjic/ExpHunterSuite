@@ -9,7 +9,7 @@ write_enrich_files(func_results, output_path = getwd())
 \arguments{
 \item{func_results}{functional enrichment results}
 
-\item{output_files}{output folder path}
+\item{output_path}{output folder path}
 }
 \value{
 void

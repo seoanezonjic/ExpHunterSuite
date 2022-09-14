@@ -52,6 +52,7 @@ res_ora <- list()
 for(funsys in names(flags_ora)) {
   if(flags_ora[[funsys]] == TRUE) {
     enrich_obj <- func_results$ORA[[funsys]]
+    gene_attribute_name <- "fold change"
     exp_res <- knitr::knit_expand("ora_plots_all_objects.Rmd")
     res_ora[[funsys]] <- knitr::knit(text=exp_res, quiet=TRUE)
   } else {

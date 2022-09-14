@@ -25,7 +25,9 @@ main_functional_hunter(
   universe = NULL,
   clean_parentals = FALSE,
   simplify = FALSE,
-  top_categories = 50
+  top_categories = 50,
+  sim_thr = NULL,
+  summary_common_name = "ancestor"
 )
 }
 \arguments{
@@ -68,6 +70,16 @@ Default: 1}
 \item{fc_colname}{main logFC colname (into hunter_results dataframe)}
 
 \item{universe}{whether to use all genes as the background, or expressed only}
+
+\item{clean_parentals}{clean parental terms in merged enrichment}
+
+\item{simplify}{simplify the merged enrichments}
+
+\item{top_categories}{numbers of categories from each cluster to use for merge}
+
+\item{sim_thr}{value to use when combining similar categories in summary mode}
+
+\item{summary_common_name}{'significant' to use the most significant term to label each summarized group}
 }
 \value{
 functional result object with enrichments performed

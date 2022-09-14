@@ -106,9 +106,12 @@ option_list <- list(
     help="Number of top categories to show on clusterProfiler dotplot and emaplot"),
   optparse::make_option(c("-T", "--top_categories"), type="integer", default=50,
     help="Number of top categories for each cluster. Default=%default"),
+  optparse::make_option(c("-S", "--sim_thr"), type="double", default=NULL,
+    help="Similarity cutoff for grouping categories in Summary mode. Default=%default"),
   optparse::make_option("--group_results", type="logical", default=FALSE, 
-    action = "store_true", help="Functions are grouped in most frequent words in emaplots.")
-
+    action = "store_true", help="Functions are grouped in most frequent words in emaplots."),
+   optparse::make_option("--summary_common_name", type="character", default="ancestor", 
+                        help="Name of the term groups. 'significant' to use the most significant term of each group. 'ancestor' to use the common ancestor of the group")
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
@@ -193,7 +196,9 @@ func_results <- main_functional_hunter(
        universe = opt$universe,
        clean_parentals = opt$clean_parentals,
        simplify = opt$simplify,
-       top_categories = opt$top_categories
+       top_categories = opt$top_categories,
+       sim_thr = opt$sim_thr,
+       summary_common_name = opt$summary_common_name
 )
 
 write_enrich_files(func_results, opt$output_files)

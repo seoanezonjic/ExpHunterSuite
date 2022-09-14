@@ -38,7 +38,11 @@ Use see get_organism_table()}
 
 \item{task_size}{number of elements per packages used}
 
-\item{report}{string with reports to be written. Allowed: clusters (c)
+\item{report}{string with reports to be written. Allowed: clusters (c)}
+
+\item{showCategories}{number of categories in the figures (per cluster)}
+
+\item{group_results}{experimental - whether to group results in the emap plot
 and functional (f). Default = "fc"}
 }
 \value{

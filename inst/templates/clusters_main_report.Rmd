@@ -38,9 +38,9 @@ require(enrichplot)
 require(DOSE)
 ```
 
-```{r child="func_initial_details.Rmd"}
+```{r child="func_initial_details.Rmd", eval=!is.null(sample_classes)}
 ```
-```{r child="func_deg_details.Rmd"}
+```{r child="func_deg_details.Rmd", eval=!is.null(sample_classes)}
 ```
 
 ## **Overview of clusters**
@@ -48,7 +48,7 @@ The following table shows the numbers of prevalent vs. non-prevalent genes found
 each cluster (first two columns), followed by the number  of significantly enriched 
 categories found in each cluster for each of the annotation sources found using the ORA method (remaining columns).
 
-```{r func_specific, echo=FALSE, results='asis'}
+```{r func_specific, echo=FALSE, results='asis', eval=!is.null(sample_classes)}
 
 # JRP - to decide - count entrez NAs to make consistent, or remove as not used for enrichements? For now we leave
 # DEGH_results_clust_stats <- DEGH_results[! is.na(DEGH_results$entrezgene) &  DEGH_results$Cluster_ID != 0,]
@@ -89,7 +89,7 @@ cat(names(flags_cluster[flags_cluster==TRUE]))
 res <- list()
 for(funsys in names(flags_cluster)) {
   if(flags_cluster[[funsys]] == TRUE) {
-    enrich_obj <- func_results$WGCNA_ORA[[funsys]]
+    enrich_obj <- enrichments_ORA[[funsys]]
     exp_res <- knitr::knit_expand("ora_plots_compareCluster.Rmd")
     res[[funsys]] <- knitr::knit(text=exp_res, quiet=TRUE)
   } else {

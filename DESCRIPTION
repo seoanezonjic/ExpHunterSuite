@@ -105,5 +105,6 @@ Imports:
     GO.db,
     Matrix,
     fastcluster,
-    DOSE
+    DOSE,
+    heatmaply
 Config/testthat/edition: 3
