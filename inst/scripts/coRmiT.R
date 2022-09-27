@@ -15,7 +15,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
     custom_libraries <- c("plotting_functions.R", "write_report.R", 
         "general_functions.R",  "statistics_functions.R", 
         "miRNA_RNA_functions.R", "functional_analysis_library.R", 
-        "main_miRNA_RNAseq_analysis.R", "mkinfer_modified.R")
+        "main_cormit.R", "mkinfer_modified.R")
     for (lib in custom_libraries){
         source(file.path(root_path, 'R', lib))
       }
