@@ -11,8 +11,8 @@
 method <- "{{method_name}}"
 outdir <- file.path(output_files, method)
 check_and_create_dir(outdir)
-
-strat_pairs <- all_pairs[, get(method)]
+strat_pairs <- as.data.frame(all_pairs)
+strat_pairs <- strat_pairs[, "{{method_name}}"]
 strat_data <- all_pairs[strat_pairs,]
 strat_data$miRNA_names <- mirna_names[match(strat_data$miRNAseq, mirna_names$Accession), "TargetName"]
 strat_data <- merge(strat_data, gene_id_translation, by.x = "RNAseq", by.y = "ensembl_gene_id", all.x = TRUE)
@@ -64,7 +64,7 @@ data.table::setnames(strat_data_table,
 
 ```{r "{{method_name}}_cor_miRNA_table", echo = FALSE, message=FALSE, warning=FALSE, results = "asis"}
 if (nrow(strat_data_table) > 20000){
-  cat(paste0("\n\nThis strategy finds too many significant pairs. Please check ", method, "/targets_results_table.txt. \n\n"))
+  cat(paste0("\n\nThis strategy finds too many significant pairs. Please check ", method, "/target_results_table.txt. \n\n"))
 
 } else {
   DT::datatable(strat_data_table, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
@@ -169,6 +169,13 @@ DT::datatable(all_miRNA_mod_summary, filter = 'top', rownames = FALSE, extension
 ```{r "{{method_name}}_dem_table_config", echo = FALSE, message=FALSE, warning=FALSE}
 
 utils::write.table(strat_data_table2, file = file.path(outdir, "target_results_table.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
+library(plyr)
+data_for_clusters_to_enrichments <-  plyr::ddply(strat_data_table2, .(miRNA), summarise, genes = list(Target_ID))
+data_for_clusters_to_enrichments$genes <- unlist(lapply(data_for_clusters_to_enrichments$genes, function(gene_set){paste(gene_set, collapse = ",")}))
+utils::write.table(data_for_clusters_to_enrichments, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", file =  file.path(outdir, "miRNA_to_enrich.txt"))
+gene_attributes <- strat_data_table2[,c("Target_ID", mapping_output)]
+colnames(gene_attributes) <- c("geneid", mapping_output)
+utils::write.table(unique(gene_attributes), file = file.path(outdir, "gene_attributes.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 
 utils::write.table(all_miRNA_summary, file = file.path(outdir, "all_miRNA_summary.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 

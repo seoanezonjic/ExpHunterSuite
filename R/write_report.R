@@ -352,7 +352,8 @@ miRNAseq,
 RNAseq,
 sig_pairs,
 raw_databases_scores,
-p_fisher           
+p_fisher,
+mapping_output           
 ){
  "%>%" <- magrittr::"%>%"
 
@@ -368,7 +369,6 @@ parse_strat_text <- function(strategies){
   default_strats <-  c(
     "Eigengene_0_RNA_vs_miRNA_normalized_counts", 
     "normalized_counts_RNA_vs_miRNA_Eigengene_0", 
-    "DEGs_RNA_vs_miRNA_DEMs",
     "DEGs_DEMs_permutated")
   strategies <- strategies[!strategies %in% default_strats]
   dictionary <- list(

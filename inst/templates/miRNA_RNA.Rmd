@@ -42,25 +42,30 @@ Results are then compared with multiMiR databases.
 
 * Brief description of strategies used: 
 ```{r print_info, echo = FALSE, warning = FALSE, results = "asis"}
-  sig_strategies <- names(strategies)[! names(strategies) %in% unsig_strategies]
+  
+  if (ncol(score_comp) == 0 || length(score_comp == 0))
+    score_comp <- NULL 
+
+  sig_strategies <- c("selected_targets_RNA_vs_miRNA_DEMs") #names(strategies)[! names(strategies) %in% unsig_strategies]
   cat(parse_strat_text(sig_strategies))
 
-  mock_strategies <-   c("Eigengene_0_RNA_vs_miRNA_normalized_counts", 
+  mock_strategies <-   c() #"Eigengene_0_RNA_vs_miRNA_normalized_counts", 
       # "normalized_counts_RNA_vs_miRNA_Eigengene_0", 
       # "DEGs_RNA_vs_miRNA_DEMs",
-      "DEGs_DEMs_permutated")
+     # "DEGs_DEMs_permutated")
 
 ```
 
 * Three **control strategies** are also used:
-    + **DEGs_DEMs_permutated:** All possible permutations between differentially expressed genes and differentially expressed miRNAs. Correlation is not performed.
-    + **Eigengene_0_RNA_vs_miRNA_normalized_counts:** Correlation between the Eigengene profile for gene module 0, which contains genes that could not be assigned to any other module and miRNA normalized counts.
+    + **Similar lFC:** All possible permutations between differentially expressed genes (DEGs) and differentially expressed miRNAs (DEMs) with similar log2FC (Possitive control). Correlation is not performed.
+    + **Opposite lFC:** All possible permutations between DEGs and DEMs with opposite log2FC (Negative control). Correlation is not performed.
+    + **E0_vs_counts:** Correlation between the Eigengene profile for gene module 0 (which contains genes that could not be assigned to any other coexpression module) and miRNA normalized counts (Negative control).
 
 Graphics are only displayed for the strategies that were run and for which significant results were found. 
-The **control strategies** are artifical strategies used for comparison with the real strategies in terms of performance.
+The **control strategies** are artifical correlation strategies used for comparison with the real strategies in terms of performance.
 Their results should not be considered for miRNA-gene target selection.
 
-```{r sig_unsig, echo = FALSE, warning = FALSE, results = "asis"}
+```{r sig_unsig, echo = FALSE, warning = FALSE, results = "asis", eval = FALSE}
 
     # + **normalized_counts_RNA_vs_miRNA_Eigengene_0:** Correlation between gene normalized counts and the Eigengene profile for miRNA module 0, which contains miRNAs that could not be assigned to any other module.
   sig_strats <-  paste0("**", paste(sig_strategies, collapse = "**, **"), "**")
@@ -373,26 +378,26 @@ Lower p-values means that the significant pairs had higher scores in the databas
 The final column of the table shows the combined p-values for all databases, integrated using Fishers method.
 
 
-```{r score_comp_pval, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = FALSE}
-# cat("
+```{r score_comp_pval, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = !is.null(score_comp)}
+cat("
 
-#   #### **One-tailed T-test**
+  #### **One-tailed T-test**
 
-#   ")
-# score_comp_pval <- reshape(score_comp[,c("strategy","database","p.value")], idvar = "strategy", timevar = "database", direction = "wide")
-#     colnames(score_comp_pval) <- gsub("p.value.", "",colnames(score_comp_pval))
-#    DT::datatable(score_comp_pval, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
-#             options = list(
-#               paging = FALSE,
-#               colReorder = TRUE,
-#               dom = 'lftBip',
-#               buttons = c('copy', 'csv', 'excel')
-#           ))
+  ")
+score_comp_pval <- reshape(score_comp[,c("strategy","database","p.value")], idvar = "strategy", timevar = "database", direction = "wide")
+    colnames(score_comp_pval) <- gsub("p.value.", "",colnames(score_comp_pval))
+   DT::datatable(score_comp_pval, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+            options = list(
+              paging = FALSE,
+              colReorder = TRUE,
+              dom = 'lftBip',
+              buttons = c('copy', 'csv', 'excel')
+          ))
 
 ```
 
 
-```{r score_comp_bootpval, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
+```{r score_comp_bootpval, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = !is.null(score_comp)}
   score_comp_boot_pval <- reshape(score_comp[,c("strategy","database","boot.p.value")], idvar = "strategy", timevar = "database", direction = "wide")
    colnames(score_comp_boot_pval) <- gsub("boot.p.value.", "",colnames(score_comp_boot_pval))
   DT::datatable(score_comp_boot_pval, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
@@ -405,25 +410,11 @@ The final column of the table shows the combined p-values for all databases, int
 
 ```
 
-
-```{r score_comp_weighted_fisher, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = FALSE}
-#### **Weighted Fisher test**
-  # score_comp_weighted_fisher <- reshape(score_comp[,c("strategy","database","w.fisher.p.value")], idvar = "strategy", timevar = "database", direction = "wide")
-  #  colnames(score_comp_weighted_fisher) <- gsub("w.fisher.p.value.", "",colnames(score_comp_weighted_fisher))
-  # DT::datatable(score_comp_weighted_fisher, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
-  #           options = list(
-  #             paging = FALSE,
-  #             colReorder = TRUE,
-  #             dom = 'lftBip',
-  #             buttons = c('copy', 'csv', 'excel')
-  #         ))
-```
-
 #### **Comparison of p-values obtained in boostrap T-test**
 
 This plot shows -log(p) values from the T-test and bootstrap T-test. Grey dotted line indicates -log10(0.05). **comb_pval** is the combination of all p-values using Fisher combined probability test.
 
-```{r score_comp_pval_log, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE}
+```{r score_comp_pval_log, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = !is.null(score_comp)}
   log_score_comp <- score_comp[,c("strategy","database","log.boot.p.value")]
 # log_score_comp <- log_score_comp[!log_score_comp$strategy %in% unsig_strategies,]
     data.table::setnames(log_score_comp, "log.boot.p.value", "logPval")
@@ -489,7 +480,7 @@ P-values are shown for the different strategies and for the different databases 
 ## **Score distribution sampling check**
 These plots compare the full score distribution of the prediction databases (black dashed line), the scores of all possible pairs (**background pairs**) in the expression data (black solid line) and the scores of strategy **significant pairs** (legend). 
 
-```{r score_sampling, results = "asis", echo = FALSE, warning = FALSE, message = FALSE}
+```{r score_sampling, results = "asis", echo = FALSE, warning = FALSE, message = FALSE, eval = !is.null(score_comp)}
   for (database in selected_predicted_databases) {
     cat(paste0("\n\n## **",stringr::str_to_title(database),"**\n"))
     raw_score <- data.frame(x = raw_databases_scores[[database]])

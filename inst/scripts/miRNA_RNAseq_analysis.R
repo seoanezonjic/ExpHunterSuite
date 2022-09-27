@@ -41,6 +41,9 @@ option_list <- list(
     optparse::make_option(c("-m", "--miRNAseq_folder"), type="character", 
         default=NULL,
         help="ExpHunterSuite miRNAseq execution folder"),
+    optparse::make_option(c("--selected_targets"), type="character", 
+        default=NULL,
+        help="One column file indicating external selected targets"),
     optparse::make_option(c("-o", "--output_files"), type="character",
      default=".", 
         help = "Output folder"),
@@ -107,9 +110,14 @@ option_list <- list(
     optparse::make_option(c("-T", "--translate_ensembl"), type="logical", 
         default=FALSE, action = "store_true",
         help = paste0('Translate mRNA Ensembl ID to ENTREZ ID and GENESYMBOL',
-            ' and include the translation in output.'))
+            ' and include the translation in output.')),
+    optparse::make_option(c("--compare_pred_scores"), type="logical", 
+        default=FALSE, action = "store_true",
+        help = 'Compute predition scores comparison. Default=%default'),
+    optparse::make_option(c("--mapping_output"), type="character", 
+        default="Target_log2FC",
+        help = "Select the output column to show in functional report: Predicted_DB_count, Validated_DB_count, Correlation, Target_log2FC, miRNA_log2FC. Default=%default")
 )
-
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 
@@ -137,16 +145,12 @@ miRNA_cor_results <-  coRmiT(
     translation_file = opt$translation_file,
     organism_table_path = organism_table_path, 
     corr_type = opt$corr_type,
-    template_folder = template_folder #file.path(root_path, "inst", "templates")
-    )
+    selected_targets_file = opt$selected_targets,
+    template_folder = template_folder,
+    compare_pred_scores = opt$compare_pred_scores    )
 miRNA_cor_results$all_pairs$RNAseq_mod <- miRNA_cor_results$RNAseq$DH_results[match(miRNA_cor_results$all_pairs$RNAseq, miRNA_cor_results$RNAseq$DH_results$gene_name),"Cluster_ID"]
 
-
-#  save(miRNA_cor_results, file = file.path(normalizePath(opt$output_files),"debug.RData"))
-# q()
-# load(file.path(normalizePath(opt$output_files),"debug.RData"))
-
-
+save(miRNA_cor_results, file = file.path(normalizePath(opt$output_files), "test.RData"))
 miRNA_cor_results$weighted_c_table <- NULL
 miRNA_cor_results <- c(miRNA_cor_results, 
     list(report_name =opt$report,
@@ -154,6 +158,8 @@ miRNA_cor_results <- c(miRNA_cor_results,
          output_files =normalizePath(opt$output_files),
          p_val_cutoff =opt$p_val_cutoff,
          corr_cutoff =opt$corr_cutoff,
-         sample_proportion =opt$sample_proportion))
+         sample_proportion =opt$sample_proportion,
+         mapping_output = opt$mapping_output))
+
 
 do.call("write_miRNA_cor_report", miRNA_cor_results)

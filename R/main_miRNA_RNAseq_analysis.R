@@ -21,13 +21,22 @@ database_to_filter = NULL,
 mc_cores = 1,
 tag_filter,
 corr_type,
+selected_targets_file, 
 template_folder = file.path(find.package('ExpHunterSuite'), "templates"),
 organism_table_path = file.path(find.package('ExpHunterSuite'), "inst", 
-    "external_data", "organism_table.txt") 
+    "external_data", "organism_table.txt"),
+compare_pred_scores = FALSE
 ){
+
+#
+last_mark <- Sys.time()
+
+
+
+
  #create output folder
  "%>%" <- magrittr::"%>%"
-  pred_dbs <- c("diana_microt", "elmmo", "microcosm",
+ pred_dbs <- c("diana_microt", "elmmo", "microcosm",
    "miranda","mirdb", "pictar", "pita", "targetscan")
   
  #parse strategies and add default strategies
@@ -35,8 +44,8 @@ organism_table_path = file.path(find.package('ExpHunterSuite'), "inst",
     "normalized_counts_RNA_vs_miRNA_normalized_counts", 
     "Eigengene_0_RNA_vs_miRNA_normalized_counts", 
     "normalized_counts_RNA_vs_miRNA_Eigengene_0", 
-    # # "DEGs_RNA_vs_miRNA_DEMs",
-    "DEGs_DEMs_permutated",
+    "DEGs_RNA_vs_miRNA_DEMs_opp",
+    "DEGs_RNA_vs_miRNA_DEMs_sim",
      parse_strategies(strat_names))
   
  # Prepare for RNA ID translation
@@ -53,21 +62,37 @@ organism_table_path = file.path(find.package('ExpHunterSuite'), "inst",
  }
  multimir_info <- load_and_parse_multimir(multimir_path = multimir_db, 
     selected_predicted_databases = selected_predicted_databases, 
-    filter_db_theshold= filter_db_theshold, #filter_db_theshold
-     database_to_filter = database_to_filter  #database_to_filter
+    filter_db_theshold= filter_db_theshold, 
+     database_to_filter = database_to_filter  
     )
  multimir <- multimir_info[["multimir_table"]]
  raw_databases_scores <- multimir_info[["raw_databases_scores"]]
+ print(Sys.time()-last_mark)
+last_mark <- Sys.time()
  message("multiMiR database has been parsed and summarized")
  
  #Load and prepare DGH data
- RNAseq   <- load_DEGH_information(RNAseq_folder)
- miRNAseq <- load_DEGH_information(miRNAseq_folder)
+ RNAseq <- list()
+
+ if (!is.null(RNAseq_folder)) {
+   RNAseq <- load_DEGH_information(RNAseq_folder) 
+ } else {
+   RNAseq <- NULL
+ } 
+
+ selected_targets <- load_selected_targets(selected_targets_file)
+ 
+ miRNAseq <- load_DEGH_information(miRNAseq_folder) 
+ print(Sys.time()-last_mark)
+last_mark <- Sys.time()
  message("RNAseq and miRNAseq data has been loaded")
  
  all_pairs <- prepare_all_pairs(RNAseq = RNAseq, miRNAseq = miRNAseq, 
-    multimir = multimir, organism = organism)
+    multimir = multimir, selected_targets = selected_targets, 
+    organism = organism)
  multimir <- NULL
+
+
  # Perform strategies
  miRNA_cor_results <- perform_all_strategies(strat_names = strat_names, 
     RNAseq = RNAseq, miRNAseq = miRNAseq, corr_cutoff=  corr_cutoff, 
@@ -75,8 +100,12 @@ organism_table_path = file.path(find.package('ExpHunterSuite'), "inst",
     permutations = permutations, all_pairs = all_pairs, 
     selected_predicted_databases = selected_predicted_databases, 
     tag_filter = tag_filter, sample_proportion = sample_proportion, 
-    raw_databases_scores=raw_databases_scores, corr_type = corr_type)
- 
+    raw_databases_scores=raw_databases_scores, corr_type = corr_type,
+    selected_targets = selected_targets, compare_pred_scores = compare_pred_scores)
+print(Sys.time()-last_mark)
+last_mark <- Sys.time()
+message("Strategies performed")
+
  miRNA_cor_results$cont_tables <- v_get_stats(miRNA_cor_results$cont_tables)
   
  miRNA_cor_results$filters_summary$type <- factor(
@@ -84,20 +113,33 @@ organism_table_path = file.path(find.package('ExpHunterSuite'), "inst",
     levels=c("novel_miRNAs","known_miRNAs","multimir", "multimir_random", 
         "predicted", "predicted_random", "validated","validated_random", 
         "pred_and_val", "pred_and_val_random"))
+ save(miRNA_cor_results, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/pmm2_belen/miRNA_taget_wf/miRNA_RNAseq_analysis.R_0005/test.RData")
+ 
+ if (compare_pred_scores) {
  miRNA_cor_results$score_comp$log.p.value <- -log10( 
     miRNA_cor_results$score_comp$p.value)
  miRNA_cor_results$score_comp$log.boot.p.value <- -log10(
     miRNA_cor_results$score_comp$boot.p.value)
+ }
  
  miRNA_cor_results$p_fisher$fisher.log.p.value <- -log10( 
     miRNA_cor_results$p_fisher$fisher.p.value)
 
+print(Sys.time()-last_mark)
+last_mark <- Sys.time()
+message("Stats computed")
  ################# GET IDS TRANSLATIONS
+ RNA_IDs <- selected_targets
+ if (!is.null(RNAseq_folder)){
+   RNA_IDs <- miRNA_cor_results$all_pairs$RNAseq
+ }
+
  translated_ids <- translate_all_id(
     miRNA_IDs = miRNA_cor_results$all_pairs$miRNAseq, 
-    RNA_IDs = miRNA_cor_results$all_pairs$RNAseq, 
+    RNA_IDs = RNA_IDs, 
     organism_info = organism_info, translate_ensembl = translate_ensembl)
- write.table(miRNA_cor_results$cont_tables, 
+ 
+    write.table(miRNA_cor_results$cont_tables, 
     file.path(output_files, "strategies_stats.txt"), 
     quote=FALSE, col.names=TRUE, sep="\t")
  
