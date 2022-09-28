@@ -29,7 +29,6 @@ compare_pred_scores = FALSE
 ){
 
 #
-last_mark <- Sys.time()
 
 
 
@@ -67,9 +66,6 @@ last_mark <- Sys.time()
     )
  multimir <- multimir_info[["multimir_table"]]
  raw_databases_scores <- multimir_info[["raw_databases_scores"]]
- print(Sys.time()-last_mark)
-last_mark <- Sys.time()
- message("multiMiR database has been parsed and summarized")
  
  #Load and prepare DGH data
  RNAseq <- list()
@@ -83,9 +79,6 @@ last_mark <- Sys.time()
  selected_targets <- load_selected_targets(selected_targets_file)
  
  miRNAseq <- load_DEGH_information(miRNAseq_folder) 
- print(Sys.time()-last_mark)
-last_mark <- Sys.time()
- message("RNAseq and miRNAseq data has been loaded")
  
  all_pairs <- prepare_all_pairs(RNAseq = RNAseq, miRNAseq = miRNAseq, 
     multimir = multimir, selected_targets = selected_targets, 
@@ -102,9 +95,6 @@ last_mark <- Sys.time()
     tag_filter = tag_filter, sample_proportion = sample_proportion, 
     raw_databases_scores=raw_databases_scores, corr_type = corr_type,
     selected_targets = selected_targets, compare_pred_scores = compare_pred_scores)
-print(Sys.time()-last_mark)
-last_mark <- Sys.time()
-message("Strategies performed")
 
  miRNA_cor_results$cont_tables <- v_get_stats(miRNA_cor_results$cont_tables)
   
@@ -113,7 +103,6 @@ message("Strategies performed")
     levels=c("novel_miRNAs","known_miRNAs","multimir", "multimir_random", 
         "predicted", "predicted_random", "validated","validated_random", 
         "pred_and_val", "pred_and_val_random"))
- save(miRNA_cor_results, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/pmm2_belen/miRNA_taget_wf/miRNA_RNAseq_analysis.R_0005/test.RData")
  
  if (compare_pred_scores) {
  miRNA_cor_results$score_comp$log.p.value <- -log10( 
@@ -125,9 +114,6 @@ message("Strategies performed")
  miRNA_cor_results$p_fisher$fisher.log.p.value <- -log10( 
     miRNA_cor_results$p_fisher$fisher.p.value)
 
-print(Sys.time()-last_mark)
-last_mark <- Sys.time()
-message("Stats computed")
  ################# GET IDS TRANSLATIONS
  RNA_IDs <- selected_targets
  if (!is.null(RNAseq_folder)){
