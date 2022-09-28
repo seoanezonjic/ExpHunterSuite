@@ -36,7 +36,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 ################### OPTIONS
 option_list <- list(
     optparse::make_option(c("-r", "--RNAseq_folder"), type="character", 
-        default=NULL,
+        default="",
         help="ExpHunterSuite RNAseq execution folder"),
     optparse::make_option(c("-m", "--miRNAseq_folder"), type="character", 
         default=NULL,
@@ -150,7 +150,6 @@ miRNA_cor_results <-  coRmiT(
     compare_pred_scores = opt$compare_pred_scores    )
 miRNA_cor_results$all_pairs$RNAseq_mod <- miRNA_cor_results$RNAseq$DH_results[match(miRNA_cor_results$all_pairs$RNAseq, miRNA_cor_results$RNAseq$DH_results$gene_name),"Cluster_ID"]
 
-save(miRNA_cor_results, file = file.path(normalizePath(opt$output_files), "test.RData"))
 miRNA_cor_results$weighted_c_table <- NULL
 miRNA_cor_results <- c(miRNA_cor_results, 
     list(report_name =opt$report,

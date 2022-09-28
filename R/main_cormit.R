@@ -74,7 +74,7 @@ last_mark <- Sys.time()
  #Load and prepare DGH data
  RNAseq <- list()
 
- if (!is.null(RNAseq_folder)) {
+ if (RNAseq_folder != "") {
    RNAseq <- load_DEGH_information(RNAseq_folder) 
  } else {
    RNAseq <- NULL

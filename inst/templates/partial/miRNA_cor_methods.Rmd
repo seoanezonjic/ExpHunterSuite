@@ -173,8 +173,8 @@ library(plyr)
 data_for_clusters_to_enrichments <-  plyr::ddply(strat_data_table2, .(miRNA), summarise, genes = list(Target_ID))
 data_for_clusters_to_enrichments$genes <- unlist(lapply(data_for_clusters_to_enrichments$genes, function(gene_set){paste(gene_set, collapse = ",")}))
 utils::write.table(data_for_clusters_to_enrichments, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", file =  file.path(outdir, "miRNA_to_enrich.txt"))
-gene_attributes <- strat_data_table2[,c("Target_ID", mapping_output)]
-colnames(gene_attributes) <- c("geneid", mapping_output)
+gene_attributes <- strat_data_table2[,c("miRNA","Target_ID", mapping_output)]
+colnames(gene_attributes) <- c("cluster", "geneid", mapping_output)
 utils::write.table(unique(gene_attributes), file = file.path(outdir, "gene_attributes.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 
 utils::write.table(all_miRNA_summary, file = file.path(outdir, "all_miRNA_summary.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
