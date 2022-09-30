@@ -281,7 +281,6 @@ write_functional_report <- function(hunter_results,
         rmarkdown::render(file.path(template_folder, 'functional_report.Rmd'), 
             output_file = outf, intermediates_dir = results_path)        
     }
-    save(list = ls(all.names = TRUE), file = "~/before_clustering.RData")
 
     if(grepl("c", report)){
         write_merged_cluster_report(enrichments_ORA, results_path, template_folder, 
