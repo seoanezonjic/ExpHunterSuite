@@ -46,7 +46,7 @@ Results are then compared with multiMiR databases.
   if (ncol(score_comp) == 0 || length(score_comp == 0))
     score_comp <- NULL 
 
-  sig_strategies <- c("selected_targets_RNA_vs_miRNA_DEMs") #names(strategies)[! names(strategies) %in% unsig_strategies]
+  sig_strategies <- names(strategies)[! names(strategies) %in% unsig_strategies]
   cat(parse_strat_text(sig_strategies))
 
   mock_strategies <-   c() #"Eigengene_0_RNA_vs_miRNA_normalized_counts", 

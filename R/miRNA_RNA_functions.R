@@ -204,11 +204,11 @@ message(paste0("RNAseq folder has been not set, only ",
 
    strategy_data <- data.table::as.data.table(strategy_data)
    
-   strategies[[strategy]] <- strategy_data
    if (sum(strategy_data$correlated_pairs) == 0){
        unsig_strategies <- c(strategy, unsig_strategies)
        next
    }
+   strategies[[strategy]] <- strategy_data
   
    all_pairs[,strategy] <- FALSE
    all_pairs[strategy_data$pair_n, strategy] <- strategy_data$correlated_pairs
@@ -251,8 +251,6 @@ message(paste0("RNAseq folder has been not set, only ",
                          all_pairs = all_pairs,
                          sample_size = sample_proportion, strategy = strategy))
    }
-
-
    gc()
  }
 
@@ -272,6 +270,16 @@ message(paste0("RNAseq folder has been not set, only ",
  return(miRNA_cor_results)
 }
 
+
+get_degs_sets <- function(DH_results_table){
+     degs <- list()
+     degs["pos"] <- DH_results_table[DH_results_table$genes_tag %in%
+               c("PREVALENT_DEG", "POSSIBLE_DEG") & DH_results_table$mean_logFCs > 0, "gene_name"]
+     degs["neg"] <- DH_results_table[DH_results_table$genes_tag %in%
+               c("PREVALENT_DEG", "POSSIBLE_DEG") & DH_results_table$mean_logFCs < 0, "gene_name"]  
+    return(degs)
+}
+
 #' @importFrom data.table as.data.table
 perform_correlations <- function(
       strategy = "normalized_counts_RNA_vs_miRNA_normalized_counts", 
@@ -281,31 +289,19 @@ perform_correlations <- function(
     # the parsed strategy name text is used to subset RNAseq/miRNAseq obects
     
     if (strategy == "DEGs_RNA_vs_miRNA_DEMs_opp"){
-       DEGs_pos <- RNAseq$DH_results[RNAseq$DH_results$genes_tag %in%
-               c("PREVALENT_DEG", "POSSIBLE_DEG") & RNAseq$DH_results$mean_logFCs > 0, "gene_name"]
-       DEGs_neg <- RNAseq$DH_results[RNAseq$DH_results$genes_tag %in%
-               c("PREVALENT_DEG", "POSSIBLE_DEG") & RNAseq$DH_results$mean_logFCs < 0, "gene_name"]
-       DEMs_pos <- miRNAseq$DH_results[miRNAseq$DH_results$genes_tag %in% 
-               c("PREVALENT_DEG", "POSSIBLE_DEG") & miRNAseq$DH_results$mean_logFCs > 0, "gene_name"]
-       DEMs_neg <- miRNAseq$DH_results[miRNAseq$DH_results$genes_tag %in% 
-               c("PREVALENT_DEG", "POSSIBLE_DEG") & miRNAseq$DH_results$mean_logFCs < 0, "gene_name"]
-
-       all_pairs <- permute_pairs(DEGs_pos, DEMs_neg, corr_type = corr_type)
-       all_pairs <- rbind(all_pairs, permute_pairs(DEGs_neg, DEMs_pos, corr_type = corr_type))
+       DEGs <- get_degs_sets(RNAseq$DH_results)
+       DEMs <- get_degs_sets(miRNAseq$DH_results)
+       
+       all_pairs <- permute_pairs(DEGs[["pos"]], DEMs[["neg"]], corr_type = corr_type)
+       all_pairs <- rbind(all_pairs, permute_pairs(DEGs[["neg"]], DEMs[["pos"]], corr_type = corr_type))
 
     } else if ( strategy == "DEGs_RNA_vs_miRNA_DEMs_sim" ){
-       DEGs_pos <- RNAseq$DH_results[RNAseq$DH_results$genes_tag %in%
-               c("PREVALENT_DEG", "POSSIBLE_DEG") & RNAseq$DH_results$mean_logFCs > 0, "gene_name"]
-       DEGs_neg <- RNAseq$DH_results[RNAseq$DH_results$genes_tag %in%
-               c("PREVALENT_DEG", "POSSIBLE_DEG") & RNAseq$DH_results$mean_logFCs < 0, "gene_name"]
-       DEMs_pos <- miRNAseq$DH_results[miRNAseq$DH_results$genes_tag %in% 
-               c("PREVALENT_DEG", "POSSIBLE_DEG") & miRNAseq$DH_results$mean_logFCs > 0, "gene_name"]
-       DEMs_neg <- miRNAseq$DH_results[miRNAseq$DH_results$genes_tag %in% 
-               c("PREVALENT_DEG", "POSSIBLE_DEG") & miRNAseq$DH_results$mean_logFCs < 0, "gene_name"]
-
-       all_pairs <- permute_pairs(DEGs_pos, DEMs_pos, corr_type = corr_type)
-       all_pairs <- rbind(all_pairs, permute_pairs(DEGs_neg, DEMs_neg, corr_type = corr_type))
-
+       DEGs <- get_degs_sets(RNAseq$DH_results)
+       DEMs <- get_degs_sets(miRNAseq$DH_results)
+       
+       all_pairs <- permute_pairs(DEGs[["pos"]], DEMs[["pos"]], corr_type = corr_type)
+       all_pairs <- rbind(all_pairs, permute_pairs(DEGs[["neg"]], DEMs[["neg"]], corr_type = corr_type))
+    
     } else if ( strategy == "selected_targets_RNA_vs_miRNA_DEMs" ) {
         DEMS <- miRNAseq$DH_results[miRNAseq$DH_results$genes_tag %in% 
                c("PREVALENT_DEG", "POSSIBLE_DEG"), "gene_name"]
@@ -664,6 +660,7 @@ translate_ensembl){
 parse_correlations <- function(strategies){
  all_cor_dist <- strategies
  all_cor_dist["DEGs_DEMs_permutated"] <- NULL
+ save(all_cor_dist, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/analysis/target_wf/ctrl_vs_mut/coRmiT.R_0005/test.RData")
  all_cor_dist <- lapply(all_cor_dist, function(strategy_data){
     dist <- strategy_data[,c("correlation", "pval", "correlated_pairs")]
     return(dist)
