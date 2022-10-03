@@ -130,7 +130,7 @@ main_degenes_Hunter <- function(
     model_formula_text <- prepare_model_text(model_variables, 
                                              multifactorial)
    
-    if(multifactorial != ""){
+    if(grepl(":(interaction|effect)", multifactorial)){
       target <- prepare_target_for_multifactorial(target, multifactorial)
     }
     # Prepare count table for analysis

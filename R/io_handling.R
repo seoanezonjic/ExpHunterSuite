@@ -187,7 +187,7 @@ write_enrich_clusters <- function(func_clusters, output_path) {
       func_res <- func_clusters[[funsys]]
       merged_func_res <- clusterProfiler::merge_result(func_res)
       write_table_ehs(merged_func_res,
-        file=file.path(output_path, paste0("enrichment_", funsys, ".csv")))
+        file=file.path(output_path, paste0("enr_cls_", funsys, ".csv")))
       # write_enrich_tables(func_res, 
       #   paste0(funsys, "_cluster"), output_path)
     })
