@@ -164,8 +164,8 @@ option_list <- list(
       "FC would represent [numA_numB - baseA_numB] - [numA_baseB - baseA_baseB] with numA/B representing the non-base levels for the factorA.",
       "Alternatively, Contrast can be specificed in the form \"effect,baseA,groupB\", where the baseA should be the level in FactorA that should be used as the base for FC calculation, ",
       "and groupB represents the level in Factor B that is the group we are looking for the change in. For effect, FactorB can have more than 2 groups, allowing 2xn designs. ",
-      "Finally, if nested is selected, we look for the change due to treat in groupA of FactorA but not in groupB, taking into account that Factor B specifies grouping of individuals. Note that the change must ",
-      "occur within treat vs. ctrl, and this must be specified in the contrast as such: \"nested,Ctrl,groupA\"."))
+      "Finally, if nested is selected, we can perform the same comparisons using a nested design with: \"nested_int,Ctrl,groupA\" for interaction, ",
+      "\"nested_effect,Ctrl,groupA\" or \"nested_effect,Ctrl,groupB\" for a group. "))
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 #############################################################################
