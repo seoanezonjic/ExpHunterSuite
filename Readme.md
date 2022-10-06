@@ -267,6 +267,57 @@ degenes_Hunter.R -m "DEL" -i path_to_normalized_table -t path_to_targets_file -o
 
 Note FactorB in the effects contrast can have more than 2 groups.
 
+##### F. Multifactorial nested (2x2xn and 2xnxn) analysis to look for interactions between factors and effects in distinct groups where the groups contain paired samples (e.g. the same patient/control before and after treatment)
+
+*NOTE: this can only be used with DESeq2 for now*
+
+In some cases we are interested in the differences that occur between case and control samples that occur in one group of samples but not in another, similar to the "interaction" contrast described previously, however we have an added complication: the samples within each group are paired. A typical example would be an experiment in which we have patients and healthy controls, and we want to see how a treatment affects patients, compared to controls. In this case, the control samples are the untreated individuals, and the case samples are the treated individuals. The groups are patients vs. controls. As such we have a 2x2 interaction design. However, if the individuals are paired, i.e. the treated and untreated samples come from the same individual,  we can add this to the experiment design so that it can be used in the DEG detection analysis:
+
+
+| sample       | treat |  pat_or_hc | ind_id |
+|--------------|-------|------------|--------|
+| pat_ctrl_1   | Ctrl  |  patient   | p1     |
+| pat_ctrl_2   | Ctrl  |  patient   | p2     |
+| pat_ctrl_3   | Ctrl  |  patient   | p3     |
+| pat_ctrl_4   | Ctrl  |  patient   | p4     |
+| pat_treat_1  | Treat |  patient   | p1     |
+| pat_treat_2  | Treat |  patient   | p2     |
+| pat_treat_3  | Treat |  patient   | p3     |
+| pat_treat_4  | Treat |  patient   | p4     |
+| hc_ctrl_1    | Ctrl  |  healthy   | h1     |
+| hc_ctrl_2    | Ctrl  |  healthy   | h2     |
+| hc_ctrl_3    | Ctrl  |  healthy   | h3     |
+| hc_ctrl_4    | Ctrl  |  healthy   | h4     |
+| hc_treat_1   | Treat |  healthy   | h1     |
+| hc_treat_2   | Treat |  healthy   | h2     |
+| hc_treat_3   | Treat |  healthy   | h3     |
+| hc_treat_4   | Treat |  healthy   | h4     |
+
+As can be observed, the same individual appears twice in the design - corresponding to samples before and after treatment (Ctrl and Treat can of course also refer to e.g. sample from different tissues, etc.,)
+
+
+This design has the advantage of allowing us to compare the change in gene expression to the starting point of each individual, which may vary.
+
+In this case, we can look for differences between groups (like the interaction shown above for the unpaired design) using the following custom_model:
+
+```bash
+--multifactorial "pat_or_hc,ind_id:nested_int,Ctrl,patient"
+```
+
+And we can look for changes occurring in the patients group using:
+
+```bash
+--multifactorial "pat_or_hc,ind_id:nested_effect,Ctrl,patient"
+```
+
+And we can look for changes occurring in the control subjects group using:
+
+```bash
+--multifactorial "pat_or_hc,ind_id:nested_effect,Ctrl,control"
+```
+
+Note that the changes must always be between Ctrl and Treat samples from the Treatment column, for interactions there must only be two groups, and each sample in each group must appear twice with the same patient ID.
+
 
 ### 2. Command line scripts for functional enrichment analysis.
 
