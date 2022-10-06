@@ -21,6 +21,7 @@ database_to_filter = NULL,
 mc_cores = 1,
 tag_filter,
 corr_type,
+corr_coef,
 selected_targets_file, 
 template_folder = file.path(find.package('ExpHunterSuite'), "templates"),
 organism_table_path = file.path(find.package('ExpHunterSuite'), "inst", 
@@ -40,11 +41,11 @@ compare_pred_scores = FALSE
   
  #parse strategies and add default strategies
  strat_names <- c(
+    "DEGs_RNA_vs_miRNA_DEMs_opp",
+    "DEGs_RNA_vs_miRNA_DEMs_sim",
     "normalized_counts_RNA_vs_miRNA_normalized_counts", 
     "Eigengene_0_RNA_vs_miRNA_normalized_counts", 
     "normalized_counts_RNA_vs_miRNA_Eigengene_0", 
-    "DEGs_RNA_vs_miRNA_DEMs_opp",
-    "DEGs_RNA_vs_miRNA_DEMs_sim",
      parse_strategies(strat_names))
   
  # Prepare for RNA ID translation
@@ -93,7 +94,7 @@ compare_pred_scores = FALSE
     permutations = permutations, all_pairs = all_pairs, 
     selected_predicted_databases = selected_predicted_databases, 
     tag_filter = tag_filter, sample_proportion = sample_proportion, 
-    raw_databases_scores=raw_databases_scores, corr_type = corr_type,
+    raw_databases_scores=raw_databases_scores, corr_type = corr_type, corr_coef = corr_coef,
     selected_targets = selected_targets, compare_pred_scores = compare_pred_scores)
 
  miRNA_cor_results$cont_tables <- v_get_stats(miRNA_cor_results$cont_tables)

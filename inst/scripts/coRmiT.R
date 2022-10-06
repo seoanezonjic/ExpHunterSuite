@@ -65,6 +65,9 @@ option_list <- list(
     optparse::make_option("--tag_filter target_tag,miRNA_tag", type="character", 
         default=paste0("putative,putative"),
         help = paste0("Set filter type for RNAseq and miRNAseq input data by comma separated string. Available options are: 'prevalent' to use only PREVALENT_DEG. 'all_possible' to use all PREVALENT_DEG and POSIBLE_DEG. 'putative' to use PREVALENT_DEG, POSIBLE_DEG and miRNA or RNAs that correlates with their expression profile.")),
+    optparse::make_option(c("-C","--corr_coef"), type="character", 
+        default="pearson",
+        help = paste0("Correlation method: chose between pearson, spearman and kendall")),
     optparse::make_option(c("--organism"), type ="character", default="hsa",
         help= paste0("Reference organism to use. Available 'hsa' for human",
             " and 'mmu' for mouse.")),
@@ -145,6 +148,7 @@ miRNA_cor_results <-  coRmiT(
     translation_file = opt$translation_file,
     organism_table_path = organism_table_path, 
     corr_type = opt$corr_type,
+    corr_coef = opt$corr_coef,
     selected_targets_file = opt$selected_targets,
     template_folder = template_folder,
     compare_pred_scores = opt$compare_pred_scores    )

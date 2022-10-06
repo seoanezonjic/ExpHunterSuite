@@ -2,38 +2,6 @@
 ########################## FUNCTIONAL ANALYSIS LIBRARY ########################
 ###############################################################################
 
-#' Translates a given gene ID
-#' @param input_ids gene IDs to be translated
-#' @param organism_db BiocGenerics organism database
-#' @param org_var_name BiocGenerics organism translation variable name
-#' @keywords translate
-#' @importFrom BiocGenerics get
-#' @importFrom AnnotationDbi mappedkeys
-#' @return translated gene IDs
-id_translation_orgdb <- function(input_ids, organism_db, org_var_name){
-    # Load necessary package
-    require(organism_db, character.only = TRUE)
-    # Obtain target variable
-    org_var <- BiocGenerics::get(org_var_name)
-    # Translate ENSEMBL to Entrex IDs
-    translation_table <- as.list(org_var[AnnotationDbi::mappedkeys(org_var)])
-    # Convert to dataframe
-    translation_table_df <- as.data.frame(do.call(rbind,
-      lapply(intersect(input_ids, names(translation_table)),function(matches){
-        # Obtain genes
-        translated_ids <- translation_table[[matches]]            
- 
-        if(length(translated_ids) == 0){
-            return(data.frame())
-        }
-        # Return info
-        return(data.frame(input = rep(matches,length(translated_ids)), 
-                          output = translated_ids, 
-                          stringsAsFactors = FALSE))
-    })))
-    return(translation_table_df)
-}
-
 
 #' Scale a matrix using minimum-maximum method
 #' @param data_matrix to be scaled

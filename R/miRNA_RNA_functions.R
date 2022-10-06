@@ -40,6 +40,7 @@ filter_DEGH_data <- function(DGH_data, MM_cutoff, tag_filter){
     }
     
     all_degs <- DGH_results$genes_tag %in% tags_to_filter
+
     DGH_data$Eigengene_0 <- DGH_data$Eigengene[,"0", drop = FALSE]
     if (tag_filter == "putative") {
         modules_with_DEGS <- unique(DGH_results[all_degs & 
@@ -154,6 +155,7 @@ permutations = 10,
 sample_proportion = 0.01,
 selected_targets = c(),
 corr_type,
+corr_coef,
 compare_pred_scores = FALSE
 ){
  ######### PREPARE PAIRS SCAFOLD
@@ -196,7 +198,7 @@ message(paste0("RNAseq folder has been not set, only ",
    message(paste0("\n", strategy, " strategy is been performed"))
     strategy_data <- perform_correlations(strategy = strategy, 
                     RNAseq = RNAseq, miRNAseq = miRNAseq, 
-                    std_positions = std_positions, 
+                    std_positions = std_positions, corr_coef = corr_coef,
                     cor_cutoff = corr_cutoff, pval_cutoff = p_val_cutoff, 
                     corr_type  = corr_type, selected_targets = selected_targets)
 
@@ -272,10 +274,11 @@ message(paste0("RNAseq folder has been not set, only ",
 
 
 get_degs_sets <- function(DH_results_table){
+
      degs <- list()
-     degs["pos"] <- DH_results_table[DH_results_table$genes_tag %in%
+     degs[["pos"]] <- DH_results_table[DH_results_table$genes_tag %in%
                c("PREVALENT_DEG", "POSSIBLE_DEG") & DH_results_table$mean_logFCs > 0, "gene_name"]
-     degs["neg"] <- DH_results_table[DH_results_table$genes_tag %in%
+     degs[["neg"]] <- DH_results_table[DH_results_table$genes_tag %in%
                c("PREVALENT_DEG", "POSSIBLE_DEG") & DH_results_table$mean_logFCs < 0, "gene_name"]  
     return(degs)
 }
@@ -283,15 +286,17 @@ get_degs_sets <- function(DH_results_table){
 #' @importFrom data.table as.data.table
 perform_correlations <- function(
       strategy = "normalized_counts_RNA_vs_miRNA_normalized_counts", 
-      RNAseq, miRNAseq, std_positions = NULL, cor_cutoff = 0, 
+      RNAseq, miRNAseq, std_positions = NULL, cor_cutoff = 0, corr_coef,
       pval_cutoff = 0.05, corr_type, selected_targets = c()){ #correct_positions 
     #is a mirna_RNA pairs vector
     # the parsed strategy name text is used to subset RNAseq/miRNAseq obects
     
     if (strategy == "DEGs_RNA_vs_miRNA_DEMs_opp"){
+      #   q()   
+      
        DEGs <- get_degs_sets(RNAseq$DH_results)
        DEMs <- get_degs_sets(miRNAseq$DH_results)
-       
+ 
        all_pairs <- permute_pairs(DEGs[["pos"]], DEMs[["neg"]], corr_type = corr_type)
        all_pairs <- rbind(all_pairs, permute_pairs(DEGs[["neg"]], DEMs[["pos"]], corr_type = corr_type))
 
@@ -314,7 +319,7 @@ perform_correlations <- function(
         if (ncol(RNA_profiles) == 0 || ncol(miRNA_profiles) == 0) {
           return(data.frame(NULL))
         }
-        all_pairs <- correlate_profiles(RNA_profiles, miRNA_profiles)
+        all_pairs <- correlate_profiles(RNA_profiles, miRNA_profiles, corr_coef= corr_coef)
         if (strat_description[1] != "normalized_counts"){
             if (strat_description[1] == "Eigengene_0") {
                 RNAseq$DH_results$relevant_genes <- TRUE
@@ -390,9 +395,9 @@ permute_pairs <- function(RNAseq, miRNAseq, corr_type){
 
 #' @importFrom WGCNA corPvalueStudent
 #' @importFrom stats cor
-correlate_profiles <- function(RNA_profiles, miRNA_profiles) {
+correlate_profiles <- function(RNA_profiles, miRNA_profiles,corr_coef) {
 
-    correlations <- WGCNA::cor(RNA_profiles, miRNA_profiles)
+    correlations <- WGCNA::cor(RNA_profiles, miRNA_profiles, method = corr_coef)
     nSamples <- nrow(RNA_profiles)
     cor_pval <- as.data.frame(WGCNA::corPvalueStudent(
         as.matrix(correlations), nSamples))
@@ -489,23 +494,22 @@ add_multimir_info <- function(all_pairs, multiMiR = NULL) {
 
 #' @importFrom data.table as.data.table merge.data.table
 get_entrez_symbol_translations <- function(ensembl_ids, organism_info){
-
-    input_to_entrezgene <- id_translation_orgdb(input_ids = ensembl_ids,
-     organism_db = organism_info$Bioconductor_DB[1],
-     org_var_name = organism_info$Bioconductor_VarName[1])
-
+    org_db <- get_org_db(organism_info)
+    input_to_entrezgene <- translate_ids_orgdb(ids = ensembl_ids, 
+                    input_id="ENSEMBL", output_id = "ENTREZID", org_db=org_db)
     # Fix names
-    colnames(input_to_entrezgene) <- c("ensembl_gene_id", "entrezgene") 
-
-    input_to_symbol <- id_translation_orgdb(
-        input_ids = input_to_entrezgene$entrezgene,
-        organism_db = organism_info$Bioconductor_DB[1],
-    org_var_name = organism_info$Bioconductor_VarName_SYMBOL[1])
+    colnames(input_to_entrezgene) <- c("ensembl_gene_id", "entrezgene")     
+    
+    input_to_symbol <- translate_ids_orgdb(input_id="ENTREZID", 
+                    output_id = "SYMBOL", org_db=org_db,
+                    ids = unique(input_to_entrezgene$entrezgene))
     colnames(input_to_symbol) <- c("entrezgene", "Symbol")
+
     input_to_entrezgene <- data.table::as.data.table(input_to_entrezgene)
     input_to_symbol <- data.table::as.data.table(input_to_symbol)
     gene_id_translation <- data.table::merge.data.table(input_to_entrezgene, 
-        input_to_symbol, by = "entrezgene", all.x = TRUE)
+                             input_to_symbol, by = "entrezgene", all.x = TRUE)
+
     return(gene_id_translation)
 }
 
@@ -624,11 +628,11 @@ organism){
  all_pairs$known_miRNA <- all_pairs$miRNAseq %in% all_known_miRNAs
  
  #possible_positives: Pairs with RNA and miRNA included in multiMiR. 
- all_pairs$possible_positives <- all_pairs$known_miRNA & 
-                                 all_pairs$miRNAseq %in% 
-                                  multimir$mature_mirna_acc &
-                                 all_pairs$RNAseq %in% 
-                                   multimir$target_ensembl 
+ all_pairs$possible_positives <- all_pairs$known_miRNA# & 
+                                 # all_pairs$miRNAseq %in% 
+                                 #  multimir$mature_mirna_acc &
+                                 # all_pairs$RNAseq %in% 
+                                 #   multimir$target_ensembl 
  return(all_pairs)
 }
 
@@ -660,7 +664,7 @@ translate_ensembl){
 parse_correlations <- function(strategies){
  all_cor_dist <- strategies
  all_cor_dist["DEGs_DEMs_permutated"] <- NULL
- save(all_cor_dist, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/analysis/target_wf/ctrl_vs_mut/coRmiT.R_0005/test.RData")
+ # save(all_cor_dist, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/analysis/target_wf/ctrl_vs_mut/coRmiT.R_0005/test.RData")
  all_cor_dist <- lapply(all_cor_dist, function(strategy_data){
     dist <- strategy_data[,c("correlation", "pval", "correlated_pairs")]
     return(dist)
