@@ -156,6 +156,8 @@ option_list <- list(
   optparse::make_option(c("--WGCNA_minKMEtoStay"), type="double", default=0.5, 
     help=paste0("Minimun module membership of a gene to be kept in module.",
       " Default=%default")),
+  optparse::make_option("--WGCNA_corType", type="character", default="pearson",
+    help="Set the correlation method to perform WGCNA_algorithm. 'pearson' and 'bicor' are the allowed options"),
   optparse::make_option(c("--multifactorial"), type="character", default="", 
         help=paste0("Currently only a 2x2 or factorial design is possible for interactions, and 2xn for group effects. Nested designs can",
           "also be specified (i.e. Group-specific condition effects, individuals nested within groups) The required contrast must be specified in the following manner: ",
@@ -254,6 +256,7 @@ final_results <- main_degenes_Hunter(
   WGCNA_minCoreKME=opt$WGCNA_minCoreKME,
   WGCNA_minCoreKMESize=opt$WGCNA_minCoreKMESize,
   WGCNA_minKMEtoStay = opt$WGCNA_minKMEtoStay,
+  WGCNA_corType = opt$WGCNA_corType,
   multifactorial = opt$multifactorial
 )
 

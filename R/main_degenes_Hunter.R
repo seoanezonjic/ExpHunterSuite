@@ -71,6 +71,7 @@ main_degenes_Hunter <- function(
     WGCNA_minCoreKME = 0.5,
     WGCNA_minCoreKMESize = NULL,
     WGCNA_minKMEtoStay = 0.2,
+    WGCNA_corType = "pearson",
     multifactorial = ""
   ){
     modified_input_args <- check_input_main_degenes_Hunter(raw, 
@@ -184,7 +185,7 @@ main_degenes_Hunter <- function(
         target_string_factors, WGCNA_memory, WGCNA_deepsplit, 
         WGCNA_detectcutHeight, WGCNA_mergecutHeight, WGCNA_min_genes_cluster, 
         WGCNA_blockwiseNetworkType, WGCNA_blockwiseTOMType, WGCNA_minCoreKME, 
-        WGCNA_minCoreKMESize, WGCNA_minKMEtoStay)
+        WGCNA_minCoreKMESize, WGCNA_minKMEtoStay, corType = WGCNA_corType)
 
       if(length(combinations_WGCNA[['WGCNA_all']]) == 1) {
         warning("Something went wrong with WGCNA on the full dataset")

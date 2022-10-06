@@ -96,7 +96,8 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE,
                     WGCNA_blockwiseTOMType, 
                     WGCNA_minCoreKME, 
                     WGCNA_minCoreKMESize, 
-                    WGCNA_minKMEtoStay){
+                    WGCNA_minKMEtoStay,
+                    corType){
     results <- list()
     if(WGCNA_all == TRUE) { #TODO => Este bloque de código es repetitivo. 
         WGCNA_input_treatment <- WGCNA_input[, index_treatmn_cols]
@@ -119,7 +120,8 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE,
                        blockwiseTOMType = WGCNA_blockwiseTOMType,
                        WGCNA_minCoreKME = WGCNA_minCoreKME,
                        WGCNA_minCoreKMESize = WGCNA_minCoreKMESize,
-                       WGCNA_minKMEtoStay = WGCNA_minKMEtoStay
+                       WGCNA_minKMEtoStay = WGCNA_minKMEtoStay,
+                       corType = corType
         )
 
         WGCNA_control_path <- file.path(path, "Control_only_data")
@@ -140,8 +142,8 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE,
                        blockwiseTOMType = WGCNA_blockwiseTOMType,
                        WGCNA_minCoreKME = WGCNA_minCoreKME,
                        WGCNA_minCoreKMESize = WGCNA_minCoreKMESize,
-                       WGCNA_minKMEtoStay = WGCNA_minKMEtoStay
-        )
+                       WGCNA_minKMEtoStay = WGCNA_minKMEtoStay,
+                       corType = corType)
     }
         
 
@@ -160,8 +162,8 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE,
                     blockwiseTOMType = WGCNA_blockwiseTOMType,
                     WGCNA_minCoreKME = WGCNA_minCoreKME,
                     WGCNA_minCoreKMESize = WGCNA_minCoreKMESize,
-                    WGCNA_minKMEtoStay = WGCNA_minKMEtoStay
-    )        
+                    WGCNA_minKMEtoStay = WGCNA_minKMEtoStay,
+                    corType = corType)        
     return(results)
 }
 
@@ -191,7 +193,8 @@ analysis_WGCNA <- function(data,
                           blockwiseTOMType, 
                           WGCNA_minCoreKME, 
                           WGCNA_minCoreKMESize, 
-                          WGCNA_minKMEtoStay) {
+                          WGCNA_minKMEtoStay,
+                          corType) {
 
     if(is.null(WGCNA_minCoreKMESize)){
         WGCNA_minCoreKMESize <- WGCNA_min_genes_cluster/3
@@ -208,7 +211,13 @@ analysis_WGCNA <- function(data,
                             ns="WGCNA")
     powers <- c(seq(10), seq(from = 12, to=30, by=2))
 
-    sft <- WGCNA::pickSoftThreshold(data, powerVector = powers, verbose = 5)
+    bicor <- WGCNA::bicor
+
+    corFnc <- cor
+    if(corType == "bicor")
+        corFnc <- bicor
+
+    sft <- WGCNA::pickSoftThreshold(data, powerVector = powers, verbose = 5, corFnc = corFnc)
 
     # Calculate Power automatically
     sft_mfs_r2 <- -sign(sft$fitIndices[,3])*sft$fitIndices[,2]
@@ -299,7 +308,8 @@ analysis_WGCNA <- function(data,
                             TOMType = blockwiseTOMType,
                             minCoreKME = WGCNA_minCoreKME,
                             minCoreKMESize = WGCNA_minCoreKMESize, 
-                            minKMEtoStay = WGCNA_minKMEtoStay)
+                            minKMEtoStay = WGCNA_minKMEtoStay,
+                            corType = corType)
     cor<-stats::cor
 
     moduleColors = WGCNA::labels2colors(net$colors)
