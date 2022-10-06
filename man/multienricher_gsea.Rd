@@ -38,6 +38,8 @@ multienricher_gsea(
 \item{kegg_file}{must be provided if kegg annotation required}
 
 \item{custom_sets}{custom set object (processed by load_and_parse_gmt)}
+
+\item{...}{other arguments passed to the enrichment function}
 }
 \description{
 Perform gsea enrichment analysis of a list of genes

@@ -381,14 +381,16 @@ get_mf_DE_options <- function(
           levels(target[, mf_text[["mf_factorA"]]])[2],
            mf_text[["mf_varA"]]
         ))
-    } else if (mf_text[["mf_contrast"]] == "nested") {
+    } else if (mf_text[["mf_contrast"]] == "nested_int") {
         target_factor <- unique(target[,mf_text[["mf_factorA"]]])
         mf_opt <- list(contrast=list(paste0(mf_text[["mf_factorA"]], mf_text[["mf_varB"]], ".treatTreat"), 
         paste0(mf_text[["mf_factorA"]], 
           target_factor[! target_factor %in% mf_text[["mf_varB"]]], ".treatTreat" ))
         )
-
-    }
+    } else if (mf_text[["mf_contrast"]] == "nested_effect") {
+      target_factor <- unique(target[,mf_text[["mf_factorA"]]])
+      mf_opt <- list(name=paste0(mf_text[["mf_factorA"]],  mf_text[["mf_varB"]], ".treatTreat" ))
+    } 
   } else if (package_name %in% c("edgeR","limma")) { 
     if(mf_text[["mf_contrast"]] == "interaction") {
       mf_opt <- list(name=colnames(package_object)[4])

@@ -50,6 +50,8 @@ multienricher_ora(
 \item{readable}{Whether output should include gene symbols}
 
 \item{return_all}{Whether to remove list items with no enrichment}
+
+\item{...}{other arguments passed to the enrichment function}
 }
 \description{
 Perform ORA enrichment analysis of a list of genes

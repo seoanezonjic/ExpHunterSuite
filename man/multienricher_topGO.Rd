@@ -14,8 +14,7 @@ multienricher_topGO(
   statistic = "fisher",
   nodeSize = 5,
   task_size = 1,
-  workers = 1,
-  ...
+  workers = 1
 )
 }
 \arguments{
