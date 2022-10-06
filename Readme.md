@@ -269,6 +269,8 @@ Note FactorB in the effects contrast can have more than 2 groups.
 
 ##### F. Multifactorial nested (2x2xn and 2xnxn) analysis to look for interactions between factors and effects in distinct groups where the groups contain paired samples (e.g. the same patient/control before and after treatment)
 
+*NOTE: this can only be used with DESeq2 for now*
+
 In some cases we are interested in the differences that occur between case and control samples that occur in one group of samples but not in another, similar to the "interaction" contrast described previously, however we have an added complication: the samples within each group are paired. A typical example would be an experiment in which we have patients and healthy controls, and we want to see how a treatment affects patients, compared to controls. In this case, the control samples are the untreated individuals, and the case samples are the treated individuals. The groups are patients vs. controls. As such we have a 2x2 interaction design. However, if the individuals are paired, i.e. the treated and untreated samples come from the same individual,  we can add this to the experiment design so that it can be used in the DEG detection analysis:
 
 
