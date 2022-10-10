@@ -96,6 +96,9 @@ option_list <- list(
   optparse::make_option(c("-o", "--output_files"), type="character", 
     default="results",
     help="Output path. Default=%default"),
+  optparse::make_option(c("-R", "--report_modes"), type="character", 
+    default="fci",
+    help="HTML report modes. 'f' for functional_report, 'c' for cluster_main_report and 'i' for individual module report. Default=%default"),
   optparse::make_option(c("-u", "--universe"), type="character", default=NULL, 
     help="Background genes for enrichment. Default all. Alternative = expressed"),
   optparse::make_option("--clean_parentals", type="logical", default=FALSE, 
@@ -202,7 +205,6 @@ func_results <- main_functional_hunter(
 )
 
 write_enrich_files(func_results, opt$output_files)
-
 write_functional_report(hunter_results = hunter_results, 
                             func_results = func_results, 
                             output_files = opt$output_files,
@@ -210,7 +212,7 @@ write_functional_report(hunter_results = hunter_results,
                             template_folder = template_folder,
                             cores =  opt$cores,
                             task_size = opt$task_size,
-                            report = "fci",
+                            report = opt$report_modes,
                             showCategories = opt$showCategories,
                             group_results = opt$group_results
 )
