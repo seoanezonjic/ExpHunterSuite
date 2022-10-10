@@ -26,6 +26,7 @@
 #' @param top_categories numbers of categories from each cluster to use for merge
 #' @param sim_thr value to use when combining similar categories in summary mode
 #' @param summary_common_name 'significant' to use the most significant term to label each summarized group
+#' @param clusters_flag execute clusters enrichments
 #' @return functional result object with enrichments performed
 #' @keywords method
 #' @export
@@ -58,7 +59,8 @@ main_functional_hunter <- function(
     simplify = FALSE,
     top_categories = 50,
     sim_thr = NULL,
-    summary_common_name = "ancestor"
+    summary_common_name = "ancestor",
+    clusters_flag = FALSE
     ){
 
     ############################################################
@@ -92,7 +94,7 @@ main_functional_hunter <- function(
     DEGH_results <- hunter_results$DE_all_genes
     DEGH_results <- DEGH_results[DEGH_results$genes_tag != "FILTERED_OUT", ]
 
-    clusters_flag <- "Cluster_ID" %in% colnames(DEGH_results)
+    clusters_flag <- "Cluster_ID" %in% colnames(DEGH_results) && clusters_flag
     ##############################################################
     ##                                                          ##
     ##  LOAD COMPLEMENTARY FILES AND ADD ENTREZ AND SYMBOL IDs  ## 

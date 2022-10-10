@@ -179,6 +179,9 @@ if("KEGG" %in% enrich_dbs) {
     if(! file.exists(kegg_data_file)) stop(paste("KEGG file:", kegg_data_file, "not found"))
 }
 
+clusters_flag <- grepl("c", opt$report_modes) || grepl("i", opt$report_modes)
+
+
 func_results <- main_functional_hunter(
        hunter_results = hunter_results,
        model_organism = opt$model_organism,
@@ -201,7 +204,8 @@ func_results <- main_functional_hunter(
        simplify = opt$simplify,
        top_categories = opt$top_categories,
        sim_thr = opt$sim_thr,
-       summary_common_name = opt$summary_common_name
+       summary_common_name = opt$summary_common_name,
+       clusters_flag = clusters_flag
 )
 
 write_enrich_files(func_results, opt$output_files)
