@@ -42,7 +42,8 @@ option_list <- list(
   optparse::make_option(c("-F", "--force"), type="logical", default=FALSE, 
                         action = "store_true", help="Ignore temporal files"),
   optparse::make_option(c("-f", "--funsys"), type="character", default="BP,MF,CC,KEGG,Reactome", 
-                        help="Funsys to execute: MF => GO Molecular Function, BP => GO Biological Process, CC => GO Celular Coponent, KEGG => KEGG, Reactome => Reactome. Default=%default"),
+                        help="Funsys to execute: MF => GO Molecular Function, BP => GO Biological Process, CC => GO Celular Coponent, 
+                        KEGG => KEGG, Reactome => Reactome, DOSE => DOSE, DGN => DisGeNET. Default=%default"),
   optparse::make_option(c("-K", "--kegg_data_file"), ,type = "character", default=NULL,
                         help=paste0("KEGG database file. Can download with download_latest_kegg_db().",
                           "If required but not provided, it will be downloaded to the current working directory")), 
@@ -129,7 +130,6 @@ ce_list <- main_clusters_to_enrichment(
   simplify = opt$simplify,
   clean_parentals = opt$clean_parentals
 )
-
 enrichments_ORA <- ce_list[["enrichments_ORA"]]
 enrichments_ORA_merged <- ce_list[["enrichments_ORA_merged"]]
 
