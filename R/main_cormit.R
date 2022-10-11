@@ -125,10 +125,11 @@ compare_pred_scores = FALSE
     miRNA_IDs = miRNA_cor_results$all_pairs$miRNAseq, 
     RNA_IDs = RNA_IDs, 
     organism_info = organism_info, translate_ensembl = translate_ensembl)
- 
+   miRNA_cor_results$cont_tables$corr_cutoff <- corr_cutoff
+
     write.table(miRNA_cor_results$cont_tables, 
     file.path(output_files, "strategies_stats.txt"), 
-    quote=FALSE, col.names=TRUE, sep="\t")
+    quote=FALSE, sep="\t",  row.names=FALSE)
  
  miRNA_cor_results <- c(
     miRNA_cor_results,
