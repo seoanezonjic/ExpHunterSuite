@@ -477,9 +477,9 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL,
     unlisted_input_flag <- TRUE
     genes_list <- list(genes_list)
   }
-  if( row.names(organism_info) != "Human" && "DOSE" %in% all_funsys) {
-    warning("Cannot run DOSE with non-human organim, will be skipped")
-    all_funsys <- all_funsys[! all_funsys %in% "DOSE"]
+  if( row.names(organism_info) != "Human" && "DO" %in% all_funsys) {
+    warning("Cannot run DO with non-human organim, will be skipped")
+    all_funsys <- all_funsys[! all_funsys %in% "DO"]
   }
   common_params <- list(universe = universe, pvalueCutoff = pvalueCutoff, 
     qvalueCutoff = qvalueCutoff, 
@@ -510,7 +510,7 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL,
       enrf <- prepare_enrichment_KEGG(enrichment_type="ora", 
         kegg_file = kegg_file)
       specific_params <- list(organism = organism_info$KeggCode[1])
-    } else if (funsys == "DOSE"){
+    } else if (funsys == "DO"){
       # No need for prepare enrichment function - hack not necessary
       enrf <- DOSE::enrichDO
     } else if (funsys == "DGN"){
@@ -526,7 +526,7 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL,
       stop("funsys", funsys, "not recognized")
     }
     temp_workers <- workers
-    if(funsys == "DOSE") workers <- 1 # DOSE not working in parallel, lucky its quick
+    if(funsys == "DO") workers <- 1 # DOSE not working in parallel, lucky its quick
     enriched_cats <- parallel_list(genes_list, function(l_genes){
         params_genes <- c(specific_params, common_params, list(gene = l_genes))
         enr <- do.call("enrf", params_genes)
@@ -901,19 +901,21 @@ clean_parentals_in_matrix <- function(enrichment_mx, subont){
 
 filter_top_categories <- function(enrichments_ORA_merged, top_c = 50){
     # save(enrichments_ORA_merged, file="enrichments_ORA_merged.RData")
-    for (funsys in names(enrichments_ORA_merged)){
-      filtered_enrichments <- 
-        enrichments_ORA_merged[[funsys]]@compareClusterResult
-      if (nrow(filtered_enrichments) == 0) next 
-      filtered_enrichments <- filtered_enrichments[order(
-        filtered_enrichments$p.adjust, decreasing = FALSE), ]
-      filtered_enrichments <- Reduce(rbind,by(
-        filtered_enrichments,filtered_enrichments["Cluster"], head, n = top_c))
-      filtered_terms <- unique(filtered_enrichments$Description)
-      enrichments_ORA_merged[[funsys]]@compareClusterResult <- 
-        filtered_enrichments
-      enrichments_ORA_merged[[funsys]]@termsim <- 
-        enrichments_ORA_merged[[funsys]]@termsim[filtered_terms,filtered_terms]
+    if(! is.null(top_c)) {
+      for (funsys in names(enrichments_ORA_merged)){
+        filtered_enrichments <- 
+          enrichments_ORA_merged[[funsys]]@compareClusterResult
+        if (nrow(filtered_enrichments) == 0) next 
+        filtered_enrichments <- filtered_enrichments[order(
+          filtered_enrichments$p.adjust, decreasing = FALSE), ]
+        filtered_enrichments <- Reduce(rbind,by(
+          filtered_enrichments,filtered_enrichments["Cluster"], head, n = top_c))
+        filtered_terms <- unique(filtered_enrichments$Description)
+        enrichments_ORA_merged[[funsys]]@compareClusterResult <- 
+          filtered_enrichments
+        enrichments_ORA_merged[[funsys]]@termsim <- 
+          enrichments_ORA_merged[[funsys]]@termsim[filtered_terms,filtered_terms]
+      }
     }
     return(enrichments_ORA_merged)
 }
