@@ -74,14 +74,16 @@ option_list <- list(
                         help="3 columns tabular file- Cluster - InputGeneID - NumericAttribute. Header must be indicated as cluster - geneid - [numeric_atribute]"),
   optparse::make_option(c("-G", "--group_results"), type="logical", default=FALSE, 
                         action = "store_true", help="Functions are grouped in most frequent words in emaplots."),
-  optparse::make_option(c("-o", "--output_file"), type="character", default="results",
+  optparse::make_option(c("-o", "--output_path"), type="character", default=NA,
                         help="Define the output path.")
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 ##################################### INITIALIZE ##
 library(clusterProfiler)
-output_path <- paste0(opt$output_file, "_functional_enrichment")
+if (is.na(opt$output_path)){
+  output_path <- file.path(getwd(), "functional_enrichment")
+}
 dir.create(output_path)
 output_path <- normalizePath(output_path)
 temp_file <- file.path(output_path, "enr_tmp.RData")
@@ -135,7 +137,6 @@ enrichments_ORA_merged <- ce_list[["enrichments_ORA_merged"]]
 
 write_clusters_to_enrichment(
   output_path=output_path,
-  output_file=opt$output_file,
   mode=opt$mode,
   enrichments_ORA=enrichments_ORA,
   enrichments_ORA_merged=enrichments_ORA_merged,
