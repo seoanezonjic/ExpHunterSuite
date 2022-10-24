@@ -105,7 +105,7 @@ main_degenes_Hunter <- function(
     design_vector <- c(rep("C", replicatesC), rep("T", replicatesT))
     sample_groups <- data.frame(class = design_vector, 
                                 name = c(index_control_cols, 
-                                         index_treatmn_cols))   
+                                         index_treatmn_cols))
     # Check if there are enough replicates for specified method
     if((replicatesC < 2) | (replicatesT < 2)) 
        stop(paste0('At least two replicates per class (i.e. treatment and',
@@ -140,7 +140,7 @@ main_degenes_Hunter <- function(
     raw[is.na(raw)] <- 0 # Substitute NA values
 
     filtered_data <- filter_count(reads, minlibraries, raw, filter_type, 
-                               index_control_cols, index_treatmn_cols)
+                               index_control_cols, index_treatmn_cols, target)
     raw_filter <- filtered_data[["raw"]]
     cpm_table <- filtered_data[["cpm_table"]]
 
@@ -363,7 +363,8 @@ filter_count <- function(reads,
                          raw, 
                          filter_type, 
                          index_control_cols, 
-                         index_treatmn_cols){
+                         index_treatmn_cols,
+                         target){
     # Prepare filtered set
     cpm_table <- edgeR::cpm(raw)
     if(reads != 0){
@@ -381,6 +382,18 @@ filter_count <- function(reads,
         # genes with cpm greater than --reads value for
         # at least --minlibrariess samples
         keep_cpm <- rowSums(cpm_table > reads) >= minlibraries 
+        raw <- raw[keep_cpm,] # Filter out count data frame
+      } else if (grepl("^combined", filter_type) == TRUE) {
+        split_filter <- strsplit(filter_type, ":")[[1]]
+        filt_factors <- strsplit(split_filter[2], ",")[[1]]
+        if(! all(filt_factors %in% colnames(target)))
+          stop("Filter factors not found in target")
+        combs_list <- split(target, target[,filt_factors])
+        samples_per_combo <- lapply(combs_list, function(x) as.vector(x$sample))
+        cpm_tab_per_combo <- sapply(samples_per_combo, function(x) cpm_table[, x])
+        combos_passing_filter <- sapply(cpm_tab_per_combo, 
+          function(x) rowSums(x > reads) > minlibraries)
+        keep_cpm <- apply(combos_passing_filter, 1, any)
         raw <- raw[keep_cpm,] # Filter out count data frame
       } else {
         warning("Unrecognized minimum read filter type. No filter will be used")
