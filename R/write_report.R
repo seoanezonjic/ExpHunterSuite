@@ -228,10 +228,10 @@ write_functional_report <- function(hunter_results,
                                     task_size = 1, 
                                     report = "fc",
                                     showCategories = 30,
-                                    group_results = FALSE
+                                    group_results = FALSE,
+                                    max_genes = 200
                                     ){
-    # report <- "i"
-            # TO parallelize properly
+    # TO parallelize properly
     clean_tmpfiles_mod <- function() {
       message("Calling clean_tmpfiles_mod()")
     }

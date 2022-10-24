@@ -174,7 +174,6 @@ main_functional_hunter <- function(
                 task_size=task_size, return_all = TRUE, universe=universe)
 
             clusters_enr_ora_merged<- process_cp_list(clusters_enr_ora, simplify, clean_parentals)
-            clusters_enr_ora_merged <- filter_top_categories(clusters_enr_ora_merged, top_categories)
             func_results$WGCNA_ORA <- clusters_enr_ora_merged
             func_results$WGCNA_ORA_expanded <- add_term_sim_ora(clusters_enr_ora)
 

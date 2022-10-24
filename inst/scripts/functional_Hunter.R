@@ -106,7 +106,9 @@ option_list <- list(
   optparse::make_option("--simplify", type="logical", default=FALSE, 
     action = "store_true", help="Apply simplify function from cluster profiler to enrichment."),
   optparse::make_option("--showCategories", type="integer", default=30, 
-    help="Number of top categories to show on clusterProfiler dotplot and emaplot"),
+    help="Number of top categories to show on clusterProfiler dotplot, cnet and emaplot"),
+  optparse::make_option("--max_genes_plot", type="integer", default=200, 
+    help="Number of genes to show on clusterProfiler cnet"),
   optparse::make_option(c("-T", "--top_categories"), type="integer", default=50,
     help="Number of top categories for each cluster. Default=%default"),
   optparse::make_option(c("-S", "--sim_thr"), type="double", default=NULL,
@@ -220,6 +222,7 @@ write_functional_report(hunter_results = hunter_results,
                             task_size = opt$task_size,
                             report = opt$report_modes,
                             showCategories = opt$showCategories,
+                            max_genes = opt$max_genes_plot,
                             group_results = opt$group_results
 )
 
