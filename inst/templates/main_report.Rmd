@@ -111,7 +111,7 @@ coldata_df <- data.frame(cond = design_vector,
                            row.names = colnames(raw_filter), stringsAsFactors=TRUE)
 
 dds <- DESeq2::DESeqDataSetFromMatrix(countData = raw_filter, colData = coldata_df, design = ~ cond)
-rld <- DESeq2::rlog(dds, blind=FALSE)
+rld <- DESeq2::vst(dds)
 
 pcaData <- DESeq2::plotPCA(rld, intgroup=c("cond"), returnData = TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
