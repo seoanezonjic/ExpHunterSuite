@@ -140,9 +140,9 @@ write_clusters_to_enrichment <- function(
   enrichments_ORA_merged=NULL,
   task_size = 1,
   workers = 1,
-  template_folder = template_folder,
+  template_folder = file.path(find.package('ExpHunterSuite'), 'templates'),
   top_categories = 50,
-  group_results = opt$group_results,
+  group_results = FALSE,
   n_category = 30,
   sim_thr = 0.7, 
   summary_common_name = "ancestor", 
@@ -209,6 +209,7 @@ write_clusters_to_enrichment <- function(
 #' @param showCategories number of categories in the figures (per cluster) 
 #' @param group_results experimental - whether to group results in the emap plot
 #'  and functional (f). Default = "fc"
+#' @param max_genes maximum number of genes to plot in cnet plot
 #' @return void
 #' @importFrom rmarkdown render
 #' @export
@@ -295,6 +296,7 @@ write_functional_report <- function(hunter_results,
         } else {
         cls  <- unique(DEGH_results$Cluster_ID)
         cls <- cls[cls != 0]
+        cls <- 1:3
         trait_module <- hunter_results$WGCNA_all$plot_objects$trait_and_module
         cl_eigvalues <- as.matrix(trait_module[,grepl("^ME",colnames(trait_module))])
         cl_eigvalues <- as.data.frame(as.table(cl_eigvalues),

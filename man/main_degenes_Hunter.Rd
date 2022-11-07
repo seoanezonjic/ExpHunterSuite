@@ -33,6 +33,7 @@ main_degenes_Hunter(
   WGCNA_minCoreKME = 0.5,
   WGCNA_minCoreKMESize = NULL,
   WGCNA_minKMEtoStay = 0.2,
+  WGCNA_corType = "pearson",
   multifactorial = ""
 )
 }
@@ -94,6 +95,8 @@ a gene as significant}
 \item{WGCNA_minCoreKMESize}{see WGCNA package}
 
 \item{WGCNA_minKMEtoStay}{see WGCNA package}
+
+\item{WGCNA_corType}{see WGCNA package}
 
 \item{multifactorial}{specify interaction/effect when multifactorial design}
 }

@@ -26,7 +26,7 @@ pval_thr_forFeatures <- 0.05
 ## **Profiles data**
 
 
-```{r "explore_genes", echo = FALSE, message = FALSE}
+```{r "explore_genes", echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
 # Load genes expressions
 #cl_i_genes <- unique(rownames(DEGH_results)[which(DEGH_results$Cluster_ID == {{cl}})])
 cl_i_genes <- unique(rownames(DEGH_results))
@@ -46,6 +46,17 @@ pp <- ggplot2::ggplot(mapping = ggplot2::aes(x = Sample)) +
 	  ggplot2::scale_y_continuous(sec.axis = ggplot2::sec_axis(~.*2-1, name = "Eigengene Value (broken blue line)")) +
       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 30, hjust = 1))
 plot(pp)
+
+# Tidy to expanded
+tidy_cl_exp <- scaled_counts_table[tgt_indx, ]
+max_cl_exp <- matrix(, length(unique(tidy_cl_exp$Gene)), length(unique(tidy_cl_exp$Sample)))
+colnames(max_cl_exp) <- unique(tidy_cl_exp$Sample)
+row.names(max_cl_exp) <- unique(tidy_cl_exp$Gene)
+max_cl_exp[as.matrix(tidy_cl_exp[, 1:2])] <- tidy_cl_exp[, "Count"]
+
+invisible(plot_in_div(gplots::heatmap.2(max_cl_exp, Colv=FALSE, col="bluered", 
+	  key.title="Expression", keysize=1.2, density.info="none", dendrogram ="row", trace="none"), 
+  fig_width = default_width))
 ```
 
 ```{r "wgcna_corr", echo = FALSE, results = 'asis'}

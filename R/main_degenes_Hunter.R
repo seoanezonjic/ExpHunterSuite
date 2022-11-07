@@ -32,6 +32,7 @@
 #' @param WGCNA_minCoreKME see WGCNA package
 #' @param WGCNA_minCoreKMESize see WGCNA package
 #' @param WGCNA_minKMEtoStay see WGCNA package
+#' @param WGCNA_corType see WGCNA package
 #' @param multifactorial specify interaction/effect when multifactorial design
 #' @return expression analysis result object with studies performed
 #' @keywords method
@@ -207,6 +208,7 @@ main_degenes_Hunter <- function(
     #################################################################
     ##                    BUILD MAIN RESULT TABLE                  ##
     #################################################################
+
     DE_all_genes <- unite_DEG_pack_results(exp_results, p_val_cutoff, 
                                            lfc, minpack_common)
     
