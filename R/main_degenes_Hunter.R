@@ -211,7 +211,11 @@ main_degenes_Hunter <- function(
 
     DE_all_genes <- unite_DEG_pack_results(exp_results, p_val_cutoff, 
                                            lfc, minpack_common)
-    
+    mean_cpm <- rowMeans(raw_filter)
+    DE_all_genes <- merge(DE_all_genes, mean_cpm, by=0, sort=FALSE)
+    names(DE_all_genes)[names(DE_all_genes) == "y"] <- "mean_expression_cpm"
+    DE_all_genes <- transform(DE_all_genes, row.names=Row.names, Row.names=NULL)
+
     if(grepl("W", modules)) { # Check WGCNA was run and returned proper results
       DE_all_genes <- merge(by.x=0, by.y="ENSEMBL_ID", x= DE_all_genes, 
           y =combinations_WGCNA[['WGCNA_all']][['gene_cluster_info']])
@@ -221,7 +225,8 @@ main_degenes_Hunter <- function(
 
     correlation_metrics <- NULL
     if(grepl("P", modules)) { # CASE P: PCIT, TODO: RESTORE FUNCTION, PEDRO 
-      # TODO : This is not working, variables "DESeq2_counts" are not being generated inside this function
+      # TODO : This is not working, variables "DESeq2_counts" 
+      # are not being generated inside this function
       all_data_normalized <- exp_results[['all_data_normalized']]$DESeq2
       raw <- raw[c(index_control_cols,index_treatmn_cols)]
       correlation_metrics <- analysis_diff_correlation(
@@ -239,8 +244,7 @@ main_degenes_Hunter <- function(
          results_diffcoexp$DCGs$Gene[results_diffcoexp$DCGs$q < 1]
       DE_all_genes$DCL <- aux %in% results_diffcoexp$DCLs$Gene.1 | 
          aux %in% results_diffcoexp$DCLs$Gene.2
-    }
-    
+    }    
     # Add the filtered genes back
     DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
 

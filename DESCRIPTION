@@ -106,5 +106,6 @@ Imports:
     Matrix,
     fastcluster,
     DOSE,
-    heatmaply
+    heatmaply,
+    EnhancedVolcano   
 Config/testthat/edition: 3
