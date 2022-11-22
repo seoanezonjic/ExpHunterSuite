@@ -296,7 +296,6 @@ write_functional_report <- function(hunter_results,
         } else {
         cls  <- unique(DEGH_results$Cluster_ID)
         cls <- cls[cls != 0]
-        cls <- 1:3
         trait_module <- hunter_results$WGCNA_all$plot_objects$trait_and_module
         cl_eigvalues <- as.matrix(trait_module[,grepl("^ME",colnames(trait_module))])
         cl_eigvalues <- as.data.frame(as.table(cl_eigvalues),
