@@ -27,7 +27,8 @@ main_functional_hunter(
   simplify = FALSE,
   top_categories = 50,
   sim_thr = NULL,
-  summary_common_name = "ancestor"
+  summary_common_name = "ancestor",
+  clusters_flag = FALSE
 )
 }
 \arguments{
@@ -80,6 +81,8 @@ Default: 1}
 \item{sim_thr}{value to use when combining similar categories in summary mode}
 
 \item{summary_common_name}{'significant' to use the most significant term to label each summarized group}
+
+\item{clusters_flag}{execute clusters enrichments}
 }
 \value{
 functional result object with enrichments performed

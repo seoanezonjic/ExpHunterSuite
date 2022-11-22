@@ -111,7 +111,12 @@ coldata_df <- data.frame(cond = design_vector,
                            row.names = colnames(raw_filter), stringsAsFactors=TRUE)
 
 dds <- DESeq2::DESeqDataSetFromMatrix(countData = raw_filter, colData = coldata_df, design = ~ cond)
-rld <- DESeq2::rlog(dds, blind=FALSE)
+
+if(nrow(raw_filter) < 2000) {
+  rld <- DESeq2::rlog(dds, blind=TRUE)
+} else {
+	rld <- DESeq2::vst(dds)
+}
 
 pcaData <- DESeq2::plotPCA(rld, intgroup=c("cond"), returnData = TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
@@ -326,6 +331,42 @@ p_seguros_Int <- ggplot2::ggplot(df_melted_FDR, ggplot2::aes(x = package_name, y
 plot(p_seguros_Int)
 }
 ```
+
+### **FDR Volcano Plot showing log 2 fold change vs. FDR
+The red horizontal line represents the chosen FDR threshold of `opt$p_val_cutoff`. The black lines represent
+other values.
+
+```{r FDR_volcano, echo = FALSE, warning=FALSE}
+
+evp <- EnhancedVolcano::EnhancedVolcano(DE_all_genes, 
+	lab=rownames(DE_all_genes),  
+	x="mean_logFCs", 
+	y="combined_FDR",     
+	boxedLabels = TRUE,     
+	drawConnectors = TRUE,     
+	pCutoff = opt$p_val_cutoff,     
+	FCcutoff = opt$lfc,  
+	cutoffLineType = 3,
+  ylab = bquote(~-Log[10] ~ italic(FDR)),
+  title = NULL,
+  subtitle = NULL,
+  legendLabels = c("NS", expression(Log[2] ~ FC), "FDR", expression(FDR ~ and
+         ~ log[2] ~ FC)),
+  caption=NULL,
+  legendPosition = 'right',
+) 
+
+fc_thresholds <- c(0.01, 0.05,0.1, 0.2)
+all_thresholds <- unique(c(opt$p_val_cutoff, fc_thresholds))
+mean_wt = data.frame(FDR = all_thresholds, nlFDR = -log10(all_thresholds))
+
+evp <- evp +
+ggplot2::geom_hline(data = mean_wt, ggplot2::aes(yintercept = nlFDR, linetype=factor(FDR)) , color = c("red", rep("black", times=nrow(mean_wt)-1)))
+plot(evp)
+
+```
+
+
 
 The complete results of the DEgenes Hunter differential expression analysis can be found in the "hunter\_results\_table.txt" file in the Common_results folder
 

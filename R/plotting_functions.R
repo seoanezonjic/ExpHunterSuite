@@ -145,6 +145,18 @@ get_genes <- function(enrich_obj, showCategory = 30){
   return(unique(genes))
 }
 
+force_max_genes_enrobj <- function(enrich_obj, maxGenes = 200, showCategory = 30) {
+  plot_df <- get_plot_df(enrich_obj, showCategory)
+  for(i in seq_len(nrow(plot_df))) {
+    sub_df <- plot_df[1:i,]
+    unique_genes <- unique(sub_df$Gene)
+    if(length(unique_genes) == maxGenes) {
+      cat_ids <- plot_df[1:i, "categoryID"]
+      return(enrich_obj[enrich_obj$Description %in% cat_ids, asis=TRUE])
+    }
+  }
+}
+
 calc_width_clusters <- function(elements, multiplier = 0.3){
  width <- elements * multiplier
  return(width)

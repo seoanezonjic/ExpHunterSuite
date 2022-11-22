@@ -58,7 +58,7 @@ option_list <- list(
     default="gKR",
     help=paste0("Functional annotation database and enrichment method(s) to",
         " use (topGO: G = GO | clusterProfiler: K = KEGG, g = GO, R = ",
-        "Reactome). [Default=%default]")),
+        "Reactome). D = Disease Ontology (DO), d = DGN. [Default=%default]")),
   optparse::make_option(c("-k", "--kegg_data_file"), ,type = "character", default=NULL,
     help=paste0("KEGG database file. Can download with download_latest_kegg_db().",
         "If not required but not provided, it will be downloaded to working directory")), 
@@ -106,7 +106,9 @@ option_list <- list(
   optparse::make_option("--simplify", type="logical", default=FALSE, 
     action = "store_true", help="Apply simplify function from cluster profiler to enrichment."),
   optparse::make_option("--showCategories", type="integer", default=30, 
-    help="Number of top categories to show on clusterProfiler dotplot and emaplot"),
+    help="Number of top categories to show on clusterProfiler dotplot, cnet and emaplot"),
+  optparse::make_option("--max_genes_plot", type="integer", default=200, 
+    help="Number of genes to show on clusterProfiler cnet"),
   optparse::make_option(c("-T", "--top_categories"), type="integer", default=50,
     help="Number of top categories for each cluster. Default=%default"),
   optparse::make_option(c("-S", "--sim_thr"), type="double", default=NULL,
@@ -168,6 +170,8 @@ if(grepl("G", opt$func_annot_db) || grepl("g", opt$func_annot_db)) {
     if(grepl("C", opt$GO_subont)) enrich_dbs = c(enrich_dbs, "CC")
     if(grepl("M", opt$GO_subont)) enrich_dbs = c(enrich_dbs, "MF")
 }
+if(grepl("D", opt$func_annot_db)) enrich_dbs = c(enrich_dbs, "DO")
+if(grepl("d", opt$func_annot_db)) enrich_dbs = c(enrich_dbs, "DGN")
 enrich_methods <- vector()
 if(grepl("G", opt$func_annot_db)) enrich_methods <- c(enrich_methods, "topGO")
 if(grepl("o", opt$analysis_type)) enrich_methods <- c(enrich_methods, "ORA")
@@ -218,6 +222,7 @@ write_functional_report(hunter_results = hunter_results,
                             task_size = opt$task_size,
                             report = opt$report_modes,
                             showCategories = opt$showCategories,
+                            max_genes = opt$max_genes_plot,
                             group_results = opt$group_results
 )
 

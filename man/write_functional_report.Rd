@@ -16,7 +16,8 @@ write_functional_report(
   task_size = 1,
   report = "fc",
   showCategories = 30,
-  group_results = FALSE
+  group_results = FALSE,
+  max_genes = 200
 )
 }
 \arguments{
@@ -44,6 +45,8 @@ Use see get_organism_table()}
 
 \item{group_results}{experimental - whether to group results in the emap plot
 and functional (f). Default = "fc"}
+
+\item{max_genes}{maximum number of genes to plot in cnet plot}
 }
 \value{
 void
