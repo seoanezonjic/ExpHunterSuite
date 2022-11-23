@@ -119,7 +119,11 @@ option_list <- list(
         help = 'Compute predition scores comparison. Default=%default'),
     optparse::make_option(c("--mapping_output"), type="character", 
         default="Target_log2FC",
-        help = "Select the output column to show in functional report: Predicted_DB_count, Validated_DB_count, Correlation, Target_log2FC, miRNA_log2FC. Default=%default")
+        help = "Select the output column to show in functional report: Predicted_DB_count, Validated_DB_count, Correlation, Target_log2FC, miRNA_log2FC. Default=%default"),
+    optparse::make_option(c("--output_pairs"), type="character", 
+        default=NA,
+        help = "Select Filters for output pairs. validated to write only validated pairs and multimir to write pairs ")
+
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
@@ -162,7 +166,8 @@ miRNA_cor_results <- c(miRNA_cor_results,
          p_val_cutoff =opt$p_val_cutoff,
          corr_cutoff =opt$corr_cutoff,
          sample_proportion =opt$sample_proportion,
-         mapping_output = opt$mapping_output))
+         mapping_output = opt$mapping_output,
+         output_pairs = opt$output_pairs))
 
 
 do.call("write_miRNA_cor_report", miRNA_cor_results)
