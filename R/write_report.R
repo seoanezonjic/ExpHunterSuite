@@ -353,7 +353,8 @@ RNAseq,
 sig_pairs,
 raw_databases_scores,
 p_fisher,
-mapping_output           
+mapping_output,
+output_pairs           
 ){
  "%>%" <- magrittr::"%>%"
 

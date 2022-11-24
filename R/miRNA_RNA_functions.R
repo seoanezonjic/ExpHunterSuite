@@ -133,7 +133,7 @@ parse_strategies <- function(strategies){
 load_selected_targets <- function(selected_targets_file){
     selected_targets <- NULL
     if (!is.null(selected_targets_file))
-    selected_targets <- utils::read.table(selected_targets_file)[,1] 
+        selected_targets <- utils::read.table(selected_targets_file)[,1] 
     return(selected_targets)
 }
 
@@ -159,19 +159,24 @@ corr_coef,
 compare_pred_scores = FALSE
 ){
  ######### PREPARE PAIRS SCAFOLD
- if ( length(selected_targets) != 0 ){
-    if (is.null(RNAseq)) {
+ if (is.null(RNAseq)) {
+    if(!is.null(selected_targets)){
         strat_names <- c("selected_targets_RNA_vs_miRNA_DEMs")
-message(paste0("RNAseq folder has been not set, only ",
-    "selected_targets_RNA_vs_miRNA_DEMs strategy will be performed"))
-    } else{
-        strat_names <- c(strat_names, "selected_targets_RNA_vs_miRNA_DEMs")
+        message(paste0("RNAseq folder has been not set, only ",
+ "selected_targets_RNA_vs_miRNA_DEMs strategy will be performed"))
+    } else {
+        strat_names <- c("all_posible_targets_RNA_vs_miRNA_DEMs")
+        message(paste0("RNAseq folder has been not set, only ",
+        " strategy will be performed"))
+        selected_targets <- unique(all_pairs$RNAseq)
     }
+ } else {
+    strat_names <- c(strat_names, "selected_targets_RNA_vs_miRNA_DEMs")
  }
-
  strategies <- list()
  tag_filter <- unlist(strsplit(tag_filter, ","))
- 
+ if (length(tag_filter) == 1)
+ tag_filter <- c(tag_filter,tag_filter)
  ###### FILTER DGH DATA
  RNAseq <- filter_DEGH_data(RNAseq, MM_cutoff, tag_filter[1])
  miRNAseq <- filter_DEGH_data(miRNAseq, MM_cutoff, tag_filter[2])
@@ -307,11 +312,10 @@ perform_correlations <- function(
        all_pairs <- permute_pairs(DEGs[["pos"]], DEMs[["pos"]], corr_type = corr_type)
        all_pairs <- rbind(all_pairs, permute_pairs(DEGs[["neg"]], DEMs[["neg"]], corr_type = corr_type))
     
-    } else if ( strategy == "selected_targets_RNA_vs_miRNA_DEMs" ) {
+    } else if ( strategy %in% c("selected_targets_RNA_vs_miRNA_DEMs","all_posible_targets_RNA_vs_miRNA_DEMs")) {
         DEMS <- miRNAseq$DH_results[miRNAseq$DH_results$genes_tag %in% 
-               c("PREVALENT_DEG", "POSSIBLE_DEG"), "gene_name"]
+               c("PREVALENT_DEG", "POSSIBLE_DEG"), "gene_name"]    
         all_pairs <- permute_pairs(selected_targets, DEMS, corr_type = corr_type)
-
     } else {
         strat_description <- unlist(strsplit(strategy, "_RNA_vs_miRNA_"))
         RNA_profiles <- as.matrix(RNAseq[[strat_description[1]]])
@@ -338,6 +342,7 @@ perform_correlations <- function(
         }
     }
     all_pairs <- data.table::as.data.table(all_pairs)
+
 
     if(corr_type == "higher"){
             all_pairs$correlated_pairs <- all_pairs$correlation >= cor_cutoff & 
@@ -607,9 +612,15 @@ multimir,
 selected_targets,
 organism){
  
- if (length(RNAseq) == 0 ) {
-    putative_targets = selected_targets
- }  else {
+ 
+
+ if (is.null(RNAseq)){
+    if (!is.null(selected_targets)) {
+        putative_targets <- selected_targets
+    } else {
+        putative_targets <- unique(multimir[multimir$mature_mirna_acc  %in% miRNAseq$DH_results$gene_name, "target_ensembl"])[[1]]
+    }
+ } else {
     putative_targets <- colnames(RNAseq$normalized_counts)
  }
  all_pairs <- expand.grid(
@@ -664,7 +675,6 @@ translate_ensembl){
 parse_correlations <- function(strategies){
  all_cor_dist <- strategies
  all_cor_dist["DEGs_DEMs_permutated"] <- NULL
- # save(all_cor_dist, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/analysis/target_wf/ctrl_vs_mut/coRmiT.R_0005/test.RData")
  all_cor_dist <- lapply(all_cor_dist, function(strategy_data){
     dist <- strategy_data[,c("correlation", "pval", "correlated_pairs")]
     return(dist)

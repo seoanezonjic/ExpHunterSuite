@@ -4,7 +4,7 @@
 options(scipen = 0.001, 
         digits = 3)
 
-if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
+if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){ 
 
     full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  
                    error=function(e) # works when using R CMD
@@ -121,7 +121,7 @@ option_list <- list(
         default="Target_log2FC",
         help = "Select the output column to show in functional report: Predicted_DB_count, Validated_DB_count, Correlation, Target_log2FC, miRNA_log2FC. Default=%default"),
     optparse::make_option(c("--output_pairs"), type="character", 
-        default=NA,
+        default="All",
         help = "Select Filters for output pairs. validated to write only validated pairs and multimir to write pairs ")
 
 )
