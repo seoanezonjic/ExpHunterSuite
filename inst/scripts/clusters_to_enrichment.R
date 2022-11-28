@@ -75,6 +75,8 @@ option_list <- list(
                         help="3 columns tabular file- Cluster - InputGeneID - NumericAttribute. Header must be indicated as cluster - geneid - [numeric_atribute]"),
   optparse::make_option(c("-G", "--group_results"), type="logical", default=FALSE, 
                         action = "store_true", help="Functions are grouped in most frequent words in emaplots."),
+  optparse::make_option("--max_genes_plot", type="integer", default=200, 
+                        help="Number of genes to show on clusterProfiler cnet"),
   optparse::make_option(c("-o", "--output_path"), type="character", default=NA,
                         help="Define the output path.")
 )
@@ -82,7 +84,8 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 ##################################### INITIALIZE ##
 library(clusterProfiler)
-if (is.na(opt$output_path)){
+output_path <- opt$output_path
+if (is.na(output_path)){
   output_path <- file.path(getwd(), "functional_enrichment")
 }
 dir.create(output_path)
@@ -150,5 +153,6 @@ write_clusters_to_enrichment(
   summary_common_name = opt$summary_common_name, 
   pvalcutoff = opt$pvalcutoff,
   gene_attributes = ce_list[["gene_attributes"]],
-  gene_attribute_name = ce_list[["gene_attribute_name"]]
+  gene_attribute_name = ce_list[["gene_attribute_name"]], 
+  max_genes = opt$max_genes_plot
 )

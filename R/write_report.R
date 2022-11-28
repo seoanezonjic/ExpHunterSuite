@@ -148,7 +148,8 @@ write_clusters_to_enrichment <- function(
   summary_common_name = "ancestor", 
   pvalcutoff = 0.1,
   gene_attributes=NULL,
-  gene_attribute_name=NULL) {
+  gene_attribute_name=NULL, 
+  max_genes = 200) {
 
   if (grepl("R", mode)){
       enrichments_for_reports <- parse_results_for_report(enrichments_ORA)  
@@ -393,7 +394,7 @@ parse_strat_text <- function(strategies){
 
 
 write_func_cluster_report <- function(enrichments_for_reports, output_path, 
-  gene_attributes, workers, task_size, template_folder, gene_attribute_name="fold change"){
+  gene_attributes, workers, task_size, template_folder, gene_attribute_name="fold change", max_genes = 200){
   clean_tmpfiles_mod <- function() {
     message("Calling clean_tmpfiles_mod()")
   }
