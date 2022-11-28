@@ -168,7 +168,6 @@ DT::datatable(all_miRNA_mod_summary, filter = 'top', rownames = FALSE, extension
 
 ```{r "{{method_name}}_dem_table_config", echo = FALSE, message=FALSE, warning=FALSE}
 
-utils::write.table(strat_data_table2, file = file.path(outdir, "target_results_table.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
 library(plyr)
 
 if (output_pairs == "validated"){
@@ -178,6 +177,7 @@ if (output_pairs == "validated"){
 } 
 
 
+utils::write.table(strat_data_table2, file = file.path(outdir, "target_results_table.txt"), quote=FALSE, col.names=TRUE, row.names = FALSE, sep="\t")
   
 
 data_for_clusters_to_enrichments <-  plyr::ddply(strat_data_table2, .(miRNA), summarise, genes = list(Target_ID))
