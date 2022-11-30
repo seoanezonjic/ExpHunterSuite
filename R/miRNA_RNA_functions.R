@@ -170,9 +170,7 @@ compare_pred_scores = FALSE
         " strategy will be performed"))
         selected_targets <- unique(all_pairs$RNAseq)
     }
- } else {
-    strat_names <- c(strat_names, "selected_targets_RNA_vs_miRNA_DEMs")
- }
+} 
  strategies <- list()
  tag_filter <- unlist(strsplit(tag_filter, ","))
  if (length(tag_filter) == 1)
