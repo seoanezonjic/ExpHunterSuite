@@ -55,8 +55,7 @@ row.names(max_cl_exp) <- unique(tidy_cl_exp$Gene)
 max_cl_exp[as.matrix(tidy_cl_exp[, 1:2])] <- tidy_cl_exp[, "Count"]
 
 invisible(plot_in_div(gplots::heatmap.2(max_cl_exp, Colv=FALSE, col="bluered", 
-	  key.title="Expression", keysize=1.2, density.info="none", dendrogram ="row", trace="none"), 
-  fig_width = default_width))
+	  key.title="Expression", keysize=1.2, density.info="none", dendrogram ="row", trace="none")))
 ```
 
 ```{r "wgcna_corr", echo = FALSE, results = 'asis'}
