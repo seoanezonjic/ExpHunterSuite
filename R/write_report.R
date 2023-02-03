@@ -147,7 +147,7 @@ write_clusters_to_enrichment <- function(
   n_category = 30,
   sim_thr = 0.7, 
   summary_common_name = "ancestor", 
-  pvalcutoff = 0.1,
+  pvalcutoff = 0.1, 
   gene_attributes=NULL,
   gene_attribute_name=NULL, 
   max_genes = 200) {
@@ -291,6 +291,21 @@ write_functional_report <- function(hunter_results,
         write_summarize_heatmaps(func_results$summarized_ora, results_path)
     }
 
+    if(grepl("a", report)){
+
+         filter_compareCluster <- function(compareCluster, clusters_to_fil){
+             fil_obj <- compareCluster
+             fil_obj@compareClusterResult <- fil_obj@compareClusterResult[
+                                     fil_obj@compareClusterResult$Cluster %in% clusters_to_fil,]
+             return(fil_obj)
+         }
+
+         lapply(func_results$WGCNA_ORA, function(funsys){
+             fil_funsys <- filter_compareCluster(funsys, fil_clusters)
+         })
+         write_merged_cluster_report(enrichments_ORA, results_path, template_folder,
+             sample_classes, DEGH_results, showCategories, group_results)
+    }
     if(grepl("i", report)) {
         message("\tRendering individual cluster reports")
         if(is.null(enrichments_ORA)) {
@@ -351,6 +366,9 @@ sample_proportion,
 selected_predicted_databases,
 all_cor_dist,
 miRNAseq, 
+miRNA_cont_tables,
+eval_method,
+miRNA_cont_tables_adj,
 RNAseq,
 sig_pairs,
 raw_databases_scores,

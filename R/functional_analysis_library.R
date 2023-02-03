@@ -1115,7 +1115,7 @@ parse_results_for_report <- function(enrichments, simplify_results = FALSE){
           enr <- clusterProfiler::simplify(enr) 
       }   
       if (length(enr$Description) > 2 ) 
-      enr <- catched_pairwise_termsim(enr, 200)
+      enr <- catched_pairwise_termsim(enr, length(enr$Description))
       enrichments_for_reports[[cluster]][[funsys]] <- enr 
     }
   }
