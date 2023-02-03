@@ -33,11 +33,11 @@ cat("\n\n**Enrich Map plot**\n\n",
 if (nrow(as.data.frame(enrich_obj)) > 2) {
 	if(group_results == TRUE)
 	  pp <- enrichplot::emapplot(enrich_obj, showCategory=showCategories, pie="Count", layout = "nicely", 
-                  shadowtext = FALSE, node_label = "group", group_category = TRUE, 
+                  shadowtext = FALSE, node_label = "group", min_edge = 0.0000000000000001, group_category = TRUE, 
                   nCluster = min(floor(nrow(enrich_obj)/7), 20), nWords = 6, repel = TRUE)
 	else 
 	  pp <- enrichplot::emapplot(enrich_obj, showCategory= showCategories, pie="Count", layout = "nicely", 
-                  shadowtext = FALSE, repel = TRUE)
+                  shadowtext = FALSE, repel = TRUE, min_edge = 0.0000000000000001)
 	invisible(plot_in_div(pp, fig_width = calc_width(enrich_obj)))
 
 } else {

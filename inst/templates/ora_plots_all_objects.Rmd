@@ -30,7 +30,7 @@ cat("\n\n**Gene-Concept Network**\n\n",
 if(length(get_genes(enrich_obj)) <= max_genes){
 	go_pp <- enrichplot::cnetplot(enrich_obj, showCategory=n_category, foldChange=fc_vector) +
 	 		 { if(!is.null(fc_vector)) ggplot2::scale_color_gradient2(name = gene_attribute_name, low = "#0000BF", high = "#bf0000", na.value = "#50EA55") }
-	invisible(plot_in_div(go_pp, fig_width = default_width))
+	invisible(plot_in_div(go_pp, fig_width = 15, fig_height = 15))
 }else{
 	cat("\n\nMore than", max_genes, "genes were found among the enriched genes. Only the first", max_genes, "genes belonging to the most significant categories are shown plotted. \n\n")
 	enrich_obj_maxed <- force_max_genes_enrobj(enrich_obj, maxGenes=max_genes, showCategory=n_category)
@@ -46,7 +46,7 @@ cat("\n\n**Enrich Map plot**\n\n",
 )
 
 if (nrow(as.data.frame(enrich_obj)) > 2) {
-	go_pp <- enrichplot::emapplot(enrich_obj, showCategory=n_category)
+	go_pp <- enrichplot::emapplot(enrich_obj, showCategory=n_category,  min_edge = 0.0000000000000001)
 	invisible(plot_in_div(go_pp, fig_width = default_width))
 } else {
 	cat("\nThis graph can not be plotted because fewer than two functional categories were enriched\n")
