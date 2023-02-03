@@ -127,6 +127,7 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path, template_
 #' @param pvalcutoff used to select terms for summarizing
 #' @param gene_attributes named list of attributes e.g. FCs for emap plot coloured nodes (genes)
 #' @param gene_attribute_name name for the legend in the emap plot for the nodes (genes)
+#' @param max_genes maximum number of genes to plot in cnet plot
 #' @return void
 #' @importFrom enrichplot emapplot
 #' @importFrom enrichplot dotplot

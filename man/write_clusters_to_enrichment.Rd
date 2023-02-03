@@ -21,7 +21,8 @@ write_clusters_to_enrichment(
   summary_common_name = "ancestor",
   pvalcutoff = 0.1,
   gene_attributes = NULL,
-  gene_attribute_name = NULL
+  gene_attribute_name = NULL,
+  max_genes = 200
 )
 }
 \arguments{
@@ -57,6 +58,8 @@ write_clusters_to_enrichment(
 \item{gene_attributes}{named list of attributes e.g. FCs for emap plot coloured nodes (genes)}
 
 \item{gene_attribute_name}{name for the legend in the emap plot for the nodes (genes)}
+
+\item{max_genes}{maximum number of genes to plot in cnet plot}
 }
 \value{
 void

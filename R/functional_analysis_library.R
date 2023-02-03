@@ -496,7 +496,7 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL,
   names(enrichments_ORA) <- all_funsys
   for(funsys in all_funsys) {
     specific_params <- NULL
-    if (funsys %in% c("CC","BP","MF")){
+    if (funsys %in% c("CC","BP","MF","ALL")){
       enrf <- prepare_enrichment_GO(enrichment_type="ora", subont = funsys, 
         org_db = org_db)
       specific_params <- list(OrgDb = org_db, ont = funsys)

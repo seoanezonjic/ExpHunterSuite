@@ -508,7 +508,6 @@ corM2igraph <- function(corM, cor_abs_thr = 0.75){
 }
     
 #' @importFrom stats cor
-#' @importFrom CeTF PCIT
 analysis_diff_correlation <- function(all_genes_stats, data, control, treat, PCIT_filter=FALSE){
     # DE and PIF calculation, see "Microarray data processing, normalization and differential expression" in https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
     # DE => Diff exp, PIF =>Phenotypic Impact Factor
@@ -534,8 +533,9 @@ analysis_diff_correlation <- function(all_genes_stats, data, control, treat, PCI
         control <- stats::cor(t(control)) # Compute correlations
         treat <- stats::cor(t(treat)) # Compute correlations
     }else{
-        control <- CeTF::PCIT(control, tolType = "mean")$adj_sig
-        treat <- CeTF::PCIT(treat, tolType = "mean")$adj_sig
+        # JRP Removed CeTF as it depended on GenomeTools which has been deprecated
+        # control <- CeTF::PCIT(control, tolType = "mean")$adj_sig
+        # treat <- CeTF::PCIT(treat, tolType = "mean")$adj_sig
     }
 
     #diferential_wiring: https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1000382
