@@ -383,3 +383,40 @@ ht2logFCPlot <- function(ht,
     ggplot2::geom_hline(yintercept = 0,linetype="dashed", color = "#636363")
   return(pp)
 }
+
+
+#' @importFrom ggplot2 aes_string aes ggplot geom_point scale_colour_gradientn guide_colorbar guides
+#' @importFrom ggrepel geom_text_repel 
+plot_odds_ratio <- function(cont_tables, OR_col = "Odds_ratio", pval_col = "Pvalue", y_col = "strategy", text_col = "TP") {
+  cont_tables <- as.data.frame(cont_tables)
+  idx <- order(cont_tables[,OR_col], decreasing = TRUE)
+  cont_tables[,y_col] <- factor(cont_tables[,y_col],
+                            levels=rev(unique(cont_tables[,y_col][idx])))
+ 
+
+  OR <- ggplot2::ggplot(cont_tables, ggplot2::aes_string(x = OR_col, y = y_col)) +
+  ggplot2::geom_point(ggplot2::aes_string(color = pval_col, size = "TP")) + 
+  ggrepel::geom_text_repel(ggplot2::aes(label = as.character(cont_tables[,text_col]))) +
+  ggplot2::scale_colour_gradientn(
+    colours = c("red", "white", "blue"),
+    values = c(0, 0.05, 1),
+    name = pval_col, 
+    guide=ggplot2::guide_colorbar(reverse=TRUE))+
+  ggplot2::guides(size = FALSE)
+  return(OR)
+}
+
+get_pie_clusters <- function(enrich_DF, enrichplot){
+  showed_categories <- enrichplot$data$name
+  all_categories <- enrich_DF@compareClusterResult$Description
+  plotted_clusters <- enrich_DF@compareClusterResult[all_categories %in% showed_categories,"Cluster"]
+  return(unique(plotted_clusters))
+}
+
+#' @importFrom enrichplot cnetplot
+clnetplot <- function(compareCluster, ...) {
+  mod_enrich_obj <- compareCluster
+  mod_enrich_obj@compareClusterResult$geneID <- as.character(mod_enrich_obj@compareClusterResult$Cluster)
+  clnet_plot <- enrichplot::cnetplot(mod_enrich_obj, ...) 
+  return(clnet_plot)
+}
