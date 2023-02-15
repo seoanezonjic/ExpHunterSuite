@@ -1,6 +1,6 @@
 Package: ExpHunterSuite
 Title: Package For The Comprehensive Analysis Of Transcriptomic Data
-Version: 1.7.0
+Version: 1.7.1
 Authors@R: 
     c(person(given = "James",
            family = "Perkins",
