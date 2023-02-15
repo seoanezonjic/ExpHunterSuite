@@ -106,5 +106,6 @@ Imports:
     fastcluster,
     DOSE,
     heatmaply,
-    EnhancedVolcano   
+    EnhancedVolcano, 
+    ggrepel
 Config/testthat/edition: 3
