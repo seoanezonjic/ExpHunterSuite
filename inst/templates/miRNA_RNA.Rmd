@@ -41,6 +41,15 @@ Correlated miRNA-mRNA pairs are known **significant pairs** representing putativ
 Results are then compared with multiMiR databases.
 
 * Brief description of strategies used: 
+
+```{r config_evaluation, echo = FALSE, warning = FALSE, result = "asis"}
+  specific_evaluation <- eval_method == "specific"
+```
+
+```{r check_sig_specific, echo =FALSE, warning=FALSE, result = "asis", eval = (eval_method == "specific")}
+  sig_strategies <- unique(cont_tables$strategy[!is.na(cont_tables$coverage)])
+```
+
 ```{r print_info, echo = FALSE, warning = FALSE, results = "asis"}
   
   if (ncol(score_comp) == 0 || length(score_comp == 0))
@@ -206,6 +215,10 @@ pp <- ggplot2::ggplot(filters_summary, ggplot2::aes(y = pairs, x = strategy, fil
 pp
 ```
 
+
+```{r fisher, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = !specific_evaluation}
+cat("
+
 ### **Significance of the overlap**
 
 Significant and non-significant pairs were compared in terms of overlap with databases using one-tailed Fisher exact test. 
@@ -214,8 +227,8 @@ Pairs found in the validation databases (**validated**) and validated pairs that
 P-values are shown for the different strategies and for the different group of databases. 
 -log10(P-values) are shown. The -log10(0.05) threshold is represented as a dashed grey line. 
 
+")
 
-```{r fisher, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
     fisher_test_raw <- cont_tables[c("strategy", "Pvalue", "db_group")]
     comb_pred_pval <- p_fisher[p_fisher$database == "comb_pval",]
 
@@ -243,15 +256,17 @@ P-values are shown for the different strategies and for the different group of d
 
 ```
 
+```{r fisher_scatter, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = !specific_evaluation}
+
+cat("
+
 #### **Comparison of predicted and validated groups**
 
 This plot compares the p-values of the Fisher exact tests performed for each strategy for the **predicted** and **validated** pairs. 
 -Log10(p-value) is shown on each axis.
 -Log10(0.05) is represented as a black dashed line.
 
-
-```{r fisher_scatter, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-
+")
    fisher_test_scatter <- fisher_test_table[,c("strategy","db_group","LogPval")]
    fisher_test_scatter <- tidyr::spread(fisher_test_scatter, db_group, LogPval)
    
@@ -264,9 +279,13 @@ This plot compares the p-values of the Fisher exact tests performed for each str
 
 ```
 
+
+```{r fisher_table, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = !specific_evaluation}
+cat("
+
 #### **Fisher exact test p-values table**
 
-```{r fisher_table, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+")
   fisher_test_raw <- tidyr::spread(fisher_test_raw, db_group, Pvalue)
   DT::datatable(fisher_test_raw, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
           options = list(
@@ -290,27 +309,47 @@ The X-axis represents the OR and the dot size the number of pairs associated wit
 
 ```{r dotplot, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 
-cont_tables <- cont_tables[! cont_tables$strategy %in% unsig_strategies,]
-splitted_c_tables <- split(cont_tables, cont_tables$db_group)
+significant_ct <- cont_tables[!cont_tables$strategy %in% unsig_strategies,]
+splitted_c_tables <- split(significant_ct, significant_ct$db_group)
+
 for (db_group in c("predicted", "validated")){
-  cat(paste0("#### Comparison with ", stringr::str_to_title(db_group), " pairs\n\n"))
   filtered_cont <- splitted_c_tables[[db_group]]
-  idx <- order(filtered_cont$Odds_ratio, decreasing = TRUE)
-  filtered_cont$strategy <- factor(filtered_cont$strategy,
-                            levels=rev(unique(filtered_cont$strategy[idx])))
 
-  pp <- ggplot2::ggplot(filtered_cont, ggplot2::aes(x = Odds_ratio, y = strategy)) +
-  ggplot2::geom_point(ggplot2::aes(color = Pvalue, size = TP)) + 
-  ggrepel::geom_text_repel(ggplot2::aes(label = as.character(TP))) +
-  ggplot2::scale_color_continuous(low="red", high="blue", name = "Pvalue", guide=ggplot2::guide_colorbar(reverse=TRUE))+
-  ggplot2::guides(size = FALSE)
+
   
-  plot(pp)
+  
+  
+  cat(paste0("\n\n#### Comparison with ", stringr::str_to_title(db_group), " pairs\n\n"))
+  
+
+  
+  overal_OR <- plot_odds_ratio(filtered_cont)
+  plot(overal_OR)
   cat("\n\n")
+  if (specific_evaluation) {
+     cat("\n\nmedian_OR: miRNAs were evaluated independently. OR and Fisher exact test P value was computed for every miRNA and here is represented the median of the OR for miRNA with a P value lower than 0.05.
+In that case Strategies without significant miRNAs were rejected.
+\n\n")
+
+     filtered_cont <- filtered_cont[!is.na(splitted_c_tables[[db_group]]$median_OR),]
+     if (nrow(filtered_cont) == 0 ) {
+       cat(paste0("\n\nAny miRNA overlapped with ", db_group," pairs databases. Plotting general stats.\n\n"))
+       next 
+     }
+  filtered_cont[,"Validated_pairs"] <- filtered_cont$TP
+  specific_OR <- ggplot2::ggplot(filtered_cont, ggplot2::aes(x = coverage, y = median_OR)) +
+  ggplot2::geom_point(ggplot2::aes(color = strategy, size = Validated_pairs), alpha = 0.3) + 
+  ggrepel::geom_text_repel(ggplot2::aes(label = coverage_text)) # +
+  # ggplot2::theme(legend.position="bottom") +
+  # ggplot2::guides(colour = guide_legend(nrow = 4))
+
+  plot(specific_OR)
+    cat("\n\n")
+
+    }
 }
-
-
 ```
+
 
 
 ```{r prec_rec, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = FALSE}
@@ -366,7 +405,10 @@ cat("
 
 ```
 
-### **Prediction scores for the significant pairs**
+
+```{r score_comp_pval, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = !is.null(score_comp)}
+cat("
+  ### **Prediction scores for the significant pairs**
 
 
 The pairs in the multiMiR prediction databases are assigned scores that represent confidence in the predicted miRNA-target interaction.
@@ -378,8 +420,6 @@ Lower p-values means that the significant pairs had higher scores in the databas
 The final column of the table shows the combined p-values for all databases, integrated using Fishers method.
 
 
-```{r score_comp_pval, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = !is.null(score_comp)}
-cat("
 
   #### **One-tailed T-test**
 
@@ -410,11 +450,12 @@ score_comp_pval <- reshape(score_comp[,c("strategy","database","p.value")], idva
 
 ```
 
-#### **Comparison of p-values obtained in boostrap T-test**
-
-This plot shows -log(p) values from the T-test and bootstrap T-test. Grey dotted line indicates -log10(0.05). **comb_pval** is the combination of all p-values using Fisher combined probability test.
 
 ```{r score_comp_pval_log, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = !is.null(score_comp)}
+cat("\n\n#### **Comparison of p-values obtained in boostrap T-test**
+
+This plot shows -log(p) values from the T-test and bootstrap T-test. Grey dotted line indicates -log10(0.05). **comb_pval** is the combination of all p-values using Fisher combined probability test.\n\n")
+
   log_score_comp <- score_comp[,c("strategy","database","log.boot.p.value")]
 # log_score_comp <- log_score_comp[!log_score_comp$strategy %in% unsig_strategies,]
     data.table::setnames(log_score_comp, "log.boot.p.value", "logPval")
@@ -467,7 +508,7 @@ P-values are shown for the different strategies and for the different databases 
 
 ```{r p_fisher_table, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
     p_fisher <- p_fisher[, c("database", "strategy", "Pvalue")]
-  p_fisher <- tidyr::spread(p_fisher, database, Pvalue)
+    p_fisher <- tidyr::spread(p_fisher, database, Pvalue)
     DT::datatable(p_fisher, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
             options = list(
               paging = TRUE,
