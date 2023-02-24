@@ -114,7 +114,6 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path, template_
 #' @param output_file output file name for heatmaps
 #' @param mode type of output to produce
 #' @param enrichments_ORA list of enrich results for all clusters
-#' @param enrichments_ORA_merged merged enrich results
 #' @param task_size number of elements per packages used
 #' @param workers (OPTIONAL) cores for parallel features
 #' @param template_folder (OPTIONAL) RMD templates folder
@@ -128,6 +127,8 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path, template_
 #' @param gene_attributes named list of attributes e.g. FCs for emap plot coloured nodes (genes)
 #' @param gene_attribute_name name for the legend in the emap plot for the nodes (genes)
 #' @param max_genes maximum number of genes to plot in cnet plot
+#' @param simplify Activate for process ClusterProfiler results with simplify function
+#' @param clean_parentals Activate to reduce significant terms in GO by removin the parentals 
 #' @return void
 #' @importFrom enrichplot emapplot
 #' @importFrom enrichplot dotplot
@@ -138,11 +139,10 @@ write_clusters_to_enrichment <- function(
   output_file="results",
   mode="PR",
   enrichments_ORA=NULL,
-  enrichments_ORA_merged=NULL,
   task_size = 1,
   workers = 1,
   template_folder = file.path(find.package('ExpHunterSuite'), 'templates'),
-  top_categories = 50,
+  top_categories = NULL,
   group_results = FALSE,
   n_category = 30,
   sim_thr = 0.7, 
@@ -150,7 +150,16 @@ write_clusters_to_enrichment <- function(
   pvalcutoff = 0.1, 
   gene_attributes=NULL,
   gene_attribute_name=NULL, 
-  max_genes = 200) {
+  max_genes = 200,
+  simplify = FALSE,
+  clean_parentals = FALSE) {
+
+  enrichments_ORA_merged <- process_cp_list(enrichments_ORA, simplify_results = simplify, 
+    clean_parentals = clean_parentals)
+ 
+  if(!is.null(top_categories))
+         enrichments_ORA_merged <- filter_top_categories(enrichments_ORA_merged, top_categories)
+
 
   if (grepl("R", mode)){
       enrichments_for_reports <- parse_results_for_report(enrichments_ORA)  
@@ -159,8 +168,7 @@ write_clusters_to_enrichment <- function(
         workers = workers, task_size = task_size, template_folder=template_folder, gene_attribute_name=gene_attribute_name)
   }
 
-  if (grepl("P", mode) || grepl("S", mode)) 
-    enrichments_ORA_merged <- filter_top_categories(enrichments_ORA_merged, top_categories)
+
 
   if (grepl("P", mode)) {
     for (funsys in names(enrichments_ORA_merged)){
