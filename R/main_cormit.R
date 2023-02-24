@@ -22,7 +22,8 @@ mc_cores = 1,
 tag_filter,
 corr_type,
 corr_coef,
-selected_targets_file, 
+selected_targets_file,
+eval_method = "aggregated",  
 template_folder = file.path(find.package('ExpHunterSuite'), "templates"),
 organism_table_path = file.path(find.package('ExpHunterSuite'), "inst", 
     "external_data", "organism_table.txt"),
@@ -89,27 +90,43 @@ compare_pred_scores = FALSE
 
  # Perform strategies
  miRNA_cor_results <- perform_all_strategies(strat_names = strat_names, 
-    RNAseq = RNAseq, miRNAseq = miRNAseq, corr_cutoff=  corr_cutoff, 
+    RNAseq = RNAseq, miRNAseq = miRNAseq, corr_cutoff =  corr_cutoff, 
     p_val_cutoff = p_val_cutoff, MM_cutoff = MM_cutoff,
     permutations = permutations, all_pairs = all_pairs, 
     selected_predicted_databases = selected_predicted_databases, 
     tag_filter = tag_filter, sample_proportion = sample_proportion, 
-    raw_databases_scores=raw_databases_scores, corr_type = corr_type, corr_coef = corr_coef,
-    selected_targets = selected_targets, compare_pred_scores = compare_pred_scores)
+    raw_databases_scores = raw_databases_scores, corr_type = corr_type, 
+    corr_coef = corr_coef, selected_targets = selected_targets, 
+    compare_pred_scores = compare_pred_scores, eval_method = eval_method)
 
  miRNA_cor_results$cont_tables <- v_get_stats(miRNA_cor_results$cont_tables)
-  
- miRNA_cor_results$filters_summary$type <- factor(
+ if (eval_method == "specific") {
+   miRNA_cor_results$miRNA_cont_tables <- 
+                              v_get_stats(miRNA_cor_results$miRNA_cont_tables, 
+                              selected_stats = c("v.fisher.test","odds_ratio"))
+   miRNA_cont_tables <- miRNA_cor_results$miRNA_cont_tables
+   integrated_stats <- filter_and_integrate_OR(miRNA_cont_tables,
+                                             p.adjust.method = "BH")
+   
+   integrated_OR <- integrated_stats[["integrated_stats"]]
+   miRNA_cor_results$miRNA_cont_tables_adj <- integrated_stats[["miRNA_ct"]]
+   miRNA_cor_results$cont_tables <- merge(miRNA_cor_results$cont_tables, 
+                                          integrated_OR, 
+                                          by=c("strategy","db_group"), 
+                                          all.x = TRUE)
+ }
+
+miRNA_cor_results$filters_summary$type <- factor(
     miRNA_cor_results$filters_summary$type, 
     levels=c("novel_miRNAs","known_miRNAs","multimir", "multimir_random", 
         "predicted", "predicted_random", "validated","validated_random", 
         "pred_and_val", "pred_and_val_random"))
  
  if (compare_pred_scores) {
- miRNA_cor_results$score_comp$log.p.value <- -log10( 
-    miRNA_cor_results$score_comp$p.value)
- miRNA_cor_results$score_comp$log.boot.p.value <- -log10(
-    miRNA_cor_results$score_comp$boot.p.value)
+   miRNA_cor_results$score_comp$log.p.value <- -log10( 
+                                          miRNA_cor_results$score_comp$p.value)
+   miRNA_cor_results$score_comp$log.boot.p.value <- -log10(
+                                     miRNA_cor_results$score_comp$boot.p.value)
  }
  
  miRNA_cor_results$p_fisher$fisher.log.p.value <- -log10( 
@@ -127,9 +144,7 @@ compare_pred_scores = FALSE
     organism_info = organism_info, translate_ensembl = translate_ensembl)
    miRNA_cor_results$cont_tables$corr_cutoff <- corr_cutoff
 
-    write.table(miRNA_cor_results$cont_tables, 
-    file.path(output_files, "strategies_stats.txt"), 
-    quote=FALSE, sep="\t",  row.names=FALSE)
+    
  
  miRNA_cor_results <- c(
     miRNA_cor_results,

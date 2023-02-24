@@ -97,9 +97,9 @@ The **DEGs_DEMs_permutated** strategy is not included.
 
 
 ```{r methods_comparison_violin_cor, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-
-pp <- ggplot2::ggplot(all_cor_dist, ggplot2::aes(x = strategy, y = correlation, fill = strategy)) +
-  ggplot2::geom_violin(col = "white",trim = FALSE, scale = "width",draw_quantiles = c( 0.1, 0.05)) + #ggplot2::ylim(-1.000001, min + 0.00001) +
+all_cor_dist_fil <- all_cor_dist[!all_cor_dist$strategy %in% c("DEGs_RNA_vs_miRNA_DEMs_opp", "DEGs_RNA_vs_miRNA_DEMs_sim"),]
+pp <- ggplot2::ggplot(all_cor_dist_fil, ggplot2::aes(x = strategy, y = correlation, fill = strategy)) +
+  ggplot2::geom_violin(col = "white",trim = FALSE, scale = "width",draw_quantiles = c(0.1, 0.05)) + #ggplot2::ylim(-1.000001, min + 0.00001) +
   ggplot2::geom_hline(yintercept= corr_cutoff, linetype = "dashed", colour = "black") +
   ggplot2::geom_boxplot(width=0.05)+ ggplot2::ylim(-1, 1)+
   ggplot2::coord_flip()+
@@ -109,15 +109,15 @@ pp <- ggplot2::ggplot(all_cor_dist, ggplot2::aes(x = strategy, y = correlation, 
 pp 
 ```
 
-### **Pearson's correlation p-values distribution**
+### **Correlation p-values distribution**
 
 Distributions of correlation p-values between miRNAs and target genes obtained using the different strategies.
 The dashed line represents a p-value of 0.05
-The **DEGs_DEMs_permutated** strategy is not included.
+The **DEGs_RNA_vs_miRNA_DEMs_opp** and **DEGs_RNA_vs_miRNA_DEMs_sim** strategy are not included.
 
 ```{r methods_comparison_violin_p, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 
-pp <- ggplot2::ggplot(all_cor_dist, ggplot2::aes(x = strategy, y = pval, fill = strategy)) +
+pp <- ggplot2::ggplot(all_cor_dist_fil, ggplot2::aes(x = strategy, y = pval, fill = strategy)) +
   ggplot2::geom_violin(trim = FALSE, scale = "width") + 
   ggplot2::geom_hline(yintercept= p_val_cutoff, linetype = "dashed", colour = "black") +
   ggplot2::geom_boxplot(width=0.05)+ ggplot2::ylim(-0.01, 1) +
@@ -131,7 +131,6 @@ pp
 ### **Overlapping strategies**
 
 This table shows the number of **significant pairs** overlapping between strategies.
-
 
 ```{r methods_comparison_intersection, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
  subchunk_count <- 3
@@ -168,7 +167,7 @@ for (db_group in names(sig_pairs)){
    common_pairs <- sig_pairs[[db_group]]
    check_ovlp <- common_pairs
    diag(check_ovlp) <- 0
-  cat(paste0("#### **Overlap of significant pairs found on ", stringr::str_to_title(db_group), " databases**\n\n"))
+   cat(paste0("#### **Overlap of significant pairs found on ", stringr::str_to_title(db_group), " databases**\n\n"))
    if (any(check_ovlp > 0)){
        common_pairs <- as.data.frame(as.table(as.matrix(common_pairs)))
        names(common_pairs) <- c("x_axis", "y_axis",  "intersection")
@@ -191,115 +190,7 @@ for (db_group in names(sig_pairs)){
    
 ```
 
-### **Comparison of the overlap between strategy results and databases**
-
-* This bar chart shows, for each strategy, how many significant miRNA-target pairs:
-  + Include a putative **novel** miRNA
-  + Include a **known** miRNA (present in miRBASE)
-
-It also shows the number of significant pairs involving known miRNAs that are found in the different groups of multiMiR databases.
-To put these numbers in context, we also select **random** pairs of expressed genes/miRNAs from the 
-experiment, of an equivalent number to the significant pairs including a known miRNA, and note how many of these
-pairs overlap with the multiMiR databases. This is repeated multiple times, and the mean +/- standard deviation are plotted.
-
-
-
-```{r methods_comparison_bar, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-
-pp <- ggplot2::ggplot(filters_summary, ggplot2::aes(y = pairs, x = strategy, fill = type)) + 
-      ggplot2::geom_bar(stat= "identity",position=ggplot2::position_dodge()) +
-      ggplot2::geom_errorbar(ggplot2::aes(ymin=pairs-sdev, ymax=pairs+sdev), width=.2,
-                 position=ggplot2::position_dodge(.9)) + 
-      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 20, hjust = 1)) + 
-      ggplot2::geom_text(ggplot2::aes(label = pairs), angle = 45, position = ggplot2::position_dodge(width=0.95), size=2, vjust = -2)
-pp
-```
-
-
-```{r fisher, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = !specific_evaluation}
-cat("
-
-### **Significance of the overlap**
-
-Significant and non-significant pairs were compared in terms of overlap with databases using one-tailed Fisher exact test. 
-For prediction databases the test were performed idependently for each prediction database. The p-values were then combined using Fisher combined probability test (**predicted**). 
-Pairs found in the validation databases (**validated**) and validated pairs that are also predicted by any database (**pred_and_val**) were grouped together. 
-P-values are shown for the different strategies and for the different group of databases. 
--log10(P-values) are shown. The -log10(0.05) threshold is represented as a dashed grey line. 
-
-")
-
-    fisher_test_raw <- cont_tables[c("strategy", "Pvalue", "db_group")]
-    comb_pred_pval <- p_fisher[p_fisher$database == "comb_pval",]
-
-    fisher_test_raw <- fisher_test_raw[fisher_test_raw$db_group != "predicted", ]
-    fisher_test_raw <- rbind(fisher_test_raw, 
-      data.frame(strategy = comb_pred_pval$strategy,
-                  Pvalue = comb_pred_pval$fisher.p.value,
-                  db_group = "predicted"))
-    fisher_test_table <- fisher_test_raw
-    fisher_test_table[,"LogPval"] <- -log10(fisher_test_table$Pvalue)
-
-    fisher_test_table$db_group <- factor(fisher_test_table$db_group, c("predicted","validated", "pred_and_val"))
-    # fisher_test$group_db <- rownames(fisher_test)
-    ggplot2::ggplot(fisher_test_table, ggplot2::aes(x = db_group, y = LogPval, group = strategy,color = strategy)) +
-    ggplot2::geom_line() + 
-    ggplot2::geom_line(ggplot2::aes( y =  -log10(0.05), linetype = "-log10(0.05)") , colour = "grey") +
-    ggplot2::geom_point(size = 1) +
-    ggplot2::labs(colour = "Strategy", linetype = "-log10(0.05)", y = "-log10(p)", x = "Pairs group") +
-    ggplot2::scale_linetype_manual(values=c("dashed", "solid"))+
-    ggplot2::theme(legend.position = "bottom", legend.box = "vertical")
-    strat_fisher_sig <- cont_tables %>% dplyr::group_by(strategy) %>% dplyr::summarise(significant = all(Pvalue <= 0.05))
-    unsig_strategies <- c(unsig_strategies, strat_fisher_sig[!strat_fisher_sig$significant, "strategy"])
-    sig_strategies <- names(strategies)[! names(strategies) %in% c(unsig_strategies, mock_strategies)]
-
-
-```
-
-```{r fisher_scatter, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = !specific_evaluation}
-
-cat("
-
-#### **Comparison of predicted and validated groups**
-
-This plot compares the p-values of the Fisher exact tests performed for each strategy for the **predicted** and **validated** pairs. 
--Log10(p-value) is shown on each axis.
--Log10(0.05) is represented as a black dashed line.
-
-")
-   fisher_test_scatter <- fisher_test_table[,c("strategy","db_group","LogPval")]
-   fisher_test_scatter <- tidyr::spread(fisher_test_scatter, db_group, LogPval)
-   
-   ggplot2::ggplot(fisher_test_scatter,ggplot2::aes(y = predicted, x = validated, fill = strategy, color = strategy)) + 
-   ggplot2::geom_point()+
-   ggplot2::geom_hline(yintercept = -log10(0.05), linetype = "dashed") + 
-   ggplot2::geom_vline(xintercept = -log10(0.05), linetype = "dashed") +
-   ggplot2::labs(x = "Validated -log10(p)", y = "Predicted -log10(p)", color = "Strategy", fill = "Strategy")
-
-
-```
-
-
-```{r fisher_table, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = !specific_evaluation}
-cat("
-
-#### **Fisher exact test p-values table**
-
-")
-  fisher_test_raw <- tidyr::spread(fisher_test_raw, db_group, Pvalue)
-  DT::datatable(fisher_test_raw, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
-          options = list(
-            paging = FALSE,
-            colReorder = TRUE,
-            dom = 'lftBip',
-            buttons = c('copy', 'csv', 'excel')
-  ))
-```
-**NOTE:** Only strategies with significant p-values in all tests will be used for the following plots.
-
-
 ### **Odds ratios for the different strategies**
-
 
 The plot shows the significant strategies ordered by Odds ratio (OR). 
 OR can be thought of as a measure of the association between a given strategy and pairs in the databases. 
@@ -313,15 +204,9 @@ significant_ct <- cont_tables[!cont_tables$strategy %in% unsig_strategies,]
 splitted_c_tables <- split(significant_ct, significant_ct$db_group)
 
 for (db_group in c("predicted", "validated")){
-  filtered_cont <- splitted_c_tables[[db_group]]
-
-
-  
-  
+  filtered_cont <- splitted_c_tables[[db_group]]  
   
   cat(paste0("\n\n#### Comparison with ", stringr::str_to_title(db_group), " pairs\n\n"))
-  
-
   
   overal_OR <- plot_odds_ratio(filtered_cont)
   plot(overal_OR)
@@ -350,60 +235,6 @@ In that case Strategies without significant miRNAs were rejected.
 }
 ```
 
-
-
-```{r prec_rec, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = FALSE}
-cat("
-
-### **Association with databases**
-
-* **Statistical metrics:**
-  + **Accuracy**, **Precision** and **Specificity** were calculated based on the overlap between significant strategies and group of multiMiR databases.
-  + **Likelihood ratio for positive test (LRplus_test):** For each pair, this shows to what extent a significant result indicates an increased probability of being a true miRNA-target pair. It is calculated as the True Positive Rate, calculated as proportion of all pairs in the experiment that overlap with the database that are signficant, divided by the False Positive Rate, calculated as proportion of all pairs in the experiment that do not overlap with the database that are significant.
-  + **Likelihood ratio for positive subjects (LRplus_sub):** Given a true miRNA-target pair, what is the increased probability of obtaining a significant result. It is calculated as the proportion of significant results overlapping with the databases (True positive rate), divided by the proportion of non-signficant results overlapping with the databases (false positive rate).
-
-*(Threshold dashed grey line marks values of 1 for the Likelihood ratiosand values of 0 for Accuracy, Precission and Specificity)*
-
-  
-  ")
-
-    cont_table_radar <- cont_tables[c("strategy","Accuracy","Precision","Specificity","db_group", "LRplus_test", "LRplus_sub")]
-    # cont_table_radar[,"-LogPval"] <- -log10(cont_table_radar$Pvalue)
-    # cont_table_radar$Pvalue <- NULL
-    cont_table_radar <- split(cont_table_radar, cont_table_radar$db_group)
-    thresholds <- data.frame(check.names = FALSE, row.names = "Thresholds", Accuracy = 0, Precision = 0, Specificity = 0, LRplus_test = 1, LRplus_sub = 1)
-    for(db_group in c("multimir", "predicted","validated", "pred_and_val")){
-      cont_tab <- cont_table_radar[[db_group]]
-      cat(paste0("\n\n#### **", stringr::str_to_title(db_group), " databases**\n\n"))
-      cat(paste0("\n\nThis section sumarizes all metrics computed for each strategy compared with ", db_group, " databases.\n\n"))
-      rownames(cont_tab) <- cont_tab$strategy
-      cont_tab$db_group <- NULL
-      cont_tab_raw <- cont_tab
-      cont_tab$strategy <- NULL
-      COL<- grDevices::colorRampPalette(c("red", "blue", "green", "orange"))(nrow(cont_tab))
-      COL <- c(COL, "#9C9C9C")
-      scales <- matrix(NA,nrow = 2, ncol = ncol(cont_tab) )
-      linetypes <-c(rep(1,nrow(cont_tab)), 2)
-      cont_tab <- rbind(cont_tab, thresholds)
-      scales[1,] <- c(1,1,1, max(cont_tab$LRplus_test), max(cont_tab$LRplus_sub))
-      scales[2,] <- c(0,0,0, min(cont_tab$LRplus_test), min(cont_tab$LRplus_sub))
-      scales <- as.data.frame(scales)
-      dimnames(scales) <- list(c("Max","Min"), colnames(cont_tab))
-      cont_tab_lim <- rbind(scales, cont_tab)
-          par(mfrow = c(1, 2))      
-          fmsb::radarchart(cont_tab_lim, cglcol="grey", maxmin = TRUE, pcol = COL, plty=linetypes )
-          plot.new() 
-          graphics::legend("center", legend = rownames(cont_tab), title = "Strategy", 
-            col = COL, seg.len = 2, border = "transparent", pch = 16, lty = linetypes)
-
-      cont_tab$db_group <- NULL
-      subchunk_count <- rechunk(DT::datatable(cont_tab_raw, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
-                                    options = list( paging =TRUE, colReorder = TRUE, dom = 'lftBip',  buttons = c('copy', 'csv', 'excel'))),
-                          counter = subchunk_count, 
-                          chunk_options = "echo=FALSE, results = 'asis', warning = FALSE, message = FALSE")
-    }     
-
-```
 
 
 ```{r score_comp_pval, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = !is.null(score_comp)}

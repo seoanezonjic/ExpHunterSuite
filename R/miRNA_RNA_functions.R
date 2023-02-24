@@ -35,7 +35,7 @@ filter_DEGH_data <- function(DGH_data, MM_cutoff, tag_filter){
     DGH_results <- DGH_data$DH_results 
     if (tag_filter == "prevalent") {
         tags_to_filter <- c("PREVALENT_DEG")
-    } else {
+    } else if (tag_filter %in% c("putative", "possible")){
         tags_to_filter <- c("PREVALENT_DEG", "POSSIBLE_DEG")
     }
     
@@ -56,7 +56,8 @@ filter_DEGH_data <- function(DGH_data, MM_cutoff, tag_filter){
                                            DGH_results$genes_tag == "NOT_DEG" &
                                            DGH_results$Cluster_MM >= MM_cutoff
         candidate_not_deg <- DGH_results[candidate_not_deg, "gene_name"]
-        relevant_genes <- c(candidate_not_deg, DGH_results[all_degs, "gene_name"]) 
+        relevant_genes <- c(candidate_not_deg, DGH_results[all_degs, 
+                                                            "gene_name"]) 
 
     }else {
         relevant_genes <- DGH_results[all_degs, "gene_name"] 
@@ -156,7 +157,8 @@ sample_proportion = 0.01,
 selected_targets = c(),
 corr_type,
 corr_coef,
-compare_pred_scores = FALSE
+compare_pred_scores = FALSE,
+eval_method = "aggregated"
 ){
  ######### PREPARE PAIRS SCAFOLD
  if (is.null(RNAseq)) {
@@ -190,6 +192,7 @@ compare_pred_scores = FALSE
  #Dataframe with all contingency tables
  cont_tables <- data.frame()  
  #Datafarme with stats of strategy pairs and randoms 
+ miRNA_cont_tables <- data.frame()
  filters_summary <- data.frame()
  #Dataframe with stats from prediction scores comparison
  score_comp<- data.frame()
@@ -224,9 +227,13 @@ compare_pred_scores = FALSE
     message("Computing stats by group")
    
    all_stats <- get_stats_by_group(all_pairs = all_pairs, strategy = strategy,
-                                   permutations = permutations)
+                                   permutations = permutations, 
+                                   eval_method = eval_method)
    filters_summary <- plyr::rbind.fill(filters_summary,all_stats$strat_summary)
    cont_tables <- rbind(cont_tables, all_stats$strat_cts)
+   if (eval_method == "specific"){
+    miRNA_cont_tables <- rbind(miRNA_cont_tables, all_stats$strat_miRNA_cts)
+   }
    all_stats <- NULL
    message("Computing contingency tables")
 
@@ -249,7 +256,7 @@ compare_pred_scores = FALSE
    p_fisher <- rbind(p_fisher, pred_fisher)
   
    if (compare_pred_scores) {
-   message("Comparing scores")
+    message("Comparing scores")
     score_comp <- rbind(score_comp,
                     score_comparison(
                          databases = selected_predicted_databases,  
@@ -268,10 +275,11 @@ compare_pred_scores = FALSE
   all_cor_dist <- parse_correlations(strategies)
   sig_pairs <- get_sig_pairs(strategies, all_pairs)
  miRNA_cor_results <- list(strategies = strategies,
-     unsig_strategies =  unsig_strategies, cont_tables = cont_tables,
-     filters_summary = filters_summary, score_comp = score_comp,
-     all_pairs = all_pairs, all_cor_dist = all_cor_dist, sig_pairs = sig_pairs,
-     p_fisher = p_fisher, raw_databases_scores = raw_databases_scores)
+    unsig_strategies =  unsig_strategies, cont_tables = cont_tables, 
+    miRNA_cont_tables = miRNA_cont_tables, filters_summary = filters_summary, 
+    score_comp = score_comp, all_pairs = all_pairs, all_cor_dist = all_cor_dist,
+    sig_pairs = sig_pairs, p_fisher = p_fisher, 
+    raw_databases_scores = raw_databases_scores)
  return(miRNA_cor_results)
 }
 
@@ -280,9 +288,11 @@ get_degs_sets <- function(DH_results_table){
 
      degs <- list()
      degs[["pos"]] <- DH_results_table[DH_results_table$genes_tag %in%
-               c("PREVALENT_DEG", "POSSIBLE_DEG") & DH_results_table$mean_logFCs > 0, "gene_name"]
+               c("PREVALENT_DEG", "POSSIBLE_DEG") & 
+                DH_results_table$mean_logFCs > 0, "gene_name"]
      degs[["neg"]] <- DH_results_table[DH_results_table$genes_tag %in%
-               c("PREVALENT_DEG", "POSSIBLE_DEG") & DH_results_table$mean_logFCs < 0, "gene_name"]  
+               c("PREVALENT_DEG", "POSSIBLE_DEG") &
+                DH_results_table$mean_logFCs < 0, "gene_name"]  
     return(degs)
 }
 
@@ -300,17 +310,22 @@ perform_correlations <- function(
        DEGs <- get_degs_sets(RNAseq$DH_results)
        DEMs <- get_degs_sets(miRNAseq$DH_results)
  
-       all_pairs <- permute_pairs(DEGs[["pos"]], DEMs[["neg"]], corr_type = corr_type)
-       all_pairs <- rbind(all_pairs, permute_pairs(DEGs[["neg"]], DEMs[["pos"]], corr_type = corr_type))
+       all_pairs <- permute_pairs(DEGs[["pos"]], DEMs[["neg"]], 
+                                    corr_type = corr_type)
+       all_pairs <- rbind(all_pairs, permute_pairs(DEGs[["neg"]], DEMs[["pos"]], 
+                                                    corr_type = corr_type))
 
     } else if ( strategy == "DEGs_RNA_vs_miRNA_DEMs_sim" ){
        DEGs <- get_degs_sets(RNAseq$DH_results)
        DEMs <- get_degs_sets(miRNAseq$DH_results)
        
-       all_pairs <- permute_pairs(DEGs[["pos"]], DEMs[["pos"]], corr_type = corr_type)
-       all_pairs <- rbind(all_pairs, permute_pairs(DEGs[["neg"]], DEMs[["neg"]], corr_type = corr_type))
+       all_pairs <- permute_pairs(DEGs[["pos"]], DEMs[["pos"]],
+                                     corr_type = corr_type)
+       all_pairs <- rbind(all_pairs, permute_pairs(DEGs[["neg"]], DEMs[["neg"]], 
+                                                        corr_type = corr_type))
     
-    } else if ( strategy %in% c("selected_targets_RNA_vs_miRNA_DEMs","all_posible_targets_RNA_vs_miRNA_DEMs")) {
+    } else if ( strategy %in% c("selected_targets_RNA_vs_miRNA_DEMs",
+                                "all_posible_targets_RNA_vs_miRNA_DEMs")) {
         DEMS <- miRNAseq$DH_results[miRNAseq$DH_results$genes_tag %in% 
                c("PREVALENT_DEG", "POSSIBLE_DEG"), "gene_name"]    
         all_pairs <- permute_pairs(selected_targets, DEMS, corr_type = corr_type)
@@ -321,7 +336,8 @@ perform_correlations <- function(
         if (ncol(RNA_profiles) == 0 || ncol(miRNA_profiles) == 0) {
           return(data.frame(NULL))
         }
-        all_pairs <- correlate_profiles(RNA_profiles, miRNA_profiles, corr_coef= corr_coef)
+        all_pairs <- correlate_profiles(RNA_profiles, miRNA_profiles, 
+                                        corr_coef= corr_coef)
         if (strat_description[1] != "normalized_counts"){
             if (strat_description[1] == "Eigengene_0") {
                 RNAseq$DH_results$relevant_genes <- TRUE
@@ -400,7 +416,15 @@ permute_pairs <- function(RNAseq, miRNAseq, corr_type){
 #' @importFrom stats cor
 correlate_profiles <- function(RNA_profiles, miRNA_profiles,corr_coef) {
 
-    correlations <- WGCNA::cor(RNA_profiles, miRNA_profiles, method = corr_coef)
+    if (corr_coef == "bicor") {
+        correlations <- WGCNA::bicor(RNA_profiles, miRNA_profiles, 
+                                maxPOutliers = round(ncol(RNA_profiles)/5, 0))    
+    } else if (corr_coef %in% c("pearson", "spearman", "kendall")){
+
+        correlations <- WGCNA::cor(RNA_profiles, miRNA_profiles, 
+            method = corr_coef)
+    }
+    
     nSamples <- nrow(RNA_profiles)
     cor_pval <- as.data.frame(WGCNA::corPvalueStudent(
         as.matrix(correlations), nSamples))
@@ -560,6 +584,16 @@ score_comparison <- function(databases, all_pairs, sample_size, strategy){
   return(db_comp)
 }
 
+get_miRNA_ct <- function(all_pairs, db_group, strategy){
+    db_gs <- all_pairs[,get(db_group)]
+    experiment_pairs <- all_pairs[,get(strategy) & known_miRNA]
+    if (sum(experiment_pairs) == 0) return(NULL)
+    strat_group_ct <- calc_ct(
+                        experiment = experiment_pairs, 
+                        gold_standard = db_gs)
+    strat_group_ct$db_group <- db_group
+    return(strat_group_ct)
+}
 
 
 #' @importFrom plyr rbind.fill
@@ -568,9 +602,12 @@ get_stats_by_group <- function(
 all_pairs, 
 strategy, 
 permutations = 50, 
-db_groups = c("predicted", "validated", "pred_and_val")
+db_groups = c("predicted", "validated", "pred_and_val"), 
+eval_method = "aggregated" 
 ){
  strat_cts <- data.frame() #contingency table
+ strat_miRNA_cts <- data.frame() #contingency table
+ 
  known_miRNAs_c <- sum(all_pairs[,get(strategy) & known_miRNA])
  novel_miRNAs_c <- sum(all_pairs[,get(strategy) & !known_miRNA])
  background <- all_pairs[,possible_positives]
@@ -579,12 +616,19 @@ db_groups = c("predicted", "validated", "pred_and_val")
               type = c("known_miRNAs", "novel_miRNAs"))
  for (db_group in db_groups){
     db_gs <- all_pairs[,get(db_group)]
-    strat_group_ct <- calc_ct(
-                        experiment = all_pairs[,get(strategy) & known_miRNA], 
-                        gold_standard = db_gs)
-    strat_group_ct$db_group <- db_group
-   
+    strat_group_ct <- get_miRNA_ct(all_pairs, db_group, strategy)
     strat_cts <- rbind(strat_cts, strat_group_ct)
+   
+    if (eval_method == "specific") {
+        all_miRNA_ct <- lapply(split(all_pairs, all_pairs$miRNAseq), 
+                                get_miRNA_ct, db_group = db_group, 
+                                strategy = strategy)
+        strat_miRNA_cts <- rbind(strat_miRNA_cts, 
+                                  data.table::rbindlist(
+                                                all_miRNA_ct, use.names = TRUE, 
+                                                idcol = "miRNA"))
+    }
+
     perm_stats <- permutations_stats(permutations = permutations, 
         db_gs = db_gs, background = background, 
         sample_size = known_miRNAs_c)
@@ -596,9 +640,13 @@ db_groups = c("predicted", "validated", "pred_and_val")
                                                     get(db_group)]))
     strat_summary <- plyr::rbind.fill(strat_summary, group_summary, perm_stats)
  }
+ if (eval_method == "specific"){
+     strat_miRNA_cts$strategy <- strategy
+ } 
  strat_summary$strategy <- strategy
  strat_cts$strategy <- strategy
- return(list(strat_summary = strat_summary, strat_cts= strat_cts))
+ return(list(strat_summary = strat_summary, strat_cts= strat_cts, 
+    strat_miRNA_cts = strat_miRNA_cts))
 }
 
 
@@ -616,7 +664,8 @@ organism){
     if (!is.null(selected_targets)) {
         putative_targets <- selected_targets
     } else {
-        putative_targets <- unique(multimir[multimir$mature_mirna_acc  %in% miRNAseq$DH_results$gene_name, "target_ensembl"])[[1]]
+        putative_targets <- unique(multimir[multimir$mature_mirna_acc  %in% 
+                    miRNAseq$DH_results$gene_name, "target_ensembl"])[[1]]
     }
  } else {
     putative_targets <- colnames(RNAseq$normalized_counts)
@@ -637,11 +686,11 @@ organism){
  all_pairs$known_miRNA <- all_pairs$miRNAseq %in% all_known_miRNAs
  
  #possible_positives: Pairs with RNA and miRNA included in multiMiR. 
- all_pairs$possible_positives <- all_pairs$known_miRNA# & 
-                                 # all_pairs$miRNAseq %in% 
-                                 #  multimir$mature_mirna_acc &
-                                 # all_pairs$RNAseq %in% 
-                                 #   multimir$target_ensembl 
+ all_pairs$possible_positives <- all_pairs$known_miRNA & 
+                                 all_pairs$miRNAseq %in% 
+                                  multimir$mature_mirna_acc &
+                                 all_pairs$RNAseq %in% 
+                                   multimir$target_ensembl 
  return(all_pairs)
 }
 
@@ -722,4 +771,12 @@ calc_pred_ctables <- function(
    cont_tables <- rbind(cont_tables, c_table)
  }
  return(cont_tables)
+}
+
+
+select_best_strategy <- function(miRNA_cont_tables){
+    #taken from https://stackoverflow.com/questions/24558328/select-the-row-with-the-maximum-value-in-each-group
+    max_mIRNA_ID <- with(miRNA_cont_tables, ave(Odds_ratio, miRNA, FUN=function(x) seq_along(x) == which.max(x))) == 1
+    miRNA_cont_tables_max <- miRNA_cont_tables[max_mIRNA_ID,]
+    return(miRNA_cont_tables_max)
 }
