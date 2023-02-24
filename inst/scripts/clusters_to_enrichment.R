@@ -131,18 +131,14 @@ ce_list <- main_clusters_to_enrichment(
   pvalcutoff = opt$pvalcutoff,
   qvalcutoff = opt$qvalcutoff,
   all_custom_gmt = all_custom_gmt,
-  kegg_data_file = kegg_data_file,
-  simplify = opt$simplify,
-  clean_parentals = opt$clean_parentals
+  kegg_data_file = kegg_data_file
 )
 enrichments_ORA <- ce_list[["enrichments_ORA"]]
-enrichments_ORA_merged <- ce_list[["enrichments_ORA_merged"]]
 
 write_clusters_to_enrichment(
   output_path=output_path,
   mode=opt$mode,
   enrichments_ORA=enrichments_ORA,
-  enrichments_ORA_merged=enrichments_ORA_merged,
   task_size = opt$task_size,
   workers = opt$workers,
   template_folder = template_folder,
@@ -154,5 +150,7 @@ write_clusters_to_enrichment(
   pvalcutoff = opt$pvalcutoff,
   gene_attributes = ce_list[["gene_attributes"]],
   gene_attribute_name = ce_list[["gene_attribute_name"]], 
-  max_genes = opt$max_genes_plot
+  max_genes = opt$max_genes_plot,
+  simplify = opt$simplify,
+  clean_parentals = opt$clean_parentals
 )
