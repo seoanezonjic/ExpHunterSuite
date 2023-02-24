@@ -13,8 +13,6 @@
 #' @param qvalcutoff q-value threshold to use for clusterProfiler,
 #' @param all_custom_gmt list of custom annotation sets
 #' @param kegg_data_file if KEGG included in enrich_dbs path needs
-#' @param simplify simplify the merged enrichments
-#' @param clean_parentals clean parental terms in merged enrichment
 #' @export
 main_clusters_to_enrichment <- function(
   input_file=NULL,
@@ -30,9 +28,7 @@ main_clusters_to_enrichment <- function(
   pvalcutoff = 0.1,
   qvalcutoff = 0.2,
   all_custom_gmt = NULL,
-  kegg_data_file = NULL,
-  simplify = FALSE,
-  clean_parentals = FALSE){
+  kegg_data_file = NULL){
 
   gene_attributes <- NULL
   gene_attribute_name <- NULL
@@ -63,15 +59,13 @@ main_clusters_to_enrichment <- function(
                                   custom_sets = all_custom_gmt,
                                   kegg_file = kegg_data_file)
 
-    enrichments_ORA_merged <- process_cp_list(enrichments_ORA, simplify_results = simplify, 
-      clean_parentals = clean_parentals)
-    save(enrichments_ORA,enrichments_ORA_merged, file = temp_file)
+
+    save(enrichments_ORA, file = temp_file)
 
   } else {
     load(temp_file)
   }
   return(list(enrichments_ORA=enrichments_ORA, 
-    enrichments_ORA_merged=enrichments_ORA_merged, 
     gene_attributes=gene_attributes, 
     gene_attribute_name=gene_attribute_name))
 }
