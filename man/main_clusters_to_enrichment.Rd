@@ -18,9 +18,7 @@ main_clusters_to_enrichment(
   pvalcutoff = 0.1,
   qvalcutoff = 0.2,
   all_custom_gmt = NULL,
-  kegg_data_file = NULL,
-  simplify = FALSE,
-  clean_parentals = FALSE
+  kegg_data_file = NULL
 )
 }
 \arguments{
@@ -51,10 +49,6 @@ main_clusters_to_enrichment(
 \item{all_custom_gmt}{list of custom annotation sets}
 
 \item{kegg_data_file}{if KEGG included in enrich_dbs path needs}
-
-\item{simplify}{simplify the merged enrichments}
-
-\item{clean_parentals}{clean parental terms in merged enrichment}
 }
 \description{
 Perform enrichment analysis on multiple lists of genes

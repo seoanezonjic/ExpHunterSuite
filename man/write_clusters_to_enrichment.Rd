@@ -10,11 +10,10 @@ write_clusters_to_enrichment(
   output_file = "results",
   mode = "PR",
   enrichments_ORA = NULL,
-  enrichments_ORA_merged = NULL,
   task_size = 1,
   workers = 1,
   template_folder = file.path(find.package("ExpHunterSuite"), "templates"),
-  top_categories = 50,
+  top_categories = NULL,
   group_results = FALSE,
   n_category = 30,
   sim_thr = 0.7,
@@ -22,7 +21,9 @@ write_clusters_to_enrichment(
   pvalcutoff = 0.1,
   gene_attributes = NULL,
   gene_attribute_name = NULL,
-  max_genes = 200
+  max_genes = 200,
+  simplify = FALSE,
+  clean_parentals = FALSE
 )
 }
 \arguments{
@@ -33,8 +34,6 @@ write_clusters_to_enrichment(
 \item{mode}{type of output to produce}
 
 \item{enrichments_ORA}{list of enrich results for all clusters}
-
-\item{enrichments_ORA_merged}{merged enrich results}
 
 \item{task_size}{number of elements per packages used}
 
@@ -60,6 +59,10 @@ write_clusters_to_enrichment(
 \item{gene_attribute_name}{name for the legend in the emap plot for the nodes (genes)}
 
 \item{max_genes}{maximum number of genes to plot in cnet plot}
+
+\item{simplify}{Activate for process ClusterProfiler results with simplify function}
+
+\item{clean_parentals}{Activate to reduce significant terms in GO by removin the parentals}
 }
 \value{
 void
