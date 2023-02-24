@@ -59,7 +59,7 @@ cat("\n\n**Cluster concept network plot**\n\n",
 	  Nodes size represents the number of clusters sharing the functional category. Pies proportion represent the proportion of clusters with that enriched category.\n\n"
 )
 
-clnetplot_pp <- clnetplot(mod_enrich_obj, showCategory=showCategories) 
+clnetplot_pp <- clnetplot(enrich_obj, showCategory=showCategories) 
 
 invisible(plot_in_div(clnetplot_pp, fig_width = 15, fig_height = 15))
 
