@@ -1,6 +1,6 @@
 Package: ExpHunterSuite
 Title: Package For The Comprehensive Analysis Of Transcriptomic Data
-Version: 1.7.1
+Version: 1.7.2
 Authors@R: 
     c(person(given = "James",
            family = "Perkins",
@@ -72,7 +72,6 @@ Imports:
     NOISeq,
     biomaRt,
     topGO,
-    clusterProfiler,
     diffcoexp,
     DT,
     ggplot2,
@@ -107,5 +106,6 @@ Imports:
     DOSE,
     heatmaply,
     EnhancedVolcano, 
-    ggrepel
+    ggrepel,
+    clusterProfiler
 Config/testthat/edition: 3
