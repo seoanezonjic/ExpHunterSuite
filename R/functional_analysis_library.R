@@ -168,6 +168,12 @@ get_gene_lists_cl <- function(DEGH_results, fc_colname) {
     lapply(DEGH_res_list, function(x) get_gene_lists(x, fc_colname))
 }
 
+#' Obtain an org_db object from a current_organism_info, obtained from
+#' subsetting the results of get_organism_table()
+#' @param current_organism_info row from output of get_organism_table() 
+#' @export
+#' @keywords org_db
+#' @return org_db 
 get_org_db <- function(current_organism_info) {
   org_db <- current_organism_info$Bioconductor_DB[1]
   org_db <- eval(parse(text = paste0(org_db,"::",org_db)))
@@ -632,7 +638,8 @@ summarize_merged_ora <- function(ORA_merged, sim_thr=0.7,
   }
   ORA_merged <- ORA_merged[names(ORA_merged) %in% c("BP","MF","CC")]
 
-  sum_enrichments <- summarize_categories(ORA_merged, sim_thr = sim_thr, common_name = common_name)
+  sum_enrichments <- summarize_categories(ORA_merged, sim_thr = sim_thr, 
+    common_name = common_name)
                 # save(list = ls(all.names = TRUE), file = "~/summarize_merged_ora_before.RData")
 
   summ_ora_to_plot <- list()
@@ -649,7 +656,8 @@ summarize_merged_ora <- function(ORA_merged, sim_thr=0.7,
    
     full_enr_table <- cluster_enr_to_matrix(ORA_merged[[funsys]]@compareClusterResult)
     full_enr_table <- (full_enr_table > pthreshold) + 0
-    summ_ora_to_plot[[funsys]] <- list(summ_enr_table=summ_enr_table, summ_enr_clean=summ_enr_clean, full_enr_table=full_enr_table)
+    summ_ora_to_plot[[funsys]] <- list(summ_enr_table=summ_enr_table, 
+      summ_enr_clean=summ_enr_clean, full_enr_table=full_enr_table)
   }
                   # save(list = ls(all.names = TRUE), file = "~/summarize_merged_ora_after.RData")
 

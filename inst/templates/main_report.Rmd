@@ -130,12 +130,12 @@ pca_plot <- ggplot2::ggplot(pcaData, ggplot2::aes(x = PC1, y = PC2, color = name
 plot_counter <- plot_in_div(pca_plot)
 # +theme(legend.position="bottom", legend.box = "horizontal")
 
-ggplot2::ggplot(pcaData, ggplot2::aes(x = PC1, y = PC2, color = name, shape = cond)) +
-  ggplot2::geom_point(size =3) +
-  ggplot2::theme(legend.position = "bottom") +
-  ggplot2::xlab(paste0("PC1: ", percentVar[1], "% variance")) +
-  ggplot2::ylab(paste0("PC2: ", percentVar[2], "% variance")) +
-  ggplot2::coord_fixed() 
+# ggplot2::ggplot(pcaData, ggplot2::aes(x = PC1, y = PC2, color = name, shape = cond)) +
+#   ggplot2::geom_point(size =3) +
+#   ggplot2::theme(legend.position = "bottom") +
+#   ggplot2::xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+#   ggplot2::ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+#   ggplot2::coord_fixed() 
 
 
 ```

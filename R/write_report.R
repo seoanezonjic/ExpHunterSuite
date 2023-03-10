@@ -112,7 +112,7 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path, template_
 #' This function allows you to report the Functional analysis.
 #' @param output_path output folder
 #' @param output_file output file name for heatmaps
-#' @param mode type of output to produce
+#' @param mode type of output to produce - P for plots, R for reports, and S for summarized heatmaps
 #' @param enrichments_ORA list of enrich results for all clusters
 #' @param task_size number of elements per packages used
 #' @param workers (OPTIONAL) cores for parallel features
@@ -191,7 +191,7 @@ write_clusters_to_enrichment <- function(
     }
   }
 
-  if (grepl("S", mode)){
+  if (grepl("S", mode)) {
     summarized_merged_ora <- summarize_merged_ora(enrichments_ORA_merged, sim_thr, summary_common_name, pvalcutoff)
     write_summarize_heatmaps(summarized_merged_ora, output_path)
   }

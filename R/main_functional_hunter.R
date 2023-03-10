@@ -1,6 +1,6 @@
 #' Perform Functional analysis with different 
 #' enrichment corpora.
-#' @param hunter_results list with DEG analysis results
+#' @param hunter_results output of main_degenes_hunter - list with DEG analysis results
 #' @param model_organism organisms which genes are being studied
 #' @param annot_table (OPTIONAL) annotation table to translate gene IDs
 #' @param organisms_table (OPTIONAL) configuration table for given organism.
@@ -79,7 +79,7 @@ main_functional_hunter <- function(
             !model_organism %in% rownames(organisms_table))) {
         stop(paste0('Model organism does not appear in organism table. 
             Currently available organisms are:', rownames(organisms_table)))
-    } else { 
+    } else {
         current_organism_info <- subset(organisms_table, 
                 rownames(organisms_table) %in% model_organism)  
     }

@@ -32,7 +32,7 @@ main_functional_hunter(
 )
 }
 \arguments{
-\item{hunter_results}{list with DEG analysis results}
+\item{hunter_results}{output of main_degenes_hunter - list with DEG analysis results}
 
 \item{model_organism}{organisms which genes are being studied}
 

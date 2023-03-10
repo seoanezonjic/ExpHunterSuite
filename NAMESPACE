@@ -3,6 +3,7 @@
 export(acc)
 export(degsynth)
 export(fmeasure)
+export(get_org_db)
 export(get_organism_table)
 export(get_stats)
 export(get_stats_from_cm)
