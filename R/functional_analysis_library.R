@@ -230,8 +230,13 @@ get_translation_tables_orgdb <- function(input_gene_id, input_ids, current_organ
                                                   organism_info=current_organism_info, outcome_action="warning")
             
   if(symbol_output_available == TRUE) {
-    input_to_symbol <- translate_ids_orgdb(ids=input_ids, 
-    input_id=input_gene_id, output_id="SYMBOL", org_db=org_db)
+    if(input_gene_id == "SYMBOL") {
+      input_to_symbol <- data.frame(input=input_ids, 
+                                      SYMBOL=input_ids)
+    } else {
+      input_to_symbol <- translate_ids_orgdb(ids=input_ids, 
+      input_id=input_gene_id, output_id="SYMBOL", org_db=org_db)
+    }
   } else {
     input_to_symbol <- NULL
   }
@@ -248,9 +253,9 @@ translate_ids_orgdb <- function(ids, input_id, output_id="ENTREZID", org_db=org_
             ids <- NULL
         }
     )
-    ids <- ids[!is.na(ids[,2]),]
+    ids <- ids[!is.na(ids[,output_id]),]
     if(just_output_ids == TRUE) {
-      return(unique(ids[,2]))
+      return(unique(ids[,output_id]))
     } else {
       return(ids)
     }

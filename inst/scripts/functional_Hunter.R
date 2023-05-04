@@ -53,7 +53,7 @@ option_list <- list(
   optparse::make_option(c("-t", "--input_gene_id"), type="character", 
     default="E",
     help=paste0("Input gene IDs. Available IDs are: ENSEMBL (E), entrezgene",
-        " (e), TAIR/Arabidopsis (T), Gene Names (G). [Default:%default]")),          
+        " (e), TAIR/Arabidopsis (T), Gene Names (G), Gene Symbol (e.g. HGNC for human). [Default:%default]")),          
   optparse::make_option(c("-f", "--func_annot_db"), type="character", 
     default="gKR",
     help=paste0("Functional annotation database and enrichment method(s) to",
@@ -160,6 +160,7 @@ if(opt$input_gene_id == "e") input_gene_id <- "ENTREZID"
 if(opt$input_gene_id == "E") input_gene_id <- "ENSEMBL"
 if(opt$input_gene_id == "T") input_gene_id <- "TAIR"
 if(opt$input_gene_id == "G") input_gene_id <- "GENENAME"
+if(opt$input_gene_id == "S") input_gene_id <- "SYMBOL"
 
 # Simplest option just to grow the vectors, given complexity of input arguments & interplay
 enrich_dbs <- vector()
