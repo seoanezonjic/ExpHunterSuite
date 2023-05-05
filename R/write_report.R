@@ -280,12 +280,6 @@ write_functional_report <- function(hunter_results,
     DEGH_results <- func_results$DEGH_results_annot
     enrichments_ORA_expanded <- func_results$WGCNA_ORA_expanded
 
-    # JRP This will get us one day
-    norm_counts <- hunter_results[["all_data_normalized"]][["DESeq2"]]
-    scaled_counts <- scale_data_matrix(data_matrix = as.matrix(norm_counts))
-    scaled_counts_table <- as.data.frame(as.table(scaled_counts))
-    colnames(scaled_counts_table) <- c("Gene","Sample","Count")
-
     if(grepl("f", report)){
         message("\tRendering regular report")
         outf <- file.path(results_path, "functional_report.html")
@@ -315,6 +309,13 @@ write_functional_report <- function(hunter_results,
              sample_classes, DEGH_results, showCategories, group_results)
     }
     if(grepl("i", report)) {
+        
+        # JRP This will get us one day
+        norm_counts <- hunter_results[["all_data_normalized"]][["DESeq2"]]
+        scaled_counts <- scale_data_matrix(data_matrix = as.matrix(norm_counts))
+        scaled_counts_table <- as.data.frame(as.table(scaled_counts))
+        colnames(scaled_counts_table) <- c("Gene","Sample","Count")
+
         message("\tRendering individual cluster reports")
         if(is.null(enrichments_ORA)) {
           message("No WGCNA ORA results, not printing individual cluster report")
