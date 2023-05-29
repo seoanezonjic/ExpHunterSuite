@@ -41,8 +41,6 @@ Correlated miRNA-mRNA pairs are known **significant pairs** representing putativ
 Results are then compared with multiMiR databases.
 
 * Brief description of strategies used: 
-
-```{r config_evaluation, echo = FALSE, warning = FALSE, result = "asis"}
   specific_evaluation <- eval_method == "specific"
 ```
 
@@ -50,10 +48,7 @@ Results are then compared with multiMiR databases.
   sig_strategies <- unique(cont_tables$strategy[!is.na(cont_tables$coverage)])
 ```
 
-```{r print_info, echo = FALSE, warning = FALSE, results = "asis"}
-  
-  if (ncol(score_comp) == 0 || length(score_comp == 0))
-    score_comp <- NULL 
+```{r print_info, echo = FALSE, warning = FALSE, results = "asis", eval = FALSE}
 
   sig_strategies <- names(strategies)[! names(strategies) %in% unsig_strategies]
   cat(parse_strat_text(sig_strategies))
@@ -65,7 +60,12 @@ Results are then compared with multiMiR databases.
 
 ```
 
-* Three **control strategies** are also used:
+```{r sig_unsig, echo = FALSE, warning = FALSE, results = "asis", eval = FALSE}
+
+
+cat("
+
+  * Three **control strategies** are also used:
     + **Similar lFC:** All possible permutations between differentially expressed genes (DEGs) and differentially expressed miRNAs (DEMs) with similar log2FC (Possitive control). Correlation is not performed.
     + **Opposite lFC:** All possible permutations between DEGs and DEMs with opposite log2FC (Negative control). Correlation is not performed.
     + **E0_vs_counts:** Correlation between the Eigengene profile for gene module 0 (which contains genes that could not be assigned to any other coexpression module) and miRNA normalized counts (Negative control).
@@ -74,8 +74,7 @@ Graphics are only displayed for the strategies that were run and for which signi
 The **control strategies** are artifical correlation strategies used for comparison with the real strategies in terms of performance.
 Their results should not be considered for miRNA-gene target selection.
 
-```{r sig_unsig, echo = FALSE, warning = FALSE, results = "asis", eval = FALSE}
-
+")
     # + **normalized_counts_RNA_vs_miRNA_Eigengene_0:** Correlation between gene normalized counts and the Eigengene profile for miRNA module 0, which contains miRNAs that could not be assigned to any other module.
   sig_strats <-  paste0("**", paste(sig_strategies, collapse = "**, **"), "**")
 
@@ -236,72 +235,6 @@ In that case Strategies without significant miRNAs were rejected.
 ```
 
 
-
-```{r score_comp_pval, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = !is.null(score_comp)}
-cat("
-  ### **Prediction scores for the significant pairs**
-
-
-The pairs in the multiMiR prediction databases are assigned scores that represent confidence in the predicted miRNA-target interaction.
-For each prediction database, the scores for the significant pairs obtained by each strategy were compared with the scores in the **background**.
-The **background** score distribution is the prediction score distribution of all possible pairs that can be generated combining all input data.
-
-The comparison was performed using one-tailed bootstrap T-tests. 
-Lower p-values means that the significant pairs had higher scores in the database.
-The final column of the table shows the combined p-values for all databases, integrated using Fishers method.
-
-
-
-  #### **One-tailed T-test**
-
-  ")
-score_comp_pval <- reshape(score_comp[,c("strategy","database","p.value")], idvar = "strategy", timevar = "database", direction = "wide")
-    colnames(score_comp_pval) <- gsub("p.value.", "",colnames(score_comp_pval))
-   DT::datatable(score_comp_pval, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
-            options = list(
-              paging = FALSE,
-              colReorder = TRUE,
-              dom = 'lftBip',
-              buttons = c('copy', 'csv', 'excel')
-          ))
-
-```
-
-
-```{r score_comp_bootpval, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = !is.null(score_comp)}
-  score_comp_boot_pval <- reshape(score_comp[,c("strategy","database","boot.p.value")], idvar = "strategy", timevar = "database", direction = "wide")
-   colnames(score_comp_boot_pval) <- gsub("boot.p.value.", "",colnames(score_comp_boot_pval))
-  DT::datatable(score_comp_boot_pval, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
-            options = list(
-              paging = FALSE,
-              colReorder = TRUE,
-              dom = 'lftBip',
-              buttons = c('copy', 'csv', 'excel')
-          ))
-
-```
-
-
-```{r score_comp_pval_log, results = 'asis', echo = FALSE, warning = FALSE, message = FALSE, eval = !is.null(score_comp)}
-cat("\n\n#### **Comparison of p-values obtained in boostrap T-test**
-
-This plot shows -log(p) values from the T-test and bootstrap T-test. Grey dotted line indicates -log10(0.05). **comb_pval** is the combination of all p-values using Fisher combined probability test.\n\n")
-
-  log_score_comp <- score_comp[,c("strategy","database","log.boot.p.value")]
-# log_score_comp <- log_score_comp[!log_score_comp$strategy %in% unsig_strategies,]
-    data.table::setnames(log_score_comp, "log.boot.p.value", "logPval")
-   
-  
-  ggplot2::ggplot(log_score_comp, ggplot2::aes(x = database, y = logPval, color = strategy, group = strategy)) +
-  ggplot2::geom_line() + 
-  ggplot2::geom_line(ggplot2::aes( y =  -log10(0.05), linetype = "-log(0.05)" ), colour = "grey") +
-  ggplot2::labs(colour = "Strategy", group = "Strategy", y = "-log(p)", linetype = "Threshold", y = "Database") +
-  ggplot2::scale_linetype_manual(values=c("dashed", "solid")) #+
-  # ggplot2::theme(legend.position = "bottom", legend.box = "vertical") + 
-  # ggplot2::guides(color = ggplot2::guide_legend(title.position = "top"))
-```
-
-
 ## **Strategies specific results**
 
 ```{r render_partial_reports, echo = FALSE, warning = FALSE}
@@ -317,69 +250,8 @@ This plot shows -log(p) values from the T-test and bootstrap T-test. Grey dotted
 `r paste(knitr::knit(text = curr_out), collapse = '\n')`
 
 
-## **Fisher exact test significance (only for prediction databases)** 
 
-Significant and non-significant pairs were compared in terms of overlap with databases using one-tailed Fisher exact tests. 
-P-values are shown for the different strategies and for the different databases considered. 
--log10(p) are represented. The -log10(0.05) threshold is represented as a dashed grey line. **comb_pval** is the combination of all p-values using Fisher combined probability test.
 
-```{r p_fisher, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-    
-
-    data.table::setnames(p_fisher, c("fisher.log.p.value", "fisher.p.value"), c("LogPval", "Pvalue"))
-     ggplot2::ggplot(p_fisher, ggplot2::aes(x = database, y = LogPval, group = strategy, color = strategy)) +
-    ggplot2::geom_line() + 
-    ggplot2::geom_line(ggplot2::aes( y =  -log10(0.05), linetype = "-log10(0.05)") , colour = "grey") +
-    ggplot2::geom_point(size = 1) +
-    ggplot2::labs(colour = "Strategy", linetype = "-log10(0.05)", y = "-log10(p)", x = "Database") +
-    ggplot2::scale_linetype_manual(values=c("dashed", "solid"))+
-    ggplot2::theme(legend.position = "bottom", legend.box = "vertical")
-
-```
-
-```{r p_fisher_table, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-    p_fisher <- p_fisher[, c("database", "strategy", "Pvalue")]
-    p_fisher <- tidyr::spread(p_fisher, database, Pvalue)
-    DT::datatable(p_fisher, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
-            options = list(
-              paging = TRUE,
-              colReorder = TRUE,
-              dom = 'lftBip',
-              buttons = c('copy', 'csv', 'excel')
-          ))
-```
-
-## **Score distribution sampling check**
-These plots compare the full score distribution of the prediction databases (black dashed line), the scores of all possible pairs (**background pairs**) in the expression data (black solid line) and the scores of strategy **significant pairs** (legend). 
-
-```{r score_sampling, results = "asis", echo = FALSE, warning = FALSE, message = FALSE, eval = !is.null(score_comp)}
-  for (database in selected_predicted_databases) {
-    cat(paste0("\n\n## **",stringr::str_to_title(database),"**\n"))
-    raw_score <- data.frame(x = raw_databases_scores[[database]])
-    data.table::setnames(raw_score, "x", database)
-    background_score <- all_pairs[,get(database)]
-    background_score <- background_score[!is.na(background_score)]
-    background_score <- data.frame(score = background_score)
-    strats_to_use <- sig_strategies
-    if (any(grepl("DEGs_DEMs_permutated", sig_strategies)))
-          strats_to_use <- c(strats_to_use, "DEGs_DEMs_permutated")
-    strat_scores <- lapply(strats_to_use, function(strategy){
-           all_strategy_score <- all_pairs[get(strategy), get(database)]
-           all_strategy_score <- all_strategy_score[!is.na(all_strategy_score)]
-           if (length(all_strategy_score) == 0) all_strategy_score <- NA
-           return(data.frame(score = all_strategy_score, strategy = strategy,stringsAsFactors = TRUE))
-      })
-    strat_scores <-  data.table::rbindlist(strat_scores)
-    dists <- ggplot2::ggplot() +       
-    ggplot2::geom_density(data = raw_score, ggplot2::aes_(x = as.name(database)), linetype = "dashed") + 
-    ggplot2::geom_density(data = background_score, ggplot2::aes(x = score)) + 
-    ggplot2::geom_density(data = strat_scores, ggplot2::aes(x = score, color = strategy))
-    plot(dists) 
-     # cat("\n\n")
-    }
-
-  cat("\n\n")
-```
 
 ### **Values of options used to run CorMiT**
 First column contains the option names; second column contains the given values for each option in this run.

@@ -61,6 +61,8 @@ option_list <- list(
                         help="String indicating report modes to execute. R: Generate report for each cluster and all clusters combined. P: Plots (dotplot and emaplot) combining all cluster enrichments. S: Summary mode (sumamrized categories heatmap)"),
   optparse::make_option(c("-S", "--sim_thr"), type="double", default=0.7,
                         help="Similarity cutoff for grouping categories in Summary mode. Default=%default"),
+  optparse::make_option(c("-U", "--universe"), ,type = "character", default=NULL,
+                        help="One column file listing the universe genes."), 
   optparse::make_option(c("-C", "--summary_common_name"), type="character", default="ancestor", 
                         help="Name of the term groups. 'significant' to use the most significant term of each group. 'ancestor' to use the common ancestor of the group"),
   optparse::make_option(c("-T", "--top_categories"), type="integer", default=NULL,
@@ -95,6 +97,21 @@ all_funsys <- unlist(strsplit(opt$funsys, ","))
 organisms_table <- get_organism_table(organisms_table_file)
 current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
 org_db <- get_org_db(current_organism_info)
+
+#Load universe
+if (is.null(opt$universe) || length(opt$universe) == 0){
+  universe <- opt$universe
+}else if (file.exists(opt$universe)){
+  universe <- read.table(opt$universe)[,1]
+  if (opt$gene_keytype != "ENTREZID"){
+    universe <- translate_ids_orgdb(ids=universe, 
+                                    input_id = opt$gene_keytype,
+                                    output_id="ENTREZID",
+                                    org_db = org_db, 
+                                    just_output_ids=TRUE)
+  }
+}
+
 # Load customs
 all_custom_gmt <- NULL
 if (!is.null(opt$custom)) {
@@ -131,7 +148,8 @@ ce_list <- main_clusters_to_enrichment(
   pvalcutoff = opt$pvalcutoff,
   qvalcutoff = opt$qvalcutoff,
   all_custom_gmt = all_custom_gmt,
-  kegg_data_file = kegg_data_file
+  kegg_data_file = kegg_data_file,
+  universe = universe
 )
 enrichments_ORA <- ce_list[["enrichments_ORA"]]
 

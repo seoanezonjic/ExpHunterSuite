@@ -9,7 +9,7 @@ sample_proportion,
 organism,
 multimir_db,
 p_val_cutoff,
-corr_cutoff,
+corr_cutoffs,
 permutations, 
 MM_cutoff,
 report, #this option can be set to default value
@@ -30,8 +30,10 @@ organism_table_path = file.path(find.package('ExpHunterSuite'), "inst",
 compare_pred_scores = FALSE
 ){
 
-#
 
+#corr_cutoffs <- gsub("'","", corr_cutoffs)
+corr_cutoffs<- eval(parse(text=paste('c(', gsub("'","", corr_cutoffs), ')')))
+#corr_cutoffs <- as.numeric(unlist(strsplit(corr_cutoffs, ",")))
 
 
 
@@ -90,8 +92,7 @@ compare_pred_scores = FALSE
 
  # Perform strategies
  miRNA_cor_results <- perform_all_strategies(strat_names = strat_names, 
-    RNAseq = RNAseq, miRNAseq = miRNAseq, corr_cutoff =  corr_cutoff, 
-    p_val_cutoff = p_val_cutoff, MM_cutoff = MM_cutoff,
+    RNAseq = RNAseq, miRNAseq = miRNAseq, MM_cutoff = MM_cutoff,
     permutations = permutations, all_pairs = all_pairs, 
     selected_predicted_databases = selected_predicted_databases, 
     tag_filter = tag_filter, sample_proportion = sample_proportion, 
@@ -99,60 +100,122 @@ compare_pred_scores = FALSE
     corr_coef = corr_coef, selected_targets = selected_targets, 
     compare_pred_scores = compare_pred_scores, eval_method = eval_method)
 
+
+#remove eval_method
+miRNA_cont_tables <- data.frame()
+cont_tables <- data.frame()
+all_pairs <- as.data.frame(miRNA_cor_results$all_pairs)
+message("Preparing data for stats computing")
+ for (corr_cutoff in corr_cutoffs){
+ #mkdir folder
+  message(paste0("Computing ", corr_cutoff, " threshold"))
+   for (strategy in strat_names){
+       
+        contingency_tables <- prepare_for_stats(all_pairs, strategy, corr_cutoff, p_val_cutoff, corr_type = corr_type)
+        if (is.null(contingency_tables)) next
+          miRNA_cont_tables <- rbind(miRNA_cont_tables, contingency_tables$strat_miRNA_ct)
+          cont_tables <- rbind(cont_tables, contingency_tables$strat_ct)
+   }
+   message("test")
+ 
+ } 
+ contingency_tables <- list(miRNA_cont_tables = miRNA_cont_tables,
+                              cont_tables = cont_tables) 
+ miRNA_cor_results <- c(miRNA_cor_results, 
+   contingency_tables)
+
  miRNA_cor_results$cont_tables <- v_get_stats(miRNA_cor_results$cont_tables)
- if (eval_method == "specific") {
-   miRNA_cor_results$miRNA_cont_tables <- 
+ miRNA_cor_results$miRNA_cont_tables <- 
                               v_get_stats(miRNA_cor_results$miRNA_cont_tables, 
                               selected_stats = c("v.fisher.test","odds_ratio"))
-   miRNA_cont_tables <- miRNA_cor_results$miRNA_cont_tables
-   integrated_stats <- filter_and_integrate_OR(miRNA_cont_tables,
+ miRNA_cont_tables <- miRNA_cor_results$miRNA_cont_tables
+ integrated_stats <- filter_and_integrate_OR(miRNA_cont_tables,
                                              p.adjust.method = "BH")
    
-   integrated_OR <- integrated_stats[["integrated_stats"]]
-   miRNA_cor_results$miRNA_cont_tables_adj <- integrated_stats[["miRNA_ct"]]
-   miRNA_cor_results$cont_tables <- merge(miRNA_cor_results$cont_tables, 
+ integrated_OR <- integrated_stats[["integrated_stats"]]
+ miRNA_cont_tables <- integrated_stats[["miRNA_ct"]]
+ 
+
+ miRNA_cont_tables <- miRNA_cont_tables[!grepl("Eigengene_0", miRNA_cont_tables$strategy) & 
+                                          !grepl("sim", miRNA_cont_tables$strategy) &
+                                          !grepl("opp", miRNA_cont_tables$strategy) &
+                                          miRNA_cont_tables$Odds_ratio >0.0001 &
+                                          miRNA_cont_tables$Odds_ratio < 10000 &
+                                          miRNA_cont_tables$Pvalue <= 0.05,]
+
+
+ miRNA_cor_results$miRNA_cont_tables <-  miRNA_cont_tables                                
+ miRNA_cor_results$cont_tables <- merge(miRNA_cor_results$cont_tables, 
                                           integrated_OR, 
-                                          by=c("strategy","db_group"), 
+                                          by=c("strategy","db_group", "corr_cutoff"), 
                                           all.x = TRUE)
- }
 
-miRNA_cor_results$filters_summary$type <- factor(
-    miRNA_cor_results$filters_summary$type, 
-    levels=c("novel_miRNAs","known_miRNAs","multimir", "multimir_random", 
-        "predicted", "predicted_random", "validated","validated_random", 
-        "pred_and_val", "pred_and_val_random"))
- 
- if (compare_pred_scores) {
-   miRNA_cor_results$score_comp$log.p.value <- -log10( 
-                                          miRNA_cor_results$score_comp$p.value)
-   miRNA_cor_results$score_comp$log.boot.p.value <- -log10(
-                                     miRNA_cor_results$score_comp$boot.p.value)
- }
- 
- miRNA_cor_results$p_fisher$fisher.log.p.value <- -log10( 
-    miRNA_cor_results$p_fisher$fisher.p.value)
 
+  integrated_strat <- get_optimal_pairs(miRNA_cor_results$all_pairs, 
+                                         miRNA_cor_results$miRNA_cont_tables,
+                                             p_val_cutoff,
+                                             corr_type = corr_type
+                                             )
+ all_pairs$integrated_strat <- integrated_strat
+ 
+
+ integrated_ct <- prepare_for_stats(all_pairs, "integrated_strat", 0, p_val_cutoff, sig_pairs = TRUE)
+
+integrated_ct$cont_tables <- v_get_stats(integrated_ct$strat_ct)
+
+ integrated_ct$miRNA_cont_tables <- 
+                              v_get_stats(integrated_ct$strat_miRNA_ct, 
+                              selected_stats = c("v.fisher.test","odds_ratio"))
+ #integrated_ct <- integrated_ct$miRNA_cont_tables
+ integrated_stats <- filter_and_integrate_OR(integrated_ct$miRNA_cont_tables,
+                                            p.adjust.method = "BH")
+   
+ integrated_OR <- integrated_stats[["integrated_stats"]]
+ int_miRNA_cont_tables <- integrated_stats[["miRNA_ct"]]
+
+ miRNA_cor_results$int_miRNA_cont_tables <- rbind(miRNA_cor_results$miRNA_cont_tables,
+                                                   integrated_stats[["miRNA_ct"]])
+
+
+ integrated_ct$cont_tables <- merge(integrated_ct$cont_tables, 
+                                          integrated_OR, 
+                                          by=c("strategy","db_group", "corr_cutoff"), 
+                                          all.x = TRUE)
+ miRNA_cor_results$int_cont_tables <- rbind(miRNA_cor_results$cont_tables,
+                                                   integrated_ct$cont_tables)
+
+
+ ## add crossvalidation
+
+ miRNA_cont_tables$strategy <- set_strats_readable(miRNA_cont_tables$strategy)
+ all_cor_dist <- get_cor_dist(all_pairs, strat_names)
  ################# GET IDS TRANSLATIONS
  RNA_IDs <- selected_targets
  if (!is.null(RNAseq_folder)){
-   RNA_IDs <- miRNA_cor_results$all_pairs$RNAseq
+   RNA_IDs <- all_pairs$RNAseq
  }
 
  translated_ids <- translate_all_id(
-    miRNA_IDs = miRNA_cor_results$all_pairs$miRNAseq, 
+    miRNA_IDs = all_pairs$miRNAseq, 
     RNA_IDs = RNA_IDs, 
     organism_info = organism_info, translate_ensembl = translate_ensembl)
-   miRNA_cor_results$cont_tables$corr_cutoff <- corr_cutoff
-
     
- 
+ miRNA_cor_results$integrated_pairs <-  all_pairs[
+  all_pairs$integrated_strat &
+  !is.na(all_pairs$integrated_strat),]  
+
+
+ miRNA_cor_results$all_pairs <- all_pairs
+
  miRNA_cor_results <- c(
     miRNA_cor_results,
     translated_ids,
     list(
      miRNAseq = miRNAseq,
      RNAseq = RNAseq,
-     selected_predicted_databases = selected_predicted_databases
+     selected_predicted_databases = selected_predicted_databases,
+     all_cor_dist = all_cor_dist
  ))
+ 
  return(miRNA_cor_results)
 }

@@ -289,28 +289,36 @@ filter_and_integrate_OR <- function(cont_table, p.adjust.method = "BH"){
   miRNA_ct <- data.frame()
   for (strat in unique(cont_table$strategy)) { 
     strat_cont_table <- cont_table[cont_table$strategy == strat,]
-    for (group_db in unique(cont_table$db_group)) { 
-        
-        miRNA_group <- strat_cont_table[strat_cont_table$db_group == group_db, ] 
-        miRNA_group_rel <- miRNA_group[!(miRNA_group$TP == 0 & 
-                                        miRNA_group$FN == 0),]                   
-        miRNA_group_rel$p.adjust <- stats::p.adjust(miRNA_group_rel$Pvalue, 
-                                              method = p.adjust.method,
-                                              n = nrow(miRNA_group_rel))
-        str(miRNA_group_rel)
-        miRNA_ct <- rbind(miRNA_ct, miRNA_group_rel)
-        miRNA_group_fil <- miRNA_group_rel[miRNA_group_rel$p.adjust < 0.05,]
-        if (nrow(miRNA_group_fil) == 0) next 
+    for (corr_thr in unique(cont_table$corr_cutoff)) {
+      for (group_db in unique(cont_table$db_group)) { 
 
-        strat_stats <- data.frame(
-           strategy = strat,
-           db_group = group_db,
-           median_OR = stats::median(miRNA_group_fil$Odds_ratio),
-           coverage = nrow(miRNA_group_fil) / nrow(miRNA_group_rel),
-           coverage_text = paste0(nrow(miRNA_group_fil),"/",nrow(miRNA_group_rel))
-        )
-        # str(unique(miRNA_group_rel$db_group))
-        integrated_stats <- rbind(integrated_stats, strat_stats)
+          miRNA_group <- strat_cont_table[strat_cont_table$db_group == group_db &
+                                          strat_cont_table$corr_cutoff == corr_thr,] 
+          miRNA_group_rel <- miRNA_group[!(miRNA_group$TP == 0 & 
+                                          miRNA_group$FN == 0),]                   
+          if (!is.na(p.adjust.method)){
+
+          miRNA_group_rel$p.adjust <- stats::p.adjust(miRNA_group_rel$Pvalue, 
+                                                method = p.adjust.method,
+                                                n = nrow(miRNA_group_rel))
+          } else {
+             miRNA_group_rel$p.adjust <- rep(0, nrow(miRNA_group_rel))
+          }
+          miRNA_group_fil <- miRNA_group_rel[miRNA_group_rel$p.adjust < 0.05,]
+          miRNA_ct <- rbind(miRNA_ct, miRNA_group_rel)
+          if (nrow(miRNA_group_fil) == 0) next 
+
+          strat_stats <- data.frame(
+             strategy = strat,
+             db_group = group_db,
+             corr_cutoff = corr_thr,
+             median_OR = stats::median(miRNA_group_fil$Odds_ratio),
+             coverage = nrow(miRNA_group_fil) / nrow(miRNA_group_rel),
+             coverage_text = paste0(nrow(miRNA_group_fil),"/",nrow(miRNA_group_rel))
+          )
+          # str(unique(miRNA_group_rel$db_group))
+          integrated_stats <- rbind(integrated_stats, strat_stats)
+        }
      }
   }
   return(list(integrated_stats = integrated_stats, miRNA_ct = miRNA_ct))

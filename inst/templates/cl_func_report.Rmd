@@ -49,6 +49,7 @@ cat(rescorr,sep='\n')
 
 ```{r ORA_analysis, eval=exists("cl_flags_ora"), echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 gene_set <- "ORA"
+default_width <- 5
 res <- list()
 for(funsys in names(cl_flags_ora)) {
   if(cl_flags_ora[[funsys]] == TRUE) {

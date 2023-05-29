@@ -48,6 +48,49 @@ write_expression_report <- function(exp_results,
                       output_file = outf, intermediates_dir = output_files)
 }
 
+write_global_cormit <- function(
+strategies,
+cont_tables,
+mirna_names,
+miRNAseq,
+miRNA_cont_tables,
+gene_id_translation,
+RNAseq,
+report_name,
+template_folder,
+output_files,
+mapping_output,
+output_pairs,
+all_cor_dist,
+int_miRNA_cont_tables,
+int_cont_tables,
+integrated_pairs,
+selected_predicted_databases,#
+all_pairs #
+){
+
+     miRNA_cont_tables$miRNA <- mirna_names[match(miRNA_cont_tables$miRNA, mirna_names$Accession), "TargetName"]   
+     rmarkdown::render(
+               file.path(template_folder, 'global_cormit.Rmd'), 
+               output_file = file.path(output_files, report_name), 
+               intermediates_dir = file.path(output_files))
+
+    integrated_pairs$miRNA <- mirna_names[match(integrated_pairs$miRNAseq, mirna_names$Accession), "TargetName"]
+    integrated_pairs$db_type <- ifelse(integrated_pairs$multimir, "DB","ND")
+     output_pairs <- data.frame()
+     genes_attr <- data.frame()
+     attr <- all_pairs[,c("miRNAseq", "RNAseq", "validated_c", "predicted_c")]
+     for (miRNA in unique(integrated_pairs$miRNA)){
+
+        DB <- data.frame(miRNA = paste0(miRNA, "_DB"), 
+        genes= paste(integrated_pairs$RNAseq[integrated_pairs$db_type== "DB" & integrated_pairs$miRNA == miRNA],collapse = ","))
+        
+        ALL <- data.frame(miRNA = paste0(miRNA, "_ALL"), 
+        genes= paste(integrated_pairs$RNAseq,collapse = ","))
+        output_pairs <- rbind(output_pairs, DB, ALL)
+  }
+    write.table(output_pairs, col.names = FALSE, sep = "\t",file = file.path(output_files,"integrated_miRNA.txt"), quote = FALSE, row.names = FALSE)
+}
 
 #' @importFrom heatmaply heatmaply
 write_summarize_heatmaps <- function(summarized_ORA, output_path) {

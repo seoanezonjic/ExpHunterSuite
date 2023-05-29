@@ -28,7 +28,8 @@ main_clusters_to_enrichment <- function(
   pvalcutoff = 0.1,
   qvalcutoff = 0.2,
   all_custom_gmt = NULL,
-  kegg_data_file = NULL){
+  kegg_data_file = NULL,
+  universe = NULL){
 
   gene_attributes <- NULL
   gene_attribute_name <- NULL
@@ -57,7 +58,8 @@ main_clusters_to_enrichment <- function(
                                   pvalueCutoff =  pvalcutoff, 
                                   qvalueCutoff = qvalcutoff,
                                   custom_sets = all_custom_gmt,
-                                  kegg_file = kegg_data_file)
+                                  kegg_file = kegg_data_file,
+                                  universe = universe)
 
 
     save(enrichments_ORA, file = temp_file)

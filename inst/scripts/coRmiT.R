@@ -46,8 +46,8 @@ option_list <- list(
     optparse::make_option("--corr_type TYPE", type="character", 
         default="lower",
         help = "Set if correlations are [lower] or [higher] than the --p_val_cutoff. Default=%default"),
-    optparse::make_option(c("-c", "--corr_cutoff"), type="double", 
-        default=-0.7,
+    optparse::make_option(c("-c", "--corr_cutoffs"), type="character", 
+        default="-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6",
         help="Correlation threshold . Default=%default"),
     optparse::make_option(c("-s", "--sample_proportion"), type="double", 
         default=0.01,
@@ -131,7 +131,11 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 }
  
  #### NOTAS PARA EL SCRIPT
-
+#
+######################
+## ADD POSSITIVE CORRELATIONS
+#####################
+## ADD OR HEATMAP FOR MIRNA/STRATEGY/CORRELATION CUTOFF
 
 
 
@@ -149,7 +153,7 @@ if (exec_cormit){
         multimir_db=opt$multimir_db,
         sample_proportion = opt$sample_proportion,
         p_val_cutoff=opt$p_val_cutoff,
-        corr_cutoff=opt$corr_cutoff,
+        corr_cutoffs=opt$corr_cutoffs,
         MM_cutoff=opt$module_membership_cutoff,
         permutations = opt$permutations,
         report=opt$report,
@@ -186,12 +190,12 @@ miRNA_cor_results <- c(miRNA_cor_results,
     list(report_name =opt$report,
          template_folder =template_folder,
          output_files =normalizePath(opt$output_files),
-         p_val_cutoff =opt$p_val_cutoff,
-         corr_cutoff =opt$corr_cutoff,
-         eval_method = opt$eval_method,
-         sample_proportion =opt$sample_proportion,
+         #p_val_cutoff =opt$p_val_cutoff,
+         #corr_cutoff =opt$corr_cutoff,
+        # eval_method = opt$eval_method,
+         #sample_proportion =opt$sample_proportion,
          mapping_output = opt$mapping_output,
          output_pairs = opt$output_pairs))
+do.call("write_global_cormit", miRNA_cor_results)
 
-
-do.call("write_miRNA_cor_report", miRNA_cor_results)
+#do.call("write_miRNA_cor_report", miRNA_cor_results)
