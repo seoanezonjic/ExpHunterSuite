@@ -338,6 +338,11 @@ other values.
 
 ```{r FDR_volcano, echo = FALSE, warning=FALSE}
 
+if (any(DE_all_genes$combined_FDR == 0)){
+	min_FDR <- min(DE_all_genes$combined_FDR[DE_all_genes$combined_FDR != 0 & !is.na(DE_all_genes$combined_FDR)])
+	DE_all_genes[DE_all_genes$combined_FDR == 0 & !is.na(DE_all_genes$combined_FDR),] <- min_FDR
+}
+
 evp <- EnhancedVolcano::EnhancedVolcano(DE_all_genes, 
 	lab=rownames(DE_all_genes),  
 	x="mean_logFCs", 
