@@ -337,8 +337,7 @@ The red horizontal line represents the chosen FDR threshold of `opt$p_val_cutoff
 other values.
 
 ```{r FDR_volcano, echo = FALSE, warning=FALSE}
-
-if (any(DE_all_genes$combined_FDR == 0)){
+if (any(DE_all_genes$combined_FDR[!is.na(DE_all_genes$combined_FDR)] == 0)){
 	min_FDR <- min(DE_all_genes$combined_FDR[DE_all_genes$combined_FDR != 0 & !is.na(DE_all_genes$combined_FDR)])
 	DE_all_genes[DE_all_genes$combined_FDR == 0 & !is.na(DE_all_genes$combined_FDR),] <- min_FDR
 }
