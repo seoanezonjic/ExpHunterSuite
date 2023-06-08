@@ -625,7 +625,7 @@ score_comparison <- function(databases, all_pairs, sample_size, strategy){
   return(db_comp)
 }
 
-get_miRNA_ct <- function(strat_data, db_group, crossval = FALSE, test_sample = 0.25, bootstrap = 10){
+get_miRNA_ct <- function(strat_data, db_group, crossval = FALSE, test_sample = 0.25, bootstrap = 40){
     db_gs <- strat_data[,get(db_group)]
     experiment_pairs <- strat_data[,sig_pairs]
 
@@ -633,33 +633,19 @@ get_miRNA_ct <- function(strat_data, db_group, crossval = FALSE, test_sample = 0
 
     if (crossval) {
         strat_group_ct <- data.frame()
+        seed <- 1234
         for (bt_it in seq(1, bootstrap)){
-                seed <- 1234
                 set.seed(seed + bt_it)
-                order <- sample(seq(1, length(db_gs)))
-               
-                db_gs <- db_gs[order]
-                experiment_pairs <- experiment_pairs[order]
-                iters <- trunc(1/test_sample)
-                for (iteration in seq(1,iters)) {
-                    test_init_pos <- (length(db_gs) * test_sample * (iteration-1)) + 1
-                    test_final_pos <- length(db_gs) * test_sample * iteration
-                    test_coord <- seq(test_init_pos, test_final_pos)
-                    test_ds <- experiment_pairs[test_coord]
-                    test_ds_db <- db_gs[test_coord]
-                    train_ds <- experiment_pairs[-test_coord]
-                    train_ds_db <- db_gs[-test_coord]
-                
-                    test_ct <- calc_ct(experiment = test_ds, gold_standard = test_ds_db)
-                    iteration <- paste0(iteration, bt_it)
-                    test_ct$crossval_it <- iteration
-                    test_ct$crossval_status <- "test"
-                    train_ct <- calc_ct(experiment = train_ds, gold_standard = train_ds_db)
-                    train_ct$crossval_it <- iteration
-                    train_ct$crossval_status <- "train"
+                db_gs_trues <- which(db_gs)
+                db_gs_to_falsify <- sample(db_gs_trues, ceiling(test_sample*length(db_gs_trues)))
 
-                    strat_group_ct <- rbind(strat_group_ct, train_ct, test_ct)
-                }
+                db_gs[db_gs_to_falsify] <- FALSE
+                              
+                train_ct <- calc_ct(experiment = experiment_pairs, gold_standard = db_gs)
+                train_ct$crossval_it <- bt_it
+                train_ct$crossval_status <- "train"
+
+                strat_group_ct <- rbind(strat_group_ct, train_ct)
         }
 
     } else {
@@ -901,3 +887,24 @@ dictionary <- list(
    }
    return(miRNA_strat_pairs)
  }
+
+
+
+ add_attrib_to_pairs <- function(pairs, RNAseq = NULL, miRNAseq = NULL, translate_targets = FALSE){
+    output_pairs <- pairs[,c("miRNA", "miRNAseq", "RNAseq", "validated_c","predicted_c","miRNA_loci")]
+    if (!is.null(RNAseq)) {
+        RNA_data <- RNAseq$DH_results[,c("gene_name","mean_logFCs","genes_tag")]
+        colnames(RNA_data) <- c("RNAseq", "Target_log2FC", "DEG_tag_target")
+        output_pairs <- merge(output_pairs, RNA_data, by = "RNAseq", all.x = TRUE)
+    }
+    if (!is.null(miRNAseq)) {
+        miRNA_data <- miRNAseq$DH_results[,c("gene_name","mean_logFCs","genes_tag")]
+        colnames(miRNA_data) <- c("miRNAseq", "miRNA_log2FC", "DEM_tag_miRNA")
+        output_pairs <- merge(output_pairs, miRNA_data, by = "miRNAseq", all.x = TRUE)
+    }
+    colnames(output_pairs)[match(c("miRNAseq", "RNAseq", "validated_c","predicted_c","miRNA_loci"),
+                                   colnames(output_pairs))] <- 
+            c("miRNA_ID", "Target_ID","Validated_DB_count", "Predicted_DB_count", "miRNA_source_gene")
+
+    return(output_pairs)
+}
