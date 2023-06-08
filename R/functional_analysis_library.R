@@ -27,44 +27,6 @@ scale_data_matrix <- function(data_matrix, norm_by_col = FALSE) {
   return(scaled_counts)
 }
 
-#' Catched errors fo pairwise_termsim for special cases
-#' @param enr enrichment object to be studied
-#' @param num_cats number of categories to be shown
-#' @return enrichment object after add termsim info
-#' @importFrom enrichplot pairwise_termsim
-catched_pairwise_termsim <- function(enr, num_cats = 200){
-  endedWithoutERRs <- FALSE
-  preparedForFortify <- FALSE
-  initial_num_cats <- num_cats
-  res <- enr
-  # Try
-  while(!endedWithoutERRs){
-    tryCatch(
-      # MAIN
-      {
-        enr <- enrichplot::pairwise_termsim(res, showCategory = num_cats)
-        endedWithoutERRs <- TRUE
-      },
-      # CATCH
-      error = function(cond){
-        if(!preparedForFortify){
-          res <<- prepare_for_fortify(res)
-          preparedForFortify <<- TRUE
-        }else{
-          num_cats <<- num_cats - 20
-        }
-        if(num_cats <= 0){
-          stop(cond)
-        }
-      }
-    )
-  }
-  if(num_cats < initial_num_cats) 
-    warning(paste0("Finally number of categories used has been (",
-                   num_cats,") for pairwise_termsim"))
-  return(enr)
-}
-
 
 #' Load a GMT format file and return a dataframe in correct format
 #' @param gmt_file file to be loaded
@@ -576,7 +538,6 @@ add_term_sim_ora <- function(deg_enr_ora) {
     if(is.list(enrichment) && length(enrichment) > 1) {
       enr_with_termsim[[funsys]] <- sapply(enrichment, function(enr) {
         if(nrow(enr) > 0) {
-#         return(catched_pairwise_termsim(enr))
           return(trycatch_pairwise_termsim(enr))
         } else {
           return(enr)
@@ -585,7 +546,6 @@ add_term_sim_ora <- function(deg_enr_ora) {
     } else {
       if(nrow(enrichment) > 0) {
         enr_with_termsim[[funsys]] <- trycatch_pairwise_termsim(enrichment)
-        #enr_with_termsim[[funsys]] <- catched_pairwise_termsim(enrichment)
       } else {
         enr_with_termsim[[funsys]] <- enrichment
       }
@@ -598,10 +558,9 @@ add_term_sim_ora <- function(deg_enr_ora) {
 #' Only seems to be a problem with Reactome - to study further
 #' Further investigation re: number of cats also required
 #' @param enr enrichment object to be studied
-#' @param num_cats number of categories to be shown
 #' @return enrichment object after add termsim info
 #' @importFrom enrichplot pairwise_termsim
-trycatch_pairwise_termsim <- function(enr, num_cats = 200){
+trycatch_pairwise_termsim <- function(enr){ 
   enr <- tryCatch(
   {
     enr <-enrichplot::pairwise_termsim(enr)
@@ -948,7 +907,7 @@ process_cp_list <- function(enrichments_ORA, simplify_results,
         enr_obj@fun <- "enrichGO"
         enr_obj <- clusterProfiler::simplify(enr_obj) 
       } 
-      enr_obj <- trycatch_pairwise_termsim(enr_obj, 200)
+      enr_obj <- trycatch_pairwise_termsim(enr_obj)
     }                              
     enrichments_ORA_tr[[funsys]] <- enr_obj 
   }
@@ -1128,7 +1087,7 @@ parse_results_for_report <- function(enrichments, simplify_results = FALSE){
           enr <- clusterProfiler::simplify(enr) 
       }   
       if (length(enr$Description) > 2 ) 
-      enr <- catched_pairwise_termsim(enr, length(enr$Description))
+      enr <- trycatch_pairwise_termsim(enr)
       enrichments_for_reports[[cluster]][[funsys]] <- enr 
     }
   }
