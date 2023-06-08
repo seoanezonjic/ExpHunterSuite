@@ -89,6 +89,12 @@ option_list <- list(
                             miRNAs with Pvalue under threshold will be discarded.
                              Strategies without significant miRNAs will be discarded
                 Default=%default"),
+    optparse::make_option(c("--genomic_ranges"), type="character", 
+        default=NULL,
+        help = "Path to miRNA genomic ranges Default=%default"),
+    optparse::make_option(c("--genome_ref"), type="character", 
+        default="hg38",
+        help = "Names of the genome version Default=%default"),
     optparse::make_option(c("--mapping_output"), type="character", 
         default="Target_log2FC",
         help = "Select the output column to show in functional report: Predicted_DB_count, Validated_DB_count, Correlation, Target_log2FC, miRNA_log2FC. Default=%default"),
@@ -194,6 +200,8 @@ miRNA_cor_results <- c(miRNA_cor_results,
          #corr_cutoff =opt$corr_cutoff,
         # eval_method = opt$eval_method,
          #sample_proportion =opt$sample_proportion,
+         genomic_ranges = opt$genomic_ranges,
+         genome_ref = opt$genome_ref,
          mapping_output = opt$mapping_output,
          output_pairs = opt$output_pairs))
 do.call("write_global_cormit", miRNA_cor_results)
