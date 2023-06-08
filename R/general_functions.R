@@ -169,15 +169,16 @@ save_times <- function(time_control,
 #' @importFrom BiocParallel MulticoreParam bptry bplapply bpok
 parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
     log <- FALSE
+    main_log_path <- file.path(getwd(), 'bcplogs')
     log_path <- NA_character_
     workers <- workers - 1 # Reserve one core for main execution process
     if( workers == 0) workers <- 1
     if(workers > 1){
       timestamp <- as.integer(Sys.time())
-      log_path <- file.path(getwd(), 'bcplogs', as.character(timestamp))
+      log_path <- file.path(main_log_path, as.character(timestamp))
       if(file.exists(log_path)){
         timestamp = timestamp + 1
-        log_path <- file.path(getwd(), 'bcplogs', as.character(timestamp))
+        log_path <- file.path(main_log_path, as.character(timestamp))
       }
       log <- TRUE
       dir.create(log_path, recursive = TRUE)
@@ -202,7 +203,10 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
       message(tail(attr(res[[fails[1]]], "traceback")))
       stop(paste('Parallel execution has failed at item', fails[1],
                  'and a total of', length(fails) , 'items have failed.'))
+    } else {
+      unlink(main_log_path, recursive = TRUE)
     }
+
     return(res)
 }
 
