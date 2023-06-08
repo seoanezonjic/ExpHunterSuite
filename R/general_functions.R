@@ -222,3 +222,14 @@ check_and_quit <- function(object){
   str(object)
   q()
 }
+
+
+
+annotate_genomic_ranges <-function(intervals_df, genome){
+ g_regs <- GenomicRanges::makeGRangesFromDataFrame(intervals_df, keep.extra.columns = TRUE)
+ annots <- annotatr::build_annotations(genome = genome, annotations = paste0(genome,"_basicgenes"))
+ annotated_g_regs <- annotatr::annotate_regions(regions = g_regs,annotations = annots, ignore.strand = FALSE)
+ annotated_g_regs <- data.frame(annotated_g_regs)
+ annotated_g_regs <- annotated_g_regs[!is.na(annotated_g_regs$annot.symbol),]
+ return(annotated_g_regs)
+}    
