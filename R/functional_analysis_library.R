@@ -28,6 +28,8 @@ scale_data_matrix <- function(data_matrix, norm_by_col = FALSE) {
 }
 
 
+
+
 #' Load a GMT format file and return a dataframe in correct format
 #' @param gmt_file file to be loaded
 #' @return GMT loaded info
@@ -582,6 +584,14 @@ trycatch_pairwise_termsim <- function(enr){
 
 merge_clusters <- function(results_list) {
   merged_clusters <- lapply(results_list, clusterProfiler::merge_result)
+}
+
+
+
+filter_cluster_enrichment <- function(compareCluster, filter_list){
+    compareCluster@compareClusterResult <- compareCluster@compareClusterResult[
+              compareCluster@compareClusterResult$Cluster %in% filter_list,]
+    return(compareCluster)
 }
 
 hamming_binary <- function(X, Y = NULL) {

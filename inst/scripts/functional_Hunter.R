@@ -99,6 +99,8 @@ option_list <- list(
   optparse::make_option(c("-R", "--report_modes"), type="character", 
     default="fci",
     help="HTML report modes. 'f' for functional_report, 'c' for cluster_main_report and 'i' for individual module report. Default=%default"),
+  optparse::make_option(c("--corr_threshold"), type = "double", default = 0.8,
+     help = "Clusters with abslute correlation higher than this theshold are combined in clusters_main_report.html. Default: %default"), 
   optparse::make_option(c("-u", "--universe"), type="character", default=NULL, 
     help="Background genes for enrichment. Default all. Alternative = expressed"),
   optparse::make_option("--clean_parentals", type="logical", default=FALSE, 
@@ -187,33 +189,36 @@ if("KEGG" %in% enrich_dbs) {
 clusters_flag <- grepl("c", opt$report_modes) || grepl("i", opt$report_modes)
 
 
-func_results <- main_functional_hunter(
-       hunter_results = hunter_results,
-       model_organism = opt$model_organism,
-       annot_table = annot_table,
-       input_gene_id = input_gene_id,
-       custom = all_custom_gmt,
-       enrich_dbs = enrich_dbs,
-       kegg_data_file = kegg_data_file,
-       enrich_methods = enrich_methods,
-       annotation_source = "orgdb", # Other option Biomart, to be added
-       pthreshold = opt$pthreshold,
-       qthreshold = opt$qthreshold,
-       cores = opt$cores,
-       task_size = opt$task_size,
-       output_files = opt$output_files,
-       organisms_table = organisms_table,
-       fc_colname = fc_colname,
-       universe = opt$universe,
-       clean_parentals = opt$clean_parentals,
-       simplify = opt$simplify,
-       top_categories = opt$top_categories,
-       sim_thr = opt$sim_thr,
-       summary_common_name = opt$summary_common_name,
-       clusters_flag = clusters_flag
-)
+# func_results <- main_functional_hunter(
+#        hunter_results = hunter_results,
+#        model_organism = opt$model_organism,
+#        annot_table = annot_table,
+#        input_gene_id = input_gene_id,
+#        custom = all_custom_gmt,
+#        enrich_dbs = enrich_dbs,
+#        kegg_data_file = kegg_data_file,
+#        enrich_methods = enrich_methods,
+#        annotation_source = "orgdb", # Other option Biomart, to be added
+#        pthreshold = opt$pthreshold,
+#        qthreshold = opt$qthreshold,
+#        cores = opt$cores,
+#        task_size = opt$task_size,
+#        output_files = opt$output_files,
+#        organisms_table = organisms_table,
+#        fc_colname = fc_colname,
+#        universe = opt$universe,
+#        clean_parentals = opt$clean_parentals,
+#        simplify = opt$simplify,
+#        top_categories = opt$top_categories,
+#        sim_thr = opt$sim_thr,
+#        summary_common_name = opt$summary_common_name,
+#        clusters_flag = clusters_flag
+# )
 
-write_enrich_files(func_results, opt$output_files)
+# write_enrich_files(func_results, opt$output_files)
+load(file.path(opt$output_files, "test.Rdata"))
+# save(func_results,hunter_results, file =  file.path(opt$output_files, "test.Rdata"))
+# q()
 write_functional_report(hunter_results = hunter_results, 
                             func_results = func_results, 
                             output_files = opt$output_files,
@@ -224,7 +229,8 @@ write_functional_report(hunter_results = hunter_results,
                             report = opt$report_modes,
                             showCategories = opt$showCategories,
                             max_genes = opt$max_genes_plot,
-                            group_results = opt$group_results
+                            group_results = opt$group_results,
+                            corr_threshold =opt$corr_threshold
 )
 
 

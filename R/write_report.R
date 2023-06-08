@@ -306,7 +306,8 @@ write_functional_report <- function(hunter_results,
                                     report = "fc",
                                     showCategories = 30,
                                     group_results = FALSE,
-                                    max_genes = 200
+                                    max_genes = 200,
+                                    corr_threshold = 0.8
                                     ){
     # TO parallelize properly
     clean_tmpfiles_mod <- function() {
@@ -354,9 +355,26 @@ write_functional_report <- function(hunter_results,
     }
 
     if(grepl("c", report)){
-        write_merged_cluster_report(enrichments_ORA, results_path, template_folder, 
-            sample_classes, DEGH_results, showCategories, group_results)
-        write_summarize_heatmaps(func_results$summarized_ora, results_path)
+     mod_t_cor_p <- hunter_results$WGCNA_all$package_objects$module_trait_cor_p
+     mod_t_cor <- hunter_results$WGCNA_all$package_objects$module_trait_cor
+     corr_cl <- mod_t_cor[abs(mod_t_cor[,"treat_Ctrl"]) > corr_threshold 
+                                & mod_t_cor_p[,"treat_Ctrl"] < 0.05,]
+     corr_cl <- rownames(corr_cl)
+     corr_cl <- gsub("Cluster_","",corr_cl)
+     if (length(corr_cl) > 0) {
+             enrichments_ORA_fil <- 
+                            lapply(enrichments_ORA, filter_cluster_enrichment, 
+                                                        filter_list = corr_cl)
+        
+            write_merged_cluster_report(enrichments_ORA_fil, results_path, 
+                                template_folder, sample_classes, DEGH_results, 
+                                showCategories, group_results)
+            write_summarize_heatmaps(func_results$summarized_ora, results_path)
+     } else {
+        warning(paste0(c("There are not clusters with higher absolute ",
+                         "correlation with treat/control hinger than ",
+                         corr_threshold, ". Modify corr_threshold option.")))
+     }
     }
 
     if(grepl("a", report)){
