@@ -66,7 +66,9 @@ int_miRNA_cont_tables,
 int_cont_tables,
 integrated_pairs,
 selected_predicted_databases,#
-all_pairs #
+all_pairs, #
+genomic_ranges,
+genome_ref
 ){
 
      miRNA_cont_tables$miRNA <- mirna_names[match(miRNA_cont_tables$miRNA, mirna_names$Accession), "TargetName"]   
@@ -75,7 +77,26 @@ all_pairs #
                output_file = file.path(output_files, report_name), 
                intermediates_dir = file.path(output_files))
 
+
+
+    if (!is.null(genomic_ranges)){
+        g_ranges <- read.table(genomic_ranges, header = FALSE)
+        g_ranges <- g_ranges[,c(1,2,3,4,6)]
+        colnames(g_ranges) <- c("chromosome", "start","end","miRNA","strand")
+        annotated <- annotate_genomic_ranges(g_ranges, genome_ref)
+        annotated <- annotated[!grepl("MIR",annotated$annot.symbol),]
+        miRNA_annot <- aggregate(annot.symbol ~ miRNA, annotated, unique)
+        miRNA_annot$annot.symbol <- unlist(lapply(miRNA_annot$annot.symbol,paste, collapse = ","))
+        integrated_pairs$miRNA_loci <- miRNA_annot[match( integrated_pairs$miRNAseq, miRNA_annot$miRNA),"annot.symbol"]
+        integrated_pairs[is.na(integrated_pairs$miRNA_loci),"miRNA_loci"] <- ""
+    }    
+
     integrated_pairs$miRNA <- mirna_names[match(integrated_pairs$miRNAseq, mirna_names$Accession), "TargetName"]
+    
+    output_pairs_all <- add_attrib_to_pairs(integrated_pairs, RNAseq, miRNAseq)
+
+    output_pairs_all$Target_SYMBOL <- gene_id_translation[match(output_pairs_all$Target_ID, gene_id_translation$ensembl_gene_id), "Symbol"]
+
     integrated_pairs$db_type <- ifelse(integrated_pairs$multimir, "DB","ND")
      output_pairs <- data.frame()
      genes_attr <- data.frame()
@@ -88,8 +109,10 @@ all_pairs #
         ALL <- data.frame(miRNA = paste0(miRNA, "_ALL"), 
         genes= paste(integrated_pairs$RNAseq,collapse = ","))
         output_pairs <- rbind(output_pairs, DB, ALL)
-  }
+     }
     write.table(output_pairs, col.names = FALSE, sep = "\t",file = file.path(output_files,"integrated_miRNA.txt"), quote = FALSE, row.names = FALSE)
+    write.table(output_pairs_all, col.names = TRUE, sep = "\t",file = file.path(output_files,"target_results_table.txt"), quote = FALSE, row.names = FALSE)
+
 }
 
 #' @importFrom heatmaply heatmaply
