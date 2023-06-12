@@ -891,7 +891,12 @@ dictionary <- list(
 
 
  add_attrib_to_pairs <- function(pairs, RNAseq = NULL, miRNAseq = NULL, translate_targets = FALSE){
-    output_pairs <- pairs[,c("miRNA", "miRNAseq", "RNAseq", "validated_c","predicted_c","miRNA_loci")]
+    fields_to_extract <- c("miRNA", "miRNAseq", "RNAseq", "validated_c","predicted_c")
+    if ("miRNA_loci" %in% colnames(pairs))
+        fields_to_extract <- c(fields_to_extract, "miRNA_loci")  
+ 
+       output_pairs <- pairs[,fields_to_extract]
+
     if (!is.null(RNAseq)) {
         RNA_data <- RNAseq$DH_results[,c("gene_name","mean_logFCs","genes_tag")]
         colnames(RNA_data) <- c("RNAseq", "Target_log2FC", "DEG_tag_target")
@@ -902,9 +907,12 @@ dictionary <- list(
         colnames(miRNA_data) <- c("miRNAseq", "miRNA_log2FC", "DEM_tag_miRNA")
         output_pairs <- merge(output_pairs, miRNA_data, by = "miRNAseq", all.x = TRUE)
     }
-    colnames(output_pairs)[match(c("miRNAseq", "RNAseq", "validated_c","predicted_c","miRNA_loci"),
+    colnames(output_pairs)[match(c("miRNAseq", "RNAseq", "validated_c","predicted_c"),
                                    colnames(output_pairs))] <- 
-            c("miRNA_ID", "Target_ID","Validated_DB_count", "Predicted_DB_count", "miRNA_source_gene")
+            c("miRNA_ID", "Target_ID","Validated_DB_count", "Predicted_DB_count")
 
+    if ("miRNA_loci" %in% colnames(output_pairs))
+    colnames(output_pairs)[colnames(output_pairs) == "miRNA_loci"] <- "miRNA_source_gene"
+    
     return(output_pairs)
 }

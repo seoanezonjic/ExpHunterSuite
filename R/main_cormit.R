@@ -22,6 +22,7 @@ mc_cores = 1,
 tag_filter,
 corr_type,
 corr_coef,
+f_p_val,
 selected_targets_file,
 eval_method = "aggregated",  
 template_folder = file.path(find.package('ExpHunterSuite'), "templates"),
@@ -124,6 +125,7 @@ message("Preparing data for stats computing")
  miRNA_cor_results <- c(miRNA_cor_results, 
    contingency_tables)
 
+
  miRNA_cor_results$cont_tables <- v_get_stats(miRNA_cor_results$cont_tables)
  miRNA_cor_results$miRNA_cont_tables <- 
                               v_get_stats(miRNA_cor_results$miRNA_cont_tables, 
@@ -141,9 +143,13 @@ message("Preparing data for stats computing")
                                           !grepl("opp", miRNA_cont_tables$strategy) &
                                           miRNA_cont_tables$Odds_ratio >0.0001 &
                                           miRNA_cont_tables$Odds_ratio < 10000 &
-                                          miRNA_cont_tables$Pvalue <= 0.05,]
+                                          miRNA_cont_tables$Pvalue <= f_p_val,]
 
 
+ if(nrow(miRNA_cont_tables) == 0 ){
+    stop(paste0("ERROR: Any miRNA has significant overlapping with databases at any ",
+                "given strategy/correlation threshold. Please try to modify parametres,"))
+ }
  miRNA_cor_results$miRNA_cont_tables <-  miRNA_cont_tables                                
  miRNA_cor_results$cont_tables <- merge(miRNA_cor_results$cont_tables, 
                                           integrated_OR, 
@@ -159,7 +165,8 @@ message("Preparing data for stats computing")
  all_pairs$integrated_strat <- integrated_strat
  
 
- integrated_ct <- prepare_for_stats(all_pairs, "integrated_strat", 0, p_val_cutoff, sig_pairs = TRUE)
+ integrated_ct <- prepare_for_stats(all_pairs, "integrated_strat", 0, p_val_cutoff, 
+                                                sig_pairs = TRUE)
 
 integrated_ct$cont_tables <- v_get_stats(integrated_ct$strat_ct)
 
