@@ -332,9 +332,10 @@ plot(p_seguros_Int)
 }
 ```
 
-### **FDR Volcano Plot showing log 2 fold change vs. FDR
+### **FDR Volcano Plot showing log 2 fold change vs. FDR**
 The red horizontal line represents the chosen FDR threshold of `opt$p_val_cutoff`. The black lines represent
 other values.
+
 
 ```{r FDR_volcano, echo = FALSE, warning=FALSE}
 if (any(DE_all_genes$combined_FDR[!is.na(DE_all_genes$combined_FDR)] == 0)){
