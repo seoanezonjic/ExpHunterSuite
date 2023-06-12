@@ -284,7 +284,7 @@ weighted_cont_table <- function(
 }
 
 
-filter_and_integrate_OR <- function(cont_table, p.adjust.method = "BH"){
+filter_and_integrate_OR <- function(cont_table, p.adjust.method = "BH" ,p_thr = 0.05){
   integrated_stats <- data.frame()
   miRNA_ct <- data.frame()
   for (strat in unique(cont_table$strategy)) { 
@@ -304,7 +304,7 @@ filter_and_integrate_OR <- function(cont_table, p.adjust.method = "BH"){
           } else {
              miRNA_group_rel$p.adjust <- rep(0, nrow(miRNA_group_rel))
           }
-          miRNA_group_fil <- miRNA_group_rel[miRNA_group_rel$p.adjust < 0.05,]
+          miRNA_group_fil <- miRNA_group_rel[miRNA_group_rel$p.adjust <= p_thr,]
           miRNA_ct <- rbind(miRNA_ct, miRNA_group_rel)
           if (nrow(miRNA_group_fil) == 0) next 
 

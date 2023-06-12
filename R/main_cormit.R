@@ -132,7 +132,8 @@ message("Preparing data for stats computing")
                               selected_stats = c("v.fisher.test","odds_ratio"))
  miRNA_cont_tables <- miRNA_cor_results$miRNA_cont_tables
  integrated_stats <- filter_and_integrate_OR(miRNA_cont_tables,
-                                             p.adjust.method = "BH")
+                                             p.adjust.method = "BH",
+                                             p_thr = f_p_val)
    
  integrated_OR <- integrated_stats[["integrated_stats"]]
  miRNA_cont_tables <- integrated_stats[["miRNA_ct"]]
@@ -146,16 +147,16 @@ message("Preparing data for stats computing")
                                           miRNA_cont_tables$Pvalue <= f_p_val,]
 
 
- if(nrow(miRNA_cont_tables) == 0 ){
+ if(nrow(miRNA_cont_tables) == 0 || nrow(integrated_OR) == 0){
     stop(paste0("ERROR: Any miRNA has significant overlapping with databases at any ",
                 "given strategy/correlation threshold. Please try to modify parametres,"))
  }
+
  miRNA_cor_results$miRNA_cont_tables <-  miRNA_cont_tables                                
  miRNA_cor_results$cont_tables <- merge(miRNA_cor_results$cont_tables, 
                                           integrated_OR, 
                                           by=c("strategy","db_group", "corr_cutoff"), 
                                           all.x = TRUE)
-
 
   integrated_strat <- get_optimal_pairs(miRNA_cor_results$all_pairs, 
                                          miRNA_cor_results$miRNA_cont_tables,
@@ -175,7 +176,8 @@ integrated_ct$cont_tables <- v_get_stats(integrated_ct$strat_ct)
                               selected_stats = c("v.fisher.test","odds_ratio"))
  #integrated_ct <- integrated_ct$miRNA_cont_tables
  integrated_stats <- filter_and_integrate_OR(integrated_ct$miRNA_cont_tables,
-                                            p.adjust.method = "BH")
+                                            p.adjust.method = "BH",
+                                            p_thr = f_p_val)
    
  integrated_OR <- integrated_stats[["integrated_stats"]]
  int_miRNA_cont_tables <- integrated_stats[["miRNA_ct"]]
