@@ -2,7 +2,7 @@
 n_category <- 30
 default_width <- set_default_width(enrich_obj = enrich_obj, showCategory=n_category)
 
-if(! exists("fc_vector")) fc_vector <- NULL
+if(! exists("attr_vector")) attr_vector <- NULL
 # Add main label
 cat("## **{{funsys}} - Over Representation Analysis**\n",
 		"The ORA method takes a group of significant genes and performs a Fisher's exact test for each term of the selected functional category.\n\n"
@@ -23,20 +23,34 @@ cat("\n\n**Dotplot**\n\n",
 go_pp <- enrichplot::dotplot(enrich_obj, showCategory=n_category)
 invisible(plot_in_div(go_pp, fig_width = default_width))
 
+
+if (!is.null(attr_vector)){
+	cat("\n\n**Distributions of ",gene_attribute_name,"**\n\n", 
+	  "This plot shows the distribution of gene ",gene_attribute_name," that enriched the top enriched functional term/pathways.
+	   The X axis repressent the distribution values. The color of the distribution repressents the FDR of the enrichment.
+	   The vertical lines represents the first, second and third quartiles.\n\n"
+	)
+
+	density_pp <- enrich_density(enrich_obj, attributes = attr_vector, showCategory = n_category) + 
+	ggplot2::labs(x = gene_attribute_name, y = NULL, fill = "Enrichment\nFDR") +
+	ggplot2::scale_fill_gradient2(low = "#3838F3", high = "#F33838", mid = "white",na.value = "#50EA55", midpoint = pvalcutoff)
+	invisible(plot_in_div(density_pp, fig_width = default_width))
+}
+
 cat("\n\n**Gene-Concept Network**\n\n", 
 	  "The network connects the top functional categories (brown nodes) to their associated genes (grey or colored nodes).
  	   The size of the functional category nodes shows the number of connected genes.\n\n"
 )
 if(length(get_genes(enrich_obj)) <= max_genes){
-	go_pp <- enrichplot::cnetplot(enrich_obj, showCategory=n_category, foldChange=fc_vector) +
-	 		 { if(!is.null(fc_vector)) ggplot2::scale_color_gradient2(name = gene_attribute_name, low = "#0000BF", high = "#bf0000", na.value = "#50EA55") }
+	go_pp <- enrichplot::cnetplot(enrich_obj, showCategory=n_category, foldChange=attr_vector) +
+	 		 { if(!is.null(attr_vector)) ggplot2::scale_color_gradient2(name = gene_attribute_name, low = "#0000BF", high = "#bf0000", na.value = "#50EA55") }
 	invisible(plot_in_div(go_pp, fig_width = 15, fig_height = 15))
 }else{
 	cat("\n\nMore than", max_genes, "genes were found among the enriched genes. Only the first", max_genes, "genes belonging to the most significant categories are shown plotted. \n\n")
 	enrich_obj_maxed <- force_max_genes_enrobj(enrich_obj, maxGenes=max_genes, showCategory=n_category)
 
-	go_pp <- enrichplot::cnetplot(enrich_obj_maxed, showCategory=n_category, foldChange=fc_vector) +
-	 		 { if(!is.null(fc_vector)) ggplot2::scale_color_gradient2(name = gene_attribute_name, low = "#0000BF", high = "#bf0000", na.value = "#50EA55") }
+	go_pp <- enrichplot::cnetplot(enrich_obj_maxed, showCategory=n_category, foldChange=attr_vector) +
+	 		 { if(!is.null(attr_vector)) ggplot2::scale_color_gradient2(name = gene_attribute_name, low = "#0000BF", high = "#bf0000", na.value = "#50EA55") }
 	invisible(plot_in_div(go_pp, fig_width = default_width))
 }
 
@@ -54,7 +68,7 @@ if (nrow(as.data.frame(enrich_obj)) > 2) {
 cat("\n\n**Heatplot**\n\n", 
 	  "Significant genes (x-axis) and the functional categories in which they appear." 
 )
-go_pp <- enrichplot::heatplot(enrich_obj, showCategory=n_category, foldChange=fc_vector)
+go_pp <- enrichplot::heatplot(enrich_obj, showCategory=n_category, foldChange=attr_vector)
 width_size <- calc_width(enrich_obj)
 height_size <- calc_height(enrich_obj) 
 invisible(plot_in_div(go_pp, height_size, width_size))

@@ -295,20 +295,22 @@ write_clusters_to_enrichment <- function(
 #' func_results <- list() 
 #' func_results <- main_functional_hunter(degh_output, "Mouse")
 #' write_functional_report(degh_output, func_results)
-write_functional_report <- function(hunter_results, 
-                                    func_results, 
-                                    output_files=getwd(), 
-                                    fc_colname="mean_logFCs", 
-                                    organisms_table=NULL, 
-                                    template_folder = file.path(find.package('ExpHunterSuite'), 'templates'),
-                                    cores = 2,
-                                    task_size = 1, 
-                                    report = "fc",
-                                    showCategories = 30,
-                                    group_results = FALSE,
-                                    max_genes = 200,
-                                    corr_threshold = 0.8
-                                    ){
+write_functional_report <- function(
+hunter_results, 
+func_results, 
+output_files=getwd(), 
+fc_colname="mean_logFCs", 
+organisms_table=NULL, 
+template_folder = file.path(find.package('ExpHunterSuite'), 'templates'),
+cores = 2,
+task_size = 1, 
+report = "fc",
+showCategories = 30,
+group_results = FALSE,
+max_genes = 200,
+corr_threshold = 0.8,
+pvalcutoff = 0.05
+    ){
     # TO parallelize properly
     clean_tmpfiles_mod <- function() {
       message("Calling clean_tmpfiles_mod()")
@@ -316,7 +318,8 @@ write_functional_report <- function(hunter_results,
     assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
 
     if(!any(grepl("WGCNA", names(func_results))) && grepl("c|i", report)) {
-        message("Cluster reports chosen but no cluster results available. Reports wont be plotted")
+        message("Cluster reports chosen but no cluster results available. 
+                Reports wont be plotted")
     }
     results_path <- normalizePath(output_files)
     model_organism <- func_results$final_main_params$model_organism
@@ -338,10 +341,11 @@ write_functional_report <- function(hunter_results,
     sample_classes <- apply(experiments, 1, function(x) paste0("* [", x[1],
                       "] ", x[2]))
 
-    fc_vector <- func_results$DEGH_results_annot[
+    attr_vector <- func_results$DEGH_results_annot[
        !is.na(func_results$DEGH_results_annot$ENTREZID), fc_colname]
-    names(fc_vector) <- func_results$DEGH_results_annot[
+    names(attr_vector) <- func_results$DEGH_results_annot[
        !is.na(func_results$DEGH_results_annot$ENTREZID), "ENTREZID"]
+    gene_attribute_name <- "Log2FC"
 
     enrichments_ORA <- func_results$WGCNA_ORA
     DEGH_results <- func_results$DEGH_results_annot
@@ -351,49 +355,37 @@ write_functional_report <- function(hunter_results,
         message("\tRendering regular report")
         outf <- file.path(results_path, "functional_report.html")
         rmarkdown::render(file.path(template_folder, 'functional_report.Rmd'), 
-            output_file = outf, intermediates_dir = results_path)        
+            output_file = outf, intermediates_dir = results_path)  
+
     }
 
-    if(grepl("c", report)){
-     mod_t_cor_p <- hunter_results$WGCNA_all$package_objects$module_trait_cor_p
-     mod_t_cor <- hunter_results$WGCNA_all$package_objects$module_trait_cor
-     corr_cl <- mod_t_cor[abs(mod_t_cor[,"treat_Ctrl"]) > corr_threshold 
+    mod_t_cor_p <- hunter_results$WGCNA_all$package_objects$module_trait_cor_p
+    mod_t_cor <- hunter_results$WGCNA_all$package_objects$module_trait_cor
+    corr_cl <- mod_t_cor[abs(mod_t_cor[,"treat_Ctrl"]) > corr_threshold 
                                 & mod_t_cor_p[,"treat_Ctrl"] < 0.05,]
-     corr_cl <- rownames(corr_cl)
-     corr_cl <- gsub("Cluster_","",corr_cl)
-     if (length(corr_cl) > 0) {
-             enrichments_ORA_fil <- 
-                            lapply(enrichments_ORA, filter_cluster_enrichment, 
-                                                        filter_list = corr_cl)
-        
-            write_merged_cluster_report(enrichments_ORA_fil, results_path, 
+    corr_cl <- rownames(corr_cl)
+    corr_cl <- gsub("Cluster_","",corr_cl)
+    if (length(corr_cl) > 0) {
+        enrichments_ORA <- lapply(enrichments_ORA, 
+                            filter_cluster_enrichment, filter_list = corr_cl)
+    } else {
+        warning(paste0(c("There are not clusters with higher absolute ",
+                         "correlation with treat/control hinger than ",
+                         corr_threshold, ". Modify corr_threshold option. ",
+                         "Reporting enrichments of all clusters...")))
+    }
+    
+    if(grepl("c", report)){
+    
+            write_merged_cluster_report(enrichments_ORA, results_path, 
                                 template_folder, sample_classes, DEGH_results, 
                                 showCategories, group_results)
             write_summarize_heatmaps(func_results$summarized_ora, results_path)
-     } else {
-        warning(paste0(c("There are not clusters with higher absolute ",
-                         "correlation with treat/control hinger than ",
-                         corr_threshold, ". Modify corr_threshold option.")))
-     }
     }
 
-    if(grepl("a", report)){
-
-         filter_compareCluster <- function(compareCluster, clusters_to_fil){
-             fil_obj <- compareCluster
-             fil_obj@compareClusterResult <- fil_obj@compareClusterResult[
-                                     fil_obj@compareClusterResult$Cluster %in% clusters_to_fil,]
-             return(fil_obj)
-         }
-
-         lapply(func_results$WGCNA_ORA, function(funsys){
-             fil_funsys <- filter_compareCluster(funsys, fil_clusters)
-         })
-         write_merged_cluster_report(enrichments_ORA, results_path, template_folder,
-             sample_classes, DEGH_results, showCategories, group_results)
-    }
+   
     if(grepl("i", report)) {
-        
+        #PCC adaptar todo esto para usar write_func_cluster_report
         # JRP This will get us one day
         norm_counts <- hunter_results[["all_data_normalized"]][["DESeq2"]]
         scaled_counts <- scale_data_matrix(data_matrix = as.matrix(norm_counts))
@@ -402,12 +394,13 @@ write_functional_report <- function(hunter_results,
 
         message("\tRendering individual cluster reports")
         if(is.null(enrichments_ORA)) {
-          message("No WGCNA ORA results, not printing individual cluster report")
+          message("No WGCNA ORA results,not printing individual cluster report")
         } else {
         cls  <- unique(DEGH_results$Cluster_ID)
         cls <- cls[cls != 0]
         trait_module <- hunter_results$WGCNA_all$plot_objects$trait_and_module
-        cl_eigvalues <- as.matrix(trait_module[,grepl("^ME",colnames(trait_module))])
+        cl_eigvalues <- as.matrix(trait_module[,grepl("^ME",
+                                            colnames(trait_module))])
         cl_eigvalues <- as.data.frame(as.table(cl_eigvalues),
           stringsAsFactors = FALSE)
         colnames(cl_eigvalues) <- c("Sample","Cluster_ID","Count")
@@ -435,7 +428,8 @@ write_functional_report <- function(hunter_results,
                    clean=TRUE, intermediates_dir = temp_path_cl)
         #}) 
         }, workers=cores, task_size=task_size)
-        unlink(list.files(results_path, pattern="_temp_cl_rep$", full.names=TRUE), recursive=TRUE) 
+        unlink(list.files(results_path, pattern="_temp_cl_rep$", 
+                        full.names=TRUE), recursive=TRUE) 
       }
     }
 }
@@ -516,7 +510,7 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
     temp_path_cl <- file.path(output_path, paste0(cluster,"_temp"))
     func_results <- enrichments_for_reports[[cluster]]
     cl_flags_ora <- sapply(func_results, nrow) > 0
-    fc_vector <- gene_attributes[[cluster]]
+    attr_vector <- gene_attributes[[cluster]]
     outfile <- file.path(output_path, paste0(cluster, "_func_report.html"))
     test_env <- list2env(list(func_results=func_results, 
       cl_flags_ora=cl_flags_ora))
