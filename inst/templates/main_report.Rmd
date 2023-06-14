@@ -333,18 +333,24 @@ plot(p_seguros_Int)
 ```
 
 ### **FDR Volcano Plot showing log 2 fold change vs. FDR**
-The red horizontal line represents the chosen FDR threshold of `opt$p_val_cutoff`. The black lines represent
+The red horizontal line represents the chosen FDR threshold of `r opt$p_val_cutoff`. The black lines represent
 other values.
 
 
 ```{r FDR_volcano, echo = FALSE, warning=FALSE}
-if (any(DE_all_genes$combined_FDR[!is.na(DE_all_genes$combined_FDR)] == 0)){
-	min_FDR <- min(DE_all_genes$combined_FDR[DE_all_genes$combined_FDR != 0 & !is.na(DE_all_genes$combined_FDR)])
-	DE_all_genes[DE_all_genes$combined_FDR == 0 & !is.na(DE_all_genes$combined_FDR),] <- min_FDR
+volcano_DE_all_genes <- DE_all_genes
+volcano_DE_all_genes <- volcano_DE_all_genes[volcano_DE_all_genes$genes_tag != "FILTERED_OUT",]
+if (any(volcano_DE_all_genes$combined_FDR[!is.na(volcano_DE_all_genes$combined_FDR)] == 0)){
+	min_FDR <- min(volcano_DE_all_genes$combined_FDR[volcano_DE_all_genes$combined_FDR != 0 & !is.na(DE_all_volcano_DE_all_genesgenes$combined_FDR)])
+	volcano_DE_all_genes[volcano_DE_all_genes$combined_FDR == 0 & !is.na(volcano_DE_all_genes$combined_FDR),] <- min_FDR
 }
 
-evp <- EnhancedVolcano::EnhancedVolcano(DE_all_genes, 
-	lab=rownames(DE_all_genes),  
+custom_shapes <- ifelse(volcano_DE_all_genes$genes_tag == "PREVALENT_DEG", 16,
+													 ifelse(volcano_DE_all_genes$genes_tag == "POSSIBLE_DEG", 0, 3)) 
+names(custom_shapes) <- volcano_DE_all_genes$genes_tag
+
+evp <- EnhancedVolcano::EnhancedVolcano(volcano_DE_all_genes, 
+	lab=rownames(volcano_DE_all_genes),  
 	x="mean_logFCs", 
 	y="combined_FDR",     
 	boxedLabels = TRUE,     
@@ -359,6 +365,7 @@ evp <- EnhancedVolcano::EnhancedVolcano(DE_all_genes,
          ~ log[2] ~ FC)),
   caption=NULL,
   legendPosition = 'right',
+  shapeCustom = custom_shapes
 ) 
 
 fc_thresholds <- c(0.01, 0.05,0.1, 0.2)
