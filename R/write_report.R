@@ -97,8 +97,9 @@ genome_ref
 
     output_pairs_all$Target_SYMBOL <- gene_id_translation[match(output_pairs_all$Target_ID, gene_id_translation$ensembl_gene_id), "Symbol"]
 
+
     integrated_pairs$db_type <- ifelse(integrated_pairs$multimir, "DB","ND")
-     output_pairs <- data.frame()
+     out_pairs <- data.frame()
      genes_attr <- data.frame()
      attr <- all_pairs[,c("miRNAseq", "RNAseq", "validated_c", "predicted_c")]
      for (miRNA in unique(integrated_pairs$miRNA)){
@@ -106,11 +107,16 @@ genome_ref
         DB <- data.frame(miRNA = paste0(miRNA, "_DB"), 
         genes= paste(integrated_pairs$RNAseq[integrated_pairs$db_type== "DB" & integrated_pairs$miRNA == miRNA],collapse = ","))
         
-        ALL <- data.frame(miRNA = paste0(miRNA, "_ALL"), 
-        genes= paste(integrated_pairs$RNAseq,collapse = ","))
-        output_pairs <- rbind(output_pairs, DB, ALL)
+        if (!output_pairs == "multimir") {
+
+            ALL <- data.frame(miRNA = paste0(miRNA, "_ALL"), 
+            genes= paste(integrated_pairs$RNAseq,collapse = ","))
+            out_pairs <- rbind(out_pairs, DB, ALL)
+        } else {
+            out_pairs <- rbind(out_pairs, DB)
+        }
      }
-    write.table(output_pairs, col.names = FALSE, sep = "\t",file = file.path(output_files,"integrated_miRNA.txt"), quote = FALSE, row.names = FALSE)
+    write.table(out_pairs, col.names = FALSE, sep = "\t",file = file.path(output_files,"integrated_miRNA.txt"), quote = FALSE, row.names = FALSE)
     write.table(output_pairs_all, col.names = TRUE, sep = "\t",file = file.path(output_files,"target_results_table.txt"), quote = FALSE, row.names = FALSE)
 
 }

@@ -352,7 +352,7 @@ perform_correlations <- function(
       
        DEGs <- get_degs_sets(RNAseq$DH_results)
        DEMs <- get_degs_sets(miRNAseq$DH_results)
- 
+        
        all_pairs <- permute_pairs(DEGs[["pos"]], DEMs[["neg"]], 
                                     corr_type = corr_type)
        all_pairs <- rbind(all_pairs, permute_pairs(DEGs[["neg"]], DEMs[["pos"]], 
@@ -450,6 +450,7 @@ permute_pairs <- function(RNAseq, miRNAseq, corr_type){
        all_pairs$correlation <- -1
     }
     all_pairs$pval <- 0
+
     return(all_pairs)
 }
 
@@ -910,6 +911,9 @@ dictionary <- list(
     colnames(output_pairs)[match(c("miRNAseq", "RNAseq", "validated_c","predicted_c"),
                                    colnames(output_pairs))] <- 
             c("miRNA_ID", "Target_ID","Validated_DB_count", "Predicted_DB_count")
+
+    output_pairs$All_DB_count <- output_pairs$Validated_DB_count + output_pairs$Predicted_DB_count
+
 
     if ("miRNA_loci" %in% colnames(output_pairs))
     colnames(output_pairs)[colnames(output_pairs) == "miRNA_loci"] <- "miRNA_source_gene"
