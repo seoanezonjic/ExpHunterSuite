@@ -233,7 +233,7 @@ ggpubr::ggscatter(corr_OR, x = "Odds_ratio.predicted", y = "Odds_ratio.validated
 
 ### **Integrated strategy comparison**
 
-````{r integration, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+```{r integration, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 
 int_cont_tables$strategy <- set_strats_readable(int_cont_tables$strategy)
 int_cont_tables <- int_cont_tables[!grepl("DEG",int_cont_tables$strat) & 
