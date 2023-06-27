@@ -112,7 +112,7 @@ coldata_df <- data.frame(cond = design_vector,
 
 dds <- DESeq2::DESeqDataSetFromMatrix(countData = raw_filter, colData = coldata_df, design = ~ cond)
 
-if(nrow(raw_filter) < 2000) {
+if(nrow(raw_filter) < 2000 || (rowSums(raw_filter) / ncol(raw_filter) > 5) < 1000  ) {
   rld <- DESeq2::rlog(dds, blind=TRUE)
 } else {
 	rld <- DESeq2::vst(dds)
@@ -341,7 +341,7 @@ other values.
 volcano_DE_all_genes <- DE_all_genes
 volcano_DE_all_genes <- volcano_DE_all_genes[volcano_DE_all_genes$genes_tag != "FILTERED_OUT",]
 if (any(volcano_DE_all_genes$combined_FDR[!is.na(volcano_DE_all_genes$combined_FDR)] == 0)){
-	min_FDR <- min(volcano_DE_all_genes$combined_FDR[volcano_DE_all_genes$combined_FDR != 0 & !is.na(DE_all_volcano_DE_all_genesgenes$combined_FDR)])
+	min_FDR <- min(volcano_DE_all_genes$combined_FDR[volcano_DE_all_genes$combined_FDR != 0 & !is.na(volcano_DE_all_genes$combined_FDR)])
 	volcano_DE_all_genes[volcano_DE_all_genes$combined_FDR == 0 & !is.na(volcano_DE_all_genes$combined_FDR),] <- min_FDR
 }
 
