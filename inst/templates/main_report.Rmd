@@ -112,7 +112,7 @@ coldata_df <- data.frame(cond = design_vector,
 
 dds <- DESeq2::DESeqDataSetFromMatrix(countData = raw_filter, colData = coldata_df, design = ~ cond)
 
-if(nrow(raw_filter) < 2000 || (rowSums(raw_filter) / ncol(raw_filter) > 5) < 1000  ) {
+if(nrow(raw_filter) < 2000 || sum((rowSums(raw_filter) / ncol(raw_filter)) > 5) < 1000 ) {
   rld <- DESeq2::rlog(dds, blind=TRUE)
 } else {
 	rld <- DESeq2::vst(dds)
@@ -338,11 +338,15 @@ other values.
 
 
 ```{r FDR_volcano, echo = FALSE, warning=FALSE}
+
 volcano_DE_all_genes <- DE_all_genes
 volcano_DE_all_genes <- volcano_DE_all_genes[volcano_DE_all_genes$genes_tag != "FILTERED_OUT",]
+
 if (any(volcano_DE_all_genes$combined_FDR[!is.na(volcano_DE_all_genes$combined_FDR)] == 0)){
-	min_FDR <- min(volcano_DE_all_genes$combined_FDR[volcano_DE_all_genes$combined_FDR != 0 & !is.na(volcano_DE_all_genes$combined_FDR)])
-	volcano_DE_all_genes[volcano_DE_all_genes$combined_FDR == 0 & !is.na(volcano_DE_all_genes$combined_FDR),] <- min_FDR
+	min_FDR <- min(volcano_DE_all_genes$combined_FDR[volcano_DE_all_genes$combined_FDR != 0 &
+																									 !is.na(volcano_DE_all_genes$combined_FDR)])
+	volcano_DE_all_genes[volcano_DE_all_genes$combined_FDR == 0 &
+											 !is.na(volcano_DE_all_genes$combined_FDR), "combined_FDR"] <- min_FDR
 }
 
 custom_shapes <- ifelse(volcano_DE_all_genes$genes_tag == "PREVALENT_DEG", 16,
