@@ -87,7 +87,7 @@ genome_ref
         annotated <- annotated[!grepl("MIR",annotated$annot.symbol),]
         miRNA_annot <- aggregate(annot.symbol ~ miRNA, annotated, unique)
         miRNA_annot$annot.symbol <- unlist(lapply(miRNA_annot$annot.symbol,paste, collapse = ","))
-        integrated_pairs$miRNA_loci <- miRNA_annot[match( integrated_pairs$miRNAseq, miRNA_annot$miRNA),"annot.symbol"]
+        integrated_pairs$miRNA_loci <- miRNA_annot[match(integrated_pairs$miRNAseq, miRNA_annot$miRNA),"annot.symbol"]
         integrated_pairs[is.na(integrated_pairs$miRNA_loci),"miRNA_loci"] <- ""
     }    
 
@@ -95,8 +95,8 @@ genome_ref
     
     output_pairs_all <- add_attrib_to_pairs(integrated_pairs, RNAseq, miRNAseq)
 
+    gene_id_translation <- as.data.frame(gene_id_translation)
     output_pairs_all$Target_SYMBOL <- gene_id_translation[match(output_pairs_all$Target_ID, gene_id_translation$ensembl_gene_id), "Symbol"]
-
 
     integrated_pairs$db_type <- ifelse(integrated_pairs$multimir, "DB","ND")
      out_pairs <- data.frame()
