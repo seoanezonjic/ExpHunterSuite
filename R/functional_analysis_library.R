@@ -438,11 +438,14 @@ prepare_enrichment_Reactome <- function(enrichment_type, reactome_id) {
 
 #' @importFrom clusterProfiler gseKEGG enrichKEGG
 prepare_enrichment_KEGG <- function(enrichment_type, kegg_file) {
+############# DEPRECATED FUNCTION
+
   if(is.null(kegg_file) || ! file.exists(kegg_file) ) 
                 stop("kegg_file not found or not provided. 
   It can be downloaded using download_latest_kegg_db()")
 
   if(enrichment_type == "ora") enrf <- clusterProfiler::enrichKEGG
+
   if(enrichment_type == "gsea") enrf <- clusterProfiler::gseKEGG
 
   ENRICH_DATA <- readRDS(kegg_file)
@@ -451,6 +454,38 @@ prepare_enrichment_KEGG <- function(enrichment_type, kegg_file) {
   body(enrf)[[ltorem]] <- substitute(KEGG_DATA <- ENRICH_DATA)
   return(enrf)
 }
+
+
+
+
+enrichKEGG_user_data <- function (
+  gene, 
+  organism = "hsa", 
+  keyType = "kegg", 
+  pvalueCutoff = 0.05,
+  pAdjustMethod = "BH", 
+  universe, minGSSize = 10, 
+  maxGSSize = 500,
+  qvalueCutoff = 0.2, 
+  user_data, ...)
+{
+    res <- clusterProfiler:::enricher_internal(gene, 
+      pvalueCutoff = pvalueCutoff,
+      pAdjustMethod = pAdjustMethod, 
+      universe = universe, 
+      minGSSize = minGSSize,
+      maxGSSize = maxGSSize, 
+      qvalueCutoff = qvalueCutoff, 
+      USER_DATA = user_data,
+      ...)
+    if (is.null(res))
+        return(res)
+    res@ontology <- "KEGG"
+    res@organism <- organism
+    res@keytype <- keyType
+    return(res)
+}
+
 
 #' Perform ORA enrichment analysis of a list of genes
 #' @param all_funsys vector of funsys to use (e.g. MF, Reatcome)
@@ -505,14 +540,21 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL,
       specific_params <- list(OrgDb = org_db, ont = funsys)
 
     } else  if (funsys == "Reactome"){
+     
       enrf <- prepare_enrichment_Reactome(enrichment_type="ora", 
         reactome_id = organism_info$Reactome_ID[1])
       specific_params <- list(organism = organism_info$Reactome_ID[1])
 
     } else if (funsys == "KEGG"){
-      enrf <- prepare_enrichment_KEGG(enrichment_type="ora", 
-        kegg_file = kegg_file)
       specific_params <- list(organism = organism_info$KeggCode[1])
+      if (!is.null(kegg_file)){ 
+        enrf <- enrichKEGG_user_data 
+        ENRICH_DATA <- readRDS(kegg_file)
+        specific_params<- c(specific_params, list(user_data = ENRICH_DATA))
+      } else {
+          stop("kegg_file not found or not provided. 
+          It can be downloaded using download_latest_kegg_db()")
+      }      
     } else if (funsys == "DO"){
       # No need for prepare enrichment function - hack not necessary
       enrf <- DOSE::enrichDO
@@ -530,10 +572,11 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL,
     }
     temp_workers <- workers
     if(funsys == "DO") workers <- 1 #DOSE not working in parallel, but its quick
+
     enriched_cats <- parallel_list(genes_list, function(l_genes){
         params_genes <- c(specific_params, common_params, list(gene = l_genes))
         enr <- do.call("enrf", params_genes)
-     }, workers= workers, task_size = task_size
+     } , workers= workers, task_size = task_size
     )
     workers <- temp_workers
     if(return_all == FALSE) enriched_cats[sapply(enriched_cats,is.null)] <- NULL
