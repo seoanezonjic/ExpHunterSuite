@@ -28,9 +28,13 @@ cat("\n\n**Gene-Concept Network**\n\n",
 	  "The network connects the top functional categories (brown nodes) to their associated genes (grey or colored nodes).
  	   The size of the functional category nodes shows the number of connected genes.\n\n"
 )
+if (nrow(as.data.frame(enrich_obj)) > 2) {
 
-cnet_pp <- enrichplot::cnetplot(enrich_obj, showCategory=showCategories) 
-invisible(plot_in_div(cnet_pp, fig_width = 15, fig_height = 15))
+ cnet_pp <- enrichplot::cnetplot(enrich_obj, showCategory=showCategories) 
+ invisible(plot_in_div(cnet_pp, fig_width = 15, fig_height = 15))
+} else {
+	cat("\nThis graph can not be plotted because fewer than two functional categories were enriched\n")
+}
 
 
 cat("\n\n**Enrich Map plot**\n\n", 
@@ -41,27 +45,31 @@ cat("\n\n**Enrich Map plot**\n\n",
 
 if (nrow(as.data.frame(enrich_obj)) > 2) {
 	if(group_results == TRUE)
-	  pp <- enrichplot::emapplot(enrich_obj, showCategory=showCategories, pie="Count", layout = "nicely", 
-                  shadowtext = FALSE, node_label = "group", min_edge = 0.0000000000000001, group_category = TRUE, 
+	  pp <- enrichplot::emapplot(enrich_obj, showCategory=showCategories, pie.params = list(pie ="Count"),  layout.params = list(layout = "nicely"), 
+                  shadowtext = FALSE, node_label = "group",  edge.params = list(min = 0.0000000000000001), group_category = TRUE, 
                   nCluster = min(floor(nrow(enrich_obj)/7), 20), nWords = 6, repel = TRUE)
 	else 
-	  pp <- enrichplot::emapplot(enrich_obj, showCategory= showCategories, pie="Count", layout = "nicely", 
-                  shadowtext = FALSE, repel = TRUE, min_edge = 0.0000000000000001)
+	  pp <- enrichplot::emapplot(enrich_obj, showCategory= showCategories, pie.params = list(pie ="Count"), layout.params = list(layout = "nicely"), 
+                  shadowtext = FALSE, repel = TRUE, edge.params = list(min = 0.0000000000000001))
 	invisible(plot_in_div(pp, fig_width = calc_width(enrich_obj)))
 
 } else {
 	cat("\nThis graph can not be plotted because fewer than two functional categories were enriched\n")
 }
 
+if (nrow(as.data.frame(enrich_obj)) > 1000000000000) {
 
 cat("\n\n**Cluster concept network plot**\n\n", 
   "The top functional categories (nodes), connected if they are shared among clusters. Edge thickness represents the number of shared genes.
 	  Nodes size represents the number of clusters sharing the functional category. Pies proportion represent the proportion of clusters with that enriched category.\n\n"
 )
 
-clnetplot_pp <- clnetplot(enrich_obj, showCategory=showCategories) 
 
-invisible(plot_in_div(clnetplot_pp, fig_width = 15, fig_height = 15))
+# clnetplot_pp <- clnetplot(enrich_obj, showCategory=showCategories) 
 
+# invisible(plot_in_div(clnetplot_pp, fig_width = 15, fig_height = 15))
+} else {
+	cat("\nThis graph can not be plotted because fewer than two functional categories were enriched\n")
+}
 ```
 
