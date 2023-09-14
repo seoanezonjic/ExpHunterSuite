@@ -854,4 +854,25 @@ First column contains the option names; second column contains the given values 
 ```{r opt_vals, echo = FALSE, warning = FALSE}
 knitr::kable(cbind(opt))
 ```
+#############################################################################
+#############################################################################
+########################## NOOB ALERT @alvaro ###############################
+#############################################################################
+#############################################################################
 
+
+```{r coverage_plot, echo = FALSE, warning = FALSE}
+    if (!is.null(librarySizes)) {
+        xtitle="Sample Rank (total reads)"
+    } else {
+        xtitle="Sample Rank (total counts)"
+    }
+    ggplot2::ggplot(coverage_dt, ggplot2::aes(x = count_rank, y = total_counts)) +
+        ggplot2::geom_point(size = 3) +
+        cowplot::theme_cowplot() +
+        cowplot::background_grid() +
+        ggplot2::labs(title = "Read Counts", x=xtitle, y = "Reads Counted") +
+        ggplot2::ylim(c(0,NA)) +
+        ggplot2::scale_color_brewer(palette="Dark2") +
+        ggplot2::ggtitle("Total counts sorted by rank")
+```
