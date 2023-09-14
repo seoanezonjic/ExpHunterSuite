@@ -34,6 +34,7 @@
 #' @param WGCNA_minKMEtoStay see WGCNA package
 #' @param WGCNA_corType see WGCNA package
 #' @param multifactorial specify interaction/effect when multifactorial design
+#' @param librarySizes NULL or a dataframe with sample names and library sizes
 #' @return expression analysis result object with studies performed
 #' @keywords method
 #' @importFrom rlang .data
@@ -73,7 +74,8 @@ main_degenes_Hunter <- function(
     WGCNA_minCoreKMESize = NULL,
     WGCNA_minKMEtoStay = 0.2,
     WGCNA_corType = "pearson",
-    multifactorial = ""
+    multifactorial = "",
+    librarySizes = NULL
   ){
     modified_input_args <- check_input_main_degenes_Hunter(raw, 
       minlibraries, reads, external_DEA_data, modules, model_variables,
@@ -244,7 +246,15 @@ main_degenes_Hunter <- function(
          results_diffcoexp$DCGs$Gene[results_diffcoexp$DCGs$q < 1]
       DE_all_genes$DCL <- aux %in% results_diffcoexp$DCLs$Gene.1 | 
          aux %in% results_diffcoexp$DCLs$Gene.2
-    }    
+    }
+
+    #############################################################################
+    #############################################################################
+    ########################## NOOB ALERT @alvaro ###############################
+    #############################################################################
+    #############################################################################
+    coverage_dt <- get_counts(cnts_mtx=raw, librarySizes=librarySizes)    
+
     # Add the filtered genes back
     DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
 
@@ -260,10 +270,19 @@ main_degenes_Hunter <- function(
     final_results[['replicatesT']] <- replicatesT
     final_results[['final_main_params']] <- final_main_params
     final_results[["var_filter"]] <- var_filter
+    #############################################################################
+    #############################################################################
+    ########################## NOOB ALERT @alvaro ###############################
+    #############################################################################
+    #############################################################################
+    final_results[["coverage_dt"]] <- coverage_dt
+
     if(!is.null(combinations_WGCNA)){
       final_results <- c(final_results, combinations_WGCNA)
     }
     return(c(final_results, exp_results))
+
+
 }
 
 
@@ -469,4 +488,37 @@ prepare_target_for_multifactorial <- function(target, multifactorial) {
                                              target[,mf_text[["mf_factorB"]]],
                                              mf_text[["mf_varB"]])
   return(target)
+}
+
+#############################################################################
+#############################################################################
+########################## NOOB ALERT @alvaro ###############################
+#############################################################################
+#############################################################################
+
+get_counts <- function(cnts_mtx, librarySizes)
+{
+    # Rewriting in base R until I get help importing special data.table functions (such as :=)
+    # Might not be needed
+
+    if (!is.null(librarySizes)){
+        total_counts <- librarySizes[,c("sample","initial_total_sequences")]
+        # Total reads might have been counted without taking into account ExpHunterSuite blacklist,
+        # which would lead to errors. This next line removes blacklisted samples from total reads table.
+        total_counts <- total_counts[total_counts$sample %in% colnames(cnts_mtx),]
+        # Remove redundant sampleID column
+        total_counts <- total_counts$initial_total_sequences
+
+    } else {
+        total_counts = colSums(cnts_mtx[,-1])
+    }
+
+    coverage_dt <- data.table::data.table(sampleID = sort(colnames(cnts_mtx)),
+                                total_counts = total_counts)
+
+    coverage_dt <- coverage_dt[order(coverage_dt$total_counts)]
+
+    coverage_dt$count_rank <- c(1:nrow(coverage_dt))
+
+    return(coverage_dt)
 }
