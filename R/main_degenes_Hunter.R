@@ -508,13 +508,17 @@ get_counts <- function(cnts_mtx, librarySizes)
         total_counts <- total_counts[total_counts$sample %in% colnames(cnts_mtx),]
         # Remove redundant sampleID column
         total_counts <- total_counts$initial_total_sequences
+        gene_counts <- colSums(cnts_mtx)
+        counted_frac <- gene_counts/total_counts
 
     } else {
-        total_counts = colSums(cnts_mtx)
+        total_counts <- colSums(cnts_mtx)
+        counted_frac <- NULL
     }
 
     coverage_dt <- data.table::data.table(sampleID = sort(colnames(cnts_mtx)),
-                                total_counts = total_counts)
+                                total_counts = total_counts,
+                                counted_frac = counted_frac)
 
     coverage_dt <- coverage_dt[order(coverage_dt$total_counts)]
 
