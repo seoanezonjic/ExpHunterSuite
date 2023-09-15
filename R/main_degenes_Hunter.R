@@ -510,7 +510,7 @@ get_counts <- function(cnts_mtx, librarySizes)
         total_counts <- total_counts$initial_total_sequences
 
     } else {
-        total_counts = colSums(cnts_mtx[,-1])
+        total_counts = colSums(cnts_mtx)
     }
 
     coverage_dt <- data.table::data.table(sampleID = sort(colnames(cnts_mtx)),
