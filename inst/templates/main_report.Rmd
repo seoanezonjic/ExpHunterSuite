@@ -185,6 +185,31 @@ ggplot2::xlab(expression(log[2](count + 1)))
 
 ```
 
+#############################################################################
+#############################################################################
+########################## NOOB ALERT @alvaro ###############################
+#############################################################################
+#############################################################################
+
+## Total counts per sample sorted by rank
+
+Sample rank is the position a sample holds after sorting by total gene counts (or total reads, if provided).
+
+```{r coverage_plot, echo = FALSE, warning = FALSE}
+    if (!is.null(librarySizes)) {
+        xtitle="Sample Rank (total reads)"
+    } else {
+        xtitle="Sample Rank (total counts)"
+    }
+    ggplot2::ggplot(coverage_dt, ggplot2::aes(x = count_rank, y = total_counts)) +
+        ggplot2::geom_point(size = 3) +
+        cowplot::theme_cowplot() +
+        cowplot::background_grid() +
+        ggplot2::labs(title = "Read Counts", x=xtitle, y = "Reads Counted") +
+        ggplot2::ylim(c(0,NA)) +
+        ggplot2::scale_color_brewer(palette="Dark2") +
+        ggplot2::ggtitle("Total counts sorted by rank")
+```
 
 ## Gene counts variance distribution
 
@@ -199,7 +224,6 @@ ggplot2::geom_density() +
 ggplot2::geom_vline(xintercept = var_filter[["thr"]], linetype="dashed", 
                 color = "grey")
 ```
-
 
 ```{r DESeq2_all_norm_head, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
 
@@ -853,26 +877,4 @@ PerformanceAnalytics::chart.Correlation(df[, c("mean_logFCs", final_logFC_names)
 First column contains the option names; second column contains the given values for each option in this run.
 ```{r opt_vals, echo = FALSE, warning = FALSE}
 knitr::kable(cbind(opt))
-```
-#############################################################################
-#############################################################################
-########################## NOOB ALERT @alvaro ###############################
-#############################################################################
-#############################################################################
-
-
-```{r coverage_plot, echo = FALSE, warning = FALSE}
-    if (!is.null(librarySizes)) {
-        xtitle="Sample Rank (total reads)"
-    } else {
-        xtitle="Sample Rank (total counts)"
-    }
-    ggplot2::ggplot(coverage_dt, ggplot2::aes(x = count_rank, y = total_counts)) +
-        ggplot2::geom_point(size = 3) +
-        cowplot::theme_cowplot() +
-        cowplot::background_grid() +
-        ggplot2::labs(title = "Read Counts", x=xtitle, y = "Reads Counted") +
-        ggplot2::ylim(c(0,NA)) +
-        ggplot2::scale_color_brewer(palette="Dark2") +
-        ggplot2::ggtitle("Total counts sorted by rank")
 ```
