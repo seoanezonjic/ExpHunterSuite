@@ -202,7 +202,7 @@ Counted fraction is the percentage of reads that map to a gene (only available i
     } else {
         xtitle="Sample Rank (total counts)"
     }
-    ggplot2::ggplot(coverage_dt, ggplot2::aes(x = count_rank, y = total_counts)) +
+    ggplot2::ggplot(coverage_df, ggplot2::aes(x = count_rank, y = total_counts)) +
         ggplot2::geom_point(size = 3) +
         cowplot::theme_cowplot() +
         cowplot::background_grid() +
@@ -212,8 +212,8 @@ Counted fraction is the percentage of reads that map to a gene (only available i
         ggplot2::ggtitle("Total counts sorted by rank")
 ```
 
-```{r coverage_plot_frac, eval = !is.null(coverage_dt$counted_frac),  echo = FALSE, warning = FALSE}
-    ggplot2::ggplot(coverage_dt, ggplot2::aes(x = count_rank, y = counted_frac)) +
+```{r coverage_plot_frac, eval = !is.null(coverage_df$counted_frac),  echo = FALSE, warning = FALSE}
+    ggplot2::ggplot(coverage_df, ggplot2::aes(x = count_rank, y = counted_frac)) +
         ggplot2::geom_point(size = 3) +
         cowplot::theme_cowplot() +
         cowplot::background_grid() +

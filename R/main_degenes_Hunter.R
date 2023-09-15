@@ -253,7 +253,7 @@ main_degenes_Hunter <- function(
     ########################## NOOB ALERT @alvaro ###############################
     #############################################################################
     #############################################################################
-    coverage_dt <- get_counts(cnts_mtx=raw, librarySizes=librarySizes)    
+    coverage_df <- get_counts(cnts_mtx=raw, librarySizes=librarySizes)    
 
     # Add the filtered genes back
     DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
@@ -275,7 +275,7 @@ main_degenes_Hunter <- function(
     ########################## NOOB ALERT @alvaro ###############################
     #############################################################################
     #############################################################################
-    final_results[["coverage_dt"]] <- coverage_dt
+    final_results[["coverage_df"]] <- coverage_df
 
     if(!is.null(combinations_WGCNA)){
       final_results <- c(final_results, combinations_WGCNA)
@@ -516,13 +516,14 @@ get_counts <- function(cnts_mtx, librarySizes)
         counted_frac <- NULL
     }
 
-    coverage_dt <- data.table::data.table(sampleID = sort(colnames(cnts_mtx)),
-                                total_counts = total_counts,
-                                counted_frac = counted_frac)
+    coverage_df <- data.frame(sampleID = sort(colnames(cnts_mtx)),
+                                total_counts = total_counts)
 
-    coverage_dt <- coverage_dt[order(coverage_dt$total_counts)]
+    coverage_df$counted_frac <- counted_frac
 
-    coverage_dt$count_rank <- c(1:nrow(coverage_dt))
+    coverage_df <- coverage_df[order(coverage_df$total_counts),]
 
-    return(coverage_dt)
+    coverage_df$count_rank <- c(1:nrow(coverage_df))
+
+    return(coverage_df)
 }
