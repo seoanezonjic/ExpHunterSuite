@@ -220,7 +220,7 @@ Counted fraction is the percentage of reads that map to a gene (only available i
         ggplot2::labs(title = "Read Counts", x="Sample Rank (total reads)", y = "% counts read") +
         ggplot2::ylim(c(0,NA)) +
         ggplot2::scale_color_brewer(palette="Dark2") +
-        ggplot2::ggtitle("% counts read sorted by rank")
+        ggplot2::ggtitle("Fraction counts read sorted by rank")
 ```
 
 ## Gene counts variance distribution
