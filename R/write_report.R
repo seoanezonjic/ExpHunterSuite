@@ -48,6 +48,7 @@ write_expression_report <- function(exp_results,
     #############################################################################
     #############################################################################
     coverage_df <- exp_results[['coverage_df']]
+    expGenesDf <- exp_results[['expGenesDf']]
 
     outf <- file.path(normalizePath(output_files),"DEG_report.html")
     rmarkdown::render(file.path(template_folder, 'main_report.Rmd'),

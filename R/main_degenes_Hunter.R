@@ -253,7 +253,8 @@ main_degenes_Hunter <- function(
     ########################## NOOB ALERT @alvaro ###############################
     #############################################################################
     #############################################################################
-    coverage_df <- get_counts(cnts_mtx=raw, librarySizes=librarySizes)    
+    coverage_df <- get_counts(cnts_mtx=raw, librarySizes=librarySizes)
+    expGenesDf <- expressedStats(cpm_table=cpm_table, reads=reads)    
 
     # Add the filtered genes back
     DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
@@ -276,6 +277,7 @@ main_degenes_Hunter <- function(
     #############################################################################
     #############################################################################
     final_results[["coverage_df"]] <- coverage_df
+    final_results[["expGenesDf"]] <- expGenesDf
 
     if(!is.null(combinations_WGCNA)){
       final_results <- c(final_results, combinations_WGCNA)
@@ -526,4 +528,31 @@ get_counts <- function(cnts_mtx, librarySizes)
     coverage_df$count_rank <- c(1:nrow(coverage_df))
 
     return(coverage_df)
+}
+
+expressedStats <- function(cpm_table, reads)
+{
+    cutoffPassedMatrix <- cpm_table > reads
+    cutoffPassedMatrix <- cutoffPassedMatrix[rowSums(cutoffPassedMatrix) > 0, ]
+    expGenesDf <- data.frame(sampleID = colnames(cutoffPassedMatrix),
+                                expressedGenes = colSums(cutoffPassedMatrix))
+    expGenesDf <- expGenesDf[order(expGenesDf$expressedGenes),]
+    expGenesDf$count_rank <- seq(1,nrow(expGenesDf))
+    cutoffPassedMatrix <- cutoffPassedMatrix[, expGenesDf$sampleID]
+    # Stats defined by me (noob alert @alvaro), didn't like how DROP did it (some calculations were plainly wrong)
+    # Firstly, a vector is created with expressed genes in the first sample. TRUE means gene is expressed, FALSE
+    # means it is not.
+    unionVec = intersVec <- cutoffPassedMatrix[,1]
+    # Now a loop is started. It compares the genes expressed in current sample with the total
+    # expressed genes vector, updating it if it finds a new expressed gene. The result is saved
+    # as the union of expressed genes for that sample. Same is done for intersection, with its
+    # corresponding logic. In this case, if it finds a gene no longer expressed, it is removed.
+    for (sample in 1:ncol(cutoffPassedMatrix))
+    {
+        unionVec <- unionVec | cutoffPassedMatrix[,sample]
+        intersVec <- intersVec & cutoffPassedMatrix[,sample]
+        expGenesDf$unionExpressedGenes[sample] <- sum(unionVec)
+        expGenesDf$intersExpressedGenes[sample] <- sum(intersVec)
+    }
+    return(expGenesDf)
 }
