@@ -34,7 +34,7 @@
 #' @param WGCNA_minKMEtoStay see WGCNA package
 #' @param WGCNA_corType see WGCNA package
 #' @param multifactorial specify interaction/effect when multifactorial design
-#' @param librarySizes NULL or a dataframe with sample names and library sizes
+#' @param library_sizes NULL or a dataframe with sample names and library sizes
 #' @return expression analysis result object with studies performed
 #' @keywords method
 #' @importFrom rlang .data
@@ -75,7 +75,7 @@ main_degenes_Hunter <- function(
     WGCNA_minKMEtoStay = 0.2,
     WGCNA_corType = "pearson",
     multifactorial = "",
-    librarySizes = NULL
+    library_sizes = NULL
   ){
     modified_input_args <- check_input_main_degenes_Hunter(raw, 
       minlibraries, reads, external_DEA_data, modules, model_variables,
@@ -253,8 +253,8 @@ main_degenes_Hunter <- function(
     ########################## NOOB ALERT @alvaro ###############################
     #############################################################################
     #############################################################################
-    coverage_df <- get_counts(cnts_mtx=raw, librarySizes=librarySizes)
-    expGenesDf <- expressedStats(cpm_table=cpm_table, reads=reads)    
+    coverage_df <- get_counts(cnts_mtx=raw, library_sizes=library_sizes)
+    expGenesDf <- get_gene_stats(cpm_table=cpm_table, reads=reads)    
 
     # Add the filtered genes back
     DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
@@ -498,13 +498,13 @@ prepare_target_for_multifactorial <- function(target, multifactorial) {
 #############################################################################
 #############################################################################
 
-get_counts <- function(cnts_mtx, librarySizes)
+get_counts <- function(cnts_mtx, library_sizes)
 {
     # Rewriting in base R until I get help importing special data.table functions (such as :=)
     # Might not be needed
 
-    if (!is.null(librarySizes)){
-        total_counts <- librarySizes[,c("sample","initial_total_sequences")]
+    if (!is.null(library_sizes)){
+        total_counts <- library_sizes[,c("sample","initial_total_sequences")]
         # Total reads might have been counted without taking into account ExpHunterSuite blacklist,
         # which would lead to errors. This next line removes blacklisted samples from total reads table.
         total_counts <- total_counts[total_counts$sample %in% colnames(cnts_mtx),]
@@ -520,17 +520,14 @@ get_counts <- function(cnts_mtx, librarySizes)
 
     coverage_df <- data.frame(sampleID = sort(colnames(cnts_mtx)),
                                 total_counts = total_counts)
-
     coverage_df$counted_frac <- counted_frac
-
     coverage_df <- coverage_df[order(coverage_df$total_counts),]
-
-    coverage_df$count_rank <- c(1:nrow(coverage_df))
+    coverage_df$count_rank <- 1:nrow(coverage_df)
 
     return(coverage_df)
 }
 
-expressedStats <- function(cpm_table, reads)
+get_gene_stats <- function(cpm_table, reads)
 {
     cutoffPassedMatrix <- cpm_table > reads
     cutoffPassedMatrix <- cutoffPassedMatrix[rowSums(cutoffPassedMatrix) > 0, ]
@@ -539,14 +536,7 @@ expressedStats <- function(cpm_table, reads)
     expGenesDf <- expGenesDf[order(expGenesDf$expressedGenes),]
     expGenesDf$count_rank <- seq(1,nrow(expGenesDf))
     cutoffPassedMatrix <- cutoffPassedMatrix[, expGenesDf$sampleID]
-    # Stats defined by me (noob alert @alvaro), didn't like how DROP did it (some calculations were plainly wrong)
-    # Firstly, a vector is created with expressed genes in the first sample. TRUE means gene is expressed, FALSE
-    # means it is not.
     unionVec = intersVec <- cutoffPassedMatrix[,1]
-    # Now a loop is started. It compares the genes expressed in current sample with the total
-    # expressed genes vector, updating it if it finds a new expressed gene. The result is saved
-    # as the union of expressed genes for that sample. Same is done for intersection, with its
-    # corresponding logic. In this case, if it finds a gene no longer expressed, it is removed.
     for (sample in 1:ncol(cutoffPassedMatrix))
     {
         unionVec <- unionVec | cutoffPassedMatrix[,sample]

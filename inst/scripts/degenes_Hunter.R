@@ -242,9 +242,9 @@ if (grepl("F", opt$modules)) {
 #############################################################################
 #############################################################################
 if(! is.null(opt$library_sizes)) {
-  librarySizes <- read.table(opt$library_sizes, header=TRUE)
+  library_sizes <- read.table(opt$library_sizes, header=TRUE)
 } else {
-  librarySizes <- NULL
+  library_sizes <- NULL
 }
 
 
@@ -284,7 +284,7 @@ final_results <- main_degenes_Hunter(
   ########################## NOOB ALERT @alvaro ###############################
   #############################################################################
   #############################################################################
-  librarySizes=librarySizes
+  library_sizes=library_sizes
 )
 
 #############################################################################

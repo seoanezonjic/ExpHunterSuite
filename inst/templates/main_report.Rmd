@@ -197,7 +197,7 @@ Sample rank is the position a sample holds after sorting by total gene counts (o
 Counted fraction is the percentage of reads that map to a gene (only available if total reads provided).
 
 ```{r coverage_plot, echo = FALSE, warning = FALSE}
-    if (!is.null(librarySizes)) {
+    if (!is.null(library_sizes)) {
         xtitle="Sample Rank (total reads)"
     } else {
         xtitle="Sample Rank (total counts)"
