@@ -515,7 +515,7 @@ get_counts <- function(cnts_mtx, library_sizes)
         # sampleID column no longer needed
         total_counts <- total_counts$initial_total_sequences
         gene_counts <- colSums(cnts_mtx)
-        counted_frac <- gene_counts/total_counts$initial_total_sequences
+        counted_frac <- gene_counts/total_counts
 
     } else {
         total_counts <- colSums(cnts_mtx)
