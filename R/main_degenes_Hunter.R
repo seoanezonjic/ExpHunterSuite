@@ -502,23 +502,27 @@ get_counts <- function(cnts_mtx, library_sizes)
 {
     # Rewriting in base R until I get help importing special data.table functions (such as :=)
     # Might not be needed
+    cnts_mtx <- cnts_mtx[,order(names(cnts_mtx))]
 
     if (!is.null(library_sizes)){
+
         total_counts <- library_sizes[,c("sample","initial_total_sequences")]
         # Total reads might have been counted without taking into account ExpHunterSuite blacklist,
         # which would lead to errors. This next line removes blacklisted samples from total reads table.
+        # Also, we have no guarantee they are sorted the same way, so we do it ourselves.
         total_counts <- total_counts[total_counts$sample %in% colnames(cnts_mtx),]
-        # Remove redundant sampleID column
+        total_counts <- total_counts[order(total_counts$sample),]
+        # sampleID column no longer needed
         total_counts <- total_counts$initial_total_sequences
         gene_counts <- colSums(cnts_mtx)
-        counted_frac <- gene_counts/total_counts
+        counted_frac <- gene_counts/total_counts$initial_total_sequences
 
     } else {
         total_counts <- colSums(cnts_mtx)
         counted_frac <- NULL
     }
 
-    coverage_df <- data.frame(sampleID = sort(colnames(cnts_mtx)),
+    coverage_df <- data.frame(sampleID = colnames(cnts_mtx),
                                 total_counts = total_counts)
     coverage_df$counted_frac <- counted_frac
     coverage_df <- coverage_df[order(coverage_df$total_counts),]
