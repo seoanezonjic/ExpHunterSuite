@@ -480,7 +480,7 @@ This plot compares the effective library size with raw library size")
 
 ```{r DESeq2_conditional_block_ELS_text, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
 
-cat("The effective library size is the factor used by DESeq2 normalizatioin algorithm for eahc sample. The effective library size must be dependent of raw library size.")
+cat("The effective library size is the factor used by DESeq2 normalizatioin algorithm for each sample. The effective library size must be dependent of raw library size.")
 ```
 
 
