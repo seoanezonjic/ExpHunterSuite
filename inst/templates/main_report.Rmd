@@ -457,8 +457,6 @@ This plot compares the effective library size with raw library size")
 ```
 
 ```{r DESeq2_conditional_block_ELS_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, warning = FALSE, message = FALSE}
-	deseq_object <- package_objects[['DESeq2']]
-	
 	effective_lib_size <- DESeq2::sizeFactors(package_objects[['DESeq2']][['DESeq2_dataset']])
 	sums <- colSums(raw_filter)
 	norm_bias <- data.frame(sums = sums, 
