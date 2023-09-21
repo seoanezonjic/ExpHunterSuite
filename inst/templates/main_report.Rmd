@@ -191,10 +191,9 @@ ggplot2::xlab(expression(log[2](count + 1)))
 #############################################################################
 #############################################################################
 
-## Counts metrics by sample ranks
+## Count metrics by sample ranks
 
 Sample rank is the position a sample holds after sorting by total gene counts (or total reads, if provided).
-Counted fraction is the percentage of reads that map to a gene (only available if total reads provided).
 
 ```{r coverage_plot, echo = FALSE, warning = FALSE}
     if (!is.null(library_sizes)) {
@@ -210,6 +209,10 @@ Counted fraction is the percentage of reads that map to a gene (only available i
         ggplot2::ylim(c(0,NA)) +
         ggplot2::scale_color_brewer(palette="Dark2") +
         ggplot2::ggtitle("Total counts sorted by rank")
+```
+
+```{r coverage_plot_frac_head, eval = !is.null(coverage_df$counted_frac),  echo = FALSE, warning = FALSE, results='asis'}
+	cat('Counted fraction is the percentage of reads that map to a gene (only available if total reads provided).')
 ```
 
 ```{r coverage_plot_frac, eval = !is.null(coverage_df$counted_frac),  echo = FALSE, warning = FALSE}
