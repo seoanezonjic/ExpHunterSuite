@@ -449,6 +449,40 @@ The complete results of the DEgenes Hunter differential expression analysis can 
 
 Various plots specific to each package are shown below:
 
+```{r DESeq2_conditional_block_sample_rank_head, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+
+cat("### **DESeq2 size factor vs. sample rank**:
+
+This plot correlates sample rank with sample effective library size (DESeq2 normalization factor)")
+```
+
+```{r DESeq2_conditional_block_sample_rank_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, warning = FALSE, message = FALSE}
+	effective_lib_size <- DESeq2::sizeFactors(package_objects[['DESeq2']][['DESeq2_dataset']])
+	effective_lib_size <- effective_lib_size[match(coverage_df$sampleID, names(effective_lib_size))] 
+	count_rank <- coverage_df$count_rank
+	size_vs_rank <- data.frame(count_rank = count_rank,
+								eff_lib_size = effective_lib_size)
+	if (!is.null(library_sizes)) {
+		xtitle="Sample Rank (total reads)"
+	} else {
+		xtitle="Sample Rank (total counts)"
+    }
+
+    ggplot2::ggplot(size_vs_rank, ggplot2::aes(x = count_rank, y = eff_lib_size)) +
+        ggplot2::geom_point(size = 3) +
+        cowplot::theme_cowplot() +
+        cowplot::background_grid() +
+        ggplot2::labs(x=xtitle, y = "Effective library size \n(DESeq2 normalization factor)") +
+        ggplot2::ylim(c(0,NA)) +
+        ggplot2::scale_color_brewer(palette="Dark2")
+
+```
+
+```{r DESeq2_conditional_block_sample_rank_text, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+
+cat("The effective library size is the factor used by DESeq2 normalization algorithm for each sample. The effective library size must be dependent of raw library size.")
+```
+
 ```{r DESeq2_conditional_block_ELS_head, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
 
 cat("### **DESeq2 normalization effects**:
