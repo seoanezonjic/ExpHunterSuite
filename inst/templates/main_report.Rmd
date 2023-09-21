@@ -191,9 +191,15 @@ ggplot2::xlab(expression(log[2](count + 1)))
 #############################################################################
 #############################################################################
 
-## Count metrics by sample ranks
+## **Count metrics by sample ranks**
 
-Sample rank is the position a sample holds after sorting by total gene counts (or total reads, if provided).
+```{r coverage_plot_head, echo = FALSE, warning = FALSE, results='asis'}
+	if (!is.null(library_sizes)) {
+		cat('### **Sample rank versus total reads**')
+	}else{
+		cat('### **Sample rank versus total counts**')
+	}
+```
 
 ```{r coverage_plot, echo = FALSE, warning = FALSE}
     if (!is.null(library_sizes)) {
@@ -207,12 +213,18 @@ Sample rank is the position a sample holds after sorting by total gene counts (o
         cowplot::background_grid() +
         ggplot2::labs(title = "Read Counts", x=xtitle, y = "Reads Counted") +
         ggplot2::ylim(c(0,NA)) +
-        ggplot2::scale_color_brewer(palette="Dark2") +
-        ggplot2::ggtitle("Total counts sorted by rank")
+        ggplot2::scale_color_brewer(palette="Dark2")
+```
+```{r coverage_plot_text, echo = FALSE, warning = FALSE, results='asis'}
+	if (!is.null(library_sizes)) {
+		cat('\n\n Sample rank is the position a sample holds after sorting by total reads')
+	}else{
+		cat('\n\n Sample rank is the position a sample holds after sorting by total counts')
+	}
 ```
 
 ```{r coverage_plot_frac_head, eval = !is.null(coverage_df$counted_frac),  echo = FALSE, warning = FALSE, results='asis'}
-	cat('Counted fraction is the percentage of reads that map to a gene (only available if total reads provided).')
+	cat('### **Fraction counts read sorted by rank**')
 ```
 
 ```{r coverage_plot_frac, eval = !is.null(coverage_df$counted_frac),  echo = FALSE, warning = FALSE}
@@ -222,16 +234,14 @@ Sample rank is the position a sample holds after sorting by total gene counts (o
         cowplot::background_grid() +
         ggplot2::labs(title = "Read Counts", x="Sample Rank (total reads)", y = "% counts read") +
         ggplot2::ylim(c(0,NA)) +
-        ggplot2::scale_color_brewer(palette="Dark2") +
-        ggplot2::ggtitle("Fraction counts read sorted by rank")
+        ggplot2::scale_color_brewer(palette="Dark2")
 ```
 
-## Statistics of expressed genes
+```{r coverage_plot_frac_text, eval = !is.null(coverage_df$counted_frac),  echo = FALSE, warning = FALSE, results='asis'}
+	cat('Counted fraction is the percentage of reads that map to a gene (only available if total reads provided)')
+```
 
-Samples are ranked by total expressed genes. Union of expressed genes represents the cumulative total expressed genes (sum of
-all genes expressed in any sample up to current sample, expected to increase with sample rank). Intersection of expressed genes
-represents the cumulative intersection of expressed genes (sum of genes expressed in all samples up to current sample, expected
-to decrease with sample rank).
+## **Statistics of expressed genes**
 
 ```{r expGenes_plot, echo = FALSE, warning = FALSE}
 		colors <- c("Unique" = "blue", "Union" = "red", "Intersection" = "green")
@@ -245,6 +255,11 @@ to decrease with sample rank).
 		    ggplot2::expand_limits(y=0) +
 		    ggplot2::scale_color_manual(values = colors)
 ```
+
+Samples are ranked by total expressed genes. Union of expressed genes represents the cumulative total expressed genes (sum of
+all genes expressed in any sample up to current sample, expected to increase with sample rank). Intersection of expressed genes
+represents the cumulative intersection of expressed genes (sum of genes expressed in all samples up to current sample, expected
+to decrease with sample rank).
 
 ## Gene counts variance distribution
 
@@ -451,9 +466,7 @@ Various plots specific to each package are shown below:
 
 ```{r DESeq2_conditional_block_sample_rank_head, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
 
-cat("### **DESeq2 size factor vs. sample rank**:
-
-This plot correlates sample rank with sample effective library size (DESeq2 normalization factor)")
+cat("### **DESeq2 size factor vs. sample rank**")
 ```
 
 ```{r DESeq2_conditional_block_sample_rank_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, warning = FALSE, message = FALSE}
