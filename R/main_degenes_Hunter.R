@@ -521,7 +521,7 @@ get_counts <- function(cnts_mtx, library_sizes)
                                 total_counts = total_counts)
     coverage_df$counted_frac <- counted_frac
     coverage_df <- coverage_df[order(coverage_df$total_counts),]
-    coverage_df$count_rank <- 1:nrow(coverage_df)
+    coverage_df$sample_rank <- 1:nrow(coverage_df)
 
     return(coverage_df)
 }

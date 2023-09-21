@@ -201,7 +201,7 @@ Sample rank is the position a sample holds after sorting by total gene counts (o
     } else {
         xtitle="Sample Rank (total counts)"
     }
-    ggplot2::ggplot(coverage_df, ggplot2::aes(x = count_rank, y = total_counts)) +
+    ggplot2::ggplot(coverage_df, ggplot2::aes(x = sample_rank, y = total_counts)) +
         ggplot2::geom_point(size = 3) +
         cowplot::theme_cowplot() +
         cowplot::background_grid() +
@@ -216,7 +216,7 @@ Sample rank is the position a sample holds after sorting by total gene counts (o
 ```
 
 ```{r coverage_plot_frac, eval = !is.null(coverage_df$counted_frac),  echo = FALSE, warning = FALSE}
-    ggplot2::ggplot(coverage_df, ggplot2::aes(x = count_rank, y = counted_frac)) +
+    ggplot2::ggplot(coverage_df, ggplot2::aes(x = sample_rank, y = counted_frac)) +
         ggplot2::geom_point(size = 3) +
         cowplot::theme_cowplot() +
         cowplot::background_grid() +
@@ -459,8 +459,8 @@ This plot correlates sample rank with sample effective library size (DESeq2 norm
 ```{r DESeq2_conditional_block_sample_rank_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, warning = FALSE, message = FALSE}
 	effective_lib_size <- DESeq2::sizeFactors(package_objects[['DESeq2']][['DESeq2_dataset']])
 	effective_lib_size <- effective_lib_size[match(coverage_df$sampleID, names(effective_lib_size))] 
-	count_rank <- coverage_df$count_rank
-	size_vs_rank <- data.frame(count_rank = count_rank,
+	sample_rank <- coverage_df$sample_rank
+	size_vs_rank <- data.frame(sample_rank = sample_rank,
 								eff_lib_size = effective_lib_size)
 	if (!is.null(library_sizes)) {
 		xtitle="Sample Rank (total reads)"
@@ -468,7 +468,7 @@ This plot correlates sample rank with sample effective library size (DESeq2 norm
 		xtitle="Sample Rank (total counts)"
     }
 
-    ggplot2::ggplot(size_vs_rank, ggplot2::aes(x = count_rank, y = eff_lib_size)) +
+    ggplot2::ggplot(size_vs_rank, ggplot2::aes(x = sample_rank, y = eff_lib_size)) +
         ggplot2::geom_point(size = 3) +
         cowplot::theme_cowplot() +
         cowplot::background_grid() +
