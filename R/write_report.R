@@ -70,7 +70,7 @@ all_pairs, #
 genomic_ranges,
 genome_ref
 ){
-
+    integrated_pairs <- integrated_pairs[integrated_pairs$miRNAseq %in% unique(miRNA_cont_tables[miRNA_cont_tables$db_group == "multimir", "miRNA"]),]
      miRNA_cont_tables$miRNA <- mirna_names[match(miRNA_cont_tables$miRNA, mirna_names$Accession), "TargetName"]   
      rmarkdown::render(
                file.path(template_folder, 'global_cormit.Rmd'), 
