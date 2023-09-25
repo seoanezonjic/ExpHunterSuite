@@ -70,6 +70,8 @@ all_pairs, #
 genomic_ranges,
 genome_ref
 ){
+    integrated_pairs <- as.data.frame(integrated_pairs)
+    miRNA_cont_tables <- as.data.frame(miRNA_cont_tables)
     integrated_pairs <- integrated_pairs[integrated_pairs$miRNAseq %in% unique(miRNA_cont_tables[miRNA_cont_tables$db_group == "multimir", "miRNA"]),]
      miRNA_cont_tables$miRNA <- mirna_names[match(miRNA_cont_tables$miRNA, mirna_names$Accession), "TargetName"]   
      rmarkdown::render(
