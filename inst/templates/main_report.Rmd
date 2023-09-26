@@ -261,6 +261,23 @@ all genes expressed in any sample up to current sample, expected to increase wit
 represents the cumulative intersection of expressed genes (sum of genes expressed in all samples up to current sample, expected
 to decrease with sample rank).
 
+### **Mean count distribution by filter**
+
+```{r mean_counts_plot, echo = FALSE, warning = FALSE}
+    ggplot2::ggplot(mean_counts_df, ggplot2::aes(x = counts, col = filter)) +
+	ggplot2::geom_density(ggplot2::aes(y=..count..)) +
+	ggplot2::scale_x_log10() +
+	ggplot2::labs(x = "Mean counts per gene", y = "Frequency") +
+    ggplot2::guides(col = ggplot2::guide_legend(title = NULL)) +
+    ggplot2::scale_color_brewer(palette = "Paired") +
+    cowplot::theme_cowplot() +
+    ggplot2::theme(legend.position = "top",
+          legend.justification="center",
+          legend.background = ggplot2::element_rect(color = NA))
+```
+
+This plot represents the mean counts distribution per gene, classified by filters
+
 ## Gene counts variance distribution
 
 Variance of gene counts across samples are represented. Genes with lower variance than selected threshold (dashed grey line) were filtered out. 

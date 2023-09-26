@@ -254,6 +254,7 @@ main_degenes_Hunter <- function(
     #############################################################################
     #############################################################################
     coverage_df <- get_counts(cnts_mtx=raw, library_sizes=library_sizes)
+    mean_counts_df <- get_mean_counts(cnts_mtx=raw, cpm_table=cpm_table, reads=reads, minlibraries=minlibraries)
     expGenesDf <- get_gene_stats(cpm_table=cpm_table, reads=reads)    
 
     # Add the filtered genes back
@@ -277,6 +278,7 @@ main_degenes_Hunter <- function(
     #############################################################################
     #############################################################################
     final_results[["coverage_df"]] <- coverage_df
+    final_results[["mean_counts_df"]] <- mean_counts_df
     final_results[["expGenesDf"]] <- expGenesDf
 
     if(!is.null(combinations_WGCNA)){
@@ -524,6 +526,26 @@ get_counts <- function(cnts_mtx, library_sizes)
     coverage_df$sample_rank <- 1:nrow(coverage_df)
 
     return(coverage_df)
+}
+
+get_mean_counts <- function(cnts_mtx, cpm_table, reads, minlibraries)
+{
+    passedFilter <- rowSums(cpm_table > reads) > minlibraries
+    min1read <- rowSums(cnts_mtx >= 1) > minlibraries
+    min10reads <- rowSums(cnts_mtx >= 10) > minlibraries
+
+    # Create a vector with the strictest filter passed
+    all <- data.frame(counts=rowMeans(cnts_mtx),
+                      filter=rep("all", nrow(cnts_mtx)))
+    min1read <- data.frame(counts=rowMeans(cnts_mtx[min1read,]),
+                              filter=rep("min1read", nrow(cnts_mtx[min1read,]))) 
+    min10reads <- data.frame(counts=rowMeans(cnts_mtx[min10reads,]),
+                              filter=rep("min10reads", nrow(cnts_mtx[min10reads,]))) 
+    passedFilter <- data.frame(counts=rowMeans(cnts_mtx[passedFilter,]),
+                                filter=rep("passedFilter", nrow(cnts_mtx[passedFilter,])))
+
+    res <- rbind(all,min1read,min10reads,passedFilter)
+    return(res)
 }
 
 get_gene_stats <- function(cpm_table, reads)
