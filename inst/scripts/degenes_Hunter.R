@@ -169,7 +169,16 @@ option_list <- list(
       "Alternatively, Contrast can be specificed in the form \"effect,baseA,groupB\", where the baseA should be the level in FactorA that should be used as the base for FC calculation, ",
       "and groupB represents the level in Factor B that is the group we are looking for the change in. For effect, FactorB can have more than 2 groups, allowing 2xn designs. ",
       "Finally, if nested is selected, we can perform the same comparisons using a nested design with: \"nested_int,Ctrl,groupA\" for interaction, ",
-      "\"nested_effect,Ctrl,groupA\" or \"nested_effect,Ctrl,groupB\" for a group. "))
+      "\"nested_effect,Ctrl,groupA\" or \"nested_effect,Ctrl,groupB\" for a group. ")),
+  #############################################################################
+  #############################################################################
+  ########################## NOOB ALERT @alvaro ###############################
+  #############################################################################
+  #############################################################################
+  optparse::make_option(c("-s", "--library_sizes"), type="character",
+    default=NULL, help="Path to file containing library sizes. If missing,
+      certain DROP QC plots will not be drawn, and sample ranks will be defined
+      by total counts.")
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 #############################################################################
@@ -227,6 +236,16 @@ if (grepl("F", opt$modules)) {
   external_DEA_data <- read.table(opt$external_DEA_file,
    header=TRUE, sep="\t", row.names=1)
 }
+#############################################################################
+#############################################################################
+########################## NOOB ALERT @alvaro ###############################
+#############################################################################
+#############################################################################
+if(! is.null(opt$library_sizes)) {
+  library_sizes <- read.table(opt$library_sizes, header=TRUE)
+} else {
+  library_sizes <- NULL
+}
 
 
 final_results <- main_degenes_Hunter(
@@ -259,7 +278,13 @@ final_results <- main_degenes_Hunter(
   WGCNA_minCoreKMESize=opt$WGCNA_minCoreKMESize,
   WGCNA_minKMEtoStay = opt$WGCNA_minKMEtoStay,
   WGCNA_corType = opt$WGCNA_corType,
-  multifactorial = opt$multifactorial
+  multifactorial = opt$multifactorial,
+  #############################################################################
+  #############################################################################
+  ########################## NOOB ALERT @alvaro ###############################
+  #############################################################################
+  #############################################################################
+  library_sizes=library_sizes
 )
 
 #############################################################################

@@ -34,6 +34,7 @@
 #' @param WGCNA_minKMEtoStay see WGCNA package
 #' @param WGCNA_corType see WGCNA package
 #' @param multifactorial specify interaction/effect when multifactorial design
+#' @param library_sizes NULL or a dataframe with sample names and library sizes
 #' @return expression analysis result object with studies performed
 #' @keywords method
 #' @importFrom rlang .data
@@ -73,7 +74,8 @@ main_degenes_Hunter <- function(
     WGCNA_minCoreKMESize = NULL,
     WGCNA_minKMEtoStay = 0.2,
     WGCNA_corType = "pearson",
-    multifactorial = ""
+    multifactorial = "",
+    library_sizes = NULL
   ){
     modified_input_args <- check_input_main_degenes_Hunter(raw, 
       minlibraries, reads, external_DEA_data, modules, model_variables,
@@ -244,7 +246,17 @@ main_degenes_Hunter <- function(
          results_diffcoexp$DCGs$Gene[results_diffcoexp$DCGs$q < 1]
       DE_all_genes$DCL <- aux %in% results_diffcoexp$DCLs$Gene.1 | 
          aux %in% results_diffcoexp$DCLs$Gene.2
-    }    
+    }
+
+    #############################################################################
+    #############################################################################
+    ########################## NOOB ALERT @alvaro ###############################
+    #############################################################################
+    #############################################################################
+    coverage_df <- get_counts(cnts_mtx=raw, library_sizes=library_sizes)
+    mean_counts_df <- get_mean_counts(cnts_mtx=raw, cpm_table=cpm_table, reads=reads, minlibraries=minlibraries)
+    exp_genes_df <- get_gene_stats(cpm_table=cpm_table, reads=reads)    
+
     # Add the filtered genes back
     DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
 
@@ -260,10 +272,21 @@ main_degenes_Hunter <- function(
     final_results[['replicatesT']] <- replicatesT
     final_results[['final_main_params']] <- final_main_params
     final_results[["var_filter"]] <- var_filter
+    #############################################################################
+    #############################################################################
+    ########################## NOOB ALERT @alvaro ###############################
+    #############################################################################
+    #############################################################################
+    final_results[["coverage_df"]] <- coverage_df
+    final_results[["mean_counts_df"]] <- mean_counts_df
+    final_results[["exp_genes_df"]] <- exp_genes_df
+
     if(!is.null(combinations_WGCNA)){
       final_results <- c(final_results, combinations_WGCNA)
     }
     return(c(final_results, exp_results))
+
+
 }
 
 
@@ -387,7 +410,7 @@ filter_count <- function(reads,
       } else if (filter_type == "global") {
         # genes with cpm greater than --reads value for
         # at least --minlibrariess samples
-        keep_cpm <- rowSums(cpm_table > reads) >= minlibraries 
+        keep_cpm <- rowSums(cpm_table >= reads) >= minlibraries 
         raw <- raw[keep_cpm,] # Filter out count data frame
       } else if (grepl("^combined", filter_type) == TRUE) {
         split_filter <- strsplit(filter_type, ":")[[1]]
@@ -398,7 +421,7 @@ filter_count <- function(reads,
         samples_per_combo <- lapply(combs_list, function(x) as.vector(x$sample))
         cpm_tab_per_combo <- sapply(samples_per_combo, function(x) cpm_table[, x])
         combos_passing_filter <- sapply(cpm_tab_per_combo, 
-          function(x) rowSums(x > reads) > minlibraries)
+          function(x) rowSums(x >= reads) >= minlibraries)
         keep_cpm <- apply(combos_passing_filter, 1, any)
         raw <- raw[keep_cpm,] # Filter out count data frame
       } else {
@@ -469,4 +492,78 @@ prepare_target_for_multifactorial <- function(target, multifactorial) {
                                              target[,mf_text[["mf_factorB"]]],
                                              mf_text[["mf_varB"]])
   return(target)
+}
+
+#############################################################################
+#############################################################################
+########################## NOOB ALERT @alvaro ###############################
+#############################################################################
+#############################################################################
+
+get_counts <- function(cnts_mtx, library_sizes)
+{
+    if (!is.null(library_sizes)){
+
+        total_counts <- library_sizes[,c("sample","initial_total_sequences")]
+        # Total reads might have been counted without taking into account ExpHunterSuite blacklist,
+        # which would lead to errors. This next line removes blacklisted samples from total reads table.
+        # Also, we have no guarantee they are sorted the same way, so we do it ourselves.
+        total_counts <- total_counts[match(colnames(cnts_mtx), total_counts$sample), ]
+        # sample_ID column no longer needed
+        total_counts <- total_counts$initial_total_sequences
+        gene_counts <- colSums(cnts_mtx)
+        counted_frac <- gene_counts/total_counts
+
+    } else {
+        total_counts <- colSums(cnts_mtx)
+        counted_frac <- NULL
+    }
+
+    coverage_df <- data.frame(sample_ID = colnames(cnts_mtx),
+                                total_counts = total_counts)
+    coverage_df$counted_frac <- counted_frac
+    coverage_df <- coverage_df[order(coverage_df$total_counts),]
+    coverage_df$sample_rank <- 1:nrow(coverage_df)
+
+    return(coverage_df)
+}
+
+get_mean_counts <- function(cnts_mtx, cpm_table, reads, minlibraries)
+{
+    passed_filter <- rowSums(cpm_table >= reads) >= minlibraries
+    min_1_read <- rowSums(cnts_mtx >= 1) >= minlibraries
+    min_10_reads <- rowSums(cnts_mtx >= 10) >= minlibraries
+
+    # Create a vector with the strictest filter passed
+    all <- data.frame(counts=rowMeans(cnts_mtx),
+                      filter=rep("all", nrow(cnts_mtx)))
+    min_1_read <- data.frame(counts=rowMeans(cnts_mtx[min_1_read,]),
+                              filter=rep("min_1_read", nrow(cnts_mtx[min_1_read,]))) 
+    min_10_reads <- data.frame(counts=rowMeans(cnts_mtx[min_10_reads,]),
+                              filter=rep("min_10_reads", nrow(cnts_mtx[min_10_reads,]))) 
+    passed_filter <- data.frame(counts=rowMeans(cnts_mtx[passed_filter,]),
+                                filter=rep("passed_filter", nrow(cnts_mtx[passed_filter,])))
+
+    res <- rbind(all,min_1_read,min_10_reads,passed_filter)
+    return(res)
+}
+
+get_gene_stats <- function(cpm_table, reads)
+{
+    cutoff_passed_matrix <- cpm_table >= reads
+    cutoff_passed_matrix <- cutoff_passed_matrix[rowSums(cutoff_passed_matrix) > 0, ]
+    exp_genes_df <- data.frame(sample_ID = colnames(cutoff_passed_matrix),
+                                expressed_genes = colSums(cutoff_passed_matrix))
+    exp_genes_df <- exp_genes_df[order(exp_genes_df$expressed_genes),]
+    exp_genes_df$count_rank <- seq(1,nrow(exp_genes_df))
+    cutoff_passed_matrix <- cutoff_passed_matrix[, exp_genes_df$sample_ID]
+    union_vec = inters_vec <- cutoff_passed_matrix[,1]
+    for (sample in 1:ncol(cutoff_passed_matrix))
+    {
+        union_vec <- union_vec | cutoff_passed_matrix[,sample]
+        inters_vec <- inters_vec & cutoff_passed_matrix[,sample]
+        exp_genes_df$union_expressed_genes[sample] <- sum(union_vec)
+        exp_genes_df$inters_expressed_genes[sample] <- sum(inters_vec)
+    }
+    return(exp_genes_df)
 }

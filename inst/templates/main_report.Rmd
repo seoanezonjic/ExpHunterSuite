@@ -185,6 +185,98 @@ ggplot2::xlab(expression(log[2](count + 1)))
 
 ```
 
+#############################################################################
+#############################################################################
+########################## NOOB ALERT @alvaro ###############################
+#############################################################################
+#############################################################################
+
+## **Count metrics by sample ranks**
+
+```{r coverage_plot_head, echo = FALSE, warning = FALSE, results='asis'}
+	if (!is.null(library_sizes)) {
+		cat('### **Sample rank versus total reads**')
+	}else{
+		cat('### **Sample rank versus total counts**')
+	}
+```
+
+```{r coverage_plot, echo = FALSE, warning = FALSE}
+    if (!is.null(library_sizes)) {
+        xtitle="Sample Rank (total reads)"
+    } else {
+        xtitle="Sample Rank (total counts)"
+    }
+    ggplot2::ggplot(coverage_df, ggplot2::aes(x = sample_rank, y = total_counts)) +
+        ggplot2::geom_point(size = 3) +
+        cowplot::theme_cowplot() +
+        cowplot::background_grid() +
+        ggplot2::labs(title = "Read Counts", x=xtitle, y = "Reads Counted") +
+        ggplot2::ylim(c(0,NA)) +
+        ggplot2::scale_color_brewer(palette="Dark2")
+```
+```{r coverage_plot_text, echo = FALSE, warning = FALSE, results='asis'}
+	if (!is.null(library_sizes)) {
+		cat('\n\n Sample rank is the position a sample holds after sorting by total reads')
+	}else{
+		cat('\n\n Sample rank is the position a sample holds after sorting by total counts')
+	}
+```
+
+```{r coverage_plot_frac_head, eval = !is.null(coverage_df$counted_frac),  echo = FALSE, warning = FALSE, results='asis'}
+	cat('### **Fraction counts read sorted by rank**')
+```
+
+```{r coverage_plot_frac, eval = !is.null(coverage_df$counted_frac),  echo = FALSE, warning = FALSE}
+    ggplot2::ggplot(coverage_df, ggplot2::aes(x = sample_rank, y = counted_frac)) +
+        ggplot2::geom_point(size = 3) +
+        cowplot::theme_cowplot() +
+        cowplot::background_grid() +
+        ggplot2::labs(title = "Read Counts", x="Sample Rank (total reads)", y = "% counts read") +
+        ggplot2::ylim(c(0,NA)) +
+        ggplot2::scale_color_brewer(palette="Dark2")
+```
+
+```{r coverage_plot_frac_text, eval = !is.null(coverage_df$counted_frac),  echo = FALSE, warning = FALSE, results='asis'}
+	cat('Counted fraction is the percentage of reads that map to a gene (only available if total reads provided)')
+```
+
+## **Statistics of expressed genes**
+
+```{r exp_genes_plot, echo = FALSE, warning = FALSE}
+		colors <- c("Unique" = "blue", "Union" = "red", "Intersection" = "green")
+		ggplot2::ggplot(data = exp_genes_df, ggplot2::aes(x = count_rank)) +
+		    ggplot2::geom_line(ggplot2::aes(y = expressed_genes, color = "Unique")) +
+		    ggplot2::geom_line(ggplot2::aes(y = union_expressed_genes, color = "Union")) +
+		    ggplot2::geom_line(ggplot2::aes(y = inters_expressed_genes, color = "Intersection")) +
+		    ggplot2::labs(x = "Sample rank",
+		                  y = "Number of genes",
+		                  color = "Legend") +
+		    ggplot2::expand_limits(y=0) +
+		    ggplot2::scale_color_manual(values = colors)
+```
+
+Samples are ranked by total expressed genes. Union of expressed genes represents the cumulative total expressed genes (sum of
+all genes expressed in any sample up to current sample, expected to increase with sample rank). Intersection of expressed genes
+represents the cumulative intersection of expressed genes (sum of genes expressed in all samples up to current sample, expected
+to decrease with sample rank).
+
+### **Mean count distribution by filter**
+
+```{r mean_counts_plot, echo = FALSE, warning = FALSE}
+    ggplot2::ggplot(mean_counts_df, ggplot2::aes(x = counts, col = filter)) +
+	ggplot2::geom_density(ggplot2::aes(y=..count..)) +
+	ggplot2::scale_x_log10() +
+	ggplot2::labs(x = "Mean counts per gene", y = "Frequency") +
+    ggplot2::guides(col = ggplot2::guide_legend(title = NULL)) +
+    ggplot2::scale_color_brewer(palette = "Paired") +
+    cowplot::theme_cowplot() +
+    ggplot2::theme(legend.position = "top",
+          legend.justification="center",
+          legend.background = ggplot2::element_rect(color = NA))
+```
+
+This plot represents the mean counts distribution per gene, classified by filters
 
 ## Gene counts variance distribution
 
@@ -199,7 +291,6 @@ ggplot2::geom_density() +
 ggplot2::geom_vline(xintercept = var_filter[["thr"]], linetype="dashed", 
                 color = "grey")
 ```
-
 
 ```{r DESeq2_all_norm_head, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
 
@@ -390,6 +481,38 @@ The complete results of the DEgenes Hunter differential expression analysis can 
 
 Various plots specific to each package are shown below:
 
+```{r DESeq2_conditional_block_sample_rank_head, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+
+cat("### **DESeq2 size factor vs. sample rank**")
+```
+
+```{r DESeq2_conditional_block_sample_rank_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, warning = FALSE, message = FALSE}
+	effective_lib_size <- DESeq2::sizeFactors(package_objects[['DESeq2']][['DESeq2_dataset']])
+	effective_lib_size <- effective_lib_size[match(coverage_df$sample_ID, names(effective_lib_size))] 
+	sample_rank <- coverage_df$sample_rank
+	size_vs_rank <- data.frame(sample_rank = sample_rank,
+								eff_lib_size = effective_lib_size)
+	if (!is.null(library_sizes)) {
+		xtitle="Sample Rank (total reads)"
+	} else {
+		xtitle="Sample Rank (total counts)"
+    }
+
+    ggplot2::ggplot(size_vs_rank, ggplot2::aes(x = sample_rank, y = eff_lib_size)) +
+        ggplot2::geom_point(size = 3) +
+        cowplot::theme_cowplot() +
+        cowplot::background_grid() +
+        ggplot2::labs(x=xtitle, y = "Effective library size \n(DESeq2 normalization factor)") +
+        ggplot2::ylim(c(0,NA)) +
+        ggplot2::scale_color_brewer(palette="Dark2")
+
+```
+
+```{r DESeq2_conditional_block_sample_rank_text, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+
+cat("The effective library size is the factor used by DESeq2 normalization algorithm for each sample. The effective library size must be dependent of raw library size.")
+```
+
 ```{r DESeq2_conditional_block_ELS_head, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
 
 cat("### **DESeq2 normalization effects**:
@@ -398,8 +521,6 @@ This plot compares the effective library size with raw library size")
 ```
 
 ```{r DESeq2_conditional_block_ELS_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, warning = FALSE, message = FALSE}
-	deseq_object <- package_objects[['DESeq2']]
-	
 	effective_lib_size <- DESeq2::sizeFactors(package_objects[['DESeq2']][['DESeq2_dataset']])
 	sums <- colSums(raw_filter)
 	norm_bias <- data.frame(sums = sums, 
@@ -424,7 +545,7 @@ This plot compares the effective library size with raw library size")
 
 ```{r DESeq2_conditional_block_ELS_text, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
 
-cat("The effective library size is the factor used by DESeq2 normalizatioin algorithm for eahc sample. The effective library size must be dependent of raw library size.")
+cat("The effective library size is the factor used by DESeq2 normalization algorithm for each sample. The effective library size must be dependent of raw library size.")
 ```
 
 
@@ -854,4 +975,3 @@ First column contains the option names; second column contains the given values 
 ```{r opt_vals, echo = FALSE, warning = FALSE}
 knitr::kable(cbind(opt))
 ```
-
