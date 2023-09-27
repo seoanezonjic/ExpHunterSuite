@@ -243,12 +243,12 @@ ggplot2::xlab(expression(log[2](count + 1)))
 
 ## **Statistics of expressed genes**
 
-```{r expGenes_plot, echo = FALSE, warning = FALSE}
+```{r exp_genes_plot, echo = FALSE, warning = FALSE}
 		colors <- c("Unique" = "blue", "Union" = "red", "Intersection" = "green")
-		ggplot2::ggplot(data = expGenesDf, ggplot2::aes(x = count_rank)) +
-		    ggplot2::geom_line(ggplot2::aes(y = expressedGenes, color = "Unique")) +
-		    ggplot2::geom_line(ggplot2::aes(y = unionExpressedGenes, color = "Union")) +
-		    ggplot2::geom_line(ggplot2::aes(y = intersExpressedGenes, color = "Intersection")) +
+		ggplot2::ggplot(data = exp_genes_df, ggplot2::aes(x = count_rank)) +
+		    ggplot2::geom_line(ggplot2::aes(y = expressed_genes, color = "Unique")) +
+		    ggplot2::geom_line(ggplot2::aes(y = union_expressed_genes, color = "Union")) +
+		    ggplot2::geom_line(ggplot2::aes(y = inters_expressed_genes, color = "Intersection")) +
 		    ggplot2::labs(x = "Sample rank",
 		                  y = "Number of genes",
 		                  color = "Legend") +
@@ -488,7 +488,7 @@ cat("### **DESeq2 size factor vs. sample rank**")
 
 ```{r DESeq2_conditional_block_sample_rank_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, warning = FALSE, message = FALSE}
 	effective_lib_size <- DESeq2::sizeFactors(package_objects[['DESeq2']][['DESeq2_dataset']])
-	effective_lib_size <- effective_lib_size[match(coverage_df$sampleID, names(effective_lib_size))] 
+	effective_lib_size <- effective_lib_size[match(coverage_df$sample_ID, names(effective_lib_size))] 
 	sample_rank <- coverage_df$sample_rank
 	size_vs_rank <- data.frame(sample_rank = sample_rank,
 								eff_lib_size = effective_lib_size)

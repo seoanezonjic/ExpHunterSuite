@@ -255,7 +255,7 @@ main_degenes_Hunter <- function(
     #############################################################################
     coverage_df <- get_counts(cnts_mtx=raw, library_sizes=library_sizes)
     mean_counts_df <- get_mean_counts(cnts_mtx=raw, cpm_table=cpm_table, reads=reads, minlibraries=minlibraries)
-    expGenesDf <- get_gene_stats(cpm_table=cpm_table, reads=reads)    
+    exp_genes_df <- get_gene_stats(cpm_table=cpm_table, reads=reads)    
 
     # Add the filtered genes back
     DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
@@ -279,7 +279,7 @@ main_degenes_Hunter <- function(
     #############################################################################
     final_results[["coverage_df"]] <- coverage_df
     final_results[["mean_counts_df"]] <- mean_counts_df
-    final_results[["expGenesDf"]] <- expGenesDf
+    final_results[["exp_genes_df"]] <- exp_genes_df
 
     if(!is.null(combinations_WGCNA)){
       final_results <- c(final_results, combinations_WGCNA)
@@ -410,7 +410,7 @@ filter_count <- function(reads,
       } else if (filter_type == "global") {
         # genes with cpm greater than --reads value for
         # at least --minlibrariess samples
-        keep_cpm <- rowSums(cpm_table > reads) >= minlibraries 
+        keep_cpm <- rowSums(cpm_table >= reads) >= minlibraries 
         raw <- raw[keep_cpm,] # Filter out count data frame
       } else if (grepl("^combined", filter_type) == TRUE) {
         split_filter <- strsplit(filter_type, ":")[[1]]
@@ -421,7 +421,7 @@ filter_count <- function(reads,
         samples_per_combo <- lapply(combs_list, function(x) as.vector(x$sample))
         cpm_tab_per_combo <- sapply(samples_per_combo, function(x) cpm_table[, x])
         combos_passing_filter <- sapply(cpm_tab_per_combo, 
-          function(x) rowSums(x > reads) > minlibraries)
+          function(x) rowSums(x >= reads) >= minlibraries)
         keep_cpm <- apply(combos_passing_filter, 1, any)
         raw <- raw[keep_cpm,] # Filter out count data frame
       } else {
@@ -509,7 +509,7 @@ get_counts <- function(cnts_mtx, library_sizes)
         # which would lead to errors. This next line removes blacklisted samples from total reads table.
         # Also, we have no guarantee they are sorted the same way, so we do it ourselves.
         total_counts <- total_counts[match(colnames(cnts_mtx), total_counts$sample), ]
-        # sampleID column no longer needed
+        # sample_ID column no longer needed
         total_counts <- total_counts$initial_total_sequences
         gene_counts <- colSums(cnts_mtx)
         counted_frac <- gene_counts/total_counts
@@ -519,7 +519,7 @@ get_counts <- function(cnts_mtx, library_sizes)
         counted_frac <- NULL
     }
 
-    coverage_df <- data.frame(sampleID = colnames(cnts_mtx),
+    coverage_df <- data.frame(sample_ID = colnames(cnts_mtx),
                                 total_counts = total_counts)
     coverage_df$counted_frac <- counted_frac
     coverage_df <- coverage_df[order(coverage_df$total_counts),]
@@ -530,40 +530,40 @@ get_counts <- function(cnts_mtx, library_sizes)
 
 get_mean_counts <- function(cnts_mtx, cpm_table, reads, minlibraries)
 {
-    passedFilter <- rowSums(cpm_table > reads) > minlibraries
-    min1read <- rowSums(cnts_mtx >= 1) > minlibraries
-    min10reads <- rowSums(cnts_mtx >= 10) > minlibraries
+    passed_filter <- rowSums(cpm_table >= reads) >= minlibraries
+    min_1_read <- rowSums(cnts_mtx >= 1) >= minlibraries
+    min_10_reads <- rowSums(cnts_mtx >= 10) >= minlibraries
 
     # Create a vector with the strictest filter passed
     all <- data.frame(counts=rowMeans(cnts_mtx),
                       filter=rep("all", nrow(cnts_mtx)))
-    min1read <- data.frame(counts=rowMeans(cnts_mtx[min1read,]),
-                              filter=rep("min1read", nrow(cnts_mtx[min1read,]))) 
-    min10reads <- data.frame(counts=rowMeans(cnts_mtx[min10reads,]),
-                              filter=rep("min10reads", nrow(cnts_mtx[min10reads,]))) 
-    passedFilter <- data.frame(counts=rowMeans(cnts_mtx[passedFilter,]),
-                                filter=rep("passedFilter", nrow(cnts_mtx[passedFilter,])))
+    min_1_read <- data.frame(counts=rowMeans(cnts_mtx[min_1_read,]),
+                              filter=rep("min_1_read", nrow(cnts_mtx[min_1_read,]))) 
+    min_10_reads <- data.frame(counts=rowMeans(cnts_mtx[min_10_reads,]),
+                              filter=rep("min_10_reads", nrow(cnts_mtx[min_10_reads,]))) 
+    passed_filter <- data.frame(counts=rowMeans(cnts_mtx[passed_filter,]),
+                                filter=rep("passed_filter", nrow(cnts_mtx[passed_filter,])))
 
-    res <- rbind(all,min1read,min10reads,passedFilter)
+    res <- rbind(all,min_1_read,min_10_reads,passed_filter)
     return(res)
 }
 
 get_gene_stats <- function(cpm_table, reads)
 {
-    cutoffPassedMatrix <- cpm_table > reads
-    cutoffPassedMatrix <- cutoffPassedMatrix[rowSums(cutoffPassedMatrix) > 0, ]
-    expGenesDf <- data.frame(sampleID = colnames(cutoffPassedMatrix),
-                                expressedGenes = colSums(cutoffPassedMatrix))
-    expGenesDf <- expGenesDf[order(expGenesDf$expressedGenes),]
-    expGenesDf$count_rank <- seq(1,nrow(expGenesDf))
-    cutoffPassedMatrix <- cutoffPassedMatrix[, expGenesDf$sampleID]
-    unionVec = intersVec <- cutoffPassedMatrix[,1]
-    for (sample in 1:ncol(cutoffPassedMatrix))
+    cutoff_passed_matrix <- cpm_table >= reads
+    cutoff_passed_matrix <- cutoff_passed_matrix[rowSums(cutoff_passed_matrix) > 0, ]
+    exp_genes_df <- data.frame(sample_ID = colnames(cutoff_passed_matrix),
+                                expressed_genes = colSums(cutoff_passed_matrix))
+    exp_genes_df <- exp_genes_df[order(exp_genes_df$expressed_genes),]
+    exp_genes_df$count_rank <- seq(1,nrow(exp_genes_df))
+    cutoff_passed_matrix <- cutoff_passed_matrix[, exp_genes_df$sample_ID]
+    union_vec = inters_vec <- cutoff_passed_matrix[,1]
+    for (sample in 1:ncol(cutoff_passed_matrix))
     {
-        unionVec <- unionVec | cutoffPassedMatrix[,sample]
-        intersVec <- intersVec & cutoffPassedMatrix[,sample]
-        expGenesDf$unionExpressedGenes[sample] <- sum(unionVec)
-        expGenesDf$intersExpressedGenes[sample] <- sum(intersVec)
+        union_vec <- union_vec | cutoff_passed_matrix[,sample]
+        inters_vec <- inters_vec & cutoff_passed_matrix[,sample]
+        exp_genes_df$union_expressed_genes[sample] <- sum(union_vec)
+        exp_genes_df$inters_expressed_genes[sample] <- sum(inters_vec)
     }
-    return(expGenesDf)
+    return(exp_genes_df)
 }
