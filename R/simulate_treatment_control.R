@@ -28,7 +28,7 @@ STC <- function(Ngene = 1000,
     # Load & prepare base data
     if(is.null(bcount)){
         arab <- NULL
-        utils::data("arab", package = "TCC", envir = environment())
+        utils::data("arab", envir = environment())
         bcount <- arab
         group <- seq(3)
     }
