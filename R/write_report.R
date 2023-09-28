@@ -333,10 +333,7 @@ pvalcutoff = 0.05
     }
     assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
 
-    if(!any(grepl("WGCNA", names(func_results))) && grepl("c|i", report)) {
-        message("Cluster reports chosen but no cluster results available. 
-                Reports wont be plotted")
-    }
+ 
     results_path <- normalizePath(output_files)
     model_organism <- func_results$final_main_params$model_organism
 
@@ -374,23 +371,29 @@ pvalcutoff = 0.05
             output_file = outf, intermediates_dir = results_path)  
 
     }
-
-    mod_t_cor_p <- hunter_results$WGCNA_all$package_objects$module_trait_cor_p
-    mod_t_cor <- hunter_results$WGCNA_all$package_objects$module_trait_cor
-    corr_cl <- mod_t_cor[abs(mod_t_cor[,"treat_Ctrl"]) > corr_threshold 
-                                & mod_t_cor_p[,"treat_Ctrl"] < 0.05,]
-    corr_cl <- rownames(corr_cl)
-    corr_cl <- gsub("Cluster_","",corr_cl)
-    if (length(corr_cl) > 0) {
-        enrichments_ORA <- lapply(enrichments_ORA, 
-                            filter_cluster_enrichment, filter_list = corr_cl)
-    } else {
-        warning(paste0(c("There are not clusters with higher absolute ",
-                         "correlation with treat/control hinger than ",
-                         corr_threshold, ". Modify corr_threshold option. ",
-                         "Reporting enrichments of all clusters...")))
-    }
     
+    
+    if(!any(grepl("WGCNA", names(func_results))) && grepl("c|i", report)) {
+        message("Cluster reports chosen but no cluster results available. 
+                Reports wont be plotted")
+    } else {
+        mod_t_cor_p <- hunter_results$WGCNA_all$package_objects$module_trait_cor_p
+        mod_t_cor <- hunter_results$WGCNA_all$package_objects$module_trait_cor
+        corr_cl <- mod_t_cor[abs(mod_t_cor[,"treat_Ctrl"]) > corr_threshold 
+                                & mod_t_cor_p[,"treat_Ctrl"] < 0.05,]
+        corr_cl <- rownames(corr_cl)
+        corr_cl <- gsub("Cluster_","",corr_cl)
+        if (length(corr_cl) > 0) {
+            enrichments_ORA <- lapply(enrichments_ORA, 
+                                filter_cluster_enrichment, filter_list = corr_cl)
+        } else {
+            warning(paste0(c("There are not clusters with higher absolute ",
+                             "correlation with treat/control hinger than ",
+                             corr_threshold, ". Modify corr_threshold option. ",
+                             "Reporting enrichments of all clusters...")))
+        }
+    
+    }
     if(grepl("c", report)){
     
             write_merged_cluster_report(enrichments_ORA, results_path, 
