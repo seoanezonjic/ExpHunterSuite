@@ -248,11 +248,6 @@ main_degenes_Hunter <- function(
          aux %in% results_diffcoexp$DCLs$Gene.2
     }
 
-    #############################################################################
-    #############################################################################
-    ########################## NOOB ALERT @alvaro ###############################
-    #############################################################################
-    #############################################################################
     coverage_df <- get_counts(cnts_mtx=raw, library_sizes=library_sizes)
     mean_counts_df <- get_mean_counts(cnts_mtx=raw, cpm_table=cpm_table, reads=reads, minlibraries=minlibraries)
     exp_genes_df <- get_gene_stats(cpm_table=cpm_table, reads=reads)    
@@ -272,11 +267,6 @@ main_degenes_Hunter <- function(
     final_results[['replicatesT']] <- replicatesT
     final_results[['final_main_params']] <- final_main_params
     final_results[["var_filter"]] <- var_filter
-    #############################################################################
-    #############################################################################
-    ########################## NOOB ALERT @alvaro ###############################
-    #############################################################################
-    #############################################################################
     final_results[["coverage_df"]] <- coverage_df
     final_results[["mean_counts_df"]] <- mean_counts_df
     final_results[["exp_genes_df"]] <- exp_genes_df
@@ -493,12 +483,6 @@ prepare_target_for_multifactorial <- function(target, multifactorial) {
                                              mf_text[["mf_varB"]])
   return(target)
 }
-
-#############################################################################
-#############################################################################
-########################## NOOB ALERT @alvaro ###############################
-#############################################################################
-#############################################################################
 
 get_counts <- function(cnts_mtx, library_sizes)
 {

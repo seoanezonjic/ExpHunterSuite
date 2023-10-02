@@ -170,11 +170,6 @@ option_list <- list(
       "and groupB represents the level in Factor B that is the group we are looking for the change in. For effect, FactorB can have more than 2 groups, allowing 2xn designs. ",
       "Finally, if nested is selected, we can perform the same comparisons using a nested design with: \"nested_int,Ctrl,groupA\" for interaction, ",
       "\"nested_effect,Ctrl,groupA\" or \"nested_effect,Ctrl,groupB\" for a group. ")),
-  #############################################################################
-  #############################################################################
-  ########################## NOOB ALERT @alvaro ###############################
-  #############################################################################
-  #############################################################################
   optparse::make_option(c("-s", "--library_sizes"), type="character",
     default=NULL, help="Path to file containing library sizes. If missing,
       certain DROP QC plots will not be drawn, and sample ranks will be defined
@@ -236,11 +231,6 @@ if (grepl("F", opt$modules)) {
   external_DEA_data <- read.table(opt$external_DEA_file,
    header=TRUE, sep="\t", row.names=1)
 }
-#############################################################################
-#############################################################################
-########################## NOOB ALERT @alvaro ###############################
-#############################################################################
-#############################################################################
 if(! is.null(opt$library_sizes)) {
   library_sizes <- read.table(opt$library_sizes, header=TRUE)
 } else {
@@ -279,11 +269,6 @@ final_results <- main_degenes_Hunter(
   WGCNA_minKMEtoStay = opt$WGCNA_minKMEtoStay,
   WGCNA_corType = opt$WGCNA_corType,
   multifactorial = opt$multifactorial,
-  #############################################################################
-  #############################################################################
-  ########################## NOOB ALERT @alvaro ###############################
-  #############################################################################
-  #############################################################################
   library_sizes=library_sizes
 )
 

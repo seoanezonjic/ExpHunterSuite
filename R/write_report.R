@@ -42,11 +42,6 @@ write_expression_report <- function(exp_results,
     final_results <- exp_results[['final_results']] 
     var_filter <-  exp_results[['var_filter']] 
     cpm_table <- exp_results[['cpm_table']]
-    #############################################################################
-    #############################################################################
-    ########################## NOOB ALERT @alvaro ###############################
-    #############################################################################
-    #############################################################################
     coverage_df <- exp_results[['coverage_df']]
     mean_counts_df <- exp_results[['mean_counts_df']]
     exp_genes_df <- exp_results[['exp_genes_df']]
