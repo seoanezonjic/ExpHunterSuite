@@ -10,7 +10,7 @@
 #' length with the fold-change values. Warning: NOT LOG FOLD CHANGE
 #' @param replicates to be ge generated of each group (Treatment and Control)
 #' @param bcount matrix of genes counts used to simulate. If NULL,
-#' arabidopsis dataset used (not from) in TCC package will be loaded
+#' toc dataset will be loaded
 #' @param group columns to be used as group replicates. If NULL,
 #' all columns will be used.
 #' @return a list with COUNT) a simulated gene counts matrix with simulated
@@ -27,9 +27,9 @@ STC <- function(Ngene = 1000,
     group = NULL){
     # Load & prepare base data
     if(is.null(bcount)){
-        arab <- NULL
-        utils::data("arab", envir = environment())
-        bcount <- arab
+        toc <- NULL
+        utils::data("toc", envir = environment())
+        bcount <- toc
         group <- seq(3)
     }
     if(is.null(group)){
