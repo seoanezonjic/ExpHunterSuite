@@ -34,7 +34,8 @@ main_degenes_Hunter(
   WGCNA_minCoreKMESize = NULL,
   WGCNA_minKMEtoStay = 0.2,
   WGCNA_corType = "pearson",
-  multifactorial = ""
+  multifactorial = "",
+  library_sizes = NULL
 )
 }
 \arguments{
@@ -99,6 +100,8 @@ a gene as significant}
 \item{WGCNA_corType}{see WGCNA package}
 
 \item{multifactorial}{specify interaction/effect when multifactorial design}
+
+\item{library_sizes}{NULL or a dataframe with sample names and library sizes}
 }
 \value{
 expression analysis result object with studies performed
