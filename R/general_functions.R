@@ -228,7 +228,8 @@ check_and_quit <- function(object){
 }
 
 
-
+#' @importFrom GenomicRanges makeGRangesFromDataFrame
+#' @importFrom annotatr annotate_regions build_annotations
 annotate_genomic_ranges <-function(intervals_df, genome){
  g_regs <- GenomicRanges::makeGRangesFromDataFrame(intervals_df, keep.extra.columns = TRUE)
  annots <- annotatr::build_annotations(genome = genome, annotations = paste0(genome,"_basicgenes"))

@@ -6,12 +6,10 @@
 Only seems to be a problem with Reactome - to study further
 Further investigation re: number of cats also required}
 \usage{
-trycatch_pairwise_termsim(enr, num_cats = 200)
+trycatch_pairwise_termsim(enr)
 }
 \arguments{
 \item{enr}{enrichment object to be studied}
-
-\item{num_cats}{number of categories to be shown}
 }
 \value{
 enrichment object after add termsim info

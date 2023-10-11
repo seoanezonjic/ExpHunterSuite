@@ -297,6 +297,8 @@ write_clusters_to_enrichment <- function(
 #' @param group_results experimental - whether to group results in the emap plot
 #'  and functional (f). Default = "fc"
 #' @param max_genes maximum number of genes to plot in cnet plot
+#' @param corr_threshold minimun module eigengene-trait vector absolute Pearson R value  
+#' @param pvalcutoff maximum module eigengene-trait vector correlation P value 
 #' @return void
 #' @importFrom rmarkdown render
 #' @export

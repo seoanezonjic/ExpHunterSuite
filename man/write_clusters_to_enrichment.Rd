@@ -31,7 +31,7 @@ write_clusters_to_enrichment(
 
 \item{output_file}{output file name for heatmaps}
 
-\item{mode}{type of output to produce - P for plots, R for a report, and S for summarized heatmaps}
+\item{mode}{type of output to produce - P for plots, R for reports, and S for summarized heatmaps}
 
 \item{enrichments_ORA}{list of enrich results for all clusters}
 

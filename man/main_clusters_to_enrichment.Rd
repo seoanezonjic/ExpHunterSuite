@@ -18,7 +18,8 @@ main_clusters_to_enrichment(
   pvalcutoff = 0.1,
   qvalcutoff = 0.2,
   all_custom_gmt = NULL,
-  kegg_data_file = NULL
+  kegg_data_file = NULL,
+  universe = NULL
 )
 }
 \arguments{
@@ -49,6 +50,8 @@ main_clusters_to_enrichment(
 \item{all_custom_gmt}{list of custom annotation sets}
 
 \item{kegg_data_file}{if KEGG included in enrich_dbs path needs}
+
+\item{universe}{background of genes to use as universe}
 }
 \description{
 Perform enrichment analysis on multiple lists of genes

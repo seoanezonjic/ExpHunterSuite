@@ -13,6 +13,7 @@
 #' @param qvalcutoff q-value threshold to use for clusterProfiler,
 #' @param all_custom_gmt list of custom annotation sets
 #' @param kegg_data_file if KEGG included in enrich_dbs path needs
+#' @param universe background of genes to use as universe
 #' @export
 main_clusters_to_enrichment <- function(
   input_file=NULL,

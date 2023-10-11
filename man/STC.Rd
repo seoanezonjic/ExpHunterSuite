@@ -29,7 +29,7 @@ length with the fold-change values. Warning: NOT LOG FOLD CHANGE}
 \item{replicates}{to be ge generated of each group (Treatment and Control)}
 
 \item{bcount}{matrix of genes counts used to simulate. If NULL,
-arabidopsis dataset used (not from) in TCC package will be loaded}
+toc dataset will be loaded}
 
 \item{group}{columns to be used as group replicates. If NULL,
 all columns will be used.}

@@ -106,5 +106,8 @@ Imports:
     heatmaply,
     EnhancedVolcano, 
     ggrepel,
-    clusterProfiler
+    clusterProfiler,
+    GenomicRanges,
+    annotatr,
+    ggridges
 Config/testthat/edition: 3

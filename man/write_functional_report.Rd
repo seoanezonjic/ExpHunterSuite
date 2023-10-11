@@ -17,7 +17,9 @@ write_functional_report(
   report = "fc",
   showCategories = 30,
   group_results = FALSE,
-  max_genes = 200
+  max_genes = 200,
+  corr_threshold = 0.8,
+  pvalcutoff = 0.05
 )
 }
 \arguments{
@@ -47,6 +49,10 @@ Use see get_organism_table()}
 and functional (f). Default = "fc"}
 
 \item{max_genes}{maximum number of genes to plot in cnet plot}
+
+\item{corr_threshold}{minimun module eigengene-trait vector absolute Pearson R value}
+
+\item{pvalcutoff}{maximum module eigengene-trait vector correlation P value}
 }
 \value{
 void
