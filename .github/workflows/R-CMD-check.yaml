@@ -19,7 +19,6 @@
 ## Acronyms:
 ## * GHA: GitHub Action
 ## * OS: operating system
-
 on:
    push:
 -    branches: [main, master]
