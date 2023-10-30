@@ -1,8 +1,3 @@
-# Read more about GitHub actions the features of this GitHub Actions workflow
-# at https://lcolladotor.github.io/biocthis/articles/biocthis.html#use_bioc_github_action
-#
-# For more details, check the biocthis developer notes vignette at
-# https://lcolladotor.github.io/biocthis/articles/biocthis_dev_notes.html
 on:
    push:
 -    branches: [main, master]
