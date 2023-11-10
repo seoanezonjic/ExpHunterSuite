@@ -33,8 +33,12 @@ output:
 
 ## Rank of the test dataset for the best strategies in train 
 
-```{r ranking_dist, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'} 
-mirna_names <- translate_miRNA_ids(cross_rank$miRNA)
+```{r config, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
+
+mirna_names <- translate_miRNA_ids(unique(full_ranking$miRNA))
+```
+
+```{r ranking_dist, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = FALSE} 
 
 cross_rank$significant <- ifelse(cross_rank$miRNA %in% best_miRNA_strategies$miRNA, "significant", "not significant")
 
@@ -57,11 +61,18 @@ Ranking values of the best strategy in corMiT but using random sections of datab
 
 train_rank_dist$miRNA_n <- mirna_names[match(train_rank_dist$miRNA, mirna_names$Accession), "TargetName"]   
 
+
+p_meds <- plyr::ddply(train_rank_dist, plyr::.(miRNA_n), summarise, med = median(OR_train_rank))
+
 ggplot2::ggplot(train_rank_dist, ggplot2::aes(x = miRNA_n, y = OR_train_rank)) + 
 ggplot2::geom_boxplot()+
+ggplot2::geom_text(data = p_meds, ggplot2::aes(x = miRNA_n, y = med, label = med), 
+              size = 3, vjust = -1.5)+
 
 
- ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 315,hjust=0,vjust=0)) +
+ ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60,hjust=1,vjust=1, size = 18),
+                 axis.text.y = ggplot2::element_text(size = 18), 
+                 axis.title.y = ggplot2::element_text(size = 15, face = "bold")) +
  ggplot2::labs(y= "Ranking position in 75% of DB", x = NULL)+
  ggplot2::scale_y_continuous(limits = c(0, 25))
 
@@ -83,23 +94,23 @@ plot_objects <- list()
 full_ranking <- full_ranking[full_ranking$miRNA %in% best_miRNA_strategies$miRNA,]
 full_ranking$miRNA_n <- mirna_names[match(full_ranking$miRNA, mirna_names$Accession), "TargetName"] 
 miRNA_cor_results$miRNA_cont_tables$miRNA_n  <- mirna_names[match(miRNA_cor_results$miRNA_cont_tables$miRNA, mirna_names$Accession), "TargetName"] 
-train_rank_dist <- data.frame()
+train_rank_dist2 <- data.frame()
 for (miRNA in unique(full_ranking$miRNA_n)) {
-    miRNA_ct <- miRNA_cor_results$miRNA_cont_tables[miRNA_cor_results$miRNA_cont_tables$miRNA_n == miRNA,]
+   miRNA_ct <- miRNA_cor_results$miRNA_cont_tables[miRNA_cor_results$miRNA_cont_tables$miRNA_n == miRNA,]
     miRNA_ct <- miRNA_ct[miRNA_ct$db_group == "multimir",]
-
     miRNA_ct$full_db_rank <- rank(-miRNA_ct$Odds_ratio, ties.method ="min")
+    
     miRNA_rank <- full_ranking[full_ranking$miRNA_n == miRNA,]
     full_and_sample_eq <- match(paste0(miRNA_rank$strategy, miRNA_rank$corr_cutoff),
                                 paste0(miRNA_ct$strategy, miRNA_ct$corr_cutoff))
     miRNA_rank$full_db_rank <- miRNA_ct$full_db_rank[full_and_sample_eq]
     miRNA_rank$Pvalue <- miRNA_ct$Pvalue[full_and_sample_eq]
+
     # miRNA_rank <- miRNA_rank[miRNA_rank$Pvalue <= 0.05,]
-    miRNA_rank$full_db_rank[is.na(miRNA_rank$full_db_rank)] <- max(miRNA_rank$full_db_rank[!is.na(miRNA_rank$full_db_rank)])
-    miRNA_rank$OR_train_rank[is.na(miRNA_rank$OR_train_rank)] <- max(miRNA_rank$OR_train_rank[!is.na(miRNA_rank$OR_train_rank)])
+    
+    top_miRNA_rank <- miRNA_rank[miRNA_rank$full_db_rank == 1 & !is.na(miRNA_rank$full_db_rank),]
    
-    top_miRNA_rank <- miRNA_rank[miRNA_rank$full_db_rank == 1,]
-    train_rank_dist <- rbind(train_rank_dist,top_miRNA_rank)
+    train_rank_dist2 <- rbind(train_rank_dist2,top_miRNA_rank)
     pp <- ggplot2::ggplot(miRNA_rank, ggplot2::aes(y = OR_train_rank, x = full_db_rank))+
     ggplot2::geom_jitter(size = 0.5,width = 0.2, height = 0.2, alpha = 0.3) + 
     ggplot2::geom_boxplot(data = top_miRNA_rank, mapping= ggplot2::aes(y = OR_train_rank, x = 0))+
@@ -110,9 +121,30 @@ for (miRNA in unique(full_ranking$miRNA_n)) {
     ggplot2::geom_vline(xintercept  = 1.5, linetype="dashed")
         plot_objects[[miRNA]] <- pp
 }
-
+# save(train_rank_dist, file = "/mnt/scratch/users/bio_267_uma/josecordoba/NGS_projects/LaforaRNAseq/analysis/target_wf_pearson/ctrl_vs_mut_deff/coRmiT.R_0000/test2.Rdata")
 gridExtra::grid.arrange(grobs = plot_objects, ncol = 3, nrow = ceiling(length(plot_objects)/3),
   left = "Ranking position in 75% of DB", bottom = "Ranking position in 100% of DB")
 ```
 
 
+## Rank of the best strategy 2
+
+Ranking values of the best strategy in corMiT but using random sections of databases
+
+```{r ranking_dist_train2, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'} 
+
+train_rank_dist2$miRNA_n <- mirna_names[match(train_rank_dist2$miRNA, mirna_names$Accession), "TargetName"]   
+
+ggplot2::ggplot(train_rank_dist2, ggplot2::aes(x = miRNA_n, y = OR_train_rank)) + 
+ggplot2::geom_boxplot()+
+
+
+ ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60,hjust=1,vjust=1, size = 18),
+                 axis.text.y = ggplot2::element_text(size = 18), 
+                 axis.title.y = ggplot2::element_text(size = 15, face = "bold")) +
+ ggplot2::labs(y= "Ranking position in 75% of DB", x = NULL)+
+ ggplot2::scale_y_continuous(limits = c(0, 25))
+
+
+
+```

@@ -2,20 +2,21 @@
 library(dplyr)
 
 filter_and_rank <- function(cv_cont_table){
-    # cv_cont_table <- cv_cont_table[cv_cont_table$Pvalue <= 0.05,]
+   # cv_cont_table <- cv_cont_table[cv_cont_table$Pvalue <= 0.05,]
     if (nrow(cv_cont_table) == 0 ) return(NULL)
 
     cv_cont_table <- cv_cont_table[,c("miRNA","strategy", "corr_cutoff", "crossval_status", "Odds_ratio", "TP")]
-    cv_cont_table <- reshape(cv_cont_table, idvar = c("miRNA","strategy", "corr_cutoff"), timevar = "crossval_status", direction = "wide")
-    if (sum(c("Odds_ratio.test", "Odds_ratio.train") %in% colnames(cv_cont_table)) != 2) return(NULL)
+     #cv_cont_table2 <- reshape(cv_cont_table, idvar = c("miRNA","strategy", "corr_cutoff"), timevar = "crossval_status", direction = "wide")
+    #if ("Odds_ratio.train" %in% colnames(cv_cont_table)) return(NULL)
     # cv_cont_table <- cv_cont_table  %>% arrange(desc(Odds_ratio.test), desc(TP.test), corr_cutoff)
     # cv_cont_table$OR_test_rank <- seq(1, nrow(cv_cont_table))    
     # str(cv_cont_table)
-    cv_cont_table$OR_test_rank <- rank(-cv_cont_table$Odds_ratio.test, ties.method ="min")
-    cv_cont_table$OR_train_rank <- rank(-cv_cont_table$Odds_ratio.train,ties.method ="min")
+  #  cv_cont_table$OR_test_rank <- rank(-cv_cont_table$Odds_ratio.test, ties.method ="min")
+    cv_cont_table$OR_train_rank <- rank(-cv_cont_table$Odds_ratio,ties.method ="min")
     return(cv_cont_table)
 
 }
+
 get_test_rank <- function(cv_cont_table){
     top_rank_train_val <- min(cv_cont_table$OR_train_rank)
     top_rank_train <- cv_cont_table[cv_cont_table$OR_train_rank ==top_rank_train_val,]
@@ -78,48 +79,49 @@ cormit_path <- file.path(opt$input_cormit, "temp.RData")
 load(cormit_path)
 
 p_val_cutoff <- 0.05
-all_pairs <- miRNA_cor_results$all_pairs
-miRNA_strat_result <- miRNA_cor_results$miRNA_cont_tables
-miRNA_strat_result <-  miRNA_strat_result[miRNA_strat_result$Pvalue <= 0.05 & miRNA_strat_result$db_group == "multimir",]
-best_miRNA_strategies <- as.data.frame(select_best_strategy(miRNA_strat_result))
-strat_combinations <- as.data.frame(unique(miRNA_strat_result[, c("corr_cutoff", "strategy")]))
-miRNA_cont_tables <- data.frame()
+# all_pairs <- miRNA_cor_results$all_pairs
+# miRNA_strat_result <- miRNA_cor_results$miRNA_cont_tables
+# miRNA_strat_result <-  miRNA_strat_result[miRNA_strat_result$Pvalue <= 0.05 & miRNA_strat_result$db_group == "multimir",]
+# best_miRNA_strategies <- as.data.frame(select_best_strategy(miRNA_strat_result))
+# strat_combinations <- as.data.frame(unique(miRNA_strat_result[, c("corr_cutoff", "strategy")]))
+# miRNA_cont_tables <- data.frame()
 
 
 
-for (combination in seq(1,nrow(strat_combinations))) {
-    corr_cutoff <- strat_combinations[combination, "corr_cutoff"]
-    strategy <- strat_combinations[combination, "strategy"]
+# for (combination in seq(1,nrow(strat_combinations))) {
+#     corr_cutoff <- strat_combinations[combination, "corr_cutoff"]
+#     strategy <- strat_combinations[combination, "strategy"]
 
-    contingency_tables <- prepare_for_stats(all_pairs, strategy, corr_cutoff,
-    db_groups = "multimir", p_val_cutoff = p_val_cutoff , crossval = TRUE, test_sample = opt$test_size)
-    miRNA_cont_tables <- rbind(miRNA_cont_tables, contingency_tables[["strat_miRNA_ct"]])
-}
-
-
-message("Stats prepared")
-miRNA_cont_tables <- v_get_stats(miRNA_cont_tables, 
-                              selected_stats = c("v.fisher.test","odds_ratio"))
-
-miRNA_cont_tables$iterations <- paste(miRNA_cont_tables$miRNA, miRNA_cont_tables$crossval_it, sep = "_")
-
-splitted_cont_tables <- split(miRNA_cont_tables, miRNA_cont_tables$iterations)
+#     contingency_tables <- prepare_for_stats(all_pairs, strategy, corr_cutoff,
+#     db_groups = "multimir", p_val_cutoff = p_val_cutoff , crossval = TRUE, test_sample = opt$test_size)
+#     miRNA_cont_tables <- rbind(miRNA_cont_tables, contingency_tables[["strat_miRNA_ct"]])
+# }
 
 
-cross_rank <- lapply(splitted_cont_tables, filter_and_rank)
-full_ranking <-as.data.frame(data.table::rbindlist(cross_rank, 
-                                     use.names = TRUE, 
-                                     idcol = "iters"))
-cross_rank <- lapply(cross_rank, get_test_rank)
+# message("Stats prepared")
+# miRNA_cont_tables <- v_get_stats(miRNA_cont_tables, 
+#                               selected_stats = c("v.fisher.test","odds_ratio"))
+
+# miRNA_cont_tables$iterations <- paste(miRNA_cont_tables$miRNA, miRNA_cont_tables$crossval_it, sep = "_")
+
+# splitted_cont_tables <- split(miRNA_cont_tables, miRNA_cont_tables$iterations)
+
+
+# cross_rank <- lapply(splitted_cont_tables, filter_and_rank)
+# full_ranking <-as.data.frame(data.table::rbindlist(cross_rank, 
+#                                      use.names = TRUE, 
+#                                      idcol = "iters"))
+### cross_rank <- lapply(cross_rank, get_test_rank)
 message("Train and test datasets ordered")
-cross_rank <-as.data.frame(data.table::rbindlist(cross_rank, 
-                                     use.names = TRUE, 
-                                     idcol = "iters"))
-colnames(cross_rank) <- c("iteration", "miRNA", "strategy","corr_cutoff","test_rank")
+#### cross_rank <-as.data.frame(data.table::rbindlist(cross_rank, 
+#                                      use.names = TRUE, 
+#                                      idcol = "iters"))
+#### colnames(cross_rank) <- c("iteration", "miRNA", "strategy","corr_cutoff","test_rank")
+#  save(full_ranking,best_miRNA_strategies, file = "test.Rdata")
+load("test.Rdata")
 best_miRNA_strategies$acc_ratio <- 0
 best_miRNA_strategies$total_strats <- 0
-# save(cross_rank,best_miRNA_strategies,full_ranking, file = "test.Rdata")
-# load("test.Rdata")
+
 train_rank_dist <- data.frame()
 for (miRNA in best_miRNA_strategies$miRNA) {
     best_miRNA_strat <- unlist(best_miRNA_strategies[best_miRNA_strategies$miRNA == miRNA,])
@@ -130,7 +132,8 @@ for (miRNA in best_miRNA_strategies$miRNA) {
     train_rank_dist <- rbind(train_rank_dist, best_rank_in_train)
 }
 
-str(full_ranking)
+# save(train_rank_dist, file = "test_stats.RData")
+# q()
 message("Computing report")
 dir.create(opt$output_files)
 outf <- file.path(normalizePath(opt$output_files),"coRmiT_cv.html")
