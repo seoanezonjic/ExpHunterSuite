@@ -979,13 +979,13 @@ process_cp_list <- function(enrichments_ORA, simplify_results,
   for (funsys in names(enrichments_ORA)){
     enr_obj <- clusterProfiler::merge_result(enrichments_ORA[[funsys]])
     if(nrow(enr_obj@compareClusterResult) > 0){
-      if (funsys %in% c("MF", "CC", "BP") && clean_parentals){
-        enr_obj@fun <- "enrichGO"
-        enr_obj <- clean_all_parentals(enr_obj, subont = funsys) 
-      } 
       if (funsys %in% c("MF", "CC", "BP") && simplify_results){
         enr_obj@fun <- "enrichGO"
         enr_obj <- clusterProfiler::simplify(enr_obj) 
+      } 
+      if (funsys %in% c("MF", "CC", "BP") && clean_parentals){
+        enr_obj@fun <- "enrichGO"
+        enr_obj <- clean_all_parentals(enr_obj, subont = funsys) 
       } 
       enr_obj <- trycatch_pairwise_termsim(enr_obj)
     }                              
