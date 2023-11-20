@@ -76,7 +76,7 @@ genome_ref
     integrated_pairs <- as.data.frame(integrated_pairs)
     miRNA_cont_tables <- as.data.frame(miRNA_cont_tables)
     integrated_pairs <- integrated_pairs[integrated_pairs$miRNAseq %in% unique(miRNA_cont_tables[miRNA_cont_tables$db_group == "multimir", "miRNA"]),]
-     miRNA_cont_tables$miRNA <- mirna_names[match(miRNA_cont_tables$miRNA, mirna_names$Accession), "TargetName"]   
+     miRNA_cont_tables$miRNA <- mirna_names[match(miRNA_cont_tables$miRNA, mirna_names$ACCESSION), "NAME"]   
      rmarkdown::render(
                file.path(template_folder, 'global_cormit.Rmd'), 
                output_file = file.path(output_files, report_name), 
@@ -96,7 +96,7 @@ genome_ref
         integrated_pairs[is.na(integrated_pairs$miRNA_loci),"miRNA_loci"] <- ""
     }    
 
-    integrated_pairs$miRNA <- mirna_names[match(integrated_pairs$miRNAseq, mirna_names$Accession), "TargetName"]
+    integrated_pairs$miRNA <- mirna_names[match(integrated_pairs$miRNAseq, mirna_names$ACCESSION), "NAME"]
     
     output_pairs_all <- add_attrib_to_pairs(integrated_pairs, RNAseq, miRNAseq)
 

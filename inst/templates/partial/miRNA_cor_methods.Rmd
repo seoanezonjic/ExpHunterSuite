@@ -14,7 +14,7 @@ check_and_create_dir(outdir)
 strat_pairs <- as.data.frame(all_pairs)
 strat_pairs <- strat_pairs[, "{{method_name}}"]
 strat_data <- all_pairs[strat_pairs,]
-strat_data$miRNA_names <- mirna_names[match(strat_data$miRNAseq, mirna_names$Accession), "TargetName"]
+strat_data$miRNA_names <- mirna_names[match(strat_data$miRNAseq, mirna_names$ACCESSION), "NAME"]
 strat_data <- merge(strat_data, gene_id_translation, by.x = "RNAseq", by.y = "ensembl_gene_id", all.x = TRUE)
 
 # q()

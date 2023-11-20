@@ -507,16 +507,12 @@ get_hub_genes_by_MM <- function(normalized_counts, hunter_results, top = 1){
 
 
 #' @importFrom data.table as.data.table merge.data.table  
-#' @importFrom dplyr select
 #' @importFrom rlang .data
 expand_module <- function(all_pairs, tag, DH_results){
-    "%>%" <- magrittr::"%>%"
-
     mod_tag <- paste0(tag, "_mod")
     names(all_pairs)[names(all_pairs)== tag] <- mod_tag
 
-    partial_expanded <- DH_results %>% dplyr::select(.data$Cluster_ID,
-    .data$gene_name)
+    partial_expanded <- DH_results[,c("Cluster_ID", "gene_name")]
     partial_expanded <- data.table::as.data.table(partial_expanded)
     colnames(partial_expanded) <- c("module", tag)
     partial_expanded$module <- as.character(partial_expanded$module)
@@ -690,7 +686,6 @@ crossval = FALSE, test_sample = 0.25
 }
 
 
-#' @importFrom miRBaseConverter getAllMiRNAs
 prepare_all_pairs <- function(
 RNAseq, 
 miRNAseq, 
@@ -719,11 +714,7 @@ organism){
                                 multiMiR = multimir)
 
  
- all_known_miRNAs <- miRBaseConverter::getAllMiRNAs(version = "v22", 
-                                                    type = "all", 
-                                                    species = organism)
- all_known_miRNAs <- all_known_miRNAs$Accession
- all_pairs$known_miRNA <- all_pairs$miRNAseq %in% all_known_miRNAs
+ all_pairs$known_miRNA <- grepl("MIMAT", all_pairs$miRNAseq)
  
  #possible_positives: Pairs with RNA and miRNA included in multiMiR. 
  possible_positives <- all_pairs$known_miRNA & 
@@ -739,7 +730,8 @@ organism){
  return(all_pairs)
 }
 
-#' @importFrom miRBaseConverter miRNA_AccessionToName
+#' @importFrom miRBaseVersions.db miRBaseVersions.db
+#' @importFrom AnnotationDbi select
 translate_all_id <- function(
 miRNA_IDs, 
 RNA_IDs, 
@@ -747,8 +739,10 @@ organism_info,
 translate_ensembl){
  mirna_names <- unique(miRNA_IDs)
  mirna_names <- mirna_names[grepl("MIMAT", mirna_names)]
- mirna_names <- miRBaseConverter::miRNA_AccessionToName(mirna_names, 
-     targetVersion = "v22")
+ mirna_names <-  AnnotationDbi::select(
+                            miRBaseVersions.db::miRBaseVersions.db, 
+                            keys = mirna_names, keytype =  "VW-MIMAT-22.0",
+                            columns = c("ACCESSION", "NAME"))
  gene_id_translation <- NULL
  if (! organism_info$Bioconductor_VarName_SYMBOL[1] == "" && 
      translate_ensembl) {
@@ -762,12 +756,16 @@ translate_ensembl){
     gene_id_translation= gene_id_translation))
 }
 
-#' @importFrom miRBaseConverter miRNA_AccessionToName
-translate_miRNA_ids <- function(miRNA_IDs){
-     mirna_names <- unique(miRNA_IDs)
-     mirna_names <- mirna_names[grepl("MIMAT", mirna_names)]
-     mirna_names <- miRBaseConverter::miRNA_AccessionToName(mirna_names, 
-     targetVersion = "v22")
+#' @importFrom miRBaseVersions.db miRBaseVersions.db
+#' @importFrom AnnotationDbi select
+translate_miRNA_ids <- function(miRNA_IDs, miRBaseVersion = "VW-MIMAT-22.0") {
+    miRNA_tr_table <- AnnotationDbi::select(
+                            miRBaseVersions.db::miRBaseVersions.db, 
+                            keys = miRNA_IDs, keytype = miRBaseVersion,
+                            columns = c("ACCESSION", "NAME"))
+    translated_miRNA <- miRNA_tr_table[match(miRNA_IDs, 
+                                        miRNA_tr_table$ACCESSION) ,"NAME"]
+    return(translated_miRNA)
 }
 
 #' @importFrom data.table rbindlist

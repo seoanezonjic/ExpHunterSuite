@@ -89,7 +89,7 @@ Imports:
     knitr,
     magrittr,
     SummarizedExperiment,
-    miRBaseConverter,
+    miRBaseVersions.db,
     grDevices,
     graphics,
     utils,
