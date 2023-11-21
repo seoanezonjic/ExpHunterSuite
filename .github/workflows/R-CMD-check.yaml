@@ -1,8 +1,8 @@
 on:
   push:
-    branches: [main, master]
+    branches: [master]
   pull_request:
-    branches: [main, master]
+    branches: [master]
 
 name: R-CMD-check-bioc
 
@@ -19,7 +19,8 @@ env:
   run_pkgdown: 'true'
   has_RUnit: 'false'
   cache-version: 'cache-v1'
-  run_docker: 'false'
+  run_docker: 'false' 
+  #ESTO HAY QUE ACTIVARLO SI QUEREMOS TESTEAR EN DOCKER
 
 jobs:
   build-check:
@@ -173,7 +174,7 @@ jobs:
           rcmdcheck::rcmdcheck(
               args = c("--no-manual", "--no-vignettes", "--timings"),
               build_args = c("--no-manual", "--keep-empty-dirs", "--no-resave-data",
-                              "-–install=_R_CHECK_FORCE_SUGGESTS_=FALSE"),
+                              "--install=_R_CHECK_FORCE_SUGGESTS_=FALSE"),
               error_on = "warning",
               check_dir = "check"
           )
