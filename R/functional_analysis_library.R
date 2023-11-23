@@ -979,13 +979,13 @@ process_cp_list <- function(enrichments_ORA, simplify_results,
   for (funsys in names(enrichments_ORA)){
     enr_obj <- clusterProfiler::merge_result(enrichments_ORA[[funsys]])
     if(nrow(enr_obj@compareClusterResult) > 0){
-      if (funsys %in% c("MF", "CC", "BP") && simplify_results){
-        enr_obj@fun <- "enrichGO"
-        enr_obj <- clusterProfiler::simplify(enr_obj) 
-      } 
       if (funsys %in% c("MF", "CC", "BP") && clean_parentals){
         enr_obj@fun <- "enrichGO"
         enr_obj <- clean_all_parentals(enr_obj, subont = funsys) 
+      } 
+      if (funsys %in% c("MF", "CC", "BP") && simplify_results){
+        enr_obj@fun <- "enrichGO"
+        enr_obj <- clusterProfiler::simplify(enr_obj) 
       } 
       enr_obj <- trycatch_pairwise_termsim(enr_obj)
     }                              
@@ -994,6 +994,21 @@ process_cp_list <- function(enrichments_ORA, simplify_results,
   return(enrichments_ORA_tr)
 }
 
+#' @importFrom GO.db GOOBSOLETE
+clean_GO_obsolete <- function(enr_obj) {
+  obsolete_terms <- names(as.list(GO.db::GOOBSOLETE))
+
+  if (is(enr_obj, "compareClusterResult")){
+    enriched_table <- enr_obj@compareClusterResult
+    enriched_table <- enriched_table[!enriched_table$ID %in% obsolete_terms,]
+    enr_obj@compareClusterResult <- enriched_table
+  } else if (is(enr_obj, "enrichResult")) {
+    enriched_table <- enr_obj@result
+    enriched_table <- enriched_table[!enriched_table$ID %in% obsolete_terms,]
+    enr_obj@result <- enriched_table
+  } 
+  return(enr_obj)
+}
 
 #' @importFrom GO.db GOBPANCESTOR GOMFANCESTOR GOCCANCESTOR
 clean_all_parentals <- function(enr_obj, subont){
@@ -1007,7 +1022,7 @@ clean_all_parentals <- function(enr_obj, subont){
   }
   GO_ancestors <- as.list(GO_ancestors)
   GO_ancestors <- GO_ancestors[!is.na(GO_ancestors)]
-
+  enr_obj <- clean_GO_obsolete(enr_obj)
   enrich_obj <- enr_obj@compareClusterResult
   pre_hamming_m <- matrix(0, nrow = length(unique(enrich_obj$Cluster)), 
                               ncol = length(unique(enrich_obj$ID)), 
