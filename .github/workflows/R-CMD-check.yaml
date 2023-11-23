@@ -171,15 +171,17 @@ jobs:
           DISPLAY: 99.0
         run: |
           options(crayon.enabled = TRUE)
+  
           rcmdcheck::rcmdcheck(
               args = c("--no-manual", "--no-vignettes", "--timings"),
-              build_args = c("--no-manual", "--keep-empty-dirs", "--no-resave-data",
-                              "--install=_R_CHECK_FORCE_SUGGESTS_=FALSE"),
+
+              build_args = c("--no-manual", "--keep-empty-dirs", "--no-resave-data"),
               error_on = "warning",
               check_dir = "check"
           )
         shell: Rscript {0}
-
+      #, "--no-suggests"), ADD THIS TO AVoid the instatation of suggested packages
+      
       ## Might need an to add this to the if:  && runner.os == 'Linux'
       - name: Reveal testthat details
         if:  env.has_testthat == 'true'
@@ -190,7 +192,7 @@ jobs:
         run: |
           BiocGenerics:::testPackage()
         shell: Rscript {0}
-      
+
     #  - name: Run BiocCheck
     #    env:
     #      DISPLAY: 99.0
