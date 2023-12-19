@@ -26,6 +26,9 @@ option_list <- list(
     optparse::make_option(c("-d", "--databases"), type="character", 
         default="targetscan,mirdb,diana_microt,elmmo,microcosm,miranda,pictar,pita",
         help = "Set prediction databases included on multiMiR to use as gold standard."),
+     optparse::make_option(c("--add_databases"), type="character", 
+        default=NA,
+        help = "Comma sepparated files, containing 2 columns Genes\tmiRNA including additional databases. Default=%default."),
     optparse::make_option("--tag_filter target_tag,miRNA_tag", type="character", 
         default="putative,putative",
         help = "Set filter type for RNAseq and miRNAseq input data by comma separated string. 
@@ -42,7 +45,7 @@ option_list <- list(
         help= "Indicate .RData file with parsed multiMiR data."),
     optparse::make_option(c("-p", "--p_val_cutoff"), type="double", 
         default=0.05,
-        help="Correlation P value threshold . Default=%default"),
+        help="Correlation P value threshold. Default=%default"),
     optparse::make_option("--corr_type TYPE", type="character", 
         default="lower",
         help = "Set if correlations are [lower] or [higher] than the --p_val_cutoff. Default=%default"),
@@ -180,7 +183,8 @@ if (exec_cormit){
         selected_targets_file = opt$selected_targets,
         template_folder = template_folder,
         compare_pred_scores = opt$compare_pred_scores,
-        eval_method = opt$eval_method)
+        eval_method = opt$eval_method,
+        add_databases_files = opt$add_databases)
     miRNA_cor_results$all_pairs$RNAseq_mod <- miRNA_cor_results$RNAseq$DH_results[match(miRNA_cor_results$all_pairs$RNAseq, miRNA_cor_results$RNAseq$DH_results$gene_name),"Cluster_ID"]
 
     miRNA_cor_results$weighted_c_table <- NULL
