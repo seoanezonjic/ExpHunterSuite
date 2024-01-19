@@ -14,8 +14,11 @@
 #' write_expression_report(degh_output)
 write_expression_report <- function(exp_results, 
     output_files=getwd(),
-    template_folder = file.path(find.package('ExpHunterSuite'), 'templates'), 
+    template_folder = NULL, 
     opt=NULL){
+    if (is.null(template_folder))
+        template_folder <- file.path(find.package('ExpHunterSuite'), 'templates')
+    
     if(length(exp_results) == 0){
         warning("Experiment results is not complete")
         return(NULL)
