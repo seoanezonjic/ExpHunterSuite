@@ -439,7 +439,7 @@ filter_by_variance <- function(count_matrix, q_filter, target){
                                   colData = target,
                                   design = stats::formula("~ treat"))
   dds <- DESeq2::DESeq(dds)
-  normalized_counts <-DESeq2::counts(dds, normalized=TRUE)
+  normalized_counts <- DESeq2::counts(dds, normalized=TRUE)
   variances <- matrixStats::rowVars(normalized_counts)
   threshold <- stats::quantile(variances, q_filter)
   fil_count_mtrx <- count_matrix[variances >= threshold,]
