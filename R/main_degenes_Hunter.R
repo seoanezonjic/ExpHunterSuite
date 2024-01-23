@@ -114,6 +114,11 @@ main_degenes_Hunter <- function(
        stop(paste0('At least two replicates per class (i.e. treatment and',
                    ' control) are required\n'))
 
+    
+    numeric_factors <- split_str(numeric_factors, ",")
+    string_factors <- split_str(string_factors, ",")
+    final_main_params["numeric_factors"] <- numeric_factors
+    final_main_params["string_factors"] <- string_factors
 
     if(!is.null(target) & grepl("W", modules)) {
       target_numeric_factors <- build_design_for_WGCNA(target, 
@@ -270,11 +275,14 @@ main_degenes_Hunter <- function(
     final_results[["coverage_df"]] <- coverage_df
     final_results[["mean_counts_df"]] <- mean_counts_df
     final_results[["exp_genes_df"]] <- exp_genes_df
+    final_results[["target"]] <- target 
 
     if(!is.null(combinations_WGCNA)){
       final_results <- c(final_results, combinations_WGCNA)
     }
-    return(c(final_results, exp_results))
+    final_results <- c(final_results, exp_results)
+    save(final_results, file = "/mnt/home/users/bio_267_uma/josecordoba/test/test_factoMiner/test_fR.Rdata")
+    return(final_results)
 
 
 }
@@ -488,7 +496,7 @@ get_counts <- function(cnts_mtx, library_sizes)
 {
     if (!is.null(library_sizes)){
 
-        total_counts <- library_sizes[,c("sample","initial_total_sequences")]
+        total_counts <- library_sizes[, c("sample","initial_total_sequences")]
         # Total reads might have been counted without taking into account ExpHunterSuite blacklist,
         # which would lead to errors. This next line removes blacklisted samples from total reads table.
         # Also, we have no guarantee they are sorted the same way, so we do it ourselves.
@@ -504,10 +512,11 @@ get_counts <- function(cnts_mtx, library_sizes)
     }
 
     coverage_df <- data.frame(sample_ID = colnames(cnts_mtx),
-                                total_counts = total_counts)
-    coverage_df$counted_frac <- counted_frac
+                                total_counts = total_counts,
+                                counted_frac = counted_frac)
+
     coverage_df <- coverage_df[order(coverage_df$total_counts),]
-    coverage_df$sample_rank <- 1:nrow(coverage_df)
+    coverage_df$sample_rank <- seq(1, nrow(coverage_df))
 
     return(coverage_df)
 }

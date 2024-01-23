@@ -97,7 +97,7 @@ option_list <- list(
     help=paste0("Variables to include in the model. Must be comma separated",
       " and each variable must be a column in the target_file")),
   optparse::make_option(c("-n", "--numerics_as_factors"), type="logical", 
-    default=TRUE,
+    default=FALSE,
     help=paste0("If TRUE, numeric variables in the target file specified",
       " in the DEG model be treated as distinct factors, i.e. categories.",
       " If FALSE, they will be considered as numeric and their values will be",
@@ -231,10 +231,9 @@ if (grepl("F", opt$modules)) {
   external_DEA_data <- read.table(opt$external_DEA_file,
    header=TRUE, sep="\t", row.names=1)
 }
-if(! is.null(opt$library_sizes)) {
-  library_sizes <- read.table(opt$library_sizes, header=TRUE)
-} else {
-  library_sizes <- NULL
+library_sizes <- opt$library_sizes
+if(! is.null(library_sizes)) {
+  library_sizes <- read.table(library_sizes, header=TRUE)
 }
 
 

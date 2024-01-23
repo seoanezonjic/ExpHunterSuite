@@ -238,3 +238,10 @@ annotate_genomic_ranges <-function(intervals_df, genome){
  annotated_g_regs <- annotated_g_regs[!is.na(annotated_g_regs$annot.symbol),]
  return(annotated_g_regs)
 }    
+
+split_str <- function(string, split = NULL) {
+  if (is.null(split))
+    stop("split character must be specifyed")
+  splitted_str <- unlist(strsplit(string, split = split))
+  return(splitted_str)
+}

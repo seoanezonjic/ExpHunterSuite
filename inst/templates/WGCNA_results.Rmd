@@ -1,0 +1,154 @@
+
+```{r WGCNA_conditional_block_head, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
+cat("## **WGCNA Results**
+
+WGCNA was run to look for modules (clusters) of coexpressed genes. These modules were then compared with the sample factors to look for correlation. 
+If no sample factors were specified, this comparison was performed with treatment/control labels.
+
+The following graphic shows the power value chosen for building clusters. The power is chosen by looking at the characteristics of the network produced."
+
+)
+```
+
+```{r WGCNA_conditional_block_plot_power_choice, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
+    replayPlot(results_WGCNA[['plot_objects']][['power_threshold_effects']])
+```
+
+
+
+```{r WGCNA_conditional_block_head_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
+cat("In total there were ", max(unique(results_WGCNA$gene_cluster_info$Cluster_ID)) , "clusters. 
+	The following plot shows the number of genes per cluster:"
+)
+```
+
+```{r WGCNA_conditional_block_plot_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
+	genes_per_cluster <- table(results_WGCNA$gene_cluster_info$Cluster_ID)
+	col_clusters_barplot <- results_WGCNA[['plot_objects']][['sorted_colours']]
+	names(col_clusters_barplot) <- names(genes_per_cluster)
+	ggplot2::ggplot(as.data.frame(genes_per_cluster), ggplot2::aes(Var1, Freq, fill=Var1)) + 
+    ggplot2::geom_bar(stat="identity") + ggplot2::scale_fill_manual(name = "Cluster ID", values=col_clusters_barplot) + 
+    ggplot2::labs(x = "Cluster ID (0 = unclustered)", y = "Frequency", main="Number of Genes per Cluster") + ggplot2::theme(legend.position = "none")
+```
+
+```{r WGCNA_conditional_dist_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, results='asis'}
+cat("### Module Membership distribution\n"
+)
+```
+
+```{r WGCNA_dist_cluster_membership, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15}
+		"%>%" <- magrittr::"%>%"
+
+	mm_dist <- DE_all_genes[DE_all_genes$Cluster_ID != 0, c("Cluster_MM", "Cluster_ID")]
+	mm_dist$Cluster_ID <- as.character(mm_dist$Cluster_ID)
+	mm_summary <- mm_dist %>% 
+					dplyr::group_by(Cluster_ID) %>% 
+					dplyr::summarise(MM_sd = sd(Cluster_MM),
+							MM_mean = mean(Cluster_MM),
+							gene_count = length(Cluster_MM))
+	mm_summary <- as.data.frame(mm_summary)				
+	mm_tables_equivalence <- match(mm_dist$Cluster_ID, mm_summary$Cluster_ID)
+	mm_dist <- cbind(mm_dist, mm_summary[mm_tables_equivalence, c("MM_sd", "MM_mean", "gene_count")])
+	mm_dist <- mm_dist[!is.na(mm_dist$Cluster_ID),]		
+	mm_dist$Cluster_ID <- factor(mm_dist$Cluster_ID, levels = as.character(sort(unique(as.numeric(mm_dist$Cluster_ID)))))
+	# mm_dist<- mm_dist[order(as.numeric(mm_dist$Cluster_ID)),]	
+	gg <- ggplot2::ggplot(mm_dist, ggplot2::aes(x = Cluster_ID, group = Cluster_ID, y = Cluster_MM, fill = gene_count)) + 
+			ggplot2::geom_violin(trim = TRUE, scale = "width") + ggplot2::ylim(c(-0.00001, 1.00001)) +
+  			ggplot2::geom_boxplot(width=0.05)+  
+  			ggplot2::scale_fill_gradient(low = "#9FCBFC", high =  "#0067DC")
+	gg
+
+```
+
+
+
+```{r WGCNA_conditional_block_plot_factors, eval=grepl("W", opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15, results = 'asis'}
+cat("### **Cluster assignment vs lower module membership (MM) **")
+
+cat("\nThis plot shows, for each gene, the cluster ID ascertained by WGCNA, vs. the cluster whose eigen gene has the highest correlation (module membership/MM).")
+	
+	plot_counter <- plot_in_div(results_WGCNA[['plot_objects']][['cluster_vs_MM']], counter = plot_counter)
+	cluster_count <- get_clusters_count(results_WGCNA)
+	features_count <- get_features_count(results_WGCNA)
+	
+cat("### **Cluster vs. factors correlation**")
+
+cat("\nThe following plots show the correlation between the different modules and specified factors. This is done using eigengenes, 
+which can be broadly thought of as the average expression pattern for the genes in a given cluster. MEn refers to the eigengene for cluster n.\n")
+
+cat("\nThis plot shows the correlation between clusters (eigen genes) and factors directly.")
+
+	pp <- gg_heatmap(data =  results_WGCNA[['plot_objects']][['trait_vs_module']], 
+						x_axis = "Trait",
+						y_axis= "Module",
+						fill = "Correlation",
+						text_plot= "Text_correlation")
+	plot_counter <- plot_in_div(pp, fig_height= (5 + (0.8 * cluster_count)), fig_width=(3 + (features_count * 0.8)), cex = 0.5, counter = plot_counter)
+
+cat("### **WGCNA Eigen values clustering**")
+
+cat("\nWGCNA dendogram showing distances between these eigengenes along with the factors. Distances has been calculated using **signed** correlation so more near elements, more positive correlation between elements.") 
+	
+	plot_counter <- plot_in_div(WGCNA::plotEigengeneNetworks(results_WGCNA[['plot_objects']][['trait_and_module']], "Eigengene dendrogram", marDendro = c(0,4,2,0), plotHeatmaps = FALSE),
+		fig_width= 4+ calc_width_clusters((features_count + cluster_count), multiplier = 0.15),  min_size = 5, counter = plot_counter)
+
+cat("### **Eigen values clustering (Absolute correlation)**")
+
+cat("\nWGCNA like dendogram showing distances between these eigengenes along with the factors. Distances has been calculated using **absolute** correlation so more near elements, more absolute correlation between elements.")
+
+	corME <- cor(results_WGCNA[['plot_objects']][['trait_and_module']], use="p")
+	disME_abs <- as.dist(1-abs(corME))
+	clust_abs = fastcluster::hclust(disME_abs, method = "average")
+	
+	plot_counter <- plot_in_div(plot(clust_abs, sub="", xlab="", ylab="", ylim=c(0,1)),
+		fig_width= 4+ calc_width_clusters((features_count + cluster_count), multiplier = 0.15),  min_size = 5, counter = plot_counter)
+
+
+corME2 <- corME
+rownames(corME2) <- gsub("^ME", "", rownames(corME2))
+colnames(corME2) <- gsub("^ME", "", colnames(corME2))
+
+mod_traits_net <- corM2igraph(corME2, cor_abs_thr = 0.8)
+
+mod_net <- igraph::graph_from_data_frame(d=mod_traits_net$edges, vertices = mod_traits_net$nodes, directed = FALSE)
+# layout <- igraph::layout_with_fr(mod_net, weights = mod_traits_net$edges$corr * 3 )
+
+cat("\n### **Correlation network between modules and factors**\n\n")
+
+if (nrow(mod_traits_net$nodes < 2)){
+
+	cat("This plot shows modules (black) and factors (green) as nodes. Correlations coefficients over 0.8 (red) and under -0.8 (blue) are represented as edges\n")
+	"%>%" <- magrittr::"%>%"
+	options(ggrepel.max.overlaps = Inf)
+	tg <- tidygraph::as_tbl_graph(mod_net) %>% tidygraph::activate(nodes) %>% dplyr::mutate(label=name)
+	igraph::E(tg)$weight <- igraph::E(tg)$corr
+	test_graph <- tg %>% 
+	ggraph::ggraph(layout = "stress")+  
+	ggraph::geom_edge_fan(ggplot2::aes(colour = ifelse(mod_traits_net$edges$corr_type == "corr", "#FF7272","#9595FF"))) +
+	ggraph::geom_node_text(ggplot2::aes(label = name), 
+	       repel = TRUE, point.padding  = grid::unit(0.2, "lines"), 
+	       colour=ifelse(grepl("_",mod_traits_net$nodes$nodes), "#43CF4C", "black"))+
+	ggraph::theme_graph(background = 'white')
+
+
+	plot_counter <- plot_in_div(test_graph)
+	options(ggrepel.max.overlaps = 10)
+
+} else {
+	cat("Only 2 modules or factors correlates with higher ansolute correlation coefficient than 0.85.")
+}
+
+
+cat("\n### **Correlation between all clusters and factors**\n")
+
+	correlation <- cor(results_WGCNA[['plot_objects']][['trait_and_module']], use = "p")
+	correlation_df <- as.data.frame(correlation)
+	pp <- gg_heatmap(data_table = correlation_df, 
+    						fill = "Correlation",
+    						labs = FALSE,
+    						input = "matrix",
+    						x_angle = 25)
+	cor_elements <- features_count + cluster_count
+	plot_counter <- plot_in_div(pp,	5 + (cor_elements *0.2), 5 + (cor_elements *0.2), counter = plot_counter)
+
+```

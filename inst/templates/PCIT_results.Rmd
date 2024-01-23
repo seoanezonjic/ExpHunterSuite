@@ -1,0 +1,90 @@
+
+```{r PCIT_conditional_block_head, eval=!is.null(DE_all_genes[['rif1']]), echo=FALSE, results='asis'}
+cat("### **PCIT Results**
+
+Plots of some of the various metrics computed in the PCIT implementation. Better explanation and more plots to be added at a later date:"
+
+)
+```
+
+```{r PCIT_conditional_block_plot, eval=!is.null(DE_all_genes[['rif1']]), echo=FALSE, warning=FALSE, message=FALSE}
+    ggplot2::ggplot(DE_all_genes, ggplot2::aes(x=ctrl_cn)) +
+              ggplot2::geom_density()
+    ggplot2::ggplot(DE_all_genes, ggplot2::aes(x=treat_cn)) +
+              ggplot2::geom_density()
+    ggplot2::ggplot(DE_all_genes, ggplot2::aes(x=diff_cn)) +
+            ggplot2::geom_density()
+    ggplot2::ggplot(DE_all_genes, ggplot2::aes(x=diffK)) +
+            ggplot2::geom_density()
+
+    av_de <- ggplot2::ggplot(DE_all_genes, ggplot2::aes(x=average, y=de)) +
+            ggplot2::geom_point()
+    av_de <- ggExtra::ggMarginal(
+      av_de,
+      type = 'density',
+      margins = 'both',
+      size = 5,
+      colour = '#000000',
+      fill = '#A6A39E'
+    )
+
+    de_diffK <- ggplot2::ggplot(DE_all_genes, ggplot2::aes(x=de, y=diffK)) +
+            ggplot2::geom_point()
+    de_diffK <- ggExtra::ggMarginal(
+      de_diffK,
+      type = 'density',
+      margins = 'both',
+      size = 5,
+      colour = '#000000',
+      fill = '#A6A39E'
+    )
+
+    de_pif <- ggplot2::ggplot(DE_all_genes, ggplot2::aes(x=de, y=pif)) +
+            ggplot2::geom_point()
+    de_pif <- ggExtra::ggMarginal(
+      de_pif,
+      type = 'density',
+      margins = 'both',
+      size = 5,
+      colour = '#000000',
+      fill = '#A6A39E'
+    )
+
+    de_rif1 <- ggplot2::ggplot(DE_all_genes, ggplot2::aes(x=de, y=rif1)) +
+            ggplot2::geom_point()
+    de_rif1 <- ggExtra::ggMarginal(
+      de_rif1,
+      type = 'density',
+      margins = 'both',
+      size = 5,
+      colour = '#000000',
+      fill = '#A6A39E'
+    )
+
+    de_rif2 <- ggplot2::ggplot(DE_all_genes, ggplot2::aes(x=de, y=rif2)) +
+            ggplot2::geom_point()
+    de_rif2 <- ggExtra::ggMarginal(
+      de_rif2,
+      type = 'density',
+      margins = 'both',
+      size = 5,
+      colour = '#000000',
+      fill = '#A6A39E'
+    )
+
+    rif1_rif2 <- ggplot2::ggplot(DE_all_genes, ggplot2::aes(x=rif1, y=rif2)) +
+            ggplot2::geom_point()
+    rif1_rif2 <- ggExtra::ggMarginal(
+      rif1_rif2,
+      type = 'density',
+      margins = 'both',
+      size = 5,
+      colour = '#000000',
+      fill = '#A6A39E'
+    )
+    gridExtra::grid.arrange(av_de, de_diffK, de_pif, de_rif1, de_rif2, rif1_rif2)
+
+```
+
+
+
