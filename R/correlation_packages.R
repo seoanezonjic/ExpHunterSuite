@@ -32,11 +32,7 @@ build_design_for_WGCNA <- function(target,
 # FOR WGCNA: Check that the appropriate factor columns can be found in the 
 # target file and makes a data frame with the specified factor
     if(!is.null(string_factors)){ 
-        if(length(string_factors) == 0) {
-            string_factors <- "treat"
-        } else {
-            string_factors <- c("treat", string_factors)
-        }
+
         # In case we duplicate treat
         if(! all(string_factors %in% colnames(target))) {
             warning(paste0("Some factors specified with the --string_factors",
@@ -52,7 +48,8 @@ build_design_for_WGCNA <- function(target,
 
     }
 
-    if(!is.null(numeric_factors)){
+    if(!is.null(numeric_factors) && numeric_factors != ""){
+        str(numeric_factors)
         if(length(numeric_factors) != 0) {
             if(! all(numeric_factors %in% colnames(target))) {
               warning(paste0("Some factors specified with the",

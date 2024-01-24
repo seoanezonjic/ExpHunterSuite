@@ -242,6 +242,18 @@ annotate_genomic_ranges <-function(intervals_df, genome){
 split_str <- function(string, split = NULL) {
   if (is.null(split))
     stop("split character must be specifyed")
+  if (nchar(string) <= 1) return(string)  
   splitted_str <- unlist(strsplit(string, split = split))
   return(splitted_str)
+}
+
+merge_factors <- function(table, target, factors) {
+  if (length(factors) == 0 ) {
+    return(table)
+  }  
+
+  table <- merge(table, target[,factors, drop = FALSE], by = "row.names", all = TRUE)
+    row.names(table) <-  table[,"Row.names"]
+    table[,"Row.names"] <- NULL 
+    return(table)
 }

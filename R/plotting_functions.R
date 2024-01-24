@@ -420,3 +420,43 @@ clnetplot <- function(compareCluster, ...) {
   clnet_plot <- enrichplot::cnetplot(mod_enrich_obj, ...) 
   return(clnet_plot)
 }
+
+
+
+parse_dim_table <- function(dimension, dim_data, tag = "##"){
+  pca_dim_data <- dim_data[[dimension]]
+
+  cat(paste0(tag, " Valiable and factors inpection for ", gsub("Dim.", "dimension ", dimension), "\n"))
+  quanti_data <- pca_dim_data$quanti
+  cat(paste0(tag,"# **Quantitative** Variables and Dimension Relationship\n"))
+  cat("This table shows the relationship between the dimension and the numerical variables. 
+    It includes the Correlation coefficient as a association metric and P value as significance mentric. \n")
+  quanti_table <- DT::datatable(quanti_data, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
+    options = list(paging = TRUE,
+                   colReorder = TRUE,
+                   dom = 'lftBip',
+                   buttons = c('copy', 'csv', 'excel')))
+  invisible(rechunk(quanti_table, chunk_options = "echo=FALSE, results = 'asis', warning = FALSE, message = FALSE"))
+
+  cat(paste0(tag,"# **Qualitative** Variables and Dimension Relationship\n"))
+  cat("This table shows the relationship between the dimension and the categorical variables. 
+       It includes the P value as significance mentric and R2 as a association metric.
+       R2 represents the proportion (in ranges from 0 to 1) of the total variability in the categorical variable that is accounted for by the PCA dimension.
+       A higher R2 value indicates a better fit or a stronger association between the variable and the dimension. \n")
+   quali_table <- DT::datatable(pca_dim_data$quali, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
+    options = list(paging = TRUE,
+                   colReorder = TRUE,
+                   dom = 'lftBip',
+                   buttons = c('copy', 'csv', 'excel')))
+  invisible(rechunk(quali_table, chunk_options = "echo=FALSE, results = 'asis', warning = FALSE, message = FALSE"))
+
+  cat(paste0(tag,"# **Qualitative** Factors and Dimension Relationship\n"))
+   quali_factors_table <- DT::datatable(pca_dim_data$category, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
+    options = list(paging = TRUE,
+                   colReorder = TRUE,
+                   dom = 'lftBip',
+                   buttons = c('copy', 'csv', 'excel')))
+  invisible(rechunk(quali_factors_table, chunk_options = "echo=FALSE, results = 'asis', warning = FALSE, message = FALSE"))
+
+
+}

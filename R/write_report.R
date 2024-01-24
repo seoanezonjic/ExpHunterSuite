@@ -24,6 +24,7 @@ write_expression_report <- function(exp_results,
         return(NULL)
     }
     if(is.null(opt)){ opt <- exp_results[['final_main_params']]}
+    final_main_params <- exp_results[['final_main_params']]
     DEG_pack_columns <- exp_results[['DEG_pack_columns']] 
     all_counts_for_plotting <- exp_results[['all_counts_for_plotting']] 
     all_FDR_names <- exp_results[['all_FDR_names']]

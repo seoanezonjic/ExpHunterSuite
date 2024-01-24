@@ -117,8 +117,9 @@ main_degenes_Hunter <- function(
     
     numeric_factors <- split_str(numeric_factors, ",")
     string_factors <- split_str(string_factors, ",")
-    final_main_params["numeric_factors"] <- numeric_factors
-    final_main_params["string_factors"] <- string_factors
+    final_main_params[["numeric_factors"]] <- numeric_factors
+    final_main_params[["string_factors"]] <-  c("treat", string_factors)
+
 
     if(!is.null(target) & grepl("W", modules)) {
       target_numeric_factors <- build_design_for_WGCNA(target, 
@@ -155,6 +156,8 @@ main_degenes_Hunter <- function(
     var_filter <- filter_by_variance(raw_filter, 
                                      q_filter = count_var_quantile, 
                                      target = target)
+    default_norm <- list(default = 
+                      as.data.frame(var_filter[["deseq2_normalized_counts"]]))
     raw_filter <- var_filter[["fil_count_mtrx"]]
 
     
@@ -162,11 +165,14 @@ main_degenes_Hunter <- function(
     ##             PERFORM EXPRESION ANALYSIS                 ##
     ############################################################
     dir.create(output_files)
-   
+
+
     exp_results <- perform_expression_analysis(modules, replicatesC, 
                      replicatesT, raw_filter, p_val_cutoff, target, 
                      model_formula_text, external_DEA_data, 
                      multifactorial)
+    exp_results[["all_data_normalized"]] <- c(default_norm,
+                                              exp_results[["all_data_normalized"]])
 
     #################################################################
     ##                       CORRELATION ANALYSIS                   ##
@@ -177,7 +183,6 @@ main_degenes_Hunter <- function(
       cat('Correlation analysis is performed with WGCNA\n')
       path <- file.path(output_files, "Results_WGCNA")
       dir.create(path)
-
       all_data_normalized <- exp_results[['all_data_normalized']]
       if(WGCNA_norm_method %in% names(all_data_normalized)) {
         WGCNA_input <- all_data_normalized[[WGCNA_norm_method]]
@@ -215,13 +220,18 @@ main_degenes_Hunter <- function(
     #################################################################
     ##                    BUILD MAIN RESULT TABLE                  ##
     #################################################################
-
-    DE_all_genes <- unite_DEG_pack_results(exp_results, p_val_cutoff, 
-                                           lfc, minpack_common)
     mean_cpm <- rowMeans(raw_filter)
-    DE_all_genes <- merge(DE_all_genes, mean_cpm, by=0, sort=FALSE)
-    names(DE_all_genes)[names(DE_all_genes) == "y"] <- "mean_expression_cpm"
-    DE_all_genes <- transform(DE_all_genes, row.names=Row.names, Row.names=NULL)
+    DE_all_genes <- NULL
+
+    if (any(grepl("[DENL]",modules))){
+      DE_all_genes <- unite_DEG_pack_results(exp_results, p_val_cutoff, 
+                                             lfc, minpack_common)
+      DE_all_genes <- merge(DE_all_genes, mean_cpm, by=0, sort=FALSE)
+      names(DE_all_genes)[names(DE_all_genes) == "y"] <- "mean_expression_cpm"
+      DE_all_genes <- transform(DE_all_genes, row.names=Row.names, Row.names=NULL)
+      # Add the filtered genes back
+      DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
+    }
 
     if(grepl("W", modules)) { # Check WGCNA was run and returned proper results
       DE_all_genes <- merge(by.x=0, by.y="ENSEMBL_ID", x= DE_all_genes, 
@@ -257,8 +267,7 @@ main_degenes_Hunter <- function(
     mean_counts_df <- get_mean_counts(cnts_mtx=raw, cpm_table=cpm_table, reads=reads, minlibraries=minlibraries)
     exp_genes_df <- get_gene_stats(cpm_table=cpm_table, reads=reads)    
 
-    # Add the filtered genes back
-    DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
+ 
 
     final_results <- list()
     final_results[['cpm_table']] <- cpm_table
@@ -281,12 +290,10 @@ main_degenes_Hunter <- function(
       final_results <- c(final_results, combinations_WGCNA)
     }
     final_results <- c(final_results, exp_results)
-    save(final_results, file = "/mnt/home/users/bio_267_uma/josecordoba/test/test_factoMiner/test_fR.Rdata")
     return(final_results)
 
 
 }
-
 
 
 check_input_main_degenes_Hunter <- function(raw, 
@@ -445,7 +452,8 @@ filter_by_variance <- function(count_matrix, q_filter, target){
   fil_count_mtrx <- count_matrix[variances >= threshold,]
   return(list(fil_count_mtrx = fil_count_mtrx, 
     variance_dis = variances, 
-     thr = q_filter))
+     thr = q_filter,
+     deseq2_normalized_counts = normalized_counts))
 }
 
 prepare_model_text <- function(model_variables, 
@@ -512,8 +520,8 @@ get_counts <- function(cnts_mtx, library_sizes)
     }
 
     coverage_df <- data.frame(sample_ID = colnames(cnts_mtx),
-                                total_counts = total_counts,
-                                counted_frac = counted_frac)
+                                total_counts = total_counts)
+    coverage_df$counted_frac <- counted_frac
 
     coverage_df <- coverage_df[order(coverage_df$total_counts),]
     coverage_df$sample_rank <- seq(1, nrow(coverage_df))

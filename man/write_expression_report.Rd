@@ -7,7 +7,7 @@
 write_expression_report(
   exp_results,
   output_files = getwd(),
-  template_folder = file.path(find.package("ExpHunterSuite"), "templates"),
+  template_folder = NULL,
   opt = NULL
 )
 }

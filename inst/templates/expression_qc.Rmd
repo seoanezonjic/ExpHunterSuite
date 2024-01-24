@@ -8,7 +8,7 @@ These plots will only be produced when the total number of samples to compare wi
 
 ```{r corr_plot_control, echo = FALSE, fig.height=12, fig.width=12, eval=length(index_control_cols) <= 10, results='asis', warning = FALSE}
 
-cat("### **Correlation between control samples:**
+cat("#### **Correlation between control samples:**
 Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.
 ")
 
@@ -18,7 +18,7 @@ PerformanceAnalytics::chart.Correlation(raw_filter[index_control_cols], histogra
 
 ```{r corr_plot_treatment, echo = FALSE, fig.height=12, fig.width=12, eval=length(index_treatmn_cols) <= 10, results='asis', warning = FALSE}
 
-cat("### **Correlation between treatment samples:**
+cat("#### **Correlation between treatment samples:**
 Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.
 ")
 
@@ -31,7 +31,7 @@ PerformanceAnalytics::chart.Correlation(raw_filter[index_treatmn_cols], histogra
 ```{r corr_plot_all , echo = FALSE, fig.height=12, fig.width=12, eval=length(index_control_cols) + length(index_treatmn_cols) <= 10, results='asis', warning = FALSE}
 
 
-cat("### **Correlation between samples: All vs all replicates**
+cat("#### **Correlation between samples: All vs all replicates**
 
 Correlation coefficients tend to be slightly higher between replicates from the same group than between replicates from different groups. If this is not the case, it may indicate mislabelling or other potential issues.
 
@@ -53,45 +53,81 @@ gplots::heatmap.2(x = res, col = col, symm = TRUE, margins = rep(max(nchar(colna
 ```
 
 ### **Principal Component Analysis**
-This is a PCA plot of the count values following rlog normalization from the DESeq2 package:
+This is a PCA plot of the count values normalized following the default method and then they are scaled:
 
-```{r pca_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo = FALSE, results = "asis", warning = FALSE, message = FALSE}
-coldata_df <- data.frame(cond = design_vector,
-                           each = colnames(raw_filter),
-                           row.names = colnames(raw_filter), stringsAsFactors=TRUE)
+```{r pca_plot_FM, echo = FALSE, results = "asis", warning = TRUE, message = TRUE}
+pca_data <- as.data.frame(t(all_data_normalized[["default"]]))
+std_pca <- FactoMineR::PCA(pca_data, scale.unit=TRUE, graph = FALSE)                                                     
+dim_to_keep <- get_PCA_dimensions(std_pca)
 
-dds <- DESeq2::DESeqDataSetFromMatrix(countData = raw_filter, colData = coldata_df, design = ~ cond)
+rownames(target) <- as.character(target$sample)
+string_factors <- final_main_params$string_factors
+numeric_factors <- final_main_params$numeric_factors
 
-if(nrow(raw_filter) < 2000 || sum((rowSums(raw_filter) / ncol(raw_filter)) > 5) < 1000 ) {
-  rld <- DESeq2::rlog(dds, blind=TRUE)
-} else {
-	rld <- DESeq2::vst(dds)
-}
+pca_data <- merge_factors(pca_data, target, string_factors)
+pca_data <- merge_factors(pca_data, target, numeric_factors)
 
-pcaData <- DESeq2::plotPCA(rld, intgroup=c("cond"), returnData = TRUE)
-percentVar <- round(100 * attr(pcaData, "percentVar"))
-pca_plot <- ggplot2::ggplot(pcaData, ggplot2::aes(x = PC1, y = PC2, color = name, shape = cond)) +
-  ggplot2::geom_point(size =3) +
-  ggrepel::geom_text_repel(ggplot2::aes(label=name),vjust="inward",hjust="inward") +
-  ggplot2::xlab(paste0("PC1: ", percentVar[1], "% variance")) +
-  ggplot2::ylab(paste0("PC2: ", percentVar[2], "% variance")) +
-  ggplot2::coord_fixed() +
-  ggplot2::theme(legend.position="none")
-plot_counter <- plot_in_div(pca_plot)
-# +theme(legend.position="bottom", legend.box = "horizontal")
+full_pca <- FactoMineR::PCA(pca_data,ncp = dim_to_keep, scale.unit=TRUE, graph = FALSE, quanti.sup = numeric_factors, quali.sup=string_factors)
+``` 
+#### **Representation of the samples in the two first dimension of PCA** 
 
-# ggplot2::ggplot(pcaData, ggplot2::aes(x = PC1, y = PC2, color = name, shape = cond)) +
-#   ggplot2::geom_point(size =3) +
-#   ggplot2::theme(legend.position = "bottom") +
-#   ggplot2::xlab(paste0("PC1: ", percentVar[1], "% variance")) +
-#   ggplot2::ylab(paste0("PC2: ", percentVar[2], "% variance")) +
-#   ggplot2::coord_fixed() 
+```{r PCA_plot, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'} 
+FactoMineR::plot.PCA(full_pca, invisible = "quali" , title = "")
+``` 
 
+#### **Representation of the samples and the categories of qualitative valiables in the two first dimension of PCA** 
+
+```{r PCA_extra_factors, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'} 
+
+FactoMineR::plot.PCA(full_pca, title = "")
+```
+
+#### **Representation of the variable contribution to the PCA axis 1 and 2**
+
+```{r PCA_num_var_1_2, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(numeric_factors)} 
+factoextra::fviz_pca_var(full_pca, axes = c(1, 2),select.var = list(name=numeric_factors), col.var="steelblue", title="") +
+		ggplot2::theme_minimal()
+
+``` 
+
+```{r PCA_num_var_3_4, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = (dim_to_keep > 3 & !is.null(numeric_factors)) } 
+cat("#### **Representation of the variable contribution to the PCA axis 3 and 4**")
+
+factoextra::fviz_pca_var(full_pca, axes = c(3, 4),select.var = list(name=numeric_factors), col.var="steelblue", title="") +
+		ggplot2::theme_minimal()
+
+``` 
+
+
+```{r biplot, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(numeric_factors)} 
+cat("#### **Representation of the individuals and the variable contribution to the PCA axis 1 and 2**")
+factoextra::fviz_pca_biplot(full_pca, repel = TRUE,select.var = list(name=numeric_factors), col.var="steelblue", title="") +
+		ggplot2::theme_minimal()
 
 ```
-```{r pca_plot_no, eval=! "DESeq2" %in% names(all_counts_for_plotting), echo = FALSE}
-cat("\n\n## DESeq2 not run so plot not shown\n\n")
+
+```{r HC, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
+cat(paste("#### **Hierarchical clustering of individuals using first", dim_to_keep, "significant PCA dimensions**",sep=' '))
+res.hcpc <- FactoMineR::HCPC(full_pca, graph = FALSE)
+plot(res.hcpc , choice="tree", title="")
+
 ```
+
+```{r HC_2, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
+cat(paste("#### **PCA representation of 1 and 2 axis with individuals coloured by its cluster membership. The first ", dim_to_keep, "significant PCA dimensions are used for HCPC**",sep=' '))
+plot(res.hcpc , axes=c(1,2), choice="map", draw.tree= FALSE, title="")
+```
+
+```{r print_tables, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
+
+dim_data <- FactoMineR::dimdesc(full_pca, axes=seq(1, dim_to_keep))
+
+
+dim_data_simp <- dim_data[grepl("Dim",names(dim_data))]
+test <- lapply(names(dim_data_simp), parse_dim_table, dim_data = dim_data_simp, tag = "####")
+
+```
+
 
 The samples are shown in the 2D plane and distributed by their first two principal components. This type of plot is useful for visualizing the overall effect of experimental covariates and batch effects. It is also useful for identifying outlier samples. Control and treatment samples respectively may cluster together.
 
@@ -99,7 +135,8 @@ The samples are shown in the 2D plane and distributed by their first two princip
 
 These boxplots show the distributions of count data before and after normalization (shown for normalization method `r names(all_data_normalized)[1]`):
 
-Representation of cpm unfiltered data:
+#### Representation of cpm unfiltered data:
+
 ```{r density_distribution_cpm, echo = FALSE, warning=FALSE}
 cpm_no_zeros <- cpm_table[! rowSums(cpm_table) == 0, ]
 log2cpm <- log2(cpm_no_zeros + 1)
@@ -111,8 +148,7 @@ ggplot2::geom_vline(xintercept = log2( opt$reads + 1))
 
 ```
 
-
-Before normalization:
+#### Before normalization:
 
 ```{r density_distribution_raw, echo = FALSE, warning=FALSE}
 log2raw_counts <- log2(raw_filter + 1)
@@ -123,11 +159,11 @@ ggplot2::xlab(expression(log[2](count + 1)))
 
 ```
 
-
-After normalization:
+#### After normalization:
 
 ```{r density_distribution_norm, echo = FALSE, warning=FALSE}
-log2norm_counts <- log2(all_data_normalized[[1]] + 1)
+
+log2norm_counts <- log2(all_data_normalized[["default"]] + 1)
 norm_long <- reshape2::melt(log2norm_counts, measure.vars=colnames(log2norm_counts))
 
 ggplot2::ggplot(norm_long, ggplot2::aes(x = value, colour=variable)) + ggplot2::geom_density() +
@@ -135,13 +171,13 @@ ggplot2::xlab(expression(log[2](count + 1)))
 
 ```
 
-## **Count metrics by sample ranks**
+### **Count metrics by sample ranks**
 
 ```{r coverage_plot_head, echo = FALSE, warning = FALSE, results='asis'}
 	if (!is.null(library_sizes)) {
-		cat('### **Sample rank versus total reads in raw FASTQ**')
+		cat('#### **Sample rank versus total reads in raw FASTQ**')
 	}else{
-		cat('### **Sample rank versus total counts**')
+		cat('#### **Sample rank versus total counts**')
 	}
 ```
 
@@ -168,7 +204,7 @@ ggplot2::xlab(expression(log[2](count + 1)))
 ```
 
 ```{r coverage_plot_frac_head, eval = !is.null(coverage_df$counted_frac),  echo = FALSE, warning = FALSE, results='asis'}
-	cat('### **Fraction counts read sorted by rank**')
+	cat('#### **Fraction counts read sorted by rank**')
 ```
 
 ```{r coverage_plot_frac, eval = !is.null(coverage_df$counted_frac),  echo = FALSE, warning = FALSE}
@@ -185,7 +221,7 @@ ggplot2::xlab(expression(log[2](count + 1)))
 	cat('Counted fraction is the percentage of reads that map to a gene (only available if total reads provided)')
 ```
 
-## **Statistics of expressed genes**
+### **Statistics of expressed genes**
 
 ```{r exp_genes_plot, echo = FALSE, warning = FALSE}
 		colors <- c("Unique" = "blue", "Union" = "red", "Intersection" = "green")
@@ -205,7 +241,7 @@ all genes expressed in any sample up to current sample, expected to increase wit
 represents the cumulative intersection of expressed genes (sum of genes expressed in all samples up to current sample, expected
 to decrease with sample rank).
 
-### **Mean count distribution by filter**
+#### **Mean count distribution by filter**
 
 ```{r mean_counts_plot, echo = FALSE, warning = FALSE}
     ggplot2::ggplot(mean_counts_df, ggplot2::aes(x = counts, col = filter)) +
@@ -222,7 +258,7 @@ to decrease with sample rank).
 
 This plot represents the mean counts distribution per gene, classified by filters
 
-## Gene counts variance distribution
+### Gene counts variance distribution
 
 Variance of gene counts across samples are represented. Genes with lower variance than selected threshold (dashed grey line) were filtered out. 
 
@@ -236,17 +272,18 @@ ggplot2::geom_vline(xintercept = var_filter[["thr"]], linetype="dashed",
                 color = "grey")
 ```
 
-```{r DESeq2_all_norm_head, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r all_norm_head, echo=FALSE, results='asis'}
 
 cat("### **Samples differences by all counts normalized**:
 		
-All counts were normalizated by DESeq2 algorithm. This count were scaled by log10 and plotted in a heatmap.")
+All counts were normalizated by default (see options below) algorithm. This count were scaled by log10 and plotted in a heatmap.")
+
 ```
 
-```{r heatmap_all_norm_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo = FALSE, fig.height=12, fig.width=12}
+```{r heatmap_all_norm_plot), echo = FALSE, fig.height=12, fig.width=12}
 	
-		deseq_normalized_data <- all_data_normalized[['DESeq2']]
-	if (nrow(all_data_normalized[['DESeq2']]) <= 50000) { 
+		deseq_normalized_data <- all_data_normalized[['default']]
+	if (nrow(all_data_normalized[['default']]) <= 50000) { 
 		deseq_normalized_data_mtx <- log10(data.matrix(deseq_normalized_data) + 1)
 
 		plot <- gplots::heatmap.2(deseq_normalized_data_mtx, col = col, labRow = FALSE, dendrogram = "column", trace = "none", srtCol=45,  adjCol = c(1,1))
@@ -257,8 +294,9 @@ All counts were normalizated by DESeq2 algorithm. This count were scaled by log1
 ```
 
 ```{r top_n_expression, results='asis', echo=FALSE, warning=FALSE, message=FALSE}
-	cat("\n\n### **Percentages of reads per sample mapping to the most highly expressed genes **\n\n")
+	cat("\n\n### **Percentages of reads per sample mapping to the most highly expressed genes**\n\n")
 	make_top_n_expression_table(count_data=raw_filter, n=5)
+
 ```
 
 
