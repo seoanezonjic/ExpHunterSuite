@@ -110,5 +110,6 @@ Imports:
     clusterProfiler,
     GenomicRanges,
     annotatr,
-    ggridges
+    ggridges,
+    FactoInvestigate
 Config/testthat/edition: 3
