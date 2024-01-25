@@ -12,6 +12,7 @@ dim_to_keep <- get_PCA_dimensions(std_pca)
 rownames(target) <- as.character(target$sample)
 string_factors <- final_main_params$string_factors
 numeric_factors <- final_main_params$numeric_factors
+if (sum(numeric_factors == "") == 1) numeric_factors <- NULL
 
 pca_data <- merge_factors(pca_data, target, string_factors)
 pca_data <- merge_factors(pca_data, target, numeric_factors)
@@ -76,3 +77,4 @@ dim_data_simp <- dim_data[grepl("Dim",names(dim_data))]
 test <- lapply(names(dim_data_simp), parse_dim_table, dim_data = dim_data_simp, tag = "####")
 
 ```
+
