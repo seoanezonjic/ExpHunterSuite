@@ -33,42 +33,23 @@ build_design_for_WGCNA <- function(target,
 # target file and makes a data frame with the specified factor
     if(!is.null(string_factors)){ 
 
-        # In case we duplicate treat
-        if(! all(string_factors %in% colnames(target))) {
-            warning(paste0("Some factors specified with the --string_factors",
-                           " option cannot be found in the target file."))
-        }
-        string_factors_index <- colnames(target) %in% string_factors 
-
-        target_string_factors <- target[string_factors_index]
-        invisible(lapply(seq(ncol(target_string_factors)),function(i){
-          target_string_factors[,i] <<- as.factor(target_string_factors[,i])
-        }))
+        target_string_factors <- target[,colnames(target) %in% string_factors,
+                                                    drop = FALSE]
+        target_string_factors <- data.frame(sapply(target_string_factors, 
+                                                   as.factor), 
+                                            stringsAsFactors=TRUE)
         return(target_string_factors)
-
     }
 
-    if(!is.null(numeric_factors) && numeric_factors != ""){
-        str(numeric_factors)
-        if(length(numeric_factors) != 0) {
-            if(! all(numeric_factors %in% colnames(target))) {
-              warning(paste0("Some factors specified with the",
-              " --numeric_factors option cannot be found in the target file."))
-            }
-              print(colnames(target)) 
-              print(numeric_factors)
-            numeric_factors_index <- colnames(target) %in% numeric_factors
-            if(TRUE %in% numeric_factors_index) {
-              target_numeric_factors <- target[numeric_factors_index]
-            } else {
-              stop(cat(paste0("Factors specified with the --numeric_factors ",
-              "option cannot be found in the target file.\nPlease resubmit.")))
-            }
-        } else {
-            target_numeric_factors <- ""
-        }
+    if(!is.null(numeric_factors)){
+        if(sum(nchar(numeric_factors) == 0)) return("") 
+
+        target_numeric_factors <- target[,colnames(target) %in% 
+                                              numeric_factors,
+                                              drop = FALSE]
         return(target_numeric_factors)
     }
+    
     return(NULL)
 }
 
