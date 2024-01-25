@@ -30,19 +30,19 @@ output:
 </style>
 
 
-```{r child="expression_qc.Rmd"}
+```{r child=file.path(template_folder,"expression_qc.Rmd")}
 ```
 
-```{r child="dea_results.Rmd", eval = any(grepl("[DENL]",opt$modules))}
+```{r child=file.path(template_folder,"dea_results.Rmd"), eval = any(grepl("[DENL]",opt$modules))}
 ``` 
 
-```{r child="WGCNA_results.Rmd", eval = grepl("W", opt$modules)}
+```{r child=file.path(template_folder,"WGCNA_results.Rmd"), eval = grepl("W", opt$modules)}
 ``` 
  
-```{r child="diffcoexp_results.Rmd", eval = grepl("X", opt$modules)}
+```{r child=file.path(template_folder,"diffcoexp_results.Rmd"), eval = grepl("X", opt$modules)}
 ``` 
  
-```{r child="PCIT_results.Rmd", eval = grepl("P", opt$modules)}
+```{r child=file.path(template_folder,"PCIT_results.Rmd"), eval = grepl("P", opt$modules)}
 ``` 
 
 ### **Values of options used to run DEGenesHunter**

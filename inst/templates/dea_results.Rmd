@@ -175,6 +175,18 @@ plot(evp)
 ```
 
 
+```{r config_PCA_DEA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE}
+
+pca_data <- as.data.frame(t(all_data_normalized[["default"]]))
+prevalen_degs <- rownames(DE_all_genes[DE_all_genes$genes_tag == "PREVALENT_DEG",])
+pca_data <- pca_data[,prevalen_degs]
+
+```
+
+```{r child=file.path(template_folder,"facto_miner.Rmd")}
+
+```
+
 
 The complete results of the DEgenes Hunter differential expression analysis can be found in the "hunter\_results\_table.txt" file in the Common_results folder
 
