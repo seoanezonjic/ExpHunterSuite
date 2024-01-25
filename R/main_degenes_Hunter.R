@@ -130,11 +130,8 @@ main_degenes_Hunter <- function(
 
     if(numerics_as_factors == TRUE) { 
       # Now coerce the targets to factors for the multifactorial analysis
-      invisible(lapply(seq(ncol(target)),function(i){
-        target[,i] <<- as.factor(target[,i])
-      }))
-      # target <-  data.frame(sapply(target, as.factor), 
-        # stringsAsFactors=TRUE)
+       target <-  data.frame(sapply(target, as.factor), 
+         stringsAsFactors=TRUE)
 
     }
     model_formula_text <- prepare_model_text(model_variables, 
