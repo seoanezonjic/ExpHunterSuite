@@ -49,11 +49,67 @@ write_expression_report <- function(exp_results,
     coverage_df <- exp_results[['coverage_df']]
     mean_counts_df <- exp_results[['mean_counts_df']]
     exp_genes_df <- exp_results[['exp_genes_df']]
-
+    numeric_factors <- exp_results[["numeric_factors"]]
+    string_factors <- exp_results[["string_factors"]] 
+    PCA_res <- exp_results[["PCA_res"]]  
     outf <- file.path(normalizePath(output_files),"DEG_report.html")
     rmarkdown::render(file.path(template_folder, 'main_report.Rmd'),
                       output_file = outf, intermediates_dir = output_files)
 }
+
+write_expression_data <- function(final_results, output_files, opt = NULL, template_folder){
+
+  write.table(final_results[['raw_filter']], 
+    file=file.path(output_files, "filtered_count_data.txt"), quote=FALSE, 
+    col.names=NA, sep="\t")
+  write.table(final_results[['sample_groups']], file=file.path(output_files, 
+    "control_treatment.txt"), row.names=FALSE, quote=FALSE, sep="\t")
+  write_df_list_as_tables(final_results[['all_data_normalized']], 
+    prefix = 'Normalized_counts_', root = output_files)
+  write_df_list_as_tables(final_results[['all_counts_for_plotting']], 
+    prefix = 'allgenes_', root = output_files)
+  dir.create(file.path(output_files, "Common_results"))
+  write.table(final_results[['DE_all_genes']], file=file.path(output_files, 
+    "Common_results", "hunter_results_table.txt"), quote=FALSE, 
+  row.names=TRUE, sep="\t")
+  
+  write_pca_data(final_results[['PCA_res']], output_files)
+}
+
+write_pca_data <- function(PCA_res, output_files){
+    pca_output <- file.path(output_files, "PCA_results")
+    dir.create(pca_output)
+    all_genes_pca <- PCA_res$all_genes$dim_data_merged
+    
+    all_genes_merged_metrics <- merge_dim_table_metrics(all_genes_pca)
+
+    write.table(all_genes_merged_metrics, file = file.path(pca_output, "all_genes_dim_metrics.txt"),sep = "\t", quote = FALSE, row.names=FALSE)
+   
+    prevalent_pca <- PCA_res$DEGs$dim_data_merged
+    if (!is.null(prevalent_pca)){
+        prevalent_merged_metrics <- merge_dim_table_metrics(prevalent_pca)
+        write.table(prevalent_merged_metrics, file = file.path(pca_output, "prevalent_dim_metrics.txt"),sep = "\t", quote = FALSE, row.names=FALSE)
+ 
+    }
+
+}
+
+merge_dim_table_metrics <- function(merged_dim_table){
+
+        names(merged_dim_table$qualitative)[names(merged_dim_table$qualitative) == "R2"] <- "metric"
+        merged_dim_table$qualitative$metric_type <- "R2"
+        
+        names(merged_dim_table$quantitative)[names(merged_dim_table$quantitative) == "correlation"] <- "metric"
+        merged_dim_table$quantitative$metric_type <- "correlation"
+        
+        names(merged_dim_table$qual_category)[names(merged_dim_table$qual_category) == "Estimate"] <- "metric"
+        merged_dim_table$qual_category$metric_type <- "coord_var_barycentre"
+        dim_data_merged <-data.table::rbindlist(merged_dim_table, use.names = TRUE,idcol = "var_type")
+        dim_data_merged <- as.data.frame(dim_data_merged)
+        dim_data_merged <- dim_data_merged[,c("factor","var_type" ,"metric_type", "dimension","metric","p.value")]
+        return(dim_data_merged)
+} 
+
 
 write_global_cormit <- function(
 strategies,

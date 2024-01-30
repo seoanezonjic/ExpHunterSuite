@@ -59,8 +59,8 @@ main_degenes_Hunter <- function(
     minpack_common = 4,
     model_variables = "",
     numerics_as_factors = TRUE,
-    string_factors = "",
-    numeric_factors = "",
+    string_factors = NULL,
+    numeric_factors = NULL,
     WGCNA_memory = 5000,
     WGCNA_norm_method = "DESeq2",
     WGCNA_deepsplit = 2,
@@ -116,11 +116,12 @@ main_degenes_Hunter <- function(
 
     
     numeric_factors <- split_str(numeric_factors, ",")
+    if (sum(numeric_factors == "") >= 1) numeric_factors <- NULL #esto esta para controlar que no haya elementos vacios
+
     string_factors <- split_str(string_factors, ",")
-    final_main_params[["numeric_factors"]] <- numeric_factors
-    final_main_params[["string_factors"]] <-  c("treat", string_factors)
+    string_factors <-  c("treat", string_factors)
 
-
+    
     if(!is.null(target) & grepl("W", modules)) {
       target_numeric_factors <- build_design_for_WGCNA(target, 
            numeric_factors=numeric_factors)
@@ -158,6 +159,13 @@ main_degenes_Hunter <- function(
     raw_filter <- var_filter[["fil_count_mtrx"]]
 
     
+
+    #computing PCA for all_genes
+    full_pca <- compute_pca(pca_data = default_norm$default,
+                            target = target,
+                            string_factors = string_factors, 
+                            numeric_factors = numeric_factors)
+    PCA_res <- list("all_genes" = full_pca)
     ############################################################
     ##             PERFORM EXPRESION ANALYSIS                 ##
     ############################################################
@@ -219,7 +227,7 @@ main_degenes_Hunter <- function(
     #################################################################
     mean_cpm <- rowMeans(raw_filter)
     DE_all_genes <- NULL
-
+    DEG_pca <- NULL
     if (any(grepl("[DENL]",modules))){
       DE_all_genes <- unite_DEG_pack_results(exp_results, p_val_cutoff, 
                                              lfc, minpack_common)
@@ -228,6 +236,18 @@ main_degenes_Hunter <- function(
       DE_all_genes <- transform(DE_all_genes, row.names=Row.names, Row.names=NULL)
       # Add the filtered genes back
       DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
+
+
+      #computing PCA for PREVALENT DEG
+
+      prevalent_degs <- rownames(DE_all_genes[DE_all_genes$genes_tag == "PREVALENT_DEG",])
+      pca_deg_data <- default_norm$default
+      pca_deg_data <- pca_deg_data[rownames(pca_deg_data) %in% prevalent_degs,]
+      
+      PCA_res[["DEGs"]] <- compute_pca(pca_data = pca_deg_data,
+                            target = target,
+                            string_factors = string_factors, 
+                            numeric_factors = numeric_factors)
     }
 
     if(grepl("W", modules)) { # Check WGCNA was run and returned proper results
@@ -260,6 +280,9 @@ main_degenes_Hunter <- function(
          aux %in% results_diffcoexp$DCLs$Gene.2
     }
 
+   
+
+
     coverage_df <- get_counts(cnts_mtx=raw, library_sizes=library_sizes)
     mean_counts_df <- get_mean_counts(cnts_mtx=raw, cpm_table=cpm_table, reads=reads, minlibraries=minlibraries)
     exp_genes_df <- get_gene_stats(cpm_table=cpm_table, reads=reads)    
@@ -282,7 +305,9 @@ main_degenes_Hunter <- function(
     final_results[["mean_counts_df"]] <- mean_counts_df
     final_results[["exp_genes_df"]] <- exp_genes_df
     final_results[["target"]] <- target 
-
+    final_results[["numeric_factors"]] <- numeric_factors
+    final_results[["string_factors"]] <- string_factors
+    final_results[["PCA_res"]] <- PCA_res
     if(!is.null(combinations_WGCNA)){
       final_results <- c(final_results, combinations_WGCNA)
     }
@@ -376,12 +401,7 @@ check_input_main_degenes_Hunter <- function(raw,
     }
 
     # If factors are specified but WGCNA not selected, throw a warning.
-    if((string_factors != "" | numeric_factors != "") & 
-       (!grepl("W", modules) | is.null(target))) {
-      warning(paste0("If you wish to use factors for the correlation analysis",
-        " you must also run WGCNA and include a target file. The -S",
-        " and -N options will be ignored"))
-    }
+   
     return(list(modules=modules, 
                 active_modules=active_modules, 
                 minpack_common=minpack_common, 

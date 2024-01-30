@@ -183,7 +183,6 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
       log <- TRUE
       dir.create(log_path, recursive = TRUE)
     }
-    utils::str(log_path)
     param <- BiocParallel::MulticoreParam( 
       workers, tasks = ceiling(length(X)/task_size), stop.on.error = TRUE,
       log = log, threshold = "INFO", logdir = log_path
@@ -242,7 +241,9 @@ annotate_genomic_ranges <-function(intervals_df, genome){
 split_str <- function(string, split = NULL) {
   if (is.null(split))
     stop("split character must be specifyed")
+  if (is.null(string)) return(NULL)  
   if (nchar(string) <= 1) return(string)  
+
   splitted_str <- unlist(strsplit(string, split = split))
   return(splitted_str)
 }

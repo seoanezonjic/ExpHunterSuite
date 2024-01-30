@@ -24,7 +24,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   custom_libraries <- c('main_degenes_Hunter.R', 'io_handling.R', 
     'general_functions.R', 'dif_expression_packages.R', 
     'qc_and_benchmarking_functions.R', 'correlation_packages.R', 
-    'plotting_functions.R', 'write_report.R', "statistics_functions.R")
+    'plotting_functions.R', 'write_report.R', "statistics_functions.R", "factor_mining.R")
   for (lib in custom_libraries){
     source(file.path(root_path, 'R', lib))
   }
@@ -274,17 +274,10 @@ final_results <- main_degenes_Hunter(
 #############################################################################
 #WRITE OUTPUT
 ############################################################################
-write.table(final_results[['raw_filter']], 
-  file=file.path(opt$output_files, "filtered_count_data.txt"), quote=FALSE, 
-  col.names=NA, sep="\t")
-write.table(final_results[['sample_groups']], file=file.path(opt$output_files, 
-  "control_treatment.txt"), row.names=FALSE, quote=FALSE, sep="\t")
-write_df_list_as_tables(final_results[['all_data_normalized']], 
-  prefix = 'Normalized_counts_', root = opt$output_files)
-write_df_list_as_tables(final_results[['all_counts_for_plotting']], 
-  prefix = 'allgenes_', root = opt$output_files)
-dir.create(file.path(opt$output_files, "Common_results"))
-write.table(final_results[['DE_all_genes']], file=file.path(opt$output_files, 
-  "Common_results", "hunter_results_table.txt"), quote=FALSE, 
-row.names=TRUE, sep="\t")
-write_expression_report(final_results, opt$output_files, template_folder, opt)
+
+
+  write_expression_data(final_results, opt$output_files, template_folder, opt)
+
+  write_expression_report(final_results, opt$output_files, template_folder, opt)
+
+

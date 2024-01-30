@@ -111,5 +111,6 @@ Imports:
     GenomicRanges,
     annotatr,
     ggridges,
-    FactoInvestigate
+    FactoInvestigate,
+    FactoMineR
 Config/testthat/edition: 3

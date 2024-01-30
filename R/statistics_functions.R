@@ -324,14 +324,3 @@ filter_and_integrate_OR <- function(cont_table, p.adjust.method = "BH" ,p_thr = 
   return(list(integrated_stats = integrated_stats, miRNA_ct = miRNA_ct))
 }
 
-#' @importFrom FactoInvestigate dimRestrict eigenRef
-get_PCA_dimensions <- function(pca_obj, min_dimensions = 2) {
-    ref = FactoInvestigate::eigenRef(pca_obj, time = "10s", parallel=FALSE) # to avoid use parallel computation that greedy takes all cpu cores
-    rand = c(ref$inertia[1], diff(ref$inertia)) * 100
-    keep_dimensions <- FactoInvestigate::dimRestrict(pca_obj, rand = rand)
-    if(keep_dimensions < min_dimensions){
-      keep_dimensions <- min_dimensions
-      message('Significant axis are less than 2. The first two axis will be selected to continue the analysis')
-    }
-    return(keep_dimensions)
-}

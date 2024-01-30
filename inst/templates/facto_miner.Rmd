@@ -5,37 +5,23 @@
 ### **Principal Component Analysis**
 This is a PCA plot of the count values normalized following the default method and then they are scaled:
 
-```{r , echo = FALSE, results = "asis", warning = TRUE, message = TRUE}
-std_pca <- FactoMineR::PCA(pca_data, scale.unit=TRUE, graph = FALSE)                                                     
-dim_to_keep <- get_PCA_dimensions(std_pca)
-
-rownames(target) <- as.character(target$sample)
-string_factors <- final_main_params$string_factors
-numeric_factors <- final_main_params$numeric_factors
-if (sum(numeric_factors == "") == 1) numeric_factors <- NULL
-
-pca_data <- merge_factors(pca_data, target, string_factors)
-pca_data <- merge_factors(pca_data, target, numeric_factors)
-
-full_pca <- FactoMineR::PCA(pca_data,ncp = dim_to_keep, scale.unit=TRUE, graph = FALSE, quanti.sup = numeric_factors, quali.sup=string_factors)
-``` 
 #### **Representation of the samples in the two first dimension of PCA** 
 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'} 
-FactoMineR::plot.PCA(full_pca, invisible = "quali" , title = "")
+FactoMineR::plot.PCA(pca_data, invisible = "quali" , title = "")
 ``` 
 
 #### **Representation of the samples and the categories of qualitative valiables in the two first dimension of PCA** 
 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'} 
 
-FactoMineR::plot.PCA(full_pca, title = "")
+FactoMineR::plot.PCA(pca_data, title = "")
 ```
 
 #### **Representation of the variable contribution to the PCA axis 1 and 2**
 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(numeric_factors)} 
-factoextra::fviz_pca_var(full_pca, axes = c(1, 2),select.var = list(name=numeric_factors), col.var="steelblue", title="") +
+factoextra::fviz_pca_var(pca_data, axes = c(1, 2),select.var = list(name=numeric_factors), col.var="steelblue", title="") +
 		ggplot2::theme_minimal()
 
 ``` 
@@ -43,7 +29,7 @@ factoextra::fviz_pca_var(full_pca, axes = c(1, 2),select.var = list(name=numeric
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = (dim_to_keep > 3 & !is.null(numeric_factors)) } 
 cat("#### **Representation of the variable contribution to the PCA axis 3 and 4**")
 
-factoextra::fviz_pca_var(full_pca, axes = c(3, 4),select.var = list(name=numeric_factors), col.var="steelblue", title="") +
+factoextra::fviz_pca_var(pca_data, axes = c(3, 4),select.var = list(name=numeric_factors), col.var="steelblue", title="") +
 		ggplot2::theme_minimal()
 
 ``` 
@@ -51,14 +37,14 @@ factoextra::fviz_pca_var(full_pca, axes = c(3, 4),select.var = list(name=numeric
 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(numeric_factors)} 
 cat("#### **Representation of the individuals and the variable contribution to the PCA axis 1 and 2**")
-factoextra::fviz_pca_biplot(full_pca, repel = TRUE,select.var = list(name=numeric_factors), col.var="steelblue", title="") +
+factoextra::fviz_pca_biplot(pca_data, repel = TRUE,select.var = list(name=numeric_factors), col.var="steelblue", title="") +
 		ggplot2::theme_minimal()
 
 ```
 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
 cat(paste("#### **Hierarchical clustering of individuals using first", dim_to_keep, "significant PCA dimensions**",sep=' '))
-res.hcpc <- FactoMineR::HCPC(full_pca, graph = FALSE)
+res.hcpc <- FactoMineR::HCPC(pca_data, graph = FALSE)
 plot(res.hcpc , choice="tree", title="")
 
 ```
@@ -68,13 +54,43 @@ cat(paste("#### **PCA representation of 1 and 2 axis with individuals coloured b
 plot(res.hcpc , axes=c(1,2), choice="map", draw.tree= FALSE, title="")
 ```
 
+
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
+dim_data_quant <- dim_data_merged$quantitative
+dim_data_quant <- dim_data_quant[dim_data_quant$factor %in% numeric_factors,]
+if (nrow(dim_data_quant) >0 ) {
+	cat("#### **Representation of correlation and P value of numeric factors and PCA dimensions**")
+	dim_data_quant$p.value <-formatC(dim_data_quant$p.value, format = "e", digits = 2)
+	dim_data_quant$correlation <- round(dim_data_quant$correlation, digits = 4)
+	dim_data_quant$text_corr <- paste(as.character(dim_data_quant$correlation),as.character(dim_data_quant$p.value), sep = "\n")
+	gg_heatmap(dim_data_quant, x_axis="dimension", y_axis="factor",fill = "correlation", text_plot="text_corr")
 
-dim_data <- FactoMineR::dimdesc(full_pca, axes=seq(1, dim_to_keep))
-
-
-dim_data_simp <- dim_data[grepl("Dim",names(dim_data))]
-test <- lapply(names(dim_data_simp), parse_dim_table, dim_data = dim_data_simp, tag = "####")
-
+}
 ```
 
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
+
+dim_data_qual <- dim_data_merged$qualitative
+if (nrow(dim_data_qual) >0 ) {
+	cat("#### **Representation of R2 and P value of qualitative factors and PCA dimensions**")
+	dim_data_qual$p.value <- formatC(dim_data_qual$p.value, format = "e", digits = 2)
+	dim_data_qual$correlation <- round(dim_data_qual$R2, digits = 4)
+	dim_data_qual$text_adjust <- paste(as.character(dim_data_qual$R2),as.character(dim_data_qual$p.value), sep = "\n")
+	gg_heatmap(dim_data_qual, x_axis="dimension", y_axis="factor",fill = "R2", text_plot="text_adjust")
+
+}
+```
+
+
+
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
+
+dim_data_cat <- dim_data_merged$qual_category
+if (nrow(dim_data_cat) >0 ) {
+	cat("#### **Representation of estimated coordinated from barycentre and P value of qualitative factors and PCA dimensions**")
+	dim_data_cat$p.value <- formatC(dim_data_cat$p.value, format = "e", digits = 2)
+	dim_data_cat$text_estimate <- paste(as.character(dim_data_cat$Estimate),as.character(dim_data_cat$p.value), sep = "\n")
+	gg_heatmap(dim_data_cat, x_axis="dimension", y_axis="factor",fill = "Estimate", text_plot="text_estimate")
+
+}
+```

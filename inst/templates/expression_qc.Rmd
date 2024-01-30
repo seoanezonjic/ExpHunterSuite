@@ -51,7 +51,10 @@ gplots::heatmap.2(x = res, col = col, symm = TRUE, margins = rep(max(nchar(colna
 ```
 
 ```{r config_PCA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE}
-pca_data <- as.data.frame(t(all_data_normalized[["default"]]))
+pca_data <- PCA_res$all_genes$pca_data
+dim_to_keep <- PCA_res$all_genes$dim_to_keep
+dim_data <- PCA_res$all_genes$dim_data
+dim_data_merged <- PCA_res$all_genes$dim_data_merged
 
 ```
 
