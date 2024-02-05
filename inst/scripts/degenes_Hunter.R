@@ -39,6 +39,9 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 option_list <- list(
   optparse::make_option(c("-i", "--input_file"), type="character", default=NULL,
     help="Input file with read counts"),
+  optparse::make_option(c("--pseudocounts"), type="logical", default=FALSE, 
+    action = "store_true",
+    help="Use this option in case the mapping has been done with salmon, kallisto, StringTie or RSEM"),
   optparse::make_option(c("-C", "--Control_columns"), type="character", 
     default=NULL,
     help=paste0("Control columns. Please indicate column names of control",
@@ -244,6 +247,7 @@ final_results <- main_degenes_Hunter(
   external_DEA_data=external_DEA_data,
   output_files=opt$output_files,
   reads=opt$reads,
+  pseudocounts=opt$pseudocounts,
   minlibraries=opt$minlibraries,
   filter_type=opt$filter_type,
   p_val_cutoff=opt$p_val_cutoff,
