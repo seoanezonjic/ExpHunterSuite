@@ -56,10 +56,15 @@ compute_pca <- function(pca_data,
 	dim_to_keep <- get_PCA_dimensions(std_pca)
 
 	rownames(target) <- as.character(target$sample)
-	if (!is.null(numeric_factors))
+
+	if (!is.null(numeric_factors)){
 		pca_data <- merge_factors(pca_data, target, numeric_factors)
-	if (!is.null(string_factors))
+
+	}
+
+	if (!is.null(string_factors)) {
 	  pca_data <- merge_factors(pca_data, target, string_factors)
+	}
 
 	pca_res <- FactoMineR::PCA(pca_data,ncp = dim_to_keep, 
 										scale.unit=TRUE, 
