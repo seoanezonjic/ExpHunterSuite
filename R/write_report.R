@@ -96,14 +96,22 @@ write_pca_data <- function(PCA_res, output_files){
 
 merge_dim_table_metrics <- function(merged_dim_table){
 
-        names(merged_dim_table$qualitative)[names(merged_dim_table$qualitative) == "R2"] <- "metric"
-        merged_dim_table$qualitative$metric_type <- "R2"
         
-        names(merged_dim_table$quantitative)[names(merged_dim_table$quantitative) == "correlation"] <- "metric"
-        merged_dim_table$quantitative$metric_type <- "correlation"
+        if(nrow(merged_dim_table$qualitative) > 0) {
+            names(merged_dim_table$qualitative)[names(merged_dim_table$qualitative) == "R2"] <- "metric"
+            merged_dim_table$qualitative$metric_type <- "R2"
+        } else { merged_dim_table$qualitative <- NULL}
         
-        names(merged_dim_table$qual_category)[names(merged_dim_table$qual_category) == "Estimate"] <- "metric"
-        merged_dim_table$qual_category$metric_type <- "coord_var_barycentre"
+        if(nrow(merged_dim_table$quantitative) > 0) {
+            names(merged_dim_table$quantitative)[names(merged_dim_table$quantitative) == "correlation"] <- "metric"
+            merged_dim_table$quantitative$metric_type <- "correlation"
+        } else { merged_dim_table$quantitative <- NULL}
+
+        if(nrow(merged_dim_table$qual_category) > 0) {
+            names(merged_dim_table$qual_category)[names(merged_dim_table$qual_category) == "Estimate"] <- "metric"
+            merged_dim_table$qual_category$metric_type <- "coord_var_barycentre"
+         } else { merged_dim_table$qual_category <- NULL}
+
         dim_data_merged <-data.table::rbindlist(merged_dim_table, use.names = TRUE,idcol = "var_type")
         dim_data_merged <- as.data.frame(dim_data_merged)
         dim_data_merged <- dim_data_merged[,c("factor","var_type" ,"metric_type", "dimension","metric","p.value")]
