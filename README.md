@@ -561,17 +561,13 @@ write_functional_report(final_results, func_results) # Generate friendly html re
 
 ## REFERENCES AND CITATION
 
-Please cite DEgenes Hunter as:
+Please cite ExpHunterSuite as:
 
-Isabel González Gayte, Rocío Bautista Moreno, Pedro Seoane Zonjic &
-Manuel G. Claros (2017). DEgenes Hunter - A Flexible R Pipeline for
-Automated RNA-seq Studies in Organisms without Reference Genome.
-Genomics And Computational Biology, 3(3), e31.
-<doi:http://dx.doi.org/10.18547/gcb.2017.vol3.iss3.e31>
 
-Fernando M. Jabato, José Córdoba-Caballero, Elena Rojano, Carlos
-Romá-Mateo, Pascual Sanz, Belén Pérez, Diana Gallego, Pedro Seoane,
-Juan A.G. Ranea y and James R. Perkins. Differential expression,
-co-expression and functional analysis of RNA-seq data using the DEgenes
-Hunter suite and its applicability to rare disease (in review).
-Briefings in Bioinformatics.
+
+Jabato, F., Córdoba-Caballero, J., Rojano, E., Romá-Mateo, C., Sanz, P., Pérez, B., Gallego, D., Seoane, P., Ranea, J., and Perkins, J. 2021. Gene expression analysis method integration and co-expression module detection applied to rare glucide metabolism disorders using ExpHunterSuite. *Scientific Reports* 2021 11:1, 11(1), p.1–12. <doi:http://dx.doi.org/0.1038/s41598-021-94343-w>
+
+
+Isabel González Gayte, Rocío Bautista Moreno, Pedro Seoane Zonjic and Manuel G. Claros (2017). DEgenes Hunter - A Flexible R Pipeline for Automated RNA-seq Studies in Organisms without Reference Genome. *Genomics And Computational Biology* , 3(3), e31. <doi:http://dx.doi.org/10.18547/gcb.2017.vol3.iss3.e31>
+
+
