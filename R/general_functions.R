@@ -258,3 +258,15 @@ merge_factors <- function(table, target, factors) {
     table[,"Row.names"] <- NULL 
     return(table)
 }
+
+remove_pattern_from_df <- function(dataframe, rgx){
+  df_parsed <- as.data.frame(lapply(dataframe,
+                    remove_text_from_column, 
+                    rgx = rgx))
+  return(df_parsed)
+}
+
+remove_text_from_column <- function(column, rgx) {
+  parsed_col <- gsub(rgx, "", column)
+  return(parsed_col)
+}

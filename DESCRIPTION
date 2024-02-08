@@ -109,6 +109,8 @@ Imports:
     ggrepel,
     clusterProfiler,
     GenomicRanges,
+    GenomicFeatures,
+    tximport,
     annotatr,
     ggridges,
     FactoInvestigate,
