@@ -1,15 +1,17 @@
-#'Main function to parse pseudocounts
+#' main_parse_pseudocounts
+#' Functions that loads pseudommappers results and complite it into a table of counts
 #' @param input_folder folder with pseudocounts files
 #' @param mapper string pseudomapping program
-#' @param output_type string indicate i fthe output must be [G] genes, [T] transcripts or both
+#' @param output_type string indicate i fthe output must be 'G' genes, 'T' transcripts or both
 #' @param annotation_file gtf or gff path, requested for parsin salmon results
 #' @examples
 #'	\dontrun{
 #'		parse_pseudocounts(input_folder = "Path_to_folder",
 #'							mapper = "salmon",
 #'							annotation_file = "path_to_gtf")	
-#'}
+#'  }
 #' @export
+#' @keywords method
 #' @importFrom GenomicFeatures makeTxDbFromGFF
 #' @importFrom AnnotationDbi keys select
 #' @importFrom tximport tximport

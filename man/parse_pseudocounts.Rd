@@ -2,7 +2,8 @@
 % Please edit documentation in R/main_parse_pseudocounts.R
 \name{parse_pseudocounts}
 \alias{parse_pseudocounts}
-\title{Main function to parse pseudocounts}
+\title{main_parse_pseudocounts
+Functions that loads pseudommappers results and complite it into a table of counts}
 \usage{
 parse_pseudocounts(input_folder, mapper, output_type, annotation_file)
 }
@@ -11,17 +12,19 @@ parse_pseudocounts(input_folder, mapper, output_type, annotation_file)
 
 \item{mapper}{string pseudomapping program}
 
-\item{output_type}{string indicate i fthe output must be \link{G} genes, \link{T} transcripts or both}
+\item{output_type}{string indicate i fthe output must be 'G' genes, 'T' transcripts or both}
 
 \item{annotation_file}{gtf or gff path, requested for parsin salmon results}
 }
 \description{
-Main function to parse pseudocounts
+main_parse_pseudocounts
+Functions that loads pseudommappers results and complite it into a table of counts
 }
 \examples{
 \dontrun{
 	parse_pseudocounts(input_folder = "Path_to_folder",
 						mapper = "salmon",
 						annotation_file = "path_to_gtf")	
+ }
 }
-}
+\keyword{method}
