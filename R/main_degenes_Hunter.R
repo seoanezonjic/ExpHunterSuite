@@ -244,14 +244,16 @@ main_degenes_Hunter <- function(
       #computing PCA for PREVALENT DEG
 
       prevalent_degs <- rownames(DE_all_genes[DE_all_genes$genes_tag == "PREVALENT_DEG",])
-      pca_deg_data <- default_norm$default
-      pca_deg_data <- pca_deg_data[rownames(pca_deg_data) %in% prevalent_degs,]
-      
-      PCA_res[["DEGs"]] <- compute_pca(pca_data = pca_deg_data,
-                            target = target,
-                            string_factors = string_factors, 
-                            numeric_factors = numeric_factors)
+      if (length(prevalent_degs) > 1) {
+        pca_deg_data <- default_norm$default
+        pca_deg_data <- pca_deg_data[rownames(pca_deg_data) %in% prevalent_degs,]
+        DEG_pca <- compute_pca(pca_data = pca_deg_data,
+                              target = target,
+                              string_factors = string_factors, 
+                              numeric_factors = numeric_factors)
+      }
     }
+    PCA_res[["DEGs"]] <- DEG_pca
 
     if(grepl("W", modules)) { # Check WGCNA was run and returned proper results
       DE_all_genes <- merge(by.x=0, by.y="ENSEMBL_ID", x= DE_all_genes, 

@@ -175,7 +175,7 @@ plot(evp)
 ```
 
 
-```{r config_PCA_DEA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE}
+```{r config_PCA_DEA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE, eval = !is.null(PCA_res$DEGs)}
 
 pca_data <- PCA_res$DEGs$pca_data
 dim_to_keep <- PCA_res$DEGs$dim_to_keep
@@ -184,7 +184,7 @@ dim_data_merged <- PCA_res$DEGs$dim_data_merged
 
 ```
 
-```{r child=file.path(template_folder,"facto_miner.Rmd")}
+```{r child=file.path(template_folder,"facto_miner.Rmd"), eval = !is.null(PCA_res$DEGs)}
 
 ```
 
