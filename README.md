@@ -8,6 +8,10 @@
 [![R-CMD-check](https://github.com/seoanezonjic/ExpHunterSuite/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/seoanezonjic/ExpHunterSuite/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
+## DOCUMENTATION - VIGNETTES
+
+[Link to ExpHunterSuite Vignettes](https://bioconductor.org/packages/3.18/workflows/vignettes/ExpHunterSuite/inst/doc/hunter.html)
+
 ## DOCUMENTATION - README
 
 # DEgenes Hunter
