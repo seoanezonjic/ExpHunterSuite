@@ -11,6 +11,10 @@ This is a PCA plot of the count values normalized following the default method a
 FactoMineR::plot.PCA(pca_data, invisible = "quali" , title = "")
 ``` 
 
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'} 
+FactoMineR::plot.PCA(pca_data, invisible = "quali" , title = "", label = "none", habillage = "treat")
+```
+
 #### **Representation of the samples and the categories of qualitative valiables in the two first dimension of PCA** 
 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'} 
