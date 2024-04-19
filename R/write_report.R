@@ -72,6 +72,7 @@ write_expression_data <- function(final_results, output_files, opt = NULL, templ
   write.table(final_results[['DE_all_genes']], file=file.path(output_files, 
     "Common_results", "hunter_results_table.txt"), quote=FALSE, 
   row.names=TRUE, sep="\t")
+
   
   write_pca_data(final_results[['PCA_res']], output_files)
 }
@@ -84,9 +85,14 @@ write_pca_data <- function(PCA_res, output_files){
     all_genes_merged_metrics <- merge_dim_table_metrics(all_genes_pca)
 
     write.table(all_genes_merged_metrics, file = file.path(pca_output, "all_genes_dim_metrics.txt"),sep = "\t", quote = FALSE, row.names=FALSE)
-   
+    hcpc_table <- PCA_res$all_genes$res.hcpc$call$X
+    hcpc_table$samples <- rownames(hcpc_table)
+    write.table(hcpc_table, file = file.path(pca_output, "all_genes_hcpc.txt"),sep = "\t", quote = FALSE, row.names=FALSE)
     prevalent_pca <- PCA_res$DEGs$dim_data_merged
     if (!is.null(prevalent_pca)){
+        hcpc_table_deg <- PCA_res$DEGs$res.hcpc$call$X
+        hcpc_table_deg$samples <- rownames(hcpc_table_deg)
+        write.table(hcpc_table_deg, file = file.path(pca_output, "prevalent_hcpc.txt"),sep = "\t", quote = FALSE, row.names=FALSE)
         prevalent_merged_metrics <- merge_dim_table_metrics(prevalent_pca)
         write.table(prevalent_merged_metrics, file = file.path(pca_output, "prevalent_dim_metrics.txt"),sep = "\t", quote = FALSE, row.names=FALSE)
  

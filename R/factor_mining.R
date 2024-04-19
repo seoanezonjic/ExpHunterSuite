@@ -44,7 +44,7 @@ get_PCA_dimensions <- function(pca_obj, min_dimensions = 2) {
     return(keep_dimensions)
 }
 
-#' @importFrom FactoMineR PCA dimdesc
+#' @importFrom FactoMineR PCA dimdesc HCPC
 compute_pca <- function(pca_data, 
 												target, 
 												string_factors = NULL, 
@@ -74,8 +74,11 @@ compute_pca <- function(pca_data,
 	dim_data <- FactoMineR::dimdesc(pca_res, axes=seq(1, dim_to_keep))
   dim_data_merged <- merge_dim_tables(dim_data)
 
+  res.hcpc <- FactoMineR::HCPC(pca_res, graph = FALSE)
+
 	return(list(pca_data = pca_res,
 							dim_to_keep = dim_to_keep,
 							dim_data = dim_data,
-							dim_data_merged = dim_data_merged))
+							dim_data_merged = dim_data_merged,
+							res.hcpc = res.hcpc))
 }
