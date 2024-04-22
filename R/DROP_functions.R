@@ -8,9 +8,10 @@
 #' @param gtf GTF file to process.
 #' @param outdir Processed files directory.
 #' @examples
-#' None yet
+#' gtf <- system.file("extData/testdata", "gencode.v45.toy.annotation.gtf",
+#'                     package = "ExpHunterSuite")
 #' @export
-process_gtf <- function(gtf, outdir) {
+preprocess_gtf <- function(gtf, outdir) {
   gtf_name <- basename(tools::file_path_sans_ext(gtf))
   db_file <- file.path(outdir, paste0(gtf_name, "_txdb.db"))
   txdb <- GenomicFeatures::makeTxDbFromGFF(opt$database_gtf) # Adjusted (came from snakemake)
