@@ -1,6 +1,6 @@
 #! /usr/bin/env Rscript
 
-
+devtools::load_all("~aestebanm/dev_R/ExpHunterSuite")
 option_list <- list(
   optparse::make_option(c("-g", "--gtf"), type="character", default=NULL,
     help="GTF file for txdb."),
@@ -16,4 +16,4 @@ if(is.null(opt$output_dir)) {
   output_dir <- opt$output_dir
 }
 
-process_gtf(opt$gtf, output_dir)
+preprocess_gtf(opt$gtf, output_dir)
