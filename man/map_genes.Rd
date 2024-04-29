@@ -13,9 +13,6 @@ map_genes(gtf)
 A data frame containing GTF file gene annotation.
 }
 \description{
-\code{map_gnes} takes a GTF file and builds a gene-name mapping data frame out
+\code{map_genes} takes a GTF file and builds a gene-name mapping data frame out
 of it.
-}
-\examples{
-None yet
 }
