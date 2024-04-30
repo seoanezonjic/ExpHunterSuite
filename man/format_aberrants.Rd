@@ -2,7 +2,7 @@
 % Please edit documentation in R/DROP_functions.R
 \name{format_aberrants}
 \alias{format_aberrants}
-\title{Function to format aberrant
+\title{Function to format DROP results
 \code{format_aberrants} takes a data frame and subsets it to columns named
 "sampleID", "geneID", "padjust", "type", "zScore" and "altRatio". It then
 updates padjust column and takes its negative decimal logarithm, and renames
@@ -19,7 +19,7 @@ A subset of the data frame containing only "sampleID", "geneID",
 "altRatio" columns, if they existed in the input data frame.
 }
 \description{
-Function to format aberrant
+Function to format DROP results
 \code{format_aberrants} takes a data frame and subsets it to columns named
 "sampleID", "geneID", "padjust", "type", "zScore" and "altRatio". It then
 updates padjust column and takes its negative decimal logarithm, and renames
