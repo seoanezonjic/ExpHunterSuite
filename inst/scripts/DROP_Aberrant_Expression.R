@@ -33,23 +33,6 @@ option_list <- list(
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
-suppressPackageStartupMessages({
-  library(data.table)
-  library(dplyr)
-  library(BiocParallel)
-  library(SummarizedExperiment)
-  library(GenomicFeatures)
-  library(OUTRIDER)
-  library(ggplot2)
-  library(magrittr)
-  library(tools)
-  library(data.table)
-  library(cowplot)
-  library(ggthemes)
-  library(GenomicAlignments)
-  library(tidyr)
-})
-
 register(MulticoreParam(opt$cpu)) # From snakemake@threads, was 30.
 
 # Read counts
