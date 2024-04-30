@@ -2,7 +2,7 @@
 % Please edit documentation in R/DROP_functions.R
 \name{add_base_IDs}
 \alias{add_base_IDs}
-\title{Get base IDs from RNA_ID column and add it to new BASE_ID column}
+\title{Add base ID column to sample annotation data frame}
 \usage{
 add_base_IDs(col_data)
 }

@@ -9,15 +9,18 @@ genes in input Outrider DataSet (ods)}
 AE_Gene_Overview(gene)
 }
 \arguments{
-\item{ods}{Outrider DataSet object.}
-
-\item{sample}{Sample to plot.}
+\item{gene}{Gene to plot.}
 }
 \value{
-Volcano plot of aberrantly expressed genes in specified sample
-in provided ods.
+Volcano plots of provided gene expression rank and expected vs
+observed counts across all samples.
 }
 \description{
 \code{AE_Gene_Overview} takes a gene and an Outrider DataSet (ODS), and
-prints a volcano plot of aberrantly expressed genes in said sample.
+prints two plots. The first one is the Expression Rank, which represents
+normalized counts of specified gene by sample. Samples are sorted in
+ascending order by normalized counts (i.e expression rank). Outliers are
+coloured red. ExpectedVsObserved plot creates a graph which represents
+raw (observed) versus expected counts. Expected counts are an estimation
+based on OUTRIDER normalization and total expression levels in sample.
 }
