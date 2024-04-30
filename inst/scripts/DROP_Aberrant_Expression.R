@@ -562,7 +562,7 @@ cnts_mtx <- OUTRIDER::counts(ods, normalized = F)
   if(has_external){
       DT::datatable(expressed_genes[order(Rank)], rownames = F)
   } else{
-      DT::datatable(expressed_genes[order(Rank),-"Is External"], rownames = F)
+      DT::datatable(expressed_genes[order(Rank), -"Is External"], rownames = F)
   }
 
   write.table(expressed_genes, paste0(opt$dataset, "_expressed_genes.tsv"), sep="\t", row.names= F)
@@ -624,9 +624,9 @@ DT::datatable(OUTRIDER_results_table, filter = 'top')
 
 #' Choose genes and samples to plot from significant table.
 
-sortedRes <- OUTRIDER_results_table[order(OUTRIDER_results_table$padj_rank),]
+sortedRes <- OUTRIDER_results_table[order(OUTRIDER_results_table$padj_rank), ]
 sigSamples <- unique(sortedRes$sampleID)
-sigGenes <- head(unique(sortedRes$geneID),opt$top_N)
+sigGenes <- head(unique(sortedRes$geneID), opt$top_N)
 
 BiocParallel::register(BiocParallel::MulticoreParam(opt$cpu))
 
@@ -647,52 +647,6 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 cfg <- yaml::read_yaml(opt$config_file)
 zScoreCutoff <- cfg$aberrantExpression$zScoreCutoff
 padjCutoff <- cfg$aberrantExpression$padjCutoff
-
-processed_vs_imported <- function(df) {
-	extIndex <- grep("GTEX", df$sampleID)
-	if(any(extIndex)) {
-		processed <- df[-grep("GTEX", df$sampleID), ]
-		imported <- df[grep("GTEX", df$sampleID), ]
-		return(list(processed = processed, imported = imported))
-	} else {
-		return(list(processed = df))
-	}
-}
-
-get_aberrants <- function(df) {
-	if(is.null(df)) {
-		return(NULL)
-	}
-	df$aberrant <- FALSE
-	df$aberrant[abs(df$zScore) > zScoreCutoff & df$padjust <= padjCutoff] <- TRUE
-	aberrants <- df$aberrant==TRUE
-	genes <- df[aberrants, ]$geneID
-	samples <- df[aberrants, ]$sampleID
-	res <- df[df$geneID %in% genes & df$sampleID %in% samples, ]
-	if((any(is.na(res)))) {
-		warning("NAs in aberrant genes, removing")
-		res <- res[!is.na(res$geneID), ]
-	}
-	if(nrow(res)==0) {
-		warning("No aberrants found in input")
-		return(NULL)
-	}
-	return(res)
-}
-
-format_aberrants <- function(df) {
-	if(is.null(df)) {
-		warning("NULL input. This can be due to missing module results or no
-			aberrants found.")
-		return(NULL)
-	}
-	names <- c("sampleID", "geneID", "padjust", "type", "zScore", "altRatio")
-	matches <- colnames(df) %in% names
-	res <- df[, matches]
-	res$padjust <- -log(res$padjust)
-	colnames(res)[colnames(res)=="padjust"] <- "p_padjust"
-	return(res)
-}
 
 data <- processed_vs_imported(OUTRIDER_results_all)
 aberrants <- lapply(data, get_aberrants)
