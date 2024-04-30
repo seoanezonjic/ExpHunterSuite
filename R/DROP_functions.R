@@ -215,11 +215,15 @@ AE_Sample_Overview <- function(ods, sample){
 #' genes in input Outrider DataSet (ods)
 #' 
 #' `AE_Gene_Overview` takes a gene and an Outrider DataSet (ODS), and
-#' prints a volcano plot of aberrantly expressed genes in said sample.
-#' @param ods Outrider DataSet object.
-#' @param sample Sample to plot.
-#' @returns Volcano plot of aberrantly expressed genes in specified sample
-#' in provided ods.
+#' prints two plots. The first one is the Expression Rank, which represents
+#' normalized counts of specified gene by sample. Samples are sorted in
+#' ascending order by normalized counts (i.e expression rank). Outliers are
+#' coloured red. ExpectedVsObserved plot creates a graph which represents
+#' raw (observed) versus expected counts. Expected counts are an estimation
+#' based on OUTRIDER normalization and total expression levels in sample.
+#' @param gene Gene to plot.
+#' @returns Volcano plots of provided gene expression rank and expected vs
+#' observed counts across all samples.
 #' @export
 
 AE_Gene_Overview <- function(gene){
@@ -231,4 +235,87 @@ AE_Gene_Overview <- function(gene){
   print(expPlot)
   print(vsPlot)
   graphics.off()
+}
+
+#' Function to separate locally processed and GTEx samples from OUTRIDER
+#' results.
+#' `processed_vs_imported` takes a data frame and splits it into two data frames
+#' contained in a list. The two elements are "processed" and "imported".
+#' All samples whose name contain "GTEX" are considered imported, the rest
+#' are considered exported.
+#' @param df A data frame containing read counts by sample.
+#' @returns A list with two elements, one for processed counts and another
+#' for imported counts.
+
+processed_vs_imported <- function(df) {
+  extIndex <- grep("GTEX", df$sampleID)
+  if(any(extIndex)) {
+    processed <- df[-grep("GTEX", df$sampleID), ]
+    imported <- df[grep("GTEX", df$sampleID), ]
+    return(list(processed = processed, imported = imported))
+  } else {
+    return(list(processed = df))
+  }
+}
+
+#' Function to identify aberrantly expressed genes in an outrider results
+#' data frame.
+#' `get_aberrants` takes an outrider results data frame and creates a column
+#' named "aberrant", set to FALSE by default. It then compares each gene's
+#' zScore and adjusted p-value to the cutoffs provided and sets that gene's
+#' aberrant value to TRUE if it passes the check (zScore greater than cutoff and
+#' adjusted p-value lower than cutoff)'. It then subsets the input data frame
+#' to samples with at least one aberrantly expressed gene and genes aberrantly
+#' expressed in at least one sample.
+#' @param df An OUTRIDER results data frame.
+#' @param zScoreCutoff Cutoff that gene zScore must surpass in order to be
+#' considered aberrantly expressed.
+#' @param padjCutoff Adjusted p-value cutoff. Gene adjusted p-value must be
+#' lower than this number in order to be considered aberrantly expressed.
+#' @returns A data frame containing only samples with at least one aberrantly
+#' expressed genes and genes aberrantly expressed in at least one sample.
+
+get_aberrants <- function(df, zScoreCutoff, padjCutoff) {
+  if(is.null(df)) {
+    return(NULL)
+  }
+  df$aberrant <- FALSE
+  df$aberrant[abs(df$zScore) > zScoreCutoff & df$padjust <= padjCutoff] <- TRUE
+  aberrants <- df$aberrant==TRUE
+  genes <- df[aberrants, ]$geneID
+  samples <- df[aberrants, ]$sampleID
+  res <- df[df$geneID %in% genes & df$sampleID %in% samples, ]
+  if((any(is.na(res)))) {
+    warning("NAs in aberrant genes, removing")
+    res <- res[!is.na(res$geneID), ]
+  }
+  if(nrow(res)==0) {
+    warning("No aberrants found in input")
+    return(NULL)
+  }
+  return(res)
+}
+
+#' Function to format aberrant
+#' `format_aberrants` takes a data frame and subsets it to columns named
+#' "sampleID", "geneID", "padjust", "type", "zScore" and "altRatio". It then
+#' updates padjust column and takes its negative decimal logarithm, and renames
+#' it to p_padjust (as in -log(padjust), as in pH meaning -log[H]).
+#' @param df A DROP results data frame.
+#' @returns A subset of the data frame containing only "sampleID", "geneID",
+#' "p_padjust" (calculated from "padjust" column), "type", "zScore" and
+#' "altRatio" columns, if they existed in the input data frame.
+
+format_aberrants <- function(df) {
+  if(is.null(df)) {
+    warning("NULL input. This can be due to missing module results or no
+      aberrants found.")
+    return(NULL)
+  }
+  names <- c("sampleID", "geneID", "padjust", "type", "zScore", "altRatio")
+  matches <- colnames(df) %in% names
+  res <- df[, matches]
+  res$padjust <- -log(res$padjust)
+  colnames(res)[colnames(res)=="padjust"] <- "p_padjust"
+  return(res)
 }
