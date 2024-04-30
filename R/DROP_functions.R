@@ -2,7 +2,7 @@
 #' 
 #' `preprocess_gtf` takes a GTF file and a directory path. It outputs a txdb,
 #'count ranges, and gene_mapping files, which it writes to provided directory.
-#' @importFrom GenomicFeatures makeTxDbFromGFF
+#' @importFrom GenomicFeatures makeTxDbFromGFF exonsBy
 #' @importFrom GenomeInfoDb keepStandardChromosomes
 #' @importFrom AnnotationDbi saveDb
 #' @param gtf GTF file to process.
@@ -11,6 +11,7 @@
 #' gtf <- system.file("extData/testdata", "gencode.v45.toy.annotation.gtf",
 #'                     package = "ExpHunterSuite")
 #' @export
+
 preprocess_gtf <- function(gtf, outdir) {
   gtf_name <- basename(tools::file_path_sans_ext(gtf))
   db_file <- file.path(outdir, paste0(gtf_name, "_txdb.db"))
@@ -36,6 +37,9 @@ preprocess_gtf <- function(gtf, outdir) {
 #' of it.
 #' @param gtf GTF file to process.
 #' @returns A data frame containing GTF file gene annotation.
+#' @importFrom AnnotationDbi saveDb
+#' @importFrom tools file_path_sans_ext
+#' @importFrom rtracklayer import
 #' @export
 
 map_genes <- function(gtf) {
@@ -63,6 +67,7 @@ map_genes <- function(gtf) {
 #' @param sample_id_col Name of sample id column.
 #' @param gene_name_col Name of column where hgnc symbols will be included.
 #' @param hpo_file File containing HPO terms associated to genes.
+#' @importFrom data.table fread setnames
 #' @returns Data frame with new hgnc symbol column and (optionally) HPO terms
 #' associated to symbols.
 #' @export
@@ -71,7 +76,6 @@ map_genes <- function(gtf) {
 
 add_HPO_cols <- function(RES, sample_id_col = 'sampleID', 
                          gene_name_col = 'hgncSymbol', hpo_file = NULL){
-  require(data.table)
   
   filename <- file.path(hpo_file) # Adjusted. Instead of trying to download it
                                   # it finds it locally. Same change as in original
@@ -115,6 +119,7 @@ add_HPO_cols <- function(RES, sample_id_col = 'sampleID',
 #' be in RDS or table format.
 #' @param file Counts table file.
 #' @returns Loaded counts table.
+#' @importFrom data.table fread
 #' @export
 
 get_counts <- function(file) {
@@ -176,18 +181,25 @@ add_base_IDs <- function(col_data) {
 #' and calculates its biological coefficient of variation, adding it to the ODS.
 #' @param ods Outrider DataSet object.
 #' @returns An updated ODS containing estimated BCV.
+#' @importFrom OUTRIDER OutriderDataSet normalizationFactors counts fit theta
+#' @importFrom SummarizedExperiment colData
 #' @export
 
 estimateThetaWithoutAutoCorrect <- function(ods){
   
-  ods1 <- OutriderDataSet(countData=counts(ods), colData=SummarizedExperiment::colData(ods))
+  ods1 <- OUTRIDER::OutriderDataSet(
+                                   countData = OUTRIDER::counts(ods),
+                                   colData = SummarizedExperiment::colData(ods)
+                                   )
   # use rowMeans as expected means
-  normalizationFactors(ods1) <- matrix(rowMeans(counts(ods1)), 
-                                       ncol=ncol(ods1), nrow=nrow(ods1))
-  ods1 <- fit(ods1)
-  theta(ods1)
+  OUTRIDER::normalizationFactors(ods1) <- matrix(
+                                            rowMeans(OUTRIDER::counts(ods1)), 
+                                            ncol=ncol(ods1), nrow=nrow(ods1)
+                                            )
+  ods1 <- OUTRIDER::fit(ods1)
+  OUTRIDER::theta(ods1)
   
-  return(theta(ods1))
+  return(OUTRIDER::theta(ods1))
 }
 
 #' Simple wrapper for OUTRIDER::plotVolcano function. Calls it for specified
@@ -199,6 +211,7 @@ estimateThetaWithoutAutoCorrect <- function(ods){
 #' @param sample Sample to plot.
 #' @returns Volcano plot of aberrantly expressed genes in specified sample
 #' in provided ods.
+#' @importFrom OUTRIDER plotVolcano
 #' @export
 
 AE_Sample_Overview <- function(ods, sample){
@@ -224,6 +237,7 @@ AE_Sample_Overview <- function(ods, sample){
 #' @param gene Gene to plot.
 #' @returns Volcano plots of provided gene expression rank and expected vs
 #' observed counts across all samples.
+#' @importFrom OUTRIDER plotExpressionRank plotExpectedVsObservedCounts
 #' @export
 
 AE_Gene_Overview <- function(gene){
@@ -296,7 +310,7 @@ get_aberrants <- function(df, zScoreCutoff, padjCutoff) {
   return(res)
 }
 
-#' Function to format aberrant
+#' Function to format DROP results
 #' `format_aberrants` takes a data frame and subsets it to columns named
 #' "sampleID", "geneID", "padjust", "type", "zScore" and "altRatio". It then
 #' updates padjust column and takes its negative decimal logarithm, and renames
