@@ -34,10 +34,20 @@ option_list <- list(
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 suppressPackageStartupMessages({
-    library(data.table)
-    library(dplyr)
-    library(BiocParallel)
-    library(SummarizedExperiment) 
+  library(data.table)
+  library(dplyr)
+  library(BiocParallel)
+  library(SummarizedExperiment)
+  library(GenomicFeatures)
+  library(OUTRIDER)
+  library(ggplot2)
+  library(magrittr)
+  library(tools)
+  library(data.table)
+  library(cowplot)
+  library(ggthemes)
+  library(GenomicAlignments)
+  library(tidyr)
 })
 
 register(MulticoreParam(opt$cpu)) # From snakemake@threads, was 30.
@@ -115,23 +125,11 @@ saveRDS(total_counts, 'total_counts.rds')
 
 # ORIGIN: exportCounts.R
 
-suppressPackageStartupMessages({
-    library(data.table)
-    library(SummarizedExperiment)
-})
-
 data.table::fwrite(as.data.table(assay(total_counts), keep.rownames = 'geneID'),
        file = paste0(opt$dataset, "_geneCounts.tsv.gz"),
        quote = FALSE, row.names = FALSE, sep = '\t', compress = 'gzip')
 
 # ORIGIN: filterCounts.R
-
-suppressPackageStartupMessages({
-    library(data.table)
-    library(GenomicFeatures)
-    library(SummarizedExperiment)
-    library(OUTRIDER)
-})
 
 counts <- readRDS(total_counts) # snakemake@input$counts, total_counts.rds.
 ods <- OUTRIDER::OutriderDataSet(counts)
@@ -161,16 +159,6 @@ ods_unfitted <- ods
 saveRDS(ods_unfitted, 'ods_unfitted.rds')
 
 # ORIGIN: runOutrider.R
-
-suppressPackageStartupMessages({
-    library(OUTRIDER)
-    library(SummarizedExperiment)
-    library(ggplot2)
-    library(data.table)
-    library(dplyr)
-    library(magrittr)
-    library(tools)
-})
 
 cfg <- yaml::read_yaml(opt$config_file)
 implementation <- cfg$aberrantExpression$implementation # From snakemake@config$aberrantExpression$implementation ("autoencoder")
@@ -213,14 +201,6 @@ saveRDS(ods, 'ods_fitted.rds') # snakemake@output$ods, 'ods.Rds'.
 
 # ORIGIN: OUTRIDER_Results.R
 
-suppressPackageStartupMessages({
-    library(dplyr)
-    library(data.table)
-    library(ggplot2)
-    library(SummarizedExperiment)
-    library(OUTRIDER)
-})
-
 cfg <- yaml::read_yaml(opt$config_file)
 res <- OUTRIDER::results(ods, padjCutoff = cfg$aberrantExpression$padjCutoff, # snakemake@params$padjCutoff, was '`sm cfg.AE.get("padjCutoff")`'
 			   zScoreCutoff = cfg$aberrantExpression$zScoreCutoff, all = TRUE) # snakemake@params$pzScoreCutoff, zScoreCutoff: '`sm cfg.AE.get("zScoreCutoff")`'
@@ -260,15 +240,6 @@ data.table::fwrite(OUTRIDER_results_table, paste0(opt$dataset, '_OUTRIDER_result
 
 # ORIGIN: OUTRIDER_Summary.R
 
-suppressPackageStartupMessages({
-  library(OUTRIDER)
-  library(SummarizedExperiment)
-  library(ggplot2)
-  library(cowplot)
-  library(data.table)
-  library(dplyr)
-  library(ggthemes)
-})
 cfg <- yaml::read_yaml(opt$config_file)
 
 # used for most plots
@@ -281,10 +252,10 @@ dataset_title <- paste("Dataset:", paste(opt$dataset, names(cfg$geneAnnotation),
 #' ## Visualize
 #' ### Encoding dimension
 OUTRIDER::plotEncDimSearch(ods) +
-            ggplot2::labs(title = dataset_title) +
-            cowplot::theme_cowplot() +
-            cowplot::background_grid() +
-            ggplot2::scale_color_brewer(palette="Dark2")
+          ggplot2::labs(title = dataset_title) +
+          cowplot::theme_cowplot() +
+          cowplot::background_grid() +
+          ggplot2::scale_color_brewer(palette="Dark2")
 
 #' ### Aberrantly expressed genes per sample
 OUTRIDER::plotAberrantPerSample(ods, main = dataset_title, 
@@ -320,7 +291,6 @@ ggplot2::ggplot(bcv_dt, ggplot2::aes(when, BCV)) +
                 ggplot2::labs(x = "Autoencoder correction",
                               y = "Biological coefficient \nof variation",
                               title = dataset_title)
-
 
 #' ## Results
 res <- OUTRIDER_results_table # Venía de snakemake@input$results
@@ -389,17 +359,6 @@ write.table(expTable, file = paste0(opt$dataset,"_outrider.tsv"), row.names = FA
 # bam_stats_files <- list.files(bam_folder, pattern=stringr::str_sub(opt$bam_stats,-6,-1))
 # parsed_bam_stats <- sapply(bam_stats_files, function(x) paste0(bam_folder,x))
 parsed_bam_stats <- opt$bam_stats
-
-suppressPackageStartupMessages({
-  library(OUTRIDER)
-  library(SummarizedExperiment)
-  library(GenomicAlignments)
-  library(ggplot2)
-  library(ggthemes)
-  library(cowplot)
-  library(data.table)
-  library(tidyr)
-})
 
 ods <- readRDS(opt$input_ods)
 has_external <- any(as.logical(SummarizedExperiment::colData(ods)$isExternal))
