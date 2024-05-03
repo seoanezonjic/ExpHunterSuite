@@ -12,14 +12,13 @@
 #' @param cpu Amount of CPUs available for analysis.
 #' @param config_file Configuration file in yaml format.
 #' @param hpo_file Genes and associated HPO terms table. Optional.
-#' @param sample_bam_stats
-#' @param merged_bam_stats merged samples BAM stat file in plain text format.
-#' Generated with samtools idxstats (see Aberrant_Expression workflow to see
-#' exactly how to generate this file).
+#' @param sample_bam_stats Bam stats of each sample.Generated with samtools
+#' idxstats (see Aberrant_Expression workflow for how to generate this file).
 #' @param top_N Top N genes by adjusted p-value to select for OUTRIDER
 #' overview. Default: 10.
 #' @return Aberrant expression object containing all analysis results.
 #' @importFrom data.table fread
+#' @importFrom dplyr left_join
 #' @importFrom BiocParallel register MulticoreParam bplapply
 #' @importFrom utils write.table
 #' @importFrom SummarizedExperiment SummarizedExperiment colData rowData
@@ -28,7 +27,7 @@
 #' findEncodingDim OUTRIDER results plotEncDimSearch plotAberrantPerSample
 #' plotCountCorHeatmap plotCountGeneSampleHeatmap
 #' @importFrom AnnotationDbi loadDb
-#' @importFrom yaml read.yaml
+#' @importFrom yaml read_yaml
 #' @importFrom S4Vectors endoapply
 #' @importFrom ggplot2 labs scale_color_brewer aes geom_boxplot theme_bw
 #' geom_point ylim geom_histogram scale_x_log10 facet_wrap guides guide_legend
@@ -48,17 +47,16 @@ main_aberrant_expression <- function(
 	config_file = NULL,
 	hpo_file = NULL,
 	sample_bam_stats = NULL,
-	merged_bam_stats = NULL,
 	top_N = 10
   ){
-	BiocParallel::register(BiocParallel::MulticoreParam(opt$cpu))
+	BiocParallel::register(BiocParallel::MulticoreParam(cpu))
 	# Read counts
 	sample_anno <- data.table::fread(sample_annotation,
 	                    colClasses = c(RNA_ID = 'character',
 	                    			   DNA_ID = 'character'))
 
-	count_files <- strsplit(opt$count_files, " ")[[1]]
-	local_counts_list <- BiocParallel::bplapply(count_files, get_counts)
+	count_files <- strsplit(count_files, " ")[[1]]
+	local_counts_list <- BiocParallel::bplapply(count_files, get_file_counts)
 	message(paste("read", length(count_files), 'files'))
 	merged_locals <- do.call(cbind, local_counts_list)
 
@@ -87,24 +85,24 @@ main_aberrant_expression <- function(
 	} else {
 	  merged_assays <- merged_locals
 	}
-	assays_table <- cbind(rownames(merged_assays), merged_assays)
-	rownames(assays_table) <- NULL
-	colnames(assays_table)[1] <- "gene_ID"
-	utils::write.table(assays_table, 'total_counts.txt', sep = '\t',
+	merged_counts_table <- cbind(rownames(merged_assays), merged_assays)
+	rownames(merged_counts_table) <- NULL
+	colnames(merged_counts_table)[1] <- "gene_ID"
+	utils::write.table(merged_counts_table, 'total_counts.txt', sep = '\t',
 					   quote = FALSE, row.names = FALSE)
 
 	total_counts <- SummarizedExperiment::SummarizedExperiment(assays=list(
 											   counts=as.matrix(merged_assays)))
 
 	# assign ranges
-	SummarizedExperiment::rowRanges(total_counts) <- readRDS(opt$count_ranges)
+	SummarizedExperiment::rowRanges(total_counts) <- readRDS(count_ranges)
 
 	# Add sample annotation data (colData)
 
-	col_data <- data.table(RNA_ID = as.character(colnames(total_counts)))
+	col_data <- data.table::data.table(RNA_ID = as.character(colnames(total_counts)))
 	col_data <- add_base_IDs(col_data)
 	colnames(sample_anno)[colnames(sample_anno) == "RNA_ID"] <- "BASE_ID"
-	col_data <- left_join(col_data, sample_anno, by = "BASE_ID")
+	col_data <- dplyr::left_join(col_data, sample_anno, by = "BASE_ID")
 	if(nrow(external_anno) > 0)
 	{
 	  col_data[col_data$RNA_ID%in%exCountIDs, ]$EXTERNAL <- "external"
@@ -121,7 +119,7 @@ main_aberrant_expression <- function(
 	data.table::fwrite(data.table::as.data.table(SummarizedExperiment::assay(
 												 total_counts),
 												 keep.rownames = 'geneID'),
-												 file = paste0(opt$dataset,
+												 file = paste0(dataset,
 												 	"_geneCounts.tsv.gz"),
 	        									 quote = FALSE,
 	        									 row.names = FALSE, sep = '\t',
@@ -129,14 +127,14 @@ main_aberrant_expression <- function(
 
 	# ORIGIN: filterCounts.R
 
-	counts <- readRDS(total_counts)
+	counts <- total_counts
 	ods <- OUTRIDER::OutriderDataSet(counts)
 	SummarizedExperiment::colData(ods)$EXTERNAL[
 		is.na(SummarizedExperiment::colData(ods)$EXTERNAL)] <- "no"
-	txdb <- AnnotationDbi::loadDb(opt$anno_database)
+	txdb <- AnnotationDbi::loadDb(anno_database)
 
 	# filter not expressed genes
-	fpkmCutoff <- yaml::read_yaml(file=opt$config_file)$aberrantExpression$fpkmCutoff
+	fpkmCutoff <- yaml::read_yaml(file=config_file)$aberrantExpression$fpkmCutoff
 	ods <- OUTRIDER::filterExpression(ods, gtfFile=txdb, filter=FALSE,
 	                        fpkmCutoff=fpkmCutoff, addExpressedGenes=TRUE)
 
@@ -146,10 +144,10 @@ main_aberrant_expression <- function(
 	# External data check
 	for (i in seq(1, length(SummarizedExperiment::colData(ods)$EXTERNAL))) {
 	  message(i)
-	  if (OUTRIDER::SummarizedExperiment::colData(ods)$EXTERNAL[i]=="no"){
-	    OUTRIDER::SummarizedExperiment::colData(ods)$isExternal[i] <- FALSE
+	  if (SummarizedExperiment::colData(ods)$EXTERNAL[i]=="no"){
+	    SummarizedExperiment::colData(ods)$isExternal[i] <- FALSE
 	  } else {
-	    OUTRIDER::SummarizedExperiment::colData(ods)$isExternal[i] <- TRUE
+	    SummarizedExperiment::colData(ods)$isExternal[i] <- TRUE
 	  }
 	}
 
@@ -159,17 +157,17 @@ main_aberrant_expression <- function(
 
 	# ORIGIN: runOutrider.R
 
-	cfg <- yaml::read_yaml(opt$config_file)
+	cfg <- yaml::read_yaml(config_file)
 	implementation <- cfg$aberrantExpression$implementation
 	mp <- cfg$aberrantExpression$maxTestedDimensionProportion
-	ods <- readRDS(opt$ods_unfitted)
 
 	## subset filtered
 	ods_unfitted <- ods_unfitted[
 					 SummarizedExperiment::mcols(ods_unfitted)$passedFilter, ]
 
 	# add gene ranges to rowData
-	gr <- unlist(S4Vectors::endoapply(rowRanges(ods_unfitted), range))
+	gr <- unlist(S4Vectors::endoapply(SummarizedExperiment::rowRanges(
+										         ods_unfitted), range))
 	if(length(gr) > 0){
 	    rd <- SummarizedExperiment::rowData(ods_unfitted)
 	    SummarizedExperiment::rowRanges(ods_unfitted) <- gr
@@ -194,7 +192,7 @@ main_aberrant_expression <- function(
 											implementation = implementation)
 
 	## fit OUTRIDER
-	ods <- OUTRIDER::OUTRIDER(ods, implementation = implementation)
+	ods <- OUTRIDER::OUTRIDER(ods_unfitted, implementation = implementation)
 	message("outrider fitting finished")
 
 	saveRDS(ods, 'ods_fitted.rds') # snakemake@output$ods, 'ods.Rds'.
@@ -210,14 +208,14 @@ main_aberrant_expression <- function(
 
 	# Save all the results and significant ones
 	OUTRIDER_results_all <- res
-	saveRDS(OUTRIDER_results_all, paste0(opt$dataset
+	saveRDS(OUTRIDER_results_all, paste0(dataset,
 									'_OUTRIDER_results_all.rds'))
 
 	# Subset to significant results
 	res <- res[padjust <= cfg$aberrantExpression$padjCutoff &
 	               abs(zScore) > cfg$aberrantExpression$zScoreCutoff]
 
-	gene_annot_dt <- data.table::fread(opt$gene_mapping_file)
+	gene_annot_dt <- data.table::fread(gene_mapping_file)
 	if(!is.null(gene_annot_dt$gene_name)){
 	  if(grepl('ENSG00', res[1,geneID]) & grepl('ENSG00', gene_annot_dt[1,gene_id])){
 	    res <- merge(res, gene_annot_dt[, .(gene_id, gene_name)],
@@ -226,24 +224,24 @@ main_aberrant_expression <- function(
 	    res <- cbind(res[, .(hgncSymbol)], res[, - 'hgncSymbol'])
 	  }
 	}
-	sa <- data.table::fread(opt$sample_annotation,
+	sa <- data.table::fread(sample_annotation,
 			colClasses = c(RNA_ID = 'character', DNA_ID = 'character'))
 	if(!is.null(sa$HPO_TERMS) & nrow(res) > 0){
 	  if(!all(is.na(sa$HPO_TERMS)) & ! all(sa$HPO_TERMS == '')){
-	    res <- add_HPO_cols(res, hpo_file = opt$hpo_file)
+	    res <- add_HPO_cols(res, hpo_file = hpo_file)
 	  }
 	}
 
 	# Save results
 	OUTRIDER_results_table <- res
 	data.table::fwrite(OUTRIDER_results_table,
-					   paste0(opt$dataset, '_OUTRIDER_results.tsv'),
+					   paste0(dataset, '_OUTRIDER_results.tsv'),
 						      sep = "\t",quote = F) 
 
 	# ORIGIN: OUTRIDER_Summary.R
 
 	# used for most plots
-	dataset_title <- paste("Dataset:", paste(opt$dataset,
+	dataset_title <- paste("Dataset:", paste(dataset,
 							names(cfg$geneAnnotation), sep = '--'))
 
 	OUTRIDER::plotEncDimSearch(ods) +
@@ -252,24 +250,19 @@ main_aberrant_expression <- function(
 	          cowplot::background_grid() +
 	          ggplot2::scale_color_brewer(palette="Dark2")
 
-	#' ### Aberrantly expressed genes per sample
 	OUTRIDER::plotAberrantPerSample(ods, main = dataset_title, 
 	                                padjCutoff = cfg$aberrantExpression$padjCutoff,
 	                                zScoreCutoff = cfg$aberrantExpression$zScoreCutoff)
 
-	#' ### Batch correction
-	#+ countCorHeatmap, fig.height=8, fig.width=8
-	OUTRIDER::plotCountCorHeatmap(ods, normalized = FALSE, colGroups = "isExternal", colColSet = "Dark2",
+	OUTRIDER::plotCountCorHeatmap(ods, normalized = FALSE, colGroups = "EXTERNAL", colColSet = "Dark2",
 	                              main = paste0('Raw Counts (', dataset_title, ')'))
-	OUTRIDER::plotCountCorHeatmap(ods, normalized = TRUE, colGroups = "isExternal", colColSet = "Dark2",
+	OUTRIDER::plotCountCorHeatmap(ods, normalized = TRUE, colGroups = "EXTERNAL", colColSet = "Dark2",
 	                              main = paste0('Normalized Counts (', dataset_title, ')'))
 
-	#' ### Expression by gene per sample
-	#+ geneSampleHeatmap, fig.height=12, fig.width=8
-	OUTRIDER::plotCountGeneSampleHeatmap(ods, normalized = FALSE, nGenes = 50, colGroups = "isExternal", colColSet = "Dark2",
+	OUTRIDER::plotCountGeneSampleHeatmap(ods, normalized = FALSE, nGenes = 50, colGroups = "EXTERNAL", colColSet = "Dark2",
 	                                     main = paste0('Raw Counts (', dataset_title, ')'),
 	                                     bcvQuantile = .95, show_names = 'row')
-	OUTRIDER::plotCountGeneSampleHeatmap(ods, normalized = TRUE, nGenes = 50, colGroups = "isExternal", colColSet = "Dark2",
+	OUTRIDER::plotCountGeneSampleHeatmap(ods, normalized = TRUE, nGenes = 50, colGroups = "EXTERNAL", colColSet = "Dark2",
 	                                     main = paste0('Normalized Counts (', dataset_title,')'),
 	                                     bcvQuantile = .95, show_names = 'row')
 
@@ -279,7 +272,6 @@ main_aberrant_expression <- function(
 	bcv_dt <- rbind(before, after)
 
 	# boxplot of BCV Before and After Autoencoder
-	#+ BCV, fig.height=5, fig.width=6
 	ggplot2::ggplot(bcv_dt, ggplot2::aes(when, BCV)) +
 	                ggplot2::geom_boxplot() +
 	                ggplot2::theme_bw(base_size = 14) +
@@ -287,16 +279,9 @@ main_aberrant_expression <- function(
 	                              y = "Biological coefficient \nof variation",
 	                              title = dataset_title)
 
-	#' ## Results
 	res <- OUTRIDER_results_table # Venía de snakemake@input$results
 
 	## This block looks more of a report than anything
-	#' Total number of expression outliers: `r nrow(res)`
-	#' Samples with at least one outlier gene: `r res[, uniqueN(sampleID)]`  
-
-	#'
-	#' ### Aberrant samples
-	#' An aberrant sample is one that has more than 0.1% of the expressed genes called as outliers.
 	if (nrow(res) > 0) {
 	  ab_table <- res[AberrantBySample > nrow(ods)/1000, .("Outlier genes" = .N), by = .(sampleID)] %>% unique
 	  if (nrow(ab_table) > 0) {
@@ -311,214 +296,203 @@ main_aberrant_expression <- function(
 
 	# ORIGIN: mergeBamStats.R. Depends on bamStats, bash script.
 
-	sa <- read.table(file = opt$sample_annotation, sep = '\t', header = TRUE) # es un data frame
-	bams_folder <- dirname(opt$input_bams)
+	sa <- read.table(file = sample_annotation, sep = '\t', header = TRUE) # es un data frame
+	bams_folder <- dirname(sample_bam_stats)
 	bams <- list.files(bams_folder, pattern=".txt", full.names = TRUE)
-	expTable <- data.frame("sampleID" = rep(NA, length(bams)), "record_count" = NA)
+	bam_coverage <- data.frame("sampleID" = rep(NA, length(bams)), "record_count" = NA)
 
 	for (i in 1:length(bams)) {
-	    expTable[i,] <- read.table(bams[i])
+	    bam_coverage[i,] <- read.table(bams[i])
 	}
 
-	expTable$record_count <- as.numeric(expTable$record_count)
-	write.table(expTable, file = paste0(opt$dataset,"_outrider.tsv"), row.names = FALSE, sep = "\t")
+	bam_coverage$record_count <- as.numeric(bam_coverage$record_count)
+	write.table(bam_coverage, file = paste0(dataset,"_outrider.tsv"), row.names = FALSE, sep = "\t")
 
 	# ORIGIN: counting_Summary.R
 
 	# Old, was useful when multiple bam_stats files were loaded. Leaving it here just in case.
-	# bam_folder <- stringr::str_sub(opt$bam_stats,1,-6)
-	# bam_stats_files <- list.files(bam_folder, pattern=stringr::str_sub(opt$bam_stats,-6,-1))
+	# bam_folder <- stringr::str_sub(bam_stats,1,-6)
+	# bam_stats_files <- list.files(bam_folder, pattern=stringr::str_sub(bam_stats,-6,-1))
 	# parsed_bam_stats <- sapply(bam_stats_files, function(x) paste0(bam_folder,x))
-	parsed_bam_stats <- opt$bam_stats
 
-	ods <- readRDS(opt$input_ods)
 	has_external <- any(as.logical(SummarizedExperiment::colData(ods)$isExternal))
 	cnts_mtx_local <- OUTRIDER::counts(ods, normalized = F)[, !as.logical(ods@colData$isExternal)]
 	cnts_mtx <- OUTRIDER::counts(ods, normalized = F)
 
+	rownames(bam_coverage) <- bam_coverage$sampleID
+	coverage_df <- data.frame(sampleID = colnames(ods),
+	                        read_count = colSums(cnts_mtx))
+	coverage_df <- merge(bam_coverage, coverage_df, by = "sampleID", sort = FALSE)
+	# read count
+	coverage_dt <- data.table::data.table(coverage_df)
+	data.table::setorder(coverage_dt, read_count)
+	coverage_dt[, count_rank := .I]
+	# ratio
+	coverage_dt[, counted_frac := read_count/record_count]
+	data.table::setorder(coverage_dt, counted_frac)
+	coverage_dt[, frac_rank := .I]
 
-	#' ## Number of samples:  
-	#' Local: `r sum(!as.logical(ods@colData$isExternal))`  
-	#' External: `r sum(as.logical(ods@colData$isExternal))`  
-	#' 
-	#' # Count Quality Control
-	#' 
-	#' Compare number of records vs. read counts  
-	#' The `Obtained Read Count Ratio` plot does not include external counts
-	#' because there are no raw reads to be counted.
-	#' 
-	  bam_coverage <- data.frame(data.table::fread(parsed_bam_stats))
-	  rownames(bam_coverage) <- bam_coverage$sampleID
-	  coverage_df <- data.frame(sampleID = colnames(ods),
-	                            read_count = colSums(cnts_mtx))
-	  coverage_df <- merge(bam_coverage, coverage_df, by = "sampleID", sort = FALSE)
-	  # read count
-	  coverage_dt <- data.table::data.table(coverage_df)
-	  data.table::setorder(coverage_dt, read_count)
-	  coverage_dt[, count_rank := .I]
-	  # ratio
-	  coverage_dt[, counted_frac := read_count/record_count]
-	  data.table::setorder(coverage_dt, counted_frac)
-	  coverage_dt[, frac_rank := .I]
+	# size factors 
+	ods <- OUTRIDER::estimateSizeFactors(ods)
+	local_size_factors <- OUTRIDER::sizeFactors(ods)[names(OUTRIDER::sizeFactors(ods)) %in% rownames(bam_coverage)]
+	coverage_dt[, size_factors := local_size_factors]
+	data.table::setorder(coverage_dt, size_factors)
+	coverage_dt[, sf_rank := 1:.N]
 
-	  # size factors 
-	  ods <- OUTRIDER::estimateSizeFactors(ods)
-	  local_size_factors <- OUTRIDER::sizeFactors(ods)[names(OUTRIDER::sizeFactors(ods)) %in% rownames(bam_coverage)]
-	  coverage_dt[, size_factors := local_size_factors]
-	  data.bale::setorder(coverage_dt, size_factors)
-	  coverage_dt[, sf_rank := 1:.N]
+	### @alvaro This block introduces the concept of sample rank. It seems to be
+	### the order by which the samples are sorted according to read counts,
+	### read count ratio and size factors. Need to properly understand the concept
+	### of size factor. Plots should be improved to include sample IDs.
 
-	  ### @alvaro This block introduces the concept of sample rank. It seems to be
-	  ### the order by which the samples are sorted according to read counts,
-	  ### read count ratio and size factors. Need to properly understand the concept
-	  ### of size factor. Plots should be improved to include sample IDs.
+	p_depth <- ggplot2::ggplot(coverage_dt, ggplot2::aes(x = count_rank, y = read_count)) +
+	ggplot2::geom_point(size = 3, show.legend = has_external) +
+	cowplot::theme_cowplot() +
+	cowplot::background_grid() +
+	ggplot2::labs(title = "Read Counts", x="Sample Rank", y = "Reads Counted") +
+	ggplot2::ylim(c(0,NA)) +
+	ggplot2::scale_color_brewer(palette="Dark2")
 
-	  p_depth <- ggplot2::ggplot(coverage_dt, ggplot2::aes(x = count_rank, y = read_count)) +
-	    ggplot2::geom_point(size = 3, show.legend = has_external) +
-	    cowplot::theme_cowplot() +
-	    cowplot::background_grid() +
-	    ggplot2::labs(title = "Read Counts", x="Sample Rank", y = "Reads Counted") +
-	    ggplot2::ylim(c(0,NA)) +
-	    ggplot2::scale_color_brewer(palette="Dark2")
+	p_frac <- ggplot2::ggplot(coverage_dt, ggplot2::aes(x = frac_rank, y = counted_frac)) +
+	ggplot2::geom_point(size = 3, show.legend = has_external) +
+	cowplot::theme_cowplot() +
+	cowplot::background_grid() +
+	ggplot2::labs(title = "Read Count Ratio", x = "Sample Rank", y = "Percent Reads Counted") +
+	ggplot2::ylim(c(0,NA)) +
+	ggplot2::scale_color_brewer(palette="Dark2")
 
-	  p_frac <- ggplot2::ggplot(coverage_dt, ggplot2::aes(x = frac_rank, y = counted_frac)) +
-	    ggplot2::geom_point(size = 3, show.legend = has_external) +
-	    cowplot::theme_cowplot() +
-	    cowplot::background_grid() +
-	    ggplot2::labs(title = "Read Count Ratio", x = "Sample Rank", y = "Percent Reads Counted") +
-	    ggplot2::ylim(c(0,NA)) +
-	    ggplot2::scale_color_brewer(palette="Dark2")
+	#+ QC, fig.height=6, fig.width=12
+	cowplot::plot_grid(p_depth, p_frac) 
 
-	  #+ QC, fig.height=6, fig.width=12
-	  cowplot::plot_grid(p_depth, p_frac) 
+	p_sf <- ggplot2::ggplot(coverage_dt, ggplot2::aes(sf_rank, local_size_factors)) +
+	ggplot2::geom_point(size = 3, show.legend = has_external) +
+	ggplot2::ylim(c(0,NA)) +
+	cowplot::theme_cowplot() +
+	cowplot::background_grid() +
+	ggplot2::labs(title = 'Size Factors', x = 'Sample Rank', y = 'Size Factors') +
+	ggplot2::scale_color_brewer(palette="Dark2")
 
-	  p_sf <- ggplot2::ggplot(coverage_dt, ggplot2::aes(sf_rank, local_size_factors)) +
-	    ggplot2::geom_point(size = 3, show.legend = has_external) +
-	    ggplot2::ylim(c(0,NA)) +
-	    cowplot::theme_cowplot() +
-	    cowplot::background_grid() +
-	    ggplot2::labs(title = 'Size Factors', x = 'Sample Rank', y = 'Size Factors') +
-	    ggplot2::scale_color_brewer(palette="Dark2")
+	p_sf_cov <- ggplot2::ggplot(coverage_dt, ggplot2::aes(read_count, size_factors)) +
+	ggplot2::geom_point(size = 3, show.legend = has_external) +
+	ggplot2::ylim(c(0,NA)) +
+	cowplot::theme_cowplot() +
+	cowplot::background_grid() +
+	ggplot2::labs(title = 'Size Factors vs. Read Counts',
+	     x = 'Reads Counted', y = 'Size Factors') +
+	ggplot2::scale_color_brewer(palette="Dark2")
 
-	  p_sf_cov <- ggplot2::ggplot(coverage_dt, ggplot2::aes(read_count, size_factors)) +
-	    ggplot2::geom_point(size = 3, show.legend = has_external) +
-	    ggplot2::ylim(c(0,NA)) +
-	    cowplot::theme_cowplot() +
-	    cowplot::background_grid() +
-	    ggplot2::labs(title = 'Size Factors vs. Read Counts',
-	         x = 'Reads Counted', y = 'Size Factors') +
-	    ggplot2::scale_color_brewer(palette="Dark2")
+	cowplot::plot_grid(p_sf, p_sf_cov) 
 
-	  cowplot::plot_grid(p_sf, p_sf_cov) 
+	quant <- .95
 
-	  quant <- .95
+	if(has_external){
+	  filter_mtx <- list(
+	    local = cnts_mtx_local,
+	    all = cnts_mtx,
+	    `passed FPKM` = cnts_mtx[SummarizedExperiment::rowData(ods)$passedFilter,],
+	    `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 1, ],
+	    `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 10, ]
+	  )
+	  filter_dt <- lapply(names(filter_mtx), function(filter_name) {
+	    mtx <- filter_mtx[[filter_name]]
+	    data.table::data.table(gene_ID = rownames(mtx), median_counts = rowMeans(mtx), filter = filter_name)
+	  }) %>% rbindlist
+	  filter_dt[, filter := factor(filter, levels = c('local', 'all', 'passed FPKM', 'min 1 read', 'min 10 reads'))]
+	} else {
+	  filter_mtx <- list(
+	    all = cnts_mtx,
+	    `passed FPKM` = cnts_mtx[SummarizedExperiment::rowData(ods)$passedFilter,],
+	    `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 1, ],
+	    `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 10, ]
+	  )
+	  filter_dt <- lapply(names(filter_mtx), function(filter_name) {
+	    mtx <- filter_mtx[[filter_name]]
+	    data.table::data.table(gene_ID = rownames(mtx), median_counts = rowMeans(mtx), filter = filter_name)
+	  }) %>% rbindlist
+	  filter_dt[, filter := factor(filter, levels = c('all', 'passed FPKM', 'min 1 read', 'min 10 reads'))]
+	}
 
-	  if(has_external){
-	      filter_mtx <- list(
-	        local = cnts_mtx_local,
-	        all = cnts_mtx,
-	        `passed FPKM` = cnts_mtx[SummarizedExperiment::rowData(ods)$passedFilter,],
-	        `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 1, ],
-	        `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 10, ]
-	      )
-	      filter_dt <- lapply(names(filter_mtx), function(filter_name) {
-	        mtx <- filter_mtx[[filter_name]]
-	        data.table::data.table(gene_ID = rownames(mtx), median_counts = rowMeans(mtx), filter = filter_name)
-	      }) %>% rbindlist
-	      filter_dt[, filter := factor(filter, levels = c('local', 'all', 'passed FPKM', 'min 1 read', 'min 10 reads'))]
-	  } else {
-	      filter_mtx <- list(
-	        all = cnts_mtx,
-	        `passed FPKM` = cnts_mtx[SummarizedExperiment::rowData(ods)$passedFilter,],
-	        `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 1, ],
-	        `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 10, ]
-	      )
-	      filter_dt <- lapply(names(filter_mtx), function(filter_name) {
-	        mtx <- filter_mtx[[filter_name]]
-	        data.table::data.table(gene_ID = rownames(mtx), median_counts = rowMeans(mtx), filter = filter_name)
-	      }) %>% rbindlist
-	      filter_dt[, filter := factor(filter, levels = c('all', 'passed FPKM', 'min 1 read', 'min 10 reads'))]
-	  }
+	binwidth <- .2
+	p_hist <- ggplot2::ggplot(filter_dt, ggplot2::aes(x = median_counts, fill = filter)) +
+	ggplot2::geom_histogram(binwidth = binwidth) +
+	ggplot2::scale_x_log10() +
+	ggplot2::facet_wrap(.~filter) +
+	ggplot2::labs(x = "Mean counts per gene", y = "Frequency", title = 'Mean Count Distribution') +
+	ggplot2::guides(col = ggplot2::guide_legend(title = NULL)) +
+	ggplot2::scale_fill_brewer(palette = "Paired") +
+	cowplot::theme_cowplot() +
+	ggplot2::theme(legend.position = "none")
 
-	  binwidth <- .2
-	  p_hist <- ggplot2::ggplot(filter_dt, ggplot2::aes(x = median_counts, fill = filter)) +
-	    ggplot2::geom_histogram(binwidth = binwidth) +
-	    ggplot2::scale_x_log10() +
-	    ggplot2::facet_wrap(.~filter) +
-	    ggplot2::labs(x = "Mean counts per gene", y = "Frequency", title = 'Mean Count Distribution') +
-	    ggplot2::guides(col = ggplot2::guide_legend(title = NULL)) +
-	    ggplot2::scale_fill_brewer(palette = "Paired") +
-	    cowplot::theme_cowplot() +
-	    ggplot2::theme(legend.position = "none")
+	p_dens <- ggplot2::ggplot(filter_dt, ggplot2::aes(x = median_counts, col = filter)) +
+	ggplot2::geom_density(ggplot2::aes(y=binwidth * ..count..), size = 1.2) +
+	ggplot2::scale_x_log10() +
+	ggplot2::labs(x = "Mean counts per gene", y = "Frequency") +
+	ggplot2::guides(col = ggplot2::guide_legend(title = NULL)) +
+	ggplot2::scale_color_brewer(palette = "Paired") +
+	cowplot::theme_cowplot() +
+	ggplot2::theme(legend.position = "top",
+	      legend.justification="center",
+	      legend.background = ggplot2::element_rect(color = NA))
 
-	  p_dens <- ggplot2::ggplot(filter_dt, ggplot2::aes(x = median_counts, col = filter)) +
-	    ggplot2::geom_density(ggplot2::aes(y=binwidth * ..count..), size = 1.2) +
-	    ggplot2::scale_x_log10() +
-	    ggplot2::labs(x = "Mean counts per gene", y = "Frequency") +
-	    ggplot2::guides(col = ggplot2::guide_legend(title = NULL)) +
-	    ggplot2::scale_color_brewer(palette = "Paired") +
-	    cowplot::theme_cowplot() +
-	    ggplot2::theme(legend.position = "top",
-	          legend.justification="center",
-	          legend.background = ggplot2::element_rect(color = NA))
+	cowplot::plot_grid(p_hist, p_dens)
 
-	  #+ meanCounts, fig.height=6, fig.width=12
-	  cowplot::plot_grid(p_hist, p_dens)
+	exp_genes_cols <- c(Rank = "expressedGenesRank",`Expressed\ngenes` = "expressedGenes", 
+	                  `Union of\nexpressed genes` = "unionExpressedGenes", 
+	                  `Intersection of\nexpressed genes` = "intersectionExpressedGenes", 
+	                  `Genes passed\nfiltering` = "passedFilterGenes")
 
-	  #' ### Expressed Genes
-	  exp_genes_cols <- c(Rank = "expressedGenesRank",`Expressed\ngenes` = "expressedGenes", 
-	                      `Union of\nexpressed genes` = "unionExpressedGenes", 
-	                      `Intersection of\nexpressed genes` = "intersectionExpressedGenes", 
-	                      `Genes passed\nfiltering` = "passedFilterGenes")
+	expressed_genes <- data.table::as.data.table(SummarizedExperiment::colData(ods)[, exp_genes_cols])
+	colnames(expressed_genes) <- names(exp_genes_cols)
 
-	  expressed_genes <- data.table::as.data.table(SummarizedExperiment::colData(ods)[, exp_genes_cols])
-	  colnames(expressed_genes) <- names(exp_genes_cols)
+	#+ expressedGenes, fig.height=6, fig.width=8
+	OUTRIDER::plotExpressedGenes(ods) + 
+	cowplot::theme_cowplot() +
+	cowplot::background_grid(major = "y") +
+	ggplot2::geom_point(data = data.table::melt(expressed_genes, id.vars = c("Rank")),
+	           ggplot2::aes(x = Rank, y = value, col = variable), show.legend = has_external)
 
-	  #+ expressedGenes, fig.height=6, fig.width=8
-	  OUTRIDER::plotExpressedGenes(ods) + 
-	    cowplot::theme_cowplot() +
-	    cowplot::background_grid(major = "y") +
-	    ggplot2::geom_point(data = data.table::melt(expressed_genes, id.vars = c("Rank")),
-	               ggplot2::aes(x = Rank, y = value, col = variable), show.legend = has_external)
+	if(has_external){
+	  DT::datatable(expressed_genes[order(Rank)], rownames = F)
+	} else{
+	  DT::datatable(expressed_genes[order(Rank), -"Is External"], rownames = F)
+	}
 
-	  if(has_external){
-	      DT::datatable(expressed_genes[order(Rank)], rownames = F)
-	  } else{
-	      DT::datatable(expressed_genes[order(Rank), -"Is External"], rownames = F)
-	  }
-
-	  write.table(expressed_genes, paste0(opt$dataset, "_expressed_genes.tsv"), sep="\t", row.names= F)
+	write.table(expressed_genes, paste0(dataset, "_expressed_genes.tsv"), sep="\t", row.names= F)
 
 	# ORIGIN: OUTRIDER_Overview.R
 
-	annotations <- names(cfg$geneAnnotation)
-
-	#' Choose genes and samples to plot from significant table.
-
 	sortedRes <- OUTRIDER_results_table[order(OUTRIDER_results_table$padj_rank), ]
 	sigSamples <- unique(sortedRes$sampleID)
-	sigGenes <- head(unique(sortedRes$geneID), opt$top_N)
+	sigGenes <- head(unique(sortedRes$geneID), top_N)
 
-	#' ### Volcano plot
-	#' setting basePlot = FALSE creates an interactive plot
-	#' that allows finding the gene(s) of interest
-
-	BiocParallel::bplapply(sigSamples,AE_Sample_Overview)
-
-	#' ### Gene expression plot (normalized counts)
-	#' ### Expected vs observed counts
-	BiocParallel::bplapply(sigGenes,AE_Gene_Overview)
+	if(length(sigSamples > 1)) {
+		BiocParallel::bplapply(sigSamples, AE_Sample_Overview, ods = ods,
+							   dataset = dataset, cfg = cfg)
+	}
+	
+	if(length(sigGenes > 1)) {
+		BiocParallel::bplapply(sigGenes, AE_Gene_Overview, ods = ods,
+							   dataset = dataset, cfg = cfg)
+	}
 
 	# ORIGIN: format_for_report.R, custom script
 
-	zScoreCutoff <- cfg$aberrantExpression$zScoreCutoff
-	padjCutoff <- cfg$aberrantExpression$padjCutoff
-
 	data <- processed_vs_imported(OUTRIDER_results_all)
-	aberrants <- lapply(data, get_aberrants)
+	aberrants <- lapply(data, get_aberrants,
+		zScoreCutoff = cfg$aberrantExpression$zScoreCutoff,
+		padjCutoff = cfg$aberrantExpression$padjCutoff)
 	formatted <- lapply(aberrants, format_aberrants)
 
 	write.table(formatted$processed, "processed_AE_results.tsv", quote = FALSE, row.names = FALSE)
 	write.table(formatted$imported, "imported_AE_results.tsv", quote = FALSE, row.names = FALSE)
+
+	final_results <- list()
+	final_results$total_counts <- total_counts
+	final_results$ods_unfitted <- ods_unfitted
+	final_results$ods <- ods
+	final_results$OUTRIDER_results_all <- OUTRIDER_results_all
+	final_results$OUTRIDER_results_table <- OUTRIDER_results_table
+	final_results$bam_coverage <- bam_coverage
+	final_results$formatted <- formatted
+	return(final_results)
 
 }
