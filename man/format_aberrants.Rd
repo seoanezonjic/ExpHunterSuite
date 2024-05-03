@@ -8,10 +8,10 @@
 updates padjust column and takes its negative decimal logarithm, and renames
 it to p_padjust (as in -log(padjust), as in pH meaning -log\link{H}).}
 \usage{
-format_aberrants(df)
+format_aberrants(input_table)
 }
 \arguments{
-\item{df}{A DROP results data frame.}
+\item{input_table}{A DROP results data frame or data table.}
 }
 \value{
 A subset of the data frame containing only "sampleID", "geneID",
