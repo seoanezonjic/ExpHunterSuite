@@ -114,5 +114,12 @@ Imports:
     annotatr (>= 1.28.0),
     ggridges (>= 0.5.4),
     FactoInvestigate (>= 1.8),
-    FactoMineR (>= 2.9)
+    FactoMineR (>= 2.9),
+    cowplot (>= 1.1.1),
+    S4Vectors (>= 0.40.0),
+    OUTRIDER (>= 1.20.0),
+    MatrixGenerics (>= 1.14.0),
+    GenomeInfoDb (>= 1.38.0),
+    yaml (>= 2.3.7),
+    rtracklayer (>= 1.62.0)
 Config/testthat/edition: 3
