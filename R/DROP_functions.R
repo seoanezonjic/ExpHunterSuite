@@ -7,28 +7,24 @@
 #' @importFrom AnnotationDbi saveDb
 #' @param gtf GTF file to process.
 #' @param outdir Processed files directory.
+#' @returns A list containing all three generated objects.
 #' @examples
 #' gtf <- system.file("extData/testdata", "gencode.v45.toy.annotation.gtf",
 #'                     package = "ExpHunterSuite")
 #' @export
 
-preprocess_gtf <- function(gtf, outdir) {
-  gtf_name <- basename(tools::file_path_sans_ext(gtf))
-  db_file <- file.path(outdir, paste0(gtf_name, "_txdb.db"))
+preprocess_gtf <- function(gtf) {
   message("Generating TxDb from provided GTF file")
   txdb <- GenomicFeatures::makeTxDbFromGFF(gtf) # Adjusted (came from snakemake)
   txdb <- GenomeInfoDb::keepStandardChromosomes(txdb)
-  AnnotationDbi::saveDb(txdb, db_file)
   message("Calculating count ranges")
-  cr_file <- file.path(outdir, paste0(gtf_name, "_count_ranges.rds"))
   count_ranges <- GenomicFeatures::exonsBy(txdb, by = "gene")
-  saveRDS(count_ranges, cr_file)
   message("Creating gene-name mapping file")
-  map_file <- file.path(outdir, paste0(gtf_name, "_gene_name_mapping.tsv"))
   gene_name_mapping <- map_genes(gtf)
-  write.table(gene_name_mapping, file = map_file, sep = "\t", quote = FALSE,
-              row.names = FALSE)
-  return("GTF processed successfully!")
+  preprocessing_results <- list(txdb = txdb,
+                             count_ranges = count_ranges,
+                             gene_name_mapping = gene_name_mapping)
+  return(preprocessing_results)
 }
 
 #' Create gene name mapping file
@@ -115,14 +111,14 @@ add_HPO_cols <- function(RES, sample_id_col = 'sampleID',
 
 #' Get counts table from rds file or table
 #' 
-#' `get_counts` takes a file from which to extract a counts table. File may
+#' `get_file_counts` takes a file from which to extract a counts table. File may
 #' be in RDS or table format.
 #' @param file Counts table file.
 #' @returns Loaded counts table.
 #' @importFrom data.table fread
 #' @export
 
-get_counts <- function(file) {
+get_file_counts <- function(file) {
   print(file)
     if(grepl('rds$', file))
       counts <- assay(readRDS(file))
@@ -214,8 +210,8 @@ estimateThetaWithoutAutoCorrect <- function(ods){
 #' @importFrom OUTRIDER plotVolcano
 #' @export
 
-AE_Sample_Overview <- function(ods, sample){
-  pdf(file=paste(sample, opt$dataset,"OUTRIDER.pdf",sep="_"))
+AE_Sample_Overview <- function(sample, ods, dataset, cfg){
+  pdf(file=paste(sample, dataset,"OUTRIDER.pdf",sep="_"))
   plot <- OUTRIDER::plotVolcano(ods, sample, basePlot = TRUE,
                       zScoreCutoff = cfg$aberrantExpression$zScoreCutoff,
                       padjCutoff = cfg$aberrantExpression$padjCutoff)
@@ -240,8 +236,8 @@ AE_Sample_Overview <- function(ods, sample){
 #' @importFrom OUTRIDER plotExpressionRank plotExpectedVsObservedCounts
 #' @export
 
-AE_Gene_Overview <- function(gene){
-  pdf(file=paste(gene, opt$dataset,"OUTRIDER.pdf",sep="_"))
+AE_Gene_Overview <- function(gene, ods, dataset, cfg){
+  pdf(file=paste(gene, dataset,"OUTRIDER.pdf",sep="_"))
   expPlot <- OUTRIDER::plotExpressionRank(ods, gene, basePlot = TRUE,
                       zScoreCutoff = cfg$aberrantExpression$zScoreCutoff,
                       padjCutoff = cfg$aberrantExpression$padjCutoff)
@@ -315,20 +311,25 @@ get_aberrants <- function(df, zScoreCutoff, padjCutoff) {
 #' "sampleID", "geneID", "padjust", "type", "zScore" and "altRatio". It then
 #' updates padjust column and takes its negative decimal logarithm, and renames
 #' it to p_padjust (as in -log(padjust), as in pH meaning -log[H]).
-#' @param df A DROP results data frame.
+#' @param input_table A DROP results data frame or data table.
 #' @returns A subset of the data frame containing only "sampleID", "geneID",
 #' "p_padjust" (calculated from "padjust" column), "type", "zScore" and
 #' "altRatio" columns, if they existed in the input data frame.
+#' @imports data.table
 
-format_aberrants <- function(df) {
-  if(is.null(df)) {
+format_aberrants <- function(input_table) {
+  if(is.null(input_table)) {
     warning("NULL input. This can be due to missing module results or no
       aberrants found.")
     return(NULL)
   }
   names <- c("sampleID", "geneID", "padjust", "type", "zScore", "altRatio")
-  matches <- colnames(df) %in% names
-  res <- df[, matches]
+  matches <- colnames(input_table) %in% names
+  if("data_table" %in% class(test)){
+    res <- input_table[, matches, with = FALSE]
+  } else {
+    res <- input_table[, matches]
+  }
   res$padjust <- -log(res$padjust)
   colnames(res)[colnames(res)=="padjust"] <- "p_padjust"
   return(res)
