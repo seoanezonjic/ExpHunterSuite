@@ -5,12 +5,12 @@
 \title{Simple wrapper for OUTRIDER::plotVolcano function. Calls it for specified
 sample in input Outrider DataSet (ods)}
 \usage{
-AE_Sample_Overview(ods, sample)
+AE_Sample_Overview(sample, ods, dataset, cfg)
 }
 \arguments{
-\item{ods}{Outrider DataSet object.}
-
 \item{sample}{Sample to plot.}
+
+\item{ods}{Outrider DataSet object.}
 }
 \value{
 Volcano plot of aberrantly expressed genes in specified sample

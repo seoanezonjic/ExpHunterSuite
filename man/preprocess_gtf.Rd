@@ -4,12 +4,15 @@
 \alias{preprocess_gtf}
 \title{Preprocess GTF for DROP analysis}
 \usage{
-preprocess_gtf(gtf, outdir)
+preprocess_gtf(gtf)
 }
 \arguments{
 \item{gtf}{GTF file to process.}
 
 \item{outdir}{Processed files directory.}
+}
+\value{
+A list containing all three generated objects.
 }
 \description{
 \code{preprocess_gtf} takes a GTF file and a directory path. It outputs a txdb,

@@ -6,7 +6,7 @@
 plotExpectedVsObservedCounts functions. Calls them for specified
 genes in input Outrider DataSet (ods)}
 \usage{
-AE_Gene_Overview(gene)
+AE_Gene_Overview(gene, ods, dataset, cfg)
 }
 \arguments{
 \item{gene}{Gene to plot.}
