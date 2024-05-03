@@ -315,7 +315,7 @@ get_aberrants <- function(df, zScoreCutoff, padjCutoff) {
 #' @returns A subset of the data frame containing only "sampleID", "geneID",
 #' "p_padjust" (calculated from "padjust" column), "type", "zScore" and
 #' "altRatio" columns, if they existed in the input data frame.
-#' @imports data.table
+#' @import data.table
 
 format_aberrants <- function(input_table) {
   if(is.null(input_table)) {
