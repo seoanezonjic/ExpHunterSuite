@@ -30,6 +30,12 @@ option_list <- list(
   optparse::make_option(c("--max_tested_dimension_proportion"), type="numeric", default=3,
     help="Quotient by which to divide the number of samples to calculate
           maximum value for encoding dimension."),
+  optparse::make_option(c("--p_adj_cutoff"), type="numeric", default=NULL,
+    help="adjusted P-value to use as cutoff to mark a gene as
+          aberrantly expressed."),
+  optparse::make_option(c("--z_score_cutoff"), type="numeric", default=NULL,
+    help="z score value to use as cutoff to mark a gene as
+          aberrantly expressed."),
   optparse::make_option(c("-f", "--hpo_file"), type="character", default=NULL,
     help="Genes and associated HPO terms in compressed tsv format."),
   optparse::make_option(c("-b", "--sample_bam_stats"), type="character", default=NULL,
@@ -51,6 +57,8 @@ final_results <- main_abgenes_Hunter(
   fpkm_cutoff = opt$fpkm_cutoff,
   implementation = opt$implementation,
   max_dim_proportion = opt$max_tested_dimension_proportion,
+  p_adj_cutoff = opt$p_adj_cutoff,
+  z_score_cutoff = opt$z_score_cutoff,
   hpo_file = opt$hpo_file,
   sample_bam_stats = opt$sample_bam_stats,
   top_N = opt$top_N)
