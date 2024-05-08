@@ -419,7 +419,7 @@ filter_counts <- function(counts, txdb, fpkm_cutoff) {
   return(ods)
 }
 
-runOutrider <- function(ods_unfitted, implementation, max_dim_proportion) {
+run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
   ods_unfitted <- ods_unfitted[
            SummarizedExperiment::mcols(ods_unfitted)$passedFilter, ]
 
@@ -450,3 +450,30 @@ runOutrider <- function(ods_unfitted, implementation, max_dim_proportion) {
   message("outrider fitting finished")
   return(ods)   
 }
+
+get_ods_results <- function(ods, p_adj_cutoff, z_score_cutoff,
+                 gene_mapping_file, sample_annotation) {
+    res <- OUTRIDER::results(ods,
+         padjCutoff = p_adj_cutoff,
+         zScoreCutoff = z_score_cutoff, all = TRUE)
+    res[, foldChange := round(2^l2fc, 2)] 
+    OUTRIDER_results_all <- res
+    res <- res[padjust <= p_adj_cutoff &
+                   abs(zScore) > z_score_cutoff]
+    gene_annot_dt <- data.table::fread(gene_mapping_file)
+    if(!is.null(gene_annot_dt$gene_name)){
+      if(grepl('ENSG00', res[1,geneID]) & grepl('ENSG00', gene_annot_dt[1,gene_id])){
+        res <- merge(res, gene_annot_dt[, .(gene_id, gene_name)],
+                     by.x = 'geneID', by.y = 'gene_id', sort = FALSE, all.x = TRUE)
+        data.table::setnames(res, 'gene_name', 'hgncSymbol')
+        res <- cbind(res[, .(hgncSymbol)], res[, - 'hgncSymbol'])
+      }
+    }
+    if(!is.null(sample_annotation$HPO_TERMS) & nrow(res) > 0){
+      if(!all(is.na(sample_annotation$HPO_TERMS)) & ! all(sa$HPO_TERMS == '')){
+        res <- add_HPO_cols(res, hpo_file = hpo_file)
+      }
+    }
+    return(list(all = OUTRIDER_results_all,
+          Otable = res))
+  }
