@@ -450,4 +450,3 @@ runOutrider <- function(unfitted_ods, implementation, max_dim_proportion) {
   message("outrider fitting finished")
   return(ods)   
 }
- 
