@@ -23,8 +23,13 @@ option_list <- list(
     help="Dataset name."),
   optparse::make_option(c("-n", "--cpu"), type="integer", default=NULL,
     help="Number of CPUs provided to job."),
-  optparse::make_option(c("-o", "--config_file"), type="character", default=NULL,
-    help="Configuration file in yaml format. Will be loaded as a list."),
+  optparse::make_option(c("--fpkm_cutoff"), type="numeric", default=1,
+    help="FPKM cutoff to filter expressed genes."),
+  optparse::make_option(c("--implementation"), type="character", default="autoencoder",
+    help="Implementation for sample covariation removal."),
+  optparse::make_option(c("--max_tested_dimension_proportion"), type="numeric", default=3,
+    help="Quotient by which to divide the number of samples to calculate
+          maximum value for encoding dimension."),
   optparse::make_option(c("-f", "--hpo_file"), type="character", default=NULL,
     help="Genes and associated HPO terms in compressed tsv format."),
   optparse::make_option(c("-b", "--sample_bam_stats"), type="character", default=NULL,
@@ -35,7 +40,7 @@ option_list <- list(
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
-final_results <- main_aberrant_expression(
+final_results <- main_abgenes_Hunter(
   sample_annotation = opt$sample_annotation,
   anno_database = opt$anno_database,
   count_ranges = opt$count_ranges,
@@ -43,7 +48,15 @@ final_results <- main_aberrant_expression(
   count_files = opt$count_files,
   dataset = opt$dataset,
   cpu = opt$cpu,
-  config_file = opt$config_file,
+  fpkm_cutoff = opt$fpkm_cutoff,
+  implementation = opt$implementation,
+  max_dim_proportion = opt$max_tested_dimension_proportion,
   hpo_file = opt$hpo_file,
   sample_bam_stats = opt$sample_bam_stats,
   top_N = opt$top_N)
+
+data.table::fwrite(data.table::as.data.table(SummarizedExperiment::assay(
+                   final_results$counts)$counts, keep.rownames = 'geneID'),
+                   file = paste0(dataset, "_geneCounts.tsv.gz"),
+                   quote = FALSE, row.names = FALSE, sep = '\t',
+                   compress = 'gzip')
