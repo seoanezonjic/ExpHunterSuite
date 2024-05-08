@@ -51,6 +51,8 @@ main_abgenes_Hunter <- function(
 	fpkm_cutoff = 1,
 	implementation = "autoencoder",
 	max_dim_proportion = 3,
+	p_adj_cutoff = 0.05,
+	z_score_cutoff = 0.2,
 	hpo_file = NULL,
 	sample_bam_stats = NULL,
 	top_N = 10
@@ -64,53 +66,16 @@ main_abgenes_Hunter <- function(
   						   count_files = count_files,
   						   count_ranges = count_ranges)
 
-	ods_unfitted <- filter_counts(counts = counts,
-								  txdb = txdb,
+	ods_unfitted <- filter_counts(counts = counts, txdb = txdb,
 								  fpkm_cutoff = fpkm_cutoff)
 
-	ods <- runOutrider(ods_unfitted = ods_unfitted, implementation = implementation,
+	ods <- run_outrider(ods_unfitted = ods_unfitted, implementation = implementation,
 				max_dim_proportion = max_dim_proportion)
 
-	# ORIGIN: OUTRIDER_Results.R
-
-	res <- OUTRIDER::results(ods,
-				 padjCutoff = cfg$aberrantExpression$padjCutoff,
-				 zScoreCutoff = cfg$aberrantExpression$zScoreCutoff, all = TRUE)
-
-	# Add fold change
-	res[, foldChange := round(2^l2fc, 2)] 
-
-	# Save all the results and significant ones
-	OUTRIDER_results_all <- res
-	saveRDS(OUTRIDER_results_all, paste0(dataset,
-									'_OUTRIDER_results_all.rds'))
-
-	# Subset to significant results
-	res <- res[padjust <= cfg$aberrantExpression$padjCutoff &
-	               abs(zScore) > cfg$aberrantExpression$zScoreCutoff]
-
-	gene_annot_dt <- data.table::fread(gene_mapping_file)
-	if(!is.null(gene_annot_dt$gene_name)){
-	  if(grepl('ENSG00', res[1,geneID]) & grepl('ENSG00', gene_annot_dt[1,gene_id])){
-	    res <- merge(res, gene_annot_dt[, .(gene_id, gene_name)],
-	                 by.x = 'geneID', by.y = 'gene_id', sort = FALSE, all.x = TRUE)
-	    data.table::setnames(res, 'gene_name', 'hgncSymbol')
-	    res <- cbind(res[, .(hgncSymbol)], res[, - 'hgncSymbol'])
-	  }
-	}
-	sa <- data.table::fread(sample_annotation,
-			colClasses = c(RNA_ID = 'character', DNA_ID = 'character'))
-	if(!is.null(sa$HPO_TERMS) & nrow(res) > 0){
-	  if(!all(is.na(sa$HPO_TERMS)) & ! all(sa$HPO_TERMS == '')){
-	    res <- add_HPO_cols(res, hpo_file = hpo_file)
-	  }
-	}
-
-	# Save results
-	OUTRIDER_results_table <- res
-	data.table::fwrite(OUTRIDER_results_table,
-					   paste0(dataset, '_OUTRIDER_results.tsv'),
-						      sep = "\t",quote = F) 
+	outrider_results <- get_ods_results(ods = ods, p_adj_cutoff = p_adj_cutoff,
+										z_score_cutoff = z_score_cutoff,
+										gene_mapping_file = gene_mapping_file,
+										sample_annotation = sample_anno)
 
 	# ORIGIN: OUTRIDER_Summary.R
 
