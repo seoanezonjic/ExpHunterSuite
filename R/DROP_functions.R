@@ -419,8 +419,8 @@ filter_counts <- function(counts, txdb, fpkm_cutoff) {
   return(ods)
 }
 
-runOutrider <- function(unfitted_ods, implementation, max_dim_proportion) {
-  ods_unfitted <- unfitted_ods[
+runOutrider <- function(ods_unfitted, implementation, max_dim_proportion) {
+  ods_unfitted <- ods_unfitted[
            SummarizedExperiment::mcols(ods_unfitted)$passedFilter, ]
 
   gr <- unlist(S4Vectors::endoapply(SummarizedExperiment::rowRanges(

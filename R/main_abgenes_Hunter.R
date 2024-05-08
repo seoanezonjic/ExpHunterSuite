@@ -68,7 +68,7 @@ main_abgenes_Hunter <- function(
 								  txdb = txdb,
 								  fpkm_cutoff = fpkm_cutoff)
 
-	ods <- runOutrider(unfitted_ods = ods_unfitted, implementation = implementation,
+	ods <- runOutrider(ods_unfitted = ods_unfitted, implementation = implementation,
 				max_dim_proportion = max_dim_proportion)
 
 	# ORIGIN: OUTRIDER_Results.R
