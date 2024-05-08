@@ -1,6 +1,6 @@
-#' Main DROP Aberrant Expression function
+#' Main Aberrant Expression function
 #'
-#' `main_aberrant_expression` runs DROP OUTRIDER analysis.
+#' `main_abgenes_Hunter` runs DROP OUTRIDER analysis.
 #' @param sample_annotation Path to sample annotation table. See documentation.
 #' @param anno_database TxDb annotation database created by preprocess_gtf
 #' function.
@@ -9,13 +9,17 @@
 #' function.
 #' @param count_files Count tables to process. Can be in rds or table format.
 #' @param dataset Name of the dataset.
-#' @param cpu Amount of CPUs available for analysis.
-#' @param config_file Configuration file in yaml format.
+#' @param cpu Amount of CPUs available for analysis. Default 1.
+#' @param fpkm_cutoff Min FPKM value for read filtering. Default 3.
+#' @param implementation Method for sample covariation removal in OUTRIDER.
+#' Possible values: "autoencoder" (default), "pca" or "peer".
+#' @param max_dim_proportion Maximum value for autoencoder encoding
+#' dimension. Default 3, optimum for aberrant expression.
 #' @param hpo_file Genes and associated HPO terms table. Optional.
 #' @param sample_bam_stats Bam stats of each sample.Generated with samtools
 #' idxstats (see Aberrant_Expression workflow for how to generate this file).
 #' @param top_N Top N genes by adjusted p-value to select for OUTRIDER
-#' overview. Default: 10.
+#' overview. Default 10.
 #' @return Aberrant expression object containing all analysis results.
 #' @importFrom data.table fread
 #' @importFrom dplyr left_join
@@ -36,7 +40,7 @@
 #' @importFrom MatrixGenerics rowQuantiles
 #' @export
 
-main_aberrant_expression <- function(
+main_abgenes_Hunter <- function(
 	sample_annotation = NULL,
 	anno_database = NULL,
 	count_ranges = NULL,
@@ -44,158 +48,28 @@ main_aberrant_expression <- function(
 	count_files = NULL,
 	dataset = NULL,
 	cpu = 1,
-	config_file = NULL,
+	fpkm_cutoff = 1,
+	implementation = "autoencoder",
+	max_dim_proportion = 3,
 	hpo_file = NULL,
 	sample_bam_stats = NULL,
 	top_N = 10
   ){
-	BiocParallel::register(BiocParallel::MulticoreParam(cpu))
-	# Read counts
-	sample_anno <- data.table::fread(sample_annotation,
-	                    colClasses = c(RNA_ID = 'character',
-	                    			   DNA_ID = 'character'))
+  	save(list = ls(all.names = TRUE), file = "environment.RData")
+  	sample_anno <- data.table::fread(sample_annotation,
+  									colClasses = c(RNA_ID = 'character',
+  												   DNA_ID = 'character'))
+  	txdb <- AnnotationDbi::loadDb(anno_database)
+  	counts <- merge_counts(cpu = cpu, sample_anno = sample_anno,
+  						   count_files = count_files,
+  						   count_ranges = count_ranges)
 
-	count_files <- strsplit(count_files, " ")[[1]]
-	local_counts_list <- BiocParallel::bplapply(count_files, get_file_counts)
-	message(paste("read", length(count_files), 'files'))
-	merged_locals <- do.call(cbind, local_counts_list)
+	ods_unfitted <- filter_counts(counts = counts,
+								  txdb = txdb,
+								  fpkm_cutoff = fpkm_cutoff)
 
-	external_anno <- sample_anno[sample_anno$EXTERNAL=="external", ]
-	if(nrow(external_anno) > 0) {
-	  external_file <- unique(external_anno$GENE_COUNTS_FILE)
-	  ex_counts <- data.frame(fread(external_file),
-	                          check.names = FALSE, row.names = "geneID")
-	  ex_counts <- ex_counts[, colnames(ex_counts)!="Description"]
-	  exCountIDs <- external_anno$RNA_ID
-	  if(exCountIDs=="all") {
-	    # Replace string "all" with sample names from external counts
-	    exCountIDs <- colnames(ex_counts)
-	  } else {
-	    ex_counts <- subset(ex_counts, select = exCountIDs)
-	  }
-	  if(!identical(get_unique_rownames(merged_locals),
-	  				get_unique_rownames(ex_counts))){
-	    stop('The rows (genes) of the count matrices to be
-	    	  merged are not the same.')
-	  }
-	}
-
-	if(nrow(external_anno) > 0) {
-	  merged_assays <- cbind(merged_locals, ex_counts)
-	} else {
-	  merged_assays <- merged_locals
-	}
-	merged_counts_table <- cbind(rownames(merged_assays), merged_assays)
-	rownames(merged_counts_table) <- NULL
-	colnames(merged_counts_table)[1] <- "gene_ID"
-	utils::write.table(merged_counts_table, 'total_counts.txt', sep = '\t',
-					   quote = FALSE, row.names = FALSE)
-
-	total_counts <- SummarizedExperiment::SummarizedExperiment(assays=list(
-											   counts=as.matrix(merged_assays)))
-
-	# assign ranges
-	SummarizedExperiment::rowRanges(total_counts) <- readRDS(count_ranges)
-
-	# Add sample annotation data (colData)
-
-	col_data <- data.table::data.table(RNA_ID = as.character(colnames(total_counts)))
-	col_data <- add_base_IDs(col_data)
-	colnames(sample_anno)[colnames(sample_anno) == "RNA_ID"] <- "BASE_ID"
-	col_data <- dplyr::left_join(col_data, sample_anno, by = "BASE_ID")
-	if(nrow(external_anno) > 0)
-	{
-	  col_data[col_data$RNA_ID%in%exCountIDs, ]$EXTERNAL <- "external"
-	}
-
-	rownames(col_data) <- col_data$RNA_ID
-	SummarizedExperiment::colData(total_counts) <- as(col_data, "DataFrame")
-	rownames(SummarizedExperiment::colData(total_counts)) <- SummarizedExperiment::colData(total_counts)$RNA_ID
-	# save in RDS format
-	saveRDS(total_counts, 'total_counts.rds')
-
-	# ORIGIN: exportCounts.R
-
-	data.table::fwrite(data.table::as.data.table(SummarizedExperiment::assay(
-												 total_counts),
-												 keep.rownames = 'geneID'),
-												 file = paste0(dataset,
-												 	"_geneCounts.tsv.gz"),
-	        									 quote = FALSE,
-	        									 row.names = FALSE, sep = '\t',
-	        									 compress = 'gzip')
-
-	# ORIGIN: filterCounts.R
-
-	counts <- total_counts
-	ods <- OUTRIDER::OutriderDataSet(counts)
-	SummarizedExperiment::colData(ods)$EXTERNAL[
-		is.na(SummarizedExperiment::colData(ods)$EXTERNAL)] <- "no"
-	txdb <- AnnotationDbi::loadDb(anno_database)
-
-	# filter not expressed genes
-	fpkmCutoff <- yaml::read_yaml(file=config_file)$aberrantExpression$fpkmCutoff
-	ods <- OUTRIDER::filterExpression(ods, gtfFile=txdb, filter=FALSE,
-	                        fpkmCutoff=fpkmCutoff, addExpressedGenes=TRUE)
-
-	# add column for genes with at least 1 gene
-	SummarizedExperiment::rowData(ods)$counted1sample = rowSums(assay(ods)) > 0
-
-	# External data check
-	for (i in seq(1, length(SummarizedExperiment::colData(ods)$EXTERNAL))) {
-	  message(i)
-	  if (SummarizedExperiment::colData(ods)$EXTERNAL[i]=="no"){
-	    SummarizedExperiment::colData(ods)$isExternal[i] <- FALSE
-	  } else {
-	    SummarizedExperiment::colData(ods)$isExternal[i] <- TRUE
-	  }
-	}
-
-	# Save the ods before filtering to preserve the original number of genes
-	ods_unfitted <- ods
-	saveRDS(ods_unfitted, 'ods_unfitted.rds')
-
-	# ORIGIN: runOutrider.R
-
-	cfg <- yaml::read_yaml(config_file)
-	implementation <- cfg$aberrantExpression$implementation
-	mp <- cfg$aberrantExpression$maxTestedDimensionProportion
-
-	## subset filtered
-	ods_unfitted <- ods_unfitted[
-					 SummarizedExperiment::mcols(ods_unfitted)$passedFilter, ]
-
-	# add gene ranges to rowData
-	gr <- unlist(S4Vectors::endoapply(SummarizedExperiment::rowRanges(
-										         ods_unfitted), range))
-	if(length(gr) > 0){
-	    rd <- SummarizedExperiment::rowData(ods_unfitted)
-	    SummarizedExperiment::rowRanges(ods_unfitted) <- gr
-	    SummarizedExperiment::rowData(ods_unfitted) <- rd
-	}
-
-	ods_unfitted <- OUTRIDER::estimateSizeFactors(ods_unfitted)
-
-	## find optimal encoding dimension
-	a <- 5 
-	b <- min(ncol(ods_unfitted), nrow(ods_unfitted)) / mp   # N/3
-
-	maxSteps <- 15
-	if(mp < 4){
-	    maxSteps <- 20
-	}
-
-	Nsteps <- min(maxSteps, b)   # Do at most 20 steps or N/3
-	# Do unique in case 2 were repeated
-	pars_q <- round(exp(seq(log(a),log(b),length.out = Nsteps))) %>% unique
-	ods_unfitted <- OUTRIDER::findEncodingDim(ods_unfitted, params = pars_q,
-											implementation = implementation)
-
-	## fit OUTRIDER
-	ods <- OUTRIDER::OUTRIDER(ods_unfitted, implementation = implementation)
-	message("outrider fitting finished")
-
-	saveRDS(ods, 'ods_fitted.rds') # snakemake@output$ods, 'ods.Rds'.
+	ods <- runOutrider(unfitted_ods = ods_unfitted, implementation = implementation,
+				max_dim_proportion = max_dim_proportion)
 
 	# ORIGIN: OUTRIDER_Results.R
 
@@ -486,7 +360,7 @@ main_aberrant_expression <- function(
 	write.table(formatted$imported, "imported_AE_results.tsv", quote = FALSE, row.names = FALSE)
 
 	final_results <- list()
-	final_results$total_counts <- total_counts
+	final_results$counts <- counts
 	final_results$ods_unfitted <- ods_unfitted
 	final_results$ods <- ods
 	final_results$OUTRIDER_results_all <- OUTRIDER_results_all
