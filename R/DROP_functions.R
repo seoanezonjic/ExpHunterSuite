@@ -334,3 +334,120 @@ format_aberrants <- function(input_table) {
   colnames(res)[colnames(res)=="padjust"] <- "p_padjust"
   return(res)
 }
+
+parse_externals <- function(sample_anno) {
+  external_anno <- sample_anno[sample_anno$EXTERNAL=="external", ]
+  external_file <- unique(external_anno$GENE_COUNTS_FILE)
+  ex_counts <- data.frame(fread(external_file),
+                          check.names = FALSE, row.names = "geneID")
+  ex_counts <- ex_counts[, colnames(ex_counts)!="Description"]
+  exCountIDs <- external_anno$RNA_ID
+  if(exCountIDs=="all") {
+    # Replace string "all" with sample names from external counts
+    exCountIDs <- colnames(ex_counts)
+  } else {
+    ex_counts <- subset(ex_counts, select = exCountIDs)
+  }
+  if(!identical(get_unique_rownames(merged_locals),
+          get_unique_rownames(ex_counts))){
+    stop('The rows (genes) of the count matrices to be
+        merged are not the same.')
+  }
+  return(list(run = nrow(external_anno) > 0, counts = ex_counts,
+              IDs = exCountIDs))
+}
+
+get_metadata <- function(total_counts, sample_anno, count_ranges, external) {
+  SummarizedExperiment::rowRanges(total_counts) <- readRDS(count_ranges)
+  col_data <- data.table::data.table(RNA_ID = as.character(
+                                              colnames(total_counts)))
+  col_data <- add_base_IDs(col_data)
+  colnames(sample_anno)[colnames(sample_anno) == "RNA_ID"] <- "BASE_ID"
+  col_data <- dplyr::left_join(col_data, sample_anno, by = "BASE_ID")
+  if(external)
+  {
+    col_data[col_data$RNA_ID%in%exCountIDs, ]$EXTERNAL <- "external"
+  }
+
+  rownames(col_data) <- col_data$RNA_ID
+  SummarizedExperiment::colData(total_counts) <- as(col_data, "DataFrame")
+  rownames(SummarizedExperiment::colData(total_counts)) <- SummarizedExperiment::colData(total_counts)$RNA_ID
+  return(total_counts)
+}
+
+merge_counts <- function(cpu, sample_anno, count_files, count_ranges) {
+  BiocParallel::register(BiocParallel::MulticoreParam(cpu))
+  count_files <- strsplit(count_files, " ")[[1]]
+  local_counts_list <- BiocParallel::bplapply(count_files, get_file_counts)
+  merged_assays <- do.call(cbind, local_counts_list)
+  message(paste("read", length(count_files), 'files'))
+  external_anno <- sample_anno[sample_anno$EXTERNAL=="external", ]
+  if(nrow(external_anno) > 0) {
+    external <- parse_externals(sample_anno)
+    merged_assays <- cbind(merged_locals, external$counts)
+  } else {
+    external <- list(run = FALSE)
+  }
+  merged_counts_table <- cbind(rownames(merged_assays), merged_assays)
+  rownames(merged_counts_table) <- NULL
+  colnames(merged_counts_table)[1] <- "gene_ID"
+
+  total_counts <- SummarizedExperiment::SummarizedExperiment(assays=list(
+                         counts=as.matrix(merged_assays)))
+  total_counts <- get_metadata(total_counts = total_counts,
+                               sample_anno = sample_anno,
+                               count_ranges = count_ranges,
+                               external = external$run)
+  return(total_counts)
+}
+
+filter_counts <- function(counts, txdb, fpkm_cutoff) {
+  ods <- OUTRIDER::OutriderDataSet(counts)
+  col_data <- SummarizedExperiment::colData(ods)
+  row_data <- SummarizedExperiment::rowData(ods)
+  col_data$EXTERNAL[
+    is.na(col_data$EXTERNAL)] <- "no"
+
+  # filter not expressed genes
+  ods <- OUTRIDER::filterExpression(ods, gtfFile=txdb, filter=FALSE,
+                          fpkm_cutoff=fpkm_cutoff, addExpressedGenes=TRUE)
+
+  # add column for genes with at least 1 gene
+  row_data$counted1sample = rowSums(assay(ods)) > 0
+
+  col_data$isExternal <- col_data$EXTERNAL=="external"
+  return(ods)
+}
+
+runOutrider <- function(unfitted_ods, implementation, max_dim_proportion) {
+  ods_unfitted <- ods_unfitted[
+           SummarizedExperiment::mcols(ods_unfitted)$passedFilter, ]
+
+  gr <- unlist(S4Vectors::endoapply(SummarizedExperiment::rowRanges(
+                             ods_unfitted), range))
+  if(length(gr) > 0){
+      rd <- SummarizedExperiment::rowData(ods_unfitted)
+      SummarizedExperiment::rowRanges(ods_unfitted) <- gr
+      SummarizedExperiment::rowData(ods_unfitted) <- rd
+  }
+
+  ods_unfitted <- OUTRIDER::estimateSizeFactors(ods_unfitted)
+
+  b <- min(ncol(ods_unfitted), nrow(ods_unfitted)) / max_dim_proportion
+  
+  if(max_dim_proportion < 4){
+      maxSteps <- 20
+  } else {
+    maxSteps <- 15
+  }
+
+  Nsteps <- min(maxSteps, b)
+  pars_q <- unique(round(exp(seq(log(5), log(b), length.out = Nsteps))))
+  ods_unfitted <- OUTRIDER::findEncodingDim(ods_unfitted, params = pars_q,
+                      implementation = implementation)
+
+  ods <- OUTRIDER::OUTRIDER(ods_unfitted, implementation = implementation)
+  message("outrider fitting finished")
+  return(ods)   
+}
+ 
