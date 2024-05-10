@@ -228,21 +228,18 @@ main_degenes_Hunter <- function(
     #################################################################
     ##                    BUILD MAIN RESULT TABLE                  ##
     #################################################################
-    mean_cpm <- rowMeans(raw_filter)
+    mean_expression_cpm <- rowMeans(raw)
+    min_expression_cpm <- matrixStats::rowMins(as.matrix(raw))
+    max_expression_cpm <- matrixStats::rowMaxs(as.matrix(raw))
+    cpm_stats <- data.frame(mean_expression_cpm, min_expression_cpm, max_expression_cpm)
+
     DE_all_genes <- NULL
     DEG_pca <- NULL
     if (any(grepl("[DENL]",modules))){
       DE_all_genes <- unite_DEG_pack_results(exp_results, p_val_cutoff, 
                                              lfc, minpack_common)
-      DE_all_genes <- merge(DE_all_genes, mean_cpm, by=0, sort=FALSE)
-      names(DE_all_genes)[names(DE_all_genes) == "y"] <- "mean_expression_cpm"
-      DE_all_genes <- transform(DE_all_genes, row.names=Row.names, Row.names=NULL)
-      # Add the filtered genes back
-      DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
-
 
       #computing PCA for PREVALENT DEG
-
       prevalent_degs <- rownames(DE_all_genes[DE_all_genes$genes_tag == "PREVALENT_DEG",])
       if (length(prevalent_degs) > 1) {
         pca_deg_data <- default_norm$default
@@ -262,6 +259,11 @@ main_degenes_Hunter <- function(
       DE_all_genes$Row.names <- NULL
     }
 
+    # Add the filtered genes back
+    DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
+    DE_all_genes <- merge(DE_all_genes, cpm_stats, by=0, sort=FALSE)
+    DE_all_genes <- transform(DE_all_genes, row.names=Row.names, Row.names=NULL)
+    
     correlation_metrics <- NULL
     if(grepl("P", modules)) { # CASE P: PCIT, TODO: RESTORE FUNCTION, PEDRO 
       # TODO : This is not working, variables "DESeq2_counts" 
