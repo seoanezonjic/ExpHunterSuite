@@ -383,16 +383,16 @@ get_metadata <- function(total_counts, sample_anno, count_ranges, external) {
   SummarizedExperiment::rowRanges(total_counts) <- readRDS(count_ranges)
   if(external) {
     col_data[col_data$RNA_ID%in%exCountIDs, ]$EXTERNAL <- "external"
-    col_data <- data.table::data.table(RNA_ID = as.character(
-                                              colnames(total_counts)))
-    col_data <- add_base_IDs(col_data)
-    colnames(sample_anno)[colnames(sample_anno) == "RNA_ID"] <- "BASE_ID"
-    col_data <- dplyr::left_join(col_data, sample_anno, by = "BASE_ID")
-    rownames(col_data) <- col_data$RNA_ID
-    col_metadata <- SummarizedExperiment::colData(total_counts)
-    col_metadata <- as(col_data, "DataFrame")
-    rownames(col_metadata) <- col_metadata$RNA_ID
   }
+  col_data <- data.table::data.table(RNA_ID = as.character(
+                                            colnames(total_counts)))
+  col_data <- add_base_IDs(col_data)
+  colnames(sample_anno)[colnames(sample_anno) == "RNA_ID"] <- "BASE_ID"
+  col_data <- dplyr::left_join(col_data, sample_anno, by = "BASE_ID")
+  rownames(col_data) <- col_data$RNA_ID
+  col_data <- as(col_data, "DataFrame")
+  rownames(col_data) <- col_data$RNA_ID
+  SummarizedExperiment::colData(total_counts) <- col_data
   return(total_counts)
 }
 
@@ -429,6 +429,7 @@ filter_counts <- function(counts, txdb, fpkm_cutoff) {
     is.na(col_data$EXTERNAL)] <- "no"
 
   # filter not expressed genes
+  print("performing actual filtering")
   ods <- OUTRIDER::filterExpression(ods, gtfFile=txdb, filter=FALSE,
                           fpkm_cutoff=fpkm_cutoff, addExpressedGenes=TRUE)
 
