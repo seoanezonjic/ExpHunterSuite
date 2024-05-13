@@ -12,15 +12,15 @@ adjusted p-value lower than cutoff)'. It then subsets the input data frame
 to samples with at least one aberrantly expressed gene and genes aberrantly
 expressed in at least one sample.}
 \usage{
-get_aberrants(df, zScoreCutoff, padjCutoff)
+get_aberrants(df, z_score_cutoff, p_adj_cutoff)
 }
 \arguments{
 \item{df}{An OUTRIDER results data frame.}
 
-\item{zScoreCutoff}{Cutoff that gene zScore must surpass in order to be
+\item{z_score_cutoff}{Cutoff that gene zScore must surpass in order to be
 considered aberrantly expressed.}
 
-\item{padjCutoff}{Adjusted p-value cutoff. Gene adjusted p-value must be
+\item{p_adj_cutoff}{Adjusted p-value cutoff. Gene adjusted p-value must be
 lower than this number in order to be considered aberrantly expressed.}
 }
 \value{

@@ -10,6 +10,8 @@ AE_Gene_Overview(gene, ods, dataset, cfg)
 }
 \arguments{
 \item{gene}{Gene to plot.}
+
+\item{ods}{Outrider DataSet object.}
 }
 \value{
 Volcano plots of provided gene expression rank and expected vs

@@ -5,7 +5,7 @@
 \title{Simple wrapper for OUTRIDER::plotVolcano function. Calls it for specified
 sample in input Outrider DataSet (ods)}
 \usage{
-AE_Sample_Overview(sample, ods, dataset, cfg)
+AE_Sample_Overview(sample, ods, dataset, cfg, z_score_cutoff, p_adj_cutoff)
 }
 \arguments{
 \item{sample}{Sample to plot.}
