@@ -13,11 +13,16 @@
 #' @param fpkm_cutoff Min FPKM value for read filtering. Default 3.
 #' @param implementation Method for sample covariation removal in OUTRIDER.
 #' Possible values: "autoencoder" (default), "pca" or "peer".
+#' @param z_score_cutoff Cutoff that gene zScore must surpass in order to be
+#' considered aberrantly expressed.
+#' @param p_adj_cutoff Adjusted p-value cutoff. Gene adjusted p-value must be
+#' lower than this number in order to be considered aberrantly expressed.
 #' @param max_dim_proportion Maximum value for autoencoder encoding
 #' dimension. Default 3, optimum for aberrant expression.
-#' @param hpo_file Genes and associated HPO terms table. Optional.
-#' @param sample_bam_stats Bam stats of each sample.Generated with samtools
-#' idxstats (see Aberrant_Expression workflow for how to generate this file).
+#' @param hpo_file File containing HPO terms associated to genes. Optional.
+#' @param stats_path Bam stats directories of each sample. Stats generated
+#' with samtools idxstats (see Aberrant_Expression workflow for how to generate
+#' this file).
 #' @param top_N Top N genes by adjusted p-value to select for OUTRIDER
 #' overview. Default 10.
 #' @return Aberrant expression object containing all analysis results.
@@ -40,24 +45,13 @@
 #' @importFrom MatrixGenerics rowQuantiles
 #' @export
 
-main_abgenes_Hunter <- function(
-	sample_annotation = NULL,
-	anno_database = NULL,
-	count_ranges = NULL,
-	gene_mapping_file = NULL,
-	count_files = NULL,
-	dataset = NULL,
-	cpu = 1,
-	fpkm_cutoff = 1,
-	implementation = "autoencoder",
-	max_dim_proportion = 3,
-	p_adj_cutoff = 0.05,
-	z_score_cutoff = 0.2,
-	hpo_file = NULL,
-	sample_bam_stats = NULL,
-	top_N = 10
-  ){
-  	save(list = ls(all.names = TRUE), file = "environment.RData")
+main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
+								count_ranges = NULL, gene_mapping_file = NULL,
+								count_files = NULL, dataset = NULL, cpu = 1,
+								fpkm_cutoff = 1, implementation = "autoencoder",
+								max_dim_proportion = 3, p_adj_cutoff = 0.05,
+								z_score_cutoff = 0.2, hpo_file = NULL,
+								stats_path = NULL, top_N = 10) {
   	sample_anno <- data.table::fread(sample_annotation,
   									colClasses = c(RNA_ID = 'character',
   												   DNA_ID = 'character'))
@@ -65,23 +59,44 @@ main_abgenes_Hunter <- function(
   	counts <- merge_counts(cpu = cpu, sample_anno = sample_anno,
   						   count_files = count_files,
   						   count_ranges = count_ranges)
-
 	ods_unfitted <- filter_counts(counts = counts, txdb = txdb,
 								  fpkm_cutoff = fpkm_cutoff)
-
-	ods <- run_outrider(ods_unfitted = ods_unfitted, implementation = implementation,
-				max_dim_proportion = max_dim_proportion)
-
+	ods <- run_outrider(ods_unfitted = ods_unfitted,
+						implementation = implementation,
+						max_dim_proportion = max_dim_proportion)
 	outrider_results <- get_ods_results(ods = ods, p_adj_cutoff = p_adj_cutoff,
 										z_score_cutoff = z_score_cutoff,
 										gene_mapping_file = gene_mapping_file,
 										sample_annotation = sample_anno)
+	bcv_dt <- get_bcv(ods)
+	save(list = ls(all.names = TRUE), file = "environment.RData")
+	bam_coverage <- merge_bam_stats(sa = sample_anno, stats_path = stats_path)
+	formatted <- format_for_report(outrider_results$all,
+								   z_score_cutoff, p_adj_cutoff)
+	final_results <- list()
+	final_results$counts <- counts
+	final_results$ods_unfitted <- ods_unfitted
+	final_results$ods <- ods
+	final_results$OUTRIDER_results_all <- outrider_results$all
+	final_results$OUTRIDER_results_table <- outrider_results$table
+	final_results$bam_coverage <- bam_coverage
+	final_results$formatted <- formatted
+	final_results$bcv_dt <- bcv_dt
+	return(final_results)
+}
 
-	# ORIGIN: OUTRIDER_Summary.R
+### plotting_things
 
-	# used for most plots
-	dataset_title <- paste("Dataset:", paste(dataset,
-							names(cfg$geneAnnotation), sep = '--'))
+placeholder <- function(juas) {
+
+	dataset_title <- paste("Dataset:", dataset)
+	# boxplot of BCV Before and After Autoencoder
+	ggplot2::ggplot(bcv_dt, ggplot2::aes(when, BCV)) +
+	                ggplot2::geom_boxplot() +
+	                ggplot2::theme_bw(base_size = 14) +
+	                ggplot2::labs(x = "Autoencoder correction",
+	                              y = "Biological coefficient \nof variation",
+	                              title = dataset_title)
 
 	OUTRIDER::plotEncDimSearch(ods) +
 	          ggplot2::labs(title = dataset_title) +
@@ -105,62 +120,15 @@ main_abgenes_Hunter <- function(
 	                                     main = paste0('Normalized Counts (', dataset_title,')'),
 	                                     bcvQuantile = .95, show_names = 'row')
 
-	before <- data.table::data.table(when = "Before",
-	                     BCV = 1/sqrt(estimateThetaWithoutAutoCorrect(ods)))
-	after <- data.table::data.table(when = "After", BCV = 1/sqrt( theta( ods )))
-	bcv_dt <- rbind(before, after)
-
-	# boxplot of BCV Before and After Autoencoder
-	ggplot2::ggplot(bcv_dt, ggplot2::aes(when, BCV)) +
-	                ggplot2::geom_boxplot() +
-	                ggplot2::theme_bw(base_size = 14) +
-	                ggplot2::labs(x = "Autoencoder correction",
-	                              y = "Biological coefficient \nof variation",
-	                              title = dataset_title)
-
-	res <- OUTRIDER_results_table # Venía de snakemake@input$results
-
-	## This block looks more of a report than anything
-	if (nrow(res) > 0) {
-	  ab_table <- res[AberrantBySample > nrow(ods)/1000, .("Outlier genes" = .N), by = .(sampleID)] %>% unique
-	  if (nrow(ab_table) > 0) {
-	    data.table::setorder(ab_table, "Outlier genes") 
-	    DT::datatable(ab_table)
-	  } else {
-	    print("no aberrant samples")
-	  }
-	} else {
-	  print('no results')
-	}
-
-	# ORIGIN: mergeBamStats.R. Depends on bamStats, bash script.
-
-	sa <- read.table(file = sample_annotation, sep = '\t', header = TRUE) # es un data frame
-	bams_folder <- dirname(sample_bam_stats)
-	bams <- list.files(bams_folder, pattern=".txt", full.names = TRUE)
-	bam_coverage <- data.frame("sampleID" = rep(NA, length(bams)), "record_count" = NA)
-
-	for (i in 1:length(bams)) {
-	    bam_coverage[i,] <- read.table(bams[i])
-	}
-
-	bam_coverage$record_count <- as.numeric(bam_coverage$record_count)
-	write.table(bam_coverage, file = paste0(dataset,"_outrider.tsv"), row.names = FALSE, sep = "\t")
-
-	# ORIGIN: counting_Summary.R
-
-	# Old, was useful when multiple bam_stats files were loaded. Leaving it here just in case.
-	# bam_folder <- stringr::str_sub(bam_stats,1,-6)
-	# bam_stats_files <- list.files(bam_folder, pattern=stringr::str_sub(bam_stats,-6,-1))
-	# parsed_bam_stats <- sapply(bam_stats_files, function(x) paste0(bam_folder,x))
-
+	# THIS PART HAS ALREADY BEEN MIGRATED, THERE ARE FUNCTIONS IN
+	# main_degenes_Hunter.R that already do this.
 	has_external <- any(as.logical(SummarizedExperiment::colData(ods)$isExternal))
 	cnts_mtx_local <- OUTRIDER::counts(ods, normalized = F)[, !as.logical(ods@colData$isExternal)]
 	cnts_mtx <- OUTRIDER::counts(ods, normalized = F)
 
 	rownames(bam_coverage) <- bam_coverage$sampleID
 	coverage_df <- data.frame(sampleID = colnames(ods),
-	                        read_count = colSums(cnts_mtx))
+	                          read_count = colSums(cnts_mtx))
 	coverage_df <- merge(bam_coverage, coverage_df, by = "sampleID", sort = FALSE)
 	# read count
 	coverage_dt <- data.table::data.table(coverage_df)
@@ -177,11 +145,6 @@ main_abgenes_Hunter <- function(
 	coverage_dt[, size_factors := local_size_factors]
 	data.table::setorder(coverage_dt, size_factors)
 	coverage_dt[, sf_rank := 1:.N]
-
-	### @alvaro This block introduces the concept of sample rank. It seems to be
-	### the order by which the samples are sorted according to read counts,
-	### read count ratio and size factors. Need to properly understand the concept
-	### of size factor. Plots should be improved to include sample IDs.
 
 	p_depth <- ggplot2::ggplot(coverage_dt, ggplot2::aes(x = count_rank, y = read_count)) +
 	ggplot2::geom_point(size = 3, show.legend = has_external) +
@@ -219,7 +182,11 @@ main_abgenes_Hunter <- function(
 	     x = 'Reads Counted', y = 'Size Factors') +
 	ggplot2::scale_color_brewer(palette="Dark2")
 
-	cowplot::plot_grid(p_sf, p_sf_cov) 
+	cowplot::plot_grid(p_sf, p_sf_cov)
+	### @alvaro This block introduces the concept of sample rank. It seems to be
+	### the order by which the samples are sorted according to read counts,
+	### read count ratio and size factors. Need to properly understand the concept
+	### of size factor. Plots should be improved to include sample IDs.
 
 	quant <- .95
 
@@ -246,7 +213,7 @@ main_abgenes_Hunter <- function(
 	  filter_dt <- lapply(names(filter_mtx), function(filter_name) {
 	    mtx <- filter_mtx[[filter_name]]
 	    data.table::data.table(gene_ID = rownames(mtx), median_counts = rowMeans(mtx), filter = filter_name)
-	  }) %>% rbindlist
+	  }) |> rbindlist()
 	  filter_dt[, filter := factor(filter, levels = c('all', 'passed FPKM', 'min 1 read', 'min 10 reads'))]
 	}
 
@@ -294,11 +261,6 @@ main_abgenes_Hunter <- function(
 	} else{
 	  DT::datatable(expressed_genes[order(Rank), -"Is External"], rownames = F)
 	}
-
-	write.table(expressed_genes, paste0(dataset, "_expressed_genes.tsv"), sep="\t", row.names= F)
-
-	# ORIGIN: OUTRIDER_Overview.R
-
 	sortedRes <- OUTRIDER_results_table[order(OUTRIDER_results_table$padj_rank), ]
 	sigSamples <- unique(sortedRes$sampleID)
 	sigGenes <- head(unique(sortedRes$geneID), top_N)
@@ -312,26 +274,24 @@ main_abgenes_Hunter <- function(
 		BiocParallel::bplapply(sigGenes, AE_Gene_Overview, ods = ods,
 							   dataset = dataset, cfg = cfg)
 	}
+}
 
-	# ORIGIN: format_for_report.R, custom script
+write_abgenes_report <- function(final_results, output_files = getwd(), 
+								 template_folder = NULL, opt = NULL) {
+	if(is.null(template_folder)) {
+        template_folder <- file.path(find.package('ExpHunterSuite'), 'templates')
+	}
+	if(any(is.null(final_results))) {
+		stop("ERROR: final_results object contains NULL fields. Analysis
+			is not complete.")
+	}
 
-	data <- processed_vs_imported(OUTRIDER_results_all)
-	aberrants <- lapply(data, get_aberrants,
-		zScoreCutoff = cfg$aberrantExpression$zScoreCutoff,
-		padjCutoff = cfg$aberrantExpression$padjCutoff)
-	formatted <- lapply(aberrants, format_aberrants)
-
-	write.table(formatted$processed, "processed_AE_results.tsv", quote = FALSE, row.names = FALSE)
-	write.table(formatted$imported, "imported_AE_results.tsv", quote = FALSE, row.names = FALSE)
-
-	final_results <- list()
-	final_results$counts <- counts
-	final_results$ods_unfitted <- ods_unfitted
-	final_results$ods <- ods
-	final_results$OUTRIDER_results_all <- OUTRIDER_results_all
-	final_results$OUTRIDER_results_table <- OUTRIDER_results_table
-	final_results$bam_coverage <- bam_coverage
-	final_results$formatted <- formatted
-	return(final_results)
-
+	counts <- final_results$counts
+	ods_unfitted <- final_results$ods_unfitted
+	ods <- final_results$ods
+	outrider_results_all <- final_results$outrider_results$all
+	outrider_results_table <- final_results$outrider_results$table
+	bam_coverage <- final_results$bam_coverage
+	formatted <- final_results$formatted
+	bcv_dt <- final_results$bcv_dt
 }
