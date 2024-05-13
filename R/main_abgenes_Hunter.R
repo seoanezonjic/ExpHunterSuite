@@ -66,7 +66,7 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 	outrider_results <- get_ods_results(ods = ods, p_adj_cutoff = p_adj_cutoff,
 										z_score_cutoff = z_score_cutoff,
 										gene_mapping_file = gene_mapping_file,
-										sample_annotation = sample_anno)
+										sample_anno = sample_anno)
 	bcv_dt <- get_bcv(ods)
 	bam_coverage <- merge_bam_stats(sa = sample_anno, stats_path = stats_path)
 	formatted <- format_for_report(outrider_results$all,
