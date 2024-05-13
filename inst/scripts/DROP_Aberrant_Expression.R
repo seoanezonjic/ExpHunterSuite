@@ -38,8 +38,8 @@ option_list <- list(
           aberrantly expressed."),
   optparse::make_option(c("-f", "--hpo_file"), type="character", default=NULL,
     help="Genes and associated HPO terms in compressed tsv format."),
-  optparse::make_option(c("-b", "--sample_bam_stats"), type="character", default=NULL,
-    help="Bam stats files in plain text format."),
+  optparse::make_option(c("-b", "--stats_path"), type="character", default=NULL,
+    help="Path to directory containing bam stats."),
   optparse::make_option(c("-t", "--top_N"), type="integer", default=10,
     help="Top N genes by adjusted p-value to be selected.")
   )
@@ -60,8 +60,10 @@ final_results <- main_abgenes_Hunter(
   p_adj_cutoff = opt$p_adj_cutoff,
   z_score_cutoff = opt$z_score_cutoff,
   hpo_file = opt$hpo_file,
-  sample_bam_stats = opt$sample_bam_stats,
+  stats_path = opt$stats_path,
   top_N = opt$top_N)
+
+saveRDS(final_results, "res.rds")
 
 data.table::fwrite(data.table::as.data.table(SummarizedExperiment::assay(
                    final_results$counts)$counts, keep.rownames = 'geneID'),
