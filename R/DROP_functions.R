@@ -150,7 +150,7 @@ get_unique_rownames <- function(df) {
 #' @export
 
 get_base_ID <- function(RNA_ID) {
-  base_ID <- strsplit(RNA_ID, "_")[[1]][1]
+  base_ID <- .split_string_by_char(RNA_ID, "_", 1)
   return(base_ID)
 }
 
