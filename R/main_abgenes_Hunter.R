@@ -36,7 +36,6 @@
 #' findEncodingDim OUTRIDER results plotEncDimSearch plotAberrantPerSample
 #' plotCountCorHeatmap plotCountGeneSampleHeatmap
 #' @importFrom AnnotationDbi loadDb
-#' @importFrom yaml read_yaml
 #' @importFrom S4Vectors endoapply
 #' @importFrom ggplot2 labs scale_color_brewer aes geom_boxplot theme_bw
 #' geom_point ylim geom_histogram scale_x_log10 facet_wrap guides guide_legend
@@ -69,7 +68,6 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 										gene_mapping_file = gene_mapping_file,
 										sample_annotation = sample_anno)
 	bcv_dt <- get_bcv(ods)
-	save(list = ls(all.names = TRUE), file = "environment.RData")
 	bam_coverage <- merge_bam_stats(sa = sample_anno, stats_path = stats_path)
 	formatted <- format_for_report(outrider_results$all,
 								   z_score_cutoff, p_adj_cutoff)
