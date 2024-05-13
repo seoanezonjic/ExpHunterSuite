@@ -6,7 +6,7 @@
 \code{format_aberrants} takes a data frame and subsets it to columns named
 "sampleID", "geneID", "padjust", "type", "zScore" and "altRatio". It then
 updates padjust column and takes its negative decimal logarithm, and renames
-it to p_padjust (as in -log(padjust), as in pH meaning -log\link{H}).}
+it to p_padjust (as in -log(padjust)).}
 \usage{
 format_aberrants(input_table)
 }
@@ -23,5 +23,5 @@ Function to format DROP results
 \code{format_aberrants} takes a data frame and subsets it to columns named
 "sampleID", "geneID", "padjust", "type", "zScore" and "altRatio". It then
 updates padjust column and takes its negative decimal logarithm, and renames
-it to p_padjust (as in -log(padjust), as in pH meaning -log\link{H}).
+it to p_padjust (as in -log(padjust)).
 }
