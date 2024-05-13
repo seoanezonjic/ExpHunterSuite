@@ -307,7 +307,7 @@ get_aberrants <- function(df, z_score_cutoff, p_adj_cutoff) {
 #' `format_aberrants` takes a data frame and subsets it to columns named
 #' "sampleID", "geneID", "padjust", "type", "zScore" and "altRatio". It then
 #' updates padjust column and takes its negative decimal logarithm, and renames
-#' it to p_padjust (as in -log(padjust), as in pH meaning -log[H]).
+#' it to p_padjust (as in -log(padjust)).
 #' @param input_table A DROP results data frame or data table.
 #' @returns A subset of the data frame containing only "sampleID", "geneID",
 #' "p_padjust" (calculated from "padjust" column), "type", "zScore" and
@@ -320,10 +320,9 @@ format_aberrants <- function(input_table) {
       aberrants found.")
     return(NULL)
   }
-  input_table <- as.data.frame(input_table)
   names <- c("sampleID", "geneID", "padjust", "type", "zScore", "altRatio")
   matches <- colnames(input_table) %in% names
-  if("data_table" %in% class(test)){
+  if("data_table" %in% class(input_table)){
     res <- input_table[, matches, with = FALSE]
   } else {
     res <- input_table[, matches]
@@ -396,6 +395,13 @@ get_metadata <- function(total_counts, sample_anno, count_ranges, external) {
   return(total_counts)
 }
 
+#' Function to extract count tables and merge them into one.
+#' `merge_counts` takes multiple paths to count tables and reads them, merging
+#' them into one.
+#' @inheritParams get_metadata
+#' @inheritParams main_abgenes_Hunter
+#' @returns A merged counts table.
+
 merge_counts <- function(cpu, sample_anno, count_files, count_ranges) {
   BiocParallel::register(BiocParallel::MulticoreParam(cpu))
   count_files <- strsplit(count_files, " ")[[1]]
@@ -421,6 +427,13 @@ merge_counts <- function(cpu, sample_anno, count_files, count_ranges) {
   return(total_counts)
 }
 
+#' Wrapper for DROP OUTRIDER filtering script.
+#' `filter_counts` takes a counts table, a txdb object and a fpkm_cutoff to
+#' build an OutriderDataSet object and filter it by fpkm.
+#' @inheritParams main_abgenes_Hunter
+#' @param counts A counts table.
+#' @returns A filtered OutriderDataSet built from the merged table.
+
 filter_counts <- function(counts, txdb, fpkm_cutoff) {
   ods <- OUTRIDER::OutriderDataSet(counts)
   col_data <- SummarizedExperiment::colData(ods)
@@ -439,6 +452,13 @@ filter_counts <- function(counts, txdb, fpkm_cutoff) {
   col_data$isExternal <- col_data$EXTERNAL=="external"
   return(ods)
 }
+
+#' Wrapper for DROP main OUTRIDER script.
+#' `run_outrider` takes a filtered Outrider dataset and runs the OUTRIDER
+#' algorithm on it.
+#' @inheritParams main_abgenes_Hunter
+#' @param ods_unfitted The filtered Outrider dataset on which to run OUTRIDER.
+#' @returns A fitted outrider dataset.
 
 run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
   ods_unfitted <- ods_unfitted[
@@ -472,6 +492,13 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
   return(ods)   
 }
 
+#' Wrapper for DROP OUTRIDER results script.
+#' `get_ods_results` extracts the results from an ods object.
+#' @inheritParams main_abgenes_Hunter
+#' @param ods A fitted outrider dataset.
+#' @returns A list with two items. The first one, named "all", contains all
+#' results. The second one, "table", only contains significant results.
+
 get_ods_results <- function(ods, p_adj_cutoff, z_score_cutoff,
                  gene_mapping_file, sample_anno) {
     OUTRIDER_results_all <- OUTRIDER::results(ods, padjCutoff = p_adj_cutoff,
@@ -497,6 +524,14 @@ get_ods_results <- function(ods, p_adj_cutoff, z_score_cutoff,
           table = res))
   }
 
+#' Function to get the Biological Coefficient Variation of an OutriderDataSet
+#' object.
+#' `get_bcv` extracts the biological coefficient variation of an outrider
+#' dataset.
+#' @inheritParams get_ods_results
+#' @returns A data table containing the biological coefficient variation
+#' of the outrider dataset before and after normalisation.
+
 get_bcv <- function(ods) {
     before <- data.table::data.table(when = "Before",
                  BCV = 1/sqrt(estimateThetaWithoutAutoCorrect(ods)))
@@ -506,13 +541,27 @@ get_bcv <- function(ods) {
     return(bcv_dt)
 }
 
-merge_bam_stats <- function(sa, stats_path) {
+#' Function to merge bam stats.
+#' `merge_bam_stats` Merges the bam stat files contained in the specified path.
+#' @inheritParams main_abgenes_Hunter
+#' @returns A table containing the merged bam stats.
+
+merge_bam_stats <- function(stats_path) {
   stats <- list.files(stats_path, pattern=".txt", full.names = TRUE)
   bam_coverage <- lapply(stats, read.table)
   bam_coverage <- do.call(rbind, bam_coverage)
   colnames(bam_coverage) <- c("sampleID", "record_count")
   return(bam_coverage)
 }
+
+#' Function to convert aberrant expression results into a format that allows
+#' a heatmap report of aberrants found.
+#' `format_for_report` Takes an OUTRIDER results table and reformats it,
+#' returning only information pertaining genes aberrantly expressed in at least
+#' one sample, and only samples containing at least one aberrantly expressed
+#' gene. It keeps p-value and z-score information.
+#' @inheritParams main_abgenes_Hunter
+#' @returns A table containing the merged bam stats.
 
 format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
   data <- processed_vs_imported(results)
@@ -521,6 +570,14 @@ format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
   formatted <- lapply(aberrants, format_aberrants)
   return(formatted)
 }
+
+#' Function to fix an annoying characteristic of using lapply, where it
+#' appends the original object name to every name of the result list.
+#' `.fix_lapply_names` Fixes the output of a lapply call, restoring the original
+#' names of the object it was called upon.
+#' @param table_list A list of tables originating from a lapply call.
+#' @returns That same list with the expected names, without the appends made
+#' by the lapply call.
 
 .fix_lapply_names <- function(table_list) {
   if(is.data.frame(table_list)) {
@@ -534,6 +591,15 @@ format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
   }
   return(table_list)
 }
+
+#' Function to split a string by a certain character and return only the desired
+#' element.
+#' `.split_string_by_char` Splits a string by the provided character, and
+#' keeps the result specified by the provided index.
+#' @param string String to split.
+#' @param char Char by which the string will be split.
+#' @param index Index of the element after splitting that will be kept
+#' @returns The element of the split string specified by provided index.
 
 .split_string_by_char <- function(string, char, index) {
   return(strsplit(x = string, split = char)[[1]][index])
