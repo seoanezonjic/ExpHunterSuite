@@ -341,7 +341,6 @@ format_aberrants <- function(input_table) {
 #' @returns A list containing three objects. "run" is a logical that is TRUE
 #' if the is an imported counts table. Counts is the counts table extracted
 #' from the file. IDs is a vectors containing imported sample IDs.
-#' @noExport
 
 .parse_externals <- function(sample_anno) {
   external_anno <- sample_anno[sample_anno$EXTERNAL=="external", ]
