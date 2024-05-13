@@ -31,7 +31,7 @@ preprocess_gtf <- function(gtf) {
 #' 
 #' `map_genes` takes a GTF file and builds a gene-name mapping data frame out
 #' of it.
-#' @param gtf GTF file to process.
+#' @inheritParams preprocess_gtf
 #' @returns A data frame containing GTF file gene annotation.
 #' @importFrom AnnotationDbi saveDb
 #' @importFrom tools file_path_sans_ext
@@ -67,8 +67,6 @@ map_genes <- function(gtf) {
 #' @returns Data frame with new hgnc symbol column and (optionally) HPO terms
 #' associated to symbols.
 #' @export
-
-# Function to add HPO terms to results table
 
 add_HPO_cols <- function(RES, sample_id_col = 'sampleID', 
                          gene_name_col = 'hgncSymbol', hpo_file = NULL){
@@ -210,11 +208,12 @@ estimateThetaWithoutAutoCorrect <- function(ods){
 #' @importFrom OUTRIDER plotVolcano
 #' @export
 
-AE_Sample_Overview <- function(sample, ods, dataset, cfg){
+AE_Sample_Overview <- function(sample, ods, dataset, cfg, z_score_cutoff,
+                               p_adj_cutoff){
   pdf(file=paste(sample, dataset,"OUTRIDER.pdf",sep="_"))
   plot <- OUTRIDER::plotVolcano(ods, sample, basePlot = TRUE,
-                      zScoreCutoff = cfg$aberrantExpression$zScoreCutoff,
-                      padjCutoff = cfg$aberrantExpression$padjCutoff)
+                      zScoreCutoff = z_score_cutoff,
+                      padjCutoff = p_adj_cutoff)
   print(plot)
   graphics.off()
 }
@@ -231,6 +230,7 @@ AE_Sample_Overview <- function(sample, ods, dataset, cfg){
 #' raw (observed) versus expected counts. Expected counts are an estimation
 #' based on OUTRIDER normalization and total expression levels in sample.
 #' @param gene Gene to plot.
+#' @param ods Outrider DataSet object.
 #' @returns Volcano plots of provided gene expression rank and expected vs
 #' observed counts across all samples.
 #' @importFrom OUTRIDER plotExpressionRank plotExpectedVsObservedCounts
@@ -239,8 +239,8 @@ AE_Sample_Overview <- function(sample, ods, dataset, cfg){
 AE_Gene_Overview <- function(gene, ods, dataset, cfg){
   pdf(file=paste(gene, dataset,"OUTRIDER.pdf",sep="_"))
   expPlot <- OUTRIDER::plotExpressionRank(ods, gene, basePlot = TRUE,
-                      zScoreCutoff = cfg$aberrantExpression$zScoreCutoff,
-                      padjCutoff = cfg$aberrantExpression$padjCutoff)
+                      zScoreCutoff = z_score_utoff,
+                      padjCutoff = p_adj_cutoff)
   vsPlot <- OUTRIDER::plotExpectedVsObservedCounts(ods, gene, basePlot = TRUE)
   print(expPlot)
   print(vsPlot)
@@ -277,20 +277,17 @@ processed_vs_imported <- function(df) {
 #' adjusted p-value lower than cutoff)'. It then subsets the input data frame
 #' to samples with at least one aberrantly expressed gene and genes aberrantly
 #' expressed in at least one sample.
+#' @inheritParams main_abgenes_Hunter
 #' @param df An OUTRIDER results data frame.
-#' @param zScoreCutoff Cutoff that gene zScore must surpass in order to be
-#' considered aberrantly expressed.
-#' @param padjCutoff Adjusted p-value cutoff. Gene adjusted p-value must be
-#' lower than this number in order to be considered aberrantly expressed.
 #' @returns A data frame containing only samples with at least one aberrantly
 #' expressed genes and genes aberrantly expressed in at least one sample.
 
-get_aberrants <- function(df, zScoreCutoff, padjCutoff) {
+get_aberrants <- function(df, z_score_cutoff, p_adj_cutoff) {
   if(is.null(df)) {
     return(NULL)
   }
   df$aberrant <- FALSE
-  df$aberrant[abs(df$zScore) > zScoreCutoff & df$padjust <= padjCutoff] <- TRUE
+  df$aberrant[abs(df$zScore) > z_score_cutoff & df$padjust <= p_adj_cutoff] <- TRUE
   aberrants <- df$aberrant==TRUE
   genes <- df[aberrants, ]$geneID
   samples <- df[aberrants, ]$sampleID
@@ -323,6 +320,7 @@ format_aberrants <- function(input_table) {
       aberrants found.")
     return(NULL)
   }
+  input_table <- as.data.frame(input_table)
   names <- c("sampleID", "geneID", "padjust", "type", "zScore", "altRatio")
   matches <- colnames(input_table) %in% names
   if("data_table" %in% class(test)){
@@ -335,7 +333,17 @@ format_aberrants <- function(input_table) {
   return(res)
 }
 
-parse_externals <- function(sample_anno) {
+#' Function to parse imported data information in merge_bam_stats function.
+#' `.parse_externals` subsets the sample annotation table to entries with
+#' "EXTERNAL" column set to "external", and sets up a custom object to allow
+#' the incorporation of imported data into OUTRIDER analysis.
+#' @inheritParams get_metadata
+#' @returns A list containing three objects. "run" is a logical that is TRUE
+#' if the is an imported counts table. Counts is the counts table extracted
+#' from the file. IDs is a vectors containing imported sample IDs.
+#' @noExport
+
+.parse_externals <- function(sample_anno) {
   external_anno <- sample_anno[sample_anno$EXTERNAL=="external", ]
   external_file <- unique(external_anno$GENE_COUNTS_FILE)
   ex_counts <- data.frame(fread(external_file),
@@ -357,21 +365,35 @@ parse_externals <- function(sample_anno) {
               IDs = exCountIDs))
 }
 
+#' Function to add rowRanges to merged counts table, and imported counts
+#' sample information if imported counts table exists in dataset.
+#' `get_metadata` takes a merged counts table, a sample annotation table,
+#' a path to a count_ranges file and a logical, and adds some metadata to
+#' merged counts table.
+#' @inheritParams main_abgenes_Hunter
+#' @param total_counts A merged counts table.
+#' @param sample_anno A sample annotation table.
+#' @param external A boolean.
+#'   * `TRUE` : function will check for imported table sample information, and
+#'              update the merged_table.
+#'   * `FALSE`: function will only set new rowRanges.
+#' @returns A merged counts table with updated rowRanges and imported sample
+#'          metadata.
+
 get_metadata <- function(total_counts, sample_anno, count_ranges, external) {
   SummarizedExperiment::rowRanges(total_counts) <- readRDS(count_ranges)
-  col_data <- data.table::data.table(RNA_ID = as.character(
-                                              colnames(total_counts)))
-  col_data <- add_base_IDs(col_data)
-  colnames(sample_anno)[colnames(sample_anno) == "RNA_ID"] <- "BASE_ID"
-  col_data <- dplyr::left_join(col_data, sample_anno, by = "BASE_ID")
-  if(external)
-  {
+  if(external) {
     col_data[col_data$RNA_ID%in%exCountIDs, ]$EXTERNAL <- "external"
+    col_data <- data.table::data.table(RNA_ID = as.character(
+                                              colnames(total_counts)))
+    col_data <- add_base_IDs(col_data)
+    colnames(sample_anno)[colnames(sample_anno) == "RNA_ID"] <- "BASE_ID"
+    col_data <- dplyr::left_join(col_data, sample_anno, by = "BASE_ID")
+    rownames(col_data) <- col_data$RNA_ID
+    col_metadata <- SummarizedExperiment::colData(total_counts)
+    col_metadata <- as(col_data, "DataFrame")
+    rownames(col_metadata) <- col_metadata$RNA_ID
   }
-
-  rownames(col_data) <- col_data$RNA_ID
-  SummarizedExperiment::colData(total_counts) <- as(col_data, "DataFrame")
-  rownames(SummarizedExperiment::colData(total_counts)) <- SummarizedExperiment::colData(total_counts)$RNA_ID
   return(total_counts)
 }
 
@@ -391,7 +413,6 @@ merge_counts <- function(cpu, sample_anno, count_files, count_ranges) {
   merged_counts_table <- cbind(rownames(merged_assays), merged_assays)
   rownames(merged_counts_table) <- NULL
   colnames(merged_counts_table)[1] <- "gene_ID"
-
   total_counts <- SummarizedExperiment::SummarizedExperiment(assays=list(
                          counts=as.matrix(merged_assays)))
   total_counts <- get_metadata(total_counts = total_counts,
@@ -452,13 +473,11 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
 }
 
 get_ods_results <- function(ods, p_adj_cutoff, z_score_cutoff,
-                 gene_mapping_file, sample_annotation) {
-    res <- OUTRIDER::results(ods,
-         padjCutoff = p_adj_cutoff,
-         zScoreCutoff = z_score_cutoff, all = TRUE)
-    res[, foldChange := round(2^l2fc, 2)] 
-    OUTRIDER_results_all <- res
-    res <- res[padjust <= p_adj_cutoff &
+                 gene_mapping_file, sample_anno) {
+    OUTRIDER_results_all <- OUTRIDER::results(ods, padjCutoff = p_adj_cutoff,
+                                      zScoreCutoff = z_score_cutoff, all = TRUE)
+    OUTRIDER_results_all[, foldChange := round(2^l2fc, 2)]
+    res <- OUTRIDER_results_all[padjust <= p_adj_cutoff &
                    abs(zScore) > z_score_cutoff]
     gene_annot_dt <- data.table::fread(gene_mapping_file)
     if(!is.null(gene_annot_dt$gene_name)){
@@ -469,11 +488,53 @@ get_ods_results <- function(ods, p_adj_cutoff, z_score_cutoff,
         res <- cbind(res[, .(hgncSymbol)], res[, - 'hgncSymbol'])
       }
     }
-    if(!is.null(sample_annotation$HPO_TERMS) & nrow(res) > 0){
-      if(!all(is.na(sample_annotation$HPO_TERMS)) & ! all(sa$HPO_TERMS == '')){
+    if(!is.null(sample_anno$HPO_TERMS) & nrow(res) > 0){
+      if(!all(is.na(sample_anno$HPO_TERMS)) & ! all(sa$HPO_TERMS == '')){
         res <- add_HPO_cols(res, hpo_file = hpo_file)
       }
     }
     return(list(all = OUTRIDER_results_all,
-          Otable = res))
+          table = res))
   }
+
+get_bcv <- function(ods) {
+    before <- data.table::data.table(when = "Before",
+                 BCV = 1/sqrt(estimateThetaWithoutAutoCorrect(ods)))
+    after <- data.table::data.table(when = "After",
+                                    BCV = 1/sqrt(OUTRIDER::theta(ods)))
+    bcv_dt <- rbind(before, after)
+    return(bcv_dt)
+}
+
+merge_bam_stats <- function(sa, stats_path) {
+  stats <- list.files(stats_path, pattern=".txt", full.names = TRUE)
+  bam_coverage <- lapply(stats, read.table)
+  bam_coverage <- do.call(rbind, bam_coverage)
+  colnames(bam_coverage) <- c("sampleID", "record_count")
+  return(bam_coverage)
+}
+
+format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
+  data <- processed_vs_imported(results)
+  aberrants <- lapply(data, get_aberrants, z_score_cutoff, p_adj_cutoff)
+  aberrants <- .fix_lapply_names(aberrants)
+  formatted <- lapply(aberrants, format_aberrants)
+  return(formatted)
+}
+
+.fix_lapply_names <- function(table_list) {
+  if(is.data.frame(table_list)) {
+    table_list <- list(table_list)
+  }
+  for (index in seq(1, length(table_list))) {
+    new_names <- lapply(colnames(table_list[[index]]), .split_string_by_char,
+                        "\\.", 2)
+    new_names <- unlist(new_names)
+    colnames(table_list[[index]]) <- new_names
+  }
+  return(table_list)
+}
+
+.split_string_by_char <- function(string, char, index) {
+  return(strsplit(x = string, split = char)[[1]][index])
+}
