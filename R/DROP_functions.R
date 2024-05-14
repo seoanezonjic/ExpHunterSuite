@@ -435,17 +435,11 @@ filter_counts <- function(counts, txdb, fpkm_cutoff) {
   ods <- OUTRIDER::OutriderDataSet(counts)
   col_data <- SummarizedExperiment::colData(ods)
   row_data <- SummarizedExperiment::rowData(ods)
-  col_data$EXTERNAL[
-    is.na(col_data$EXTERNAL)] <- "no"
-
-  # filter not expressed genes
-  print("performing actual filtering")
+  col_data$EXTERNAL[is.na(col_data$EXTERNAL)] <- "no"
   ods <- OUTRIDER::filterExpression(ods, gtfFile=txdb, filter=FALSE,
                           fpkm_cutoff=fpkm_cutoff, addExpressedGenes=TRUE)
-
   # add column for genes with at least 1 gene
   row_data$counted1sample = rowSums(assay(ods)) > 0
-
   col_data$isExternal <- col_data$EXTERNAL=="external"
   return(ods)
 }
@@ -568,30 +562,8 @@ merge_bam_stats <- function(stats_path) {
 format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
   data <- .processed_vs_imported(results)
   aberrants <- lapply(data, get_aberrants, z_score_cutoff, p_adj_cutoff)
-  aberrants <- .fix_lapply_names(aberrants)
   formatted <- lapply(aberrants, format_aberrants)
   return(formatted)
-}
-
-#' Function to fix an annoying characteristic of using lapply, where it
-#' appends the original object name to every name of the result list.
-#' `.fix_lapply_names` Fixes the output of a lapply call, restoring the original
-#' names of the object it was called upon.
-#' @param table_list A list of tables originating from a lapply call.
-#' @returns That same list with the expected names, without the appends made
-#' by the lapply call.
-
-.fix_lapply_names <- function(table_list) {
-  if(is.data.frame(table_list)) {
-    table_list <- list(table_list)
-  }
-  for (index in seq(1, length(table_list))) {
-    new_names <- lapply(colnames(table_list[[index]]), .split_string_by_char,
-                        ".", 2)
-    new_names <- unlist(new_names)
-    colnames(table_list[[index]]) <- new_names
-  }
-  return(table_list)
 }
 
 #' Function to split a string by a certain character and return only the desired
