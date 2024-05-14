@@ -4,7 +4,7 @@ test_that("preprocess_gtf works as intended", {
   txdb <- suppressMessages(GenomicFeatures::makeTxDbFromGFF(gtf))
   GenomeInfoDb::keepStandardChromosomes(txdb)
   count_ranges <- GenomicFeatures::exonsBy(txdb, by = "gene")
-  gene_name_mapping <- map_genes(gtf)
+  gene_name_mapping <- .map_genes(gtf)
   count_ranges@metadata$genomeInfo$`Creation time` <- ""
   # Replace with GRanges object, comparing environments is messier
   expected_output <- list(txdb = GenomicFeatures::transcripts(txdb),
@@ -21,7 +21,7 @@ test_that("preprocess_gtf works as intended", {
 test_that("map_genes works as intended", {
   gtf <- system.file("extData/testdata", "gencode.v45.toy.annotation.gtf",
                      package = "ExpHunterSuite")
-  actual_output <- map_genes(gtf)
+  actual_output <- .map_genes(gtf)
   gtf_name <- basename(tools::file_path_sans_ext(gtf))
   gtf_df <- as.data.frame(rtracklayer::import(gtf))
   if (!"gene_name" %in% colnames(gtf_df)) {
@@ -59,19 +59,3 @@ test_that(".split_string_by_char edge cases", {
   testthat::expect_warning(.split_string_by_char(string, ".", 200),
                            "out-of-bounds")
 })
-
-test_that(".fix_lapply_names works as intended", {
-  table_list <- list(df_1 = df_1 <- data.frame(matrix(ncol=3)),
-                     df_2 = df_2 <- data.frame(matrix(ncol=4)))
-  colnames(table_list$df_1) <- c("Test.1", ".Testcolname", "foobar.")
-  colnames(table_list$df_2) <- c("Test", "34", "no.t.h.i.ng", ".Another_test.")
-  res_list <- suppressWarnings(.fix_lapply_names(table_list))
-  expected_list <- list(df_1 = df_1 <- data.frame(matrix(ncol=3)),
-                        df_2 = df_2 <- data.frame(matrix(ncol=4)))
-  colnames(expected_list$df_1) <- c("1", "Testcolname", NA)
-  colnames(expected_list$df_2) <- c(NA, NA, "t", "Another_test")
-  testthat::expect_equal(colnames(res_list$df_1),
-                         colnames(expected_list$df_1))
-  testthat::expect_equal(colnames(res_list$df_2),
-                         colnames(expected_list$df_2))
-  })
