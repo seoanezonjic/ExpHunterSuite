@@ -57,7 +57,7 @@ preprocess_gtf <- function(gtf) {
 
 #' Add HPO terms to table
 #' 
-#' `add_HPO_cols` takes a data table and adds a hgncSymbol column.
+#' `.add_HPO_cols` takes a data table and adds a hgncSymbol column.
 #' @param RES Data table to process.
 #' @param sample_id_col Name of sample id column.
 #' @param gene_name_col Name of column where hgnc symbols will be included.
@@ -107,7 +107,7 @@ preprocess_gtf <- function(gtf) {
 
 #' Get counts table from rds file or table
 #' 
-#' `get_file_counts` takes a file from which to extract a counts table. File may
+#' `.get_file_counts` takes a file from which to extract a counts table. File may
 #' be in RDS or table format.
 #' @param file Counts table file.
 #' @returns Loaded counts table.
@@ -125,7 +125,7 @@ preprocess_gtf <- function(gtf) {
 
 #' Get unique rownames of a data frame
 #' 
-#' `get_unique_rownames` takes a data frame and extracts its unique row names.
+#' `.get_unique_rownames` takes a data frame and extracts its unique row names.
 #' @param df A data frame.
 #' @returns Unique rownames of data frame.
 
@@ -136,7 +136,7 @@ preprocess_gtf <- function(gtf) {
 
 #' Get base sample ID from RNA_ID string generated for sample annotation file
 #' 
-#' `get_base_ID` takes an RNA_ID string from the DROP sample annotation file.
+#' `.get_base_ID` takes an RNA_ID string from the DROP sample annotation file.
 #' String generated in this way contain not only sample ID, but the name of
 #' the program that generated them. This function extracts the sample ID from
 #' that string.
@@ -151,21 +151,21 @@ preprocess_gtf <- function(gtf) {
 
 #' Add base ID column to sample annotation data frame
 #' 
-#' `add_base_IDs` takes a sample annotation data frame and calls get_base_ID
+#' `.add_base_IDs` takes a sample annotation data frame and calls .get_base_ID
 #' on it, then assigns the results to new BASE_ID column.
 #' @param col_data Data frame containing RNA_ID column.
 #' @returns The same dataframe, with a new BASE_ID column containing sample ID.
 #' If RNA_ID column only contains sample ID, new column will be an exact copy.
 
 .add_base_IDs <- function(col_data) {
-  base_IDs <- sapply(col_data$RNA_ID, get_base_ID)
+  base_IDs <- sapply(col_data$RNA_ID, .get_base_ID)
   col_data$BASE_ID <- base_IDs
   return(col_data)
 }
 
 #' Estimate BCV (Biological Coefficient of Variation) from Outrider Dataset.
 #' 
-#' `estimateThetaWithoutAutoCorrect` takes an ODS (Outrider DataSet) object
+#' `.estimateThetaWithoutAutoCorrect` takes an ODS (Outrider DataSet) object
 #' and calculates its biological coefficient of variation, adding it to the ODS.
 #' @param ods Outrider DataSet object.
 #' @returns An updated ODS containing estimated BCV.
@@ -242,7 +242,7 @@ AE_Gene_Overview <- function(gene, ods, dataset, cfg){
 
 #' Function to separate locally processed and GTEx samples from OUTRIDER
 #' results.
-#' `processed_vs_imported` takes a data frame and splits it into two data frames
+#' `.processed_vs_imported` takes a data frame and splits it into two data frames
 #' contained in a list. The two elements are "processed" and "imported".
 #' All samples whose name contain "GTEX" are considered imported, the rest
 #' are considered exported.
@@ -331,7 +331,7 @@ format_aberrants <- function(input_table) {
 #' `.parse_externals` subsets the sample annotation table to entries with
 #' "EXTERNAL" column set to "external", and sets up a custom object to allow
 #' the incorporation of imported data into OUTRIDER analysis.
-#' @inheritParams get_metadata
+#' @inheritParams .get_metadata
 #' @returns A list containing three objects. "run" is a logical that is TRUE
 #' if the is an imported counts table. Counts is the counts table extracted
 #' from the file. IDs is a vectors containing imported sample IDs.
@@ -349,8 +349,8 @@ format_aberrants <- function(input_table) {
   } else {
     ex_counts <- subset(ex_counts, select = exCountIDs)
   }
-  if(!identical(get_unique_rownames(merged_locals),
-          get_unique_rownames(ex_counts))){
+  if(!identical(.get_unique_rownames(merged_locals),
+          .get_unique_rownames(ex_counts))){
     stop('The rows (genes) of the count matrices to be
         merged are not the same.')
   }
@@ -360,7 +360,7 @@ format_aberrants <- function(input_table) {
 
 #' Function to add rowRanges to merged counts table, and imported counts
 #' sample information if imported counts table exists in dataset.
-#' `get_metadata` takes a merged counts table, a sample annotation table,
+#' `.get_metadata` takes a merged counts table, a sample annotation table,
 #' a path to a count_ranges file and a logical, and adds some metadata to
 #' merged counts table.
 #' @inheritParams main_abgenes_Hunter
@@ -380,7 +380,7 @@ format_aberrants <- function(input_table) {
   }
   col_data <- data.table::data.table(RNA_ID = as.character(
                                             colnames(total_counts)))
-  col_data <- add_base_IDs(col_data)
+  col_data <- .add_base_IDs(col_data)
   colnames(sample_anno)[colnames(sample_anno) == "RNA_ID"] <- "BASE_ID"
   col_data <- dplyr::left_join(col_data, sample_anno, by = "BASE_ID")
   rownames(col_data) <- col_data$RNA_ID
@@ -401,12 +401,12 @@ format_aberrants <- function(input_table) {
 merge_counts <- function(cpu, sample_anno, count_files, count_ranges) {
   BiocParallel::register(BiocParallel::MulticoreParam(cpu))
   count_files <- strsplit(count_files, " ")[[1]]
-  local_counts_list <- BiocParallel::bplapply(count_files, get_file_counts)
+  local_counts_list <- BiocParallel::bplapply(count_files, .get_file_counts)
   merged_assays <- do.call(cbind, local_counts_list)
   message(paste("read", length(count_files), 'files'))
   external_anno <- sample_anno[sample_anno$EXTERNAL=="external", ]
   if(nrow(external_anno) > 0) {
-    external <- parse_externals(sample_anno)
+    external <- .parse_externals(sample_anno)
     merged_assays <- cbind(merged_locals, external$counts)
   } else {
     external <- list(run = FALSE)
@@ -534,7 +534,7 @@ get_ods_results <- function(ods, p_adj_cutoff, z_score_cutoff,
 
 get_bcv <- function(ods) {
     before <- data.table::data.table(when = "Before",
-                 BCV = 1/sqrt(estimateThetaWithoutAutoCorrect(ods)))
+                 BCV = 1/sqrt(.estimateThetaWithoutAutoCorrect(ods)))
     after <- data.table::data.table(when = "After",
                                     BCV = 1/sqrt(OUTRIDER::theta(ods)))
     bcv_dt <- rbind(before, after)
