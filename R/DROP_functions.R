@@ -322,7 +322,7 @@ format_aberrants <- function(input_table) {
   }
   names <- c("sampleID", "geneID", "padjust", "type", "zScore", "altRatio")
   matches <- colnames(input_table) %in% names
-  if("data_table" %in% class(input_table)){
+  if("data.table" %in% class(input_table)){
     res <- input_table[, matches, with = FALSE]
   } else {
     res <- input_table[, matches]
