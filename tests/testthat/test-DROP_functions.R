@@ -39,3 +39,39 @@ test_that("map_genes works as intended", {
   expected_output <- gtf_df
   testthat::expect_equal(actual_output, expected_output)
 })
+
+test_that(".split_string_by_char works as intended", {
+  string <- "Lorem ipsum dolor sit_amet"
+  substr_1 <- .split_string_by_char(string, "_", 1)
+  substr_2 <- .split_string_by_char(string, "_", 2)
+  expected_substr_1 <- "Lorem ipsum dolor sit"
+  expected_substr_2 <- "amet"
+  testthat::expect_equal(substr_1, expected_substr_1)
+  testthat::expect_equal(substr_2, expected_substr_2)
+})
+
+test_that(".split_string_by_char edge cases", {
+  string <- "._?!#$"
+  testthat::expect_warning(.split_string_by_char(string, "(", 1),
+                           "character not present")
+  testthat::expect_warning(.split_string_by_char(string, ".", 0),
+                           "out-of-bounds")
+  testthat::expect_warning(.split_string_by_char(string, ".", 200),
+                           "out-of-bounds")
+})
+
+test_that(".fix_lapply_names works as intended", {
+  table_list <- list(df_1 = df_1 <- data.frame(matrix(ncol=3)),
+                     df_2 = df_2 <- data.frame(matrix(ncol=4)))
+  colnames(table_list$df_1) <- c("Test.1", ".Testcolname", "foobar.")
+  colnames(table_list$df_2) <- c("Test", "34", "no.t.h.i.ng", ".Another_test.")
+  res_list <- suppressWarnings(.fix_lapply_names(table_list))
+  expected_list <- list(df_1 = df_1 <- data.frame(matrix(ncol=3)),
+                        df_2 = df_2 <- data.frame(matrix(ncol=4)))
+  colnames(expected_list$df_1) <- c("1", "Testcolname", NA)
+  colnames(expected_list$df_2) <- c(NA, NA, "t", "Another_test")
+  testthat::expect_equal(colnames(res_list$df_1),
+                         colnames(expected_list$df_1))
+  testthat::expect_equal(colnames(res_list$df_2),
+                         colnames(expected_list$df_2))
+  })
