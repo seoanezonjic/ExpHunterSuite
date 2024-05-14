@@ -20,7 +20,7 @@ preprocess_gtf <- function(gtf) {
   message("Calculating count ranges")
   count_ranges <- GenomicFeatures::exonsBy(txdb, by = "gene")
   message("Creating gene-name mapping file")
-  gene_name_mapping <- map_genes(gtf)
+  gene_name_mapping <- .map_genes(gtf)
   preprocessing_results <- list(txdb = txdb,
                              count_ranges = count_ranges,
                              gene_name_mapping = gene_name_mapping)
@@ -36,9 +36,8 @@ preprocess_gtf <- function(gtf) {
 #' @importFrom AnnotationDbi saveDb
 #' @importFrom tools file_path_sans_ext
 #' @importFrom rtracklayer import
-#' @export
 
-map_genes <- function(gtf) {
+.map_genes <- function(gtf) {
   gtf_name <- basename(tools::file_path_sans_ext(gtf))
   gtf_df <- as.data.frame(rtracklayer::import(gtf))
     if (!"gene_name" %in% colnames(gtf_df)) {
@@ -66,9 +65,8 @@ map_genes <- function(gtf) {
 #' @importFrom data.table fread setnames
 #' @returns Data frame with new hgnc symbol column and (optionally) HPO terms
 #' associated to symbols.
-#' @export
 
-add_HPO_cols <- function(RES, sample_id_col = 'sampleID', 
+.add_HPO_cols <- function(RES, sample_id_col = 'sampleID', 
                          gene_name_col = 'hgncSymbol', hpo_file = NULL){
   
   filename <- file.path(hpo_file) # Adjusted. Instead of trying to download it
@@ -114,9 +112,8 @@ add_HPO_cols <- function(RES, sample_id_col = 'sampleID',
 #' @param file Counts table file.
 #' @returns Loaded counts table.
 #' @importFrom data.table fread
-#' @export
 
-get_file_counts <- function(file) {
+.get_file_counts <- function(file) {
   print(file)
     if(grepl('rds$', file))
       counts <- assay(readRDS(file))
@@ -131,9 +128,8 @@ get_file_counts <- function(file) {
 #' `get_unique_rownames` takes a data frame and extracts its unique row names.
 #' @param df A data frame.
 #' @returns Unique rownames of data frame.
-#' @export
 
-get_unique_rownames <- function(df) {
+.get_unique_rownames <- function(df) {
   res <- sort(unique(rownames(df)))
   return(res)
 }
@@ -147,9 +143,8 @@ get_unique_rownames <- function(df) {
 #' @param RNA_ID A string containing the sample ID and the program used for
 #' read counting, separated by underscores.
 #' @returns Sample ID.
-#' @export
 
-get_base_ID <- function(RNA_ID) {
+.get_base_ID <- function(RNA_ID) {
   base_ID <- .split_string_by_char(RNA_ID, "_", 1)
   return(base_ID)
 }
@@ -161,9 +156,8 @@ get_base_ID <- function(RNA_ID) {
 #' @param col_data Data frame containing RNA_ID column.
 #' @returns The same dataframe, with a new BASE_ID column containing sample ID.
 #' If RNA_ID column only contains sample ID, new column will be an exact copy.
-#' @export
 
-add_base_IDs <- function(col_data) {
+.add_base_IDs <- function(col_data) {
   base_IDs <- sapply(col_data$RNA_ID, get_base_ID)
   col_data$BASE_ID <- base_IDs
   return(col_data)
@@ -177,9 +171,8 @@ add_base_IDs <- function(col_data) {
 #' @returns An updated ODS containing estimated BCV.
 #' @importFrom OUTRIDER OutriderDataSet normalizationFactors counts fit theta
 #' @importFrom SummarizedExperiment colData
-#' @export
 
-estimateThetaWithoutAutoCorrect <- function(ods){
+.estimateThetaWithoutAutoCorrect <- function(ods){
   
   ods1 <- OUTRIDER::OutriderDataSet(
                                    countData = OUTRIDER::counts(ods),
@@ -257,7 +250,7 @@ AE_Gene_Overview <- function(gene, ods, dataset, cfg){
 #' @returns A list with two elements, one for processed counts and another
 #' for imported counts.
 
-processed_vs_imported <- function(df) {
+.processed_vs_imported <- function(df) {
   extIndex <- grep("GTEX", df$sampleID)
   if(any(extIndex)) {
     processed <- df[-grep("GTEX", df$sampleID), ]
@@ -281,6 +274,7 @@ processed_vs_imported <- function(df) {
 #' @param df An OUTRIDER results data frame.
 #' @returns A data frame containing only samples with at least one aberrantly
 #' expressed genes and genes aberrantly expressed in at least one sample.
+#' @export
 
 get_aberrants <- function(df, z_score_cutoff, p_adj_cutoff) {
   if(is.null(df)) {
@@ -313,6 +307,7 @@ get_aberrants <- function(df, z_score_cutoff, p_adj_cutoff) {
 #' "p_padjust" (calculated from "padjust" column), "type", "zScore" and
 #' "altRatio" columns, if they existed in the input data frame.
 #' @import data.table
+#' @export
 
 format_aberrants <- function(input_table) {
   if(is.null(input_table)) {
@@ -378,7 +373,7 @@ format_aberrants <- function(input_table) {
 #' @returns A merged counts table with updated rowRanges and imported sample
 #'          metadata.
 
-get_metadata <- function(total_counts, sample_anno, count_ranges, external) {
+.get_metadata <- function(total_counts, sample_anno, count_ranges, external) {
   SummarizedExperiment::rowRanges(total_counts) <- readRDS(count_ranges)
   if(external) {
     col_data[col_data$RNA_ID%in%exCountIDs, ]$EXTERNAL <- "external"
@@ -398,9 +393,10 @@ get_metadata <- function(total_counts, sample_anno, count_ranges, external) {
 #' Function to extract count tables and merge them into one.
 #' `merge_counts` takes multiple paths to count tables and reads them, merging
 #' them into one.
-#' @inheritParams get_metadata
+#' @inheritParams .get_metadata
 #' @inheritParams main_abgenes_Hunter
 #' @returns A merged counts table.
+#' @export
 
 merge_counts <- function(cpu, sample_anno, count_files, count_ranges) {
   BiocParallel::register(BiocParallel::MulticoreParam(cpu))
@@ -420,7 +416,7 @@ merge_counts <- function(cpu, sample_anno, count_files, count_ranges) {
   colnames(merged_counts_table)[1] <- "gene_ID"
   total_counts <- SummarizedExperiment::SummarizedExperiment(assays=list(
                          counts=as.matrix(merged_assays)))
-  total_counts <- get_metadata(total_counts = total_counts,
+  total_counts <- .get_metadata(total_counts = total_counts,
                                sample_anno = sample_anno,
                                count_ranges = count_ranges,
                                external = external$run)
@@ -433,6 +429,7 @@ merge_counts <- function(cpu, sample_anno, count_files, count_ranges) {
 #' @inheritParams main_abgenes_Hunter
 #' @param counts A counts table.
 #' @returns A filtered OutriderDataSet built from the merged table.
+#' @export
 
 filter_counts <- function(counts, txdb, fpkm_cutoff) {
   ods <- OUTRIDER::OutriderDataSet(counts)
@@ -459,6 +456,7 @@ filter_counts <- function(counts, txdb, fpkm_cutoff) {
 #' @inheritParams main_abgenes_Hunter
 #' @param ods_unfitted The filtered Outrider dataset on which to run OUTRIDER.
 #' @returns A fitted outrider dataset.
+#' @export
 
 run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
   ods_unfitted <- ods_unfitted[
@@ -498,6 +496,7 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
 #' @param ods A fitted outrider dataset.
 #' @returns A list with two items. The first one, named "all", contains all
 #' results. The second one, "table", only contains significant results.
+#' @export
 
 get_ods_results <- function(ods, p_adj_cutoff, z_score_cutoff,
                  gene_mapping_file, sample_anno) {
@@ -517,7 +516,7 @@ get_ods_results <- function(ods, p_adj_cutoff, z_score_cutoff,
     }
     if(!is.null(sample_anno$HPO_TERMS) & nrow(res) > 0){
       if(!all(is.na(sample_anno$HPO_TERMS)) & ! all(sa$HPO_TERMS == '')){
-        res <- add_HPO_cols(res, hpo_file = hpo_file)
+        res <- .add_HPO_cols(res, hpo_file = hpo_file)
       }
     }
     return(list(all = OUTRIDER_results_all,
@@ -531,6 +530,7 @@ get_ods_results <- function(ods, p_adj_cutoff, z_score_cutoff,
 #' @inheritParams get_ods_results
 #' @returns A data table containing the biological coefficient variation
 #' of the outrider dataset before and after normalisation.
+#' @export
 
 get_bcv <- function(ods) {
     before <- data.table::data.table(when = "Before",
@@ -545,6 +545,7 @@ get_bcv <- function(ods) {
 #' `merge_bam_stats` Merges the bam stat files contained in the specified path.
 #' @inheritParams main_abgenes_Hunter
 #' @returns A table containing the merged bam stats.
+#' @export
 
 merge_bam_stats <- function(stats_path) {
   stats <- list.files(stats_path, pattern=".txt", full.names = TRUE)
@@ -562,9 +563,10 @@ merge_bam_stats <- function(stats_path) {
 #' gene. It keeps p-value and z-score information.
 #' @inheritParams main_abgenes_Hunter
 #' @returns A table containing the merged bam stats.
+#' @export
 
 format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
-  data <- processed_vs_imported(results)
+  data <- .processed_vs_imported(results)
   aberrants <- lapply(data, get_aberrants, z_score_cutoff, p_adj_cutoff)
   aberrants <- .fix_lapply_names(aberrants)
   formatted <- lapply(aberrants, format_aberrants)
