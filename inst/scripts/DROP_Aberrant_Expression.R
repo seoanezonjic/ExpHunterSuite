@@ -2,6 +2,7 @@
 
 
 devtools::load_all("~aestebanm/dev_R/ExpHunterSuite") ## Temporary until it is installed
+devtools::load_all("~aestebanm/dev_R/htmlreportR")
 options(error = function() { 
   traceback(2)
   options(error = NULL)
@@ -41,7 +42,9 @@ option_list <- list(
   optparse::make_option(c("-b", "--stats_path"), type="character", default=NULL,
     help="Path to directory containing bam stats."),
   optparse::make_option(c("-t", "--top_N"), type="integer", default=10,
-    help="Top N genes by adjusted p-value to be selected.")
+    help="Top N genes by adjusted p-value to be selected."),
+  optparse::make_option(c("-o", "--report_dir"), type="character", default=getwd(),
+    help="Directory where report will be generated.")
   )
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
@@ -65,8 +68,4 @@ final_results <- main_abgenes_Hunter(
 
 saveRDS(final_results, "res.rds")
 
-data.table::fwrite(data.table::as.data.table(SummarizedExperiment::assay(
-                   final_results$counts)$counts, keep.rownames = 'geneID'),
-                   file = paste0(dataset, "_geneCounts.tsv.gz"),
-                   quote = FALSE, row.names = FALSE, sep = '\t',
-                   compress = 'gzip')
+write_abgenes_report(final_results = final_results, output_files = "./report/")
