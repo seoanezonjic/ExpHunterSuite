@@ -438,8 +438,10 @@ filter_counts <- function(counts, txdb, fpkm_cutoff) {
   col_data$EXTERNAL[is.na(col_data$EXTERNAL)] <- "no"
   ods <- OUTRIDER::filterExpression(ods, gtfFile=txdb, filter=FALSE,
                           fpkm_cutoff=fpkm_cutoff, addExpressedGenes=TRUE)
+
   # add column for genes with at least 1 gene
   row_data$counted1sample = rowSums(assay(ods)) > 0
+
   col_data$isExternal <- col_data$EXTERNAL=="external"
   return(ods)
 }
@@ -579,8 +581,9 @@ format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
   if (!char %in% strsplit(string, "")[[1]]) {
     warning("WARNING: Attempted to split string by character not present")
   }
-  if(index > length(string) || index < 1) {
+  split <- strsplit(x = string, split = char, fixed = TRUE)[[1]]
+  if(index > length(split) || index < 1) {
     warning("WARNING: Attempted to split string by out-of-bounds index.")
   }
-  return(strsplit(x = string, split = char, fixed = TRUE)[[1]][index])
+  return(split[index])
 }
