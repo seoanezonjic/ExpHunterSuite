@@ -57,7 +57,7 @@ write_expression_report <- function(exp_results,
                       output_file = outf, intermediates_dir = output_files)
 }
 
-write_expression_data <- function(final_results, output_files, opt = NULL, template_folder){
+write_expression_data <- function(final_results, output_files){
 
   write.table(final_results[['raw_filter']], 
     file=file.path(output_files, "filtered_count_data.txt"), quote=FALSE, 
