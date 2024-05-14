@@ -68,15 +68,16 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 										gene_mapping_file = gene_mapping_file,
 										sample_anno = sample_anno)
 	bcv_dt <- get_bcv(ods)
-	bam_coverage <- merge_bam_stats(sa = sample_anno, stats_path = stats_path)
+	bam_coverage <- merge_bam_stats(stats_path = stats_path)
+	save(list = ls(all.names = TRUE), file = "environment.RData")
 	formatted <- format_for_report(outrider_results$all,
 								   z_score_cutoff, p_adj_cutoff)
 	final_results <- list()
 	final_results$counts <- counts
 	final_results$ods_unfitted <- ods_unfitted
 	final_results$ods <- ods
-	final_results$OUTRIDER_results_all <- outrider_results$all
-	final_results$OUTRIDER_results_table <- outrider_results$table
+	final_results$outrider_res_all <- outrider_results$all
+	final_results$outrider_res_table <- outrider_results$table
 	final_results$bam_coverage <- bam_coverage
 	final_results$formatted <- formatted
 	final_results$bcv_dt <- bcv_dt
@@ -274,22 +275,33 @@ placeholder <- function(juas) {
 	}
 }
 
-write_abgenes_report <- function(final_results, output_files = getwd(), 
-								 template_folder = NULL, opt = NULL) {
-	if(is.null(template_folder)) {
-        template_folder <- file.path(find.package('ExpHunterSuite'), 'templates')
-	}
-	if(any(is.null(final_results))) {
-		stop("ERROR: final_results object contains NULL fields. Analysis
-			is not complete.")
-	}
+write_abgenes_results <- function(final_results, output_dir) {
+	return("WIP")
+}
 
-	counts <- final_results$counts
-	ods_unfitted <- final_results$ods_unfitted
-	ods <- final_results$ods
-	outrider_results_all <- final_results$outrider_results$all
-	outrider_results_table <- final_results$outrider_results$table
-	bam_coverage <- final_results$bam_coverage
-	formatted <- final_results$formatted
-	bcv_dt <- final_results$bcv_dt
+write_abgenes_report <- function(final_results, output_dir = getwd()) {
+		template <- file.path(template_folder, 'DROP_template.txt')
+		if(any(is.null(final_results))) {
+			stop("ERROR: final_results object contains NULL fields. Analysis
+				 is not complete.")
+		}
+		find.package('htmlreportR')
+		if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' ) {
+			source_folder <- file.path(source_folder, "inst")
+		}
+		tmp_folder <- "tmp_lib"
+		container <- list(counts = final_results$counts,
+						  ods = final_results$ods,
+						  ods_unfitted = final_results$ods_unfitted,
+						  outrider_res_all = final_results$outrider_res_all,
+						  outrider_res_table = final_results$outrider_res_table,
+						  bam_coverage = final_results$bam_coverage,
+						  formatted = final_results$formatted,
+						  bcf_dt = final_results$bcf_dt)
+		plotter <- htmlReport$new(title_doc = "Aberrant Expression report", 
+						      	  container = container, 
+		                      	  tmp_folder = tmp_folder,
+		                      	  src = source_folder)
+		plotter$build(template)
+		plotter$write_report(file.path(output_dir, "report_lib.html"))
 }
