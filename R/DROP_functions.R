@@ -587,7 +587,7 @@ format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
   }
   for (index in seq(1, length(table_list))) {
     new_names <- lapply(colnames(table_list[[index]]), .split_string_by_char,
-                        "\\.", 2)
+                        ".", 2)
     new_names <- unlist(new_names)
     colnames(table_list[[index]]) <- new_names
   }
@@ -604,5 +604,11 @@ format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
 #' @returns The element of the split string specified by provided index.
 
 .split_string_by_char <- function(string, char, index) {
-  return(strsplit(x = string, split = char)[[1]][index])
+  if (!char %in% strsplit(string, "")[[1]]) {
+    warning("WARNING: Attempted to split string by character not present")
+  }
+  if(index > length(string) || index < 1) {
+    warning("WARNING: Attempted to split string by out-of-bounds index.")
+  }
+  return(strsplit(x = string, split = char, fixed = TRUE)[[1]][index])
 }
