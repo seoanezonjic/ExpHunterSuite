@@ -28,7 +28,8 @@ eval_method = "aggregated",
 template_folder = file.path(find.package('ExpHunterSuite'), "templates"),
 organism_table_path = file.path(find.package('ExpHunterSuite'), "inst", 
     "external_data", "organism_table.txt"),
-compare_pred_scores = FALSE
+compare_pred_scores = FALSE,
+add_databases_files = NA
 ){
 
 
@@ -52,6 +53,7 @@ corr_cutoffs<- eval(parse(text=paste('c(', gsub("'","", corr_cutoffs), ')')))
     "normalized_counts_RNA_vs_miRNA_Eigengene_0", 
      parse_strategies(strat_names))
   
+
  # Prepare for RNA ID translation
  organism_info <- utils::read.table(organism_table_path, 
     header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, 

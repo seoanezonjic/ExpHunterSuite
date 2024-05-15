@@ -50,7 +50,7 @@ option_list <- list(
         default="lower",
         help = "Set if correlations are [lower] or [higher] than the --p_val_cutoff. Default=%default"),
     optparse::make_option(c("-c", "--corr_cutoffs"), type="character", 
-        default="-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6",
+        default="-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6,-0.55",
         help="Correlation threshold . Default=%default"),
      optparse::make_option(c("-F", "--f_p_val"), type="double", 
         default=0.05,

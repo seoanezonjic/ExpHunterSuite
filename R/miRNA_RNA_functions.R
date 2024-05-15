@@ -121,6 +121,7 @@ parse_strategies <- function(strategies){
     parsed_strategies <- c()
     for (strategy in strategies) {
       splitted_strategy <- unlist(strsplit(strategy, ""))
+      if (length(splitted_strategy) == 0) next
       RNA_profile <- strat_equivalence[[splitted_strategy[1]]]
       miRNA_profile <- strat_equivalence[[splitted_strategy[2]]]
       parsed_strategies <- c(parsed_strategies, paste0(RNA_profile, 
