@@ -1,7 +1,41 @@
 
 <h1>Aberrantly Expressed Genes Report</h1>
+<h2>Boxplot of BCV Before and After Autoencoder</h2>
+<!--begin.rcode setup
+    p_adj_cutoff <- plotter$hash_vars$p_adj_cutoff
+    z_score_cutoff <- plotter$hash_vars$z_score_cutoff
+    plot_enc_dim_search <- function(ods) {
+        OUTRIDER::plotEncDimSearch(ods) +
+              ggplot2::labs(title = "Encoding dim search") +
+              cowplot::theme_cowplot() +
+              cowplot::background_grid() +
+              ggplot2::scale_color_brewer(palette="Dark2")
+    }
+    plot_aberrant_per_sample <- function(ods) {
+        OUTRIDER::plotAberrantPerSample(ods, main = "Aberrants per sample", 
+                                        padjCutoff = p_adj_cutoff,
+                                        zScoreCutoff = z_score_cutoff)
+    }
+    plot_count_cor_heatmap_raw <- function(ods) {
+        OUTRIDER::plotCountCorHeatmap(ods, normalized = FALSE, colGroups = "EXTERNAL", colColSet = "Dark2",
+                                      main = 'Raw Counts')  
+    }
+    plot_count_cor_heatmap_norm <- function(ods) {
+        OUTRIDER::plotCountCorHeatmap(ods, normalized = TRUE, colGroups = "EXTERNAL", colColSet = "Dark2",
+                                      main = 'Normalized Counts')
+    }
+    plot_count_gene_sample_heatmap_raw <- function(ods) {
+        OUTRIDER::plotCountGeneSampleHeatmap(ods, normalized = FALSE, nGenes = 50, colGroups = "EXTERNAL", colColSet = "Dark2",
+                                     main = 'Raw Counts',
+                                     bcvQuantile = .95, show_names = 'row')
+    }
+    plot_count_gene_sample_heatmap_norm <- function(ods) {
+        OUTRIDER::plotCountGeneSampleHeatmap(ods, normalized = TRUE, nGenes = 50, colGroups = "EXTERNAL", colColSet = "Dark2",
+                                             main = 'Normalized Counts',
+                                             bcvQuantile = .95, show_names = 'row')
+    }
+end.rcode-->
 <!--begin.rcode biological_variation_coefficient
-    cat(paste0("<h2>Boxplot of BCV Before and After Autoencoder</h2>"))
     cat(plotter$static_ggplot_main(id ="bcv_dt", header = NULL, text = "dynamic",
             plotting_function = function(ggplot_obj) {
             ggplot_obj + ggplot2::aes(x = when, y = BCV) +
@@ -10,6 +44,21 @@
                               y = "Biological coefficient \nof variation",
                               title = "Change in BCV")
         }))
+end.rcode-->
+<h2>OUTRIDER Summary</h2>
+<!--begin.rcode OUTRIDER_Summary
+    cat(plotter$static_plot_main("ods", custom_format = TRUE,
+                                 plotting_function = plot_enc_dim_search))
+    cat(plotter$static_plot_main("ods", custom_format = TRUE,
+                                 plotting_function = plot_aberrant_per_sample))
+    cat(plotter$static_plot_main("ods", custom_format = TRUE,
+                                 plotting_function = plot_count_cor_heatmap_raw))
+    cat(plotter$static_plot_main("ods", custom_format = TRUE,
+                                 plotting_function = plot_count_cor_heatmap_norm))
+    cat(plotter$static_plot_main("ods", custom_format = TRUE,
+                                 plotting_function = plot_count_gene_sample_heatmap_raw))
+    cat(plotter$static_plot_main("ods", custom_format = TRUE,
+                                 plotting_function = plot_count_gene_sample_heatmap_norm))
 end.rcode-->
 
 # <!--begin.rcode AE_heatmaps, eval=!is.null(plotter$hash_vars$processed_AE_results.tsv)
