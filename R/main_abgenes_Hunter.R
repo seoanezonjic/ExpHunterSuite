@@ -279,29 +279,33 @@ write_abgenes_results <- function(final_results, output_dir) {
 	return("WIP")
 }
 
-write_abgenes_report <- function(final_results, output_dir = getwd()) {
-		template <- file.path(template_folder, 'DROP_template.txt')
-		if(any(is.null(final_results))) {
-			stop("ERROR: final_results object contains NULL fields. Analysis
-				 is not complete.")
-		}
-		find.package('htmlreportR')
-		if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' ) {
-			source_folder <- file.path(source_folder, "inst")
-		}
-		tmp_folder <- "tmp_lib"
-		container <- list(counts = final_results$counts,
-						  ods = final_results$ods,
-						  ods_unfitted = final_results$ods_unfitted,
-						  outrider_res_all = final_results$outrider_res_all,
-						  outrider_res_table = final_results$outrider_res_table,
-						  bam_coverage = final_results$bam_coverage,
-						  formatted = final_results$formatted,
-						  bcf_dt = final_results$bcf_dt)
-		plotter <- htmlReport$new(title_doc = "Aberrant Expression report", 
-						      	  container = container, 
-		                      	  tmp_folder = tmp_folder,
-		                      	  src = source_folder)
-		plotter$build(template)
-		plotter$write_report(file.path(output_dir, "report_lib.html"))
+write_abgenes_report <- function(final_results, output_dir = getwd(),
+							 template_folder = NULL, source_folder = "none"){
+	if(is.null(template_folder)) {
+		stop("No template folder was provided.")
+	}
+	if(!exists(source_folder)) {
+		stop(paste0("Source folder not found. Was ", source_folder))
+	}
+	if(any(is.null(final_results))) {
+		stop("ERROR: final_results object contains NULL fields. Analysis
+			 is not complete.")
+	}
+	template <- file.path(template_folder, "abgenes_template.txt")
+	tmp_folder <- "tmp_lib"
+	out_file <- paste0(output_dir, "/abgenes_report.html")
+	container <- list(counts = final_results$counts,
+					  ods = final_results$ods,
+					  ods_unfitted = final_results$ods_unfitted,
+					  outrider_res_all = final_results$outrider_res_all,
+					  outrider_res_table = final_results$outrider_res_table,
+					  bam_coverage = final_results$bam_coverage,
+					  formatted = final_results$formatted,
+					  bcv_dt = final_results$bcv_dt)
+	plotter <- htmlReport$new(title_doc = "Aberrant Expression report", 
+					      	  container = container, 
+	                      	  tmp_folder = tmp_folder,
+	                      	  src = source_folder)
+	plotter$build(template)
+	plotter$write_report(out_file)
 }
