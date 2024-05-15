@@ -280,7 +280,7 @@ final_results <- main_degenes_Hunter(
 ############################################################################
 
 
-  write_expression_data(final_results, opt$output_files, template_folder, opt)
+  write_expression_data(final_results, opt$output_files)
 
   write_expression_report(final_results, opt$output_files, template_folder, opt)
 
