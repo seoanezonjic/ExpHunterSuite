@@ -88,38 +88,7 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 
 placeholder <- function(juas) {
 
-	dataset_title <- paste("Dataset:", dataset)
-	# boxplot of BCV Before and After Autoencoder
-	ggplot2::ggplot(bcv_dt, ggplot2::aes(when, BCV)) +
-	                ggplot2::geom_boxplot() +
-	                ggplot2::theme_bw(base_size = 14) +
-	                ggplot2::labs(x = "Autoencoder correction",
-	                              y = "Biological coefficient \nof variation",
-	                              title = dataset_title)
-
-	OUTRIDER::plotEncDimSearch(ods) +
-	          ggplot2::labs(title = dataset_title) +
-	          cowplot::theme_cowplot() +
-	          cowplot::background_grid() +
-	          ggplot2::scale_color_brewer(palette="Dark2")
-
-	OUTRIDER::plotAberrantPerSample(ods, main = dataset_title, 
-	                                padjCutoff = cfg$aberrantExpression$padjCutoff,
-	                                zScoreCutoff = cfg$aberrantExpression$zScoreCutoff)
-
-	OUTRIDER::plotCountCorHeatmap(ods, normalized = FALSE, colGroups = "EXTERNAL", colColSet = "Dark2",
-	                              main = paste0('Raw Counts (', dataset_title, ')'))
-	OUTRIDER::plotCountCorHeatmap(ods, normalized = TRUE, colGroups = "EXTERNAL", colColSet = "Dark2",
-	                              main = paste0('Normalized Counts (', dataset_title, ')'))
-
-	OUTRIDER::plotCountGeneSampleHeatmap(ods, normalized = FALSE, nGenes = 50, colGroups = "EXTERNAL", colColSet = "Dark2",
-	                                     main = paste0('Raw Counts (', dataset_title, ')'),
-	                                     bcvQuantile = .95, show_names = 'row')
-	OUTRIDER::plotCountGeneSampleHeatmap(ods, normalized = TRUE, nGenes = 50, colGroups = "EXTERNAL", colColSet = "Dark2",
-	                                     main = paste0('Normalized Counts (', dataset_title,')'),
-	                                     bcvQuantile = .95, show_names = 'row')
-
-	# THIS PART HAS ALREADY BEEN MIGRATED, THERE ARE FUNCTIONS IN
+	# THIS PART HAS ALREADY MIGRATED, THERE ARE FUNCTIONS IN
 	# main_degenes_Hunter.R that already do this.
 	has_external <- any(as.logical(SummarizedExperiment::colData(ods)$isExternal))
 	cnts_mtx_local <- OUTRIDER::counts(ods, normalized = F)[, !as.logical(ods@colData$isExternal)]
@@ -280,11 +249,12 @@ write_abgenes_results <- function(final_results, output_dir) {
 }
 
 write_abgenes_report <- function(final_results, output_dir = getwd(),
-							 template_folder = NULL, source_folder = "none"){
+							 template_folder = NULL, source_folder = "none",
+							 p_adj_cutoff = 0.05, z_score_cutoff = 3){
 	if(is.null(template_folder)) {
 		stop("No template folder was provided.")
 	}
-	if(!exists(source_folder)) {
+	if(!file.exists(source_folder)) {
 		stop(paste0("Source folder not found. Was ", source_folder))
 	}
 	if(any(is.null(final_results))) {
@@ -301,7 +271,9 @@ write_abgenes_report <- function(final_results, output_dir = getwd(),
 					  outrider_res_table = final_results$outrider_res_table,
 					  bam_coverage = final_results$bam_coverage,
 					  formatted = final_results$formatted,
-					  bcv_dt = final_results$bcv_dt)
+					  bcv_dt = final_results$bcv_dt,
+					  p_adj_cutoff = p_adj_cutoff,
+					  z_score_cutoff = z_score_cutoff)
 	plotter <- htmlReport$new(title_doc = "Aberrant Expression report", 
 					      	  container = container, 
 	                      	  tmp_folder = tmp_folder,
