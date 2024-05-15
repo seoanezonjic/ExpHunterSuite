@@ -548,6 +548,7 @@ merge_bam_stats <- function(stats_path) {
   bam_coverage <- lapply(stats, read.table)
   bam_coverage <- do.call(rbind, bam_coverage)
   colnames(bam_coverage) <- c("sampleID", "record_count")
+  bam_coverage <- .setup_for_report(bam_coverage)
   return(bam_coverage)
 }
 
@@ -586,4 +587,26 @@ format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
     warning("WARNING: Attempted to split string by out-of-bounds index.")
   }
   return(split[index])
+}
+
+.setup_for_report <- function(bam_coverage) {
+    has_external <- any(as.logical(SummarizedExperiment::colData(ods)$isExternal))
+    cnts_mtx <- OUTRIDER::counts(ods, normalized = F)
+    rownames(bam_coverage) <- bam_coverage$sampleID
+    coverage_df <- data.frame(sampleID = colnames(ods),
+                              read_count = colSums(cnts_mtx))
+    coverage_df <- merge(bam_coverage, coverage_df,
+                         by = "sampleID", sort = FALSE)
+    coverage_dt <- data.table::data.table(coverage_df)
+    data.table::setorder(coverage_dt, read_count)
+    coverage_dt[, count_rank := .I]
+    coverage_dt[, counted_frac := read_count/record_count]
+    data.table::setorder(coverage_dt, counted_frac)
+    coverage_dt[, frac_rank := .I]
+    ods <- OUTRIDER::estimateSizeFactors(ods)
+    local_size_factors <- OUTRIDER::sizeFactors(ods)[names(OUTRIDER::sizeFactors(ods)) %in% rownames(bam_coverage)]
+    coverage_dt[, size_factors := local_size_factors]
+    data.table::setorder(coverage_dt, size_factors)
+    coverage_dt[, sf_rank := 1:.N]
+    return(coverage_dt)
 }
