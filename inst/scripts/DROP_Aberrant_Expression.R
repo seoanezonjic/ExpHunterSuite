@@ -16,7 +16,6 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   template_folder <- "templates"
 }
 template_folder <- file.path(find.package("ExpHunterSuite"), template_folder)
-devtools::load_all("~aestebanm/dev_R/htmlreportR")
 
 option_list <- list(
   optparse::make_option(c("-s", "--sample_annotation"), type="character", default=NULL,
@@ -80,4 +79,5 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 final_results <- readRDS("res.rds")
 
 write_abgenes_report(final_results = final_results, template_folder = template_folder,
-                     output_dir = opt$report_dir, source_folder = source_folder)
+                     output_dir = opt$report_dir, source_folder = source_folder,
+                     p_adj_cutoff = opt$p_adj_cutoff, z_score_cutoff = opt$z_score_cutoff)
