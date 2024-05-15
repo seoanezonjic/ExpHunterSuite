@@ -1,14 +1,23 @@
 #! /usr/bin/env Rscript
 
-
-devtools::load_all("~aestebanm/dev_R/ExpHunterSuite") ## Temporary until it is installed
+if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' ){
+  devtools::load_all("~aestebanm/dev_R/htmlreportR")
+  source_folder <- "inst"
+} else {
+  require("htmlreportR")
+  source_folder <- NULL
+}
+  source_folder <- file.path(find.package("htmlreportR"), source_folder)
+if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
+  devtools::load_all("~aestebanm/dev_R/ExpHunterSuite")
+  template_folder <- "inst/templates"
+} else {
+  require("ExpHunterSuite")
+  template_folder <- "templates"
+}
+template_folder <- file.path(find.package("ExpHunterSuite"), template_folder)
 devtools::load_all("~aestebanm/dev_R/htmlreportR")
-options(error = function() { 
-  traceback(2)
-  options(error = NULL)
-  stop("exiting after script error") 
-})
-### ORIGIN:  MergeCounts.R
+
 option_list <- list(
   optparse::make_option(c("-s", "--sample_annotation"), type="character", default=NULL,
     help="Sample annotation table in tsv format."),
@@ -49,23 +58,26 @@ option_list <- list(
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
-final_results <- main_abgenes_Hunter(
-  sample_annotation = opt$sample_annotation,
-  anno_database = opt$anno_database,
-  count_ranges = opt$count_ranges,
-  gene_mapping_file = opt$gene_mapping_file,
-  count_files = opt$count_files,
-  dataset = opt$dataset,
-  cpu = opt$cpu,
-  fpkm_cutoff = opt$fpkm_cutoff,
-  implementation = opt$implementation,
-  max_dim_proportion = opt$max_tested_dimension_proportion,
-  p_adj_cutoff = opt$p_adj_cutoff,
-  z_score_cutoff = opt$z_score_cutoff,
-  hpo_file = opt$hpo_file,
-  stats_path = opt$stats_path,
-  top_N = opt$top_N)
+# final_results <- main_abgenes_Hunter(
+#   sample_annotation = opt$sample_annotation,
+#   anno_database = opt$anno_database,
+#   count_ranges = opt$count_ranges,
+#   gene_mapping_file = opt$gene_mapping_file,
+#   count_files = opt$count_files,
+#   dataset = opt$dataset,
+#   cpu = opt$cpu,
+#   fpkm_cutoff = opt$fpkm_cutoff,
+#   implementation = opt$implementation,
+#   max_dim_proportion = opt$max_tested_dimension_proportion,
+#   p_adj_cutoff = opt$p_adj_cutoff,
+#   z_score_cutoff = opt$z_score_cutoff,
+#   hpo_file = opt$hpo_file,
+#   stats_path = opt$stats_path,
+#   top_N = opt$top_N)
 
-saveRDS(final_results, "res.rds")
+# saveRDS(final_results, "res.rds")
 
-write_abgenes_report(final_results = final_results, output_files = "./report/")
+final_results <- readRDS("res.rds")
+
+write_abgenes_report(final_results = final_results, template_folder = template_folder,
+                     output_dir = opt$report_dir, source_folder = source_folder)
