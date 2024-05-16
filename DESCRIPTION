@@ -96,7 +96,7 @@ Imports:
     MKinfer (>= 1.1),
     matrixStats (>= 1.0.0),
     ggupset (>= 0.3.0),
-    rlang (>= 1.1.3),
+    rlang (>= 1.1.1),
     plyr (>= 1.8.9),
     tidyr (>= 1.3.0),
     GO.db (>= 3.18.0),
