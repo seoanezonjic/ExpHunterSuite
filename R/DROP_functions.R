@@ -332,11 +332,12 @@ format_aberrants <- function(input_table) {
 #' "EXTERNAL" column set to "external", and sets up a custom object to allow
 #' the incorporation of imported data into OUTRIDER analysis.
 #' @inheritParams .get_metadata
+#' @param local_counts Counts table to merge with external table
 #' @returns A list containing three objects. "run" is a logical that is TRUE
 #' if the is an imported counts table. Counts is the counts table extracted
 #' from the file. IDs is a vectors containing imported sample IDs.
 
-.parse_externals <- function(sample_anno) {
+.parse_externals <- function(sample_anno, local_counts) {
   external_anno <- sample_anno[sample_anno$EXTERNAL=="external", ]
   external_file <- unique(external_anno$GENE_COUNTS_FILE)
   ex_counts <- data.frame(fread(external_file),
@@ -349,10 +350,10 @@ format_aberrants <- function(input_table) {
   } else {
     ex_counts <- subset(ex_counts, select = exCountIDs)
   }
-  if(!identical(.get_unique_rownames(merged_locals),
-          .get_unique_rownames(ex_counts))){
-    stop('The rows (genes) of the count matrices to be
-        merged are not the same.')
+  if(!identical(.get_unique_rownames(local_counts),
+                .get_unique_rownames(ex_counts))){
+                            stop('The rows (genes) of the count matrices to be
+                                merged are not the same.')
   }
   return(list(run = nrow(external_anno) > 0, counts = ex_counts,
               IDs = exCountIDs))
@@ -406,8 +407,8 @@ merge_counts <- function(cpu, sample_anno, count_files, count_ranges) {
   message(paste("read", length(count_files), 'files'))
   external_anno <- sample_anno[sample_anno$EXTERNAL=="external", ]
   if(nrow(external_anno) > 0) {
-    external <- .parse_externals(sample_anno)
-    merged_assays <- cbind(merged_locals, external$counts)
+    external <- .parse_externals(sample_anno, merged_assays)
+    merged_assays <- cbind(merged_assays, external$counts)
   } else {
     external <- list(run = FALSE)
   }
@@ -609,4 +610,29 @@ format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
     data.table::setorder(coverage_dt, size_factors)
     coverage_dt[, sf_rank := 1:.N]
     return(coverage_dt)
+}
+
+get_counts_correlation <- function(ods, normalized) {
+  counts <- OUTRIDER::counts(ods, normalized = normalized)
+  fc_matrix <- as.matrix(log2(counts + 1))
+  counts_corr <- cor(fc_matrix, method = "spearman")
+  clust_annotation <- get_cluster_vector(ods, counts_corr, "EXTERNAL", 4)
+  external_row <- clust_annotation["EXTERNAL"]
+  external_row <- t(rbind(NA, external_row))
+  colnames(external_row)[1] <- "nClust"
+  res <- cbind(clust_annotation["nClust"], counts_corr)
+  res <- rbind(external_row, res)
+  rownames(res)[1] <- "EXTERNAL"
+  return(res)
+}
+
+get_cluster_vector <- function(ods, counts_corr, groups = character(),
+                               nClust = 4) {
+  col_data <- SummarizedExperiment::colData(ods)
+  ans <- as.data.frame(col_data[, groups])
+  colnames(ans) <- groups
+  clusters <- cutree(hclust(dist(counts_corr)), nClust)
+  ans[["nClust"]] <- as.character(clusters)
+  rownames(ans) <- rownames(col_data)
+  return(ans)
 }
