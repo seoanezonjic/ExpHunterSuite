@@ -2,6 +2,10 @@
 <!--begin.rcode setup
     p_adj_cutoff <- plotter$hash_vars$p_adj_cutoff
     z_score_cutoff <- plotter$hash_vars$z_score_cutoff
+    plotter$hash_vars$raw_cors <- get_counts_correlation(plotter$hash_vars$ods, FALSE)
+    plotter$hash_vars$norm_cors <- get_counts_correlation(plotter$hash_vars$ods, TRUE)
+    # plotter$hash_vars$raw_cors <- get_gene_samples(plotter$hash_vars$ods, FALSE)
+    # plotter$hash_vars$norm_cors <- get_gene_samples(plotter$hash_vars$ods, TRUE)
     plot_enc_dim_search <- function(ods) {
         OUTRIDER::plotEncDimSearch(ods) +
               ggplot2::labs(title = "Encoding dim search") +
@@ -13,14 +17,6 @@
         OUTRIDER::plotAberrantPerSample(ods, main = "Aberrants per sample", 
                                         padjCutoff = p_adj_cutoff,
                                         zScoreCutoff = z_score_cutoff)
-    }
-    plot_count_cor_heatmap_raw <- function(ods) {
-        OUTRIDER::plotCountCorHeatmap(ods, normalized = FALSE, colGroups = "EXTERNAL", colColSet = "Dark2",
-                                      main = 'Raw Counts')  
-    }
-    plot_count_cor_heatmap_norm <- function(ods) {
-        OUTRIDER::plotCountCorHeatmap(ods, normalized = TRUE, colGroups = "EXTERNAL", colColSet = "Dark2",
-                                      main = 'Normalized Counts')
     }
     plot_count_gene_sample_heatmap_raw <- function(ods) {
         OUTRIDER::plotCountGeneSampleHeatmap(ods, normalized = FALSE, nGenes = 50, colGroups = "EXTERNAL", colColSet = "Dark2",
@@ -52,14 +48,26 @@ end.rcode-->
                                  plotting_function = plot_enc_dim_search))
     cat(plotter$static_plot_main("ods", custom_format = TRUE,
                                  plotting_function = plot_aberrant_per_sample))
-    cat(plotter$static_plot_main("ods", custom_format = TRUE,
-                                 plotting_function = plot_count_cor_heatmap_raw))
-    cat(plotter$static_plot_main("ods", custom_format = TRUE,
-                                 plotting_function = plot_count_cor_heatmap_norm))
-    cat(plotter$static_plot_main("ods", custom_format = TRUE,
-                                 plotting_function = plot_count_gene_sample_heatmap_raw))
-    cat(plotter$static_plot_main("ods", custom_format = TRUE,
-                                 plotting_function = plot_count_gene_sample_heatmap_norm))
+    cat(plotter$heatmap(list(id = "raw_cors", title = "Correlation between samples before normalisation",
+                             header = NULL, text = FALSE, row_names = NULL,
+                             transpose = FALSE, smp_attr = 1, var_attr = 1,
+                             config = list("smpOverlays" = "nClust",
+                                            "varOverlays" ="EXTERNAL",
+                                            samplesClustered = TRUE,
+                                            variablesClustered = TRUE,
+                                            clusteringDistance = "euclidianDistance"))))
+    cat(plotter$heatmap(list(id = "norm_cors", title = "Correlation between samples after normalisation",
+                             header = NULL, text = FALSE, row_names = NULL,
+                             transpose = FALSE, smp_attr = 1, var_attr = 1,
+                             config = list("smpOverlays" = "nClust",
+                                            "varOverlays" = "EXTERNAL",
+                                            samplesClustered = TRUE,
+                                            variablesClustered = TRUE,
+                                            clusteringDistance = "euclidianDistance"))))
+    # cat(plotter$static_plot_main("ods", custom_format = TRUE,
+    #                              plotting_function = plot_count_gene_sample_heatmap_raw))
+    # cat(plotter$static_plot_main("ods", custom_format = TRUE,
+    #                              plotting_function = plot_count_gene_sample_heatmap_norm))
 end.rcode-->
 
 # <!--begin.rcode AE_heatmaps, eval=!is.null(plotter$hash_vars$processed_AE_results.tsv)
