@@ -327,7 +327,7 @@ format_aberrants <- function(input_table) {
   return(res)
 }
 
-#' Function to parse imported data information in merge_bam_stats function.
+#' Function to parse imported data information in merge_counts function.
 #' `.parse_externals` subsets the sample annotation table to entries with
 #' "EXTERNAL" column set to "external", and sets up a custom object to allow
 #' the incorporation of imported data into OUTRIDER analysis.
@@ -544,13 +544,13 @@ get_bcv <- function(ods) {
 #' @returns A table containing the merged bam stats.
 #' @export
 
-merge_bam_stats <- function(stats_path) {
+merge_bam_stats <- function(ods, stats_path) {
   stats <- list.files(stats_path, pattern=".txt", full.names = TRUE)
   bam_coverage <- lapply(stats, read.table)
   bam_coverage <- do.call(rbind, bam_coverage)
   colnames(bam_coverage) <- c("sampleID", "record_count")
-  bam_coverage <- .setup_for_report(bam_coverage)
-  return(bam_coverage)
+  coverage_dt <- .make_coverage_dt(ods = ods, bam_coverage = bam_coverage)
+  return(coverage_Dt)
 }
 
 #' Function to convert aberrant expression results into a format that allows
@@ -590,33 +590,25 @@ format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
   return(split[index])
 }
 
-.setup_for_report <- function(bam_coverage) {
-    has_external <- any(as.logical(SummarizedExperiment::colData(ods)$isExternal))
-    cnts_mtx <- OUTRIDER::counts(ods, normalized = F)
-    rownames(bam_coverage) <- bam_coverage$sampleID
-    coverage_df <- data.frame(sampleID = colnames(ods),
-                              read_count = colSums(cnts_mtx))
-    coverage_df <- merge(bam_coverage, coverage_df,
-                         by = "sampleID", sort = FALSE)
-    coverage_dt <- data.table::data.table(coverage_df)
-    data.table::setorder(coverage_dt, read_count)
-    coverage_dt[, count_rank := .I]
-    coverage_dt[, counted_frac := read_count/record_count]
-    data.table::setorder(coverage_dt, counted_frac)
-    coverage_dt[, frac_rank := .I]
-    ods <- OUTRIDER::estimateSizeFactors(ods)
-    local_size_factors <- OUTRIDER::sizeFactors(ods)[names(OUTRIDER::sizeFactors(ods)) %in% rownames(bam_coverage)]
-    coverage_dt[, size_factors := local_size_factors]
-    data.table::setorder(coverage_dt, size_factors)
-    coverage_dt[, sf_rank := 1:.N]
-    return(coverage_dt)
-}
-
+#' Function to split a string by a certain character and return only the desired
+#' element.
+#' `get_counts_correlation` Extracts the correlation between counts across
+#' all samples and clusterizes it.
+#' @inheritParams .estimateThetaWithoutAutoCorrect
+#' @param normalized A boolean.
+#'   * `TRUE` : raw counts.
+#'   * `FALSE`: normalized counts.
+#' @returns A data frame containing the correlations between the log2 of counts
+#' calculated with the spearman method. It constains a column of clusters
+#' (calculated with euclidean distance) and a row of EXTERNAL metadata ('yes'
+#' for imported counts and 'no' for locally processed counts).
+#' @export
 get_counts_correlation <- function(ods, normalized) {
   counts <- OUTRIDER::counts(ods, normalized = normalized)
   fc_matrix <- as.matrix(log2(counts + 1))
   counts_corr <- cor(fc_matrix, method = "spearman")
-  clust_annotation <- get_cluster_vector(ods, counts_corr, "EXTERNAL", 4)
+  clust_annotation <- .get_clusters_df(ods = ods, matrix = counts_corr,
+                                       groups = "EXTERNAL", nClust = 4)
   external_row <- clust_annotation["EXTERNAL"]
   external_row <- t(rbind(NA, external_row))
   colnames(external_row)[1] <- "nClust"
@@ -626,13 +618,87 @@ get_counts_correlation <- function(ods, normalized) {
   return(res)
 }
 
-get_cluster_vector <- function(ods, counts_corr, groups = character(),
-                               nClust = 4) {
-  col_data <- SummarizedExperiment::colData(ods)
-  ans <- as.data.frame(col_data[, groups])
+#' Auxiliary function to clusterize correlation data.
+#' `.get_clusters_df` Clusterizes a count correlation matrix, adding metadata
+#' specified in the ods object from which it was calculated.
+#' @inheritParams .estimateThetaWithoutAutoCorrect
+#' @param matrix log2 counts correlation matrix.
+#' @param groups A string. Column of ods colData to use as secondary grouping
+#' atribute. Default: "EXTERNAL".
+#' @param nClust Number of clusters in which data should be divided.
+#' @returns A data frame. Rows are named after samples. Columns are nClust
+#' (cluster where sample belongs) and specified groups column.
+
+.get_clusters_df <- function(ods, matrix, groups = character(),
+                             nClust = 4, type = "sample") {
+  if(type == "gene") {
+    data <- SummarizedExperiment::rowData(ods)
+  } else {
+    data <- SummarizedExperiment::colData(ods)
+  }
+  ans <- as.data.frame(data[, groups])
   colnames(ans) <- groups
-  clusters <- cutree(hclust(dist(counts_corr)), nClust)
+  clusters <- cutree(hclust(dist(matrix)), nClust)
   ans[["nClust"]] <- as.character(clusters)
-  rownames(ans) <- rownames(col_data)
+  rownames(ans) <- rownames(data)
   return(ans)
+}
+
+get_gene_sample_correlations <- function(ods, normalized = TRUE, nGenes = 500,
+                                       rowCentered = TRUE, bcvQuantile = 0.9) {
+  bcv <- 1/sqrt(OUTRIDER::theta(ods))
+  SummarizedExperiment::rowData(ods)$BCV <- bcv
+  ods_sub <- ods[!is.na(bcv) & bcv > stats::quantile(bcv, probs=bcvQuantile,
+                                                     na.rm=TRUE),]
+  if(!is.null(nGenes)){
+    ods_sub <- ods_sub[BiocGenerics::rank(
+                       SummarizedExperiment::rowData(ods_sub)$BCV) <= nGenes,]
+  }
+  if(normalized){
+    fc_mat <- as.matrix(log2(OUTRIDER::counts(
+                                                 ods_sub, normalized=TRUE) + 1))
+  } else {
+    fc_mat <- as.matrix(log2(OUTRIDER::counts(
+                                  ods_sub, normalized=FALSE) + 1))
+    fc_mat <- t(t(fc_mat)/
+                       DESeq2::estimateSizeFactorsForMatrix(fc_mat))
+  }
+  if(rowCentered) {
+    fc_mat <- fc_mat - rowMeans(fc_mat)
+  }
+  cluster_col <- .get_clusters_df(ods = ods_sub, matrix = fc_mat, 
+                                     nClust = 4, type = "gene")
+  external_row <- .get_clusters_df(ods = ods_sub, matrix = t(fc_mat), 
+                                     groups = "EXTERNAL", nClust = 4)["EXTERNAL"]
+  external_row <- t(rbind(NA, external_row))
+  colnames(external_row)[1] <- "nClust"
+  res <- cbind(cluster_col, fc_mat)
+  res <- rbind(external_row, res)
+  return(res)
+}
+
+.make_coverage_dt <- function(bam_coverage, ods) {
+  has_external <- any(as.logical(SummarizedExperiment::colData(ods)$isExternal))
+  cnts_mtx_local <- OUTRIDER::counts(ods, normalized = F)[, !as.logical(ods@colData$isExternal)]
+  cnts_mtx <- OUTRIDER::counts(ods, normalized = F)
+
+  rownames(bam_coverage) <- bam_coverage$sampleID
+  coverage_df <- data.frame(sampleID = colnames(ods),
+                            read_count = colSums(cnts_mtx))
+  coverage_df <- merge(bam_coverage, coverage_df, by = "sampleID", sort = FALSE)
+  # read count
+  coverage_dt <- data.table::data.table(coverage_df)
+  data.table::setorder(coverage_dt, read_count)
+  coverage_dt[, count_rank := .I]
+  # ratio
+  coverage_dt[, counted_frac := read_count/record_count]
+  data.table::setorder(coverage_dt, counted_frac)
+  coverage_dt[, frac_rank := .I]
+
+  # size factors 
+  ods <- OUTRIDER::estimateSizeFactors(ods)
+  local_size_factors <- OUTRIDER::sizeFactors(ods)[names(OUTRIDER::sizeFactors(ods)) %in% rownames(bam_coverage)]
+  coverage_dt[, size_factors := local_size_factors]
+  data.table::setorder(coverage_dt, size_factors)
+  coverage_dt[, sf_rank := 1:.N]
 }
