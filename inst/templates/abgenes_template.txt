@@ -2,10 +2,8 @@
 <!--begin.rcode setup
     p_adj_cutoff <- plotter$hash_vars$p_adj_cutoff
     z_score_cutoff <- plotter$hash_vars$z_score_cutoff
-    plotter$hash_vars$raw_cors <- get_counts_correlation(plotter$hash_vars$ods, FALSE)
-    plotter$hash_vars$norm_cors <- get_counts_correlation(plotter$hash_vars$ods, TRUE)
-    # plotter$hash_vars$raw_cors <- get_gene_samples(plotter$hash_vars$ods, FALSE)
-    # plotter$hash_vars$norm_cors <- get_gene_samples(plotter$hash_vars$ods, TRUE)
+    size_factors <- plotter$hash_vars$size_factors
+    local_size_factors <- plotter$hash_vars$local_size_factors
     plot_enc_dim_search <- function(ods) {
         OUTRIDER::plotEncDimSearch(ods) +
               ggplot2::labs(title = "Encoding dim search") +
@@ -18,16 +16,10 @@
                                         padjCutoff = p_adj_cutoff,
                                         zScoreCutoff = z_score_cutoff)
     }
-    plot_count_gene_sample_heatmap_raw <- function(ods) {
-        OUTRIDER::plotCountGeneSampleHeatmap(ods, normalized = FALSE, nGenes = 50, colGroups = "EXTERNAL", colColSet = "Dark2",
-                                     main = 'Raw Counts',
-                                     bcvQuantile = .95, show_names = 'row')
+    subset_df <- function(df){
+        return(df[, columns, drop = FALSE])
     }
-    plot_count_gene_sample_heatmap_norm <- function(ods) {
-        OUTRIDER::plotCountGeneSampleHeatmap(ods, normalized = TRUE, nGenes = 50, colGroups = "EXTERNAL", colColSet = "Dark2",
-                                             main = 'Normalized Counts',
-                                             bcvQuantile = .95, show_names = 'row')
-    }
+
 end.rcode-->
 
 <h1>Aberrantly Expressed Genes Report</h1>
@@ -42,33 +34,191 @@ end.rcode-->
                               title = "Change in BCV")
         }))
 end.rcode-->
+
 <h2>OUTRIDER Summary</h2>
-<!--begin.rcode OUTRIDER_Summary
+<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">
+<!--begin.rcode OUTRIDER_Summary_static_plots
     cat(plotter$static_plot_main("ods", custom_format = TRUE,
                                  plotting_function = plot_enc_dim_search))
     cat(plotter$static_plot_main("ods", custom_format = TRUE,
                                  plotting_function = plot_aberrant_per_sample))
-    cat(plotter$heatmap(list(id = "raw_cors", title = "Correlation between samples before normalisation",
+end.rcode-->
+</div>
+
+<!--begin.rcode OUTRIDER_Summary_heatmaps
+    cat('<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">')
+    cat(plotter$heatmap(list(id = "raw_sample_cors", title = "Correlation between samples before normalisation",
                              header = NULL, text = FALSE, row_names = NULL,
                              transpose = FALSE, smp_attr = 1, var_attr = 1,
                              config = list("smpOverlays" = "nClust",
-                                            "varOverlays" ="EXTERNAL",
-                                            samplesClustered = TRUE,
-                                            variablesClustered = TRUE,
-                                            clusteringDistance = "euclidianDistance"))))
-    cat(plotter$heatmap(list(id = "norm_cors", title = "Correlation between samples after normalisation",
+                                           "varOverlays" = "EXTERNAL",
+                                           samplesClustered = TRUE,
+                                           variablesClustered = TRUE,
+                                           clusteringDistance = "euclidianDistance"))))
+    cat(plotter$heatmap(list(id = "norm_sample_cors", title = "Correlation between samples after normalisation",
                              header = NULL, text = FALSE, row_names = NULL,
                              transpose = FALSE, smp_attr = 1, var_attr = 1,
+                             config = list("smpOverlays" = "nClust",
+                                           "varOverlays" = "EXTERNAL",
+                                           samplesClustered = TRUE,
+                                           variablesClustered = TRUE,
+                                           clusteringDistance = "euclidianDistance"))))
+    cat('</div>')
+    cat('<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">')
+    cat(plotter$heatmap(list(id = "raw_gene_cors", title = "logFC before normalisation",
+                             header = NULL, text = FALSE, row_names = NULL,
+                             transpose = TRUE, smp_attr = 1, var_attr = 1,
                              config = list("smpOverlays" = "nClust",
                                             "varOverlays" = "EXTERNAL",
                                             samplesClustered = TRUE,
                                             variablesClustered = TRUE,
                                             clusteringDistance = "euclidianDistance"))))
-    # cat(plotter$static_plot_main("ods", custom_format = TRUE,
-    #                              plotting_function = plot_count_gene_sample_heatmap_raw))
-    # cat(plotter$static_plot_main("ods", custom_format = TRUE,
-    #                              plotting_function = plot_count_gene_sample_heatmap_norm))
+    cat(plotter$heatmap(list(id = "norm_gene_cors", title = "logFC after normalisation",
+                             header = NULL, text = FALSE, row_names = NULL,
+                             transpose = TRUE, smp_attr = 1, var_attr = 1,
+                             config = list("smpOverlays" = "nClust",
+                                           "varOverlays" = "EXTERNAL",
+                                           samplesClustered = TRUE,
+                                           variablesClustered = TRUE,
+                                           clusteringDistance = "euclidianDistance"))))
+    cat('</div>')
 end.rcode-->
+
+<h2>Counting Summary</h2>
+<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">
+<!--begin.rcode Counting_Summary_plots
+    columns <- c("count_rank", "read_count")
+    cat(plotter$scatter2D(
+        list(id = "coverage_df", title = "Read counts", header = NULL,
+             text = FALSE, row_names = FALSE, x_label = "Sample rank",
+             y_label = "Reads counted", func = subset_df)))
+    columns <- c("frac_rank", "counted_frac")
+    cat(plotter$scatter2D(
+        list(id = "coverage_df", title = "Read Count Ratio", header = NULL,
+             text = FALSE, row_names = FALSE, x_label = "Sample rank",
+             y_label = "Percent Reads Counted", func = subset_df)))
+    cat("</div>")
+    cat('<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">"')
+    columns <- c("sf_rank", "size_factors")
+    cat(plotter$scatter2D(
+        list(id = "coverage_df", title = "Size Factors", header = NULL,
+             text = FALSE, row_names = FALSE, x_label = "Sample rank",
+             y_label = "Size Factors", func = subset_df)))
+    columns <- c("read_count", "size_factors")
+    cat(plotter$scatter2D(
+        list(id = "coverage_df", title = "Size Factors vs. Read Counts",
+             header = NULL, text = FALSE, row_names = FALSE,
+             x_label = "Reads counted", y_label = "Size Factors", func = subset_df)))
+
+    # cat(plotter$static_ggplot_main(id ="coverage_df", header = NULL, text = "dynamic",
+    #         plotting_function = function(ggplot_obj) {
+    #         ggplot_obj + ggplot2::aes(x = frac_rank, y = counted_frac) +
+    #                      ggplot2::geom_point(size = 3, show.legend = TRUE) +
+    #                      cowplot::theme_cowplot() +
+    #                      cowplot::background_grid() +
+    #                      ggplot2::labs(title = "Read Count Ratio", x = "Sample Rank", y = "Percent Reads Counted") +
+    #                      ggplot2::ylim(c(0,NA)) +
+    #                      ggplot2::scale_color_brewer(palette="Dark2")
+    #     }))
+
+    #     cat(plotter$static_ggplot_main(id ="coverage_df", header = NULL, text = "dynamic",
+    #         plotting_function = function(ggplot_obj) {
+    #         ggplot_obj + ggplot2::aes(sf_rank, local_size_factors) +
+    #                      ggplot2::geom_point(size = 3, show.legend = TRUE) +
+    #                      ggplot2::ylim(c(0,NA)) +
+    #                      cowplot::theme_cowplot() +
+    #                      cowplot::background_grid() +
+    #                      ggplot2::labs(title = 'Size Factors', x = 'Sample Rank', y = 'Size Factors') +
+    #                      ggplot2::scale_color_brewer(palette="Dark2")
+    #     }))
+
+    #     cat(plotter$static_ggplot_main(id ="coverage_df", header = NULL, text = "dynamic",
+    #         plotting_function = function(ggplot_obj) {
+    #         ggplot_obj + ggplot2::aes(read_count, size_factors) +
+    #         ggplot2::geom_point(size = 3, show.legend = TRUE) +
+    #         ggplot2::ylim(c(0, NA)) +
+    #         cowplot::theme_cowplot() +
+    #         cowplot::background_grid() +
+    #         ggplot2::labs(title = 'Size Factors vs. Read Counts',
+    #                       x = 'Reads Counted', y = 'Size Factors') +
+    #         ggplot2::scale_color_brewer(palette="Dark2")
+    #    }))
+
+    # quant <- .95
+
+    # if(has_external){
+    #   filter_mtx <- list(
+    #     local = cnts_mtx_local,
+    #     all = cnts_mtx,
+    #     `passed FPKM` = cnts_mtx[SummarizedExperiment::rowData(ods)$passedFilter,],
+    #     `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 1, ],
+    #     `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 10, ]
+    #   )
+    #   filter_dt <- lapply(names(filter_mtx), function(filter_name) {
+    #     mtx <- filter_mtx[[filter_name]]
+    #     data.table::data.table(gene_ID = rownames(mtx), median_counts = rowMeans(mtx), filter = filter_name)
+    #   }) %>% rbindlist
+    #   filter_dt[, filter := factor(filter, levels = c('local', 'all', 'passed FPKM', 'min 1 read', 'min 10 reads'))]
+    # } else {
+    #   filter_mtx <- list(
+    #     all = cnts_mtx,
+    #     `passed FPKM` = cnts_mtx[SummarizedExperiment::rowData(ods)$passedFilter,],
+    #     `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 1, ],
+    #     `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 10, ]
+    #   )
+    #   filter_dt <- lapply(names(filter_mtx), function(filter_name) {
+    #     mtx <- filter_mtx[[filter_name]]
+    #     data.table::data.table(gene_ID = rownames(mtx), median_counts = rowMeans(mtx), filter = filter_name)
+    #   }) |> rbindlist()
+    #   filter_dt[, filter := factor(filter, levels = c('all', 'passed FPKM', 'min 1 read', 'min 10 reads'))]
+    # }
+
+    # binwidth <- .2
+    # p_hist <- ggplot2::ggplot(filter_dt, ggplot2::aes(x = median_counts, fill = filter)) +
+    # ggplot2::geom_histogram(binwidth = binwidth) +
+    # ggplot2::scale_x_log10() +
+    # ggplot2::facet_wrap(.~filter) +
+    # ggplot2::labs(x = "Mean counts per gene", y = "Frequency", title = 'Mean Count Distribution') +
+    # ggplot2::guides(col = ggplot2::guide_legend(title = NULL)) +
+    # ggplot2::scale_fill_brewer(palette = "Paired") +
+    # cowplot::theme_cowplot() +
+    # ggplot2::theme(legend.position = "none")
+
+    # p_dens <- ggplot2::ggplot(filter_dt, ggplot2::aes(x = median_counts, col = filter)) +
+    # ggplot2::geom_density(ggplot2::aes(y=binwidth * ..count..), size = 1.2) +
+    # ggplot2::scale_x_log10() +
+    # ggplot2::labs(x = "Mean counts per gene", y = "Frequency") +
+    # ggplot2::guides(col = ggplot2::guide_legend(title = NULL)) +
+    # ggplot2::scale_color_brewer(palette = "Paired") +
+    # cowplot::theme_cowplot() +
+    # ggplot2::theme(legend.position = "top",
+    #       legend.justification="center",
+    #       legend.background = ggplot2::element_rect(color = NA))
+
+    # cowplot::plot_grid(p_hist, p_dens)
+
+    # exp_genes_cols <- c(Rank = "expressedGenesRank",`Expressed\ngenes` = "expressedGenes", 
+    #                   `Union of\nexpressed genes` = "unionExpressedGenes", 
+    #                   `Intersection of\nexpressed genes` = "intersectionExpressedGenes", 
+    #                   `Genes passed\nfiltering` = "passedFilterGenes")
+
+    # expressed_genes <- data.table::as.data.table(SummarizedExperiment::colData(ods)[, exp_genes_cols])
+    # colnames(expressed_genes) <- names(exp_genes_cols)
+
+    # #+ expressedGenes, fig.height=6, fig.width=8
+    # OUTRIDER::plotExpressedGenes(ods) + 
+    # cowplot::theme_cowplot() +
+    # cowplot::background_grid(major = "y") +
+    # ggplot2::geom_point(data = data.table::melt(expressed_genes, id.vars = c("Rank")),
+    #            ggplot2::aes(x = Rank, y = value, col = variable), show.legend = TRUE)
+
+    # if(TRUE){
+    #   DT::datatable(expressed_genes[order(Rank)], rownames = F)
+    # } else{
+    #   DT::datatable(expressed_genes[order(Rank), -"Is External"], rownames = F)
+    # }
+end.rcode-->
+</div>
 
 # <!--begin.rcode AE_heatmaps, eval=!is.null(plotter$hash_vars$processed_AE_results.tsv)
 #     groups <- "processed"
