@@ -68,94 +68,39 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 										gene_mapping_file = gene_mapping_file,
 										sample_anno = sample_anno)
 	bcv_dt <- get_bcv(ods)
-	bam_coverage <- merge_bam_stats(stats_path = stats_path)
-	save(list = ls(all.names = TRUE), file = "environment.RData")
+	coverage_df <- merge_bam_stats(ods = ods, stats_path = stats_path)
+	ods <- OUTRIDER::estimateSizeFactors(ods)
+	size_factors <- OUTRIDER::sizeFactors(ods)
+	local_positions <- names(size_factors) %in% coverage_df$sampleID
+	local_size_factors <- size_factors[local_positions]
 	formatted <- format_for_report(outrider_results$all,
 								   z_score_cutoff, p_adj_cutoff)
+	raw_sample_cors <- get_counts_correlation(ods, FALSE)
+    norm_sample_cors <- get_counts_correlation(ods, TRUE)
+    raw_gene_cors <- get_gene_sample_correlations(ods, FALSE)
+    norm_gene_cors <- get_gene_sample_correlations(ods, TRUE)
 	final_results <- list()
 	final_results$counts <- counts
 	final_results$ods_unfitted <- ods_unfitted
 	final_results$ods <- ods
 	final_results$outrider_res_all <- outrider_results$all
 	final_results$outrider_res_table <- outrider_results$table
-	final_results$bam_coverage <- bam_coverage
+	final_results$coverage_df <- coverage_df
 	final_results$formatted <- formatted
 	final_results$bcv_dt <- bcv_dt
+	final_results$raw_sample_cors <- raw_sample_cors
+	final_results$norm_sample_cors <- norm_sample_cors
+	final_results$raw_gene_cors <- raw_gene_cors
+	final_results$norm_gene_cors <- norm_gene_cors	
+	final_results$size_factors <- size_factors
+	final_results$local_size_factors <- local_size_factors 
+	save(list = ls(all.names = TRUE), file = "environment.RData")
 	return(final_results)
 }
 
 ### plotting_things
 
 placeholder <- function(juas) {
-
-	# THIS PART HAS ALREADY MIGRATED, THERE ARE FUNCTIONS IN
-	# main_degenes_Hunter.R that already do this.
-	has_external <- any(as.logical(SummarizedExperiment::colData(ods)$isExternal))
-	cnts_mtx_local <- OUTRIDER::counts(ods, normalized = F)[, !as.logical(ods@colData$isExternal)]
-	cnts_mtx <- OUTRIDER::counts(ods, normalized = F)
-
-	rownames(bam_coverage) <- bam_coverage$sampleID
-	coverage_df <- data.frame(sampleID = colnames(ods),
-	                          read_count = colSums(cnts_mtx))
-	coverage_df <- merge(bam_coverage, coverage_df, by = "sampleID", sort = FALSE)
-	# read count
-	coverage_dt <- data.table::data.table(coverage_df)
-	data.table::setorder(coverage_dt, read_count)
-	coverage_dt[, count_rank := .I]
-	# ratio
-	coverage_dt[, counted_frac := read_count/record_count]
-	data.table::setorder(coverage_dt, counted_frac)
-	coverage_dt[, frac_rank := .I]
-
-	# size factors 
-	ods <- OUTRIDER::estimateSizeFactors(ods)
-	local_size_factors <- OUTRIDER::sizeFactors(ods)[names(OUTRIDER::sizeFactors(ods)) %in% rownames(bam_coverage)]
-	coverage_dt[, size_factors := local_size_factors]
-	data.table::setorder(coverage_dt, size_factors)
-	coverage_dt[, sf_rank := 1:.N]
-
-	p_depth <- ggplot2::ggplot(coverage_dt, ggplot2::aes(x = count_rank, y = read_count)) +
-	ggplot2::geom_point(size = 3, show.legend = has_external) +
-	cowplot::theme_cowplot() +
-	cowplot::background_grid() +
-	ggplot2::labs(title = "Read Counts", x="Sample Rank", y = "Reads Counted") +
-	ggplot2::ylim(c(0,NA)) +
-	ggplot2::scale_color_brewer(palette="Dark2")
-
-	p_frac <- ggplot2::ggplot(coverage_dt, ggplot2::aes(x = frac_rank, y = counted_frac)) +
-	ggplot2::geom_point(size = 3, show.legend = has_external) +
-	cowplot::theme_cowplot() +
-	cowplot::background_grid() +
-	ggplot2::labs(title = "Read Count Ratio", x = "Sample Rank", y = "Percent Reads Counted") +
-	ggplot2::ylim(c(0,NA)) +
-	ggplot2::scale_color_brewer(palette="Dark2")
-
-	#+ QC, fig.height=6, fig.width=12
-	cowplot::plot_grid(p_depth, p_frac) 
-
-	p_sf <- ggplot2::ggplot(coverage_dt, ggplot2::aes(sf_rank, local_size_factors)) +
-	ggplot2::geom_point(size = 3, show.legend = has_external) +
-	ggplot2::ylim(c(0,NA)) +
-	cowplot::theme_cowplot() +
-	cowplot::background_grid() +
-	ggplot2::labs(title = 'Size Factors', x = 'Sample Rank', y = 'Size Factors') +
-	ggplot2::scale_color_brewer(palette="Dark2")
-
-	p_sf_cov <- ggplot2::ggplot(coverage_dt, ggplot2::aes(read_count, size_factors)) +
-	ggplot2::geom_point(size = 3, show.legend = has_external) +
-	ggplot2::ylim(c(0,NA)) +
-	cowplot::theme_cowplot() +
-	cowplot::background_grid() +
-	ggplot2::labs(title = 'Size Factors vs. Read Counts',
-	     x = 'Reads Counted', y = 'Size Factors') +
-	ggplot2::scale_color_brewer(palette="Dark2")
-
-	cowplot::plot_grid(p_sf, p_sf_cov)
-	### @alvaro This block introduces the concept of sample rank. It seems to be
-	### the order by which the samples are sorted according to read counts,
-	### read count ratio and size factors. Need to properly understand the concept
-	### of size factor. Plots should be improved to include sample IDs.
-
 	quant <- .95
 
 	if(has_external){
@@ -269,11 +214,14 @@ write_abgenes_report <- function(final_results, output_dir = getwd(),
 					  ods_unfitted = final_results$ods_unfitted,
 					  outrider_res_all = final_results$outrider_res_all,
 					  outrider_res_table = final_results$outrider_res_table,
-					  bam_coverage = final_results$bam_coverage,
+					  coverage_df = final_results$coverage_df,
 					  formatted = final_results$formatted,
 					  bcv_dt = final_results$bcv_dt,
 					  p_adj_cutoff = p_adj_cutoff,
-					  z_score_cutoff = z_score_cutoff)
+					  z_score_cutoff = z_score_cutoff,
+					  raw_sample_cors = final_results$raw_sample_cors, norm_sample_cors = final_results$norm_sample_cors,
+					  raw_gene_cors = final_results$raw_gene_cors, norm_gene_cors = final_results$norm_gene_cors,
+					  size_factors = final_results$size_factors, local_size_factors = final_results$local_size_factors)
 	plotter <- htmlReport$new(title_doc = "Aberrant Expression report", 
 					      	  container = container, 
 	                      	  tmp_folder = tmp_folder,
