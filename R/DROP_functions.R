@@ -549,8 +549,8 @@ merge_bam_stats <- function(ods, stats_path) {
   bam_coverage <- lapply(stats, read.table)
   bam_coverage <- do.call(rbind, bam_coverage)
   colnames(bam_coverage) <- c("sampleID", "record_count")
-  coverage_dt <- .make_coverage_dt(ods = ods, bam_coverage = bam_coverage)
-  return(coverage_Dt)
+  coverage_df <- .make_coverage_df(ods = ods, bam_coverage = bam_coverage)
+  return(coverage_df)
 }
 
 #' Function to convert aberrant expression results into a format that allows
@@ -590,18 +590,17 @@ format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
   return(split[index])
 }
 
-#' Function to split a string by a certain character and return only the desired
-#' element.
-#' `get_counts_correlation` Extracts the correlation between counts across
-#' all samples and clusterizes it.
+#' Extract correlation between samples according to gene counts.
+#' `get_counts_correlation` Calculates the correlation between all samples of an
+#' ods object according to gene count levels.
 #' @inheritParams .estimateThetaWithoutAutoCorrect
 #' @param normalized A boolean.
 #'   * `TRUE` : raw counts.
 #'   * `FALSE`: normalized counts.
-#' @returns A data frame containing the correlations between the log2 of counts
-#' calculated with the spearman method. It constains a column of clusters
-#' (calculated with euclidean distance) and a row of EXTERNAL metadata ('yes'
-#' for imported counts and 'no' for locally processed counts).
+#' @returns The correlation data frame, calculated with the spearman method.
+#' It constains a column of clusters (calculated with euclidean distance) and a
+#' row of EXTERNAL metadata ('yes' for imported counts and 'no' for locally
+#' processed counts).
 #' @export
 get_counts_correlation <- function(ods, normalized) {
   counts <- OUTRIDER::counts(ods, normalized = normalized)
@@ -618,7 +617,7 @@ get_counts_correlation <- function(ods, normalized) {
   return(res)
 }
 
-#' Auxiliary function to clusterize correlation data.
+#' Clusterize correlation data.
 #' `.get_clusters_df` Clusterizes a count correlation matrix, adding metadata
 #' specified in the ods object from which it was calculated.
 #' @inheritParams .estimateThetaWithoutAutoCorrect
@@ -643,6 +642,20 @@ get_counts_correlation <- function(ods, normalized) {
   rownames(ans) <- rownames(data)
   return(ans)
 }
+
+#' Get gene counts correlations across all samples of an ods object.
+#' samples from an ods object. Genes are then clusterized.
+#' `get_gene_sample_correlations` Extracts the correlation between counts across
+#' all samples and clusterizes it.
+#' @inheritParams .estimateThetaWithoutAutoCorrect
+#' @param normalized A boolean.
+#'   * `TRUE` : raw counts.
+#'   * `FALSE`: normalized counts.
+#' @returns A data frame containing the correlations between the log2 of counts
+#' calculated with the spearman method. It constains a column of clusters
+#' (calculated with euclidean distance) and a row of EXTERNAL metadata ('yes'
+#' for imported counts and 'no' for locally processed counts).
+#' @export
 
 get_gene_sample_correlations <- function(ods, normalized = TRUE, nGenes = 500,
                                        rowCentered = TRUE, bcvQuantile = 0.9) {
@@ -677,28 +690,24 @@ get_gene_sample_correlations <- function(ods, normalized = TRUE, nGenes = 500,
   return(res)
 }
 
-.make_coverage_dt <- function(bam_coverage, ods) {
-  has_external <- any(as.logical(SummarizedExperiment::colData(ods)$isExternal))
-  cnts_mtx_local <- OUTRIDER::counts(ods, normalized = F)[, !as.logical(ods@colData$isExternal)]
+.make_coverage_df <- function(bam_coverage, ods) {
+  local_columns <- SummarizedExperiment::colData(ods)$EXTERNAL == "no"
+  cnts_mtx_local <- OUTRIDER::counts(ods, normalized = F)[, local_columns]
   cnts_mtx <- OUTRIDER::counts(ods, normalized = F)
-
   rownames(bam_coverage) <- bam_coverage$sampleID
   coverage_df <- data.frame(sampleID = colnames(ods),
                             read_count = colSums(cnts_mtx))
   coverage_df <- merge(bam_coverage, coverage_df, by = "sampleID", sort = FALSE)
-  # read count
   coverage_dt <- data.table::data.table(coverage_df)
   data.table::setorder(coverage_dt, read_count)
   coverage_dt[, count_rank := .I]
-  # ratio
   coverage_dt[, counted_frac := read_count/record_count]
   data.table::setorder(coverage_dt, counted_frac)
   coverage_dt[, frac_rank := .I]
-
-  # size factors 
-  ods <- OUTRIDER::estimateSizeFactors(ods)
   local_size_factors <- OUTRIDER::sizeFactors(ods)[names(OUTRIDER::sizeFactors(ods)) %in% rownames(bam_coverage)]
   coverage_dt[, size_factors := local_size_factors]
   data.table::setorder(coverage_dt, size_factors)
   coverage_dt[, sf_rank := 1:.N]
+  coverage_df <- as.data.frame(coverage_dt)
+  return(coverage_df)
 }
