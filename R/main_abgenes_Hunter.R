@@ -68,11 +68,7 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 										gene_mapping_file = gene_mapping_file,
 										sample_anno = sample_anno)
 	bcv_dt <- get_bcv(ods)
-	coverage_df <- merge_bam_stats(ods = ods, stats_path = stats_path)
-	ods <- OUTRIDER::estimateSizeFactors(ods)
-	size_factors <- OUTRIDER::sizeFactors(ods)
-	local_positions <- names(size_factors) %in% coverage_df$sampleID
-	local_size_factors <- size_factors[local_positions]
+	merged_bam_stats <- merge_bam_stats(ods = ods, stats_path = stats_path)
 	formatted <- format_for_report(outrider_results$all,
 								   z_score_cutoff, p_adj_cutoff)
 	raw_sample_cors <- get_counts_correlation(ods, FALSE)
@@ -85,15 +81,17 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 	final_results$ods <- ods
 	final_results$outrider_res_all <- outrider_results$all
 	final_results$outrider_res_table <- outrider_results$table
-	final_results$coverage_df <- coverage_df
+	final_results$coverage_df <- merged_bam_stats$coverage_df
+	final_results$counts_matrix <- merged_bam_stats$counts_matrix
+	final_results$local_counts_matrix <- merged_bam_stats$local_counts_matrix
 	final_results$formatted <- formatted
 	final_results$bcv_dt <- bcv_dt
 	final_results$raw_sample_cors <- raw_sample_cors
 	final_results$norm_sample_cors <- norm_sample_cors
 	final_results$raw_gene_cors <- raw_gene_cors
 	final_results$norm_gene_cors <- norm_gene_cors	
-	final_results$size_factors <- size_factors
-	final_results$local_size_factors <- local_size_factors 
+	final_results$size_factors <- merged_bam_stats$size_factors
+	final_results$local_size_factors <- merged_bam_stats$local_size_factors
 	save(list = ls(all.names = TRUE), file = "environment.RData")
 	return(final_results)
 }
@@ -215,13 +213,18 @@ write_abgenes_report <- function(final_results, output_dir = getwd(),
 					  outrider_res_all = final_results$outrider_res_all,
 					  outrider_res_table = final_results$outrider_res_table,
 					  coverage_df = final_results$coverage_df,
+					  counts_matrix = final_results$counts_matrix,
+					  local_counts_matrix = final_results$local_counts_matrix,
 					  formatted = final_results$formatted,
 					  bcv_dt = final_results$bcv_dt,
 					  p_adj_cutoff = p_adj_cutoff,
 					  z_score_cutoff = z_score_cutoff,
-					  raw_sample_cors = final_results$raw_sample_cors, norm_sample_cors = final_results$norm_sample_cors,
-					  raw_gene_cors = final_results$raw_gene_cors, norm_gene_cors = final_results$norm_gene_cors,
-					  size_factors = final_results$size_factors, local_size_factors = final_results$local_size_factors)
+					  raw_sample_cors = final_results$raw_sample_cors,
+					  norm_sample_cors = final_results$norm_sample_cors,
+					  raw_gene_cors = final_results$raw_gene_cors,
+					  norm_gene_cors = final_results$norm_gene_cors,
+					  size_factors = final_results$size_factors,
+					  local_size_factors = final_results$local_size_factors)
 	plotter <- htmlReport$new(title_doc = "Aberrant Expression report", 
 					      	  container = container, 
 	                      	  tmp_folder = tmp_folder,
