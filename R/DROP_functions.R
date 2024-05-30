@@ -541,7 +541,8 @@ get_bcv <- function(ods) {
 #' Function to merge bam stats.
 #' `merge_bam_stats` Merges the bam stat files contained in the specified path.
 #' @inheritParams main_abgenes_Hunter
-#' @returns A table containing the merged bam stats.
+#' @returns A list containing two merged counts matrices, one for local and
+#'  one for xternal counts, and a merged bam stats table.
 #' @export
 
 merge_bam_stats <- function(ods, stats_path) {
@@ -549,8 +550,9 @@ merge_bam_stats <- function(ods, stats_path) {
   bam_coverage <- lapply(stats, read.table)
   bam_coverage <- do.call(rbind, bam_coverage)
   colnames(bam_coverage) <- c("sampleID", "record_count")
-  coverage_df <- .make_coverage_df(ods = ods, bam_coverage = bam_coverage)
-  return(coverage_df)
+  merged_bam_stats <- .extract_coverage_info(ods = ods,
+                                             bam_coverage = bam_coverage)
+  return(merged_bam_stats)
 }
 
 #' Function to convert aberrant expression results into a format that allows
@@ -690,10 +692,10 @@ get_gene_sample_correlations <- function(ods, normalized = TRUE, nGenes = 500,
   return(res)
 }
 
-.make_coverage_df <- function(bam_coverage, ods) {
-  local_columns <- SummarizedExperiment::colData(ods)$EXTERNAL == "no"
-  cnts_mtx_local <- OUTRIDER::counts(ods, normalized = F)[, local_columns]
+.extract_coverage_info <- function(bam_coverage, ods) {
   cnts_mtx <- OUTRIDER::counts(ods, normalized = F)
+  local_columns <- SummarizedExperiment::colData(ods)$EXTERNAL == "no"
+  cnts_mtx_local <- cnts_mtx[, local_columns]
   rownames(bam_coverage) <- bam_coverage$sampleID
   coverage_df <- data.frame(sampleID = colnames(ods),
                             read_count = colSums(cnts_mtx))
@@ -704,10 +706,14 @@ get_gene_sample_correlations <- function(ods, normalized = TRUE, nGenes = 500,
   coverage_dt[, counted_frac := read_count/record_count]
   data.table::setorder(coverage_dt, counted_frac)
   coverage_dt[, frac_rank := .I]
-  local_size_factors <- OUTRIDER::sizeFactors(ods)[names(OUTRIDER::sizeFactors(ods)) %in% rownames(bam_coverage)]
+  size_factors <- OUTRIDER::sizeFactors(ods)
+  locals <- names(size_factors) %in%  colnames(cnts_mtx_local)
+  local_size_factors <- size_factors[locals]
   coverage_dt[, size_factors := local_size_factors]
   data.table::setorder(coverage_dt, size_factors)
   coverage_dt[, sf_rank := 1:.N]
   coverage_df <- as.data.frame(coverage_dt)
-  return(coverage_df)
+  return(list(coverage_df = coverage_df, counts_matrix = cnts_mtx,
+              local_counts_matrix = cnts_mtx_local, size_factors = size_factors,
+              local_size_factors = local_size_factors))
 }
