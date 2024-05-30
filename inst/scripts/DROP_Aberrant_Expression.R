@@ -1,21 +1,34 @@
 #! /usr/bin/env Rscript
 
-if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' ){
-  devtools::load_all("~aestebanm/dev_R/htmlreportR")
-  source_folder <- "inst"
-} else {
-  require("htmlreportR")
-  source_folder <- NULL
-}
-  source_folder <- file.path(find.package("htmlreportR"), source_folder)
+
+##########################################
+## LOAD LIBRARIES
+##########################################
+
 if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
-  devtools::load_all("~aestebanm/dev_R/ExpHunterSuite")
-  template_folder <- "inst/templates"
+  # Obtain this script directory
+  full.fpath <- normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
+                  commandArgs())], '='))[2])
+  main_path_script <- dirname(full.fpath)
+  root_path <- file.path(main_path_script, '..', '..')
+  # Load custom libraries
+  custom_libraries <- c('main_abgenes_Hunter.R', 'DROP_functions.R')
+  for (lib in custom_libraries){
+    source(file.path(root_path, 'R', lib))
+  }
+  template_folder <- file.path(root_path, 'inst', 'templates')
 } else {
-  require("ExpHunterSuite")
-  template_folder <- "templates"
+  require('ExpHunterSuite')
+  root_path <- find.package('ExpHunterSuite')
+  template_folder <- file.path(root_path, 'templates')
 }
-template_folder <- file.path(find.package("ExpHunterSuite"), template_folder)
+
+devtools::load_all('~/dev_R/htmlreportR')
+source_folder <- file.path(find.package("htmlreportR"), "inst")
+
+##########################################
+## OPTPARSE
+##########################################
 
 option_list <- list(
   optparse::make_option(c("-s", "--sample_annotation"), type="character", default=NULL,
@@ -57,6 +70,10 @@ option_list <- list(
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
+##########################################
+## MAIN
+##########################################
+
 # final_results <- main_abgenes_Hunter(
 #   sample_annotation = opt$sample_annotation,
 #   anno_database = opt$anno_database,
@@ -74,9 +91,9 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 #   stats_path = opt$stats_path,
 #   top_N = opt$top_N)
 
-# saveRDS(final_results, "res.rds")
+# saveRDS(final_results, "final_results.rds")
 
-final_results <- readRDS("res.rds")
+final_results <- readRDS("final_results.rds")
 
 write_abgenes_report(final_results = final_results, template_folder = template_folder,
                      output_dir = opt$report_dir, source_folder = source_folder,

@@ -1,6 +1,27 @@
 #! /usr/bin/env Rscript
 
-devtools::load_all("~aestebanm/dev_R/ExpHunterSuite")
+##########################################
+## LOAD LIBRARIES
+##########################################
+
+if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
+  # Obtain this script directory
+  full.fpath <- normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
+                  commandArgs())], '='))[2])
+  main_path_script <- dirname(full.fpath)
+  root_path <- file.path(main_path_script, '..', '..')
+  # Load custom libraries
+  custom_libraries <- 'DROP_functions.R'
+  for (lib in custom_libraries){
+    source(file.path(root_path, 'R', lib))
+  }
+  template_folder <- file.path(root_path, 'inst', 'templates')
+} else {
+  require('ExpHunterSuite')
+  root_path <- find.package('ExpHunterSuite')
+  template_folder <- file.path(root_path, 'templates')
+}
+
 option_list <- list(
   optparse::make_option(c("-g", "--gtf"), type="character", default=NULL,
     help="GTF file for txdb."),
