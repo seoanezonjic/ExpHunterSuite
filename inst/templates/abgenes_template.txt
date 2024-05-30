@@ -4,6 +4,10 @@
     z_score_cutoff <- plotter$hash_vars$z_score_cutoff
     size_factors <- plotter$hash_vars$size_factors
     local_size_factors <- plotter$hash_vars$local_size_factors
+    has_external <- any(as.logical(SummarizedExperiment::colData(
+                                   plotter$hash_vars$ods)$isExternal))
+    local_columns <- SummarizedExperiment::colData(plotter$hash_vars$ods)$EXTERNAL == "no"
+    plotter$hash_vars$cnts_mtx_local <- plotter$hash_vars$cnts_mtx[, local_columns]
     plot_enc_dim_search <- function(ods) {
         OUTRIDER::plotEncDimSearch(ods) +
               ggplot2::labs(title = "Encoding dim search") +
@@ -19,7 +23,6 @@
     subset_df <- function(df){
         return(df[, columns, drop = FALSE])
     }
-
 end.rcode-->
 
 <h1>Aberrantly Expressed Genes Report</h1>
@@ -49,17 +52,17 @@ end.rcode-->
     cat('<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">')
     cat(plotter$heatmap(list(id = "raw_sample_cors", title = "Correlation between samples before normalisation",
                              header = NULL, text = FALSE, row_names = NULL,
-                             transpose = FALSE, smp_attr = 1, var_attr = 1,
-                             config = list("smpOverlays" = "nClust",
-                                           "varOverlays" = "EXTERNAL",
+                             transpose = FALSE, var_attr = 1, smp_attr = 1,
+                             config = list("varOverlays" = "nClust",
+                                           "smpOverlays" = "EXTERNAL",
                                            samplesClustered = TRUE,
                                            variablesClustered = TRUE,
                                            clusteringDistance = "euclidianDistance"))))
     cat(plotter$heatmap(list(id = "norm_sample_cors", title = "Correlation between samples after normalisation",
                              header = NULL, text = FALSE, row_names = NULL,
-                             transpose = FALSE, smp_attr = 1, var_attr = 1,
-                             config = list("smpOverlays" = "nClust",
-                                           "varOverlays" = "EXTERNAL",
+                             transpose = FALSE, var_attr = 1, smp_attr = 1,
+                             config = list("varOverlays" = "nClust",
+                                           "smpOverlays" = "EXTERNAL",
                                            samplesClustered = TRUE,
                                            variablesClustered = TRUE,
                                            clusteringDistance = "euclidianDistance"))))
@@ -67,17 +70,17 @@ end.rcode-->
     cat('<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">')
     cat(plotter$heatmap(list(id = "raw_gene_cors", title = "logFC before normalisation",
                              header = NULL, text = FALSE, row_names = NULL,
-                             transpose = TRUE, smp_attr = 1, var_attr = 1,
-                             config = list("smpOverlays" = "nClust",
-                                            "varOverlays" = "EXTERNAL",
+                             transpose = TRUE, var_attr = 1, smp_attr = 1,
+                             config = list("varOverlays" = "nClust",
+                                            "smpOverlays" = "EXTERNAL",
                                             samplesClustered = TRUE,
                                             variablesClustered = TRUE,
                                             clusteringDistance = "euclidianDistance"))))
     cat(plotter$heatmap(list(id = "norm_gene_cors", title = "logFC after normalisation",
                              header = NULL, text = FALSE, row_names = NULL,
-                             transpose = TRUE, smp_attr = 1, var_attr = 1,
-                             config = list("smpOverlays" = "nClust",
-                                           "varOverlays" = "EXTERNAL",
+                             transpose = TRUE, var_attr = 1, smp_attr = 1,
+                             config = list("varOverlays" = "nClust",
+                                           "smpOverlays" = "EXTERNAL",
                                            samplesClustered = TRUE,
                                            variablesClustered = TRUE,
                                            clusteringDistance = "euclidianDistance"))))
@@ -110,49 +113,13 @@ end.rcode-->
              header = NULL, text = FALSE, row_names = FALSE,
              x_label = "Reads counted", y_label = "Size Factors", func = subset_df)))
 
-    # cat(plotter$static_ggplot_main(id ="coverage_df", header = NULL, text = "dynamic",
-    #         plotting_function = function(ggplot_obj) {
-    #         ggplot_obj + ggplot2::aes(x = frac_rank, y = counted_frac) +
-    #                      ggplot2::geom_point(size = 3, show.legend = TRUE) +
-    #                      cowplot::theme_cowplot() +
-    #                      cowplot::background_grid() +
-    #                      ggplot2::labs(title = "Read Count Ratio", x = "Sample Rank", y = "Percent Reads Counted") +
-    #                      ggplot2::ylim(c(0,NA)) +
-    #                      ggplot2::scale_color_brewer(palette="Dark2")
-    #     }))
-
-    #     cat(plotter$static_ggplot_main(id ="coverage_df", header = NULL, text = "dynamic",
-    #         plotting_function = function(ggplot_obj) {
-    #         ggplot_obj + ggplot2::aes(sf_rank, local_size_factors) +
-    #                      ggplot2::geom_point(size = 3, show.legend = TRUE) +
-    #                      ggplot2::ylim(c(0,NA)) +
-    #                      cowplot::theme_cowplot() +
-    #                      cowplot::background_grid() +
-    #                      ggplot2::labs(title = 'Size Factors', x = 'Sample Rank', y = 'Size Factors') +
-    #                      ggplot2::scale_color_brewer(palette="Dark2")
-    #     }))
-
-    #     cat(plotter$static_ggplot_main(id ="coverage_df", header = NULL, text = "dynamic",
-    #         plotting_function = function(ggplot_obj) {
-    #         ggplot_obj + ggplot2::aes(read_count, size_factors) +
-    #         ggplot2::geom_point(size = 3, show.legend = TRUE) +
-    #         ggplot2::ylim(c(0, NA)) +
-    #         cowplot::theme_cowplot() +
-    #         cowplot::background_grid() +
-    #         ggplot2::labs(title = 'Size Factors vs. Read Counts',
-    #                       x = 'Reads Counted', y = 'Size Factors') +
-    #         ggplot2::scale_color_brewer(palette="Dark2")
-    #    }))
-
-    # quant <- .95
-
     # if(has_external){
     #   filter_mtx <- list(
     #     local = cnts_mtx_local,
     #     all = cnts_mtx,
     #     `passed FPKM` = cnts_mtx[SummarizedExperiment::rowData(ods)$passedFilter,],
-    #     `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 1, ],
-    #     `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 10, ]
+    #     `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = 0.95) > 1, ],
+    #     `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = 0.95) > 10, ]
     #   )
     #   filter_dt <- lapply(names(filter_mtx), function(filter_name) {
     #     mtx <- filter_mtx[[filter_name]]
@@ -163,8 +130,8 @@ end.rcode-->
     #   filter_mtx <- list(
     #     all = cnts_mtx,
     #     `passed FPKM` = cnts_mtx[SummarizedExperiment::rowData(ods)$passedFilter,],
-    #     `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 1, ],
-    #     `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 10, ]
+    #     `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = 0.95) > 1, ],
+    #     `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = 0.95) > 10, ]
     #   )
     #   filter_dt <- lapply(names(filter_mtx), function(filter_name) {
     #     mtx <- filter_mtx[[filter_name]]
