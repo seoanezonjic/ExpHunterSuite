@@ -67,6 +67,7 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 										z_score_cutoff = z_score_cutoff,
 										gene_mapping_file = gene_mapping_file,
 										sample_anno = sample_anno)
+	save(list = ls(all.names = TRUE), file = "environment.RData")
 	bcv_dt <- get_bcv(ods)
 	merged_bam_stats <- merge_bam_stats(ods = ods, stats_path = stats_path)
 	formatted <- format_for_report(outrider_results$all,
@@ -75,6 +76,10 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
     norm_sample_cors <- get_counts_correlation(ods, TRUE)
     raw_gene_cors <- get_gene_sample_correlations(ods, FALSE)
     norm_gene_cors <- get_gene_sample_correlations(ods, TRUE)
+    has_external <- any(SummarizedExperiment::colData(ods)$EXTERNAL == "yes")
+    filter_df <- filter_matrix(cnts_mtx = merged_bam_stats$counts_matrix,
+    					 cnts_mtx_local = merged_bam_stats$local_counts_matrix,
+    					 has_external = has_external)
 	final_results <- list()
 	final_results$counts <- counts
 	final_results$ods_unfitted <- ods_unfitted
@@ -82,17 +87,13 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 	final_results$outrider_res_all <- outrider_results$all
 	final_results$outrider_res_table <- outrider_results$table
 	final_results$coverage_df <- merged_bam_stats$coverage_df
-	final_results$counts_matrix <- merged_bam_stats$counts_matrix
-	final_results$local_counts_matrix <- merged_bam_stats$local_counts_matrix
 	final_results$formatted <- formatted
 	final_results$bcv_dt <- bcv_dt
 	final_results$raw_sample_cors <- raw_sample_cors
 	final_results$norm_sample_cors <- norm_sample_cors
 	final_results$raw_gene_cors <- raw_gene_cors
-	final_results$norm_gene_cors <- norm_gene_cors	
-	final_results$size_factors <- merged_bam_stats$size_factors
-	final_results$local_size_factors <- merged_bam_stats$local_size_factors
-	save(list = ls(all.names = TRUE), file = "environment.RData")
+	final_results$norm_gene_cors <- norm_gene_cors
+	final_results$filter_df <- filter_df
 	return(final_results)
 }
 
@@ -100,37 +101,9 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 
 placeholder <- function(juas) {
 	quant <- .95
-
-	if(has_external){
-	  filter_mtx <- list(
-	    local = cnts_mtx_local,
-	    all = cnts_mtx,
-	    `passed FPKM` = cnts_mtx[SummarizedExperiment::rowData(ods)$passedFilter,],
-	    `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 1, ],
-	    `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 10, ]
-	  )
-	  filter_dt <- lapply(names(filter_mtx), function(filter_name) {
-	    mtx <- filter_mtx[[filter_name]]
-	    data.table::data.table(gene_ID = rownames(mtx), median_counts = rowMeans(mtx), filter = filter_name)
-	  }) %>% rbindlist
-	  filter_dt[, filter := factor(filter, levels = c('local', 'all', 'passed FPKM', 'min 1 read', 'min 10 reads'))]
-	} else {
-	  filter_mtx <- list(
-	    all = cnts_mtx,
-	    `passed FPKM` = cnts_mtx[SummarizedExperiment::rowData(ods)$passedFilter,],
-	    `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 1, ],
-	    `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 10, ]
-	  )
-	  filter_dt <- lapply(names(filter_mtx), function(filter_name) {
-	    mtx <- filter_mtx[[filter_name]]
-	    data.table::data.table(gene_ID = rownames(mtx), median_counts = rowMeans(mtx), filter = filter_name)
-	  }) |> rbindlist()
-	  filter_dt[, filter := factor(filter, levels = c('all', 'passed FPKM', 'min 1 read', 'min 10 reads'))]
-	}
-
-	binwidth <- .2
+	0.2 <- .2
 	p_hist <- ggplot2::ggplot(filter_dt, ggplot2::aes(x = median_counts, fill = filter)) +
-	ggplot2::geom_histogram(binwidth = binwidth) +
+	ggplot2::geom_histogram(binwidth = 0.2) +
 	ggplot2::scale_x_log10() +
 	ggplot2::facet_wrap(.~filter) +
 	ggplot2::labs(x = "Mean counts per gene", y = "Frequency", title = 'Mean Count Distribution') +
@@ -140,7 +113,7 @@ placeholder <- function(juas) {
 	ggplot2::theme(legend.position = "none")
 
 	p_dens <- ggplot2::ggplot(filter_dt, ggplot2::aes(x = median_counts, col = filter)) +
-	ggplot2::geom_density(ggplot2::aes(y=binwidth * ..count..), size = 1.2) +
+	ggplot2::geom_density(ggplot2::aes(y=0.2 * ..count..), size = 1.2) +
 	ggplot2::scale_x_log10() +
 	ggplot2::labs(x = "Mean counts per gene", y = "Frequency") +
 	ggplot2::guides(col = ggplot2::guide_legend(title = NULL)) +
