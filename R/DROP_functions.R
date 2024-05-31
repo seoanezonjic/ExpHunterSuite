@@ -717,3 +717,33 @@ get_gene_sample_correlations <- function(ods, normalized = TRUE, nGenes = 500,
               local_counts_matrix = cnts_mtx_local, size_factors = size_factors,
               local_size_factors = local_size_factors))
 }
+
+filter_matrix <- function(cnts_mtx, cnts_mtx_local, has_external) {
+  if(has_external){
+    filter_mtx <- list(
+      local = cnts_mtx_local,
+      all = cnts_mtx,
+      `passed FPKM` = cnts_mtx[SummarizedExperiment::rowData(ods)$passedFilter,],
+      `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 1, ],
+      `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 10, ]
+    )
+    filter_dt <- lapply(names(filter_mtx), function(filter_name) {
+      mtx <- filter_mtx[[filter_name]]
+      data.table::data.table(gene_ID = rownames(mtx), median_counts = rowMeans(mtx), filter = filter_name)
+    }) %>% rbindlist
+    filter_dt[, filter := factor(filter, levels = c('local', 'all', 'passed FPKM', 'min 1 read', 'min 10 reads'))]
+  } else {
+    filter_mtx <- list(
+      all = cnts_mtx,
+      `passed FPKM` = cnts_mtx[SummarizedExperiment::rowData(ods)$passedFilter,],
+      `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 1, ],
+      `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 10, ]
+    )
+    filter_dt <- lapply(names(filter_mtx), function(filter_name) {
+      mtx <- filter_mtx[[filter_name]]
+      data.table::data.table(gene_ID = rownames(mtx), median_counts = rowMeans(mtx), filter = filter_name)
+    }) |> rbindlist()
+    filter_dt[, filter := factor(filter, levels = c('all', 'passed FPKM', 'min 1 read', 'min 10 reads'))]
+  }
+  return(as.data.frame(filter_dt))
+}
