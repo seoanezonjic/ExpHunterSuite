@@ -50,14 +50,11 @@ option_list <- list(
   optparse::make_option(c("--implementation"), type="character", default="autoencoder",
     help="Implementation for sample covariation removal."),
   optparse::make_option(c("--max_tested_dimension_proportion"), type="numeric", default=3,
-    help="Quotient by which to divide the number of samples to calculate
-          maximum value for encoding dimension."),
+    help="Quotient by which to divide the number of samples to calculate maximum value for encoding dimension."),
   optparse::make_option(c("--p_adj_cutoff"), type="numeric", default=NULL,
-    help="adjusted P-value to use as cutoff to mark a gene as
-          aberrantly expressed."),
+    help="adjusted P-value to use as cutoff to mark a gene as aberrantly expressed."),
   optparse::make_option(c("--z_score_cutoff"), type="numeric", default=NULL,
-    help="z score value to use as cutoff to mark a gene as
-          aberrantly expressed."),
+    help="z score value to use as cutoff to mark a gene as aberrantly expressed."),
   optparse::make_option(c("-f", "--hpo_file"), type="character", default=NULL,
     help="Genes and associated HPO terms in compressed tsv format."),
   optparse::make_option(c("-b", "--stats_path"), type="character", default=NULL,
@@ -74,24 +71,24 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 ## MAIN
 ##########################################
 
-# final_results <- main_abgenes_Hunter(
-#   sample_annotation = opt$sample_annotation,
-#   anno_database = opt$anno_database,
-#   count_ranges = opt$count_ranges,
-#   gene_mapping_file = opt$gene_mapping_file,
-#   count_files = opt$count_files,
-#   dataset = opt$dataset,
-#   cpu = opt$cpu,
-#   fpkm_cutoff = opt$fpkm_cutoff,
-#   implementation = opt$implementation,
-#   max_dim_proportion = opt$max_tested_dimension_proportion,
-#   p_adj_cutoff = opt$p_adj_cutoff,
-#   z_score_cutoff = opt$z_score_cutoff,
-#   hpo_file = opt$hpo_file,
-#   stats_path = opt$stats_path,
-#   top_N = opt$top_N)
+final_results <- main_abgenes_Hunter(
+  sample_annotation = opt$sample_annotation,
+  anno_database = opt$anno_database,
+  count_ranges = opt$count_ranges,
+  gene_mapping_file = opt$gene_mapping_file,
+  count_files = opt$count_files,
+  dataset = opt$dataset,
+  cpu = opt$cpu,
+  fpkm_cutoff = opt$fpkm_cutoff,
+  implementation = opt$implementation,
+  max_dim_proportion = opt$max_tested_dimension_proportion,
+  p_adj_cutoff = opt$p_adj_cutoff,
+  z_score_cutoff = opt$z_score_cutoff,
+  hpo_file = opt$hpo_file,
+  stats_path = opt$stats_path,
+  top_N = opt$top_N)
 
-# saveRDS(final_results, "final_results.rds")
+saveRDS(final_results, "final_results.rds")
 
 final_results <- readRDS("final_results.rds")
 
