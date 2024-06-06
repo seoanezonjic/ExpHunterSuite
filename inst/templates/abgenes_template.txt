@@ -14,9 +14,39 @@
                                         padjCutoff = p_adj_cutoff,
                                         zScoreCutoff = z_score_cutoff)
     }
-    subset_df <- function(df){
+    plot_expressed_genes <- function(ods) {
+        OUTRIDER::plotExpressedGenes(ods) + cowplot::theme_cowplot() + cowplot::background_grid(major = "y") +
+        ggplot2::geom_point(data = data.table::melt(plotter$hash_vars$expressed_genes, id.vars = c("Rank")),
+                            ggplot2::aes(x = Rank, y = value, col = variable), show.legend = TRUE)
+    }
+    subset_columns <- function(df){
         return(df[, columns, drop = FALSE])
     }
+
+    format_filter_df <- function(filter_df) {
+        filter_levels <- levels(filter_df$filter)
+        levels_length <- length(filter_levels)
+        list <- vector(mode = "list", length = levels_length)
+        for(i in seq(1, levels_length)) {
+            list[[i]] <- filter_df[filter_df$filter == filter_levels[i], -3]
+            names(list)[i] <- filter_levels[i]
+            colnames(list[[i]])[2] <- filter_levels[i]
+        }
+        all_genes <- list$all$gene_ID
+        for(name in names(list)[!names(list)=="all"]) {
+            missing_genes <- all_genes[!all_genes %in% list[[name]]$gene_ID]
+            if(length(missing_genes) > 0) {
+                new_rows <- data.frame(gene_ID = missing_genes, median_counts = 0)
+                colnames(new_rows)[2] <- name
+                list[[name]] <- rbind(list[[name]], new_rows)
+                list[[name]] <- list[[name]][order(list$all$gene_ID), ]
+            }
+        }
+        res <- Reduce(function(df1, df2) merge(df1, df2, by = "gene_ID", all.x = TRUE), list)
+        return(res)
+    }
+
+    plotter$hash_vars$formatted_filter_df <- format_filter_df(plotter$hash_vars$filter_df)
 end.rcode-->
 
 <h1>Aberrantly Expressed Genes Report</h1>
@@ -88,53 +118,38 @@ end.rcode-->
     cat(plotter$scatter2D(
         list(id = "coverage_df", title = "Read counts", header = NULL,
              text = FALSE, row_names = FALSE, x_label = "Sample rank",
-             y_label = "Reads counted", func = subset_df)))
+             y_label = "Reads counted", func = subset_columns)))
     columns <- c("frac_rank", "counted_frac")
     cat(plotter$scatter2D(
         list(id = "coverage_df", title = "Read Count Ratio", header = NULL,
              text = FALSE, row_names = FALSE, x_label = "Sample rank",
-             y_label = "Percent Reads Counted", func = subset_df)))
+             y_label = "Percent Reads Counted", func = subset_columns)))
     cat("</div>")
     cat('<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">"')
     columns <- c("sf_rank", "size_factors")
     cat(plotter$scatter2D(
         list(id = "coverage_df", title = "Size Factors", header = NULL,
              text = FALSE, row_names = FALSE, x_label = "Sample rank",
-             y_label = "Size Factors", func = subset_df)))
+             y_label = "Size Factors", func = subset_columns)))
     columns <- c("read_count", "size_factors")
     cat(plotter$scatter2D(
         list(id = "coverage_df", title = "Size Factors vs. Read Counts",
              header = NULL, text = FALSE, row_names = FALSE,
-             x_label = "Reads counted", y_label = "Size Factors", func = subset_df)))
-
+             x_label = "Reads counted", y_label = "Size Factors", func = subset_columns)))
 end.rcode-->
 </div>
 
+<h1>Count statistics</h1>
 <div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">
-<!--begin.rcode Counting_Summary_countRanks
-    columns <- c("count_rank", "read_count")
-    cat(plotter$scatter2D(
-        list(id = "coverage_df", title = "Read counts", header = NULL,
-             text = FALSE, row_names = FALSE, x_label = "Sample rank",
-             y_label = "Reads counted", func = subset_df)))
-    columns <- c("frac_rank", "counted_frac")
-    cat(plotter$scatter2D(
-        list(id = "coverage_df", title = "Read Count Ratio", header = NULL,
-             text = FALSE, row_names = FALSE, x_label = "Sample rank",
-             y_label = "Percent Reads Counted", func = subset_df)))
-    cat("</div>")
-    cat('<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">"')
-    columns <- c("sf_rank", "size_factors")
-    cat(plotter$scatter2D(
-        list(id = "coverage_df", title = "Size Factors", header = NULL,
-             text = FALSE, row_names = FALSE, x_label = "Sample rank",
-             y_label = "Size Factors", func = subset_df)))
-    columns <- c("read_count", "size_factors")
-    cat(plotter$scatter2D(
-        list(id = "coverage_df", title = "Size Factors vs. Read Counts",
-             header = NULL, text = FALSE, row_names = FALSE,
-             x_label = "Reads counted", y_label = "Size Factors", func = subset_df)))
-
+<!--begin.rcode Filter_barplots
+    cat(plotter$density(
+        list(id = "formatted_filter_df", header = NULL, text = FALSE, fillDensity = TRUE, median = TRUE,
+             row_names = TRUE, x_label = "log10(mean counts per gene)", y_label = "Frequency", func = log10)))
+end.rcode-->
+<!--begin.rcode Counting_summary_expressed_genes
+    cat(plotter$line(
+        list(id = "expressed_genes", title = "Statistics of expressed genes", header = NULL, text = "dynamic", row_names = TRUE,
+             smp_attr = c(1), config = list('graphOrientation' = 'vertical'), x_label = "Sample rank", y_label = "Nº of genes")))
 end.rcode-->
 </div>
 
