@@ -718,32 +718,52 @@ get_gene_sample_correlations <- function(ods, normalized = TRUE, nGenes = 500,
               local_size_factors = local_size_factors))
 }
 
-filter_matrix <- function(cnts_mtx, cnts_mtx_local, has_external) {
+filter_matrix <- function(ods, cnts_mtx, cnts_mtx_local, has_external) {
   if(has_external){
     filter_mtx <- list(
       local = cnts_mtx_local,
       all = cnts_mtx,
       `passed FPKM` = cnts_mtx[SummarizedExperiment::rowData(ods)$passedFilter,],
-      `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 1, ],
-      `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 10, ]
+      `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = 0.95) > 1, ],
+      `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = 0.95) > 10, ]
     )
     filter_dt <- lapply(names(filter_mtx), function(filter_name) {
       mtx <- filter_mtx[[filter_name]]
       data.table::data.table(gene_ID = rownames(mtx), median_counts = rowMeans(mtx), filter = filter_name)
-    }) %>% rbindlist
+    }) |> data.table::rbindlist()
     filter_dt[, filter := factor(filter, levels = c('local', 'all', 'passed FPKM', 'min 1 read', 'min 10 reads'))]
   } else {
     filter_mtx <- list(
       all = cnts_mtx,
       `passed FPKM` = cnts_mtx[SummarizedExperiment::rowData(ods)$passedFilter,],
-      `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 1, ],
-      `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = quant) > 10, ]
+      `min 1 read` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = 0.95) > 1, ],
+      `min 10 reads` = cnts_mtx[MatrixGenerics::rowQuantiles(cnts_mtx, probs = 0.95) > 10, ]
     )
     filter_dt <- lapply(names(filter_mtx), function(filter_name) {
       mtx <- filter_mtx[[filter_name]]
       data.table::data.table(gene_ID = rownames(mtx), median_counts = rowMeans(mtx), filter = filter_name)
-    }) |> rbindlist()
+    }) |> data.table::rbindlist()
     filter_dt[, filter := factor(filter, levels = c('all', 'passed FPKM', 'min 1 read', 'min 10 reads'))]
   }
   return(as.data.frame(filter_dt))
+}
+
+
+# Data manipulation extracted from OUTRIDER::plotExpressedGenes, WITHOUT
+# the plotting part.
+get_expressed_genes <- function(ods) {
+  exp_genes_cols <- c(sampleID = "sampleID", Rank = "expressedGenesRank",
+                      Expressed = "expressedGenes",
+                      Union = "unionExpressedGenes",
+                      Intersection = "intersectionExpressedGenes", 
+                      Passed = "passedFilterGenes")
+  col_data <- SummarizedExperiment::colData(ods)
+  if(!all(exp_genes_cols %in% names(col_data))) {
+      stop("Compute expressed genes first by executing \n\tods <- ",
+          "filterExpression(ods, addExpressedGenes=TRUE)")
+    }
+  dt <- data.table::as.data.table(col_data[, exp_genes_cols])
+  colnames(dt) <- names(exp_genes_cols)
+  df <- as.data.frame(dt)
+  return(df[order(df$Rank), ])
 }
