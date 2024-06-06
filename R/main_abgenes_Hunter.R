@@ -79,7 +79,8 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
     has_external <- any(SummarizedExperiment::colData(ods)$EXTERNAL == "yes")
     filter_df <- filter_matrix(cnts_mtx = merged_bam_stats$counts_matrix,
     					 cnts_mtx_local = merged_bam_stats$local_counts_matrix,
-    					 has_external = has_external)
+    					 has_external = has_external, ods = ods)
+    expressed_genes <- get_expressed_genes(ods)
 	final_results <- list()
 	final_results$counts <- counts
 	final_results$ods_unfitted <- ods_unfitted
@@ -94,51 +95,13 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 	final_results$raw_gene_cors <- raw_gene_cors
 	final_results$norm_gene_cors <- norm_gene_cors
 	final_results$filter_df <- filter_df
+	final_results$expressed_genes <- expressed_genes
 	return(final_results)
 }
 
 ### plotting_things
 
 placeholder <- function(juas) {
-	quant <- .95
-	0.2 <- .2
-	p_hist <- ggplot2::ggplot(filter_dt, ggplot2::aes(x = median_counts, fill = filter)) +
-	ggplot2::geom_histogram(binwidth = 0.2) +
-	ggplot2::scale_x_log10() +
-	ggplot2::facet_wrap(.~filter) +
-	ggplot2::labs(x = "Mean counts per gene", y = "Frequency", title = 'Mean Count Distribution') +
-	ggplot2::guides(col = ggplot2::guide_legend(title = NULL)) +
-	ggplot2::scale_fill_brewer(palette = "Paired") +
-	cowplot::theme_cowplot() +
-	ggplot2::theme(legend.position = "none")
-
-	p_dens <- ggplot2::ggplot(filter_dt, ggplot2::aes(x = median_counts, col = filter)) +
-	ggplot2::geom_density(ggplot2::aes(y=0.2 * ..count..), size = 1.2) +
-	ggplot2::scale_x_log10() +
-	ggplot2::labs(x = "Mean counts per gene", y = "Frequency") +
-	ggplot2::guides(col = ggplot2::guide_legend(title = NULL)) +
-	ggplot2::scale_color_brewer(palette = "Paired") +
-	cowplot::theme_cowplot() +
-	ggplot2::theme(legend.position = "top",
-	      legend.justification="center",
-	      legend.background = ggplot2::element_rect(color = NA))
-
-	cowplot::plot_grid(p_hist, p_dens)
-
-	exp_genes_cols <- c(Rank = "expressedGenesRank",`Expressed\ngenes` = "expressedGenes", 
-	                  `Union of\nexpressed genes` = "unionExpressedGenes", 
-	                  `Intersection of\nexpressed genes` = "intersectionExpressedGenes", 
-	                  `Genes passed\nfiltering` = "passedFilterGenes")
-
-	expressed_genes <- data.table::as.data.table(SummarizedExperiment::colData(ods)[, exp_genes_cols])
-	colnames(expressed_genes) <- names(exp_genes_cols)
-
-	#+ expressedGenes, fig.height=6, fig.width=8
-	OUTRIDER::plotExpressedGenes(ods) + 
-	cowplot::theme_cowplot() +
-	cowplot::background_grid(major = "y") +
-	ggplot2::geom_point(data = data.table::melt(expressed_genes, id.vars = c("Rank")),
-	           ggplot2::aes(x = Rank, y = value, col = variable), show.legend = has_external)
 
 	if(has_external){
 	  DT::datatable(expressed_genes[order(Rank)], rownames = F)
@@ -196,8 +159,8 @@ write_abgenes_report <- function(final_results, output_dir = getwd(),
 					  norm_sample_cors = final_results$norm_sample_cors,
 					  raw_gene_cors = final_results$raw_gene_cors,
 					  norm_gene_cors = final_results$norm_gene_cors,
-					  size_factors = final_results$size_factors,
-					  local_size_factors = final_results$local_size_factors)
+					  filter_df = final_results$filter_df,
+					  expressed_genes = final_results$expressed_genes)
 	plotter <- htmlReport$new(title_doc = "Aberrant Expression report", 
 					      	  container = container, 
 	                      	  tmp_folder = tmp_folder,
