@@ -5,8 +5,21 @@
 ### **Principal Component Analysis**
 This is a PCA plot of the count values normalized following the default method and then they are scaled:
 
-#### **Representation of the samples in the two first dimension of PCA** 
+#### **Inertia plot exploring variance explained by dimensions**
+```{r, echo = FALSE, }
+inertia <- as.data.frame(pca_data$eig)[,c(2,3)]
+inertia$names <- factor(gsub("comp ", "PC", rownames(inertia)), levels= gsub("comp ", "PC", rownames(inertia)))
+colnames(inertia) <- c("var", "cum_var", "names")
+inertia$sig <- ifelse(rownames(inertia) %in% paste("comp", seq(1, dim_to_keep)), "significant", "no_significant")
+ggplot2::ggplot(inertia) + ggplot2::geom_bar(ggplot2::aes(x = names, y = var, fill = sig), stat = "identity") + 
+ggplot2::geom_line(ggplot2::aes(x = names, y = cum_var), stat = "identity", group = 1)+ 
+ggplot2::labs(x = "", y = "Percentage of total variance")+ 
+ggplot2::scale_y_continuous(sec.axis = ggplot2::sec_axis(~./100, name = "Cumulative percentage of variance", labels = scales::percent)) + 
+ggplot2::theme(legend.position = "bottom", axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
 
+```
+
+#### **Representation of the samples in the two first dimension of PCA** 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'} 
 FactoMineR::plot.PCA(pca_data, invisible = "quali" , title = "")
 ``` 
