@@ -224,7 +224,7 @@ if(! is.null(c(opt$target_file, opt$Control_columns, opt$Treatment_columns))) {
 }
 if(! is.null(opt$input_file)) {
   raw_count_table <- read.table(opt$input_file, 
-    header=TRUE, row.names=1, sep="\t")
+    header=TRUE, row.names=1, sep="\t", check.names = FALSE)
 } else {
   raw_count_table <- NULL
 }
