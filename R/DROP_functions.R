@@ -765,5 +765,8 @@ get_expressed_genes <- function(ods) {
   dt <- data.table::as.data.table(col_data[, exp_genes_cols])
   colnames(dt) <- names(exp_genes_cols)
   df <- as.data.frame(dt)
+  new_col <- data.frame(Sample = rownames(df))
+  new_df <- cbind(new_col, df)
+  nrownames(new_df) <- NULL
   return(df[order(df$Rank), ])
 }
