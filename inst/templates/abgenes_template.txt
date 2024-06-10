@@ -46,10 +46,17 @@
         return(res)
     }
 
+    rownames_as_col <- function(df) {
+        new_col <- data.frame(Sample = rownames(df))
+        new_df <- cbind(new_col, df)
+        rownames(new_df) <- NULL
+        return(new_df)
+    }
+
     plotter$hash_vars$formatted_filter_df <- format_filter_df(plotter$hash_vars$filter_df)
 end.rcode-->
 
-<h1>Aberrantly Expressed Genes Report</h1>
+<h1>Aberrant Expression Report</h1>
 <h2>Boxplot of BCV Before and After Autoencoder</h2>
 <!--begin.rcode biological_variation_coefficient
     cat(plotter$static_ggplot_main(id ="bcv_dt", header = NULL, text = "dynamic",
@@ -72,7 +79,7 @@ end.rcode-->
 end.rcode-->
 </div>
 
-<!--begin.rcode OUTRIDER_Summary_heatmaps
+<!--begin.rcode Corr_heatmaps
     cat('<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">')
     cat(plotter$heatmap(list(id = "raw_sample_cors", title = "Correlation between samples before normalisation",
                              header = NULL, text = FALSE, row_names = NULL,
@@ -113,7 +120,7 @@ end.rcode-->
 
 <h2>Counting Summary</h2>
 <div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">
-<!--begin.rcode Counting_Summary_scatter2D
+<!--begin.rcode Count_rank_scatter2D
     columns <- c("count_rank", "read_count")
     cat(plotter$scatter2D(
         list(id = "coverage_df", title = "Read counts", header = NULL,
@@ -146,12 +153,18 @@ end.rcode-->
         list(id = "formatted_filter_df", header = NULL, text = FALSE, fillDensity = TRUE, median = TRUE,
              row_names = TRUE, x_label = "log10(mean counts per gene)", y_label = "Frequency", func = log10)))
 end.rcode-->
-<!--begin.rcode Counting_summary_expressed_genes
+<!--begin.rcode Expressed_genes_lineplot
     cat(plotter$line(
         list(id = "expressed_genes", title = "Statistics of expressed genes", header = NULL, text = "dynamic", row_names = TRUE,
              smp_attr = c(1), config = list('graphOrientation' = 'vertical'), x_label = "Sample rank", y_label = "Nº of genes")))
 end.rcode-->
 </div>
+
+<!--begin.rcode Expressed_genes_dt
+    cat(plotter$table(
+        "expressed_genes", header = NULL, row_names = TRUE, table_rownames = FALSE, smp_attr = c(1), var_attr = c(1),
+        styled = "dt", func = rownames_as_col))
+end.rcode-->
 
 # <!--begin.rcode AE_heatmaps, eval=!is.null(plotter$hash_vars$processed_AE_results.tsv)
 #     groups <- "processed"
