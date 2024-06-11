@@ -891,7 +891,7 @@ dictionary <- list(
 
 
  add_attrib_to_pairs <- function(pairs, RNAseq = NULL, miRNAseq = NULL, translate_targets = FALSE){
-    fields_to_extract <- c("miRNA", "miRNAseq", "RNAseq", "validated_c","predicted_c")
+    fields_to_extract <- c("miRNA", "miRNAseq", "RNAseq", "validated_c","predicted_c", "normalized_counts_RNA_vs_miRNA_normalized_counts_correlation","normalized_counts_RNA_vs_miRNA_normalized_counts_pval" )
     if ("miRNA_loci" %in% colnames(pairs))
         fields_to_extract <- c(fields_to_extract, "miRNA_loci")  
  
