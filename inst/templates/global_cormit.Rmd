@@ -10,7 +10,7 @@ output:
 
 <style type='text/css'>
     body .main-container { 
-        max-width: 90%;
+        max-width: 80%;
     
     }
 
@@ -38,26 +38,46 @@ This report summarizes the results of ExpHunterSuite CoRmiT, comparing RNAseq an
 
 cols <- c("Eg Em"= "#1F77B4", "Cg Cm"="#FF7F0E", "Eg Cm"="#2CA02C", "Hg Cm"="#D62728", "Eg Hm"="#9467BD", "Hg Em"="#8C564B", "Hg Hm"="#E377C2", "Cg Hm" ="#767676", "Cg Em" ="#000000" ) #, "#7F7F7F", "#BCBD22", "#17BECF")
 
+```
+## **General Overview - Quality Control**
+
+This section describes the general statistics about coRmiT execution.
 
 
+### **Executed strategies**
+
+```{r executes_str, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+all_cor_dist_fil <- all_cor_dist[!all_cor_dist$strategy %in% c("DEGs_RNA_vs_miRNA_DEMs_opp", "DEGs_RNA_vs_miRNA_DEMs_sim") &
+                                 !grepl("Eigengene_0" ,all_cor_dist$strategy),]
+all_cor_dist_fil$strategy <- as.factor(all_cor_dist_fil$strategy)
+all_cor_dist_fil$strategy_old <- all_cor_dist_fil$strategy 
+levels(all_cor_dist_fil$strategy) <- set_strats_readable(levels(all_cor_dist_fil$strategy))
+
+strat_n <- unique(all_cor_dist_fil[,c("strategy", "strategy_old")])
+
+strat_n$strategy_old <- gsub("_", " ", strat_n$strategy_old)
+colnames(strat_n) <- c("Strategy name", "Description")
+knitr::kable(strat_n, row.names = FALSE)
+
+cat(paste(paste(unique(cont_tables$corr_cutoff), collapse =", "), "correlation thresholds have been applied to each strategies."))
 
 ```
+
 
 ### **Correlation distributions**
 
 Distributions of correlation values between miRNAs and target genes obtained using the different strategies.
 Horizontal white lines within the distributions represent the 90 and 95 percentiles. 
-The **DEGs_RNA_vs_miRNA_DEMs_opp** and **DEGs_RNA_vs_miRNA_DEMs_sim** strategy are not included.
-
 
 ```{r methods_comparison_violin_cor, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 all_cor_dist_fil <- all_cor_dist[!all_cor_dist$strategy %in% c("DEGs_RNA_vs_miRNA_DEMs_opp", "DEGs_RNA_vs_miRNA_DEMs_sim") &
                                  !grepl("Eigengene_0" ,all_cor_dist$strategy),]
+all_cor_dist_fil$strategy <- as.factor(all_cor_dist_fil$strategy)
+all_cor_dist_fil$strategy_old <- all_cor_dist_fil$strategy 
+levels(all_cor_dist_fil$strategy) <- set_strats_readable(levels(all_cor_dist_fil$strategy))
 
-#all_cor_dist_fil$strategy <- set_strats_readable(all_cor_dist_fil$strategy)
 pp <- ggplot2::ggplot(all_cor_dist_fil, ggplot2::aes(x = strategy, y = correlation, fill = strategy)) +
   ggplot2::geom_violin(col = "white",trim = FALSE, scale = "width",draw_quantiles = c(0.1, 0.05)) + #ggplot2::ylim(-1.000001, min + 0.00001) +
-  #ggplot2::geom_hline(yintercept= , linetype = "dashed", colour = "black") +
   ggplot2::geom_boxplot(width=0.05)+ ggplot2::ylim(-1, 1) +
   ggplot2::coord_flip() +
   ggplot2::theme(axis.text.y = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank()) +
@@ -67,18 +87,17 @@ pp <- ggplot2::ggplot(all_cor_dist_fil, ggplot2::aes(x = strategy, y = correlati
 pp
 ```
 
-### **Correlation p-values distribution**
+### **Correlation P values distribution**
 
-Distributions of correlation p-values between miRNAs and target genes obtained using the different strategies.
-The dashed line represents a p-value of 0.05
-The **DEGs_RNA_vs_miRNA_DEMs_opp** and **DEGs_RNA_vs_miRNA_DEMs_sim** strategy are not included.
+Distributions of correlation P values between miRNAs and target genes obtained using the different strategies.
+The dashed line represents a threshold of 0.05 
 
 ```{r methods_comparison_violin_p, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 
 pp <- ggplot2::ggplot(all_cor_dist_fil, ggplot2::aes(x = strategy, y = pval, fill = strategy)) +
   ggplot2::geom_violin(trim = FALSE, scale = "width") + 
-  #ggplot2::geom_hline(yintercept= p_val_cutoff, linetype = "dashed", colour = "black") +
   ggplot2::geom_boxplot(width=0.05)+ ggplot2::ylim(-0.01, 1) +
+  ggplot2::geom_hline(yintercept = 0.05, colour="grey", linetype = "dashed")+
   ggplot2::coord_flip() +
   ggplot2::theme(axis.text.y = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank()) +
   ggplot2::labs(fill = "Strategy") + 
@@ -89,7 +108,11 @@ pp
 
 ### **Overal Odds Ratio**
 
-```{r overall_OR, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+Overall Odds Ratio was computed as an overview of strategies performance. 
+The color indicate the strategies and shape and linetype represent the type of strategy. 
+Y axis represent Overall Odds Ratio and X represent the correlation thresholds. 
+
+```{r overall_OR, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, fig.width = 10, fig.height = 10  }
 cont_tables$strategy <- set_strats_readable(cont_tables$strategy)
 cont_tables <- cont_tables[!grepl("DEG",cont_tables$strat) & !grepl("E0",cont_tables$strat),]
 
@@ -100,7 +123,7 @@ cont_tables$miRNA_strat <- strat_names[,2]
 
 
 cont_tables_pred <- cont_tables[cont_tables$db_group == "multimir",]
-pp <- ggplot2::ggplot(cont_tables_pred, ggplot2::aes(x=corr_cutoff, y=Odds_ratio,color = strategy)) +
+ggplot2::ggplot(cont_tables_pred, ggplot2::aes(x=corr_cutoff, y=Odds_ratio,color = strategy)) +
             ggplot2::geom_point(ggplot2::aes( shape = RNA_strat),size = 4, stat="identity", alpha = 0.8) +
             ggplot2::geom_line(ggplot2::aes(linetype = miRNA_strat), size = 0.7, stat="identity", alpha = 0.8)+
             ggplot2::xlab("Pearson's R threshold") + ggplot2::ylab("Odds ratio") +
@@ -112,38 +135,47 @@ pp <- ggplot2::ggplot(cont_tables_pred, ggplot2::aes(x=corr_cutoff, y=Odds_ratio
             legend.text = ggplot2::element_text(size = 17),
             legend.title = ggplot2::element_text(size=17, face = "bold")) +
       ggplot2::guides(colour = ggplot2::guide_legend(nrow = 4))+
-   #   scale_size_manual(name = "Validated pairs")+
       ggplot2::scale_color_manual(name = "Strategy",
                                   values = cols)
-plot_in_div(pp,10,10) 
-
-```
-
-### **miRNA_strategy**
-
-ADD TEXT
-
-```{r miRNA_strategy, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
- 
- # miRNA_cont_tables_val <- miRNA_cont_tables[miRNA_cont_tables$db_group == "validated",]
-    miRNA_cont_tables_mult <- miRNA_cont_tables[miRNA_cont_tables$db_group == "multimir",]
-miRNA_cont_tables_mult$strategy <- set_strats_readable(miRNA_cont_tables_mult$strategy)
-  best_strats_mult <- select_best_strategy(miRNA_cont_tables_mult)
-  #best_strats_val <- select_best_strategy(miRNA_cont_tables_val)
-  miRNA_cont_tables_mult$strat_corr <- paste(miRNA_cont_tables_mult$strategy , as.character(miRNA_cont_tables_mult$corr_cutoff), sep = "_")
-  ggplot2::ggplot(miRNA_cont_tables_mult, ggplot2::aes(x = miRNA, y = Odds_ratio, color = strategy)) + 
-  ggplot2::geom_point(size = 2)+ 
-  ggplot2::geom_line(ggplot2::aes(group = strat_corr),size = 0.1) +
-  ggplot2::scale_color_manual(values = cols) + 
-  ggplot2::geom_point(data = best_strats_mult, ggplot2::aes(x = miRNA, y = Odds_ratio),color = "black",size = 2, pch = 21)+ 
-  ggplot2::theme_bw()+
-  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 315,hjust=0,vjust=0))
 
 
 ```
+
+
+## **Integrated pairs description**
+
+This section describes the optimal pairs for each miRNA were selected through the Selecction-Integration.
+(Further description in Cordoba-Caballero et al., 2024)
+
+### **General overview of integrated pairs**
+
+```{r overall_results_table, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, fig.width = 4, fig.height = 4}
+      overall_stats <- all_pairs[!is.na(all_pairs$normalized_counts_RNA_vs_miRNA_normalized_counts_correlation),]
+      int_stats <- overall_stats[overall_stats$integrated_strat,]
+      overall_summary <- data.frame("Input miRNA" = length(unique(overall_stats$miRNAseq)),
+                                    "Input RNA" = length(unique(overall_stats$RNAseq)),
+                                    "miRNA with targets" = length(unique(int_stats$miRNAseq)),
+                                    "RNA targets" = length(unique(int_stats$RNAseq)),
+                                    "Total integrated pairs" = nrow(int_stats),
+                                    "Pairs in any DBs" = sum(int_stats$multimir),
+                                    "Pairs in prediction DBs" = sum(int_stats$predicted),
+                                    "Pairs in validation DBs" =sum(int_stats$validated)
+                                    , check.names = FALSE)
+      overall_summary <- as.data.frame(t(overall_summary))
+      colnames(overall_summary) <- "Count"
+knitr::kable(overall_summary)
+
+```
+
+### **Selected strategy for miRNAs**
+Selection-Integration methods select, for each miRNA, the optimal strategy and correlation threshold based on Specific Odds Ratio.
+This plot shows the strategy (color) and correlation threshold (black tags over the bars) for each miRNA. 
+White numbers represent the number of pairs that were found in DBs for each miRNA. Y axis represent the Specific Odds Ratio.
 
 ```{r miRNA_best_strategy, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, fig.width = 8, fig.height = 5}
- 
+   miRNA_cont_tables_mult <- miRNA_cont_tables[miRNA_cont_tables$db_group == "multimir",]
+miRNA_cont_tables_mult$strategy <- set_strats_readable(miRNA_cont_tables_mult$strategy)
+  best_strats_mult <- select_best_strategy(miRNA_cont_tables_mult)
 
   best_strats_mult$strat_corr<- paste(best_strats_mult$strategy , as.character(best_strats_mult$corr_cutoff), sep = " ")
   best_strats_mult$strat_pairs <- as.character(best_strats_mult$TP+ best_strats_mult$FP)
@@ -152,9 +184,7 @@ miRNA_cont_tables_mult$strategy <- set_strats_readable(miRNA_cont_tables_mult$st
   ggplot2::geom_bar(stat = "identity", width = 0.8) + 
   ggplot2::geom_text(ggplot2::aes(label=as.character(corr_cutoff)), vjust=-0.3, size=3.5,  colour = "black") +
   ggplot2::geom_text(ggplot2::aes(label = TP), size=3.5, vjust = 1.5, colour = "white")+
-  #ggplot2::geom_line(ggplot2::aes(group = strat_corr),size = 0.1) +
   ggplot2::scale_fill_manual(values = cols) + 
-  #ggplot2::geom_point(data = best_strats_mult, ggplot2::aes(x = miRNA, y = Odds_ratio),color = "black",size = 2, pch = 21)+ 
   ggplot2::theme_bw() +
   ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60,hjust=1,vjust=1, size = 18),
                  axis.text.y = ggplot2::element_text(size = 18), 
@@ -165,86 +195,24 @@ miRNA_cont_tables_mult$strategy <- set_strats_readable(miRNA_cont_tables_mult$st
 ```
 
 
-### **Best Strategy Predicted**
+### **Best Strategy based on multimir pairs**
+
+This table shows different statistics about optimal strategy for each miRNA.
 
 ```{r best_strat_mult, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 best_strats_to_print <- best_strats_mult[,c("miRNA","strategy","Odds_ratio", "corr_cutoff", "p.adjust")]
+colnames(best_strats_to_print) <- c("miRNA","Strategy","Specific Odds Ratio", "Correlation cutoff", "Fisher's exact test FDR")
 knitr::kable(best_strats_to_print)
 ```
 
-### **Strategy summary Predicted**
+### **Strategy summary based on multimir pairs**
+
+This table summarizes the impact of different strategies in the integrated pairs.
+miRNA_count is the number of miRNA for which the strategy was the optimal. 
+median_OR represent the median of the Specific Odds Ratio distribution of all miRNA for which the strategy was the optimal.
 
 ```{r strat_summary, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
 library(dplyr) #remove
 strat_sum <- best_strats_mult %>% group_by(strategy) %>% summarise(miRNA_count = length(miRNA), median_OR = median(Odds_ratio))
 knitr::kable(strat_sum)
-```
-
-
-### **Best Strategy Validated**
-
-```{r best_strat_val, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = FALSE}
-best_strats_to_print <- best_strats_val[,c("miRNA","strategy","Odds_ratio","corr_cutoff")]
-knitr::kable(best_strats_to_print)
-```
-
-### **Strategy summary Validated**
-
-```{r strat_summary_val, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = FALSE}
-strat_sum <- best_strats_val %>% group_by(strategy) %>% summarise(miRNA_count = length(miRNA), median_OR = median(Odds_ratio))
-knitr::kable(strat_sum)
-```
-
-
-
-
-
-### **Validated and predicted OR correlation**
-
-```{r OR_pre_val_corr, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = FALSE}
-to_corr <- miRNA_cont_tables[,c("miRNA", "strategy","Odds_ratio","db_group")]
-
-corr_OR <- as.data.frame(stats::reshape(to_corr, idvar = c("miRNA", "strategy"), timevar = "db_group", direction = "wide"))
-corr_OR <- corr_OR[!is.na(corr_OR$Odds_ratio.validated) & 
-                   !is.na(corr_OR$Odds_ratio.predicted) &
-                   corr_OR$Odds_ratio.validated > 0 &
-                   corr_OR$Odds_ratio.predicted > 0,]
-
-ggpubr::ggscatter(corr_OR, x = "Odds_ratio.predicted", y = "Odds_ratio.validated" ,add = "reg.line", conf.int = TRUE,cor.coef = TRUE, cor.method = "spearman")
-
-```
-
-### **Validated and predicted OR correlation of best**
-
-```{r OR_pre_val_corr_best, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, eval = FALSE}
-to_corr <- miRNA_cont_tables[apply(miRNA_cont_tables[,c("strategy","corr_cutoff", "miRNA")], 1, paste, collapse = "-") %in%
-                            apply(best_strats_val[,c("strategy","corr_cutoff", "miRNA")], 1, paste, collapse = "-"),
-                            c("miRNA", "strategy","Odds_ratio","db_group")]
-
-corr_OR <- as.data.frame(stats::reshape(to_corr, idvar = c("miRNA", "strategy"), timevar = "db_group", direction = "wide"))
-corr_OR <- corr_OR[!is.na(corr_OR$Odds_ratio.validated) & 
-                   !is.na(corr_OR$Odds_ratio.predicted) &
-                   corr_OR$Odds_ratio.validated > 0 &
-                   corr_OR$Odds_ratio.predicted > 0,]
-
-ggpubr::ggscatter(corr_OR, x = "Odds_ratio.predicted", y = "Odds_ratio.validated" ,add = "reg.line", conf.int = TRUE,cor.coef = TRUE, cor.method = "spearman")
-
-```
-
-### **Integrated strategy comparison**
-
-```{r integration, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-
-int_cont_tables$strategy <- set_strats_readable(int_cont_tables$strategy)
-int_cont_tables <- int_cont_tables[!grepl("DEG",int_cont_tables$strat) & 
-                                   !grepl("E0",int_cont_tables$strat) & 
-                                   int_cont_tables$db_group == "multimir",]
-
-int_cont_tables$sig_miRNA <- gsub("/[0-9]","", int_cont_tables$coverage_text)
-
-int_cont_tables <- int_cont_tables[!is.na(int_cont_tables$sig_miRNA),]
-
-ggplot2::ggplot(int_cont_tables, ggplot2::aes(fill = strategy, color = strategy, x = sig_miRNA, y = Odds_ratio)) + ggplot2::geom_point(ggplot2::aes(shape = strategy)) +
-ggplot2::scale_shape_manual(values=seq(0,length(unique(int_cont_tables$strategy))))
-
 ```

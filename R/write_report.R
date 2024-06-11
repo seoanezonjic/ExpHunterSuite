@@ -147,6 +147,7 @@ all_pairs, #
 genomic_ranges,
 genome_ref
 ){
+
     integrated_pairs <- as.data.frame(integrated_pairs)
     miRNA_cont_tables <- as.data.frame(miRNA_cont_tables)
     integrated_pairs <- integrated_pairs[integrated_pairs$miRNAseq %in% unique(miRNA_cont_tables[miRNA_cont_tables$db_group == "multimir", "miRNA"]),]
@@ -173,7 +174,7 @@ genome_ref
     integrated_pairs$miRNA <- mirna_names[match(integrated_pairs$miRNAseq, mirna_names$ACCESSION), "NAME"]
     
     output_pairs_all <- add_attrib_to_pairs(integrated_pairs, RNAseq, miRNAseq)
-
+    colnames(output_pairs_all)[match( c("normalized_counts_RNA_vs_miRNA_normalized_counts_correlation","normalized_counts_RNA_vs_miRNA_normalized_counts_pval"), colnames(output_pairs_all))] <- c("Raw_correlation", "Raw_cor_Pcalue")
     gene_id_translation <- as.data.frame(gene_id_translation)
     output_pairs_all$Target_SYMBOL <- gene_id_translation[match(output_pairs_all$Target_ID, gene_id_translation$ensembl_gene_id), "Symbol"]
    
@@ -199,6 +200,11 @@ genome_ref
             out_pairs <- rbind(out_pairs, DB)
         }
     }
+
+best_strats <- select_best_strategy(int_miRNA_cont_tables[int_miRNA_cont_tables$db_group == "multimir",])[,c("miRNA", "Odds_ratio")]
+output_pairs_all <- merge(output_pairs_all, best_strats, by.x ="miRNA_ID", by.y = "miRNA", all.x = TRUE)
+
+
     write.table(out_pairs, col.names = FALSE, sep = "\t",file = file.path(output_files,"integrated_miRNA.txt"), quote = FALSE, row.names = FALSE)
     write.table(output_pairs_all, col.names = TRUE, sep = "\t",file = file.path(output_files,"target_results_table.txt"), quote = FALSE, row.names = FALSE)
 
