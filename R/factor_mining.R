@@ -50,6 +50,7 @@ compute_pca <- function(pca_data,
 												string_factors = NULL, 
 												numeric_factors = NULL) {
 
+	
 	pca_data <- as.data.frame(t(pca_data))
 	 
 	std_pca <- FactoMineR::PCA(pca_data, scale.unit=TRUE, 

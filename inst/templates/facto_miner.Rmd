@@ -6,7 +6,7 @@
 This is a PCA plot of the count values normalized following the default method and then they are scaled:
 
 #### **Inertia plot exploring variance explained by dimensions**
-```{r, echo = FALSE, }
+```{r, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 4 }
 inertia <- as.data.frame(pca_data$eig)[,c(2,3)]
 inertia$names <- factor(gsub("comp ", "PC", rownames(inertia)), levels= gsub("comp ", "PC", rownames(inertia)))
 colnames(inertia) <- c("var", "cum_var", "names")
@@ -17,6 +17,35 @@ ggplot2::labs(x = "", y = "Percentage of total variance")+
 ggplot2::scale_y_continuous(sec.axis = ggplot2::sec_axis(~./100, name = "Cumulative percentage of variance", labels = scales::percent)) + 
 ggplot2::theme(legend.position = "bottom", axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
 
+
+
+
+```
+
+
+#### **Comparison of significant dimensions significant dimensions**
+```{r, echo = FALSE,warning =FALSE, message=FALSE, results = 'asis', fig.width = 8, fig.height = 8  }
+
+dims <- as.data.frame(pca_data$ind$coord)
+colnames(dims) <- gsub("Dim.", "PC", colnames(dims))
+inertia$text <- paste(inertia$names, "\n(", round(inertia$var, 2),"%)", sep = "")
+colnames(dims)[colnames(dims) %in% inertia$names] <- inertia$text[match(colnames(dims), inertia$names)]
+dims$names <- rownames(dims)
+rownames(dims) <- NULL
+dims <- merge(dims, target[,c("sample","treat")], by.x = "names", by.y ="sample")
+
+pca_scatter <- function(data, mapping,...){
+	 p <- ggplot2::ggplot(data, mapping)  
+	 p$mapping$alpha <- NULL
+	 p$mapping$color <- p$mapping$fill
+	p + ggplot2::geom_point() + 
+	ggplot2::geom_vline(xintercept = 0,  linetype="dashed")+ 
+	ggplot2::geom_hline(yintercept = 0,  linetype="dashed")
+}
+
+p <- GGally::ggpairs(dims, columns = seq(2, dim_to_keep +1),  mapping = ggplot2::aes(fill = treat, alpha = 0.5),lower = list(continuous = pca_scatter),upper = list(continuous = "blank"), switch = "both") + ggplot2::theme_bw()
+p[dim_to_keep, dim_to_keep] <- p[dim_to_keep, dim_to_keep] +ggplot2::coord_flip()
+p
 ```
 
 #### **Representation of the samples in the two first dimension of PCA** 
