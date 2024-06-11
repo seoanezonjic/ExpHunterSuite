@@ -151,7 +151,10 @@ This section describes the optimal pairs for each miRNA were selected through th
 
 ```{r overall_results_table, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, fig.width = 4, fig.height = 4}
       overall_stats <- all_pairs[!is.na(all_pairs$normalized_counts_RNA_vs_miRNA_normalized_counts_correlation),]
-      int_stats <- overall_stats[overall_stats$integrated_strat,]
+      overall_stats$miRNA <- mirna_names[match(overall_stats$miRNAseq, mirna_names$ACCESSION), "NAME"]
+
+      int_stats <- overall_stats[overall_stats$miRNA %in% unique(miRNA_cont_tables[miRNA_cont_tables$db_group == "multimir", "miRNA"]),]
+      int_stats <- int_stats[int_stats$integrated_strat,]
       overall_summary <- data.frame("Input miRNA" = length(unique(overall_stats$miRNAseq)),
                                     "Input RNA" = length(unique(overall_stats$RNAseq)),
                                     "miRNA with targets" = length(unique(int_stats$miRNAseq)),
@@ -200,8 +203,9 @@ miRNA_cont_tables_mult$strategy <- set_strats_readable(miRNA_cont_tables_mult$st
 This table shows different statistics about optimal strategy for each miRNA.
 
 ```{r best_strat_mult, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
-best_strats_to_print <- best_strats_mult[,c("miRNA","strategy","Odds_ratio", "corr_cutoff", "p.adjust")]
-colnames(best_strats_to_print) <- c("miRNA","Strategy","Specific Odds Ratio", "Correlation cutoff", "Fisher's exact test FDR")
+
+best_strats_to_print <- best_strats_mult[,c("miRNA","strategy","TP", "Odds_ratio", "corr_cutoff", "p.adjust")]
+colnames(best_strats_to_print) <- c("miRNA","Strategy","Pairs in DBs", "Specific Odds Ratio", "Correlation cutoff", "Fisher's exact test FDR")
 knitr::kable(best_strats_to_print)
 ```
 
