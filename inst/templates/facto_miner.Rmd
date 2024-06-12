@@ -6,6 +6,10 @@
 This is a PCA plot of the count values normalized following the default method and then they are scaled:
 
 #### **Inertia plot exploring variance explained by dimensions**
+
+Graphical representation of PCA dimensions. The bars represent the percentage of total variance that summarize each dimension. 
+The line measures the percentage of total variance accumulated in previous dimensions. The color distinguishes between significan or no significant dimensions. 
+Only significant dimensions will be considered in the following plots.
 ```{r, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 4 }
 inertia <- as.data.frame(pca_data$eig)[,c(2,3)]
 inertia$names <- factor(gsub("comp ", "PC", rownames(inertia)), levels= gsub("comp ", "PC", rownames(inertia)))
@@ -24,6 +28,10 @@ ggplot2::theme(legend.position = "bottom", axis.text.x = ggplot2::element_text(a
 
 
 #### **Comparison of significant dimensions significant dimensions**
+
+This plot compare the position of samples and their distribution in the significant dimensions. 
+The color differenciate between the control (red) and treat (blue) samples. 
+
 ```{r, echo = FALSE,warning =FALSE, message=FALSE, results = 'asis', fig.width = 8, fig.height = 8  }
 
 dims <- as.data.frame(pca_data$ind$coord)
@@ -43,7 +51,13 @@ pca_scatter <- function(data, mapping,...){
 	ggplot2::geom_hline(yintercept = 0,  linetype="dashed")
 }
 
-p <- GGally::ggpairs(dims, columns = seq(2, dim_to_keep +1),  mapping = ggplot2::aes(fill = treat, alpha = 0.5),lower = list(continuous = pca_scatter),upper = list(continuous = "blank"), switch = "both") + ggplot2::theme_bw()
+p <- GGally::ggpairs(dims, columns = seq(2, dim_to_keep +1),  
+	mapping = ggplot2::aes(fill = treat, alpha = 0.5),
+	lower = list(continuous = pca_scatter),
+	upper = list(continuous = "blank"), 
+	switch = "both") + 
+	ggplot2::theme_bw() 
+
 p[dim_to_keep, dim_to_keep] <- p[dim_to_keep, dim_to_keep] +ggplot2::coord_flip()
 p
 ```
@@ -101,42 +115,60 @@ plot(res.hcpc , axes=c(1,2), choice="map", draw.tree= FALSE, title="")
 ```
 
 
-```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5}
 dim_data_quant <- dim_data_merged$quantitative
 dim_data_quant <- dim_data_quant[dim_data_quant$factor %in% numeric_factors,]
-if (nrow(dim_data_quant) >0 ) {
-	cat("#### **Representation of correlation and P value of numeric factors and PCA dimensions**")
-	dim_data_quant$p.value <-formatC(dim_data_quant$p.value, format = "e", digits = 2)
-	dim_data_quant$correlation <- round(dim_data_quant$correlation, digits = 4)
-	dim_data_quant$text_corr <- paste(as.character(dim_data_quant$correlation),as.character(dim_data_quant$p.value), sep = "\n")
-	gg_heatmap(dim_data_quant, x_axis="dimension", y_axis="factor",fill = "correlation", text_plot="text_corr")
+if (nrow(dim_data_quant) > 0 ) {
+	cat("#### **Representation of correlation and P value of numeric factors and PCA dimensions**\n")
+	dim_data_quant$dimension <- gsub("Dim.", "PC", dim_data_quant$dimension)
+	dim_data_quant$correlation <- round(dim_data_quant$correlation, digits = 2)
+	dim_data_quant$significance <- ifelse(dim_data_quant$p.value < 0.001, "***",
+					                ifelse(dim_data_quant$p.value < 0.01, "**",
+				                    ifelse(dim_data_quant$p.value < 0.05, "*", "")))
+	dim_data_quant$text_corr <- paste(as.character(dim_data_quant$correlation),as.character(dim_data_quant$significance), sep = " ")
+
+
+	gg_heatmap(dim_data_quant, x_axis="dimension", y_axis="factor",fill = "correlation", 
+		text_plot="text_corr", text_size = 4,
+		col = c("#3b71ff", "#f1f1f1", "#ff3b3b"))
 
 }
 ```
 
-```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5}
 
 dim_data_qual <- dim_data_merged$qualitative
 if (nrow(dim_data_qual) >0 ) {
-	cat("#### **Representation of R2 and P value of qualitative factors and PCA dimensions**")
-	dim_data_qual$p.value <- formatC(dim_data_qual$p.value, format = "e", digits = 2)
-	dim_data_qual$correlation <- round(dim_data_qual$R2, digits = 4)
-	dim_data_qual$text_adjust <- paste(as.character(dim_data_qual$R2),as.character(dim_data_qual$p.value), sep = "\n")
-	gg_heatmap(dim_data_qual, x_axis="dimension", y_axis="factor",fill = "R2", text_plot="text_adjust")
+	cat("#### **Representation of R2 and P value of qualitative factors and PCA dimensions**\n")
+	dim_data_qual$dimension <- gsub("Dim.", "PC", dim_data_qual$dimension)
+	dim_data_qual$R2 <- round(dim_data_qual$R2, digits = 3)
+	dim_data_qual$significance <- ifelse(dim_data_qual$p.value < 0.001, "***",
+					                ifelse(dim_data_qual$p.value < 0.01, "**",
+				                    ifelse(dim_data_qual$p.value < 0.05, "*", "")))
+
+	dim_data_qual$text_adjust <- paste(as.character(dim_data_qual$R2),as.character(dim_data_qual$significance), sep = " ")
+
+	gg_heatmap(dim_data_qual, x_axis="dimension", y_axis="factor",fill = "R2", text_plot="text_adjust", text_size = 4,
+		col = c("#3b71ff", "#f1f1f1", "#ff3b3b"))
 
 }
 ```
 
 
 
-```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5}
 
 dim_data_cat <- dim_data_merged$qual_category
 if (nrow(dim_data_cat) >0 ) {
-	cat("#### **Representation of estimated coordinated from barycentre and P value of qualitative factors and PCA dimensions**")
-	dim_data_cat$p.value <- formatC(dim_data_cat$p.value, format = "e", digits = 2)
-	dim_data_cat$text_estimate <- paste(as.character(dim_data_cat$Estimate),as.character(dim_data_cat$p.value), sep = "\n")
-	gg_heatmap(dim_data_cat, x_axis="dimension", y_axis="factor",fill = "Estimate", text_plot="text_estimate")
+	cat("#### **Representation of estimated coordinated from barycentre and P value of qualitative factors and PCA dimensions**\n")
+		dim_data_cat$dimension <- gsub("Dim.", "PC", dim_data_cat$dimension)
+
+	dim_data_cat$significance <- ifelse(dim_data_cat$p.value < 0.001, "***",
+					                ifelse(dim_data_cat$p.value < 0.01, "**",
+				                    ifelse(dim_data_cat$p.value < 0.05, "*", "")))
+	dim_data_cat$text_estimate <- paste(round(dim_data_cat$Estimate, digits = 4),dim_data_cat$significance, sep = " ")
+	gg_heatmap(dim_data_cat, x_axis="dimension", y_axis="factor",fill = "Estimate", text_plot="text_estimate", text_size = 4,
+		col = c("#3b71ff", "#f1f1f1", "#ff3b3b") )
 
 }
 ```
