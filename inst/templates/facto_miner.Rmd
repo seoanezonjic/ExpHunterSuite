@@ -78,9 +78,10 @@ FactoMineR::plot.PCA(pca_data, invisible = "quali" , title = "", label = "none",
 FactoMineR::plot.PCA(pca_data, title = "")
 ```
 
-#### **Representation of the variable contribution to the PCA axis 1 and 2**
 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(numeric_factors)} 
+cat("#### **Representation of the variable contribution to the PCA axis 1 and 2**")
+
 factoextra::fviz_pca_var(pca_data, axes = c(1, 2),select.var = list(name=numeric_factors), col.var="steelblue", title="") +
 		ggplot2::theme_minimal()
 
