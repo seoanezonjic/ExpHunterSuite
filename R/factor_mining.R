@@ -84,3 +84,5 @@ compute_pca <- function(pca_data,
 							dim_data_merged = dim_data_merged,
 							res.hcpc = res.hcpc))
 }
+
+

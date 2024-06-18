@@ -116,11 +116,37 @@ plot(res.hcpc , axes=c(1,2), choice="map", draw.tree= FALSE, title="")
 ```
 
 
+#### **Relationship between HCPC clusters and experiment design**
+Fisher's exact test is computed between clusters and experimental treats. Fisher's exact test P values and FDR are showed. 
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
+
+clusters_ct <- ct_from_qual(res.hcpc$data.clust[,c("clust", "treat")])
+colnames(clusters_ct)[match(c("ref","sub"),colnames(clusters_ct))] <- c("Cluster","Treat")
+clusters_ct$fisher.test.pval <- v.fisher.test(clusters_ct)
+clusters_ct$FDR <- p.adjust(clusters_ct$fisher.test.pval, method = "BH")
+
+clusters_ct <- clusters_ct[clusters_ct$FDR <= 0.05,]
+
+if (nrow(clusters_ct) > 0 ) {
+
+	clusters_ct$FDR <- format(clusters_ct$FDR, scientific = TRUE, digits = 3)
+	clusters_ct$fisher.test.pval <- format(clusters_ct$fisher.test.pval, scientific = TRUE, digits = 3)
+
+	clusters_ct <- clusters_ct[,c("Cluster","Treat","fisher.test.pval", "FDR")]
+	knitr::kable(clusters_ct, row.names = FALSE)
+} else {
+	cat("None of the clusters were significantly associated with any experimental group")
+
+}
+
+```
+
+#### **Representation of correlation and P value of numeric factors and PCA dimensions**
+
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5}
 dim_data_quant <- dim_data_merged$quantitative
 dim_data_quant <- dim_data_quant[dim_data_quant$factor %in% numeric_factors,]
 if (nrow(dim_data_quant) > 0 ) {
-	cat("#### **Representation of correlation and P value of numeric factors and PCA dimensions**\n")
 	dim_data_quant$dimension <- gsub("Dim.", "PC", dim_data_quant$dimension)
 	dim_data_quant$correlation <- round(dim_data_quant$correlation, digits = 2)
 	dim_data_quant$significance <- ifelse(dim_data_quant$p.value < 0.001, "***",
@@ -133,14 +159,17 @@ if (nrow(dim_data_quant) > 0 ) {
 		text_plot="text_corr", text_size = 4,
 		col = c("#3b71ff", "#f1f1f1", "#ff3b3b"))
 
+} else {
+	cat("None of the factors were significantly associated with any dimension")
 }
 ```
+
+#### **Representation of R2 and P value of qualitative factors and PCA dimensions**
 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5}
 
 dim_data_qual <- dim_data_merged$qualitative
 if (nrow(dim_data_qual) >0 ) {
-	cat("#### **Representation of R2 and P value of qualitative factors and PCA dimensions**\n")
 	dim_data_qual$dimension <- gsub("Dim.", "PC", dim_data_qual$dimension)
 	dim_data_qual$R2 <- round(dim_data_qual$R2, digits = 3)
 	dim_data_qual$significance <- ifelse(dim_data_qual$p.value < 0.001, "***",
@@ -152,17 +181,18 @@ if (nrow(dim_data_qual) >0 ) {
 	gg_heatmap(dim_data_qual, x_axis="dimension", y_axis="factor",fill = "R2", text_plot="text_adjust", text_size = 4,
 		col = c("#3b71ff", "#f1f1f1", "#ff3b3b"))
 
+} else {
+	cat("None of the factors were significantly associated with any dimension")
 }
 ```
 
-
+#### **Representation of estimated coordinated from barycentre and P value of qualitative factors and PCA dimensions**
 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5}
 
 dim_data_cat <- dim_data_merged$qual_category
 if (nrow(dim_data_cat) >0 ) {
-	cat("#### **Representation of estimated coordinated from barycentre and P value of qualitative factors and PCA dimensions**\n")
-		dim_data_cat$dimension <- gsub("Dim.", "PC", dim_data_cat$dimension)
+	dim_data_cat$dimension <- gsub("Dim.", "PC", dim_data_cat$dimension)
 
 	dim_data_cat$significance <- ifelse(dim_data_cat$p.value < 0.001, "***",
 					                ifelse(dim_data_cat$p.value < 0.01, "**",
@@ -171,5 +201,7 @@ if (nrow(dim_data_cat) >0 ) {
 	gg_heatmap(dim_data_cat, x_axis="dimension", y_axis="factor",fill = "Estimate", text_plot="text_estimate", text_size = 4,
 		col = c("#3b71ff", "#f1f1f1", "#ff3b3b") )
 
+} else {
+	cat("None of the categories were significantly associated with any dimension")
 }
 ```
