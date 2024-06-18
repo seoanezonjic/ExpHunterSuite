@@ -2,12 +2,13 @@
 <!--begin.rcode setup
     p_adj_cutoff <- plotter$hash_vars$p_adj_cutoff
     z_score_cutoff <- plotter$hash_vars$z_score_cutoff
+    top_N <- plotter$hash_vars$top_N
     plot_enc_dim_search <- function(ods) {
         OUTRIDER::plotEncDimSearch(ods) +
-              ggplot2::labs(title = "Encoding dim search") +
-              cowplot::theme_cowplot() +
-              cowplot::background_grid() +
-              ggplot2::scale_color_brewer(palette="Dark2")
+        ggplot2::labs(title = "Encoding dim search") +
+        cowplot::theme_cowplot() +
+        cowplot::background_grid() +
+        ggplot2::scale_color_brewer(palette="Dark2")
     }
     plot_aberrant_per_sample <- function(ods) {
         OUTRIDER::plotAberrantPerSample(ods, main = "Aberrants per sample", 
@@ -19,6 +20,7 @@
         ggplot2::geom_point(data = data.table::melt(plotter$hash_vars$expressed_genes, id.vars = c("Rank")),
                             ggplot2::aes(x = Rank, y = value, col = variable), show.legend = TRUE)
     }
+
     subset_columns <- function(df){
         return(df[, columns, drop = FALSE])
     }
@@ -46,11 +48,21 @@
         return(res)
     }
 
-    rownames_as_col <- function(df) {
-        new_col <- data.frame(Sample = rownames(df))
-        new_df <- cbind(new_col, df)
-        rownames(new_df) <- NULL
-        return(new_df)
+    format_sample_volcano <- function(df) {
+        res <- subset_columns(df)
+        res <- res[res$sampleID %in% top_samples, ]
+        res$padjust <- -log10(res$padjust)
+        return(res)
+    }
+
+    plot_expression_rank <- function(ods) {
+        OUTRIDER::plotExpressionRank(ods, gene, basePlot = TRUE,
+                      zScoreCutoff = cfg$aberrantExpression$zScoreCutoff,
+                      padjCutoff = cfg$aberrantExpression$padjCutoff)
+    }
+
+    plot_expected_vs_observed <- function(ods) {
+        OUTRIDER::plotExpectedVsObservedCounts(ods, gene, basePlot = TRUE)
     }
 
     plotter$hash_vars$formatted_filter_df <- format_filter_df(plotter$hash_vars$filter_df)
@@ -162,9 +174,44 @@ end.rcode-->
 
 <!--begin.rcode Expressed_genes_dt
     cat(plotter$table(
-        "expressed_genes", header = NULL, row_names = TRUE, table_rownames = FALSE, smp_attr = c(1), var_attr = c(1),
-        styled = "dt", func = rownames_as_col))
+        "expressed_genes", header = NULL, row_names = NULL, table_rownames = FALSE, styled = "dt"))
 end.rcode-->
+
+<h1>OUTRIDER Overview</h1>
+
+<!--begin.rcode OUTRIDER_Overview_table
+    cat(plotter$table(
+        "outrider_res_table", header = NULL, row_names = NULL, table_rownames = FALSE, styled = "dt"))
+end.rcode-->
+
+<!--begin.rcode OUTRIDER_Overview_Samples
+    samples <- unique(plotter$hash_vars$outrider_res_table$sampleID)
+    total_samples <- length(samples)
+    columns <- c("sampleID", "hgncSymbol", "padjust", "zScore")
+    if(total_samples < top_N) {
+        nsamples <- total_samples
+    } else {
+        nsamples <- top_N
+    }
+    top_samples <- samples[seq(1, nsamples)]
+    cat(plotter$scatter2D(
+        list(id = "outrider_res_table", title = paste0("Top ", nsamples, " samples volcano plot"), header = NULL, text = "dynamic", 
+             row_names = NULL, x_label = "zScore", y_label = "p_padjust", var_attr = c(1), func = format_sample_volcano,
+             config = list("colorBy" = "sampleID", "shapeBy" = "hgncSymbol",
+                           "decorations" = list("line" = as.vector(c(list("color" = "rgba(205,0,0,0.5)", "width" = 2, "x" = z_score_cutoff),
+                                                                     list("color" = "rgba(205,0,0,0.5)", "width" = 2, "x" = -z_score_cutoff),
+                                                                     list("color" = "rgba(205,0,0,0.5)", "width" = 2, "y" = p_adj_cutoff))))))
+        ))
+end.rcode-->
+# <!--begin.rcode OUTRIDER_Overview_Genes
+#     for (i in seq(1, top_N)) {
+#         gene <- unique(plotter$hash_vars$outrider_results_all$geneID)[i]
+#         cat(plotter$static_ggplot_main(id = "ods", header = NULL, text = "dynamic", 
+#                                        plotting_function = plot_expression_rank))
+#         cat(plotter$static_ggplot_main(id = "ods", header = NULL, text = "dynamic", 
+#                                        plotting_function = plot_expected_vs_observed))
+#     }
+# end.rcode-->
 
 # <!--begin.rcode AE_heatmaps, eval=!is.null(plotter$hash_vars$processed_AE_results.tsv)
 #     groups <- "processed"
