@@ -103,11 +103,6 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 
 placeholder <- function(juas) {
 
-	if(has_external){
-	  DT::datatable(expressed_genes[order(Rank)], rownames = F)
-	} else{
-	  DT::datatable(expressed_genes[order(Rank), -"Is External"], rownames = F)
-	}
 	sortedRes <- OUTRIDER_results_table[order(OUTRIDER_results_table$padj_rank), ]
 	sigSamples <- unique(sortedRes$sampleID)
 	sigGenes <- head(unique(sortedRes$geneID), top_N)
@@ -129,7 +124,8 @@ write_abgenes_results <- function(final_results, output_dir) {
 
 write_abgenes_report <- function(final_results, output_dir = getwd(),
 							 template_folder = NULL, source_folder = "none",
-							 p_adj_cutoff = 0.05, z_score_cutoff = 3){
+							 p_adj_cutoff = 0.05, z_score_cutoff = 3,
+							 top_N = 10){
 	if(is.null(template_folder)) {
 		stop("No template folder was provided.")
 	}
@@ -143,8 +139,7 @@ write_abgenes_report <- function(final_results, output_dir = getwd(),
 	template <- file.path(template_folder, "abgenes_template.txt")
 	tmp_folder <- "tmp_lib"
 	out_file <- paste0(output_dir, "/abgenes_report.html")
-	container <- list(counts = final_results$counts,
-					  ods = final_results$ods,
+	container <- list(counts = final_results$counts, ods = final_results$ods,
 					  ods_unfitted = final_results$ods_unfitted,
 					  outrider_res_all = final_results$outrider_res_all,
 					  outrider_res_table = final_results$outrider_res_table,
@@ -155,6 +150,7 @@ write_abgenes_report <- function(final_results, output_dir = getwd(),
 					  bcv_dt = final_results$bcv_dt,
 					  p_adj_cutoff = p_adj_cutoff,
 					  z_score_cutoff = z_score_cutoff,
+					  top_N = top_N,
 					  raw_sample_cors = final_results$raw_sample_cors,
 					  norm_sample_cors = final_results$norm_sample_cors,
 					  raw_gene_cors = final_results$raw_gene_cors,
