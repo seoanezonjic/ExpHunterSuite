@@ -88,10 +88,6 @@ final_results <- main_abgenes_Hunter(
   stats_path = opt$stats_path,
   top_N = opt$top_N)
 
-saveRDS(final_results, "final_results.rds")
-
-final_results <- readRDS("final_results.rds")
-
-write_abgenes_report(final_results = final_results, template_folder = template_folder,
-                     output_dir = opt$report_dir, source_folder = source_folder,
-                     p_adj_cutoff = opt$p_adj_cutoff, z_score_cutoff = opt$z_score_cutoff)
+write_abgenes_report(final_results = final_results, template_folder = template_folder, output_dir = opt$report_dir,
+                     source_folder = source_folder, p_adj_cutoff = opt$p_adj_cutoff, z_score_cutoff = opt$z_score_cutoff,
+                     top_N = opt$top_N)
