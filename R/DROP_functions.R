@@ -497,10 +497,11 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
 
 get_ods_results <- function(ods, p_adj_cutoff, z_score_cutoff,
                  gene_mapping_file, sample_anno) {
-    OUTRIDER_results_all <- OUTRIDER::results(ods, padjCutoff = p_adj_cutoff,
+    results_all <- OUTRIDER::results(ods, padjCutoff = p_adj_cutoff,
                                       zScoreCutoff = z_score_cutoff, all = TRUE)
-    OUTRIDER_results_all[, foldChange := round(2^l2fc, 2)]
-    res <- OUTRIDER_results_all[padjust <= p_adj_cutoff &
+    results_all[, foldChange := round(2^l2fc, 2)]
+    results_all <- results_all[order(results_all$padj_rank),]
+    res <- results_all[padjust <= p_adj_cutoff &
                    abs(zScore) > z_score_cutoff]
     gene_annot_dt <- data.table::fread(gene_mapping_file)
     if(!is.null(gene_annot_dt$gene_name)){
@@ -516,7 +517,8 @@ get_ods_results <- function(ods, p_adj_cutoff, z_score_cutoff,
         res <- .add_HPO_cols(res, hpo_file = hpo_file)
       }
     }
-    return(list(all = OUTRIDER_results_all,
+
+    return(list(all = results_all,
           table = res))
   }
 
@@ -767,6 +769,6 @@ get_expressed_genes <- function(ods) {
   df <- as.data.frame(dt)
   new_col <- data.frame(Sample = rownames(df))
   new_df <- cbind(new_col, df)
-  nrownames(new_df) <- NULL
+  rownames(new_df) <- NULL
   return(df[order(df$Rank), ])
 }
