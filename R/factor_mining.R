@@ -46,37 +46,52 @@ get_PCA_dimensions <- function(pca_obj, min_dimensions = 2, time = "10s") {
 
 #' @importFrom FactoMineR PCA dimdesc HCPC
 compute_pca <- function(pca_data, 
-												target, 
-												string_factors = NULL, 
-												numeric_factors = NULL) {
+						target = NULL, 
+						string_factors = NULL, 
+						numeric_factors = NULL, 
+						transpose = TRUE,
+						add_samples = NULL) {
 
-	
-	pca_data <- as.data.frame(t(pca_data))
+	if (transpose) 
+		pca_data <- as.data.frame(t(pca_data))
 	 
-	std_pca <- FactoMineR::PCA(pca_data, scale.unit=TRUE, 
-																				graph = FALSE)                                                     
+	if (!is.null(target)) {
+		rownames(target) <- as.character(target$sample)
+
+		if (!is.null(numeric_factors)){
+			pca_data <- merge_factors(pca_data, target, numeric_factors)
+
+		}
+
+		if (!is.null(string_factors)) {
+		  pca_data <- merge_factors(pca_data, target, string_factors)
+		}
+	} 
+
+	raw_pca_data <- pca_data[!rownames(pca_data) %in% add_samples,
+							 ! colnames(pca_data) %in% c(numeric_factors, string_factors)]
+
+	std_pca <- FactoMineR::PCA(raw_pca_data, scale.unit=TRUE, 
+	  							graph = FALSE)                                                     
 	dim_to_keep <- get_PCA_dimensions(std_pca)
 
-	rownames(target) <- as.character(target$sample)
-
-	if (!is.null(numeric_factors)){
-		pca_data <- merge_factors(pca_data, target, numeric_factors)
-
+	
+	if (!is.null(add_samples)) {
+		add_samples_idx <- match(add_samples, rownames(pca_data))
+	} else {
+		add_samples_idx <- NULL
 	}
 
-	if (!is.null(string_factors)) {
-	  pca_data <- merge_factors(pca_data, target, string_factors)
-	}
-
-	pca_res <- FactoMineR::PCA(pca_data,ncp = dim_to_keep, 
+	pca_res <- FactoMineR::PCA(pca_data, ncp = dim_to_keep, 
 										scale.unit=TRUE, 
 										graph = FALSE,
 										quanti.sup = numeric_factors, 
-										quali.sup=string_factors)	
-	dim_data <- FactoMineR::dimdesc(pca_res, axes=seq(1, dim_to_keep))
-  dim_data_merged <- merge_dim_tables(dim_data)
+										quali.sup=string_factors,
+										ind.sup = add_samples_idx)	
+ 	dim_data <- FactoMineR::dimdesc(pca_res, axes=seq(1, dim_to_keep))
+    dim_data_merged <- merge_dim_tables(dim_data)
 
-  res.hcpc <- FactoMineR::HCPC(pca_res, graph = FALSE)
+  res.hcpc <- FactoMineR::HCPC(pca_res, graph = FALSE, nb.clust = -1)
 
 	return(list(pca_data = pca_res,
 							dim_to_keep = dim_to_keep,

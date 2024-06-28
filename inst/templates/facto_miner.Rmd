@@ -32,7 +32,7 @@ ggplot2::theme(legend.position = "bottom", axis.text.x = ggplot2::element_text(a
 This plot compare the position of samples and their distribution in the significant dimensions. 
 The color differenciate between the control (red) and treat (blue) samples. 
 
-```{r, echo = FALSE,warning =FALSE, message=FALSE, results = 'asis', fig.width = 8, fig.height = 8  }
+```{r, echo = FALSE,warning =FALSE, message=FALSE, results = 'asis', fig.width = 8, fig.height = 8, eval = !is.null(target) }
 
 dims <- as.data.frame(pca_data$ind$coord)
 colnames(dims) <- gsub("Dim.", "PC", colnames(dims))
@@ -67,7 +67,7 @@ p
 FactoMineR::plot.PCA(pca_data, invisible = "quali" , title = "")
 ``` 
 
-```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'} 
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(target) } 
 FactoMineR::plot.PCA(pca_data, invisible = "quali" , title = "", label = "none", habillage = "treat")
 ```
 
@@ -120,20 +120,34 @@ plot(res.hcpc , axes=c(1,2), choice="map", draw.tree= FALSE, title="")
 Fisher's exact test is computed between clusters and experimental treats. Fisher's exact test P values and FDR are showed. 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
 
-clusters_ct <- ct_from_qual(res.hcpc$data.clust[,c("clust", "treat")])
-colnames(clusters_ct)[match(c("ref","sub"),colnames(clusters_ct))] <- c("Cluster","Treat")
-clusters_ct$fisher.test.pval <- v.fisher.test(clusters_ct)
-clusters_ct$FDR <- p.adjust(clusters_ct$fisher.test.pval, method = "BH")
+all_factor_clusters <- data.frame()
+for (add_factor in string_factors) {
+	clusters_ct <- ct_from_qual(res.hcpc$data.clust[,c("clust", add_factor)])
+	clusters_ct$sub <- paste(add_factor,clusters_ct$sub, sep = ":")
+	colnames(clusters_ct)[match(c("ref","sub"),colnames(clusters_ct))] <- c("Cluster","Category")
+	clusters_ct$fisher.test.pval <- v.fisher.test(clusters_ct)
+	clusters_ct$FDR <- p.adjust(clusters_ct$fisher.test.pval, method = "BH")
+	all_factor_clusters <- rbind(all_factor_clusters, clusters_ct)
+}
 
-clusters_ct <- clusters_ct[clusters_ct$FDR <= 0.05,]
+all_factor_clusters <- all_factor_clusters[all_factor_clusters$FDR <= 0.05,]
 
-if (nrow(clusters_ct) > 0 ) {
+if (nrow(all_factor_clusters) > 0 ) {
 
-	clusters_ct$FDR <- format(clusters_ct$FDR, scientific = TRUE, digits = 3)
-	clusters_ct$fisher.test.pval <- format(clusters_ct$fisher.test.pval, scientific = TRUE, digits = 3)
+	all_factor_clusters$FDR <- format(all_factor_clusters$FDR, scientific = TRUE, digits = 3)
+	all_factor_clusters$fisher.test.pval <- format(all_factor_clusters$fisher.test.pval, scientific = TRUE, digits = 3)
 
-	clusters_ct <- clusters_ct[,c("Cluster","Treat","fisher.test.pval", "FDR")]
-	knitr::kable(clusters_ct, row.names = FALSE)
+	all_factor_clusters <- all_factor_clusters[,c("Cluster","Category","fisher.test.pval", "FDR")]
+
+
+	DT::datatable(all_factor_clusters, filter = 'top', rownames = FALSE, 
+                      extensions = c('Buttons','ColReorder'),
+                      options = list(
+                        colReorder = TRUE,
+                        dom = 'lftBip',
+                          buttons = c('copy', 'csv', 'excel')))
+
+	# knitr::kable(all_factor_clusters, row.names = FALSE)
 } else {
 	cat("None of the clusters were significantly associated with any experimental group")
 

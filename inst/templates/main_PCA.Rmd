@@ -1,0 +1,20 @@
+# Principal Component Analysis Report
+
+
+```{r config_PCA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE}
+pca_data <- pca_res$pca_data
+dim_to_keep <- pca_res$dim_to_keep
+dim_data <- pca_res$dim_data
+dim_data_merged <- pca_res$dim_data_merged
+target <- NULL
+string_factors <- opt$add_cualitative_vars 
+numeric_factors <- opt$add_cuantitative_vars
+```
+
+```{r child=file.path(template_folder,"facto_miner.Rmd")}
+
+```
+
+
+
+

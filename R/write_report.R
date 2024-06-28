@@ -100,6 +100,18 @@ write_pca_data <- function(PCA_res, output_files){
 
 }
 
+write_general_pca <- function(pca_data, output_files, tag = ""){
+  pca_res <- pca_data$dim_data_merged
+  
+  merged_metrics <- merge_dim_table_metrics(pca_res)
+
+  write.table(merged_metrics, file = file.path(output_files, paste0(tag, "dim_metrics.txt")),sep = "\t", quote = FALSE, row.names=FALSE)
+  hcpc_table <- pca_data$res.hcpc$call$X
+  hcpc_table$samples <- rownames(hcpc_table)
+  write.table(hcpc_table, file = file.path(output_files, paste0(tag, "hcpc.txt")),sep = "\t", quote = FALSE, row.names=FALSE)
+  
+}
+
 merge_dim_table_metrics <- function(merged_dim_table){
 
         
