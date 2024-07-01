@@ -32,7 +32,7 @@ option_list <- list(
   optparse::make_option(c("-i", "--input_file"), type="character", default=NULL,
     help="Input file where rows are samples and columns are variables. Samples and variable names must be given as first row and column respectively. To change this behaviour, please see -t option"),
   optparse::make_option(c("-o", "--output_files"), type="character", 
-    default="results",
+    default=file.path(getwd(), "results"),
     help="Output path. Default=%default"),
   optparse::make_option(c("-a", "--analysis_type"), type="character", 
     default="pca",
@@ -85,7 +85,7 @@ if (opt$analysis_type == "pca") {
 	write_general_pca(pca_res, pca_output)
 
     rmarkdown::render(input = file.path(template_folder, 'main_PCA.Rmd'),
-    				output_dir = opt$output_files,
-                      output_file = "PCA_report.html")
+            intermediates_dir = file.path(opt$output_files, "tmp"),
+                      output_file = file.path(opt$output_files, "PCA_report.html"))
 
 }
