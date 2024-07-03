@@ -15,15 +15,18 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
   custom_libraries <- list.files(file.path(root_path, "R"), full.names = TRUE)
+    # template_folder <- file.path(root_path, 'inst/templates')
+  template_folder <- file.path(root_path, 'inst/templates', 'htmlreport_migration')
 
   invisible(sapply(custom_libraries, source)) # source(file.path(root_path, 'R', lib))
   
-  template_folder <- file.path(root_path, 'inst', 'templates')
 }else{
   require('ExpHunterSuite')
   root_path <- find.package('ExpHunterSuite')
-  template_folder <- file.path(root_path, 'templates')
+  # template_folder <- file.path(root_path, 'templates')
+  template_folder <- file.path(root_path, 'templates', 'htmlreport_migration')
 }
+
 
 
 
@@ -43,10 +46,10 @@ option_list <- list(
    optparse::make_option(c("-t", "--transpose"), type="logical", action = "store_true", 
     default=FALSE,
     help="If activated, rows are treated as variables and columns as samples."),
-   optparse::make_option(c("-S", "--add_cualitative_vars"), type="character", 
+   optparse::make_option(c("-S", "--add_qualitative_vars"), type="character", 
     default=NULL,
     help="Variables in the input to be treated as supplementary QUALITATIVE variables"),
-  optparse::make_option(c("-N", "--add_cuantitative_vars"), type="character", 
+  optparse::make_option(c("-N", "--add_quantitative_vars"), type="character", 
     default=NULL,
     help="Variables in the input to be treated as supplementary QUANTITATIVE variables"),
   optparse::make_option(c("-s", "--add_samples"), type="character", 
@@ -58,12 +61,12 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 input_file <- read.table(file.path(opt$input_file), header = TRUE, row.names = 1)
 
-if (!is.null(opt$add_cuantitative_vars)) {
-	opt$add_cuantitative_vars <- split_str(opt$add_cuantitative_vars, ",")
+if (!is.null(opt$add_quantitative_vars)) {
+	opt$add_quantitative_vars <- split_str(opt$add_quantitative_vars, ",")
 }
 
-if (!is.null(opt$add_cualitative_vars)) {
-	opt$add_cualitative_vars <- split_str(opt$add_cualitative_vars, ",")
+if (!is.null(opt$add_qualitative_vars)) {
+	opt$add_qualitative_vars <- split_str(opt$add_qualitative_vars, ",")
 }
 
 if (!is.null(opt$add_samples)) {
@@ -76,16 +79,30 @@ if(!file.exists(opt$output_files))
 if (opt$analysis_type == "pca") {
 	pca_res <- compute_pca(pca_data = input_file,
 							transpose = opt$transpose,
-							string_factors = opt$add_cualitative_vars, 
-							numeric_factors = opt$add_cuantitative_vars,
+							string_factors = opt$add_qualitative_vars, 
+							numeric_factors = opt$add_quantitative_vars,
 							add_samples = opt$add_samples)
 	pca_output <- file.path(opt$output_files, "PCA_results")
 	dir.create(pca_output)
 
 	write_general_pca(pca_res, pca_output)
 
-    rmarkdown::render(input = file.path(template_folder, 'main_PCA.Rmd'),
-            intermediates_dir = file.path(opt$output_files, "tmp"),
-                      output_file = file.path(opt$output_files, "PCA_report.html"))
+  devtools::load_all("/mnt/home/users/bio_267_uma/josecordoba/software/htmlreportR")
+  source_folder <- find.package('htmlreportR')
+
+  if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' )
+    source_folder <- file.path(source_folder, "inst")
+
+    pca_res$string_factors <-opt$add_qualitative_vars
+    pca_res$numeric_factors <- opt$add_quantitative_vars
+    plotter <- htmlReport$new(title_doc = "PCA report", 
+                          container = pca_res, 
+                          tmp_folder = file.path(opt$output_files, "tmp"),
+                          src = source_folder,
+                          compress_obj = FALSE,
+                          type_index = "menu")
+  
+  plotter$build(file.path(template_folder, 'main_PCA.txt'))
+  plotter$write_report(file.path(opt$output_files, "PCA_report.html"))
 
 }

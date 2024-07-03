@@ -1,0 +1,30 @@
+
+<style>
+.content {
+    display: flex;
+    justify-content: center; /* Center horizontally */
+}
+.subcontent {
+    width: 50%; /* Set a width for the content */
+    justify-content: center; /* Horizontally center contents */    
+}
+</style>
+<div class="content">
+<div class="subcontent">
+
+<!--begin.rcode general_multivariate_config
+cat(plotter$create_title("<b>Principal Component Analysis Report</b>", "main_title", hlevel = 1))
+last_title <- 1
+
+target <- plotter$hash_vars$target
+end.rcode-->
+
+
+<!--begin.rcode child=file.path(template_folder,"facto_miner.txt"), eval = opt$analysis_type == "pca"
+
+end.rcode-->
+
+
+
+</div>
+</div>
