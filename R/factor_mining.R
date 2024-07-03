@@ -50,7 +50,8 @@ compute_pca <- function(pca_data,
 						string_factors = NULL, 
 						numeric_factors = NULL, 
 						transpose = TRUE,
-						add_samples = NULL) {
+						add_samples = NULL,
+						min_dimensions = 2) {
 
 	if (transpose) 
 		pca_data <- as.data.frame(t(pca_data))
@@ -73,7 +74,7 @@ compute_pca <- function(pca_data,
 
 	std_pca <- FactoMineR::PCA(raw_pca_data, scale.unit=TRUE, 
 	  							graph = FALSE)                                                     
-	dim_to_keep <- get_PCA_dimensions(std_pca)
+	dim_to_keep <- get_PCA_dimensions(std_pca, min_dimensions = min_dimensions)
 
 	
 	if (!is.null(add_samples)) {
@@ -98,6 +99,22 @@ compute_pca <- function(pca_data,
 							dim_data = dim_data,
 							dim_data_merged = dim_data_merged,
 							res.hcpc = res.hcpc))
+}
+
+
+
+get_cluster_string_assoc <- function(res.hcpc, string_factors){
+
+	all_factor_clusters <- data.frame()
+	for (add_factor in string_factors) {
+		clusters_ct <- ct_from_qual(res.hcpc$data.clust[,c("clust", add_factor)])
+		clusters_ct$sub <- paste(add_factor,clusters_ct$sub, sep = ":")
+		colnames(clusters_ct)[match(c("ref","sub"),colnames(clusters_ct))] <- c("Cluster","Category")
+		clusters_ct$fisher.test.pval <- v.fisher.test(clusters_ct)
+		clusters_ct$FDR <- p.adjust(clusters_ct$fisher.test.pval, method = "BH")
+		all_factor_clusters <- rbind(all_factor_clusters, clusters_ct)
+	}
+	return(all_factor_clusters)
 }
 
 
