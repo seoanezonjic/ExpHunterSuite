@@ -71,6 +71,8 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 ## MAIN
 ##########################################
 
+BiocParallel::register(BiocParallel::MulticoreParam(opt$cpu))
+
 final_results <- main_abgenes_Hunter(
   sample_annotation = opt$sample_annotation,
   anno_database = opt$anno_database,
