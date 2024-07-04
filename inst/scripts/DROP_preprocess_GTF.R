@@ -4,7 +4,7 @@
 ## LOAD LIBRARIES
 ##########################################
 
-if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
+if( Sys.getenv('ABGHUNTER_MODE') == 'DEVELOPMENT' ){
   # Obtain this script directory
   full.fpath <- normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
                   commandArgs())], '='))[2])
