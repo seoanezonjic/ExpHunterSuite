@@ -54,6 +54,7 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
   	sample_anno <- data.table::fread(sample_annotation,
   									colClasses = c(RNA_ID = 'character',
   												   DNA_ID = 'character'))
+  	has_external <- any(sample_anno$EXTERNAL == "external")
   	txdb <- AnnotationDbi::loadDb(anno_database)
   	counts <- merge_counts(cpu = cpu, sample_anno = sample_anno,
   						   count_files = count_files,
@@ -67,7 +68,6 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 										z_score_cutoff = z_score_cutoff,
 										gene_mapping_file = gene_mapping_file,
 										sample_anno = sample_anno)
-	save(list = ls(all.names = TRUE), file = "environment.RData")
 	bcv_dt <- get_bcv(ods)
 	merged_bam_stats <- merge_bam_stats(ods = ods, stats_path = stats_path)
 	formatted <- format_for_report(outrider_results$all,
@@ -76,7 +76,6 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
     norm_sample_cors <- get_counts_correlation(ods, TRUE)
     raw_gene_cors <- get_gene_sample_correlations(ods, FALSE)
     norm_gene_cors <- get_gene_sample_correlations(ods, TRUE)
-    has_external <- any(SummarizedExperiment::colData(ods)$EXTERNAL == "yes")
     filter_df <- filter_matrix(cnts_mtx = merged_bam_stats$counts_matrix,
     					 cnts_mtx_local = merged_bam_stats$local_counts_matrix,
     					 has_external = has_external, ods = ods)
@@ -97,25 +96,6 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 	final_results$filter_df <- filter_df
 	final_results$expressed_genes <- expressed_genes
 	return(final_results)
-}
-
-### plotting_things
-
-placeholder <- function(juas) {
-
-	sortedRes <- OUTRIDER_results_table[order(OUTRIDER_results_table$padj_rank), ]
-	sigSamples <- unique(sortedRes$sampleID)
-	sigGenes <- head(unique(sortedRes$geneID), top_N)
-
-	if(length(sigSamples > 1)) {
-		BiocParallel::bplapply(sigSamples, AE_Sample_Overview, ods = ods,
-							   dataset = dataset, cfg = cfg)
-	}
-	
-	if(length(sigGenes > 1)) {
-		BiocParallel::bplapply(sigGenes, AE_Gene_Overview, ods = ods,
-							   dataset = dataset, cfg = cfg)
-	}
 }
 
 write_abgenes_results <- function(final_results, output_dir) {
@@ -158,9 +138,9 @@ write_abgenes_report <- function(final_results, output_dir = getwd(),
 					  filter_df = final_results$filter_df,
 					  expressed_genes = final_results$expressed_genes)
 	plotter <- htmlReport$new(title_doc = "Aberrant Expression report", 
-					      	  container = container, 
-	                      	  tmp_folder = tmp_folder,
-	                      	  src = source_folder)
+					      	  container = container,
+	                      	  tmp_folder = tmp_folder, src = source_folder,
+	                      	  compress_obj = TRUE, type_index = "menu")
 	plotter$build(template)
 	plotter$write_report(out_file)
 }
