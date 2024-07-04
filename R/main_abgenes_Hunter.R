@@ -28,7 +28,6 @@
 #' @return Aberrant expression object containing all analysis results.
 #' @importFrom data.table fread
 #' @importFrom dplyr left_join
-#' @importFrom BiocParallel register MulticoreParam bplapply
 #' @importFrom utils write.table
 #' @importFrom SummarizedExperiment SummarizedExperiment colData rowData
 #' rowRanges mcols
