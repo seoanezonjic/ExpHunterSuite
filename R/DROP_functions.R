@@ -189,57 +189,6 @@ preprocess_gtf <- function(gtf) {
   return(OUTRIDER::theta(ods1))
 }
 
-#' Simple wrapper for OUTRIDER::plotVolcano function. Calls it for specified
-#' sample in input Outrider DataSet (ods)
-#' 
-#' `AE_Sample_Overview` takes a sample and an Outrider DataSet (ods), and
-#' prints a volcano plot of aberrantly expressed genes in said sample.
-#' @param ods Outrider DataSet object.
-#' @param sample Sample to plot.
-#' @returns Volcano plot of aberrantly expressed genes in specified sample
-#' in provided ods.
-#' @importFrom OUTRIDER plotVolcano
-#' @export
-
-AE_Sample_Overview <- function(sample, ods, dataset, cfg, z_score_cutoff,
-                               p_adj_cutoff){
-  pdf(file=paste(sample, dataset,"OUTRIDER.pdf",sep="_"))
-  plot <- OUTRIDER::plotVolcano(ods, sample, basePlot = TRUE,
-                      zScoreCutoff = z_score_cutoff,
-                      padjCutoff = p_adj_cutoff)
-  print(plot)
-  graphics.off()
-}
-
-#' Simple wrapper for OUTRIDER::plotExpressionRank and
-#' plotExpectedVsObservedCounts functions. Calls them for specified
-#' genes in input Outrider DataSet (ods)
-#' 
-#' `AE_Gene_Overview` takes a gene and an Outrider DataSet (ODS), and
-#' prints two plots. The first one is the Expression Rank, which represents
-#' normalized counts of specified gene by sample. Samples are sorted in
-#' ascending order by normalized counts (i.e expression rank). Outliers are
-#' coloured red. ExpectedVsObserved plot creates a graph which represents
-#' raw (observed) versus expected counts. Expected counts are an estimation
-#' based on OUTRIDER normalization and total expression levels in sample.
-#' @param gene Gene to plot.
-#' @param ods Outrider DataSet object.
-#' @returns Volcano plots of provided gene expression rank and expected vs
-#' observed counts across all samples.
-#' @importFrom OUTRIDER plotExpressionRank plotExpectedVsObservedCounts
-#' @export
-
-AE_Gene_Overview <- function(gene, ods, dataset, cfg){
-  pdf(file=paste(gene, dataset,"OUTRIDER.pdf",sep="_"))
-  expPlot <- OUTRIDER::plotExpressionRank(ods, gene, basePlot = TRUE,
-                      zScoreCutoff = z_score_utoff,
-                      padjCutoff = p_adj_cutoff)
-  vsPlot <- OUTRIDER::plotExpectedVsObservedCounts(ods, gene, basePlot = TRUE)
-  print(expPlot)
-  print(vsPlot)
-  graphics.off()
-}
-
 #' Function to separate locally processed and GTEx samples from OUTRIDER
 #' results.
 #' `.processed_vs_imported` takes a data frame and splits it into two data frames
@@ -340,7 +289,7 @@ format_aberrants <- function(input_table) {
 .parse_externals <- function(sample_anno, local_counts) {
   external_anno <- sample_anno[sample_anno$EXTERNAL=="external", ]
   external_file <- unique(external_anno$GENE_COUNTS_FILE)
-  ex_counts <- data.frame(fread(external_file),
+  ex_counts <- data.frame(data.table::fread(external_file),
                           check.names = FALSE, row.names = "geneID")
   ex_counts <- ex_counts[, colnames(ex_counts)!="Description"]
   exCountIDs <- external_anno$RNA_ID
@@ -376,17 +325,15 @@ format_aberrants <- function(input_table) {
 
 .get_metadata <- function(total_counts, sample_anno, count_ranges, external) {
   SummarizedExperiment::rowRanges(total_counts) <- readRDS(count_ranges)
-  if(external) {
-    col_data[col_data$RNA_ID%in%exCountIDs, ]$EXTERNAL <- "external"
-  }
   col_data <- data.table::data.table(RNA_ID = as.character(
                                             colnames(total_counts)))
-  col_data <- .add_base_IDs(col_data)
-  colnames(sample_anno)[colnames(sample_anno) == "RNA_ID"] <- "BASE_ID"
-  col_data <- dplyr::left_join(col_data, sample_anno, by = "BASE_ID")
+  col_data <- dplyr::left_join(col_data, sample_anno, by = "RNA_ID")
+  col_data <- methods::as(col_data, "DataFrame")
   rownames(col_data) <- col_data$RNA_ID
-  col_data <- as(col_data, "DataFrame")
-  rownames(col_data) <- col_data$RNA_ID
+  local_IDs <- sample_anno$BASE_ID[sample_anno$EXTERNAL == "no"]
+  if(external) {
+    col_data$EXTERNAL[!col_data$BASE_ID %in% local_IDs] <- "external"
+  }
   SummarizedExperiment::colData(total_counts) <- col_data
   return(total_counts)
 }
@@ -415,8 +362,8 @@ merge_counts <- function(cpu, sample_anno, count_files, count_ranges) {
   merged_counts_table <- cbind(rownames(merged_assays), merged_assays)
   rownames(merged_counts_table) <- NULL
   colnames(merged_counts_table)[1] <- "gene_ID"
-  total_counts <- SummarizedExperiment::SummarizedExperiment(assays=list(
-                         counts=as.matrix(merged_assays)))
+  total_counts <- SummarizedExperiment::SummarizedExperiment(assays = list(
+                         counts = as.matrix(merged_assays)))
   total_counts <- .get_metadata(total_counts = total_counts,
                                sample_anno = sample_anno,
                                count_ranges = count_ranges,
@@ -471,12 +418,10 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
 
   b <- min(ncol(ods_unfitted), nrow(ods_unfitted)) / max_dim_proportion
   
-  if(max_dim_proportion < 4){
-      maxSteps <- 20
-  } else {
-    maxSteps <- 15
+  maxSteps <- 15
+  if(max_dim_proportion < 4) {
+    maxSteps <- 20
   }
-
   Nsteps <- min(maxSteps, b)
   pars_q <- unique(round(exp(seq(log(5), log(b), length.out = Nsteps))))
   ods_unfitted <- OUTRIDER::findEncodingDim(ods_unfitted, params = pars_q,
@@ -497,12 +442,10 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
 
 get_ods_results <- function(ods, p_adj_cutoff, z_score_cutoff,
                  gene_mapping_file, sample_anno) {
-    results_all <- OUTRIDER::results(ods, padjCutoff = p_adj_cutoff,
+    res <- OUTRIDER::results(ods, padjCutoff = p_adj_cutoff,
                                       zScoreCutoff = z_score_cutoff, all = TRUE)
-    results_all[, foldChange := round(2^l2fc, 2)]
-    results_all <- results_all[order(results_all$padj_rank),]
-    res <- results_all[padjust <= p_adj_cutoff &
-                   abs(zScore) > z_score_cutoff]
+    res[, foldChange := round(2^l2fc, 2)]
+    res <- res[order(res$padj_rank),]
     gene_annot_dt <- data.table::fread(gene_mapping_file)
     if(!is.null(gene_annot_dt$gene_name)){
       if(grepl('ENSG00', res[1,geneID]) & grepl('ENSG00', gene_annot_dt[1,gene_id])){
@@ -517,9 +460,8 @@ get_ods_results <- function(ods, p_adj_cutoff, z_score_cutoff,
         res <- .add_HPO_cols(res, hpo_file = hpo_file)
       }
     }
-
-    return(list(all = results_all,
-          table = res))
+    return(list(all = res, table = res[padjust <= p_adj_cutoff & 
+                                       abs(zScore) > z_score_cutoff]))
   }
 
 #' Function to get the Biological Coefficient Variation of an OutriderDataSet
