@@ -5,7 +5,7 @@
 \title{Function to merge bam stats.
 \code{merge_bam_stats} Merges the bam stat files contained in the specified path.}
 \usage{
-merge_bam_stats(stats_path)
+merge_bam_stats(ods, stats_path)
 }
 \arguments{
 \item{stats_path}{Bam stats directories of each sample. Stats generated
@@ -13,7 +13,8 @@ with samtools idxstats (see Aberrant_Expression workflow for how to generate
 this file).}
 }
 \value{
-A table containing the merged bam stats.
+A list containing two merged counts matrices, one for local and
+one for xternal counts, and a merged bam stats table.
 }
 \description{
 Function to merge bam stats.

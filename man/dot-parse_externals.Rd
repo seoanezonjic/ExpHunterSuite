@@ -2,15 +2,17 @@
 % Please edit documentation in R/DROP_functions.R
 \name{.parse_externals}
 \alias{.parse_externals}
-\title{Function to parse imported data information in merge_bam_stats function.
+\title{Function to parse imported data information in merge_counts function.
 \code{.parse_externals} subsets the sample annotation table to entries with
 "EXTERNAL" column set to "external", and sets up a custom object to allow
 the incorporation of imported data into OUTRIDER analysis.}
 \usage{
-.parse_externals(sample_anno)
+.parse_externals(sample_anno, local_counts)
 }
 \arguments{
 \item{sample_anno}{A sample annotation table.}
+
+\item{local_counts}{Counts table to merge with external table}
 }
 \value{
 A list containing three objects. "run" is a logical that is TRUE
@@ -18,7 +20,7 @@ if the is an imported counts table. Counts is the counts table extracted
 from the file. IDs is a vectors containing imported sample IDs.
 }
 \description{
-Function to parse imported data information in merge_bam_stats function.
+Function to parse imported data information in merge_counts function.
 \code{.parse_externals} subsets the sample annotation table to entries with
 "EXTERNAL" column set to "external", and sets up a custom object to allow
 the incorporation of imported data into OUTRIDER analysis.
