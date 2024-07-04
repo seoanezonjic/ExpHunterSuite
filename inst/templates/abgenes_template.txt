@@ -48,9 +48,8 @@
         return(res)
     }
 
-    format_sample_volcano <- function(df) {
+    format_volcano <- function(df) {
         res <- subset_columns(df)
-        res <- res[res$sampleID %in% top_samples, ]
         res$padjust <- -log10(res$padjust)
         return(res)
     }
@@ -63,6 +62,20 @@
 
     plot_expected_vs_observed <- function(ods) {
         OUTRIDER::plotExpectedVsObservedCounts(ods, gene, basePlot = TRUE)
+    }
+
+    format_aberrants_heatmap <- function(df) {
+        df <- as.data.frame(df)
+        samples <- unique(df$sampleID)
+        res <- df[, colnames(df) != "zScore"]
+        res <- reshape(res, idvar = "geneID", timevar = "sampleID", direction = "wide")
+        res[is.na(res)] <- 0
+        res <- t(res)
+        colnames(res) <- res[1, ]
+        res <- res[-1, ]
+        # res <- apply(res, 2, function(x) as.numeric(x))
+        rownames(res) <- samples
+        return(res)
     }
 
     plotter$hash_vars$formatted_filter_df <- format_filter_df(plotter$hash_vars$filter_df)
@@ -81,9 +94,42 @@ end.rcode-->
         }))
 end.rcode-->
 
-<h2>OUTRIDER Summary</h2>
-<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">
+<div id = "Counting_Summary">
+<!--begin.rcode Count_rank_scatter2D
+    cat(plotter$create_title("Counting Summary", hlevel = 1, indexable = TRUE,
+        id = "Counting_Summary", t_id = "Counting_Summary"))
+    cat("<div style=\"overflow: hidden; display: flex; flex-direction: row; justify-content: center\">")
+    columns <- c("count_rank", "read_count")
+    cat(plotter$scatter2D(
+        list(id = "coverage_df", title = "Read counts", header = NULL,
+             text = FALSE, row_names = FALSE, x_label = "Sample rank",
+             y_label = "Reads counted", func = subset_columns)))
+    columns <- c("frac_rank", "counted_frac")
+    cat(plotter$scatter2D(
+        list(id = "coverage_df", title = "Read Count Ratio", header = NULL,
+             text = FALSE, row_names = FALSE, x_label = "Sample rank",
+             y_label = "Percent Reads Counted", func = subset_columns)))
+    cat("</div>")
+    cat('<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">"')
+    columns <- c("sf_rank", "size_factors")
+    cat(plotter$scatter2D(
+        list(id = "coverage_df", title = "Size Factors", header = NULL,
+             text = FALSE, row_names = FALSE, x_label = "Sample rank",
+             y_label = "Size Factors", func = subset_columns)))
+    columns <- c("read_count", "size_factors")
+    cat(plotter$scatter2D(
+        list(id = "coverage_df", title = "Size Factors vs. Read Counts",
+             header = NULL, text = FALSE, row_names = FALSE,
+             x_label = "Reads counted", y_label = "Size Factors", func = subset_columns)))
+end.rcode-->
+</div>
+<div>
+
+<div id = "OUTRIDER_Summary">
 <!--begin.rcode OUTRIDER_Summary_static_plots
+    cat(plotter$create_title("OUTRIDER Summary", hlevel = 1, indexable = TRUE,
+        id = "OUTRIDER_Summary", t_id = "OUTRIDER_Summary"))
+    cat("<div style=\"overflow: hidden; display: flex; flex-direction: row; justify-content: center\">")
     cat(plotter$static_plot_main("ods", custom_format = TRUE,
                                  plotting_function = plot_enc_dim_search))
     cat(plotter$static_plot_main("ods", custom_format = TRUE,
@@ -130,34 +176,6 @@ end.rcode-->
     cat('</div>')
 end.rcode-->
 
-<h2>Counting Summary</h2>
-<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">
-<!--begin.rcode Count_rank_scatter2D
-    columns <- c("count_rank", "read_count")
-    cat(plotter$scatter2D(
-        list(id = "coverage_df", title = "Read counts", header = NULL,
-             text = FALSE, row_names = FALSE, x_label = "Sample rank",
-             y_label = "Reads counted", func = subset_columns)))
-    columns <- c("frac_rank", "counted_frac")
-    cat(plotter$scatter2D(
-        list(id = "coverage_df", title = "Read Count Ratio", header = NULL,
-             text = FALSE, row_names = FALSE, x_label = "Sample rank",
-             y_label = "Percent Reads Counted", func = subset_columns)))
-    cat("</div>")
-    cat('<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">"')
-    columns <- c("sf_rank", "size_factors")
-    cat(plotter$scatter2D(
-        list(id = "coverage_df", title = "Size Factors", header = NULL,
-             text = FALSE, row_names = FALSE, x_label = "Sample rank",
-             y_label = "Size Factors", func = subset_columns)))
-    columns <- c("read_count", "size_factors")
-    cat(plotter$scatter2D(
-        list(id = "coverage_df", title = "Size Factors vs. Read Counts",
-             header = NULL, text = FALSE, row_names = FALSE,
-             x_label = "Reads counted", y_label = "Size Factors", func = subset_columns)))
-end.rcode-->
-</div>
-
 <h1>Count statistics</h1>
 <div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">
 <!--begin.rcode Filter_barplots
@@ -177,122 +195,85 @@ end.rcode-->
         "expressed_genes", header = NULL, row_names = NULL, table_rownames = FALSE, styled = "dt"))
 end.rcode-->
 
-<h1>OUTRIDER Overview</h1>
-
+<div id = "OUTRIDER_Overview">
 <!--begin.rcode OUTRIDER_Overview_table
+    cat(plotter$create_title("OUTRIDER Overview", hlevel = 1, indexable = TRUE,
+        id = "OUTRIDER_Overview"))
     cat(plotter$table(
         "outrider_res_table", header = NULL, row_names = NULL, table_rownames = FALSE, styled = "dt"))
 end.rcode-->
 
+<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">
 <!--begin.rcode OUTRIDER_Overview_Samples
     samples <- unique(plotter$hash_vars$outrider_res_table$sampleID)
     total_samples <- length(samples)
-    columns <- c("sampleID", "hgncSymbol", "padjust", "zScore")
+    columns <- c("padjust", "zScore")
     if(total_samples < top_N) {
         nsamples <- total_samples
     } else {
         nsamples <- top_N
     }
     top_samples <- samples[seq(1, nsamples)]
+    table <- plotter$hash_vars$outrider_res_all
+    sig_samples <- table[table$sampleID %in% top_samples, ]
+    plotter$hash_vars$sig_samples <- sig_samples
     cat(plotter$scatter2D(
-        list(id = "outrider_res_table", title = paste0("Top ", nsamples, " samples volcano plot"), header = NULL, text = "dynamic", 
-             row_names = NULL, x_label = "zScore", y_label = "p_padjust", var_attr = c(1), func = format_sample_volcano,
-             config = list("colorBy" = "sampleID", "shapeBy" = "hgncSymbol",
-                           "decorations" = list("line" = as.vector(c(list("color" = "rgba(205,0,0,0.5)", "width" = 2, "x" = z_score_cutoff),
-                                                                     list("color" = "rgba(205,0,0,0.5)", "width" = 2, "x" = -z_score_cutoff),
-                                                                     list("color" = "rgba(205,0,0,0.5)", "width" = 2, "y" = p_adj_cutoff))))))
+        list(id = "sig_samples", title = paste0("Top ", nsamples, " samples volcano plot"), header = NULL, text = "dynamic", 
+             row_names = FALSE, x_label = "zScore", y_label = "p_padjust", var_attr = c(1, 3), func = format_volcano,
+             xAxis = "zScore", yAxis = "padjust",
+             config = list("decorations" = list("line" = list(list("color" = "rgba(205,0,0,0.5)", "width" = 2, "y" = -log10(p_adj_cutoff)),
+                                                              list("color" = "rgba(205,0,0,0.5)", "width" = 2, "x" = z_score_cutoff),
+                                                              list("color" = "rgba(205,0,0,0.5)", "width" = 2, "x" = -z_score_cutoff)))))
         ))
 end.rcode-->
-# <!--begin.rcode OUTRIDER_Overview_Genes
-#     for (i in seq(1, top_N)) {
-#         gene <- unique(plotter$hash_vars$outrider_results_all$geneID)[i]
-#         cat(plotter$static_ggplot_main(id = "ods", header = NULL, text = "dynamic", 
-#                                        plotting_function = plot_expression_rank))
-#         cat(plotter$static_ggplot_main(id = "ods", header = NULL, text = "dynamic", 
-#                                        plotting_function = plot_expected_vs_observed))
-#     }
-# end.rcode-->
 
-# <!--begin.rcode AE_heatmaps, eval=!is.null(plotter$hash_vars$processed_AE_results.tsv)
-#     groups <- "processed"
-#     if(!is.null(plotter$hash_vars$imported_AE_results.tsv)) {
-#         groups <- c(groups, "imported")
-#     }
-#     for (group in groups) {
-#         cat(paste0("<h2>Aberrants detected in ", group," samples</h2>"))
-#         cat(plotter$static_ggplot_main(paste0(group, "_AE_results.tsv"), header = TRUE, text = "dynamic",
-#             plotting_function = function(ggplot_obj) {
-#                 ggplot_obj + ggplot2::aes(x = sampleID, y = geneID, fill = p_padjust) +
-#                 ggplot2::geom_tile(show.legend = TRUE) +
-#                 ggplot2::theme_minimal() +
-#                 ggplot2::theme(panel.grid.major = ggplot2::element_blank()) +
-#                 ggplot2::theme(
-#                     axis.text.x = ggplot2::element_text(
-#                                     angle = 25, face = "bold", hjust = 1),
-#                     axis.text.y = ggplot2::element_text(face = "bold")
-#                     ) +
-#                 ggplot2::scale_fill_gradient2(
-#                     low = "#0000D5", mid= "#FFFFFF", high = "#D50000",
-#                     na.value = "grey50", guide = "colourbar",
-#                     aesthetics = "fill")
-#             }))
-#     }
-# end.rcode-->
+<!--begin.rcode OUTRIDER_Overview_Genes
+    genes <- unique(plotter$hash_vars$outrider_res_table$geneID)
+    total_genes <- length(genes)
+    columns <- c("padjust", "zScore")
+    if(total_genes < top_N) {
+        ngenes <- total_genes
+    } else {
+        ngenes <- top_N
+    }
+    top_genes <- genes[seq(1, ngenes)]
+    table <- plotter$hash_vars$outrider_res_all
+    sig_genes <- table[table$geneID %in% top_genes, ]
+    plotter$hash_vars$sig_genes <- sig_genes
+    cat(plotter$scatter2D(
+        list(id = "sig_genes", title = paste0("Top ", ngenes, " genes volcano plot"), header = NULL, text = "dynamic", 
+             row_names = FALSE, x_label = "zScore", y_label = "p_padjust", var_attr = c(1, 3), func = format_volcano,
+             xAxis = "zScore", yAxis = "padjust",
+             config = list("decorations" = list("line" = list(list("color" = "rgba(205,0,0,0.5)", "width" = 2, "y" = -log10(p_adj_cutoff)),
+                                                              list("color" = "rgba(205,0,0,0.5)", "width" = 2, "x" = z_score_cutoff),
+                                                              list("color" = "rgba(205,0,0,0.5)", "width" = 2, "x" = -z_score_cutoff))),
+                      list("hoverTemplate" = "Sample: {sampleID} <br>
+                                              HGNC symbol: {hgncsymbol} <br>
+                                              pP-value (adjusted): {pval} <br>
+                                              Z-score: {Zscore}"))
+        )))
+end.rcode-->
+</div>
+</div>
 
-# <!--begin.rcode No_AE_heatmaps, eval=is.null(plotter$hash_vars$processed_AE_results.tsv)
-#     cat("<h2>No aberrantly expressed genes found in dataset</h2>")
-# end.rcode-->
+<!--begin.rcode AE_diagnostics, eval =! is.null(plotter$hash_vars$processed) & is.null(plotter$hash_vars$imported)
+    cat(plotter$create_title("Diagnostics plots", hlevel = 1, indexable = TRUE,
+                              id = "AE_diagnostics", t_id = AE_diagnostics))
+end.rcode-->
 
-# <!--begin.rcode AS_heatmaps, eval=!is.null(plotter$hash_vars$processed_AS_psi3_results.tsv)
-#     cat("<h1>Aberrant Splicing Plots</h1>")
-#         groups <- "processed"
-#         metrics <- c("psi3", "psi5", "theta")
-#     if(!is.null(plotter$hash_vars$imported_AS_psi3_results.tsv)) {
-#         groups <- c(groups, "imported")
-#     }
-#     cat("<ul>\n
-#             <li> Only samples with at least one aberrantly spliced gene are shown </li>\n
-#             <li> Only genes aberrantly spliced in at least one sample are shown </li>\n
-#             <li> Metrics show deviation from mean splicing metric </li>\n
-#             <li> Psi3 => canonic acceptor rate </li>\n
-#             <li> Psi5 => canonic donor rate </li>\n
-#             <li> Theta => splicing efficiency </li>\n
-#             <li> Number inside field represents number of splicing events </li>\n
-#         </ul>")
-#     for (group in groups) {
-#         cat(paste0("<h2>Aberrants detected in ", group," samples</h2>"))
-#         for (metric in metrics) {
-#             cat(paste0("<h2>Aberrant ", metric," events</h2>"))
-#             cat(plotter$static_ggplot_main(paste0(group, "_AS_", metric, "_results.tsv"), header = TRUE, text = "dynamic", resizable = TRUE,
-#             plotting_function = function(ggplot_obj) {
-#                     ggplot_obj + ggplot2::aes(x = sampleID, y = geneID, fill = p_padjust) +
-#                     ggplot2::geom_tile(show.legend = TRUE) +
-#                     ggplot2::geom_text(mapping = ggplot2::aes(label=spliceSites), size = 2) +
-#                     ggplot2::theme_minimal() +
-#                     ggplot2::theme(panel.grid.major = ggplot2::element_blank()) +
-#                     ggplot2::theme(text = ggplot2::element_text(size=8)) +
-#                     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 25, face = "bold", hjust = 1), axis.text.y = ggplot2::element_text(face = "bold")) +
-#                     ggplot2::scale_fill_gradient2(low = "#0000D5", mid= "#FFFFFF", high = "#D50000", na.value = "grey50", guide = "colourbar", aesthetics = "fill")
-#                 }))
-#             }
-#         }
-# end.rcode-->
-
-# <!--begin.rcode MAE_heatmaps, eval=!is.null(plotter$hash_vars$MAE_results.tsv)
-#     cat("<h1>Monoallelic expression plots</h1>\n
-#         <ul>\n
-#             <li> Technical test. Performed on RNA variant-called VCFs, NOT the intended way to use this module. </li>\n
-#         </ul>")
-#     cat(plotter$static_ggplot_main("MAE_results.tsv", header = TRUE, text = "dynamic", resizable = TRUE,
-#         plotting_function = function(ggplot_obj) {
-#             ggplot_obj + ggplot2::aes(x = sampleID, y = geneID, fill = p_padjust) +
-#             ggplot2::geom_tile(show.legend = TRUE) +
-#             ggplot2::theme_minimal() +
-#             ggplot2::theme(panel.grid.major = ggplot2::element_blank()) +
-#             ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 25, face = "bold", hjust = 1), axis.text.y = ggplot2::element_text(face = "bold")) +
-#             ggplot2::scale_fill_gradient2(low = "#0000D5", mid= "#FFFFFF", high = "#D50000", na.value = "grey50", guide = "colourbar", aesthetics = "fill")
-#     }))
-# end.rcode-->
-
-
-# <br><br><br>
+<h1>Aberrant genes detected in locally processed samples</h1>
+<div id=AE_diagnostics>
+<!--begin.rcode AE_local_heatmaps, eval=!is.null(plotter$hash_vars$formatted$processed)
+    plotter$hash_vars$local <- plotter$hash_vars$formatted$processed
+    cat(plotter$heatmap(list(id = "local", title = "Aberrant expression heatmap across samples", header = NULL,
+                             text = "dynamic", row_names = NULL, transpose = FALSE,
+                             xAxis = "sampleID", yAxis = "geneID", func = format_aberrants_heatmap)))
+end.rcode-->
+<h1>Aberrant genes detected in imported samples (quality control)</h1>
+<!--begin.rcode AE_external_heatmaps, eval=!is.null(plotter$hash_vars$formatted$imported)
+    plotter$hash_vars$external <- plotter$hash_vars$formatted$imported
+    cat(plotter$heatmap(list(id = "external", title = "Aberrant expression heatmap across samples", header = NULL,
+                             text = "dynamic", row_names = NULL, transpose = FALSE,
+                             xAxis = "sampleID", yAxis = "geneID", func = format_aberrants_heatmap)))
+end.rcode-->
+</div>
