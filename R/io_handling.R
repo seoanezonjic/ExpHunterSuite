@@ -88,6 +88,12 @@ load_hunter_folder <- function(path = NULL){
         return(exp_matrix)
     })
     names(dgh_exp_results[["all_data_normalized"]]) <- sapply(strsplit(packages_results,"_"), utils::tail, 1)
+
+    dgh_exp_results$pca_all_genes <- read.table(file.path(path, "PCA_results/all_genes_eigenvectors.txt"), 
+                                                row.names = 1, header = TRUE)
+    dgh_exp_results$pca_degs<- read.table(file.path(path, "PCA_results/prevalent_eigenvectors.txt"), 
+                                                row.names = 1, header = TRUE)
+
     return(dgh_exp_results)
 }
 
@@ -193,6 +199,21 @@ write_enrich_clusters <- function(func_clusters, output_path) {
     })
 }
 
+merge_and_write_tables <- function(tables_list, output_path, idcol = "group") {
+    merged_table <- data.table::rbindlist(tables_list, fill=FALSE, idcol= idcol)
+    write.table(merged_table, file = output_path, sep = "\t", row.names = FALSE, quote = FALSE)
+}
+
+write_pca_enrichments <- function(pca_enrichments, output_path) {
+    for (pca_type in names(pca_enrichments)) {
+        enrichments <- pca_enrichments[[pca_type]]
+        for (funsys in names(enrichments)) {
+            file_name <- file.path(output_path, paste(pca_type, funsys, sep = "_"))
+            merge_and_write_tables(enrichments[[funsys]], paste0(file_name, ".txt"), idcol = "PC")
+        }
+    } 
+}
+
 #' Write enrichment files related to functional_hunter results list
 #' @param func_results functional enrichment results
 #' @param output_path output folder path
@@ -211,7 +232,7 @@ write_enrich_files <- function(func_results, output_path=getwd()) {
     write_table_ehs(data.frame(A = names(final_params), 
                                B = sapply(final_params, paste, collapse=" ")), 
                        file = file.path(output_path,"functional_opt.txt"))
-
+    write_pca_enrichments(func_results$PCA_enrichments, output_path)
     if("ORA" %in% names(func_results)) {
         write_enrich_tables(func_results$ORA, "ORA", output_path)
     }

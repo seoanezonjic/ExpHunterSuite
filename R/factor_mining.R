@@ -117,4 +117,12 @@ get_cluster_string_assoc <- function(res.hcpc, string_factors){
 	return(all_factor_clusters)
 }
 
-
+parse_eigenvectors <- function(eigenvectors) {
+	parsed_eigvec <- list()
+	for (Dim in names(eigenvectors)) {
+		pDim <- gsub("Dim","PC",Dim)
+		parsed_eigvec[[paste("positive", pDim, sep = ".")]] <- eigenvectors[[Dim]]
+		parsed_eigvec[[paste("negative", pDim, sep = ".")]] <- eigenvectors[[Dim]] * -1
+	}
+	return(parsed_eigvec)
+}
