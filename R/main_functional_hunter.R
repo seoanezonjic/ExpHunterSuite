@@ -141,6 +141,14 @@ main_functional_hunter <- function(
         }
     }
 
+
+    # prepare PCA data for KS
+    pca_eigenvectors <- list(pca_all_genes  = hunter_results$pca_all_genes,
+                             pca_degs = hunter_results$pca_degs)
+
+    pca_eigenvectors <- lapply(pca_eigenvectors, name_all_columns)
+
+    pca_eigenvectors <- lapply(pca_eigenvectors, parse_eigenvectors)
     ############################################################
     ##                                                        ##
     ##                     PERFORM ENRICHMENTS                ## 
@@ -159,6 +167,7 @@ main_functional_hunter <- function(
     }
 
     if("ORA" %in% enrich_methods){
+
         deg_enr_ora  <- multienricher_ora(all_funsys = enrich_dbs, 
             genes_list = prev_genes, organism_info = current_organism_info, 
             pvalueCutoff = pthreshold, qvalueCutoff = qthreshold, 
@@ -183,6 +192,24 @@ main_functional_hunter <- function(
                   sim_thr, summary_common_name, pthreshold)
         }
     }
+
+    if ("topGO" %in% enrich_methods){
+        func_results$topGO <- multienricher_topGO(all_funsys=enrich_dbs, 
+                                                   universe=universe,
+                                                   genes_list=prev_genes,
+                                                   organism_info=current_organism_info,
+                                                   p_value_cutoff = pthreshold)
+    }
+
+    func_results$PCA_enrichments <- lapply(pca_eigenvectors, 
+                                           multienricher_topGO, 
+                                           all_funsys = enrich_dbs,
+                                           organism_info = current_organism_info,
+                                           p_value_cutoff = pthreshold,
+                                           algorithm = "classic", 
+                                           statistic = "ks",
+                                           gene_id = "ensembl", 
+                                           scoreOrder = "decreasing")
 
     ############################################################
     ##                                                        ##

@@ -172,7 +172,7 @@ main_degenes_Hunter <- function(
     ############################################################
     ##             PERFORM EXPRESION ANALYSIS                 ##
     ############################################################
-    dir.create(output_files)
+    check_and_create_dir(output_files)
 
 
     exp_results <- perform_expression_analysis(modules, replicatesC, 
@@ -217,7 +217,7 @@ main_degenes_Hunter <- function(
     if(grepl("X", modules)) { # CASE X: diffcoexp
       cat('Correlation analysis is performed with diffcoexp\n')
       path <- file.path(output_files, "Results_diffcoexp")
-      dir.create(path)
+      check_and_create_dir(path)
 
       results_diffcoexp <- analysis_diffcoexp(data = raw_filter,
                                            path = path,
@@ -315,6 +315,8 @@ main_degenes_Hunter <- function(
     final_results[["numeric_factors"]] <- numeric_factors
     final_results[["string_factors"]] <- string_factors
     final_results[["PCA_res"]] <- PCA_res
+    final_results[["library_sizes"]] <- library_sizes
+    
     if(!is.null(combinations_WGCNA)){
       final_results <- c(final_results, combinations_WGCNA)
     }

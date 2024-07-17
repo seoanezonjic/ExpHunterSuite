@@ -52,6 +52,7 @@ write_expression_report <- function(exp_results,
     numeric_factors <- exp_results[["numeric_factors"]]
     string_factors <- exp_results[["string_factors"]] 
     PCA_res <- exp_results[["PCA_res"]]  
+    library_sizes <- exp_results[["library_sizes"]]
     outf <- file.path(normalizePath(output_files),"DEG_report.html")
     rmarkdown::render(file.path(template_folder, 'main_report.Rmd'),
                       output_file = outf, intermediates_dir = output_files)
@@ -78,24 +79,17 @@ write_expression_data <- function(final_results, output_files){
 }
 
 write_pca_data <- function(PCA_res, output_files){
+
     pca_output <- file.path(output_files, "PCA_results")
     dir.create(pca_output)
-    all_genes_pca <- PCA_res$all_genes$dim_data_merged
+    all_genes_pca <- PCA_res$all_genes
     
-    all_genes_merged_metrics <- merge_dim_table_metrics(all_genes_pca)
+    write_general_pca(all_genes_pca, pca_output, "all_genes_")
 
-    write.table(all_genes_merged_metrics, file = file.path(pca_output, "all_genes_dim_metrics.txt"),sep = "\t", quote = FALSE, row.names=FALSE)
-    hcpc_table <- PCA_res$all_genes$res.hcpc$call$X
-    hcpc_table$samples <- rownames(hcpc_table)
-    write.table(hcpc_table, file = file.path(pca_output, "all_genes_hcpc.txt"),sep = "\t", quote = FALSE, row.names=FALSE)
-    prevalent_pca <- PCA_res$DEGs$dim_data_merged
+
+    prevalent_pca <- PCA_res$DEGs
     if (!is.null(prevalent_pca)){
-        hcpc_table_deg <- PCA_res$DEGs$res.hcpc$call$X
-        hcpc_table_deg$samples <- rownames(hcpc_table_deg)
-        write.table(hcpc_table_deg, file = file.path(pca_output, "prevalent_hcpc.txt"),sep = "\t", quote = FALSE, row.names=FALSE)
-        prevalent_merged_metrics <- merge_dim_table_metrics(prevalent_pca)
-        write.table(prevalent_merged_metrics, file = file.path(pca_output, "prevalent_dim_metrics.txt"),sep = "\t", quote = FALSE, row.names=FALSE)
- 
+       write_general_pca(prevalent_pca, pca_output, "prevalent_")
     }
 
 }
@@ -104,7 +98,9 @@ write_general_pca <- function(pca_data, output_files, tag = ""){
   pca_res <- pca_data$dim_data_merged
   
   merged_metrics <- merge_dim_table_metrics(pca_res)
-
+  
+  dimnames(pca_data$pca_data$svd$V) <- dimnames(pca_data$pca_data$var$cor)
+  write.table(pca_data$pca_data$svd$V, quote = FALSE, file = file.path(output_files, paste0(tag, "eigenvectors.txt")), sep = "\t")
   write.table(merged_metrics, file = file.path(output_files, paste0(tag, "dim_metrics.txt")),sep = "\t", quote = FALSE, row.names=FALSE)
   hcpc_table <- pca_data$res.hcpc$call$X
   hcpc_table$samples <- rownames(hcpc_table)
