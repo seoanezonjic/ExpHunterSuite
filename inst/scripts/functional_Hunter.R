@@ -13,7 +13,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
     custom_libraries <- c('general_functions.R', 
         'functional_analysis_library.R', 'plotting_functions.R', 
         'main_functional_hunter.R', "io_handling.R", "plotting_functions.R", 
-        "write_report.R")
+        "write_report.R", "factor_mining.R")
     for (lib in custom_libraries){
         source(file.path(root_path, 'R', lib))
     }
