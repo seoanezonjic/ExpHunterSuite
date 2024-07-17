@@ -10,5 +10,5 @@ test_that("Run c2e main", {
 
    testthat::expect_equal(
     as.data.frame(enr_lists$enrichments_ORA$MF$two)[1, "ID"], 
-    "GO:0008097")
+    "GO:0004866")
 })

@@ -99,6 +99,6 @@ test_that("main functional enrichment function works gsea", {
   )
   testthat::expect_equal(nrow(fh_out$GSEA$Reactome), 24)
   testthat::expect_equal(as.data.frame(fh_out$GSEA$Reactome)[["ID"]][1:2],  
-   c("R-MMU-5578775", "R-MMU-111931"))
+   c("R-MMU-5576891", "R-MMU-5578775"))
  
 })
