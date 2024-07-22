@@ -27,11 +27,14 @@ test_that("multiple gene list Multienricher topGO", {
     genes_list=genes,
     organism_info=current_organism_info)
 
+
   library(topGO)
   funsys <- "BP"
   org_db <- "org.Mm.eg.db"
   gene_id <- "entrez"
 
+
+  ### PREPARING EXPECTED 1
   geneList <- factor(as.integer(universe %in% genes[[1]]))
   names(geneList) <- universe
 
@@ -41,18 +44,32 @@ test_that("multiple gene list Multienricher topGO", {
                    nodeSize = 5,
                    mapping = org_db,
                    annotationFun = annFUN.org,
+                   geneSel =  get_default_geneSel("fisher"),
                    ID = gene_id)
-
   resultFis_1 <- topGO::runTest(GOdata, algorithm = "classic", statistic = "fisher")
 
+  restable_1 <- topGO::GenTable(GOdata, 
+                                 p.value = resultFis_1,
+                                 topNodes = length(resultFis_1@score), 
+                                 format.FUN = function(x, dig, eps){x})
+  restable_1$fdr <- p.adjust(restable_1$p.value, method = "BH", n = length(restable_1$p.value))
+
+
+  ### PREPARING EXPECTED 2
   geneList2 <- factor(as.integer(universe %in% genes[[2]]))
   names(geneList2) <- universe
   GOdata2 <- topGO::updateGenes(object = GOdata, geneList = geneList2)
-
   resultFis_2 <- topGO::runTest(GOdata2, algorithm = "classic", statistic = "fisher")
- 
-  testthat::expect_identical(object=resultFis_1, expected=new_res_tg[["BP"]][[1]])
-  testthat::expect_identical(object=resultFis_2, expected=new_res_tg[["BP"]][[2]])
+  restable_2 <- topGO::GenTable(GOdata2, 
+                                 p.value = resultFis_2,
+                                 topNodes = length(resultFis_2@score), 
+                                 format.FUN = function(x, dig, eps){x})
+  restable_2$fdr <- p.adjust(restable_2$p.value, method = "BH", n = length(restable_2$p.value))
+
+
+
+  testthat::expect_identical(object=restable_1, expected=new_res_tg[["BP"]][[1]])
+  testthat::expect_identical(object=restable_2, expected=new_res_tg[["BP"]][[2]])
 
 })
 
@@ -105,9 +122,13 @@ test_that("unique gene list Multienricher topGO", {
                    ID = gene_id)
 
   resultFis <- topGO::runTest(GOdata, algorithm = "classic", statistic = "fisher")
+  restable <- topGO::GenTable(GOdata, 
+                               p.value = resultFis,
+                               topNodes = length(resultFis@score), 
+                               format.FUN = function(x, dig, eps){x})
+   restable$fdr <- p.adjust(restable$p.value, method = "BH", n = length(restable$p.value))
 
- 
-  testthat::expect_identical(object=resultFis, expected=new_res_tg[["BP"]])
+  testthat::expect_identical(object=restable, expected=new_res_tg[["BP"]])
 
 })
 
@@ -151,7 +172,13 @@ test_that("multi_topGOTest BP", {
                                 genes_list=genes, org_db = org_db )
 
   resultFis <- topGO::runTest(GOdata, algorithm = "classic", statistic = "fisher")
-  testthat::expect_identical(object=resultFis, expected=new_res_tg[[1]])
+  restable <- topGO::GenTable(GOdata, 
+                             p.value = resultFis,
+                             topNodes = length(resultFis@score), 
+                             format.FUN = function(x, dig, eps){x})
+  restable$fdr <- p.adjust(restable$p.value, method = "BH", n = length(restable$p.value))
+
+  testthat::expect_identical(object=restable, expected=new_res_tg)
 
 })
 
@@ -183,7 +210,12 @@ test_that("multi_topGOTest BP ks", {
   new_res_tg <- multi_topGOTest(funsys=funsys, universe=NULL,
                                 genes_list=genes, org_db = org_db, statistic = "ks")
 
-  resultFis <- topGO::runTest(GOdata, algorithm = "classic", statistic = "ks")
-  testthat::expect_identical(object=resultFis, expected=new_res_tg[[1]])
+  resultKS <- topGO::runTest(GOdata, algorithm = "classic", statistic = "ks")
+  restable <- topGO::GenTable(GOdata, 
+                             p.value = resultKS,
+                             topNodes = length(resultKS@score), 
+                             format.FUN = function(x, dig, eps){x})
+  restable$fdr <- p.adjust(restable$p.value, method = "BH", n = length(restable$p.value))
+  testthat::expect_identical(object=restable, expected=new_res_tg)
 
 })

@@ -331,11 +331,20 @@ multi_topGOTest <- function(funsys, genes_list, nodeSize = 5, org_db,
       return(l_genes)
     }   
   })
+  all_names <- unique(as.vector(sapply(genes_list, names)))
+  if (statistic == "fisher") {
+    rand <- factor(c(1,2))
+  } else {
+    rand <- seq(0,1,0.1)
+  }
+
+  all_genes <- sample(rand, length(all_names), replace = TRUE)
+  names(all_genes) <-  all_names 
   # Create environment variables used for initialization of the topGOdata obj
   topGO::groupGOTerms()
   GOdata <- new("topGOdata",
                ontology = funsys,
-               allGenes = genes_list[[1]],
+               allGenes = all_genes,
                nodeSize = nodeSize,
                mapping = org_db,
                geneSel = geneSel,
@@ -348,6 +357,7 @@ multi_topGOTest <- function(funsys, genes_list, nodeSize = 5, org_db,
       l_GOdata <- topGO::updateGenes(object = GOdata, geneList = l_genes, geneSel = geneSel)
 
     }
+   
     result <- topGO::runTest(l_GOdata, algorithm = algorithm, 
     statistic = statistic, scoreOrder = scoreOrder)
     res_table <- topGO::GenTable(l_GOdata, 
