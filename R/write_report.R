@@ -92,6 +92,7 @@ write_pca_data <- function(PCA_res, output_files){
        write_general_pca(prevalent_pca, pca_output, "prevalent_")
     }
 
+    saveRDS(PCA_res, file = file.path(pca_output, "pca_data.rds"))
 }
 
 write_general_pca <- function(pca_data, output_files, tag = ""){

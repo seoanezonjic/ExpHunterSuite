@@ -283,6 +283,7 @@ multienricher_topGO <- function(all_funsys, genes_list, universe=NULL,
   organism_info, gene_id="entrez", p_value_cutoff = 0.05, algorithm = "classic", statistic = "fisher", 
   nodeSize = 5, task_size=1, workers=1, scoreOrder = "increasing") {
 
+
   #checking input format
   if (!is.list(genes_list)) 
     genes_list <- list(genes_list)
@@ -308,7 +309,6 @@ multienricher_topGO <- function(all_funsys, genes_list, universe=NULL,
 multi_topGOTest <- function(funsys, genes_list, nodeSize = 5, org_db, 
                             universe = NULL, gene_id = "entrez",p_value_cutoff = 0.05, algorithm = "classic", statistic = "fisher",
                             scoreOrder = "increasing", workers = 1, task_size = 1, geneSel = NULL) {
-
   if(is.null(universe) && statistic == "fisher") {
     go_to_genes <- topGO::annFUN.org(funsys, mapping = org_db, ID = gene_id)
     universe <- unique(unlist(go_to_genes))
@@ -331,7 +331,7 @@ multi_topGOTest <- function(funsys, genes_list, nodeSize = 5, org_db,
       return(l_genes)
     }   
   })
-  all_names <- unique(as.vector(sapply(genes_list, names)))
+  all_names <- unique(unlist(lapply(genes_list, names)))
   if (statistic == "fisher") {
     rand <- factor(c(1,2))
   } else {
@@ -342,25 +342,21 @@ multi_topGOTest <- function(funsys, genes_list, nodeSize = 5, org_db,
   names(all_genes) <-  all_names 
   # Create environment variables used for initialization of the topGOdata obj
   topGO::groupGOTerms()
+  enriched_cats <- parallel_list(genes_list, function(l_genes) {
+  if(length(l_genes) == 0)
+    return(data.frame())
   GOdata <- new("topGOdata",
                ontology = funsys,
-               allGenes = all_genes,
+               allGenes = l_genes,
                nodeSize = nodeSize,
                mapping = org_db,
                geneSel = geneSel,
                annotationFun = topGO::annFUN.org,
                ID = gene_id)
-  enriched_cats <- parallel_list(genes_list, function(l_genes) {
-    if (statistic == "fisher") {
-      l_GOdata <- topGO::updateGenes(object = GOdata, geneList = l_genes)
-    } else {
-      l_GOdata <- topGO::updateGenes(object = GOdata, geneList = l_genes, geneSel = geneSel)
-
-    }
-   
-    result <- topGO::runTest(l_GOdata, algorithm = algorithm, 
+  
+    result <- topGO::runTest(GOdata, algorithm = algorithm, 
     statistic = statistic, scoreOrder = scoreOrder)
-    res_table <- topGO::GenTable(l_GOdata, 
+    res_table <- topGO::GenTable(GOdata, 
                                  p.value = result,
                                  topNodes = length(result@score), 
                                  format.FUN = function(x, dig, eps){x})

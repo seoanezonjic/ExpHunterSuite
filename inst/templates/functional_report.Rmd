@@ -45,6 +45,7 @@ require(DOSE)
 ```{r child="func_top_genes.Rmd"}
 ```
 
+
 ```{r ORA_analysis, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 
 
@@ -73,7 +74,21 @@ for(funsys in names(flags_gsea)) {
 }
 cat(unlist(res_gsea), sep = '\n')
 
+```
 
+```{r PCA_enr, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+res_PCA <- list()
+
+for(funsys in names(flags_ora)) {
+  if (funsys %in% c("BP", "MF", "CC")){
+    pca_enr_all <- func_results$PCA_enrichments$all_genes[[funsys]]
+    pca_enr_degs <- func_results$PCA_enrichments$DEGs[[funsys]]
+    pca_enr <- knitr::knit_expand("pca_enr.Rmd")
+    res_PCA[[funsys]] <- knitr::knit(text=pca_enr, quiet=TRUE)
+  }
+}
+
+cat(unlist(res_PCA), sep = '\n')
 ```
 
 ## **Values of options passed to the Functional Hunter main function**

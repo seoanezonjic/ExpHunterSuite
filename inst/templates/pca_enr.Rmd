@@ -1,0 +1,58 @@
+```{r , echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+	print_go_tables <- function(all_enr) {
+		cat("\n\n\n<br>")
+			cat('<div style="display:flex; flex-wrap: wrap;">')
+		for (dimension in names(all_enr)) {
+
+			cat('<div style ="width:50%">')
+			cat(paste0("\n**",dimension,"**<br>"))
+			top_GOs <- head(all_enr[[dimension]], 10)
+			if (nrow(top_GOs) != 0){
+				top_GOs <- top_GOs[,c("GO.ID","Term","p.value","fdr")]
+				print(htmltools::tagList(
+					DT::datatable(top_GOs, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+		                    options = list(
+		                      colReorder = TRUE,
+		                      dom = 'lftBip',
+		                        buttons = c('copy', 'csv', 'excel')))
+				))
+			} else {
+				cat("\n**No enrichments found**\n")
+			}
+			cat("</div>")
+
+		}	
+		cat("</div>")
+	}
+```
+```{r "{{funsys}}_enr", echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+cat("\n## **{{funsys}} - Enrichments for Principal Components**\n")
+
+cat("### **Functional enrichments of PCs using all genes**\n")
+
+FactoMineR::plot.PCA(func_results$pca_data$all_genes$pca_data, invisible = "quali" , title = "")
+
+print_go_tables(pca_enr_all)
+
+cat("### **Functional enrichments of PCs using only DEGs**\n")
+FactoMineR::plot.PCA(func_results$pca_data$DEGs$pca_data, invisible = "quali" , title = "")
+print_go_tables(pca_enr_degs)
+
+# for (dimension in names(pca_enr_degs)) {
+# 	cat(paste0("\n**",dimension,"**\n"))
+# 	top_GOs <- head(pca_enr_degs[[dimension]], 10)
+# 	if (nrow(top_GOs) != 0){
+# 		top_GOs <- top_GOs[,c("GO.ID","Term","p.value","fdr")]
+# 		print(htmltools::tagList(
+# 			DT::datatable(top_GOs, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+#                     options = list(
+#                       colReorder = TRUE,
+#                       dom = 'lftBip',
+#                         buttons = c('copy', 'csv', 'excel')))
+# 		))
+# 	} else {
+# 		cat("\n**No enrichments found**\n")
+# 	}
+# }	
+# pca_enr_degs
+```

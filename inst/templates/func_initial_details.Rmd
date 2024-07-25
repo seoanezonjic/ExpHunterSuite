@@ -1,14 +1,9 @@
-```{r, include = FALSE} 
-# Load necessary packages
-#require(ggplot2)
-#require(knitr)
-#require(clusterProfiler)
-```
+
 
 ## **Used data in this analysis**
 Specifically, in this experiment set, known experiment labels are:
 
-`r paste(knitr::knit(text = paste(sample_classes, collapse = "\n")), collapse = "\n")`
+`r paste(knitr::knit(text = paste(sample_classes[-1], collapse = "\n")), collapse = "\n")`
 
 ## **General description**
 This report contains all the functional information that was requested by the options when functional_Hunter.R was executed.
