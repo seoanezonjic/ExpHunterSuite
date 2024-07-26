@@ -122,7 +122,6 @@ factoextra::fviz_pca_biplot(pca_data, repel = TRUE,select.var = list(name=numeri
 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
 cat(paste("#### **Hierarchical clustering of individuals using first", dim_to_keep, "significant PCA dimensions**",sep=' '))
-res.hcpc <- FactoMineR::HCPC(pca_data, graph = FALSE)
 plot(res.hcpc , choice="tree", title="")
 
 ```
