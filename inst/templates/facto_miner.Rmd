@@ -10,6 +10,7 @@ This is a PCA plot of the count values normalized following the default method a
 Graphical representation of PCA dimensions. The bars represent the percentage of total variance that summarize each dimension. 
 The line measures the percentage of total variance accumulated in previous dimensions. The color distinguishes between significan or no significant dimensions. 
 Only significant dimensions will be considered in the following plots.
+
 ```{r, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 4 }
 inertia <- as.data.frame(pca_data$eig)[,c(2,3)]
 inertia$names <- factor(gsub("comp ", "PC", rownames(inertia)), levels= gsub("comp ", "PC", rownames(inertia)))
