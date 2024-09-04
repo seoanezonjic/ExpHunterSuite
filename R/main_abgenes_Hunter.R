@@ -136,10 +136,13 @@ write_abgenes_report <- function(final_results, output_dir = getwd(),
 					  norm_gene_cors = final_results$norm_gene_cors,
 					  filter_df = final_results$filter_df,
 					  expressed_genes = final_results$expressed_genes)
-	plotter <- htmlReport$new(title_doc = "Aberrant Expression report", 
-					      	  container = container,
-	                      	  tmp_folder = tmp_folder, src = source_folder,
-	                      	  compress_obj = TRUE, type_index = "menu")
+	plotter <- htmlreportR:::htmlReport$new(title_doc = "Aberrant Expression
+														 report", 
+					      	  			   container = container,
+	                      	  			   tmp_folder = tmp_folder,
+	                      	  			   src = source_folder,
+	                      	  			   compress_obj = TRUE,
+	                      	  			   type_index = "menu")
 	plotter$build(template)
 	plotter$write_report(out_file)
 }
