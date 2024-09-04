@@ -72,8 +72,7 @@
         res[is.na(res)] <- 0
         res <- t(res)
         colnames(res) <- res[1, ]
-        res <- res[-1, ]
-        # res <- apply(res, 2, function(x) as.numeric(x))
+        res <- res[-1, , drop = FALSE]
         rownames(res) <- samples
         return(res)
     }
