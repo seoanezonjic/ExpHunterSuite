@@ -143,36 +143,24 @@ end.rcode-->
                              header = NULL, text = FALSE, row_names = NULL,
                              transpose = FALSE, var_attr = 1, smp_attr = 1,
                              config = list("varOverlays" = "nClust",
-                                           "smpOverlays" = "EXTERNAL",
-                                           samplesClustered = TRUE,
-                                           variablesClustered = TRUE,
-                                           clusteringDistance = "euclidianDistance"))))
+                                           "smpOverlays" = "EXTERNAL"))))
     cat(plotter$heatmap(list(id = "norm_sample_cors", title = "Correlation between samples after normalisation",
                              header = NULL, text = FALSE, row_names = NULL,
                              transpose = FALSE, var_attr = 1, smp_attr = 1,
                              config = list("varOverlays" = "nClust",
-                                           "smpOverlays" = "EXTERNAL",
-                                           samplesClustered = TRUE,
-                                           variablesClustered = TRUE,
-                                           clusteringDistance = "euclidianDistance"))))
+                                           "smpOverlays" = "EXTERNAL"))))
     cat('</div>')
     cat('<div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">')
     cat(plotter$heatmap(list(id = "raw_gene_cors", title = "logFC before normalisation",
                              header = NULL, text = FALSE, row_names = NULL,
                              transpose = TRUE, var_attr = 1, smp_attr = 1,
                              config = list("varOverlays" = "nClust",
-                                            "smpOverlays" = "EXTERNAL",
-                                            samplesClustered = TRUE,
-                                            variablesClustered = TRUE,
-                                            clusteringDistance = "euclidianDistance"))))
+                                            "smpOverlays" = "EXTERNAL"))))
     cat(plotter$heatmap(list(id = "norm_gene_cors", title = "logFC after normalisation",
                              header = NULL, text = FALSE, row_names = NULL,
                              transpose = TRUE, var_attr = 1, smp_attr = 1,
                              config = list("varOverlays" = "nClust",
-                                           "smpOverlays" = "EXTERNAL",
-                                           samplesClustered = TRUE,
-                                           variablesClustered = TRUE,
-                                           clusteringDistance = "euclidianDistance"))))
+                                           "smpOverlays" = "EXTERNAL"))))
     cat('</div>')
 end.rcode-->
 
@@ -199,12 +187,18 @@ end.rcode-->
 <!--begin.rcode OUTRIDER_Overview_table
     cat(plotter$create_title("OUTRIDER Overview", hlevel = 1, indexable = TRUE,
         id = "OUTRIDER_Overview"))
-    cat(plotter$table(
+    if(nrow(plotter$hash_vars$outrider_res_table) > 0) {
+        cat(plotter$table(
         "outrider_res_table", header = NULL, row_names = NULL, table_rownames = FALSE, styled = "dt"))
+        } else {
+            cat("<p>No aberrants found in dataset. Perhaps thresholds are too strict, or dataset
+                is too small. We suggest at least 30 samples.")
+        }
+    
 end.rcode-->
 
 <div style="overflow: hidden; display: flex; flex-direction: row; justify-content: center">
-<!--begin.rcode OUTRIDER_Overview_Samples
+<!--begin.rcode OUTRIDER_Overview_Samples, eval = nrow(plotter$hash_vars$outrider_res_table) > 0
     samples <- unique(plotter$hash_vars$outrider_res_table$sampleID)
     total_samples <- length(samples)
     columns <- c("padjust", "zScore")
@@ -227,7 +221,7 @@ end.rcode-->
         ))
 end.rcode-->
 
-<!--begin.rcode OUTRIDER_Overview_Genes
+<!--begin.rcode OUTRIDER_Overview_Genes, eval = nrow(plotter$hash_vars$outrider_res_table)
     genes <- unique(plotter$hash_vars$outrider_res_table$geneID)
     total_genes <- length(genes)
     columns <- c("padjust", "zScore")
@@ -256,21 +250,20 @@ end.rcode-->
 </div>
 </div>
 
-<!--begin.rcode AE_diagnostics, eval =! is.null(plotter$hash_vars$processed) & is.null(plotter$hash_vars$imported)
+<!--begin.rcode AE_diagnostics, eval = !is.null(plotter$hash_vars$processed) & is.null(plotter$hash_vars$imported)
     cat(plotter$create_title("Diagnostics plots", hlevel = 1, indexable = TRUE,
                               id = "AE_diagnostics", t_id = AE_diagnostics))
+    cat("<div id=AE_diagnostics>")
 end.rcode-->
-
-<h1>Aberrant genes detected in locally processed samples</h1>
-<div id=AE_diagnostics>
-<!--begin.rcode AE_local_heatmaps, eval=!is.null(plotter$hash_vars$formatted$processed)
+<!--begin.rcode AE_local_heatmaps, eval = !is.null(plotter$hash_vars$formatted$processed)
+    cat("<h1>Aberrant genes detected in locally processed samples</h1>")
     plotter$hash_vars$local <- plotter$hash_vars$formatted$processed
     cat(plotter$heatmap(list(id = "local", title = "Aberrant expression heatmap across samples", header = NULL,
                              text = "dynamic", row_names = NULL, transpose = FALSE,
                              xAxis = "sampleID", yAxis = "geneID", func = format_aberrants_heatmap)))
 end.rcode-->
-<h1>Aberrant genes detected in imported samples (quality control)</h1>
-<!--begin.rcode AE_external_heatmaps, eval=!is.null(plotter$hash_vars$formatted$imported)
+<!--begin.rcode AE_external_heatmaps, eval = !is.null(plotter$hash_vars$formatted$imported)
+    cat("<h1>Aberrant genes detected in imported samples (quality control)</h1>")
     plotter$hash_vars$external <- plotter$hash_vars$formatted$imported
     cat(plotter$heatmap(list(id = "external", title = "Aberrant expression heatmap across samples", header = NULL,
                              text = "dynamic", row_names = NULL, transpose = FALSE,
