@@ -117,12 +117,42 @@ get_cluster_string_assoc <- function(res.hcpc, string_factors){
 	return(all_factor_clusters)
 }
 
-parse_eigenvectors <- function(eigenvectors) {
+parse_eigenvectors <- function(eigenvectors, eig_abs_cutoff = NULL) {
+
 	parsed_eigvec <- list()
 	for (Dim in names(eigenvectors)) {
 		pDim <- gsub("Dim","PC",Dim)
-		parsed_eigvec[[paste("positive", pDim, sep = ".")]] <- eigenvectors[[Dim]]
-		parsed_eigvec[[paste("negative", pDim, sep = ".")]] <- eigenvectors[[Dim]] * -1
+		eigen_vec <- eigenvectors[[Dim]]
+		
+		if (!is.null(eig_abs_cutoff))
+			eigen_vec <- eigen_vec[abs(eigen_vec) > eig_abs_cutoff]
+			# eigen_vec[abs(eigen_vec) < eig_abs_cutoff] <- 0
+
+		parsed_eigvec[[paste("positive", pDim, sep = ".")]] <- eigen_vec
+		parsed_eigvec[[paste("negative", pDim, sep = ".")]] <- eigen_vec * -1
 	}
 	return(parsed_eigvec)
+}
+
+get_and_parse_pca_eigenvectors <- 	function(pca_res, cor_pval_cutoff = 0.05, eig_abs_cutoff = NULL){
+	dimnames(pca_res$pca_data$svd$V) <- dimnames(pca_res$pca_data$var$cor)
+	eigenvectors <- name_all_columns(as.data.frame(pca_res$pca_data$svd$V))
+	correlations <- pca_res$pca_data$var$cor
+	n <- nrow(pca_res$pca_data$ind$cos2)
+	cor_sig <- cor_pval(correlations, n)
+	eigenvectors <- filter_eigenvectors(eigenvectors, cor_sig, pval_cutoff = cor_pval_cutoff)
+	eigenvectors <- parse_eigenvectors(eigenvectors, eig_abs_cutoff = eig_abs_cutoff)
+	return(eigenvectors)
+
+}
+
+
+filter_eigenvectors <- function(eigenvectors, cor_sig, pval_cutoff) {
+ 	eigenvec_fil <- lapply(names(eigenvectors), function(dimension) {
+		eigenvec <- eigenvectors[[dimension]]
+		significance <- cor_sig[,dimension]
+	  eigenvec[significance <= pval_cutoff] 
+	})
+	names(eigenvec_fil) <- names(eigenvectors)
+	return(eigenvec_fil)
 }

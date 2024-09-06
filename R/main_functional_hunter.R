@@ -141,14 +141,15 @@ main_functional_hunter <- function(
         }
     }
 
-
+    if (!is.null(hunter_results$pca_data)) {
     # prepare PCA data for KS
-    pca_eigenvectors <- list(pca_all_genes  = hunter_results$pca_all_genes,
-                             pca_degs = hunter_results$pca_degs)
+        pca_eigenvectors <-  lapply(hunter_results$pca_data, 
+                                    get_and_parse_pca_eigenvectors, 
+                                    cor_pval = 1, 
+                                    eig_abs_cutoff = NULL)
 
-    pca_eigenvectors <- lapply(pca_eigenvectors, name_all_columns)
+    }
 
-    pca_eigenvectors <- lapply(pca_eigenvectors, parse_eigenvectors)
     ############################################################
     ##                                                        ##
     ##                     PERFORM ENRICHMENTS                ## 
@@ -201,16 +202,20 @@ main_functional_hunter <- function(
                                                    p_value_cutoff = pthreshold)
     }
 
-    func_results$PCA_enrichments <- lapply(pca_eigenvectors, 
-                                           multienricher_topGO, 
-                                           all_funsys = enrich_dbs,
-                                           organism_info = current_organism_info,
-                                           p_value_cutoff = pthreshold,
-                                           algorithm = "classic", 
-                                           statistic = "ks",
-                                           gene_id = "ensembl", 
-                                           scoreOrder = "decreasing")
+    if (!is.null(hunter_results$pca_data)) {
 
+        func_results$PCA_enrichments <- lapply(pca_eigenvectors, 
+                                                multienricher_topGO, 
+                                                all_funsys = enrich_dbs,
+                                                organism_info = current_organism_info,
+                                                p_value_cutoff = pthreshold,
+                                                algorithm = "classic",
+                                                statistic = "t",
+                                                gene_id = "ensembl", 
+                                                scoreOrder = "decreasing",
+                                                workers = cores, 
+                                                task_size = task_size)
+    }
     ############################################################
     ##                                                        ##
     ##                     EXPORT DATA                        ## 
@@ -220,6 +225,6 @@ main_functional_hunter <- function(
     # Reorder rows by combined FDR
     DEGH_results <- DEGH_results[order(DEGH_results[,"combined_FDR"]),] 
     func_results$DEGH_results_annot <- DEGH_results
-    
+    func_results$pca_data <- hunter_results$pca_data
     return(func_results)
 }

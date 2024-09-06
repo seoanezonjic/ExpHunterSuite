@@ -339,3 +339,9 @@ ct_from_qual <- function(qual_table, col_ref = 1, col_sub = 2){
   } 
   return(all_ct)
 }
+
+
+cor_pval <- function(r, n) {
+  t_statistic <- r * sqrt((n - 2) / (1 - r^2))
+  2 * pt(-abs(t_statistic), df = n - 2)
+}

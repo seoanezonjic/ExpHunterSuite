@@ -1,0 +1,59 @@
+```{r , echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+	print_go_tables <- function(all_enr) {
+		cat("\n\n\n<br>")
+			cat('<div style="display:flex; flex-wrap: wrap;">')
+		for (dimension in names(all_enr)) {
+
+			cat('<div style ="width:50%">')
+			cat(paste0("\n**",dimension,"**<br>"))
+			top_GOs <- head(all_enr[[dimension]], 10)
+			if (nrow(top_GOs) != 0){
+				top_GOs <- top_GOs[,c("GO.ID","Term","p.value","fdr")]
+				top_GOs[,c("p.value","fdr")]<- format(top_GOs[,c("p.value","fdr")], scientific = TRUE, digits = 3)
+				print(htmltools::tagList(
+					DT::datatable(top_GOs, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+		                    options = list(
+		                      colReorder = TRUE,
+		                      dom = 'lftBip',
+		                        buttons = c('copy', 'csv', 'excel')))
+				))
+			} else {
+				cat("\n**No enrichments found**\n")
+			}
+			cat("</div>")
+
+		}	
+		cat("</div>")
+	}
+```
+```{r "{{funsys}}_enr", echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+cat("\n## **{{funsys}} - Enrichments for Principal Components**\n")
+
+cat("### **Functional enrichments of PCs using all genes**\n")
+
+last_dim <- 1
+while (last_dim < func_results$pca_data$all_genes$dim_to_keep){
+	plot(FactoMineR::plot.PCA(func_results$pca_data$all_genes$pca_data, 
+						invisible = "quali", 
+						axis = c(last_dim, last_dim + 1), 
+						title = paste0(last_dim, " and ", last_dim + 1, " PCs")))
+	last_dim <- last_dim + 2
+} 
+
+print_go_tables(pca_enr_all)
+
+cat("### **Functional enrichments of PCs using only DEGs**\n")
+
+last_dim <- 1
+while (last_dim < func_results$pca_data$all_genes$dim_to_keep){
+	plot(FactoMineR::plot.PCA(func_results$pca_data$DEGs$pca_data, 
+		invisible = "quali", 
+		axis = c(last_dim, last_dim + 1), 
+		title = paste0(last_dim, " and ", last_dim + 1, " PCs")))
+	last_dim <- last_dim + 2
+} 
+
+print_go_tables(pca_enr_degs)
+
+
+```

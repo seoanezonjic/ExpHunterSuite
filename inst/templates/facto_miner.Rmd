@@ -10,6 +10,7 @@ This is a PCA plot of the count values normalized following the default method a
 Graphical representation of PCA dimensions. The bars represent the percentage of total variance that summarize each dimension. 
 The line measures the percentage of total variance accumulated in previous dimensions. The color distinguishes between significan or no significant dimensions. 
 Only significant dimensions will be considered in the following plots.
+
 ```{r, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 4 }
 inertia <- as.data.frame(pca_data$eig)[,c(2,3)]
 inertia$names <- factor(gsub("comp ", "PC", rownames(inertia)), levels= gsub("comp ", "PC", rownames(inertia)))
@@ -21,11 +22,28 @@ ggplot2::labs(x = "", y = "Percentage of total variance")+
 ggplot2::scale_y_continuous(sec.axis = ggplot2::sec_axis(~./100, name = "Cumulative percentage of variance", labels = scales::percent)) + 
 ggplot2::theme(legend.position = "bottom", axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
 
-
-
-
 ```
 
+
+#### **Distribution of Eigenvectors**
+The eigenvector contains the weights of each gene for the PC. Here are represented the distributions of the weights of each eigenvector.
+The vertical lines represent the quantiles. 
+
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 4 }
+
+eig_dist <- pca_data$svd$V
+colnames(eig_dist) <- colnames(pca_data$var$cor)
+eig_dist <- reshape2::melt(eig_dist)
+
+ggplot2::ggplot(eig_dist, ggplot2::aes(x = value, 
+                                            y = Var2)) + 
+ggridges::geom_density_ridges(jittered_points = TRUE, 
+                              position = "raincloud", 
+                              alpha = 0.7, 
+                              scale = 0.9, 
+                              quantile_lines = TRUE) + 
+ggplot2::theme_classic()
+```
 
 #### **Comparison of significant dimensions significant dimensions**
 
@@ -105,7 +123,6 @@ factoextra::fviz_pca_biplot(pca_data, repel = TRUE,select.var = list(name=numeri
 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
 cat(paste("#### **Hierarchical clustering of individuals using first", dim_to_keep, "significant PCA dimensions**",sep=' '))
-res.hcpc <- FactoMineR::HCPC(pca_data, graph = FALSE)
 plot(res.hcpc , choice="tree", title="")
 
 ```

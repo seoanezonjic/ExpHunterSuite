@@ -89,10 +89,7 @@ load_hunter_folder <- function(path = NULL){
     })
     names(dgh_exp_results[["all_data_normalized"]]) <- sapply(strsplit(packages_results,"_"), utils::tail, 1)
 
-    dgh_exp_results$pca_all_genes <- read.table(file.path(path, "PCA_results/all_genes_eigenvectors.txt"), 
-                                                row.names = 1, header = TRUE)
-    dgh_exp_results$pca_degs<- read.table(file.path(path, "PCA_results/prevalent_eigenvectors.txt"), 
-                                                row.names = 1, header = TRUE)
+    dgh_exp_results$pca_data <- readRDS(file.path(path, "PCA_results/pca_data.rds"))
 
     return(dgh_exp_results)
 }

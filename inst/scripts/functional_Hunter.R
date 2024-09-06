@@ -13,7 +13,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
     custom_libraries <- c('general_functions.R', 
         'functional_analysis_library.R', 'plotting_functions.R', 
         'main_functional_hunter.R', "io_handling.R", "plotting_functions.R", 
-        "write_report.R")
+        "write_report.R", "factor_mining.R", "statistics_functions.R")
     for (lib in custom_libraries){
         source(file.path(root_path, 'R', lib))
     }
@@ -214,6 +214,7 @@ func_results <- main_functional_hunter(
        summary_common_name = opt$summary_common_name,
        clusters_flag = clusters_flag
 )
+
 
 write_enrich_files(func_results, opt$output_files)
 
