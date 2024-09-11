@@ -1255,11 +1255,7 @@ enrich_density <- function(enrich_result,
                            showCategory = 30) {
 
   terms_attr <- get_attr_by_terms(enrich_result, attributes)
-  enrich_result <- enrichplot:::fortify.internal(
-                                  enrich_result,
-                                  showCategory = showCategory,
-                                  by = "p.adjust",
-                                  )
+  enrich_result <- enrichplot:::fortify.enrichResult(enrich_result,showCategory = showCategory,by = "p.adjust")
 
   enriched_dist <- merge(terms_attr, enrich_result, by ="ID", all.y = TRUE)
   plot <- ggplot2::ggplot(enriched_dist, ggplot2::aes(x = attribute, 
