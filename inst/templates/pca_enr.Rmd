@@ -42,10 +42,17 @@ while (last_dim < func_results$pca_data$all_genes$dim_to_keep){
 
 print_go_tables(pca_enr_all)
 
+cat("### **Functional enrichments of HCPC clusters using all genes**\n")
+plot(func_results$pca_data$all_genes$res.hcpc, choice="tree", title="")
+plot(func_results$pca_data$all_genes$res.hcpc,  axes=c(1,2), choice="map", draw.tree= FALSE)
+
+print_go_tables(pca_cl_all)
+
+
 cat("### **Functional enrichments of PCs using only DEGs**\n")
 
 last_dim <- 1
-while (last_dim < func_results$pca_data$all_genes$dim_to_keep){
+while (last_dim < func_results$pca_data$DEGs$dim_to_keep){
 	plot(FactoMineR::plot.PCA(func_results$pca_data$DEGs$pca_data, 
 		invisible = "quali", 
 		axis = c(last_dim, last_dim + 1), 
@@ -54,6 +61,14 @@ while (last_dim < func_results$pca_data$all_genes$dim_to_keep){
 } 
 
 print_go_tables(pca_enr_degs)
+
+cat("### **Functional enrichments of HCPC clusters using only DEGs**\n")
+
+plot(func_results$pca_data$DEGs$res.hcpc, choice="tree", title="")
+plot(func_results$pca_data$DEGs$res.hcpc,  axes=c(1,2), choice="map", draw.tree= FALSE)
+
+print_go_tables(pca_cl_degs)
+
 
 
 ```

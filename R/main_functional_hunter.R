@@ -142,11 +142,13 @@ main_functional_hunter <- function(
     }
 
     if (!is.null(hunter_results$pca_data)) {
-    # prepare PCA data for KS
+    # prepare PCA data for topGO
+
         pca_eigenvectors <-  lapply(hunter_results$pca_data, 
                                     get_and_parse_pca_eigenvectors, 
                                     cor_pval = 1, 
                                     eig_abs_cutoff = NULL)
+        pca_clusters <- lapply(hunter_results$pca_data, get_and_parse_clusters)
 
     }
 
@@ -205,6 +207,17 @@ main_functional_hunter <- function(
     if (!is.null(hunter_results$pca_data)) {
 
         func_results$PCA_enrichments <- lapply(pca_eigenvectors, 
+                                                multienricher_topGO, 
+                                                all_funsys = enrich_dbs,
+                                                organism_info = current_organism_info,
+                                                p_value_cutoff = pthreshold,
+                                                algorithm = "classic",
+                                                statistic = "t",
+                                                gene_id = "ensembl", 
+                                                scoreOrder = "decreasing",
+                                                workers = cores, 
+                                                task_size = task_size)
+        func_results$PCA_clusters_results <- lapply(pca_clusters, 
                                                 multienricher_topGO, 
                                                 all_funsys = enrich_dbs,
                                                 organism_info = current_organism_info,

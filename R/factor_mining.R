@@ -146,6 +146,27 @@ get_and_parse_pca_eigenvectors <- 	function(pca_res, cor_pval_cutoff = 0.05, eig
 
 }
 
+get_and_parse_clusters <- function(pca_res){
+	clusters <- pca_res$res.hcpc$call$X
+	dims <- colnames(clusters)[grepl("Dim.", colnames(clusters))]
+	weights <- clusters |> dplyr::group_by(clust) |> dplyr::summarise_at(dims, mean)
+	dimnames(pca_res$pca_data$svd$V) <- dimnames(pca_res$pca_data$var$cor)
+	clust_names <- paste("Cluster",weights$clust )
+	weights <- as.data.frame(dplyr::select(weights, -clust))
+	rownames(weights) <- clust_names
+	weighted_eigen <- apply(weights,1, get_clust_contributions, 
+	                                   eigenvectors = pca_res$pca_data$svd$V)
+	colnames(weighted_eigen) <- rownames(weights)
+	weighted_eigen <- as.data.frame(weighted_eigen)
+	weighted_eigen <- lapply(weighted_eigen, function(col) setNames(col, rownames(weighted_eigen)))
+	return(weighted_eigen)
+}
+
+get_clust_contributions <- function(weigths, eigenvectors)  {
+	weighted_eig <- weigths * eigenvectors
+	rowSums(weighted_eig)
+}
+
 
 filter_eigenvectors <- function(eigenvectors, cor_sig, pval_cutoff) {
  	eigenvec_fil <- lapply(names(eigenvectors), function(dimension) {
