@@ -201,7 +201,8 @@ main_functional_hunter <- function(
                                                    universe=universe,
                                                    genes_list=prev_genes,
                                                    organism_info=current_organism_info,
-                                                   p_value_cutoff = pthreshold)
+                                                   p_value_cutoff = pthreshold,
+                                                   clean_parentals = clean_parentals)
     }
 
     if (!is.null(hunter_results$pca_data)) {
@@ -215,6 +216,7 @@ main_functional_hunter <- function(
                                                 statistic = "t",
                                                 gene_id = "ensembl", 
                                                 scoreOrder = "decreasing",
+                                                clean_parentals = clean_parentals,
                                                 workers = cores, 
                                                 task_size = task_size)
         func_results$PCA_clusters_results <- lapply(pca_clusters, 
@@ -226,6 +228,7 @@ main_functional_hunter <- function(
                                                 statistic = "t",
                                                 gene_id = "ensembl", 
                                                 scoreOrder = "decreasing",
+                                                clean_parentals = clean_parentals,
                                                 workers = cores, 
                                                 task_size = task_size)
     }

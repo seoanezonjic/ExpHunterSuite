@@ -281,7 +281,7 @@ translate_gmt <- function(gmt, gene_keytype, org_db){
 #' @importFrom topGO annFUN
 multienricher_topGO <- function(all_funsys, genes_list, universe=NULL, 
   organism_info, gene_id="entrez", p_value_cutoff = 0.05, algorithm = "classic", statistic = "fisher", 
-  nodeSize = 5, task_size=1, workers=1, scoreOrder = "increasing") {
+  nodeSize = 5, task_size=1, workers=1, scoreOrder = "increasing", clean_parentals = FALSE) {
 
 
   #checking input format
@@ -302,13 +302,13 @@ multienricher_topGO <- function(all_funsys, genes_list, universe=NULL,
   enrichments_topGO <- lapply(enrichments_topGO, multi_topGOTest, genes_list = genes_list,
                             nodeSize = nodeSize, org_db = org_db, p_value_cutoff = p_value_cutoff, universe = universe, 
                             gene_id = gene_id, algorithm = algorithm, statistic = statistic,
-                            scoreOrder = scoreOrder, workers = workers, task_size = task_size)
+                            scoreOrder = scoreOrder, clean_parentals = clean_parentals,workers = workers, task_size = task_size)
   return(enrichments_topGO)
 }
 
 multi_topGOTest <- function(funsys, genes_list, nodeSize = 5, org_db, 
                             universe = NULL, gene_id = "entrez",p_value_cutoff = 0.05, algorithm = "classic", statistic = "fisher",
-                            scoreOrder = "increasing", workers = 1, task_size = 1, geneSel = NULL) {
+                            scoreOrder = "increasing", workers = 1, task_size = 1, geneSel = NULL, clean_parentals = FALSE) {
   if(is.null(universe) && statistic == "fisher") {
     go_to_genes <- topGO::annFUN.org(funsys, mapping = org_db, ID = gene_id)
     universe <- unique(unlist(go_to_genes))
@@ -360,6 +360,8 @@ multi_topGOTest <- function(funsys, genes_list, nodeSize = 5, org_db,
                                  p.value = result,
                                  topNodes = length(result@score), 
                                  format.FUN = function(x, dig, eps){x})
+    if(clean_parentals)
+      res_table <- clean_topGO_parentals(res_table, funsys, p_value_cutoff)
     res_table$fdr <- p.adjust(res_table$p.value, method = "BH", n = length(res_table$p.value))
     res_table
   
@@ -1108,6 +1110,36 @@ clean_all_parentals <- function(enr_obj, subont){
     enrich_obj[!enrich_obj$ID %in% to_remove_lapply,]
   return(enr_obj)
 }
+
+
+#' @importFrom GO.db GOBPANCESTOR GOMFANCESTOR GOCCANCESTOR
+clean_topGO_parentals <- function(top_GO_enr, subont, p_value_cutoff = 0.05){
+  if (nrow(top_GO_enr) == 0) return(top_GO_enr)
+
+  if (subont=="BP"){
+    GO_ancestors <- GO.db::GOBPANCESTOR
+  } else if (subont=="MF"){
+    GO_ancestors <-  GO.db::GOMFANCESTOR
+  } else if (subont=="CC"){
+    GO_ancestors <- GO.db::GOCCANCESTOR
+  }
+  GO_ancestors <- as.list(GO_ancestors)
+  GO_ancestors <- GO_ancestors[!is.na(GO_ancestors)]
+  obsolete_terms <- names(as.list(GO.db::GOOBSOLETE))
+  top_GO_enr <- top_GO_enr[!top_GO_enr$GO.ID %in% obsolete_terms,]
+  go_to_keep <- rep(TRUE, nrow(top_GO_enr))
+  names(go_to_keep) <- top_GO_enr$GO.ID
+
+  for (go_term in top_GO_enr[top_GO_enr$p.value < p_value_cutoff,"GO.ID"]){ 
+    term_stats <- top_GO_enr[top_GO_enr$GO.ID == go_term,]
+    go_to_keep[names(go_to_keep) %in% GO_ancestors[[go_term]]] <- FALSE  
+  }
+  top_GO_enr <- top_GO_enr[go_to_keep,]
+  return(top_GO_enr)
+}
+
+
+
 
 #' @importFrom GO.db GOTERM
 get_GOid_term <- function(GOid, output = "term"){
