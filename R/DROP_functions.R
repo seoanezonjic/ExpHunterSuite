@@ -112,11 +112,12 @@ preprocess_gtf <- function(gtf) {
 #' @param file Counts table file.
 #' @returns Loaded counts table.
 #' @importFrom data.table fread
+#' @importFrom SummarizedExperiment assay
 
 .get_file_counts <- function(file) {
   print(file)
     if(grepl('rds$', file))
-      counts <- assay(readRDS(file))
+      counts <- SummarizedExperiment::assay(readRDS(file))
     else {
       counts <- as.matrix(data.table::fread(file), rownames = "geneID")
     }
@@ -377,6 +378,8 @@ merge_counts <- function(cpu, sample_anno, count_files, count_ranges) {
 #' @inheritParams main_abgenes_Hunter
 #' @param counts A counts table.
 #' @returns A filtered OutriderDataSet built from the merged table.
+#' @importFrom OUTRIDER OutriderDataSet filterExpression
+#' @importFrom SummarizedExperiment colData rowData assay
 #' @export
 
 filter_counts <- function(counts, txdb, fpkm_cutoff) {
@@ -388,7 +391,7 @@ filter_counts <- function(counts, txdb, fpkm_cutoff) {
                           fpkm_cutoff=fpkm_cutoff, addExpressedGenes=TRUE)
 
   # add column for genes with at least 1 gene
-  row_data$counted1sample = rowSums(assay(ods)) > 0
+  row_data$counted1sample = rowSums(SummarizedExperiment::assay(ods)) > 0
 
   col_data$isExternal <- col_data$EXTERNAL=="external"
   return(ods)
