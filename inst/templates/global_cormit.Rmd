@@ -43,7 +43,24 @@ cols <- c("Eg Em"= "#1F77B4", "Cg Cm"="#FF7F0E", "Eg Cm"="#2CA02C", "Hg Cm"="#D6
 
 This section describes the general statistics about coRmiT execution.
 
+### **multiMiR stats**
+#### MultiMiR version summary
+```{r multimir_stats, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+knitr::kable(multimir_stats, row.names = FALSE)
+```
+#### Expression data in MultiMiR summary 
 
+```{r exp_multimir_stats, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
+ pred_db <- c("diana_microt", "elmmo", "microcosm","miranda",
+     "mirdb","pictar","pita", "targetscan")
+ databases <- c("mirecords","mirtarbase","tarbase", pred_db)
+ expressed_multimir <- integrated_pairs[,c("RNAseq","miRNAseq", databases)]
+ expressed_multimir[,pred_db] <- !is.na(expressed_multimir[,pred_db])
+ colnames(expressed_multimir)[match(c("RNAseq","miRNAseq"), colnames(expressed_multimir))] <- c("target_ensembl", "mature_mirna_acc")
+ exp_multimir_stats <- get_multimir_stats(expressed_multimir)
+
+knitr::kable(exp_multimir_stats, row.names = FALSE)
+```
 ### **Executed strategies**
 
 ```{r executes_str, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE}
