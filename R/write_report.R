@@ -154,7 +154,8 @@ integrated_pairs,
 selected_predicted_databases,#
 all_pairs, #
 genomic_ranges,
-genome_ref
+genome_ref,
+multimir_stats
 ){
 
     integrated_pairs <- as.data.frame(integrated_pairs)

@@ -919,3 +919,29 @@ dictionary <- list(
     
     return(output_pairs)
 }
+
+
+get_multimir_stats <- function(multimir){
+    pred_dbs <- c("diana_microt", "elmmo", "microcosm","miranda",
+     "mirdb","pictar","pita", "targetscan")
+    databases <- c("mirecords","mirtarbase","tarbase", pred_dbs)
+    sum_table <- data.frame()
+    for (db in c(databases)){
+        if (is.null(multimir[[db]])) {
+            db_sum <- data.frame(database = db, 
+                                db_type = ifelse(db %in% pred_dbs, "prediction", "validation"),
+                                miRNA = 0, 
+                                target = 0, 
+                                pairs = 0)
+        } else {
+            db_sum <- data.frame(database = db,
+                                 db_type = ifelse(db %in% pred_dbs, "prediction", "validation"),
+                                miRNA = length(unique(multimir[multimir[,db],"mature_mirna_acc"])),
+                                target = length(unique(multimir[multimir[,db],"target_ensembl"])),
+                                pairs = nrow(multimir[multimir[,db],]))
+        }
+        sum_table <-rbind(sum_table, db_sum)
+    }
+    return(sum_table)
+}
+
