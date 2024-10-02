@@ -149,6 +149,13 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 #####################
 ## ADD OR HEATMAP FOR MIRNA/STRATEGY/CORRELATION CUTOFF
 
+if (is.null(opt$multimir_db)){
+    multimir_db <- file.path(root_path, "inst", "multimir_data", paste0("parsed_raw_score_", opt$organism, ".RData"))
+} else {
+    multimir_db <- opt$multimir_db
+}
+if (!file.exists(multimir_db))
+    stop("Please, provide a valid Multimir database")
 
 
 check_and_create_dir(opt$output_files)
@@ -162,7 +169,7 @@ if (exec_cormit){
         output_files=opt$output_files,
         strat_names=unlist(strsplit(opt$strategies, ",")),
         organism=opt$organism,
-        multimir_db=opt$multimir_db,
+        multimir_db=multimir_db,
         sample_proportion = opt$sample_proportion,
         p_val_cutoff=opt$p_val_cutoff,
         corr_cutoffs=opt$corr_cutoffs,
