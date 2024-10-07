@@ -103,7 +103,7 @@ if (is.null(opt$universe) || length(opt$universe) == 0){
   universe <- opt$universe
 }else if (file.exists(opt$universe)){
   universe <- read.table(opt$universe)[,1]
-  if (opt$gene_keytype != "ENTREZID"){
+  if (opt$gene_keytype != "ENTREZID" && opt$gene_keytype != ""){
     universe <- translate_ids_orgdb(ids=universe, 
                                     input_id = opt$gene_keytype,
                                     output_id="ENTREZID",
@@ -120,7 +120,7 @@ if (!is.null(opt$custom)) {
     names(all_custom_gmt) <- custom_files
     names(all_custom_gmt) <- basename(names(all_custom_gmt))
 
-  if(opt$gmt_id != "ENTREZID") {
+  if(opt$gmt_id != "ENTREZID" && opt$gmt_id != "") {
     all_custom_gmt <- lapply(all_custom_gmt, function(gmt){
         tr_gmt <- translate_gmt(gmt, opt$gmt_id, org_db)
         return(tr_gmt)
