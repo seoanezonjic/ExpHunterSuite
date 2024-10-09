@@ -270,3 +270,12 @@ remove_text_from_column <- function(column, rgx) {
   parsed_col <- gsub(rgx, "", column)
   return(parsed_col)
 }
+
+name_column <- function(column, row_names){
+  names(column) <- row_names
+  column
+}
+
+name_all_columns <- function(data_frame) {
+   lapply(data_frame, name_column, row_names = rownames(data_frame))
+}

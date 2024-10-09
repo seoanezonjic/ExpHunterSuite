@@ -280,53 +280,110 @@ translate_gmt <- function(gmt, gene_keytype, org_db){
 #' @importClassesFrom topGO topGOdata
 #' @importFrom topGO annFUN
 multienricher_topGO <- function(all_funsys, genes_list, universe=NULL, 
-  organism_info, gene_id="entrez", algorithm = "classic", statistic = "fisher", 
-  nodeSize = 5, task_size=1, workers=1) {
+  organism_info, gene_id="entrez", p_value_cutoff = 0.05, algorithm = "classic", statistic = "fisher", 
+  nodeSize = 5, task_size=1, workers=1, scoreOrder = "increasing", clean_parentals = FALSE) {
 
-  unlisted_input_flag <- FALSE
-  if(! is.list(genes_list)) {
-    unlisted_input_flag <- TRUE
+
+  #checking input format
+  if (!is.list(genes_list)) 
     genes_list <- list(genes_list)
+  
+
+  if (!any(all_funsys %in% c("CC","BP","MF"))) {
+    message("None GO subontology has been selected")
+    return(NULL)
   }
 
- org_db <- organism_info$Bioconductor_DB[1]
- enrichments_topGO <- vector("list", length(all_funsys))
- names(enrichments_topGO) <- all_funsys
- for(funsys in all_funsys) {
-  if (funsys %in% c("CC","BP","MF")){
-    if(is.null(universe)) {
-      go_to_genes <- topGO::annFUN.org(funsys, mapping = org_db, ID = gene_id)
-      universe <- unique(unlist(go_to_genes))
-    }
+  org_db <- organism_info$Bioconductor_DB[1]
 
-    geneList <- factor(as.integer(universe %in% genes_list[[1]]))
-    names(geneList) <- universe
-     
-
-    # Create environment variables used for initialization of the topGOdata obj
-    topGO::groupGOTerms()
-    GOdata <- new("topGOdata",
-                 ontology = funsys,
-                 allGenes = geneList,
-                 nodeSize = nodeSize,
-                 mapping = org_db,
-                 annotationFun = topGO::annFUN.org,
-                 ID = gene_id)
-    }
-
-    enriched_cats <- parallel_list(genes_list, function(l_genes) {
-      geneList <- factor(as.integer(universe %in% l_genes))
-      names(geneList) <- universe
-      l_GOdata <- topGO::updateGenes(object = GOdata, geneList = geneList)
-      resultFis <- topGO::runTest(l_GOdata, algorithm = algorithm, 
-      statistic = statistic)
-    }, workers = workers, task_size = task_size )
-    
-    if(unlisted_input_flag) enriched_cats <- enriched_cats[[1]]
-    enrichments_topGO[[funsys]] <- enriched_cats
-  }
+  all_funsys <- all_funsys[all_funsys %in% c("CC","BP","MF")]
+  enrichments_topGO <- as.list(all_funsys)
+  names(enrichments_topGO) <- all_funsys
+  enrichments_topGO <- lapply(enrichments_topGO, multi_topGOTest, genes_list = genes_list,
+                            nodeSize = nodeSize, org_db = org_db, p_value_cutoff = p_value_cutoff, universe = universe, 
+                            gene_id = gene_id, algorithm = algorithm, statistic = statistic,
+                            scoreOrder = scoreOrder, clean_parentals = clean_parentals,workers = workers, task_size = task_size)
   return(enrichments_topGO)
 }
+
+multi_topGOTest <- function(funsys, genes_list, nodeSize = 5, org_db, 
+                            universe = NULL, gene_id = "entrez",p_value_cutoff = 0.05, algorithm = "classic", statistic = "fisher",
+                            scoreOrder = "increasing", workers = 1, task_size = 1, geneSel = NULL, clean_parentals = FALSE) {
+  if(is.null(universe) && statistic == "fisher") {
+    go_to_genes <- topGO::annFUN.org(funsys, mapping = org_db, ID = gene_id)
+    universe <- unique(unlist(go_to_genes))
+  }
+
+  if (is.null(geneSel)) 
+    geneSel <- get_default_geneSel(statistic)
+
+  genes_list <- lapply(genes_list, function(l_genes){
+    if (is.numeric(l_genes)) { 
+      if (!statistic %in%  c("ks", "t"))
+        stop("ERROR: numeric scores can be only computed using 'ks' and 't' statistic")
+      
+      return(l_genes)      
+    } else {
+      if (statistic %in% c("ks", "t"))
+        stop("ERROR: 'ks' and 't' can be only computed using numeric scores") 
+      l_genes <- factor(as.integer(universe %in% l_genes))
+      names(l_genes) <- universe
+      return(l_genes)
+    }   
+  })
+  all_names <- unique(unlist(lapply(genes_list, names)))
+  if (statistic == "fisher") {
+    rand <- factor(c(1,2))
+  } else {
+    rand <- seq(0,1,0.1)
+  }
+
+  all_genes <- sample(rand, length(all_names), replace = TRUE)
+  names(all_genes) <-  all_names 
+  # Create environment variables used for initialization of the topGOdata obj
+  topGO::groupGOTerms()
+  enriched_cats <- parallel_list(genes_list, function(l_genes) {
+  if(length(l_genes) == 0)
+    return(data.frame())
+  GOdata <- new("topGOdata",
+               ontology = funsys,
+               allGenes = l_genes,
+               nodeSize = nodeSize,
+               mapping = org_db,
+               geneSel = geneSel,
+               annotationFun = topGO::annFUN.org,
+               ID = gene_id)
+  
+    result <- topGO::runTest(GOdata, algorithm = algorithm, 
+    statistic = statistic, scoreOrder = scoreOrder)
+    res_table <- topGO::GenTable(GOdata, 
+                                 p.value = result,
+                                 topNodes = length(result@score), 
+                                 format.FUN = function(x, dig, eps){x})
+    if(clean_parentals)
+      res_table <- clean_topGO_parentals(res_table, funsys, p_value_cutoff)
+    res_table$fdr <- p.adjust(res_table$p.value, method = "BH", n = length(res_table$p.value))
+    res_table
+  
+  }, workers = workers, task_size = task_size )
+
+  if (length(enriched_cats) == 1)
+    enriched_cats <- enriched_cats[[1]]
+  return(enriched_cats)
+
+}
+
+get_default_geneSel <-function(statistic){
+  if (statistic == "fisher"){
+    return(NULL) 
+  } else {
+    return(function(x){x})
+  } 
+}
+
+
+
+
 
 #' Perform gsea enrichment analysis of a list of genes
 #' @export
@@ -1054,6 +1111,36 @@ clean_all_parentals <- function(enr_obj, subont){
   return(enr_obj)
 }
 
+
+#' @importFrom GO.db GOBPANCESTOR GOMFANCESTOR GOCCANCESTOR
+clean_topGO_parentals <- function(top_GO_enr, subont, p_value_cutoff = 0.05){
+  if (nrow(top_GO_enr) == 0) return(top_GO_enr)
+
+  if (subont=="BP"){
+    GO_ancestors <- GO.db::GOBPANCESTOR
+  } else if (subont=="MF"){
+    GO_ancestors <-  GO.db::GOMFANCESTOR
+  } else if (subont=="CC"){
+    GO_ancestors <- GO.db::GOCCANCESTOR
+  }
+  GO_ancestors <- as.list(GO_ancestors)
+  GO_ancestors <- GO_ancestors[!is.na(GO_ancestors)]
+  obsolete_terms <- names(as.list(GO.db::GOOBSOLETE))
+  top_GO_enr <- top_GO_enr[!top_GO_enr$GO.ID %in% obsolete_terms,]
+  go_to_keep <- rep(TRUE, nrow(top_GO_enr))
+  names(go_to_keep) <- top_GO_enr$GO.ID
+
+  for (go_term in top_GO_enr[top_GO_enr$p.value < p_value_cutoff,"GO.ID"]){ 
+    term_stats <- top_GO_enr[top_GO_enr$GO.ID == go_term,]
+    go_to_keep[names(go_to_keep) %in% GO_ancestors[[go_term]]] <- FALSE  
+  }
+  top_GO_enr <- top_GO_enr[go_to_keep,]
+  return(top_GO_enr)
+}
+
+
+
+
 #' @importFrom GO.db GOTERM
 get_GOid_term <- function(GOid, output = "term"){
  term <- AnnotationDbi::Term(GO.db::GOTERM[GOid])
@@ -1200,11 +1287,7 @@ enrich_density <- function(enrich_result,
                            showCategory = 30) {
 
   terms_attr <- get_attr_by_terms(enrich_result, attributes)
-  enrich_result <- enrichplot:::fortify.internal(
-                                  enrich_result,
-                                  showCategory = showCategory,
-                                  by = "p.adjust",
-                                  )
+  enrich_result <- enrichplot:::fortify.enrichResult(enrich_result,showCategory = showCategory,by = "p.adjust")
 
   enriched_dist <- merge(terms_attr, enrich_result, by ="ID", all.y = TRUE)
   plot <- ggplot2::ggplot(enriched_dist, ggplot2::aes(x = attribute, 

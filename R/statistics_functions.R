@@ -324,3 +324,24 @@ filter_and_integrate_OR <- function(cont_table, p.adjust.method = "BH" ,p_thr = 
   return(list(integrated_stats = integrated_stats, miRNA_ct = miRNA_ct))
 }
 
+
+ct_from_qual <- function(qual_table, col_ref = 1, col_sub = 2){
+  all_ct <- data.frame()
+  for(ref_element in unique(qual_table[,col_ref])) {
+    for(sub_element in unique(qual_table[,col_sub])) { 
+     ctable <- calc_ct(qual_table[,col_ref] == ref_element, 
+                       qual_table[,col_sub] == sub_element) 
+     
+     ctable <- cbind(data.frame(ref = ref_element, sub = sub_element), ctable)
+     all_ct <- rbind(all_ct, ctable)
+
+    }
+  } 
+  return(all_ct)
+}
+
+
+cor_pval <- function(r, n) {
+  t_statistic <- r * sqrt((n - 2) / (1 - r^2))
+  2 * pt(-abs(t_statistic), df = n - 2)
+}

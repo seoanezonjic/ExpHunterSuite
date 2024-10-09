@@ -28,7 +28,8 @@ eval_method = "aggregated",
 template_folder = file.path(find.package('ExpHunterSuite'), "templates"),
 organism_table_path = file.path(find.package('ExpHunterSuite'), "inst", 
     "external_data", "organism_table.txt"),
-compare_pred_scores = FALSE
+compare_pred_scores = FALSE,
+add_databases_files = NA
 ){
 
 
@@ -52,6 +53,7 @@ corr_cutoffs<- eval(parse(text=paste('c(', gsub("'","", corr_cutoffs), ')')))
     "normalized_counts_RNA_vs_miRNA_Eigengene_0", 
      parse_strategies(strat_names))
   
+
  # Prepare for RNA ID translation
  organism_info <- utils::read.table(organism_table_path, 
     header = TRUE, row.names=1, sep="\t", stringsAsFactors = FALSE, 
@@ -70,6 +72,7 @@ corr_cutoffs<- eval(parse(text=paste('c(', gsub("'","", corr_cutoffs), ')')))
      database_to_filter = database_to_filter  
     )
  multimir <- multimir_info[["multimir_table"]]
+
  raw_databases_scores <- multimir_info[["raw_databases_scores"]]
  
  #Load and prepare DGH data
@@ -88,6 +91,11 @@ corr_cutoffs<- eval(parse(text=paste('c(', gsub("'","", corr_cutoffs), ')')))
  all_pairs <- prepare_all_pairs(RNAseq = RNAseq, miRNAseq = miRNAseq, 
     multimir = multimir, selected_targets = selected_targets, 
     organism = organism)
+ multimir <- as.data.frame(multimir)
+
+ multimir[,selected_predicted_databases] <- 
+                !is.na(multimir[,selected_predicted_databases])
+multimir_stats <- get_multimir_stats(multimir)
  multimir <- NULL
 
 
@@ -117,7 +125,6 @@ message("Preparing data for stats computing")
           miRNA_cont_tables <- rbind(miRNA_cont_tables, contingency_tables$strat_miRNA_ct)
           cont_tables <- rbind(cont_tables, contingency_tables$strat_ct)
    }
-   message("test")
  
  } 
  contingency_tables <- list(miRNA_cont_tables = miRNA_cont_tables,
@@ -223,7 +230,8 @@ integrated_ct$cont_tables <- v_get_stats(integrated_ct$strat_ct)
      miRNAseq = miRNAseq,
      RNAseq = RNAseq,
      selected_predicted_databases = selected_predicted_databases,
-     all_cor_dist = all_cor_dist
+     all_cor_dist = all_cor_dist,
+     multimir_stats = multimir_stats
  ))
  
  return(miRNA_cor_results)

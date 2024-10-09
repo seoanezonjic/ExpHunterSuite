@@ -141,6 +141,17 @@ main_functional_hunter <- function(
         }
     }
 
+    if (!is.null(hunter_results$pca_data)) {
+    # prepare PCA data for topGO
+
+        pca_eigenvectors <-  lapply(hunter_results$pca_data, 
+                                    get_and_parse_pca_eigenvectors, 
+                                    cor_pval = 1, 
+                                    eig_abs_cutoff = NULL)
+        pca_clusters <- lapply(hunter_results$pca_data, get_and_parse_clusters)
+
+    }
+
     ############################################################
     ##                                                        ##
     ##                     PERFORM ENRICHMENTS                ## 
@@ -159,6 +170,7 @@ main_functional_hunter <- function(
     }
 
     if("ORA" %in% enrich_methods){
+
         deg_enr_ora  <- multienricher_ora(all_funsys = enrich_dbs, 
             genes_list = prev_genes, organism_info = current_organism_info, 
             pvalueCutoff = pthreshold, qvalueCutoff = qthreshold, 
@@ -184,6 +196,42 @@ main_functional_hunter <- function(
         }
     }
 
+    if ("topGO" %in% enrich_methods){
+        func_results$topGO <- multienricher_topGO(all_funsys=enrich_dbs, 
+                                                   universe=universe,
+                                                   genes_list=prev_genes,
+                                                   organism_info=current_organism_info,
+                                                   p_value_cutoff = pthreshold,
+                                                   clean_parentals = clean_parentals)
+    }
+
+    if (!is.null(hunter_results$pca_data)) {
+
+        func_results$PCA_enrichments <- lapply(pca_eigenvectors, 
+                                                multienricher_topGO, 
+                                                all_funsys = enrich_dbs,
+                                                organism_info = current_organism_info,
+                                                p_value_cutoff = pthreshold,
+                                                algorithm = "classic",
+                                                statistic = "t",
+                                                gene_id = "ensembl", 
+                                                scoreOrder = "decreasing",
+                                                clean_parentals = clean_parentals,
+                                                workers = cores, 
+                                                task_size = task_size)
+        func_results$PCA_clusters_results <- lapply(pca_clusters, 
+                                                multienricher_topGO, 
+                                                all_funsys = enrich_dbs,
+                                                organism_info = current_organism_info,
+                                                p_value_cutoff = pthreshold,
+                                                algorithm = "classic",
+                                                statistic = "t",
+                                                gene_id = "ensembl", 
+                                                scoreOrder = "decreasing",
+                                                clean_parentals = clean_parentals,
+                                                workers = cores, 
+                                                task_size = task_size)
+    }
     ############################################################
     ##                                                        ##
     ##                     EXPORT DATA                        ## 
@@ -193,6 +241,6 @@ main_functional_hunter <- function(
     # Reorder rows by combined FDR
     DEGH_results <- DEGH_results[order(DEGH_results[,"combined_FDR"]),] 
     func_results$DEGH_results_annot <- DEGH_results
-    
+    func_results$pca_data <- hunter_results$pca_data
     return(func_results)
 }

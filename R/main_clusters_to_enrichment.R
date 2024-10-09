@@ -44,7 +44,7 @@ main_clusters_to_enrichment <- function(
     cluster_genes <- read.table(input_file, header=FALSE, sep="\t")
     cluster_genes_list <- strsplit(cluster_genes[,2], ",")
     names(cluster_genes_list) <- cluster_genes[,1]
-    if(gene_keytype != "ENTREZID") {
+    if(gene_keytype != "ENTREZID" && gene_keytype != "") {
       cluster_genes_list <- lapply(cluster_genes_list, function(x){
           translate_ids_orgdb(ids=x, input_id = gene_keytype,
             org_db = org_db, just_output_ids=TRUE)}) 
@@ -60,7 +60,8 @@ main_clusters_to_enrichment <- function(
                                   qvalueCutoff = qvalcutoff,
                                   custom_sets = all_custom_gmt,
                                   kegg_file = kegg_data_file,
-                                  universe = universe)
+                                  universe = universe,
+                                  readable = FALSE)
 
 
     save(enrichments_ORA, file = temp_file)

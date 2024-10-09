@@ -121,6 +121,7 @@ parse_strategies <- function(strategies){
     parsed_strategies <- c()
     for (strategy in strategies) {
       splitted_strategy <- unlist(strsplit(strategy, ""))
+      if (length(splitted_strategy) == 0) next
       RNA_profile <- strat_equivalence[[splitted_strategy[1]]]
       miRNA_profile <- strat_equivalence[[splitted_strategy[2]]]
       parsed_strategies <- c(parsed_strategies, paste0(RNA_profile, 
@@ -890,7 +891,7 @@ dictionary <- list(
 
 
  add_attrib_to_pairs <- function(pairs, RNAseq = NULL, miRNAseq = NULL, translate_targets = FALSE){
-    fields_to_extract <- c("miRNA", "miRNAseq", "RNAseq", "validated_c","predicted_c")
+    fields_to_extract <- c("miRNA", "miRNAseq", "RNAseq", "validated_c","predicted_c", "normalized_counts_RNA_vs_miRNA_normalized_counts_correlation","normalized_counts_RNA_vs_miRNA_normalized_counts_pval" )
     if ("miRNA_loci" %in% colnames(pairs))
         fields_to_extract <- c(fields_to_extract, "miRNA_loci")  
  
@@ -918,3 +919,29 @@ dictionary <- list(
     
     return(output_pairs)
 }
+
+
+get_multimir_stats <- function(multimir){
+    pred_dbs <- c("diana_microt", "elmmo", "microcosm","miranda",
+     "mirdb","pictar","pita", "targetscan")
+    databases <- c("mirecords","mirtarbase","tarbase", pred_dbs)
+    sum_table <- data.frame()
+    for (db in c(databases)){
+        if (is.null(multimir[[db]])) {
+            db_sum <- data.frame(database = db, 
+                                db_type = ifelse(db %in% pred_dbs, "prediction", "validation"),
+                                miRNA = 0, 
+                                target = 0, 
+                                pairs = 0)
+        } else {
+            db_sum <- data.frame(database = db,
+                                 db_type = ifelse(db %in% pred_dbs, "prediction", "validation"),
+                                miRNA = length(unique(multimir[multimir[,db],"mature_mirna_acc"])),
+                                target = length(unique(multimir[multimir[,db],"target_ensembl"])),
+                                pairs = nrow(multimir[multimir[,db],]))
+        }
+        sum_table <-rbind(sum_table, db_sum)
+    }
+    return(sum_table)
+}
+

@@ -33,12 +33,11 @@ log_file <- file.path(opt$output, paste0(opt$organism, "_multimir_log"))
 if(opt$cache_mode && file.exists(remaining_miRNAs_file)){
     remaining_mirnas <- readLines(remaining_miRNAs_file)
 }else{
-    miRNA_info <- multmiMiR::list_multimir("mirna")
-    # list_organism <- list(rep(0, length(all_organism)))
- #     names(list_organism) <- all_organism
-    allmiRNAs <- miRNA_info[miRNA_info$org == opt$organism, 
-             "mature_mirna_id"] %>% unique
-    remaining_mirnas <- allmiRNAs
+    miRNA_info <- multiMiR::list_multimir("mirna")
+  
+    allmiRNAs <- unique(miRNA_info[miRNA_info$org == opt$organism, 
+             "mature_mirna_id"])
+    remaining_mirnas <- allmiRNAs[allmiRNAs != ""]
         
     if(opt$cache_mode){
         dir.create(temp_dir, recursive=TRUE)
@@ -54,9 +53,8 @@ if(!dir.exists(org_path)){
 }
 
 while(length(remaining_mirnas) > 0){
-    mirna_chunk <- sample(remaining_mirnas, opt$chunk_size, 
-        replace = TRUE) %>% unique
-    print(str(mirna_chunk))
+    mirna_chunk <- unique(sample(remaining_mirnas, opt$chunk_size, 
+        replace = TRUE))
     multimir <- multiMiR::get_multimir(mirna = mirna_chunk, table = "all", 
         org = opt$organism, predicted.cutoff.type="n", 
         predicted.cutoff = 1000000000, predicted.site = "all", limit = NULL)
@@ -67,8 +65,8 @@ while(length(remaining_mirnas) > 0){
         multimir <- data.frame(mature_mirna_id = no_downloaded_mirnas)
         remaining_mirnas <- remaining_mirnas[! remaining_mirnas %in% 
              no_downloaded_mirnas]
-        cat(paste0(length(no_downloaded_mirnas), " of ", length(mirna_chunk),
-           " miRNAs can not been found on multiMiR. ", length(remaining_mirnas), 
+        cat(paste0(paste0(no_downloaded_mirnas, sep = ","),
+           " miRNAs could not been found on multiMiR. ", length(remaining_mirnas), 
            " miRNAs remaining..."), file = log_file, append=TRUE, sep = "\n")
     } else {
         downloaded_mirnas <- multimir[,"mature_mirna_id"] %>% unique
@@ -82,7 +80,7 @@ while(length(remaining_mirnas) > 0){
             remaining_mirnas <- remaining_mirnas[! remaining_mirnas %in% 
                downloaded_mirnas]
         }
-        cat(paste0(length(downloaded_mirnas), " of ", length(mirna_chunk), 
+        cat(paste0(length(downloaded_mirnas), " of ", length(downloaded_mirnas) + length(remaining_mirnas), 
             " miRNAs has been downloaded. ", length(remaining_mirnas), 
             " miRNAs remaining..."), file = log_file, append=TRUE, sep = "\n")
     }

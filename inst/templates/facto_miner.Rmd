@@ -5,13 +5,87 @@
 ### **Principal Component Analysis**
 This is a PCA plot of the count values normalized following the default method and then they are scaled:
 
-#### **Representation of the samples in the two first dimension of PCA** 
+#### **Inertia plot exploring variance explained by dimensions**
 
+Graphical representation of PCA dimensions. The bars represent the percentage of total variance that summarize each dimension. 
+The line measures the percentage of total variance accumulated in previous dimensions. The color distinguishes between significan or no significant dimensions. 
+Only significant dimensions will be considered in the following plots.
+
+```{r, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 4 }
+inertia <- as.data.frame(pca_data$eig)[,c(2,3)]
+inertia$names <- factor(gsub("comp ", "PC", rownames(inertia)), levels= gsub("comp ", "PC", rownames(inertia)))
+colnames(inertia) <- c("var", "cum_var", "names")
+inertia$sig <- ifelse(rownames(inertia) %in% paste("comp", seq(1, dim_to_keep)), "significant", "no_significant")
+ggplot2::ggplot(inertia) + ggplot2::geom_bar(ggplot2::aes(x = names, y = var, fill = sig), stat = "identity") + 
+ggplot2::geom_line(ggplot2::aes(x = names, y = cum_var), stat = "identity", group = 1)+ 
+ggplot2::labs(x = "", y = "Percentage of total variance")+ 
+ggplot2::scale_y_continuous(sec.axis = ggplot2::sec_axis(~./100, name = "Cumulative percentage of variance", labels = scales::percent)) + 
+ggplot2::theme(legend.position = "bottom", axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
+
+```
+
+
+#### **Distribution of Eigenvectors**
+The eigenvector contains the weights of each gene for the PC. Here are represented the distributions of the weights of each eigenvector.
+The vertical lines represent the quantiles. 
+
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 4 }
+
+eig_dist <- pca_data$svd$V
+colnames(eig_dist) <- colnames(pca_data$var$cor)
+eig_dist <- reshape2::melt(eig_dist)
+
+ggplot2::ggplot(eig_dist, ggplot2::aes(x = value, 
+                                            y = Var2)) + 
+ggridges::geom_density_ridges(jittered_points = TRUE, 
+                              position = "raincloud", 
+                              alpha = 0.7, 
+                              scale = 0.9, 
+                              quantile_lines = TRUE) + 
+ggplot2::theme_classic()
+```
+
+#### **Comparison of significant dimensions significant dimensions**
+
+This plot compare the position of samples and their distribution in the significant dimensions. 
+The color differenciate between the control (red) and treat (blue) samples. 
+
+```{r, echo = FALSE,warning =FALSE, message=FALSE, results = 'asis', fig.width = 8, fig.height = 8, eval = !is.null(target) }
+
+dims <- as.data.frame(pca_data$ind$coord)
+colnames(dims) <- gsub("Dim.", "PC", colnames(dims))
+inertia$text <- paste(inertia$names, "\n(", round(inertia$var, 2),"%)", sep = "")
+colnames(dims)[colnames(dims) %in% inertia$names] <- inertia$text[match(colnames(dims), inertia$names)]
+dims$names <- rownames(dims)
+rownames(dims) <- NULL
+dims <- merge(dims, target[,c("sample","treat")], by.x = "names", by.y ="sample")
+
+pca_scatter <- function(data, mapping,...){
+	 p <- ggplot2::ggplot(data, mapping)  
+	 p$mapping$alpha <- NULL
+	 p$mapping$color <- p$mapping$fill
+	p + ggplot2::geom_point() + 
+	ggplot2::geom_vline(xintercept = 0,  linetype="dashed")+ 
+	ggplot2::geom_hline(yintercept = 0,  linetype="dashed")
+}
+
+p <- GGally::ggpairs(dims, columns = seq(2, dim_to_keep +1),  
+	mapping = ggplot2::aes(fill = treat, alpha = 0.5),
+	lower = list(continuous = pca_scatter),
+	upper = list(continuous = "blank"), 
+	switch = "both") + 
+	ggplot2::theme_bw() 
+
+p[dim_to_keep, dim_to_keep] <- p[dim_to_keep, dim_to_keep] +ggplot2::coord_flip()
+p
+```
+
+#### **Representation of the samples in the two first dimension of PCA** 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'} 
 FactoMineR::plot.PCA(pca_data, invisible = "quali" , title = "")
 ``` 
 
-```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'} 
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(target) } 
 FactoMineR::plot.PCA(pca_data, invisible = "quali" , title = "", label = "none", habillage = "treat")
 ```
 
@@ -22,9 +96,10 @@ FactoMineR::plot.PCA(pca_data, invisible = "quali" , title = "", label = "none",
 FactoMineR::plot.PCA(pca_data, title = "")
 ```
 
-#### **Representation of the variable contribution to the PCA axis 1 and 2**
 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(numeric_factors)} 
+cat("#### **Representation of the variable contribution to the PCA axis 1 and 2**")
+
 factoextra::fviz_pca_var(pca_data, axes = c(1, 2),select.var = list(name=numeric_factors), col.var="steelblue", title="") +
 		ggplot2::theme_minimal()
 
@@ -48,7 +123,6 @@ factoextra::fviz_pca_biplot(pca_data, repel = TRUE,select.var = list(name=numeri
 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
 cat(paste("#### **Hierarchical clustering of individuals using first", dim_to_keep, "significant PCA dimensions**",sep=' '))
-res.hcpc <- FactoMineR::HCPC(pca_data, graph = FALSE)
 plot(res.hcpc , choice="tree", title="")
 
 ```
@@ -59,42 +133,106 @@ plot(res.hcpc , axes=c(1,2), choice="map", draw.tree= FALSE, title="")
 ```
 
 
+#### **Relationship between HCPC clusters and experiment design**
+Fisher's exact test is computed between clusters and experimental treats. Fisher's exact test P values and FDR are showed. 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
+
+all_factor_clusters <- data.frame()
+for (add_factor in string_factors) {
+	clusters_ct <- ct_from_qual(res.hcpc$data.clust[,c("clust", add_factor)])
+	clusters_ct$sub <- paste(add_factor,clusters_ct$sub, sep = ":")
+	colnames(clusters_ct)[match(c("ref","sub"),colnames(clusters_ct))] <- c("Cluster","Category")
+	clusters_ct$fisher.test.pval <- v.fisher.test(clusters_ct)
+	clusters_ct$FDR <- p.adjust(clusters_ct$fisher.test.pval, method = "BH")
+	all_factor_clusters <- rbind(all_factor_clusters, clusters_ct)
+}
+
+all_factor_clusters <- all_factor_clusters[all_factor_clusters$FDR <= 0.05,]
+
+if (nrow(all_factor_clusters) > 0 ) {
+
+	all_factor_clusters$FDR <- format(all_factor_clusters$FDR, scientific = TRUE, digits = 3)
+	all_factor_clusters$fisher.test.pval <- format(all_factor_clusters$fisher.test.pval, scientific = TRUE, digits = 3)
+
+	all_factor_clusters <- all_factor_clusters[,c("Cluster","Category","fisher.test.pval", "FDR")]
+
+
+	DT::datatable(all_factor_clusters, filter = 'top', rownames = FALSE, 
+                      extensions = c('Buttons','ColReorder'),
+                      options = list(
+                        colReorder = TRUE,
+                        dom = 'lftBip',
+                          buttons = c('copy', 'csv', 'excel')))
+
+	# knitr::kable(all_factor_clusters, row.names = FALSE)
+} else {
+	cat("None of the clusters were significantly associated with any experimental group")
+
+}
+
+```
+
+#### **Representation of correlation and P value of numeric factors and PCA dimensions**
+
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5}
 dim_data_quant <- dim_data_merged$quantitative
 dim_data_quant <- dim_data_quant[dim_data_quant$factor %in% numeric_factors,]
-if (nrow(dim_data_quant) >0 ) {
-	cat("#### **Representation of correlation and P value of numeric factors and PCA dimensions**")
-	dim_data_quant$p.value <-formatC(dim_data_quant$p.value, format = "e", digits = 2)
-	dim_data_quant$correlation <- round(dim_data_quant$correlation, digits = 4)
-	dim_data_quant$text_corr <- paste(as.character(dim_data_quant$correlation),as.character(dim_data_quant$p.value), sep = "\n")
-	gg_heatmap(dim_data_quant, x_axis="dimension", y_axis="factor",fill = "correlation", text_plot="text_corr")
+if (nrow(dim_data_quant) > 0 ) {
+	dim_data_quant$dimension <- gsub("Dim.", "PC", dim_data_quant$dimension)
+	dim_data_quant$correlation <- round(dim_data_quant$correlation, digits = 2)
+	dim_data_quant$significance <- ifelse(dim_data_quant$p.value < 0.001, "***",
+					                ifelse(dim_data_quant$p.value < 0.01, "**",
+				                    ifelse(dim_data_quant$p.value < 0.05, "*", "")))
+	dim_data_quant$text_corr <- paste(as.character(dim_data_quant$correlation),as.character(dim_data_quant$significance), sep = " ")
 
+
+	gg_heatmap(dim_data_quant, x_axis="dimension", y_axis="factor",fill = "correlation", 
+		text_plot="text_corr", text_size = 4,
+		col = c("#3b71ff", "#f1f1f1", "#ff3b3b"))
+
+} else {
+	cat("None of the factors were significantly associated with any dimension")
 }
 ```
 
-```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
+#### **Representation of R2 and P value of qualitative factors and PCA dimensions**
+
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5}
 
 dim_data_qual <- dim_data_merged$qualitative
 if (nrow(dim_data_qual) >0 ) {
-	cat("#### **Representation of R2 and P value of qualitative factors and PCA dimensions**")
-	dim_data_qual$p.value <- formatC(dim_data_qual$p.value, format = "e", digits = 2)
-	dim_data_qual$correlation <- round(dim_data_qual$R2, digits = 4)
-	dim_data_qual$text_adjust <- paste(as.character(dim_data_qual$R2),as.character(dim_data_qual$p.value), sep = "\n")
-	gg_heatmap(dim_data_qual, x_axis="dimension", y_axis="factor",fill = "R2", text_plot="text_adjust")
+	dim_data_qual$dimension <- gsub("Dim.", "PC", dim_data_qual$dimension)
+	dim_data_qual$R2 <- round(dim_data_qual$R2, digits = 3)
+	dim_data_qual$significance <- ifelse(dim_data_qual$p.value < 0.001, "***",
+					                ifelse(dim_data_qual$p.value < 0.01, "**",
+				                    ifelse(dim_data_qual$p.value < 0.05, "*", "")))
 
+	dim_data_qual$text_adjust <- paste(as.character(dim_data_qual$R2),as.character(dim_data_qual$significance), sep = " ")
+
+	gg_heatmap(dim_data_qual, x_axis="dimension", y_axis="factor",fill = "R2", text_plot="text_adjust", text_size = 4,
+		col = c("#3b71ff", "#f1f1f1", "#ff3b3b"))
+
+} else {
+	cat("None of the factors were significantly associated with any dimension")
 }
 ```
 
+#### **Representation of estimated coordinated from barycentre and P value of qualitative factors and PCA dimensions**
 
-
-```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5}
 
 dim_data_cat <- dim_data_merged$qual_category
 if (nrow(dim_data_cat) >0 ) {
-	cat("#### **Representation of estimated coordinated from barycentre and P value of qualitative factors and PCA dimensions**")
-	dim_data_cat$p.value <- formatC(dim_data_cat$p.value, format = "e", digits = 2)
-	dim_data_cat$text_estimate <- paste(as.character(dim_data_cat$Estimate),as.character(dim_data_cat$p.value), sep = "\n")
-	gg_heatmap(dim_data_cat, x_axis="dimension", y_axis="factor",fill = "Estimate", text_plot="text_estimate")
+	dim_data_cat$dimension <- gsub("Dim.", "PC", dim_data_cat$dimension)
 
+	dim_data_cat$significance <- ifelse(dim_data_cat$p.value < 0.001, "***",
+					                ifelse(dim_data_cat$p.value < 0.01, "**",
+				                    ifelse(dim_data_cat$p.value < 0.05, "*", "")))
+	dim_data_cat$text_estimate <- paste(round(dim_data_cat$Estimate, digits = 4),dim_data_cat$significance, sep = " ")
+	gg_heatmap(dim_data_cat, x_axis="dimension", y_axis="factor",fill = "Estimate", text_plot="text_estimate", text_size = 4,
+		col = c("#3b71ff", "#f1f1f1", "#ff3b3b") )
+
+} else {
+	cat("None of the categories were significantly associated with any dimension")
 }
 ```

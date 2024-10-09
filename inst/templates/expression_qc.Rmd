@@ -55,6 +55,7 @@ pca_data <- PCA_res$all_genes$pca_data
 dim_to_keep <- PCA_res$all_genes$dim_to_keep
 dim_data <- PCA_res$all_genes$dim_data
 dim_data_merged <- PCA_res$all_genes$dim_data_merged
+res.hcpc <- PCA_res$all_genes$res.hcpc
 
 ```
 

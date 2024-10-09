@@ -50,7 +50,7 @@ option_list <- list(
         default="lower",
         help = "Set if correlations are [lower] or [higher] than the --p_val_cutoff. Default=%default"),
     optparse::make_option(c("-c", "--corr_cutoffs"), type="character", 
-        default="-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6",
+        default="-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6,-0.55",
         help="Correlation threshold . Default=%default"),
      optparse::make_option(c("-F", "--f_p_val"), type="double", 
         default=0.05,
@@ -149,6 +149,13 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 #####################
 ## ADD OR HEATMAP FOR MIRNA/STRATEGY/CORRELATION CUTOFF
 
+if (is.null(opt$multimir_db)){
+    multimir_db <- file.path(root_path, "inst", "multimir_data", paste0("parsed_raw_score_", opt$organism, ".RData"))
+} else {
+    multimir_db <- opt$multimir_db
+}
+if (!file.exists(multimir_db))
+    stop("Please, provide a valid Multimir database")
 
 
 check_and_create_dir(opt$output_files)
@@ -162,7 +169,7 @@ if (exec_cormit){
         output_files=opt$output_files,
         strat_names=unlist(strsplit(opt$strategies, ",")),
         organism=opt$organism,
-        multimir_db=opt$multimir_db,
+        multimir_db=multimir_db,
         sample_proportion = opt$sample_proportion,
         p_val_cutoff=opt$p_val_cutoff,
         corr_cutoffs=opt$corr_cutoffs,

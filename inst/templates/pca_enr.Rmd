@@ -1,0 +1,78 @@
+```{r , echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+	print_go_tables <- function(all_enr) {
+		cat("\n\n\n<br>")
+		
+		
+		 merged_df <- all_enr |>
+		 purrr::imap(~ rename_fdr_column(.x, .y)) |>
+		 purrr::reduce(dplyr::full_join, by = c("GO.ID", "Term"))
+		 merged_columns <- colnames(merged_df)[!colnames(merged_df) %in% c("GO.ID", "Term")]
+
+				merged_df[,merged_columns]<- format(merged_df[,merged_columns], scientific = TRUE, digits = 3)
+				print(htmltools::tagList(
+					DT::datatable(merged_df, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
+		                    options = list(
+		                      colReorder = TRUE,
+		                      dom = 'lftBip',
+		                        buttons = c('copy', 'csv', 'excel')))
+				))
+			
+	}
+
+	rename_fdr_column <- function(df, name) {
+		 df <- df[df$fdr <= 0.05,]
+		 df |>
+		   dplyr::select(GO.ID, Term, fdr) |>
+		   dplyr::rename(!!name := fdr)
+	}
+```
+```{r "{{funsys}}_enr", echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+cat("\n## **{{funsys}} - Enrichments for Principal Components**\n")
+
+cat("### **Functional enrichments of PCs using all genes**\n")
+
+last_dim <- 1
+while (last_dim < func_results$pca_data$all_genes$dim_to_keep){
+	plot(FactoMineR::plot.PCA(func_results$pca_data$all_genes$pca_data, 
+						invisible = "quali", 
+						axes = c(last_dim, last_dim + 1), 
+						title = paste0(last_dim, " and ", last_dim + 1, " PCs")))
+	last_dim <- last_dim + 2
+} 
+
+print_go_tables(pca_enr_all)
+cat("<br> This table shows the enrichment FDR of Gene ontology terms in gene contibution to PCs<br>")
+
+cat("### **Functional enrichments of HCPC clusters using all genes**\n")
+plot(func_results$pca_data$all_genes$res.hcpc, choice="tree", title="")
+plot(func_results$pca_data$all_genes$res.hcpc,  axes=c(1,2), choice="map", draw.tree= FALSE)
+
+print_go_tables(pca_cl_all)
+cat("<br> This table shows the enrichment FDR of Gene ontology terms in gene contibution to HCPC clusters<br>")
+
+
+cat("### **Functional enrichments of PCs using only DEGs**\n")
+
+last_dim <- 1
+while (last_dim < func_results$pca_data$DEGs$dim_to_keep){
+	plot(FactoMineR::plot.PCA(func_results$pca_data$DEGs$pca_data, 
+		invisible = "quali", 
+		axes = c(last_dim, last_dim + 1), 
+		title = paste0(last_dim, " and ", last_dim + 1, " PCs")))
+	last_dim <- last_dim + 2
+} 
+
+print_go_tables(pca_enr_degs)
+cat("<br> This table shows the enrichment FDR of Gene ontology terms in gene contibution to PCs<br>")
+
+cat("### **Functional enrichments of HCPC clusters using only DEGs**\n")
+
+plot(func_results$pca_data$DEGs$res.hcpc, choice="tree", title="")
+plot(func_results$pca_data$DEGs$res.hcpc,  axes=c(1,2), choice="map", draw.tree= FALSE)
+
+print_go_tables(pca_cl_degs)
+
+cat("<br> This table shows the enrichment FDR of Gene ontology terms in gene contibution to HCPC clusters<br>")
+
+
+```
