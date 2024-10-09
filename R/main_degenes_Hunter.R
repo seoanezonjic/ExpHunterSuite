@@ -17,6 +17,7 @@
 #' @param minpack_common minimum of pack that must be significant to tag 
 #' a gene as significant
 #' @param model_variables custom model
+#' @param pseudocounts boolean, activate if the input contains pseudocounts
 #' @param numerics_as_factors transform numeric values to factors. Default: TRUE
 #' @param string_factors string factors for WGCNA
 #' @param numeric_factors numeric factors for WGCNA
@@ -46,6 +47,7 @@
 
 main_degenes_Hunter <- function(
     raw = NULL,
+    pseudocounts = FALSE,
     target = NULL,
     count_var_quantile = 0,
     external_DEA_data = NULL,
@@ -78,7 +80,7 @@ main_degenes_Hunter <- function(
     library_sizes = NULL
   ){
     modified_input_args <- check_input_main_degenes_Hunter(raw, 
-      minlibraries, reads, external_DEA_data, modules, model_variables,
+      minlibraries, pseudocounts,reads, external_DEA_data, modules, model_variables,
       active_modules, WGCNA_all, minpack_common, target, 
       string_factors, numeric_factors, multifactorial)
     modules <- modified_input_args[['modules']]
@@ -119,6 +121,7 @@ main_degenes_Hunter <- function(
     if (sum(numeric_factors == "") >= 1) numeric_factors <- NULL #esto esta para controlar que no haya elementos vacios
 
     string_factors <- split_str(string_factors, ",")
+
     string_factors <-  c("treat", string_factors)
 
     
@@ -238,14 +241,16 @@ main_degenes_Hunter <- function(
 
       #computing PCA for PREVALENT DEG
       prevalent_degs <- rownames(DE_all_genes[DE_all_genes$genes_tag == "PREVALENT_DEG",])
-      pca_deg_data <- default_norm$default
-      pca_deg_data <- pca_deg_data[rownames(pca_deg_data) %in% prevalent_degs,]
-      
-      PCA_res[["DEGs"]] <- compute_pca(pca_data = pca_deg_data,
-                            target = target,
-                            string_factors = string_factors, 
-                            numeric_factors = numeric_factors)
+      if (length(prevalent_degs) > 1) {
+        pca_deg_data <- default_norm$default
+        pca_deg_data <- pca_deg_data[rownames(pca_deg_data) %in% prevalent_degs,]
+        DEG_pca <- compute_pca(pca_data = pca_deg_data,
+                              target = target,
+                              string_factors = string_factors, 
+                              numeric_factors = numeric_factors)
+      }
     }
+    PCA_res[["DEGs"]] <- DEG_pca
 
     if(grepl("W", modules)) { # Check WGCNA was run and returned proper results
       DE_all_genes <- merge(by.x=0, by.y="ENSEMBL_ID", x= DE_all_genes, 
@@ -324,6 +329,7 @@ main_degenes_Hunter <- function(
 
 check_input_main_degenes_Hunter <- function(raw, 
                                             minlibraries, 
+                                            pseudocounts = FALSE,
                                             reads, 
                                             external_DEA_data, 
                                             modules, 
@@ -335,6 +341,10 @@ check_input_main_degenes_Hunter <- function(raw,
                                             string_factors, 
                                             numeric_factors,
                                             multifactorial){
+
+    if (pseudocounts) {
+      raw <- round(raw)
+    }
     if (minlibraries < 1){
       stop(cat(paste0("Minimum library number to check minimum read counts",
         " cannot be less than 1.\nIf you want to avoid filtering, set",
