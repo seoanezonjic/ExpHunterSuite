@@ -6,7 +6,6 @@
 \usage{
 main_degenes_Hunter(
   raw = NULL,
-  pseudocounts = FALSE,
   target = NULL,
   count_var_quantile = 0,
   external_DEA_data = NULL,
@@ -41,8 +40,6 @@ main_degenes_Hunter(
 }
 \arguments{
 \item{raw}{Dataframe with raw counts per sample and feature}
-
-\item{pseudocounts}{boolean, activate if the input contains pseudocounts}
 
 \item{target}{set with control and treatment information}
 
