@@ -97,26 +97,26 @@ FactoMineR::plot.PCA(pca_data, title = "")
 ```
 
 
-```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(numeric_factors)} 
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$numeric_factors)} 
 cat("#### **Representation of the variable contribution to the PCA axis 1 and 2**")
 
-factoextra::fviz_pca_var(pca_data, axes = c(1, 2),select.var = list(name=numeric_factors), col.var="steelblue", title="") +
+factoextra::fviz_pca_var(pca_data, axes = c(1, 2),select.var = list(name=plotter$hash_vars$numeric_factors), col.var="steelblue", title="") +
 		ggplot2::theme_minimal()
 
 ``` 
 
-```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = (dim_to_keep > 3 & !is.null(numeric_factors)) } 
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = (dim_to_keep > 3 & !is.null(plotter$hash_vars$numeric_factors)) } 
 cat("#### **Representation of the variable contribution to the PCA axis 3 and 4**")
 
-factoextra::fviz_pca_var(pca_data, axes = c(3, 4),select.var = list(name=numeric_factors), col.var="steelblue", title="") +
+factoextra::fviz_pca_var(pca_data, axes = c(3, 4),select.var = list(name=plotter$hash_vars$numeric_factors), col.var="steelblue", title="") +
 		ggplot2::theme_minimal()
 
 ``` 
 
 
-```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(numeric_factors)} 
+```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$numeric_factors)} 
 cat("#### **Representation of the individuals and the variable contribution to the PCA axis 1 and 2**")
-factoextra::fviz_pca_biplot(pca_data, repel = TRUE,select.var = list(name=numeric_factors), col.var="steelblue", title="") +
+factoextra::fviz_pca_biplot(pca_data, repel = TRUE,select.var = list(name=plotter$hash_vars$numeric_factors), col.var="steelblue", title="") +
 		ggplot2::theme_minimal()
 
 ```
@@ -138,7 +138,7 @@ Fisher's exact test is computed between clusters and experimental treats. Fisher
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'}
 
 all_factor_clusters <- data.frame()
-for (add_factor in string_factors) {
+for (add_factor in plotter$hash_vars$string_factors) {
 	clusters_ct <- ct_from_qual(res.hcpc$data.clust[,c("clust", add_factor)])
 	clusters_ct$sub <- paste(add_factor,clusters_ct$sub, sep = ":")
 	colnames(clusters_ct)[match(c("ref","sub"),colnames(clusters_ct))] <- c("Cluster","Category")
@@ -176,7 +176,7 @@ if (nrow(all_factor_clusters) > 0 ) {
 
 ```{r , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5}
 dim_data_quant <- dim_data_merged$quantitative
-dim_data_quant <- dim_data_quant[dim_data_quant$factor %in% numeric_factors,]
+dim_data_quant <- dim_data_quant[dim_data_quant$factor %in% plotter$hash_vars$numeric_factors,]
 if (nrow(dim_data_quant) > 0 ) {
 	dim_data_quant$dimension <- gsub("Dim.", "PC", dim_data_quant$dimension)
 	dim_data_quant$correlation <- round(dim_data_quant$correlation, digits = 2)

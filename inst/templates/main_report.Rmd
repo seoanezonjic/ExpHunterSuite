@@ -29,6 +29,10 @@ output:
   }   
 </style>
 
+```{r}
+  cat(plotter$create_title("Migrated Report", hlevel = 1, indexable = TRUE,
+                           id = "Migrated_Report"))
+```
 
 ```{r child=file.path(template_folder,"expression_qc.Rmd")}
 ```

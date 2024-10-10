@@ -2,12 +2,12 @@
 
 ### **First group of samples (to be referred to as control in the rest of the report)**
 ```{r control_table, echo = FALSE, warning=FALSE}
-	knitr::kable(index_control_cols, col.names="Sample Names:")
+	knitr::kable(plotter$hash_vars$index_control_cols, col.names="Sample Names:")
 ```
 
 ### **Second group of samples (to be referred to as treatment in the rest of the report)**
 ```{r treatment_table, echo = FALSE, warning=FALSE}
-	knitr::kable(index_treatmn_cols, col.names="Sample Names:")
+	knitr::kable(plotter$hash_vars$index_treatmn_cols, col.names="Sample Names:")
 
 ```
 
@@ -24,19 +24,19 @@ Note: A positive log fold change shows higher expression in the treatment group;
 DEgenes Hunter uses multiple DE detection packages to analyse all genes in the input count table and labels them accordingly:
 
 * **Filtered out:** Genes discarded during the filtering process as showing no or very low expression.
-* **Prevalent DEG:** Genes considered as differentially expressed (DE) by at least `r opt$minpack_common` packages, as specified by the `minpack_common` argument.
+* **Prevalent DEG:** Genes considered as differentially expressed (DE) by at least `r plotter$hash_vars$opt$minpack_common` packages, as specified by the `minpack_common` argument.
 * **Possible DEG:** Genes considered DE by at least one of the DE detection packages.
 * **Not DEG:** Genes not considered DE in any package.
 
-This barplot shows the total number of genes passing each stage of analysis - from the total number of genes in the input table of counts, to the genes surviving the expression filter, to the genes detected as DE by one package, to the genes detected by at least `r opt$minpack_common` packages.
+This barplot shows the total number of genes passing each stage of analysis - from the total number of genes in the input table of counts, to the genes surviving the expression filter, to the genes detected as DE by one package, to the genes detected by at least `r plotter$hash_vars$opt$minpack_common` packages.
 
 ```{r qc,echo = FALSE}
 # Create genes barplot
 barplot_df <- data.frame(total=c(
-		sum(DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG", "POSSIBLE_DEG", "NOT_DEG", "FILTERED_OUT")),
-		sum(DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG", "POSSIBLE_DEG", "NOT_DEG")),
-		sum(DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG", "POSSIBLE_DEG")),
-		sum(DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG"))
+		sum(plotter$hash_vars$DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG", "POSSIBLE_DEG", "NOT_DEG", "FILTERED_OUT")),
+		sum(plotter$hash_vars$DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG", "POSSIBLE_DEG", "NOT_DEG")),
+		sum(plotter$hash_vars$DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG", "POSSIBLE_DEG")),
+		sum(plotter$hash_vars$DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG"))
 		),
 	  gene_type=c("Total genes", "Genes passing expression filter", "DEGs considered possible or prevalent", "Prevalent DEGs")
 	)
@@ -58,9 +58,9 @@ This is the Venn Diagram of all possible DE genes (DEGs) according to at least o
 
 ```{r Venn_d, echo = FALSE, fig.height=12, fig.width=12}
 sets <- list()
-for(DEG_pack in DEG_pack_columns){
+for(DEG_pack in plotter$hash_vars$DEG_pack_columns){
 	pack <- unlist(strsplit(DEG_pack, split='_'))[1] # Get the name of the package
-	sets[[pack]] <- row.names(DE_all_genes)[which(DE_all_genes[,DEG_pack] == TRUE)] # 
+	sets[[pack]] <- row.names(plotter$hash_vars$DE_all_genes)[which(plotter$hash_vars$DE_all_genes[,DEG_pack] == TRUE)] # 
 }
 items <- unique(unlist(sets))
 
@@ -81,13 +81,13 @@ limma::vennDiagram(intersections, circle.col = grDevices::rainbow(length(sets)))
 var_thr <- 0.01
 ```
 
-```{r logFCplots, echo = FALSE, eval=(!grepl("F", opt$modules) && sum(grepl("logFC_", colnames(DE_all_genes))) > 1), results = "asis"}
+```{r logFCplots, echo = FALSE, eval=(!grepl("F", plotter$hash_vars$opt$modules) && sum(grepl("logFC_", colnames(plotter$hash_vars$DE_all_genes))) > 1), results = "asis"}
 
   cat(paste0("\n### **Plot showing variability between different DEG detection methods in terms of logFC calculation**"))
   cat(paste0("\nThis graph shows logFC calculated (y-axis) for each package (points) and gene (x-axis). Only genes with variability over ", var_thr, " will be plotted. This representation allows to user to observe the behaviour of each DE package and see if one of them has atypical results.\n"))
   cat(paste0("\nIf there are no genes showing sufficient variance in estimated logFC accross methods, no plot will be produced and a warning message will be given.\n\n"))
 
-  pp <- ht2logFCPlot(DE_all_genes, var_filter = var_thr, title = paste0("(variance threshold >= ",var_thr,")"))
+  pp <- ht2logFCPlot(plotter$hash_vars$DE_all_genes, var_filter = var_thr, title = paste0("(variance threshold >= ",var_thr,")"))
 	print(pp)
 ```
 
@@ -99,11 +99,11 @@ Benchmark of false positive calling:
 Boxplot of FDR values among all genes with an FDR <= 0.05 in at least one DE detection package
 
 ```{r FDR_plot, echo = FALSE}
-df <- DE_all_genes[DE_all_genes[, "genes_tag"] == "PREVALENT_DEG",]
-df <- df[final_FDR_names]
+df <- plotter$hash_vars$DE_all_genes[plotter$hash_vars$DE_all_genes[, "genes_tag"] == "PREVALENT_DEG",]
+df <- df[plotter$hash_vars$final_FDR_names]
 
 df$gene_names <- row.names(df)
-df_melted_FDR <- reshape2::melt(df, id.vars = "gene_names", measure.vars = final_FDR_names)
+df_melted_FDR <- reshape2::melt(df, id.vars = "gene_names", measure.vars = plotter$hash_vars$final_FDR_names)
 df_melted_FDR[,"package_name"] <- unlist(lapply(strsplit(as.character(df_melted_FDR[, "variable"]), split='_'), function(x) x[2])) # Ugly way to remove FDR_ from names
 
 if(dim(df)[1] == 0){
@@ -114,24 +114,24 @@ p_seguros_Int <- ggplot2::ggplot(df_melted_FDR, ggplot2::aes(x = package_name, y
     			 ggplot2::geom_boxplot(outlier.colour = grDevices::rgb(0, 0, 0, 0)) + 
 		         ggplot2::theme_bw(base_size = 30) + 
 		         ggplot2::geom_point(position = ggplot2::position_jitter(w = 0.1), color = "grey50", size = 1) + 
-		         ggplot2::geom_hline(ggplot2::aes(yintercept = opt$p_val_cutoff)) + 
+		         ggplot2::geom_hline(ggplot2::aes(yintercept = plotter$hash_vars$opt$p_val_cutoff)) + 
 		         ggplot2::ylab("1 - precision (FDR)") + 
 		         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)) + 
 		         ggplot2::xlab("") + 
 		         ggplot2::scale_colour_discrete(guide = "none") + 
-		         ggplot2::coord_cartesian(ylim = c(0, opt$p_val_cutoff))
+		         ggplot2::coord_cartesian(ylim = c(0, plotter$hash_vars$opt$p_val_cutoff))
 plot(p_seguros_Int)
 }
 ```
 
 ### **FDR Volcano Plot showing log 2 fold change vs. FDR**
-The red horizontal line represents the chosen FDR threshold of `r opt$p_val_cutoff`. The black lines represent
+The red horizontal line represents the chosen FDR threshold of `r plotter$hash_vars$opt$p_val_cutoff`. The black lines represent
 other values.
 
 
 ```{r FDR_volcano, echo = FALSE, warning=FALSE}
 
-volcano_DE_all_genes <- DE_all_genes
+volcano_DE_all_genes <- plotter$hash_vars$DE_all_genes
 volcano_DE_all_genes <- volcano_DE_all_genes[volcano_DE_all_genes$genes_tag != "FILTERED_OUT",]
 
 if (any(volcano_DE_all_genes$combined_FDR[!is.na(volcano_DE_all_genes$combined_FDR)] == 0)){
@@ -151,8 +151,8 @@ evp <- EnhancedVolcano::EnhancedVolcano(volcano_DE_all_genes,
 	y="combined_FDR",     
 	boxedLabels = TRUE,     
 	drawConnectors = TRUE,     
-	pCutoff = opt$p_val_cutoff,     
-	FCcutoff = opt$lfc,  
+	pCutoff = plotter$hash_vars$opt$p_val_cutoff,     
+	FCcutoff = plotter$hash_vars$opt$lfc,  
 	cutoffLineType = 3,
   ylab = bquote(~-Log[10] ~ italic(FDR)),
   title = NULL,
@@ -165,7 +165,7 @@ evp <- EnhancedVolcano::EnhancedVolcano(volcano_DE_all_genes,
 ) 
 
 fc_thresholds <- c(0.01, 0.05,0.1, 0.2)
-all_thresholds <- unique(c(opt$p_val_cutoff, fc_thresholds))
+all_thresholds <- unique(c(plotter$hash_vars$opt$p_val_cutoff, fc_thresholds))
 mean_wt = data.frame(FDR = all_thresholds, nlFDR = -log10(all_thresholds))
 
 evp <- evp +
@@ -175,17 +175,17 @@ plot(evp)
 ```
 
 
-```{r config_PCA_DEA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE, eval = !is.null(PCA_res$DEGs)}
+```{r config_PCA_DEA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE, eval = !is.null(plotter$hash_vars$PCA_res$DEGs)}
 
-pca_data <- PCA_res$DEGs$pca_data
-dim_to_keep <- PCA_res$DEGs$dim_to_keep
-dim_data <- PCA_res$DEGs$dim_data
-dim_data_merged <- PCA_res$DEGs$dim_data_merged
-res.hcpc <- PCA_res$DEGs$res.hcpc
+pca_data <- plotter$hash_vars$PCA_res$DEGs$pca_data
+dim_to_keep <- plotter$hash_vars$PCA_res$DEGs$dim_to_keep
+dim_data <- plotter$hash_vars$PCA_res$DEGs$dim_data
+dim_data_merged <- plotter$hash_vars$PCA_res$DEGs$dim_data_merged
+res.hcpc <- plotter$hash_vars$PCA_res$DEGs$res.hcpc
 
 ```
 
-```{r child=file.path(template_folder,"facto_miner.Rmd"), eval = !is.null(PCA_res$DEGs)}
+```{r child=file.path(template_folder,"facto_miner.Rmd"), eval = !is.null(plotter$hash_vars$PCA_res$DEGs)}
 
 ```
 
@@ -196,18 +196,18 @@ The complete results of the DEgenes Hunter differential expression analysis can 
 
 Various plots specific to each package are shown below:
 
-```{r DESeq2_conditional_block_sample_rank_head, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r DESeq2_conditional_block_sample_rank_head, eval="DESeq2" %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'}
 
 cat("### **DESeq2 size factor vs. sample rank**")
 ```
 
-```{r DESeq2_conditional_block_sample_rank_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, warning = FALSE, message = FALSE}
-	effective_lib_size <- DESeq2::sizeFactors(package_objects[['DESeq2']][['DESeq2_dataset']])
-	effective_lib_size <- effective_lib_size[match(coverage_df$sample_ID, names(effective_lib_size))] 
-	sample_rank <- coverage_df$sample_rank
+```{r DESeq2_conditional_block_sample_rank_plot, eval="DESeq2" %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, warning = FALSE, message = FALSE}
+	effective_lib_size <- DESeq2::sizeFactors(plotter$hash_vars$package_objects[['DESeq2']][['DESeq2_dataset']])
+	effective_lib_size <- effective_lib_size[match(plotter$hash_vars$coverage_df$sample_ID, names(effective_lib_size))] 
+	sample_rank <- plotter$hash_vars$coverage_df$sample_rank
 	size_vs_rank <- data.frame(sample_rank = sample_rank,
 								eff_lib_size = effective_lib_size)
-	if (!is.null(library_sizes)) {
+	if (!is.null(plotter$hash_vars$library_sizes)) {
 		xtitle="Sample Rank (total reads)"
 	} else {
 		xtitle="Sample Rank (total counts)"
@@ -223,24 +223,24 @@ cat("### **DESeq2 size factor vs. sample rank**")
 
 ```
 
-```{r DESeq2_conditional_block_sample_rank_text, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r DESeq2_conditional_block_sample_rank_text, eval="DESeq2" %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'}
 
 cat("The effective library size is the factor used by DESeq2 normalization algorithm for each sample. The effective library size must be dependent of raw library size.")
 ```
 
-```{r DESeq2_conditional_block_ELS_head, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r DESeq2_conditional_block_ELS_head, eval="DESeq2" %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'}
 
 cat("### **DESeq2 normalization effects**:
 
 This plot compares the effective library size with raw library size")
 ```
 
-```{r DESeq2_conditional_block_ELS_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, warning = FALSE, message = FALSE}
-	effective_lib_size <- DESeq2::sizeFactors(package_objects[['DESeq2']][['DESeq2_dataset']])
-	sums <- colSums(raw_filter)
+```{r DESeq2_conditional_block_ELS_plot, eval="DESeq2" %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, warning = FALSE, message = FALSE}
+	effective_lib_size <- DESeq2::sizeFactors(plotter$hash_vars$package_objects[['DESeq2']][['DESeq2_dataset']])
+	sums <- colSums(plotter$hash_vars$raw_filter)
 	norm_bias <- data.frame(sums = sums, 
 							eff_lib_size = effective_lib_size,
-							Treat = design_vector)
+							Treat = plotter$hash_vars$design_vector)
 	rownames(norm_bias) <- names(sums)
 
 	plot <- ggplot2::ggplot(norm_bias, ggplot2::aes(x = sums, y = eff_lib_size, group = Treat)) + 
@@ -258,13 +258,13 @@ This plot compares the effective library size with raw library size")
   
 ```
 
-```{r DESeq2_conditional_block_ELS_text, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r DESeq2_conditional_block_ELS_text, eval="DESeq2" %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'}
 
 cat("The effective library size is the factor used by DESeq2 normalization algorithm for each sample. The effective library size must be dependent of raw library size.")
 ```
 
 
-```{r DESeq2_conditional_block_ma_head, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r DESeq2_conditional_block_ma_head, eval='DESeq2' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'}
 
 cat("### **DESeq2 MA plot**:
 
@@ -272,11 +272,11 @@ This is the MA plot from DESeq2 package:")
 
 ```
 
-```{r DESeq2_conditional_block_ma_plot, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE}
-	DESeq2::plotMA(package_objects[['DESeq2']][['de_deseq2']], cex.lab=1.6, cex.axis=1.5)
+```{r DESeq2_conditional_block_ma_plot, eval='DESeq2' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE}
+	DESeq2::plotMA(plotter$hash_vars$package_objects[['DESeq2']][['de_deseq2']], cex.lab=1.6, cex.axis=1.5)
 ```
 
-```{r DESeq2_conditional_block_ma_text, eval='DESeq2' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r DESeq2_conditional_block_ma_text, eval='DESeq2' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'}
 
 	
 cat("In DESeq2, the MA-plot (log ratio versus abundance) shows the log2 fold changes are attributable to a given variable over the mean of normalized counts. Points will be colored red if the adjusted Pvalue is less than 0.1. Points which fall out of the window are plotted as open triangles pointing either up or down.
@@ -287,7 +287,7 @@ A table containing the DESeq2 normalized counts is provided in Results\\_DESeq2/
 
 ```
 
-```{r DESeq2_only_prev_norm_head, eval="DESeq2" %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r DESeq2_only_prev_norm_head, eval="DESeq2" %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'}
 
 cat("### **Differences between samples by PREVALENT DEGs normalized counts**:
 		
@@ -296,9 +296,9 @@ Counts of prevalent DEGs were normalizated by DESeq2 algorithm. This count were 
 
 ```
 
-```{r DESeq2_only_prev_norm_plot, eval="DESeq2" %in% names(all_counts_for_plotting), echo = FALSE, fig.height=12, fig.width=12}
+```{r DESeq2_only_prev_norm_plot, eval="DESeq2" %in% names(plotter$hash_vars$all_counts_for_plotting), echo = FALSE, fig.height=12, fig.width=12}
 	
-	DE_prevalent_genes <- rownames(DE_all_genes[DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG"),])
+	DE_prevalent_genes <- rownames(plotter$hash_vars$DE_all_genes[plotter$hash_vars$DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG"),])
 	if(length(DE_prevalent_genes) > 1){
 		deseq_prevalent_normalized <- deseq_normalized_data[rownames(deseq_normalized_data) %in% DE_prevalent_genes,]  
 		deseq_normalized_data_mtx <- log10(data.matrix(deseq_prevalent_normalized) + 1)
@@ -311,7 +311,7 @@ Counts of prevalent DEGs were normalizated by DESeq2 algorithm. This count were 
 ```
 
 
-```{r edgeR_conditional_block_head, eval='edgeR' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r edgeR_conditional_block_head, eval='edgeR' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'}
 
 cat("### **edgeR MA plot**
 
@@ -319,15 +319,15 @@ This is the MA plot from edgeR package:")
 
 ```
 
-```{r edgeR_conditional_block_plot, eval='edgeR' %in% names(all_counts_for_plotting), echo=FALSE}
+```{r edgeR_conditional_block_plot, eval='edgeR' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE}
 
-with(all_counts_for_plotting[['edgeR']], plot(logCPM, logFC, pch=20, main='edgeR: Fold change vs abundance', cex.lab=1.5, cex.axis=1.5))
-with(subset(all_counts_for_plotting[['edgeR']], FDR < opt$p_val_cutoff), points(logCPM, logFC, pch=20, col='red'))
+with(plotter$hash_vars$all_counts_for_plotting[['edgeR']], plot(logCPM, logFC, pch=20, main='edgeR: Fold change vs abundance', cex.lab=1.5, cex.axis=1.5))
+with(subset(plotter$hash_vars$all_counts_for_plotting[['edgeR']], FDR < plotter$hash_vars$opt$p_val_cutoff), points(logCPM, logFC, pch=20, col='red'))
 abline(h=c(-1,1), col='blue')
 	
 ```
 
-```{r edgeR_conditional_block_body, eval='edgeR' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r edgeR_conditional_block_body, eval='edgeR' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'}
 
 cat("Differential gene expression data can be visualized as MA-plots (log ratio versus abundance) where each dot represents a gene. The differentially expressed genes are colored red and the non-differentially expressed ones are colored black.
 
@@ -337,7 +337,7 @@ A table containing the edgeR normalized counts is provided in Results\\_edgeR/No
 
 ```
 
-```{r limma_conditional_block_head, eval='limma' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r limma_conditional_block_head, eval='limma' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'}
 
 cat("### **limma Volcano plot**
 
@@ -345,21 +345,21 @@ Volcano plot of log2-fold change versus -log10 of adjusted p-values for all gene
 
 ```
 
-```{r limma_conditional_block_plot, eval='limma' %in% names(all_counts_for_plotting), echo=FALSE, warning=FALSE}
+```{r limma_conditional_block_plot, eval='limma' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, warning=FALSE}
 
-limma_sig <- row.names(all_counts_for_plotting[['limma']]) %in% row.names(DE_all_genes[DE_all_genes$limma_DEG == TRUE, ]) + 1
-plot(x=all_counts_for_plotting[['limma']]$logFC, 
-	y=-log10(all_counts_for_plotting[['limma']]$adj.P.Val),
+limma_sig <- row.names(plotter$hash_vars$all_counts_for_plotting[['limma']]) %in% row.names(plotter$hash_vars$DE_all_genes[plotter$hash_vars$DE_all_genes$limma_DEG == TRUE, ]) + 1
+plot(x=plotter$hash_vars$all_counts_for_plotting[['limma']]$logFC, 
+	y=-log10(plotter$hash_vars$all_counts_for_plotting[['limma']]$adj.P.Val),
 	main= c('groupsB-groupsA'), xlab='logFC', ylab='-log10 adjusted p-value',
 	col=c('blue', 'red')[limma_sig],
 	pch=20,cex.lab=1.6, cex.axis=1.5)
-abline(v= opt$lfc, col='cyan')	
-abline(v= -(opt$lfc), col='cyan')	
-abline(h=-log10(opt$p_val_cutoff), col='red', lty='dashed')
+abline(v= plotter$hash_vars$opt$lfc, col='cyan')	
+abline(v= -(plotter$hash_vars$opt$lfc), col='cyan')	
+abline(h=-log10(plotter$hash_vars$opt$p_val_cutoff), col='red', lty='dashed')
 
 ```
 
-```{r limma_conditional_block_text, eval='limma' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r limma_conditional_block_text, eval='limma' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'}
 
 cat("A table containing the limma DEGs is provided in Results\\_limma/DEgenes\\_limma.txt")
 
@@ -367,7 +367,7 @@ cat("A table containing the limma DEGs is provided in Results\\_limma/DEgenes\\_
 cat("A table containing the limma normalized counts is provided in Results\\_limma/Normalized\\_counts\\_limma.txt")
 ```
 
-```{r NOISeq_conditional_block_head, eval='NOISeq' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r NOISeq_conditional_block_head, eval='NOISeq' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'}
 cat("### **NOISeq Expressionplot**
 
 This is the summary plot for (M,D) values (black) and the differentially expressed genes (red) from the NOISeq package (Image extracted from {'ExpressionPlot.pdf'} file):"
@@ -375,13 +375,13 @@ This is the summary plot for (M,D) values (black) and the differentially express
 )
 ```
 
-```{r NOISeq_conditional_block_plot, eval='NOISeq' %in% names(all_counts_for_plotting), echo=FALSE, warning=FALSE, message=FALSE, results='hide',}
-    q_value <- 1-opt$p_val_cutoff # Differential expression threshold for creating plot
-	NOISeq::DE.plot(package_objects[['NOISeq']], q = q_value, graphic = 'MD', cex.lab=1.4, cex.axis=1.4)
+```{r NOISeq_conditional_block_plot, eval='NOISeq' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, warning=FALSE, message=FALSE, results='hide',}
+    q_value <- 1-plotter$hash_vars$opt$p_val_cutoff # Differential expression threshold for creating plot
+	NOISeq::DE.plot(plotter$hash_vars$package_objects[['NOISeq']], q = q_value, graphic = 'MD', cex.lab=1.4, cex.axis=1.4)
 
 ```
 
-```{r NOISeq_conditional_block_text, eval='NOISeq' %in% names(all_counts_for_plotting), echo=FALSE, results='asis'}
+```{r NOISeq_conditional_block_text, eval='NOISeq' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'}
 
 cat("A table containing the NOISeq DEGs is provided in Results\\_NOISeq/DEgenes\\_NOISeq.txt.
 
@@ -398,10 +398,10 @@ Distributions of p-values, unadjusted and adjusted for multiple testing (FDR)
 
 ```{r pval_distr, echo = FALSE, warning = FALSE}
 
-df <- DE_all_genes[DE_all_genes$genes_tag != "FILTERED_OUT", ]
+df <- plotter$hash_vars$DE_all_genes[plotter$hash_vars$DE_all_genes$genes_tag != "FILTERED_OUT", ]
 df$gene_names <- row.names(df)
-df_melted_pval <- reshape2::melt(df, id.vars = "gene_names", measure.vars = final_FDR_names)
-df_melted_FDR <- reshape2::melt(df, id.vars = "gene_names", measure.vars = final_pvalue_names)
+df_melted_pval <- reshape2::melt(df, id.vars = "gene_names", measure.vars = plotter$hash_vars$final_FDR_names)
+df_melted_FDR <- reshape2::melt(df, id.vars = "gene_names", measure.vars = plotter$hash_vars$final_pvalue_names)
 # Now plot
 ggplot2::ggplot(df_melted_pval, ggplot2::aes(x=value)) + 
     ggplot2::geom_density() + ggplot2::facet_grid(. ~variable)
@@ -412,11 +412,11 @@ ggplot2::ggplot(df_melted_FDR, ggplot2::aes(x=value)) +
 ### **FDR Correlations**
 Correlations of adjusted p-values, adjusted for multiple testing (FDR) and for log Fold Change.
 
-```{r pval_corr, echo = FALSE, warning = FALSE, eval = length(all_counts_for_plotting) > 1}
+```{r pval_corr, echo = FALSE, warning = FALSE, eval = length(plotter$hash_vars$all_counts_for_plotting) > 1}
 
-PerformanceAnalytics::chart.Correlation(df[, c("combined_FDR", final_FDR_names)], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
-PerformanceAnalytics::chart.Correlation(df[, final_pvalue_names], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
-PerformanceAnalytics::chart.Correlation(df[, c("mean_logFCs", final_logFC_names)], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
+PerformanceAnalytics::chart.Correlation(df[, c("combined_FDR", plotter$hash_vars$final_FDR_names)], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
+PerformanceAnalytics::chart.Correlation(df[, plotter$hash_vars$final_pvalue_names], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
+PerformanceAnalytics::chart.Correlation(df[, c("mean_logFCs", plotter$hash_vars$final_logFC_names)], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
 
 ```
 
