@@ -66,6 +66,7 @@ write_expression_report <- function(exp_results,
                                            type_index = "menu")
     plotter$build(template)
     plotter$write_report(outf)
+    message(paste0("Report written in ", outf))
 }
 
 write_expression_data <- function(final_results, output_files){
