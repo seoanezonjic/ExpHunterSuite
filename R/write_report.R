@@ -24,38 +24,48 @@ write_expression_report <- function(exp_results,
         return(NULL)
     }
     if(is.null(opt)){ opt <- exp_results[['final_main_params']]}
-    final_main_params <- exp_results[['final_main_params']]
-    DEG_pack_columns <- exp_results[['DEG_pack_columns']] 
-    all_counts_for_plotting <- exp_results[['all_counts_for_plotting']] 
-    all_FDR_names <- exp_results[['all_FDR_names']]
-    all_LFC_names <- exp_results[['all_LFC_names']] 
-    all_pvalue_names <- exp_results[['all_pvalue_names']]
-    final_pvalue_names <- exp_results[['final_pvalue_names']]
-    final_logFC_names <- exp_results[['final_logFC_names']]
-    final_FDR_names <- exp_results[['final_FDR_names']]
-    package_objects <- exp_results[['package_objects']]
-    results_WGCNA <- exp_results[['WGCNA_all']]
-    index_control_cols <- exp_results[['index_control_cols']] 
-    index_treatmn_cols <- exp_results[['index_treatmn_cols']] 
-    raw_filter <- exp_results[['raw_filter']] 
-    design_vector <- exp_results[['design_vector']]
-    all_data_normalized <- exp_results[['all_data_normalized']] 
-    replicatesC <- exp_results[['replicatesC']] 
-    replicatesT <- exp_results[['replicatesT']] 
-    DE_all_genes <- exp_results[['DE_all_genes']]
-    final_results <- exp_results[['final_results']] 
-    var_filter <-  exp_results[['var_filter']] 
-    cpm_table <- exp_results[['cpm_table']]
-    coverage_df <- exp_results[['coverage_df']]
-    mean_counts_df <- exp_results[['mean_counts_df']]
-    exp_genes_df <- exp_results[['exp_genes_df']]
-    numeric_factors <- exp_results[["numeric_factors"]]
-    string_factors <- exp_results[["string_factors"]] 
-    PCA_res <- exp_results[["PCA_res"]]  
-    library_sizes <- exp_results[["library_sizes"]]
+    template <- file.path(template_folder, "main_report.Rmd")
+    tmp_folder <- "tmp_lib"
+    container <- list(opt = opt,
+    final_main_params = exp_results[['final_main_params']],
+    DEG_pack_columns = exp_results[['DEG_pack_columns']],
+    all_counts_for_plotting = exp_results[['all_counts_for_plotting']],
+    all_FDR_names = exp_results[['all_FDR_names']],
+    all_LFC_names = exp_results[['all_LFC_names']],
+    all_pvalue_names = exp_results[['all_pvalue_names']],
+    final_pvalue_names = exp_results[['final_pvalue_names']],
+    final_logFC_names = exp_results[['final_logFC_names']],
+    final_FDR_names = exp_results[['final_FDR_names']],
+    package_objects = exp_results[['package_objects']],
+    results_WGCNA = exp_results[['WGCNA_all']],
+    index_control_cols = exp_results[['index_control_cols']],
+    index_treatmn_cols = exp_results[['index_treatmn_cols']],
+    raw_filter = exp_results[['raw_filter']],
+    design_vector = exp_results[['design_vector']],
+    all_data_normalized = exp_results[['all_data_normalized']],
+    replicatesC = exp_results[['replicatesC']],
+    replicatesT = exp_results[['replicatesT']],
+    DE_all_genes = exp_results[['DE_all_genes']],
+    final_results = exp_results[['final_results']],
+    var_filter =  exp_results[['var_filter']],
+    cpm_table = exp_results[['cpm_table']],
+    coverage_df = exp_results[['coverage_df']],
+    mean_counts_df = exp_results[['mean_counts_df']],
+    exp_genes_df = exp_results[['exp_genes_df']],
+    numeric_factors = exp_results[["numeric_factors"]],
+    string_factors = exp_results[["string_factors"]],
+    PCA_res = exp_results[["PCA_res"]],
+    library_sizes = exp_results[["library_sizes"]])
+    
     outf <- file.path(normalizePath(output_files),"DEG_report.html")
-    rmarkdown::render(file.path(template_folder, 'main_report.Rmd'),
-                      output_file = outf, intermediates_dir = output_files)
+    plotter <- htmlreportR:::htmlReport$new(title_doc = "DEG_report", 
+                                           container = container,
+                                           tmp_folder = tmp_folder,
+                                           src = source_folder,
+                                           compress_obj = TRUE,
+                                           type_index = "menu")
+    plotter$build(template)
+    plotter$write_report(outf)
 }
 
 write_expression_data <- function(final_results, output_files){
