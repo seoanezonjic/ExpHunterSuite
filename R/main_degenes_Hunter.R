@@ -241,7 +241,7 @@ main_degenes_Hunter <- function(
 
       #computing PCA for PREVALENT DEG
       prevalent_degs <- rownames(DE_all_genes[DE_all_genes$genes_tag == "PREVALENT_DEG",])
-      if (length(prevalent_degs) > 1) {
+      if (length(prevalent_degs) > 2) {
         pca_deg_data <- default_norm$default
         pca_deg_data <- pca_deg_data[rownames(pca_deg_data) %in% prevalent_degs,]
         DEG_pca <- compute_pca(pca_data = pca_deg_data,
