@@ -360,6 +360,8 @@ multi_topGOTest <- function(funsys, genes_list, nodeSize = 5, org_db,
                                  p.value = result,
                                  topNodes = length(result@score), 
                                  format.FUN = function(x, dig, eps){x})
+    colnames(res_table)[6] <- "p.value"
+
     if(clean_parentals)
       res_table <- clean_topGO_parentals(res_table, funsys, p_value_cutoff)
     res_table$fdr <- p.adjust(res_table$p.value, method = "BH", n = length(res_table$p.value))
