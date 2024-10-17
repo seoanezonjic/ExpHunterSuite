@@ -1,7 +1,9 @@
 ```{r , echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 	print_go_tables <- function(all_enr) {
 		cat("\n\n\n<br>")
-		
+		if (any(sapply(all_enr, nrow) > 0 )) {
+
+
 		
 		 merged_df <- all_enr |>
 		 purrr::imap(~ rename_fdr_column(.x, .y)) |>
@@ -16,7 +18,9 @@
 		                      dom = 'lftBip',
 		                        buttons = c('copy', 'csv', 'excel')))
 				))
-			
+		} else {
+			cat("\nThere are not significant enrichments to show\n<br>")
+		}		
 	}
 
 	rename_fdr_column <- function(df, name) {
@@ -41,21 +45,21 @@ if (!is.null(func_results$pca_data$all_genes)){
 			last_dim <- last_dim + 2
 		} 
 
-		print_go_tables(pca_enr_all)
 		cat("<br> This table shows the enrichment FDR of Gene ontology terms in gene contibution to PCs<br>")
+		print_go_tables(pca_enr_all)
 
-		cat("### **Functional enrichments of HCPC clusters using all genes**\n")
+		cat("\n### **Functional enrichments of HCPC clusters using all genes**\n")
 		plot(func_results$pca_data$all_genes$res.hcpc, choice="tree", title="")
 		plot(func_results$pca_data$all_genes$res.hcpc,  axes=c(1,2), choice="map", draw.tree= FALSE)
 
-		print_go_tables(pca_cl_all)
 		cat("<br> This table shows the enrichment FDR of Gene ontology terms in gene contibution to HCPC clusters<br>")
+		print_go_tables(pca_cl_all)
 
 } else {
-	cat("PCA was not performed for all genes")
+	cat("PCA was not performed for all genes<br>\n")
 }
 
-cat("### **Functional enrichments of PCs using only DEGs**\n")
+cat("\n### **Functional enrichments of PCs using only DEGs**\n")
 
 if (!is.null(func_results$pca_data$DEGs)){
 
@@ -68,19 +72,19 @@ if (!is.null(func_results$pca_data$DEGs)){
 		last_dim <- last_dim + 2
 	} 
 
-	print_go_tables(pca_enr_degs)
 	cat("<br> This table shows the enrichment FDR of Gene ontology terms in gene contibution to PCs<br>")
+	print_go_tables(pca_enr_degs)
 
-	cat("### **Functional enrichments of HCPC clusters using only DEGs**\n")
+	cat("\n\n### **Functional enrichments of HCPC clusters using only DEGs**\n")
 
 	plot(func_results$pca_data$DEGs$res.hcpc, choice="tree", title="")
 	plot(func_results$pca_data$DEGs$res.hcpc,  axes=c(1,2), choice="map", draw.tree= FALSE)
 
+	cat("<br> This table shows the enrichment FDR of Gene ontology terms in gene contibution to HCPC clusters<br>")
 	print_go_tables(pca_cl_degs)
 
-	cat("<br> This table shows the enrichment FDR of Gene ontology terms in gene contibution to HCPC clusters<br>")
 } else {
-	cat("PCA was not performed for differentially expressed genes")
+	cat("PCA was not performed for differentially expressed genes<br>\n")
 }
 
 ```
