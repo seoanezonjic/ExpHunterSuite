@@ -99,7 +99,8 @@ current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$mode
 org_db <- get_org_db(current_organism_info)
 
 #Load universe
-if (is.null(opt$universe) || length(opt$universe) == 0){
+readable <-TRUE
+ if (is.null(opt$universe) || length(opt$universe) == 0){
   universe <- opt$universe
 }else if (file.exists(opt$universe)){
   universe <- read.table(opt$universe)[,1]
@@ -109,6 +110,8 @@ if (is.null(opt$universe) || length(opt$universe) == 0){
                                     output_id="ENTREZID",
                                     org_db = org_db, 
                                     just_output_ids=TRUE)
+  } else {
+    readable <- FALSE
   }
 }
 
@@ -149,7 +152,8 @@ ce_list <- main_clusters_to_enrichment(
   qvalcutoff = opt$qvalcutoff,
   all_custom_gmt = all_custom_gmt,
   kegg_data_file = kegg_data_file,
-  universe = universe
+  universe = universe,
+  readable = readable
 )
 enrichments_ORA <- ce_list[["enrichments_ORA"]]
 
