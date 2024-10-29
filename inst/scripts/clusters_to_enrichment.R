@@ -100,7 +100,10 @@ org_db <- get_org_db(current_organism_info)
 
 #Load universe
 readable <-TRUE
- if (is.null(opt$universe) || length(opt$universe) == 0){
+if (opt$gene_keytype == "")
+  readable <-FALSE
+
+if (is.null(opt$universe) || length(opt$universe) == 0){
   universe <- opt$universe
 }else if (file.exists(opt$universe)){
   universe <- read.table(opt$universe)[,1]
@@ -110,8 +113,6 @@ readable <-TRUE
                                     output_id="ENTREZID",
                                     org_db = org_db, 
                                     just_output_ids=TRUE)
-  } else {
-    readable <- FALSE
   }
 }
 
