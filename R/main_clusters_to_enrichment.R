@@ -30,7 +30,8 @@ main_clusters_to_enrichment <- function(
   qvalcutoff = 0.2,
   all_custom_gmt = NULL,
   kegg_data_file = NULL,
-  universe = NULL){
+  universe = NULL, 
+  readable = TRUE){
 
   gene_attributes <- NULL
   gene_attribute_name <- NULL
@@ -51,6 +52,7 @@ main_clusters_to_enrichment <- function(
     }
     names(cluster_genes_list) <- cluster_genes[,1]
 
+
     enrichments_ORA <- multienricher_ora(all_funsys =  all_funsys, 
                                   genes_list =  cluster_genes_list, 
                                   task_size = task_size, 
@@ -61,7 +63,7 @@ main_clusters_to_enrichment <- function(
                                   custom_sets = all_custom_gmt,
                                   kegg_file = kegg_data_file,
                                   universe = universe,
-                                  readable = FALSE)
+                                  readable = readable)
 
 
     save(enrichments_ORA, file = temp_file)

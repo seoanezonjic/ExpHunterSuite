@@ -343,27 +343,30 @@ multi_topGOTest <- function(funsys, genes_list, nodeSize = 5, org_db,
   # Create environment variables used for initialization of the topGOdata obj
   topGO::groupGOTerms()
   enriched_cats <- parallel_list(genes_list, function(l_genes) {
-  if(length(l_genes) == 0)
-    return(data.frame())
-  GOdata <- new("topGOdata",
-               ontology = funsys,
-               allGenes = l_genes,
-               nodeSize = nodeSize,
-               mapping = org_db,
-               geneSel = geneSel,
-               annotationFun = topGO::annFUN.org,
-               ID = gene_id)
-  
+    if(length(l_genes) == 0)
+      return(data.frame())
+    
+    GOdata <- new("topGOdata",
+                     ontology = funsys,
+                     allGenes = l_genes,
+                     nodeSize = nodeSize,
+                     mapping = org_db,
+                     geneSel = geneSel,
+                     annotationFun = topGO::annFUN.org,
+                     ID = gene_id)
+
+    if (length(GOdata@graph@nodes) == 0)
+      return(data.frame())
+
     result <- topGO::runTest(GOdata, algorithm = algorithm, 
     statistic = statistic, scoreOrder = scoreOrder)
     res_table <- topGO::GenTable(GOdata, 
                                  p.value = result,
                                  topNodes = length(result@score), 
                                  format.FUN = function(x, dig, eps){x})
-    colnames(res_table)[6] <- "p.value"
-
     if(clean_parentals)
       res_table <- clean_topGO_parentals(res_table, funsys, p_value_cutoff)
+    
     res_table$fdr <- p.adjust(res_table$p.value, method = "BH", n = length(res_table$p.value))
     res_table
   
