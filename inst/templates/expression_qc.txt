@@ -17,11 +17,17 @@ These plots will only be produced when the total number of samples to compare wi
 		PerformanceAnalytics::chart.Correlation(R = data_frame, histogram = TRUE, pch = 19, log = "xy")
 	}
 
-	custom_heatmap.2 <- function() {
+	custom_heatmap_cor <- function() {
 	    gplots::heatmap.2(x = data_frame, symm = TRUE, scale = "none",
 	    				  col = colorRampPalette(c("#FFFFCC", "#FD8D3C",
 	    				  						"#800026"))(20), trace = "none",
 	                      margins = rep(max(nchar(colnames(data_frame))), 2))
+  	}
+
+  	custom_heatmap_deseq <- function() {
+	    gplots::heatmap.2(x = data_frame, labRow = FALSE, dendrogram = "column",
+	    				  trace = "none", srtCol = 45, adjCol = c(1,1),
+	    				  col = colorRampPalette(c("#FFFFCC", "#FD8D3C", "#800026"))(20))
   	}
 
   	custom_coverage_plot <- function(input) {
@@ -40,111 +46,118 @@ These plots will only be produced when the total number of samples to compare wi
   		rownames(df) <- xAxis
   	}
 
+    make_top_n_expression_table <- function(count_data, n = 5) {
+	    top_n_index <- order(rowSums(count_data), decreasing=TRUE)[1:n]
+	    sample_totals <- colSums(count_data)
+	    top_n_count <- count_data[top_n_index, ]
+	    top_n_perc <- apply(top_n_count, 1,
+	    					function(x) round(x / sample_totals * 100, 3))
+	    return(top_n_perc)
+	}
+
 end.rcode-->
 
-# <!--begin.rcode corr_plot_control, echo = FALSE, fig.height=12, fig.width=12, eval=length(plotter$hash_vars$index_control_cols) <= 10, results='asis', warning = FALSE
+<!--begin.rcode corr_plot_control, echo = FALSE, fig.height=12, fig.width=12, eval=length(plotter$hash_vars$index_control_cols) <= 10, results='asis', warning = FALSE
 
-# 	cat("<h4> <strong>Correlation between control samples:</strong></h4>
-# 	Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.
-# 	")
+	cat("<h4> <strong>Correlation between control samples:</strong></h4>
+	Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.
+	")
 
-# 	plotter$hash_vars$raw_control <- plotter$hash_vars$raw_filter[plotter$hash_vars$index_control_cols]
-# 	cat(plotter$static_plot_main("raw_control", custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
-# end.rcode-->
+	plotter$hash_vars$raw_control <- plotter$hash_vars$raw_filter[plotter$hash_vars$index_control_cols]
+	cat(plotter$static_plot_main("raw_control", custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
+end.rcode-->
 
-# <!--begin.rcode corr_plot_treatment, echo = FALSE, fig.height=12, fig.width=12, eval=length(plotter$hash_vars$index_treatmn_cols) <= 10, results='asis', warning = FALSE
+<!--begin.rcode corr_plot_treatment, echo = FALSE, fig.height=12, fig.width=12, eval=length(plotter$hash_vars$index_treatmn_cols) <= 10, results='asis', warning = FALSE
 
-# cat("<h4> <strong>Correlation between treatment samples:</strong></h4>
-# Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.
-# ")
-# plotter$hash_vars$raw_treatment <- plotter$hash_vars$raw_filter[plotter$hash_vars$index_treatmn_cols]
-# cat(plotter$static_plot_main("raw_treatment", custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
+cat("<h4> <strong>Correlation between treatment samples:</strong></h4>
+Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.
+")
+plotter$hash_vars$raw_treatment <- plotter$hash_vars$raw_filter[plotter$hash_vars$index_treatmn_cols]
+cat(plotter$static_plot_main("raw_treatment", custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
 
-# end.rcode-->
-
-
-# <!--begin.rcode corr_plot_all , echo = FALSE, fig.height=12, fig.width=12, eval=length(plotter$hash_vars$index_control_cols) + length(plotter$hash_vars$index_treatmn_cols) <= 10, results='asis', warning = FALSE
+end.rcode-->
 
 
-# cat("<h4> <strong>Correlation between samples: All vs all replicates</strong></h4>
-# Correlation coefficients tend to be slightly higher between replicates from the same group than between replicates from different groups. If this is not the case, it may indicate mislabelling or other potential issues.
-# ")
+<!--begin.rcode corr_plot_all , echo = FALSE, fig.height=12, fig.width=12, eval=length(plotter$hash_vars$index_control_cols) + length(plotter$hash_vars$index_treatmn_cols) <= 10, results='asis', warning = FALSE
 
-# cat(plotter$static_plot_main("raw_filter", custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
+cat(plotter$create_title())
+cat("<h4> <strong>Correlation between samples: All vs all replicates</strong></h4>
+Correlation coefficients tend to be slightly higher between replicates from the same group than between replicates from different groups. If this is not the case, it may indicate mislabelling or other potential issues.
+")
 
-# end.rcode-->
+cat(plotter$static_plot_main("raw_filter", custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
 
-# <h3> <strong>Heatmap and clustering showing correlation between replicates</strong></h3>
-# <strong>BROWN: higher correlation; YELLOW: lower</strong>
+end.rcode-->
 
-# <!--begin.rcode heatmap_corr, eval=!"externalDEA" %in% names(plotter$hash_vars$all_counts_for_plotting), echo = FALSE, fig.height=12, fig.width=12
-# col <- colorRampPalette(c("#FFFFCC", "#FD8D3C", "#800026"))(20)
-# plotter$hash_vars$cor_filter <- cor(plotter$hash_vars$raw_filter)
-# cat(plotter$static_plot_main("cor_filter", custom_format = TRUE, plotting_function = custom_heatmap.2, plot_type = "autoplot"))	
-# end.rcode-->
+<h3> <strong>Heatmap and clustering showing correlation between replicates</strong></h3>
+<strong>BROWN: higher correlation; YELLOW: lower</strong>
 
-# <!--begin.rcode config_PCA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE
-# pca_data <- plotter$hash_vars$PCA_res$all_genes$pca_data
-# dim_to_keep <- plotter$hash_vars$PCA_res$all_genes$dim_to_keep
-# dim_data <- plotter$hash_vars$PCA_res$all_genes$dim_data
-# dim_data_merged <- plotter$hash_vars$PCA_res$all_genes$dim_data_merged
-# res.hcpc <- plotter$hash_vars$PCA_res$all_genes$res.hcpc
+<!--begin.rcode heatmap_corr, eval=!"externalDEA" %in% names(plotter$hash_vars$all_counts_for_plotting), echo = FALSE, fig.height=12, fig.width=12
+col <- colorRampPalette(c("#FFFFCC", "#FD8D3C", "#800026"))(20)
+plotter$hash_vars$cor_filter <- cor(plotter$hash_vars$raw_filter)
+cat(plotter$static_plot_main("cor_filter", custom_format = TRUE, plotting_function = custom_heatmap_cor, plot_type = "autoplot"))	
+end.rcode-->
 
-# end.rcode-->
+<!--begin.rcode config_PCA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE
+pca_data <- plotter$hash_vars$PCA_res$all_genes$pca_data
+dim_to_keep <- plotter$hash_vars$PCA_res$all_genes$dim_to_keep
+dim_data <- plotter$hash_vars$PCA_res$all_genes$dim_data
+dim_data_merged <- plotter$hash_vars$PCA_res$all_genes$dim_data_merged
+res.hcpc <- plotter$hash_vars$PCA_res$all_genes$res.hcpc
 
-# <!--begin.rcode child=file.path(template_folder,"facto_miner.Rmd")
+end.rcode-->
 
-# end.rcode-->
+<!--begin.rcode child=file.path(template_folder,"facto_miner.Rmd")
 
+end.rcode-->
 
+<h3> <strong>Visualizing normalization results</strong></h3>
 
-# <h3> <strong>Visualizing normalization results</strong></h3>
+These boxplots show the distributions of count data before and after normalization (shown for normalization method `r names(plotter$hash_vars$all_data_normalized)[1]`):
 
-# These boxplots show the distributions of count data before and after normalization (shown for normalization method `r names(plotter$hash_vars$all_data_normalized)[1]`):
+<h4> Representation of cpm unfiltered data:</h4>
 
-# <h4> Representation of cpm unfiltered data:</h4>
+<!--begin.rcode density_distribution_cpm, echo = FALSE, warning=FALSE
+cpm_no_zeros <- plotter$hash_vars$cpm_table[! rowSums(plotter$hash_vars$cpm_table) == 0, ]
+log2cpm <- log2(cpm_no_zeros + 1)
+cpm_long <- reshape2::melt(log2cpm, measure.vars=colnames(log2cpm))
 
-# <!--begin.rcode density_distribution_cpm, echo = FALSE, warning=FALSE
-# cpm_no_zeros <- plotter$hash_vars$cpm_table[! rowSums(plotter$hash_vars$cpm_table) == 0, ]
-# log2cpm <- log2(cpm_no_zeros + 1)
-# cpm_long <- reshape2::melt(log2cpm, measure.vars=colnames(log2cpm))
+ggplot2::ggplot(cpm_long, ggplot2::aes(x = value, colour=Var2)) + ggplot2::geom_density() +
+ggplot2::xlab(expression(log[2](cpm + 1))) +
+ggplot2::geom_vline(xintercept = log2( opt$reads + 1))
 
-# ggplot2::ggplot(cpm_long, ggplot2::aes(x = value, colour=Var2)) + ggplot2::geom_density() +
-# ggplot2::xlab(expression(log[2](cpm + 1))) +
-# ggplot2::geom_vline(xintercept = log2( opt$reads + 1))
+end.rcode-->
 
-# end.rcode-->
+<h4> Before normalization:</h4>
 
-# <h4> Before normalization:</h4>
+<!--begin.rcode density_distribution_raw, echo = FALSE, warning=FALSE
+log2raw_counts <- log2(plotter$hash_vars$raw_filter + 1)
+raw_long <- reshape2::melt(log2raw_counts, measure.vars=colnames(log2raw_counts))
 
-# <!--begin.rcode density_distribution_raw, echo = FALSE, warning=FALSE
-# log2raw_counts <- log2(plotter$hash_vars$raw_filter + 1)
-# raw_long <- reshape2::melt(log2raw_counts, measure.vars=colnames(log2raw_counts))
+ggplot2::ggplot(raw_long, ggplot2::aes(x = value, colour=variable)) + ggplot2::geom_density() +
+ggplot2::xlab(expression(log[2](count + 1)))
 
-# ggplot2::ggplot(raw_long, ggplot2::aes(x = value, colour=variable)) + ggplot2::geom_density() +
-# ggplot2::xlab(expression(log[2](count + 1)))
+end.rcode-->
 
-# end.rcode-->
+<h4> After normalization:</h4>
 
-# <h4> After normalization:</h4>
+<!--begin.rcode density_distribution_norm, echo = FALSE, warning=FALSE
 
-# <!--begin.rcode density_distribution_norm, echo = FALSE, warning=FALSE
+log2norm_counts <- log2(plotter$hash_vars$all_data_normalized[["default"]] + 1)
+norm_long <- reshape2::melt(log2norm_counts, measure.vars=colnames(log2norm_counts))
 
-# log2norm_counts <- log2(plotter$hash_vars$all_data_normalized[["default"]] + 1)
-# norm_long <- reshape2::melt(log2norm_counts, measure.vars=colnames(log2norm_counts))
+ggplot2::ggplot(norm_long, ggplot2::aes(x = value, colour=variable)) + ggplot2::geom_density() +
+ggplot2::xlab(expression(log[2](count + 1)))
 
-# ggplot2::ggplot(norm_long, ggplot2::aes(x = value, colour=variable)) + ggplot2::geom_density() +
-# ggplot2::xlab(expression(log[2](count + 1)))
+end.rcode-->
 
-# end.rcode-->
-
-# <!--begin.rcode coverage_plot_head, echo = FALSE, warning = FALSE, results='asis'
-# 	if (!is.null(plotter$hash_vars$library_sizes)) {
-# 		cat('#### <strong>Sample rank versus total reads in raw FASTQ</strong>')
-# 	}else{
-# 		cat('#### <strong>Sample rank versus total counts</strong>')
-# 	}
-# end.rcode-->
+<!--begin.rcode coverage_plot_head, echo = FALSE, warning = FALSE, results='asis'
+	if (!is.null(plotter$hash_vars$library_sizes)) {
+		cat('#### <strong>Sample rank versus total reads in raw FASTQ</strong>')
+	}else{
+		cat('#### <strong>Sample rank versus total counts</strong>')
+	}
+end.rcode-->
 
 <!--begin.rcode count_metrics_title
 	cat(plotter$create_title("Count metrics by sample ranks", id = "count_metrics_title",
@@ -247,21 +260,22 @@ All counts were normalizated by default (see options below) algorithm. This coun
 
 end.rcode-->
 
-<!--begin.rcode heatmap_all_norm_plot), echo = FALSE, fig.height=12, fig.width=12
-	col = colorRampPalette(c("#FFFFCC", "#FD8D3C", "#800026"))(20)
-		deseq_normalized_data <- plotter$hash_vars$all_data_normalized[['default']]
+<!--begin.rcode heatmap_all_norm_plot, echo = FALSE, fig.height=12, fig.width=12
+	cat(plotter$create_title("Sample differences by total normalized counts", id = "heatmap_norm",
+						 	 hlevel = 3, indexable = TRUE))
+	deseq_normalized_data <- plotter$hash_vars$all_data_normalized[['default']]
 	if (nrow(plotter$hash_vars$all_data_normalized[['default']]) <= 50000) { 
-		deseq_normalized_data_mtx <- log10(data.matrix(deseq_normalized_data) + 1)
-
-		plot <- gplots::heatmap.2(deseq_normalized_data_mtx, col = col, labRow = FALSE, dendrogram = "column", trace = "none", srtCol=45,  adjCol = c(1,1))
+		plotter$hash_vars$deseq_normalized_data_mtx <- log10(data.matrix(deseq_normalized_data) + 1)
+		cat(plotter$prettify_div(plotter$static_plot_main("deseq_normalized_data_mtx", custom_format = TRUE,
+								 plotting_function = custom_heatmap_deseq, plot_type = "autoplot"), preset = "magic"))
 	} else {
-		cat("\n\nThis plot can not be generated because more than 50 000 genes have passed the filters and it can cause memory problems.\n\n")
+		cat("<p>This plot cannot be generated because more than 50 000 genes have passed the filters, which can cause memory problems.</p>")
 	}
 
 end.rcode-->
 
 <!--begin.rcode top_n_expression, results='asis', echo=FALSE, warning=FALSE, message=FALSE
-	cat("\n\n### <strong>Percentages of reads per sample mapping to the most highly expressed genes</strong>\n\n")
-	make_top_n_expression_table(count_data=plotter$hash_vars$raw_filter, n=5)
-
+	cat(plotter$create_title("Percentages of reads per sample mapping to the most highly expressed genes",
+							 id = "pct_map", hlevel = 3, indexable = TRUE))
+	cat(plotter$table("raw_filter", header = NULL, row_names = NULL, styled = "dt", func = make_top_n_expression_table))
 end.rcode-->
