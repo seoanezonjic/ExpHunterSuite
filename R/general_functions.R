@@ -253,7 +253,7 @@ merge_factors <- function(table, target, factors) {
     return(table)
   }  
 
-  table <- merge(table, target[,factors, drop = FALSE], by = "row.names", all = TRUE)
+  table <- merge(table, target[,factors, drop = FALSE], by = "row.names", all.x = TRUE)
     row.names(table) <-  table[,"Row.names"]
     table[,"Row.names"] <- NULL 
     return(table)

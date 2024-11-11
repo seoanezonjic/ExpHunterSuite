@@ -49,6 +49,10 @@ plot_pca_qual <- function() {
 	plot(FactoMineR::plot.PCA(data_frame, title = ""))
 }
 
+plot_mca_qual <- function() {
+	plot(FactoMineR::plot.MCA(data_frame, title = "", invisible = "var"))
+}
+
 plot_pca_quant <- function(pca_data) {
 	factoextra::fviz_pca_var(pca_data, axes = c(1, 2),select.var = list(name=plotter$hash_vars$numeric_factors), col.var="steelblue", title="") +
 		ggplot2::theme_minimal()
@@ -59,6 +63,15 @@ plot_biplot_quant <- function(pca_data) {
 			ggplot2::theme_minimal()
 
 }
+
+plot_mca <- function(pca_data) {
+	factoextra::fviz_mca_ind(pca_data, repel = TRUE)
+}
+
+plot_mca_hab <- function(pca_data) {
+	factoextra::fviz_mca_ind(pca_data, repel = TRUE, habillage = "Task")
+}
+
 
 plot_hcpc <- function(){
  plot(data_frame , choice="tree", title="")
@@ -87,9 +100,9 @@ plot_cat_heat <- function(data_frame){
 
 ## inertia_plot
 inertia <- as.data.frame(plotter$hash_vars$pca_data$eig)[,c(2,3)]
-inertia$names <- factor(gsub("comp ", "PC", rownames(inertia)), levels= gsub("comp ", "PC", rownames(inertia)))
+inertia$names <- factor(gsub("dim ", "PC", rownames(inertia)), levels= gsub("dim ", "PC", rownames(inertia)))
 colnames(inertia) <- c("var", "cum_var", "names")
-inertia$sig <- ifelse(rownames(inertia) %in% paste("comp", seq(1, plotter$hash_vars$dim_to_keep)), "significant", "no_significant")
+inertia$sig <- ifelse(rownames(inertia) %in% paste("dim", seq(1, plotter$hash_vars$dim_to_keep)), "significant", "no_significant")
 plotter$hash_vars[["inertia"]] <- inertia
 
 ## pca_all
@@ -100,16 +113,19 @@ colnames(dims)[colnames(dims) %in% inertia$names] <- inertia$text[match(colnames
 dims$names <- rownames(dims)
 rownames(dims) <- NULL
 
-quali_sup <- plotter$hash_vars$pca_data$call$quali.sup$quali.sup
-quali_names <- as.list(colnames(quali_sup))
-names(quali_names) <- paste("dims",colnames(quali_sup), sep = "_")
-quali_sup$names <- rownames(quali_sup)
-all_dims <- lapply(quali_names, function(var) {
+if (!is.null(plotter$hash_vars$string_factors)) {
 
-	curr_dims <- merge(dims, quali_sup[,c("names",var)], by = "names")
+	quali_sup <- plotter$hash_vars$pca_data$call$X[,plotter$hash_vars$string_factors, drop = F]
+	quali_names <- as.list(colnames(quali_sup))
+	names(quali_names) <- paste("dims",colnames(quali_sup), sep = "_")
+	quali_sup$names <- rownames(quali_sup)
+	all_dims <- lapply(quali_names, function(var) {
 
-})
-plotter$hash_vars <- c(plotter$hash_vars, all_dims)
+		curr_dims <- merge(dims, quali_sup[,c("names",var)], by = "names")
+
+	})
+	plotter$hash_vars <- c(plotter$hash_vars, all_dims)
+}
 
 
 ## HCPC 
@@ -198,9 +214,15 @@ end.rcode-->
 end.rcode-->
 
 
-<!--begin.rcode main_pca_hab, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(target) 
+<!--begin.rcode main_pca_hab, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(target) && plotter$hash_vars$multivar_type == "pca"
 	cat("This is a simplificated plot of the samples displayed in the two main principal components. The color of the samples indicates their experimental condition.")
 	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca_hab))
+
+end.rcode-->
+
+<!--begin.rcode main_mca_hab, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(target) && plotter$hash_vars$multivar_type == "mca"
+	cat("This is a simplificated plot of the samples displayed in the two main principal components. The color of the samples indicates their experimental condition.")
+	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_mca_hab))
 
 end.rcode-->
 
@@ -218,7 +240,7 @@ cat("This section explore the relationship between supplementary categorical var
 end.rcode-->
 
 
-<!--begin.rcode qual_pca , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis',fig.width = 8, fig.height = 8, eval = !is.null(plotter$hash_vars$string_factors)
+<!--begin.rcode qual_pca , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis',fig.width = 8, fig.height = 8, eval = !is.null(plotter$hash_vars$string_factors) && plotter$hash_vars$multivar_type == "pca"
 
 	cat(plotter$create_title("<b> 3 Representation of the samples and the categories of qualitative variables in the two first dimension of PCA</b>", "main_pc_qual", 
 			hlevel = last_title + 2))
@@ -229,9 +251,23 @@ end.rcode-->
 end.rcode-->
 
 
+
+
+<!--begin.rcode qual_mca , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis',fig.width = 8, fig.height = 8, eval = !is.null(plotter$hash_vars$string_factors) && plotter$hash_vars$multivar_type == "mca"
+
+	cat(plotter$create_title("<b> 3 Representation of the samples and the categories of qualitative variables in the two first dimension of PCA</b>", "main_pc_qual", 
+			hlevel = last_title + 2))
+
+	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_mca_qual, plot_type = "autoplot" ))
+
+
+end.rcode-->
+
+
+
 <!--begin.rcode PCA_all, echo = FALSE,warning =FALSE, message=FALSE, results = 'asis', fig.width = 8, fig.height = 8, eval = !is.null(plotter$hash_vars$string_factors)
 	
-	cat(plotter$create_title("<b> 4 Comparison of significant dimensions significant dimensions</b>", "all_pc", 
+	cat(plotter$create_title("<b> 4 Comparison of significant dimensions </b>", "all_pc", 
 			hlevel = last_title + 2))
 	
 	cat("This plot compare the position of samples and their distribution in the significant dimensions. The color differenciate between the control (red) and treat (blue) samples.")
@@ -289,7 +325,7 @@ end.rcode-->
 
 
 
-<!--begin.rcode quant_pca , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$numeric_factors)
+<!--begin.rcode quant_pca , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$numeric_factors) && plotter$hash_vars$multivar_type == "pca"
 	
 	cat(plotter$create_title("<b>7 Representation of the variable contribution to the PCA axis 1 and 2</b>", "main_pc_quant", 
 			hlevel = last_title + 2))
@@ -297,11 +333,12 @@ end.rcode-->
 	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca_quant))
 
 end.rcode-->
+
  
 
 
 
-<!--begin.rcode biplot, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$numeric_factors)
+<!--begin.rcode biplot, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$numeric_factors)&& plotter$hash_vars$multivar_type == "pca"
 
 	cat(plotter$create_title("<b>8 Representation of the individuals and the variable contribution to the PCA axis 1 and 2</b>", "main_pc_quant", 
 			hlevel = last_title + 2))
@@ -309,6 +346,7 @@ end.rcode-->
 	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_biplot_quant))
 
 end.rcode-->
+
 
 <!--begin.rcode dim_quant , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5, eval = !is.null(plotter$hash_vars$numeric_factors)
 
@@ -339,7 +377,7 @@ end.rcode-->
 
 <!--begin.rcode HCPC , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
 
-	cat(plotter$create_title(paste0("<b>10 Hierarchical clustering of individuals using first", plotter$hash_vars$dim_to_keep, "significant PCA dimensions</b>"), "main_pc_quant", 
+	cat(plotter$create_title(paste0("<b>10 Hierarchical clustering of individuals using first ", plotter$hash_vars$dim_to_keep, " significant PCA dimensions</b>"), "main_pc_quant", 
 			hlevel = last_title + 2))
 
 	cat(plotter$static_plot_main(id = "res_hcpc",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_hcpc, plot_type = "autoplot" ))
