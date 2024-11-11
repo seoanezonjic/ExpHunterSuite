@@ -1,6 +1,27 @@
 #!/usr/bin/env Rscript
 
 
+render_pca_report <- function(multivar_res, output_files,template_folder, multivar_type) {
+  devtools::load_all("/mnt/home/users/bio_267_uma/josecordoba/software/htmlreportR")
+  source_folder <- find.package('htmlreportR')
+
+  if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' )
+    source_folder <- file.path(source_folder, "inst")
+
+  plotter <- htmlReport$new(title_doc = "PCA report", 
+                          container = c(multivar_res, list(multivar_type = multivar_type)), 
+                          tmp_folder = file.path(output_files, "tmp"),
+                          src = source_folder,
+                          compress_obj = FALSE,
+                          type_index = "menu")
+  
+  plotter$build(file.path(template_folder, 'main_PCA.txt'))
+  plotter$write_report(file.path(opt$output_files, "PCA_report.html"))
+}
+
+
+
+
 ############################################################
 ##                      SETUP PROGRAM                     ##
 ############################################################
@@ -37,12 +58,11 @@ option_list <- list(
   optparse::make_option(c("-o", "--output_files"), type="character", 
     default=file.path(getwd(), "results"),
     help="Output path. Default=%default"),
+   optparse::make_option(c("--supp_file"), type="character", default=NULL,
+    help="Additional file with supplementary variables"),
   optparse::make_option(c("-a", "--analysis_type"), type="character", 
     default="pca",
     help="Indicate which type of multivariate analysis must be performed. Default=%default"),
-    # optparse::make_option(c("-p", "--p_val_cutoff"), type="double", default=0.05,
-  #   help=paste0("Adjusted p-value cutoff for the differential expression",
-  #     " analysis. Default=%default")),
    optparse::make_option(c("-t", "--transpose"), type="logical", action = "store_true", 
     default=FALSE,
     help="If activated, rows are treated as variables and columns as samples."),
@@ -60,7 +80,10 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 
 input_file <- read.table(file.path(opt$input_file), header = TRUE, row.names = 1)
-
+target <- NULL 
+if (!is.null(opt$supp_file)) {
+  target <- read.table(opt$supp_file, header = TRUE)
+}
 if (!is.null(opt$add_quantitative_vars)) {
 	opt$add_quantitative_vars <- split_str(opt$add_quantitative_vars, ",")
 }
@@ -81,28 +104,25 @@ if (opt$analysis_type == "pca") {
 							transpose = opt$transpose,
 							string_factors = opt$add_qualitative_vars, 
 							numeric_factors = opt$add_quantitative_vars,
-							add_samples = opt$add_samples)
+							add_samples = opt$add_samples,
+              target = target)
+
+} else if (opt$analysis_type == "mca") {
+  pca_res <- compute_mca(mca_data = input_file,
+              transpose = opt$transpose,
+              string_factors = opt$add_qualitative_vars, 
+              numeric_factors = opt$add_quantitative_vars,
+              add_samples = opt$add_samples, 
+              target = target)
+}
 	pca_output <- file.path(opt$output_files, "PCA_results")
 	dir.create(pca_output)
-
+  save(pca_res, file = file.path(pca_output, "pca_tmp.rdata"))
 	write_general_pca(pca_res, pca_output)
+  write.table(pca_res$pca_data$var$eta2, file = file.path(pca_output, "pca_vars.txt"), quote = F, sep = "\t")
+  pca_res$string_factors <-opt$add_qualitative_vars
+  pca_res$numeric_factors <- opt$add_quantitative_vars
 
-  devtools::load_all("/mnt/home/users/bio_267_uma/josecordoba/software/htmlreportR")
-  source_folder <- find.package('htmlreportR')
+  render_pca_report(multivar_res = pca_res, output_files = opt$output_files, 
+                    template_folder = template_folder, multivar_type = opt$analysis_type)
 
-  if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' )
-    source_folder <- file.path(source_folder, "inst")
-
-    pca_res$string_factors <-opt$add_qualitative_vars
-    pca_res$numeric_factors <- opt$add_quantitative_vars
-    plotter <- htmlReport$new(title_doc = "PCA report", 
-                          container = pca_res, 
-                          tmp_folder = file.path(opt$output_files, "tmp"),
-                          src = source_folder,
-                          compress_obj = FALSE,
-                          type_index = "menu")
-  
-  plotter$build(file.path(template_folder, 'main_PCA.txt'))
-  plotter$write_report(file.path(opt$output_files, "PCA_report.html"))
-
-}

@@ -20,7 +20,7 @@ target <- plotter$hash_vars$target
 end.rcode-->
 
 
-<!--begin.rcode child=file.path(template_folder,"facto_miner.txt"), eval = opt$analysis_type == "pca"
+<!--begin.rcode child=file.path(template_folder,"facto_miner.txt")
 
 end.rcode-->
 
