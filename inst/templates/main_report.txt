@@ -29,7 +29,7 @@ output:
   }   
 </style>
 
-<!--begin.rcode child=file.path(template_folder,"expression_qc.txt")
+<!--begin.rcode expression_qc, child=file.path(template_folder,"expression_qc.txt")
 end.rcode-->
 
 # <!--begin.rcode child=file.path(template_folder,"dea_results.txt"), eval = any(grepl("[DENL]",opt$modules))

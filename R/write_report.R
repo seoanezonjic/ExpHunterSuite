@@ -24,8 +24,8 @@ write_expression_report <- function(exp_results,
         return(NULL)
     }
     if(is.null(opt)){ opt <- exp_results[['final_main_params']]}
-    template <- file.path(template_folder, "main_report.Rmd")
-    tmp_folder <- "tmp_lib"
+    template <- file.path(template_folder, "main_report.txt")
+    tmp_folder <- file.path(output_files, "tmp_lib")
     container <- list(opt = opt,
     final_main_params = exp_results[['final_main_params']],
     DEG_pack_columns = exp_results[['DEG_pack_columns']],
