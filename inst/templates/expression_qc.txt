@@ -1,17 +1,5 @@
 
-<h2> <strong>Data quality control (QC)</strong></h2>
-
-<h3> <strong>Correlation between samples:</strong></h3>
-
-Here we show scatterplots comparing expression levels for all genes between the different samples, for i) all controls, ii) all treatment samples and iii) for all samples together.
-
-These plots will only be produced when the total number of samples to compare within a group is less than or equal to 10.
-
-# <--begin.rcode setup
-
-# end.rcode-->
-
-<!--begin.rcode setup
+<!--begin.rcode setup_expression_qc
 
 	custom_PerformanceAnalytics <- function() {
 		PerformanceAnalytics::chart.Correlation(R = data_frame, histogram = TRUE, pch = 19, log = "xy")
@@ -55,113 +43,117 @@ These plots will only be produced when the total number of samples to compare wi
 	    return(top_n_perc)
 	}
 
+	plot_cpm_density <- function(ggplot_obj) { 
+	   ggplot_obj + ggplot2::aes(x = value, colour = variable) +
+	   ggplot2::geom_density() + ggplot2::xlab(expression(log[2](cpm + 1))) +
+	   ggplot2::geom_vline(xintercept = log2(opt$reads + 1))
+	}
+
 end.rcode-->
 
+<!--begin.rcode expression_qc_title
+	cat(plotter$create_title("Data quality control (QC)", id = "main_qc_title", hlevel = 2, indexable = TRUE))
+	cat(plotter$create_title("Correlation between samples", id = "corr_title", hlevel = 3, indexable = FALSE))
+end.rcode-->
+
+<p>Here we show scatterplots comparing expression levels for all genes between the different samples, for i) all controls, ii) all treatment samples and iii) for all samples together.
+These plots will only be produced when the total number of samples to compare within a group is less than or equal to 10.</p>
+
 <!--begin.rcode corr_plot_control, echo = FALSE, fig.height=12, fig.width=12, eval=length(plotter$hash_vars$index_control_cols) <= 10, results='asis', warning = FALSE
-
-	cat("<h4> <strong>Correlation between control samples:</strong></h4>
-	Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.
-	")
-
+  	cat(plotter$create_title("Correlation between control samples", id = "main_title", hlevel = 4,
+                            indexable = FALSE))
+  	cat("<p>Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.</p>")
 	plotter$hash_vars$raw_control <- plotter$hash_vars$raw_filter[plotter$hash_vars$index_control_cols]
 	cat(plotter$static_plot_main("raw_control", custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
 end.rcode-->
 
 <!--begin.rcode corr_plot_treatment, echo = FALSE, fig.height=12, fig.width=12, eval=length(plotter$hash_vars$index_treatmn_cols) <= 10, results='asis', warning = FALSE
-
-cat("<h4> <strong>Correlation between treatment samples:</strong></h4>
-Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.
-")
-plotter$hash_vars$raw_treatment <- plotter$hash_vars$raw_filter[plotter$hash_vars$index_treatmn_cols]
-cat(plotter$static_plot_main("raw_treatment", custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
-
+	cat(plotter$create_title("Correlation between treatment samples", id = "main_title", hlevel = 4,
+                         	 indexable = FALSE))
+	cat("<p>Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.</p>")
+	plotter$hash_vars$raw_treatment <- plotter$hash_vars$raw_filter[plotter$hash_vars$index_treatmn_cols]
+	cat(plotter$static_plot_main("raw_treatment", custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
 end.rcode-->
-
 
 <!--begin.rcode corr_plot_all , echo = FALSE, fig.height=12, fig.width=12, eval=length(plotter$hash_vars$index_control_cols) + length(plotter$hash_vars$index_treatmn_cols) <= 10, results='asis', warning = FALSE
-
-cat(plotter$create_title())
-cat("<h4> <strong>Correlation between samples: All vs all replicates</strong></h4>
-Correlation coefficients tend to be slightly higher between replicates from the same group than between replicates from different groups. If this is not the case, it may indicate mislabelling or other potential issues.
-")
-
-cat(plotter$static_plot_main("raw_filter", custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
-
+	cat(plotter$create_title("Correlation between samples: All vs all replicates", id = "corr_title",
+							 hlevel = 4, indexable = FALSE))
+	cat("<p>Correlation coefficients tend to be slightly higher between replicates from the same group than between
+		replicates from different groups. If this is not the case, it may indicate mislabelling or other
+		potential issues.</p>")
+	cat(plotter$static_plot_main("raw_filter", custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
 end.rcode-->
 
-<h3> <strong>Heatmap and clustering showing correlation between replicates</strong></h3>
-<strong>BROWN: higher correlation; YELLOW: lower</strong>
-
 <!--begin.rcode heatmap_corr, eval=!"externalDEA" %in% names(plotter$hash_vars$all_counts_for_plotting), echo = FALSE, fig.height=12, fig.width=12
-col <- colorRampPalette(c("#FFFFCC", "#FD8D3C", "#800026"))(20)
-plotter$hash_vars$cor_filter <- cor(plotter$hash_vars$raw_filter)
-cat(plotter$static_plot_main("cor_filter", custom_format = TRUE, plotting_function = custom_heatmap_cor, plot_type = "autoplot"))	
+	cat(plotter$create_title("Heatmap and clustering showing correlation between replicates", id = "heat_corr_title",
+							 hlevel = 3, indexable = TRUE))
+	cat("<p><strong>BROWN: higher correlation; YELLOW: lower correlation</strong></p>")
+	col <- colorRampPalette(c("#FFFFCC", "#FD8D3C", "#800026"))(20)
+	plotter$hash_vars$cor_filter <- cor(plotter$hash_vars$raw_filter)
+	cat(plotter$static_plot_main("cor_filter", custom_format = TRUE, plotting_function = custom_heatmap_cor, plot_type = "autoplot"))	
 end.rcode-->
 
 <!--begin.rcode config_PCA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE
-pca_data <- plotter$hash_vars$PCA_res$all_genes$pca_data
-dim_to_keep <- plotter$hash_vars$PCA_res$all_genes$dim_to_keep
-dim_data <- plotter$hash_vars$PCA_res$all_genes$dim_data
-dim_data_merged <- plotter$hash_vars$PCA_res$all_genes$dim_data_merged
-res.hcpc <- plotter$hash_vars$PCA_res$all_genes$res.hcpc
-
+	plotter$hash_vars$pca_data <- plotter$hash_vars$PCA_res$all_genes$pca_data
+	plotter$hash_vars$dim_to_keep <- plotter$hash_vars$PCA_res$all_genes$dim_to_keep
+	plotter$hash_vars$dim_data <- plotter$hash_vars$PCA_res$all_genes$dim_data
+	plotter$hash_vars$dim_data_merged <- plotter$hash_vars$PCA_res$all_genes$dim_data_merged
+	plotter$hash_vars$res.hcpc <- plotter$hash_vars$PCA_res$all_genes$res.hcpc
+	plotter$hash_vars$last_title <- 3
+	plotter$hash_vars$multivar_type <- "pca"
+	plotter$hash_vars$main_cat <- "treat"
 end.rcode-->
 
-<!--begin.rcode child=file.path(template_folder,"facto_miner.Rmd")
-
+<!--begin.rcode expression_pca
+	knitr::knit_expand(file = file.path(template_folder, "facto_miner.txt"))
 end.rcode-->
-
-<h3> <strong>Visualizing normalization results</strong></h3>
-
-These boxplots show the distributions of count data before and after normalization (shown for normalization method `r names(plotter$hash_vars$all_data_normalized)[1]`):
-
-<h4> Representation of cpm unfiltered data:</h4>
 
 <!--begin.rcode density_distribution_cpm, echo = FALSE, warning=FALSE
-cpm_no_zeros <- plotter$hash_vars$cpm_table[! rowSums(plotter$hash_vars$cpm_table) == 0, ]
-log2cpm <- log2(cpm_no_zeros + 1)
-cpm_long <- reshape2::melt(log2cpm, measure.vars=colnames(log2cpm))
-
-ggplot2::ggplot(cpm_long, ggplot2::aes(x = value, colour=Var2)) + ggplot2::geom_density() +
-ggplot2::xlab(expression(log[2](cpm + 1))) +
-ggplot2::geom_vline(xintercept = log2( opt$reads + 1))
-
+	cat(plotter$create_title("Visualizing normalization results", id = "density_title", hlevel = 3,
+							 indexable = TRUE))
+	cat(paste0("<p>These boxplots show the distributions of count data before and after normalization (shown for
+		normalization method", names(plotter$hash_vars$all_data_normalized)[1]))
+	cat(plotter$create_title("Representation of cpm unfiltered data", id = "cpm_repr", hlevel = 4,
+							 indexable = FALSE))
+	cpm_no_zeros <- plotter$hash_vars$cpm_table[!rowSums(plotter$hash_vars$cpm_table) == 0, ]
+	log2cpm <- log2(cpm_no_zeros + 1)
+	plotter$hash_vars$cpm_long <- reshape2::melt(log2cpm, measure.vars=colnames(log2cpm))
+	colnames(plotter$hash_vars$cpm_long)[2] <- "variable"
+	cat(plotter$prettify_div(plotter$static_ggplot_main("cpm_long", header = NULL, row_names = NULL,
+           plotting_function = plot_cpm_density), preset = "magic"))
 end.rcode-->
-
-<h4> Before normalization:</h4>
 
 <!--begin.rcode density_distribution_raw, echo = FALSE, warning=FALSE
-log2raw_counts <- log2(plotter$hash_vars$raw_filter + 1)
-raw_long <- reshape2::melt(log2raw_counts, measure.vars=colnames(log2raw_counts))
-
-ggplot2::ggplot(raw_long, ggplot2::aes(x = value, colour=variable)) + ggplot2::geom_density() +
-ggplot2::xlab(expression(log[2](count + 1)))
-
+	cat(plotter$create_title("Before normalization", id = "before_title", hlevel = 4,
+						     indexable = FALSE))
+	log2raw_counts <- log2(plotter$hash_vars$raw_filter + 1)
+	plotter$hash_vars$raw_long <- reshape2::melt(log2raw_counts, measure.vars=colnames(log2raw_counts))
+	cat(plotter$prettify_div(plotter$static_ggplot_main("raw_long", header = NULL, row_names = NULL,
+	        plotting_function = plot_cpm_density), preset = "magic"))
 end.rcode-->
 
-<h4> After normalization:</h4>
-
 <!--begin.rcode density_distribution_norm, echo = FALSE, warning=FALSE
-
-log2norm_counts <- log2(plotter$hash_vars$all_data_normalized[["default"]] + 1)
-norm_long <- reshape2::melt(log2norm_counts, measure.vars=colnames(log2norm_counts))
-
-ggplot2::ggplot(norm_long, ggplot2::aes(x = value, colour=variable)) + ggplot2::geom_density() +
-ggplot2::xlab(expression(log[2](count + 1)))
-
+	cat(plotter$create_title("After normalization", id = "after_title", hlevel = 4,
+						     indexable = FALSE))
+	log2norm_counts <- log2(plotter$hash_vars$all_data_normalized[["default"]] + 1)
+	plotter$hash_vars$norm_long <- reshape2::melt(log2norm_counts, measure.vars=colnames(log2norm_counts))
+	cat(plotter$prettify_div(plotter$static_ggplot_main("raw_long", header = NULL, row_names = NULL,
+	        plotting_function = plot_cpm_density), preset = "magic"))
 end.rcode-->
 
 <!--begin.rcode coverage_plot_head, echo = FALSE, warning = FALSE, results='asis'
-	if (!is.null(plotter$hash_vars$library_sizes)) {
-		cat('#### <strong>Sample rank versus total reads in raw FASTQ</strong>')
-	}else{
-		cat('#### <strong>Sample rank versus total counts</strong>')
-	}
+	cat(plotter$create_title("Count metrics by sample ranks", id = "count_metrics_title",
+		 hlevel = 2, indexable = TRUE))
 end.rcode-->
 
 <!--begin.rcode count_metrics_title
-	cat(plotter$create_title("Count metrics by sample ranks", id = "count_metrics_title",
-		hlevel = 2, indexable = TRUE))
+
+	if(!is.null(plotter$hash_vars$library_sizes)) {
+		title <- "Sample rank versus total reads in raw FASTQ"
+	}else{
+		title <- "Sample rank versus total counts"
+	}
+	cat(plotter$create_title(title, hlevel = 3, id = "coverage_plot_title", indexable = TRUE))
 end.rcode-->
 
 <!--begin.rcode coverage_plot, echo = FALSE, warning = FALSE
@@ -170,40 +162,36 @@ end.rcode-->
 		xtitle <- "Sample Rank (total reads)"
 		ytitle <- "Reads"
 		yAxis <- "total_reads"
+		count_fields <- c(1, 2, 4)
 	}else{
 		head <- "Sample rank versus total counts"
 		xtitle <- "Sample Rank (total counts)"
 		ytitle <- "Counts"
 		yAxis <- "total_counts"
+		count_fields <- 1:3
 	}
     cat(plotter$prettify_div(plotter$scatter2D(list(id = "coverage_df", text = "dynamic", header = NULL,
     						 row_names = TRUE, xAxis = "sample_rank", title = head, x_label = xtitle,
-    						 y_label = ytitle, text = FALSE)), preset = "magic"))
+    						 y_label = ytitle, fields = count_fields, text = FALSE)), preset = "magic"))
     cat(plotter$prettify_div(paste0("<p> Sample rank: the position a sample holds after sorting by total ",
     						 tolower(ytitle), ".</p>"), preset = "magic"))
 end.rcode-->
 
-<!--begin.rcode coverage_plot_frac_head, eval = !is.null(plotter$hash_vars$coverage_df$counted_frac),  echo = FALSE, warning = FALSE, results='asis'
-	cat('#### <strong>Fraction counts read sorted by rank</strong>')
-end.rcode-->
-
-<!--begin.rcode coverage_plot_frac, eval = !is.null(plotter$hash_vars$coverage_df$counted_frac),  echo = FALSE, warning = FALSE
-    ggplot2::ggplot(plotter$hash_vars$coverage_df, ggplot2::aes(x = sample_rank, y = counted_frac)) +
-        ggplot2::geom_point(size = 3) +
-        cowplot::theme_cowplot() +
-        cowplot::background_grid() +
-        ggplot2::labs(title = "Read Counts", x="Sample Rank (total reads)", y = "% counts read") +
-        ggplot2::ylim(c(0,NA)) +
-        ggplot2::scale_color_brewer(palette="Dark2")
+<!--begin.rcode coverage_plot_frac, eval = !is.null(plotter$hash_vars$coverage_df$counted_frac), echo = FALSE, warning = FALSE
+	cat(plotter$create_title("Fraction counts read sorted by rank", hlevel = 3, id = "coverage_frac_title",
+						     indexable = TRUE))
+    cat(plotter$prettify_div(plotter$scatter2D(list(id = "coverage_df", text = "dynamic", header = NULL,
+    						 row_names = TRUE, xAxis = "sample_rank", title = head, x_label = xtitle,
+    						 y_label = "% counts read", text = FALSE, fields = c(1, 3, 4))), preset = "magic"))
 end.rcode-->
 
 <!--begin.rcode coverage_plot_frac_text, eval = !is.null(plotter$hash_vars$coverage_df$counted_frac),  echo = FALSE, warning = FALSE, results='asis'
 	cat('Counted fraction is the percentage of reads that map to a gene (only available if total reads provided)')
 end.rcode-->
 
-<h3> <strong>Statistics of expressed genes</strong></h3>
-
 <!--begin.rcode exp_genes_plot, echo = FALSE, warning = FALSE
+    cat(plotter$create_title("Statistics of expressed genes", hlevel = 3, id = "mean_plot_title",
+   							 indexable = TRUE))
 	cat(plotter$prettify_div(plotter$line(list(id = "exp_genes_df", title = "Statistics of expressed genes",
 											   config = list(graphOrientation = 'vertical'), header = NULL,
 											   row_names = NULL, text = FALSE, smp_attr = 3,
@@ -216,28 +204,27 @@ all genes expressed in any sample up to current sample, expected to increase wit
 represents the cumulative intersection of expressed genes (sum of genes expressed in every sample up to current sample, expected
 to decrease with sample rank)</p>
 
-<h4> <strong>Mean count distribution by filter</strong></h4>
-
 <!--begin.rcode mean_counts_plot, echo = FALSE, warning = FALSE
-	   cat(plotter$prettify_div(plotter$static_ggplot_main("mean_counts_df", header = NULL, row_names = NULL,
-                                      plotting_function = function(ggplot_obj) { 
-       ggplot_obj + ggplot2::aes(x = counts, col = filter) +
-       ggplot2::geom_density(ggplot2::aes(y=..count..)) +
-						 ggplot2::scale_x_log10() +
-						 ggplot2::labs(x = "Mean counts per gene", y = "Frequency") +
-					     ggplot2::guides(col = ggplot2::guide_legend(title = NULL)) +
-					     ggplot2::scale_color_brewer(palette = "Paired") +
-					     cowplot::theme_cowplot() +
-					     ggplot2::theme(legend.position = "top", legend.justification="center",
-					           			legend.background = ggplot2::element_rect(color = NA))
-	   }), preset = "magic"))
+   cat(plotter$create_title("Mean count distribution by filter", hlevel = 4, id = "mean_plot_title",
+   							 indexable = FALSE))
+   cat(plotter$prettify_div(plotter$static_ggplot_main("mean_counts_df", header = NULL, row_names = NULL,
+                                  plotting_function = function(ggplot_obj) { 
+   ggplot_obj + ggplot2::aes(x = counts, col = filter) +
+   ggplot2::geom_density(ggplot2::aes(y=..count..)) +
+					 ggplot2::scale_x_log10() +
+					 ggplot2::labs(x = "Mean counts per gene", y = "Frequency") +
+				     ggplot2::guides(col = ggplot2::guide_legend(title = NULL)) +
+				     ggplot2::scale_color_brewer(palette = "Paired") +
+				     cowplot::theme_cowplot() +
+				     ggplot2::theme(legend.position = "top", legend.justification="center",
+				           			legend.background = ggplot2::element_rect(color = NA))
+   }), preset = "magic"))
+
+   cat("<p>This plot represents the mean counts distribution per gene, classified by filters</p>")
+   cat(plotter$create_title("Gene counts variance distribution", id = "counts_distr_title", hlevel = 3,
+   					       indexable = TRUE))
+   cat("<p> Variance of gene counts across samples are represented. Genes with lower variance than selected threshold (dashed grey line) were filtered out. </p>")
 end.rcode-->
-
-<p>This plot represents the mean counts distribution per gene, classified by filters</p>
-
-<h3> Gene counts variance distribution</h3>
-
-<p> Variance of gene counts across samples are represented. Genes with lower variance than selected threshold (dashed grey line) were filtered out. </p>
 
 <!--begin.rcode variance_dist, echo = FALSE, eval=!grepl("F", opt$modules), warning = FALSE, message = FALSE
 
@@ -254,15 +241,17 @@ end.rcode-->
 
 <!--begin.rcode all_norm_head, echo=FALSE, results='asis'
 
-cat("<h3> <strong>Samples differences by all counts normalized</strong>:</h3>
-		
-All counts were normalizated by default (see options below) algorithm. This count were scaled by log10 and plotted in a heatmap.")
+cat(plotter$create_title("Samples differences by all counts normalized", id = "all_norm_title", hlevel = 3,
+						 indexable = TRUE))
+
+cat("<p>All counts were normalizated by default (see options below) algorithm. These counts have been scaled by
+	log10 and plotted in a heatmap.</p>")
 
 end.rcode-->
 
 <!--begin.rcode heatmap_all_norm_plot, echo = FALSE, fig.height=12, fig.width=12
 	cat(plotter$create_title("Sample differences by total normalized counts", id = "heatmap_norm",
-						 	 hlevel = 3, indexable = TRUE))
+						 	 hlevel = 4, indexable = FALSE))
 	deseq_normalized_data <- plotter$hash_vars$all_data_normalized[['default']]
 	if (nrow(plotter$hash_vars$all_data_normalized[['default']]) <= 50000) { 
 		plotter$hash_vars$deseq_normalized_data_mtx <- log10(data.matrix(deseq_normalized_data) + 1)
