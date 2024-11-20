@@ -55,7 +55,8 @@ write_expression_report <- function(exp_results,
     numeric_factors = exp_results[["numeric_factors"]],
     string_factors = exp_results[["string_factors"]],
     PCA_res = exp_results[["PCA_res"]],
-    library_sizes = exp_results[["library_sizes"]])
+    library_sizes = exp_results[["library_sizes"]],
+    target = exp_results[["target"]])
     
     outf <- file.path(normalizePath(output_files),"DEG_report.html")
     plotter <- htmlreportR:::htmlReport$new(title_doc = "DEG_report", 
@@ -63,7 +64,7 @@ write_expression_report <- function(exp_results,
                                            tmp_folder = tmp_folder,
                                            src = source_folder,
                                            compress_obj = TRUE,
-                                           type_index = "menu")
+                                           type_index = "contents_list")
     plotter$build(template)
     plotter$write_report(outf)
     message(paste0("Report written in ", outf))
