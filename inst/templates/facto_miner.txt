@@ -1,5 +1,5 @@
 
-<!--begin.rcode setup
+<!--begin.rcode setup_facto_miner
 
 ### plotting_functions
 inertia_plot <- function(ggplot_obj) { 
@@ -15,25 +15,24 @@ inertia_plot <- function(ggplot_obj) {
 }
 
 pairs_plot_pca <- function(data_frame) {
-
-	pca_scatter <- function(data, mapping,...){
-		 p <- ggplot2::ggplot(data, mapping)  
-		 p$mapping$alpha <- NULL
-		 p$mapping$color <- p$mapping$fill
+	pca_scatter <- function(data, mapping, ...){
+		p <- ggplot2::ggplot(data, mapping)  
+		p$mapping$alpha <- NULL
+		p$mapping$color <- p$mapping$fill
 		p + ggplot2::geom_point() + 
 		ggplot2::geom_vline(xintercept = 0,  linetype="dashed")+ 
 		ggplot2::geom_hline(yintercept = 0,  linetype="dashed")
 	}
 	p <- GGally::ggpairs(data_frame, columns = seq(2, dim_to_keep +1),  
 		mapping = ggplot2::aes(fill = .data[[cual_var]], alpha = 0.5),
-		 lower = list(continuous = pca_scatter),
+		lower = list(continuous = pca_scatter),
 		upper = list(continuous = "blank"), 
 		switch = "both") + 
 		ggplot2::theme_bw() 
 		leg <- ggpubr::get_legend(p[1,1])
 		leg <- ggpubr::as_ggplot(leg)
-		p <- GGally::putPlot(p, leg, 1,dim_to_keep)
-	p[dim_to_keep, dim_to_keep] <- p[dim_to_keep, dim_to_keep] +ggplot2::coord_flip()
+		p <- GGally::putPlot(p, leg, 1, dim_to_keep)
+	p[dim_to_keep, dim_to_keep] <- p[dim_to_keep, dim_to_keep] + ggplot2::coord_flip()
   p
 }
 
@@ -42,7 +41,7 @@ plot_pca <- function(pca_data) {
 }
 
 plot_pca_hab <- function(pca_data) {
-	factoextra::fviz_pca_ind(pca_data, repel = TRUE, habillage = "Task")
+	factoextra::fviz_pca_ind(pca_data, repel = TRUE, habillage = main_cat)
 }
 
 plot_pca_qual <- function() {
@@ -69,7 +68,7 @@ plot_mca <- function(pca_data) {
 }
 
 plot_mca_hab <- function(pca_data) {
-	factoextra::fviz_mca_ind(pca_data, repel = TRUE, habillage = "Task")
+	factoextra::fviz_mca_ind(pca_data, repel = TRUE, habillage = main_cat)
 }
 
 
@@ -188,13 +187,13 @@ end.rcode-->
 ###################################################################################################################
 #######################################    OVERVIEW  ##############################################################
 cat(plotter$create_title("<b>Overview</b>", "overview", 
-			hlevel = last_title + 1, indexable = TRUE, clickable = FALSE, t_id = "overview", clickable_text =""))
+			hlevel = plotter$hash_vars$last_title + 1, indexable = TRUE, clickable = FALSE, t_id = "overview", clickable_text =""))
 cat("This section encompases a general overview of PCA application.")
 end.rcode-->
 
 <!--begin.rcode inertia_plot, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 4 
 	cat(plotter$create_title("<b>1 Inertia plot exploring variance explained by dimensions</b>", "inertia_plot", 
-			hlevel = last_title + 2))
+			hlevel = plotter$hash_vars$last_title + 2))
 	cat("Graphical representation of PCA dimensions. The bars represent the percentage of total variance that summarize each dimension. <br>
 The line measures the percentage of total variance accumulated in previous dimensions. The color distinguishes between significan or no significant dimensions. <br>
 Only significant dimensions will be considered in the following plots.<br>")
@@ -207,23 +206,23 @@ end.rcode-->
 <!--begin.rcode main_pca, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
 	
 	cat(plotter$create_title("<b>2 Representation of the samples in the two first dimension of PCA</b>", "main_pc", 
-		hlevel = last_title + 2))
+		hlevel = plotter$hash_vars$last_title + 2))
 	
 	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca))
 
 end.rcode-->
 
 
-<!--begin.rcode main_pca_hab, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(target) && plotter$hash_vars$multivar_type == "pca"
-	cat("This is a simplificated plot of the samples displayed in the two main principal components. The color of the samples indicates their experimental condition.")
-	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca_hab))
-
+<!--begin.rcode main_pca_hab, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$target) && plotter$hash_vars$multivar_type == "pca"
+	cat("This is a simplified plot of the samples displayed in the two main principal components. The color of the samples indicates their experimental condition.")
+	main_cat <- plotter$hash_vars$main_cat
+	cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_pca_hab))
 end.rcode-->
 
-<!--begin.rcode main_mca_hab, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(target) && plotter$hash_vars$multivar_type == "mca"
-	cat("This is a simplificated plot of the samples displayed in the two main principal components. The color of the samples indicates their experimental condition.")
-	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_mca_hab))
-
+<!--begin.rcode main_mca_hab, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$target) && plotter$hash_vars$multivar_type == "mca"
+	main_cat <- plotter$hash_vars$main_cat
+	cat("This is a simplified plot of the samples displayed in the two main principal components. The color of the samples indicates their experimental condition.")
+	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE, resizable = TRUE, plotting_function = plot_mca_hab))
 end.rcode-->
 
 
@@ -234,16 +233,16 @@ end.rcode-->
 #######################################    CATEGORICAL VARIABLES  #################################################
 
 cat(plotter$create_title("<b>Categorical variables</b>", "cat_var", 
-			hlevel = last_title + 1, indexable = TRUE, clickable = FALSE, t_id = "cat_var", clickable_text =""))
+			hlevel = plotter$hash_vars$last_title + 1, indexable = TRUE, clickable = FALSE, t_id = "cat_var", clickable_text =""))
 
 cat("This section explore the relationship between supplementary categorical variables (-S option), samples and principal components.")
 end.rcode-->
 
 
-<!--begin.rcode qual_pca , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis',fig.width = 8, fig.height = 8, eval = !is.null(plotter$hash_vars$string_factors) && plotter$hash_vars$multivar_type == "pca"
+<!--begin.rcode qual_pca, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis',fig.width = 8, fig.height = 8, eval = !is.null(plotter$hash_vars$string_factors) && plotter$hash_vars$multivar_type == "pca"
 
 	cat(plotter$create_title("<b> 3 Representation of the samples and the categories of qualitative variables in the two first dimension of PCA</b>", "main_pc_qual", 
-			hlevel = last_title + 2))
+			hlevel = plotter$hash_vars$last_title + 2))
 
 	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca_qual, plot_type = "autoplot" ))
 
@@ -253,12 +252,12 @@ end.rcode-->
 
 
 
-<!--begin.rcode qual_mca , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis',fig.width = 8, fig.height = 8, eval = !is.null(plotter$hash_vars$string_factors) && plotter$hash_vars$multivar_type == "mca"
+<!--begin.rcode qual_mca, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis',fig.width = 8, fig.height = 8, eval = !is.null(plotter$hash_vars$string_factors) && plotter$hash_vars$multivar_type == "mca"
 
 	cat(plotter$create_title("<b> 3 Representation of the samples and the categories of qualitative variables in the two first dimension of PCA</b>", "main_pc_qual", 
-			hlevel = last_title + 2))
+			hlevel = plotter$hash_vars$last_title + 2))
 
-	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_mca_qual, plot_type = "autoplot" ))
+	cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE , resizable = TRUE, plotting_function = plot_mca_qual, plot_type = "autoplot" ))
 
 
 end.rcode-->
@@ -268,7 +267,7 @@ end.rcode-->
 <!--begin.rcode PCA_all, echo = FALSE,warning =FALSE, message=FALSE, results = 'asis', fig.width = 8, fig.height = 8, eval = !is.null(plotter$hash_vars$string_factors)
 	
 	cat(plotter$create_title("<b> 4 Comparison of significant dimensions </b>", "all_pc", 
-			hlevel = last_title + 2))
+			hlevel = plotter$hash_vars$last_title + 2))
 	
 	cat("This plot compare the position of samples and their distribution in the significant dimensions. The color differenciate between the control (red) and treat (blue) samples.")
 	dim_to_keep <- plotter$hash_vars$dim_to_keep 
@@ -283,7 +282,7 @@ end.rcode-->
 <!--begin.rcode dim_qual , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5, eval = !is.null(plotter$hash_vars$string_factors)
 
 	cat(plotter$create_title("<b>5 Representation of R2 and P value of qualitative factors and PCA dimensions</b>", "main_pc_quant", 
-			hlevel = last_title + 2))
+			hlevel = plotter$hash_vars$last_title + 2))
 
 
 	if (nrow(plotter$hash_vars$dim_data_qual) >0 ) {
@@ -297,7 +296,7 @@ end.rcode-->
 <!--begin.rcode dim_cat , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5, eval = !is.null(plotter$hash_vars$string_factors)
 
 	cat(plotter$create_title("<b>6 Representation of estimated coordinated from barycentre and P value of qualitative factors and PCA dimensions</b>", "main_pc_quant", 
-			hlevel = last_title + 2))
+			hlevel = plotter$hash_vars$last_title + 2))
 
 	if (nrow(plotter$hash_vars$dim_data_cat) > 0 ) {
 		cat(plotter$static_plot_main(id = "dim_data_cat",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_cat_heat))
@@ -318,7 +317,7 @@ end.rcode-->
 #######################################    NUMERIC VARIABLES  #################################################
 
 cat(plotter$create_title("<b>Numerical variables</b>", "num_var", 
-			hlevel = last_title + 1, indexable = TRUE, clickable = FALSE, t_id = "num_var", clickable_text =""))
+			hlevel = plotter$hash_vars$last_title + 1, indexable = TRUE, clickable = FALSE, t_id = "num_var", clickable_text =""))
 
 cat("This section explore the relationship between supplementary quantitative variables (-N option), samples and principal components.")
 end.rcode-->
@@ -328,7 +327,7 @@ end.rcode-->
 <!--begin.rcode quant_pca , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$numeric_factors) && plotter$hash_vars$multivar_type == "pca"
 	
 	cat(plotter$create_title("<b>7 Representation of the variable contribution to the PCA axis 1 and 2</b>", "main_pc_quant", 
-			hlevel = last_title + 2))
+			hlevel = plotter$hash_vars$last_title + 2))
 	
 	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca_quant))
 
@@ -341,7 +340,7 @@ end.rcode-->
 <!--begin.rcode biplot, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$numeric_factors)&& plotter$hash_vars$multivar_type == "pca"
 
 	cat(plotter$create_title("<b>8 Representation of the individuals and the variable contribution to the PCA axis 1 and 2</b>", "main_pc_quant", 
-			hlevel = last_title + 2))
+			hlevel = plotter$hash_vars$last_title + 2))
 
 	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_biplot_quant))
 
@@ -351,7 +350,7 @@ end.rcode-->
 <!--begin.rcode dim_quant , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5, eval = !is.null(plotter$hash_vars$numeric_factors)
 
 	cat(plotter$create_title("9 Representation of correlation and P value of numeric factors and PCA dimensions", "main_pc_quant", 
-		hlevel = last_title + 2))
+		hlevel = plotter$hash_vars$last_title + 2))
 
 	if (nrow(plotter$hash_vars$dim_data_quant) > 0 ) {
 		cat(plotter$static_plot_main(id = "dim_data_quant",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_quant_heat))
@@ -368,7 +367,7 @@ end.rcode-->
 #######################################    HCPC  ##################################################################
 
 cat(plotter$create_title("<b>HCPC</b>", "hcpc", 
-			hlevel = last_title + 1, indexable = TRUE, clickable = FALSE, t_id = "hcpc", clickable_text =""))
+			hlevel = plotter$hash_vars$last_title + 1, indexable = TRUE, clickable = FALSE, t_id = "hcpc", clickable_text =""))
 
 cat("This section explore the groups of samples based on Hierarchical Clustering on Principal Components (HCPC) and the relationship of the clusters with supplementary variables.")
 end.rcode-->
@@ -378,7 +377,7 @@ end.rcode-->
 <!--begin.rcode HCPC , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
 
 	cat(plotter$create_title(paste0("<b>10 Hierarchical clustering of individuals using first ", plotter$hash_vars$dim_to_keep, " significant PCA dimensions</b>"), "main_pc_quant", 
-			hlevel = last_title + 2))
+			hlevel = plotter$hash_vars$last_title + 2))
 
 	cat(plotter$static_plot_main(id = "res_hcpc",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_hcpc, plot_type = "autoplot" ))
 
@@ -388,7 +387,7 @@ end.rcode-->
 <!--begin.rcode HCPC_map , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
 
 	cat(plotter$create_title(paste0("<b>11 PCA representation of 1 and 2 axis with individuals coloured by its cluster membership. The first ", plotter$hash_vars$dim_to_keep, "significant PCA dimensions are used for HCPC</b>"), "main_pc_quant", 
-			hlevel = last_title + 2))
+			hlevel = plotter$hash_vars$last_title + 2))
 
 	cat(plotter$static_plot_main(id = "res_hcpc",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_hcpc_map, plot_type = "autoplot" ))
 
@@ -399,7 +398,7 @@ end.rcode-->
 <!--begin.rcode cluster_string , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
 
 	cat(plotter$create_title("12 Relationship between HCPC clusters and experiment design", "main_pc_quant", 
-			hlevel = last_title + 2))
+			hlevel = plotter$hash_vars$last_title + 2))
 
 	cat("Fisher's exact test is computed between clusters and experimental treats. Fisher's exact test P values and FDR are showed.<br>")
 
@@ -412,12 +411,3 @@ end.rcode-->
 
 	}
 end.rcode-->
-
-
-
-
-
-
-<br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br>
