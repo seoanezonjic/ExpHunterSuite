@@ -1,12 +1,3 @@
----
-title: "ExpHunterSuite: Differential Expression Report"
-output:
-  html_document:
-    toc: true
-    toc_float: true
-    df_print: paged
-    fig_width: 12
----
 
 <style type='text/css'>
     body .main-container {
@@ -29,23 +20,28 @@ output:
   }   
 </style>
 
-<!--begin.rcode expression_qc, child=file.path(template_folder,"expression_qc.txt")
+<!--begin.rcode main_title
+  cat(plotter$create_title("ExpHunterSuite: Differential Expression Report", id = "main_title", hlevel = 1,
+                            indexable = FALSE))
 end.rcode-->
 
-# <!--begin.rcode child=file.path(template_folder,"dea_results.txt"), eval = any(grepl("[DENL]",opt$modules))
-# end.rcode--> 
+<!--begin.rcode expression_qc, child=file.path(template_folder, "expression_qc.txt")
+end.rcode-->
 
-# <!--begin.rcode child=file.path(template_folder,"WGCNA_results.txt"), eval = grepl("W", opt$modules)
-# end.rcode--> 
- 
-# <!--begin.rcode child=file.path(template_folder,"diffcoexp_results.txt"), eval = grepl("X", opt$modules)
-# end.rcode--> 
- 
-# <!--begin.rcode child=file.path(template_folder,"PCIT_results.txt"), eval = grepl("P", opt$modules)
-# end.rcode--> 
+<!--begin.rcode child=file.path(template_folder,"dea_results.txt"), eval = any(grepl("[DENL]", opt$modules))
+end.rcode--> 
 
-# <h3> <strong>Values of options used to run DEGenesHunter</strong></h3>
-# First column contains the option names; second column contains the given values for each option in this run.
-# <!--begin.rcode opt_vals, echo = FALSE, warning = FALSE
-# knitr::kable(cbind(opt))
-# end.rcode-->
+<!--begin.rcode child=file.path(template_folder,"WGCNA_results.txt"), eval = grepl("W", opt$modules)
+end.rcode--> 
+ 
+<!--begin.rcode child=file.path(template_folder,"diffcoexp_results.txt"), eval = grepl("X", opt$modules)
+end.rcode--> 
+ 
+<!--begin.rcode child=file.path(template_folder,"PCIT_results.txt"), eval = grepl("P", opt$modules)
+end.rcode--> 
+
+<h3> <strong>Values of options used to run DEGenesHunter</strong></h3>
+First column contains the option names; second column contains the given values for each option in this run.
+<!--begin.rcode opt_vals, echo = FALSE, warning = FALSE
+knitr::kable(cbind(opt))
+end.rcode-->
