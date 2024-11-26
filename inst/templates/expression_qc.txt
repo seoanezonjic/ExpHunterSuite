@@ -93,7 +93,7 @@ end.rcode-->
 	cat(plotter$static_plot_main("cor_filter", custom_format = TRUE, plotting_function = custom_heatmap_cor, plot_type = "autoplot"))	
 end.rcode-->
 
-<!--begin.rcode config_PCA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE
+<!--begin.rcode config_expression_PCA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE
 	plotter$hash_vars$pca_data <- plotter$hash_vars$PCA_res$all_genes$pca_data
 	plotter$hash_vars$dim_to_keep <- plotter$hash_vars$PCA_res$all_genes$dim_to_keep
 	plotter$hash_vars$dim_data <- plotter$hash_vars$PCA_res$all_genes$dim_data
@@ -102,10 +102,12 @@ end.rcode-->
 	plotter$hash_vars$last_title <- 3
 	plotter$hash_vars$multivar_type <- "pca"
 	plotter$hash_vars$main_cat <- "treat"
+	called_from <- "expression_qc"
 end.rcode-->
 
 <!--begin.rcode expression_pca
-	knitr::knit_expand(file = file.path(template_folder, "facto_miner.txt"))
+	child <- knitr::knit_expand(file.path(template_folder, "facto_miner.txt"))
+	cat(knitr::knit_child(text = child, quiet = TRUE), sep = "\n")
 end.rcode-->
 
 <!--begin.rcode density_distribution_cpm, echo = FALSE, warning=FALSE
@@ -266,5 +268,5 @@ end.rcode-->
 <!--begin.rcode top_n_expression, results='asis', echo=FALSE, warning=FALSE, message=FALSE
 	cat(plotter$create_title("Percentages of reads per sample mapping to the most highly expressed genes",
 							 id = "pct_map", hlevel = 3, indexable = TRUE))
-	cat(plotter$table("raw_filter", header = NULL, row_names = NULL, styled = "dt", func = make_top_n_expression_table))
+	cat(plotter$table(list(id = "raw_filter", header = NULL, row_names = NULL, styled = "dt", func = make_top_n_expression_table)))
 end.rcode-->
