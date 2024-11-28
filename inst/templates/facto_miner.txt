@@ -186,13 +186,13 @@ end.rcode-->
 <!--begin.rcode {{called_from}}_overview
 ###################################################################################################################
 #######################################    OVERVIEW  ##############################################################
-cat(plotter$create_title("<b>Overview</b>", "overview", 
+cat(plotter$create_title("<strong>Overview</strong>", "overview", 
 			hlevel = plotter$hash_vars$last_title + 1, indexable = TRUE, clickable = FALSE, t_id = "overview", clickable_text =""))
 cat("This section encompases a general overview of PCA application.")
 end.rcode-->
 
 <!--begin.rcode {{called_from}}_inertia_plot, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 4 
-	cat(plotter$create_title("<b>1 Inertia plot exploring variance explained by dimensions</b>", "inertia_plot", 
+	cat(plotter$create_title("<strong>1 Inertia plot exploring variance explained by dimensions</strong>", "inertia_plot", 
 			hlevel = plotter$hash_vars$last_title + 2))
 	cat("Graphical representation of PCA dimensions. The bars represent the percentage of total variance that summarize each dimension. <br>
 The line measures the percentage of total variance accumulated in previous dimensions. The color distinguishes between significan or no significant dimensions. <br>
@@ -205,7 +205,7 @@ end.rcode-->
 
 <!--begin.rcode {{called_from}}_main_pca, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
 	
-	cat(plotter$create_title("<b>2 Representation of the samples in the two first dimension of PCA</b>", "main_pc", 
+	cat(plotter$create_title("<strong>2 Representation of the samples in the two first dimension of PCA</strong>", "main_pc", 
 		hlevel = plotter$hash_vars$last_title + 2))
 	
 	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca))
@@ -232,16 +232,16 @@ end.rcode-->
 ###################################################################################################################
 #######################################    CATEGORICAL VARIABLES  #################################################
 
-cat(plotter$create_title("<b>Categorical variables</b>", "cat_var", 
+cat(plotter$create_title("<strong>Categorical variables</strong>", "cat_var", 
 			hlevel = plotter$hash_vars$last_title + 1, indexable = TRUE, clickable = FALSE, t_id = "cat_var", clickable_text =""))
 
-cat("This section explore the relationship between supplementary categorical variables (-S option), samples and principal components.")
+cat("<p>This section explore the relationship between supplementary categorical variables (-S option), samples and principal components.</p>")
 end.rcode-->
 
 
 <!--begin.rcode {{called_from}}_qual_pca, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis',fig.width = 8, fig.height = 8, eval = !is.null(plotter$hash_vars$string_factors) && plotter$hash_vars$multivar_type == "pca"
 
-	cat(plotter$create_title("<b> 3 Representation of the samples and the categories of qualitative variables in the two first dimension of PCA</b>", "main_pc_qual", 
+	cat(plotter$create_title("<strong> 3 Representation of the samples and the categories of qualitative variables in the two first dimension of PCA</strong>", "main_pc_qual", 
 			hlevel = plotter$hash_vars$last_title + 2))
 
 	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca_qual, plot_type = "autoplot" ))
@@ -254,7 +254,7 @@ end.rcode-->
 
 <!--begin.rcode {{called_from}}_qual_mca, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis',fig.width = 8, fig.height = 8, eval = !is.null(plotter$hash_vars$string_factors) && plotter$hash_vars$multivar_type == "mca"
 
-	cat(plotter$create_title("<b> 3 Representation of the samples and the categories of qualitative variables in the two first dimension of PCA</b>", "main_pc_qual", 
+	cat(plotter$create_title("<strong> 3 Representation of the samples and the categories of qualitative variables in the two first dimension of PCA</strong>", "main_pc_qual", 
 			hlevel = plotter$hash_vars$last_title + 2))
 
 	cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE , resizable = TRUE, plotting_function = plot_mca_qual, plot_type = "autoplot" ))
@@ -266,7 +266,7 @@ end.rcode-->
 
 <!--begin.rcode {{called_from}}_PCA_all, echo = FALSE,warning =FALSE, message=FALSE, results = 'asis', fig.width = 8, fig.height = 8, eval = !is.null(plotter$hash_vars$string_factors)
 	
-	cat(plotter$create_title("<b> 4 Comparison of significant dimensions </b>", "all_pc", 
+	cat(plotter$create_title("<strong> 4 Comparison of significant dimensions </strong>", "all_pc", 
 			hlevel = plotter$hash_vars$last_title + 2))
 	
 	cat("This plot compare the position of samples and their distribution in the significant dimensions. The color differenciate between the control (red) and treat (blue) samples.")
@@ -281,7 +281,7 @@ end.rcode-->
 
 <!--begin.rcode {{called_from}}_dim_qual , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5, eval = !is.null(plotter$hash_vars$string_factors)
 
-	cat(plotter$create_title("<b>5 Representation of R2 and P value of qualitative factors and PCA dimensions</b>", "main_pc_quant", 
+	cat(plotter$create_title("<strong>5 Representation of R2 and P value of qualitative factors and PCA dimensions</strong>", "main_pc_quant", 
 			hlevel = plotter$hash_vars$last_title + 2))
 
 
@@ -295,7 +295,7 @@ end.rcode-->
 
 <!--begin.rcode {{called_from}}_dim_cat , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5, eval = !is.null(plotter$hash_vars$string_factors)
 
-	cat(plotter$create_title("<b>6 Representation of estimated coordinated from barycentre and P value of qualitative factors and PCA dimensions</b>", "main_pc_quant", 
+	cat(plotter$create_title("<strong>6 Representation of estimated coordinated from barycentre and P value of qualitative factors and PCA dimensions</strong>", "main_pc_quant", 
 			hlevel = plotter$hash_vars$last_title + 2))
 
 	if (nrow(plotter$hash_vars$dim_data_cat) > 0 ) {
@@ -316,7 +316,7 @@ end.rcode-->
 ###################################################################################################################
 #######################################    NUMERIC VARIABLES  #################################################
 
-cat(plotter$create_title("<b>Numerical variables</b>", "num_var", 
+cat(plotter$create_title("<strong>Numerical variables</strong>", "num_var", 
 			hlevel = plotter$hash_vars$last_title + 1, indexable = TRUE, clickable = FALSE, t_id = "num_var", clickable_text =""))
 
 cat("This section explore the relationship between supplementary quantitative variables (-N option), samples and principal components.")
@@ -326,7 +326,7 @@ end.rcode-->
 
 <!--begin.rcode {{called_from}}_quant_pca , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$numeric_factors) && plotter$hash_vars$multivar_type == "pca"
 	
-	cat(plotter$create_title("<b>7 Representation of the variable contribution to the PCA axis 1 and 2</b>", "main_pc_quant", 
+	cat(plotter$create_title("<strong>7 Representation of the variable contribution to the PCA axis 1 and 2</strong>", "main_pc_quant", 
 			hlevel = plotter$hash_vars$last_title + 2))
 	
 	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca_quant))
@@ -339,7 +339,7 @@ end.rcode-->
 
 <!--begin.rcode {{called_from}}_biplot, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$numeric_factors)&& plotter$hash_vars$multivar_type == "pca"
 
-	cat(plotter$create_title("<b>8 Representation of the individuals and the variable contribution to the PCA axis 1 and 2</b>", "main_pc_quant", 
+	cat(plotter$create_title("<strong>8 Representation of the individuals and the variable contribution to the PCA axis 1 and 2</strong>", "main_pc_quant", 
 			hlevel = plotter$hash_vars$last_title + 2))
 
 	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_biplot_quant))
@@ -366,7 +366,7 @@ end.rcode-->
 ###################################################################################################################
 #######################################    HCPC  ##################################################################
 
-cat(plotter$create_title("<b>HCPC</b>", "hcpc", 
+cat(plotter$create_title("<strong>HCPC</strong>", "hcpc", 
 			hlevel = plotter$hash_vars$last_title + 1, indexable = TRUE, clickable = FALSE, t_id = "hcpc", clickable_text =""))
 
 cat("This section explore the groups of samples based on Hierarchical Clustering on Principal Components (HCPC) and the relationship of the clusters with supplementary variables.")
@@ -376,7 +376,7 @@ end.rcode-->
 
 <!--begin.rcode {{called_from}}_HCPC , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
 
-	cat(plotter$create_title(paste0("<b>10 Hierarchical clustering of individuals using first ", plotter$hash_vars$dim_to_keep, " significant PCA dimensions</b>"), "main_pc_quant", 
+	cat(plotter$create_title(paste0("<strong>10 Hierarchical clustering of individuals using first ", plotter$hash_vars$dim_to_keep, " significant PCA dimensions</strong>"), "main_pc_quant", 
 			hlevel = plotter$hash_vars$last_title + 2))
 
 	cat(plotter$static_plot_main(id = "res_hcpc",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_hcpc, plot_type = "autoplot" ))
@@ -386,7 +386,7 @@ end.rcode-->
 
 <!--begin.rcode {{called_from}}_HCPC_map , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
 
-	cat(plotter$create_title(paste0("<b>11 PCA representation of 1 and 2 axis with individuals coloured by its cluster membership. The first ", plotter$hash_vars$dim_to_keep, "significant PCA dimensions are used for HCPC</b>"), "main_pc_quant", 
+	cat(plotter$create_title(paste0("<strong>11 PCA representation of 1 and 2 axis with individuals coloured by its cluster membership. The first ", plotter$hash_vars$dim_to_keep, "significant PCA dimensions are used for HCPC</strong>"), "main_pc_quant", 
 			hlevel = plotter$hash_vars$last_title + 2))
 
 	cat(plotter$static_plot_main(id = "res_hcpc",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_hcpc_map, plot_type = "autoplot" ))
@@ -397,7 +397,7 @@ end.rcode-->
 
 <!--begin.rcode {{called_from}}_cluster_string , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
 
-	cat(plotter$create_title("12 Relationship between HCPC clusters and experiment design", "main_pc_quant", 
+	cat(plotter$create_title("<strong>12 Relationship between HCPC clusters and experiment design</strong>", "main_pc_quant", 
 			hlevel = plotter$hash_vars$last_title + 2))
 
 	cat("Fisher's exact test is computed between clusters and experimental treats. Fisher's exact test P values and FDR are showed.<br>")
