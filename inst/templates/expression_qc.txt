@@ -64,7 +64,7 @@ These plots will only be produced when the total number of samples to compare wi
                             indexable = FALSE))
   	cat("<p>Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.</p>")
 	plotter$hash_vars$raw_control <- plotter$hash_vars$raw_filter[plotter$hash_vars$index_control_cols]
-	cat(plotter$static_plot_main("raw_control", custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
+	cat(plotter$prettify_div(plotter$static_plot_main("raw_control", resizable = TRUE, custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"), preset = "magic"))
 end.rcode-->
 
 <!--begin.rcode corr_plot_treatment, echo = FALSE, fig.height=12, fig.width=12, eval=length(plotter$hash_vars$index_treatmn_cols) <= 10, results='asis', warning = FALSE
@@ -72,7 +72,7 @@ end.rcode-->
                          	 indexable = FALSE))
 	cat("<p>Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.</p>")
 	plotter$hash_vars$raw_treatment <- plotter$hash_vars$raw_filter[plotter$hash_vars$index_treatmn_cols]
-	cat(plotter$static_plot_main("raw_treatment", custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
+	cat(plotter$prettify_div(plotter$static_plot_main("raw_treatment", resizable = TRUE, custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"), preset = "magic"))
 end.rcode-->
 
 <!--begin.rcode corr_plot_all , echo = FALSE, fig.height=12, fig.width=12, eval=length(plotter$hash_vars$index_control_cols) + length(plotter$hash_vars$index_treatmn_cols) <= 10, results='asis', warning = FALSE
@@ -81,7 +81,7 @@ end.rcode-->
 	cat("<p>Correlation coefficients tend to be slightly higher between replicates from the same group than between
 		replicates from different groups. If this is not the case, it may indicate mislabelling or other
 		potential issues.</p>")
-	cat(plotter$static_plot_main("raw_filter", custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
+	cat(plotter$prettify_div(plotter$static_plot_main("raw_filter", resizable = TRUE, custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"), preset = "magic"))
 end.rcode-->
 
 <!--begin.rcode heatmap_corr, eval=!"externalDEA" %in% names(plotter$hash_vars$all_counts_for_plotting), echo = FALSE, fig.height=12, fig.width=12
@@ -90,7 +90,7 @@ end.rcode-->
 	cat("<p><strong>BROWN: higher correlation; YELLOW: lower correlation</strong></p>")
 	col <- colorRampPalette(c("#FFFFCC", "#FD8D3C", "#800026"))(20)
 	plotter$hash_vars$cor_filter <- cor(plotter$hash_vars$raw_filter)
-	cat(plotter$static_plot_main("cor_filter", custom_format = TRUE, plotting_function = custom_heatmap_cor, plot_type = "autoplot"))	
+	cat(plotter$prettify_div(plotter$static_plot_main("cor_filter", resizable = TRUE, custom_format = TRUE, plotting_function = custom_heatmap_cor, plot_type = "autoplot"), preset = "maigic"))
 end.rcode-->
 
 <!--begin.rcode config_expression_PCA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE
@@ -121,7 +121,7 @@ end.rcode-->
 	log2cpm <- log2(cpm_no_zeros + 1)
 	plotter$hash_vars$cpm_long <- reshape2::melt(log2cpm, measure.vars=colnames(log2cpm))
 	colnames(plotter$hash_vars$cpm_long)[2] <- "variable"
-	cat(plotter$prettify_div(plotter$static_ggplot_main("cpm_long", header = NULL, row_names = NULL,
+	cat(plotter$prettify_div(plotter$static_ggplot_main("cpm_long", resizable = TRUE, header = NULL, row_names = NULL,
            plotting_function = plot_cpm_density), preset = "magic"))
 end.rcode-->
 
@@ -130,7 +130,7 @@ end.rcode-->
 						     indexable = FALSE))
 	log2raw_counts <- log2(plotter$hash_vars$raw_filter + 1)
 	plotter$hash_vars$raw_long <- reshape2::melt(log2raw_counts, measure.vars=colnames(log2raw_counts))
-	cat(plotter$prettify_div(plotter$static_ggplot_main("raw_long", header = NULL, row_names = NULL,
+	cat(plotter$prettify_div(plotter$static_ggplot_main("raw_long", resizable = TRUE, header = NULL, row_names = NULL,
 	        plotting_function = plot_cpm_density), preset = "magic"))
 end.rcode-->
 
@@ -139,7 +139,7 @@ end.rcode-->
 						     indexable = FALSE))
 	log2norm_counts <- log2(plotter$hash_vars$all_data_normalized[["default"]] + 1)
 	plotter$hash_vars$norm_long <- reshape2::melt(log2norm_counts, measure.vars=colnames(log2norm_counts))
-	cat(plotter$prettify_div(plotter$static_ggplot_main("raw_long", header = NULL, row_names = NULL,
+	cat(plotter$prettify_div(plotter$static_ggplot_main("raw_long", resizable = TRUE, header = NULL, row_names = NULL,
 	        plotting_function = plot_cpm_density), preset = "magic"))
 end.rcode-->
 
@@ -209,7 +209,7 @@ to decrease with sample rank)</p>
 <!--begin.rcode mean_counts_plot, echo = FALSE, warning = FALSE
    cat(plotter$create_title("Mean count distribution by filter", hlevel = 4, id = "mean_plot_title",
    							 indexable = FALSE))
-   cat(plotter$prettify_div(plotter$static_ggplot_main("mean_counts_df", header = NULL, row_names = NULL,
+   cat(plotter$prettify_div(plotter$static_ggplot_main("mean_counts_df", resizable = TRUE, header = NULL, row_names = NULL,
                                   plotting_function = function(ggplot_obj) { 
    ggplot_obj + ggplot2::aes(x = counts, col = filter) +
    ggplot2::geom_density(ggplot2::aes(y=..count..)) +
@@ -232,7 +232,7 @@ end.rcode-->
 
 plotter$hash_vars$gene_count_var <- data.frame(variance = plotter$hash_vars$var_filter[["variance_dis"]])
 
-cat(plotter$prettify_div(plotter$static_ggplot_main("gene_count_var", header = NULL, row_names = NULL,
+cat(plotter$prettify_div(plotter$static_ggplot_main("gene_count_var", resizable = TRUE, header = NULL, row_names = NULL,
 								 plotting_function = function(ggplot_obj) {
 								 	ggplot_obj + ggplot2::aes(x = variance) +
 								 	ggplot2::geom_density() +
@@ -257,12 +257,11 @@ end.rcode-->
 	deseq_normalized_data <- plotter$hash_vars$all_data_normalized[['default']]
 	if (nrow(plotter$hash_vars$all_data_normalized[['default']]) <= 50000) { 
 		plotter$hash_vars$deseq_normalized_data_mtx <- log10(data.matrix(deseq_normalized_data) + 1)
-		cat(plotter$prettify_div(plotter$static_plot_main("deseq_normalized_data_mtx", custom_format = TRUE,
+		cat(plotter$prettify_div(plotter$static_plot_main("deseq_normalized_data_mtx", resizable = TRUE, custom_format = TRUE,
 								 plotting_function = custom_heatmap_deseq, plot_type = "autoplot"), preset = "magic"))
 	} else {
 		cat("<p>This plot cannot be generated because more than 50 000 genes have passed the filters, which can cause memory problems.</p>")
 	}
-
 end.rcode-->
 
 <!--begin.rcode top_n_expression, results='asis', echo=FALSE, warning=FALSE, message=FALSE
