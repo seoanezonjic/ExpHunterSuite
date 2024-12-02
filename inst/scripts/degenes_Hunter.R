@@ -182,8 +182,8 @@ option_list <- list(
       by total counts.")
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
-#############################################################################
-#DRAFT INPUT/OUTPUT
+############################################################################
+# DRAFT INPUT/OUTPUT
 ############################################################################
 dir.create(opt$output_files)
 write.table(cbind(opt), file=file.path(opt$output_files, 
@@ -242,7 +242,6 @@ if(! is.null(library_sizes)) {
   library_sizes <- read.table(library_sizes, header=TRUE)
 }
 
-
 final_results <- main_degenes_Hunter(
   target=target,
   raw=raw_count_table,
@@ -275,16 +274,12 @@ final_results <- main_degenes_Hunter(
   WGCNA_minKMEtoStay = opt$WGCNA_minKMEtoStay,
   WGCNA_corType = opt$WGCNA_corType,
   multifactorial = opt$multifactorial,
-  library_sizes=library_sizes
+  library_sizes = library_sizes
 )
 
-#############################################################################
-#WRITE OUTPUT
 ############################################################################
-
-
+# WRITE OUTPUT
+###########################################################################
   write_expression_data(final_results, opt$output_files)
 
   write_expression_report(final_results, opt$output_files, template_folder, opt)
-
-
