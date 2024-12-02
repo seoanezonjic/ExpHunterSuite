@@ -7,9 +7,9 @@
 		ggplot2::geom_text(ggplot2::aes(label = total, y = total + 1500)) + 
 		ggplot2::theme(text = ggplot2::element_text(face="bold", size=10))
 	}
-	custom_ht2logFCPlot <- function(ggplot_obj) {
-		ggplot_obj + ht2logFCPlot(ggplot_obj, var_filter = var_thr,
-			  				title = paste0("(variance threshold >= ",var_thr,")"))
+	custom_ht2logFCPlot <- function(plot_data) {
+		ht2logFCPlot(plot_data, var_filter = var_thr,
+					 title = paste0("(variance threshold >= ",var_thr,")"))
 	}
 	p_seguros_Int <- function(ggplot_obj) {
 		ggplot_obj + ggplot2::aes(x = package_name, y = value, color = package_name) +
@@ -22,9 +22,9 @@
 		ggplot2::coord_cartesian(ylim = c(0, plotter$hash_vars$opt$p_val_cutoff))
 	}
 
-	DE_volcano <- function(plot_obj) {
-		EnhancedVolcano::EnhancedVolcano(volcano_DE_all_genes, 
-		lab=rownames(volcano_DE_all_genes), x="mean_logFCs", y="combined_FDR",
+	DE_volcano <- function(plot_data) {
+		EnhancedVolcano::EnhancedVolcano(plot_data, 
+		lab=rownames(plot_data), x="mean_logFCs", y="combined_FDR",
 		boxedLabels = TRUE, drawConnectors = TRUE, cutoffLineType = 3,    
 		pCutoff = plotter$hash_vars$opt$p_val_cutoff, title = NULL,
 		subtitle = NULL, FCcutoff = plotter$hash_vars$opt$lfc, 
@@ -64,9 +64,34 @@
 		ggplot2::facet_grid(. ~variable)
 	}
 
-	plot_FDR_corr <- function(plot_obj) {
-		PerformanceAnalytics::chart.Correlation(df[, c(extra_column, plotter$hash_vars$final_FDR_names)],
+	plot_FDR_corr <- function() {
+		PerformanceAnalytics::chart.Correlation(data_frame[, columns],
 			histogram=TRUE, pch=19, log="xy", na.action = na.omit)
+	}
+	aux_func <- function(data_frame){
+			eval(parse(text = paste(deparse(plotting_function),
+					   collapse ="\n")))}
+
+	plot_edgeR_MA <- function(ggplot_obj) {
+		plot(data_frame$logCPM, data_frame$logFC, pch = 20, cex.lab = 1.5,
+			 cex.axis = 1.5, main='edgeR: Fold change vs abundance')
+		subs_df <- subset(data_frame, FDR < p_val_cutoff)
+		points(subs_df$logCPM, subs_df$logFC, pch = 20, col = 'red')
+		abline(h=c(-1,1), col='blue')
+	}
+
+	plot_limma_volcano <- function() {
+		plot(x = data_frame[['limma']]$logFC, y = -log10(data_frame[['limma']]$adj.P.Val),
+		main = c('groupsB-groupsA'), xlab = 'logFC', ylab = '-log10 adjusted p-value',
+		col = c('blue', 'red')[limma_sig], pch = 20, cex.lab = 1.6, cex.axis = 1.5)
+		abline(v = lfc, col = "cyan")
+		abline(v = -lfc, col = "cyan")
+		abline(h = -log10(p_val_cutoff), col = "red", lty = "dashed")
+	}
+
+	NOISeq_plot <- function() {
+		NOISeq::DE.plot(data_frame[["NOISeq"]], q = q_value, graphic = "MD",
+			cex.lab = 1.4, cex.axis=1.4)
 	}
 	
 end.rcode-->
@@ -74,7 +99,7 @@ end.rcode-->
 <!--begin.rcode dea_results_title
 	cat(plotter$create_title("Details of input data", id = "main_dea_title", hlevel = 2,
 							  indexable = TRUE))
-end.rcode-->
+end.rcode-->F
 <!--begin.rcode control_table, echo = FALSE, warning=FALSE
 	cat(plotter$create_title("First group of samples (to be referred to as control in the rest of the report)",
 							  id = "control_table", hlevel = 3, indexable = FALSE))
@@ -126,10 +151,10 @@ end.rcode-->
 							 preset = "magic"))
 end.rcode-->
 
-<h3> <strong>Package DEG detection stats</strong></h3>
-This is the Venn Diagram of all possible DE genes (DEGs) according to at least on of the DE detection packages employed:
-
 <!--begin.rcode Venn_d, echo = FALSE, fig.height=12, fig.width=12
+	cat(plotter$create_title("Package DEG detection stats", hlevel = 3, id = "DEG_title", indexable = FALSE))
+	cat("<p>This is the Venn Diagram of all possible DE genes (DEGs) according to at least one of the
+		 selected DE detection packages</p>")
 	sets <- list()
 	for(DEG_pack in plotter$hash_vars$DEG_pack_columns){
 		pack <- unlist(strsplit(DEG_pack, split='_'))[1] # Get the name of the package
@@ -149,8 +174,8 @@ This is the Venn Diagram of all possible DE genes (DEGs) according to at least o
 	## Only way to make colors accessible in "autoplot" mode.
 	venn_colors <<- grDevices::rainbow(length(sets))
 	# Plot
-	cat(plotter$prettify_div(plotter$static_plot_main("intersections", header = NULL, row_names = NULL,
-	        custom_format = TRUE, plot_type = "autoplot",
+	cat(plotter$prettify_div(plotter$static_plot_main("intersections", resizable = TRUE,
+		    header = NULL, row_names = NULL, custom_format = TRUE, plot_type = "autoplot",
 	        plotting_function = function(){
 	      		limma::vennDiagram(data_frame, circle.col = venn_colors)
 	      	}), preset = "magic"))
@@ -167,15 +192,14 @@ end.rcode-->
 	cat(paste0("<p>This graph shows logFC calculated (y-axis) for each package (points) and gene (x-axis). Only genes with variability over ",
 			   var_thr, " will be plotted. This representation allows to user to observe the behaviour of each DE package and see if one of them has atypical results."))
     cat("<p>If there are no genes showing sufficient variance in estimated logFC accross methods, no plot will be produced and a warning message will be given.</p>")
-    var_filter = var_thr
-    cat(plotter$prettify_div(plotter$static_plot_main(list(id = DE_all_genes, header = NULL, row_names = NULL,
-    						 plotting_function = custom_ht2logFCPlot)), preset = "magic"))
+    var_filter <- var_thr
+    cat(plotter$prettify_div(plotter$static_plot_main(id = "DE_all_genes", header = NULL, row_names = NULL,
+    						 plotting_function = custom_ht2logFCPlot), preset = "magic"))
 end.rcode-->
 
 <!--begin.rcode FDR_bench
 	cat(plotter$create_title("FDR gene-wise benchmarking", id = "FDR_bench", hlevel = 3, indexable = TRUE))
 	cat("<p>Benchmark of false positive calling:
-
 		Boxplot of FDR values among all genes with an FDR <= 0.05 in at least one DE detection package</p>")
 	df <- plotter$hash_vars$DE_all_genes[plotter$hash_vars$DE_all_genes[, "genes_tag"] == "PREVALENT_DEG",]
 	df <- df[plotter$hash_vars$final_FDR_names]
@@ -212,7 +236,7 @@ end.rcode-->
 	fc_thresholds <- c(0.01, 0.05,0.1, 0.2)
 	all_thresholds <- unique(c(plotter$hash_vars$opt$p_val_cutoff, fc_thresholds))
 	mean_wt = data.frame(FDR = all_thresholds, nlFDR = -log10(all_thresholds))
-	cat(plotter$prettify_div(plotter$static_plot_main("condition_DEGs", custom_format = TRUE,
+	cat(plotter$prettify_div(plotter$static_plot_main("volcano_DE_all_genes", custom_format = TRUE,
                              plotting_function = DE_volcano), preset = "magic"))
 end.rcode-->
 
@@ -231,10 +255,10 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode DESeq2_conditional_block_sample_rank_head,
-	cat("DEgenes Hunter differential expression analysis results can be found in file Common_results/hunter_results_table.txt")
+	cat("<p>DEgenes Hunter differential expression analysis results can be found in file Common_results/hunter_results_table.txt</p>")
 	cat(plotter$create_title("DE detection package-specific results", id = "DE_packages", hlevel = 2,
 							  indexable = TRUE))
-	cat("<Various plots specific to each package are shown below:")
+	cat("<p>Various plots specific to each package are shown below:<p>")
 end.rcode-->
 
 <!--begin.rcode DESeq2_conditional_block_sample_rank_plot, eval="DESeq2" %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, warning = FALSE, message = FALSE
@@ -272,7 +296,7 @@ end.rcode-->
 	cat("<p> This is the MA plot from DESeq2 package")
 	plotter$hash_vars$ma_data <- plotter$hash_vars$package_objects[['DESeq2']][['de_deseq2']]
 	cat(plotter$prettify_div(plotter$static_plot_main("ma_data", custom_format = TRUE, plotting_function = plot_MA,
-		plot_type = "autoplot"), preset = "magic")
+		plot_type = "autoplot"), preset = "magic"))
 	cat("<p>In DESeq2, the MA-plot (log ratio versus abundance) shows the log2 fold changes are attributable to a given variable over the mean of normalized counts. Points will be colored red if the adjusted Pvalue is less than 0.1. Points which fall out of the window are plotted as open triangles pointing either up or down.
 		 A table containing the DESeq2 DEGs is provided: in Results\\_DESeq2/DEgenes\\_DESEq2.txt
 		 A table containing the DESeq2 normalized counts is provided in Results\\_DESeq2/Normalized\\_counts\\_DESEq2.txt</p>")
@@ -293,66 +317,55 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode edgeR_conditional_block, eval='edgeR' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'
-	cat(plotter$create_title("edgeR MA plot", id = "edgeR_MA" hlevel = 3, indexable = FALSE))
+	cat(plotter$create_title("edgeR MA plot", id = "edgeR_MA", hlevel = 3, indexable = FALSE))
 	cat("<p>This is the MA plot from package edgeR</p>")
-	with(plotter$hash_vars$all_counts_for_plotting[['edgeR']], plot(logCPM, logFC, pch=20, main='edgeR: Fold change vs abundance', cex.lab=1.5, cex.axis=1.5))
-	with(subset(plotter$hash_vars$all_counts_for_plotting[['edgeR']], FDR < plotter$hash_vars$opt$p_val_cutoff), points(logCPM, logFC, pch=20, col='red'))
-	abline(h=c(-1,1), col='blue')
+	plotter$hash_vars$full_edgeR <- plotter$hash_vars$all_counts_for_plotting[['edgeR']]
+	# Only way to make it accessible in autoplot
+	p_val_cutoff <<- plotter$hash_vars$opt$p_val_cutoff
+	cat(plotter$prettify_div(plotter$static_plot_main("full_edgeR", header = NULL, row_names = NULL,
+		resizable = TRUE, plotting_function = plot_edgeR_MA, custom_format = TRUE, plot_type = "autoplot"),
+	    preset = "magic"))
 	cat("Differential gene expression data can be visualized as MA-plots (log ratio versus abundance) where each dot represents a gene. The differentially expressed genes are colored red and the non-differentially expressed ones are colored black.
 		 A table containing the edgeR DEGs is provided in Results\\_edgeR/DEgenes\\_edgeR.txt
 		 A table containing the edgeR normalized counts is provided in Results\\_edgeR/Normalized\\_counts\\_edgeR.txt")
 end.rcode-->
 
-<!--begin.rcode limma_conditional_block_head, eval='limma' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'
-	cat("<h3> <strong>limma Volcano plot</strong></h3>
-	Volcano plot of log2-fold change versus -log10 of adjusted p-values for all genes according to the analysis with limma:")
+<!--begin.rcode limma_conditional_block, eval='limma' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'
+	cat(plotter$create_title("limma Volcano plot", id = "limma_volcano", hlevel = 3, indexable = FALSE))
+	cat("<p>Volcano plot of log2-fold change versus -log10 of adjuster p-values for all genes according to limma analysis")
+	limma_sig <<- row.names(plotter$hash_vars$all_counts_for_plotting[['limma']]) %in% row.names(plotter$hash_vars$DE_all_genes[plotter$hash_vars$DE_all_genes$limma_DEG == TRUE, ]) + 1
+	p_val_cutoff <<- plotter$hash_vars$opt$p_val_cutoff
+	lfc <<- plotter$hash_vars$opt$lfc
+	cat(plotter$prettify_div(plotter$static_plot_main("all_counts_for_plotting", header = NULL, plot_type = "autoplot",
+		row_names = NULL, resizable = TRUE, plotting_function = plot_limma_volcano, custom_format = TRUE),
+		preset = "magic"))
+	cat("<p>Limma DEGs table can be found in Results_limma/DEGenes_limma.txt</p>")
+	cat("<p>Limma normalized counts table can be found in Results_limma/Normalized_counts_limma.txt</p>")
 end.rcode-->
 
-<!--begin.rcode limma_conditional_block_plot, eval='limma' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, warning=FALSE
-	limma_sig <- row.names(plotter$hash_vars$all_counts_for_plotting[['limma']]) %in% row.names(plotter$hash_vars$DE_all_genes[plotter$hash_vars$DE_all_genes$limma_DEG == TRUE, ]) + 1
-	plot(x=plotter$hash_vars$all_counts_for_plotting[['limma']]$logFC, 
-		y=-log10(plotter$hash_vars$all_counts_for_plotting[['limma']]$adj.P.Val),
-		main= c('groupsB-groupsA'), xlab='logFC', ylab='-log10 adjusted p-value',
-		col=c('blue', 'red')[limma_sig],
-		pch=20,cex.lab=1.6, cex.axis=1.5)
-	abline(v= plotter$hash_vars$opt$lfc, col='cyan')	
-	abline(v= -(plotter$hash_vars$opt$lfc), col='cyan')	
-	abline(h=-log10(plotter$hash_vars$opt$p_val_cutoff), col='red', lty='dashed')
+<!--begin.rcode NOISeq_conditional_block, eval='NOISeq' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'
+	cat(plotter$create_title("NOISEeq Expression plot", hlevel = 3, id = "Noiseq_title", indexable = FALSE))
+	cat("<p> This plot represents (M, D) values (black) and differentially expressed genes (red)
+		from the NOISeq package (Image extracted from file {'ExpressionPlot.pdf'}):</p>")
+	q_value <<- 1 - plotter$hash_vars$opt$p_val_cutoff # Differential expression threshold for creating plot
+	cat(plotter$prettify_div(plotter$static_plot_main("package_objects", header = NULL, row_names = NULL,
+		resizable = TRUE, plotting_function = NOISeq_plot, custom_format = TRUE, plot_type = "autoplot"),
+		preset = "magic"))
+	cat("<p>NOISeq DEgs table can be found in Results_NOISEQ/Degenes_NOISeq.txt.</p>")
+	cat("<p>NOISeq normalized counts can be found in Results_NOISeq/Normalized_counts_NOISeq.txt</p>")
 end.rcode-->
-
-<!--begin.rcode limma_conditional_block_text, eval='limma' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'
-	cat("A table containing the limma DEGs is provided in Results\\_limma/DEgenes\\_limma.txt")
-	cat("A table containing the limma normalized counts is provided in Results\\_limma/Normalized\\_counts\\_limma.txt")
-end.rcode-->
-
-<!--begin.rcode NOISeq_conditional_block_head, eval='NOISeq' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'
-	cat("<h3> <strong>NOISeq Expressionplot</strong></h3>
-	This is the summary plot for (M,D) values (black) and the differentially expressed genes (red) from the NOISeq package (Image extracted from {'ExpressionPlot.pdf'} file):")
-end.rcode-->
-
-<!--begin.rcode NOISeq_conditional_block_plot, eval='NOISeq' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, warning=FALSE, message=FALSE, results='hide',
-    q_value <- 1-plotter$hash_vars$opt$p_val_cutoff # Differential expression threshold for creating plot
-	NOISeq::DE.plot(plotter$hash_vars$package_objects[['NOISeq']], q = q_value, graphic = 'MD', cex.lab=1.4, cex.axis=1.4)
-end.rcode-->
-
-<!--begin.rcode NOISeq_conditional_block_text, eval='NOISeq' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'
-	cat("A table containing the NOISeq DEGs is provided in Results\\_NOISeq/DEgenes\\_NOISeq.txt.
-	A table containing the NOISeq normalized counts is provided in Results\\_NOISeq/Normalized\\_counts\\_NOISeq.txt")
-end.rcode-->
-
-<h2> <strong>Detailed package results comparation</strong></h2>
-This is an advanced section in order to compare the output of the packages used to perform data analysis. The data shown here does not necessarilly have any biological implication. 
-
-<h3> <strong>P-value Distributions</strong></h3>
-Distributions of p-values, unadjusted and adjusted for multiple testing (FDR)
 
 <!--begin.rcode pval_distr, echo = FALSE, warning = FALSE
 	cat(plotter$create_title("Detailed package results comparison", id = "Det_res",
 		hlevel = 2, indexable = TRUE))
+	cat("<p>This is an advanced section that allows comparing the output of packages unadjusted
+		for DE analysis. The data shown here do not necessarily reflect biological impact.</p>")
 	cat(plotter$create_title("P-value distributions", id = "p_distr",
 		hlevel = 3, indexable = FALSE))
+	cat("<p>Distributions of p-values, unadjusted and adjusted for multiple testing (FDR)</p>")
 	df <- plotter$hash_vars$DE_all_genes[plotter$hash_vars$DE_all_genes$genes_tag != "FILTERED_OUT", ]
 	df$gene_names <- row.names(df)
+	plotter$hash_vars$df <- df
 	plotter$hash_vars$df_melted_pval <- reshape2::melt(df, id.vars = "gene_names", measure.vars = plotter$hash_vars$final_FDR_names)
 	plotter$hash_vars$df_melted_FDR <- reshape2::melt(df, id.vars = "gene_names", measure.vars = plotter$hash_vars$final_pvalue_names)
 	cat(plotter$prettify_div(plotter$static_ggplot_main(id = "df_melted_pval", header = NULL, row_names = NULL,
@@ -362,19 +375,15 @@ Distributions of p-values, unadjusted and adjusted for multiple testing (FDR)
 end.rcode-->
 
 <!--begin.rcode pval_corr, echo = FALSE, warning = FALSE, eval = length(plotter$hash_vars$all_counts_for_plotting) > 1
+	saveRDS(plotter, "~/projects/Hunter_hepatocytes/exec_DEG_wf/degenes_Hunter.R_0011/plotter.rds")
 	cat(plotter$create_title("FDR Correlations", id = "FDR_corr", hlevel = 3, indexable = FALSE))
-	extra_column <- "combined_FDR"
-	cat(plotter$prettify_div(plotter$static_plot_main(id = "final_FDR_names", header = NULL, row_names = NULL,
-		custom_format = TRUE, plotting_function = plot_FDR_corr)))
-	extra_column <- NULL
-	cat(plotter$prettify_div(plotter$static_plot_main(id = "final_pvalue_names", header = NULL, row_names = NULL,
-		custom_format = TRUE, plotting_function = plot_FDR_corr)))
-	extra_column <- "mean_logFCs"
-	cat(plotter$prettify_div(plotter$static_plot_main(id = "final_logFC_names", header = NULL, row_names = NULL,
-		custom_format = TRUE, plotting_function = plot_FDR_corr)))
-
-PerformanceAnalytics::chart.Correlation(df[, c("combined_FDR", plotter$hash_vars$final_FDR_names)], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
-PerformanceAnalytics::chart.Correlation(df[, plotter$hash_vars$final_pvalue_names], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
-PerformanceAnalytics::chart.Correlation(df[, c("mean_logFCs", plotter$hash_vars$final_logFC_names)], histogram=TRUE, pch=19, log="xy", na.action = na.omit)
-
+	columns <<- c("combined_FDR", plotter$hash_vars$final_FDR_names)
+	cat(plotter$prettify_div(plotter$static_plot_main(id = "df", header = NULL, row_names = NULL,
+		custom_format = TRUE, plot_type = "autoplot", plotting_function = plot_FDR_corr), preset = "magic"))
+	columns <<- plotter$hash_vars$final_pvalue_names
+	cat(plotter$prettify_div(plotter$static_plot_main(id = "df", header = NULL, row_names = NULL,
+		custom_format = TRUE, plot_type = "autoplot", plotting_function = plot_FDR_corr), preset = "magic"))
+	columns <<- c("mean_logFCs", plotter$hash_vars$final_logFC_names)
+	cat(plotter$prettify_div(plotter$static_plot_main(id = "df", header = NULL, row_names = NULL,
+		custom_format = TRUE, plot_type = "autoplot", plotting_function = plot_FDR_corr), preset = "magic"))
 end.rcode-->
