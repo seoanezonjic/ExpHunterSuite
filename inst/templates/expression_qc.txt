@@ -90,7 +90,7 @@ end.rcode-->
 	cat("<p><strong>BROWN: higher correlation; YELLOW: lower correlation</strong></p>")
 	col <- colorRampPalette(c("#FFFFCC", "#FD8D3C", "#800026"))(20)
 	plotter$hash_vars$cor_filter <- cor(plotter$hash_vars$raw_filter)
-	cat(plotter$prettify_div(plotter$static_plot_main("cor_filter", resizable = TRUE, custom_format = TRUE, plotting_function = custom_heatmap_cor, plot_type = "autoplot"), preset = "maigic"))
+	cat(plotter$prettify_div(plotter$static_plot_main("cor_filter", resizable = TRUE, custom_format = TRUE, plotting_function = custom_heatmap_cor, plot_type = "autoplot"), preset = "magic"))
 end.rcode-->
 
 <!--begin.rcode config_expression_PCA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE
