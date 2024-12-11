@@ -112,6 +112,11 @@ option_list <- list(
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 ################### INITIALIZE
+
+# THIS NEEDS TO GO AFTER I'M DONE WITH DEVEL PHASE
+devtools::load_all('~/dev_R/htmlreportR')
+source_folder <- file.path(find.package("htmlreportR"), "inst")
+
 options(scipen = 0.001, 
         digits = 3)
 
@@ -163,7 +168,7 @@ check_and_create_dir(opt$output_files)
 temp_file <- file.path(normalizePath(opt$output_files), "../temp.RData")
 exec_cormit <- !(opt$save_temp && file.exists(temp_file)) 
 if (exec_cormit){
-    miRNA_cor_results <-  coRmiT( 
+    miRNA_cor_results <- coRmiT( 
         RNAseq_folder=opt$RNAseq_folder,
         miRNAseq_folder=opt$miRNAseq_folder,
         output_files=opt$output_files,
@@ -207,7 +212,7 @@ write.table(miRNA_cor_results$cont_tables,
     file.path(opt$output_files, "strategies_stats.txt"), 
     quote=FALSE, sep="\t",  row.names=FALSE)
 
-miRNA_cor_results <- c(miRNA_cor_results, 
+cormit_res <- c(miRNA_cor_results, 
     list(report_name =opt$report,
          template_folder =template_folder,
          output_files =normalizePath(opt$output_files),
@@ -219,6 +224,9 @@ miRNA_cor_results <- c(miRNA_cor_results,
          genome_ref = opt$genome_ref,
          mapping_output = opt$mapping_output,
          output_pairs = opt$output_pairs))
-do.call("write_global_cormit", miRNA_cor_results)
+write_global_cormit(cormit_res = cormit_res,
+                    template_folder = template_folder,
+                    output_files = opt$output_files,
+                    source_folder = source_folder)
 
 #do.call("write_miRNA_cor_report", miRNA_cor_results)
