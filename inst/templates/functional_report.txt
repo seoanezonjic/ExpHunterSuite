@@ -1,0 +1,94 @@
+
+<style type='text/css'>
+    body .main-container {
+        max-width: 90%;
+
+    }
+
+    .plot_real_size {
+      overflow: scroll;
+      max-height: 600px;
+    }
+
+    .plot_real_size img{
+      max-width: none;
+      max-height: none;
+    }
+
+    embed {
+   
+  }   
+</style>
+
+<!--begin.rcode config, include=FALSE, message=FALSE
+require(ggplot2)
+require(knitr)
+require(clusterProfiler)
+require(enrichplot)
+require(DOSE)
+flags_ora <- plotter$hash_vars$flags_ora
+flags_gsea <- plotter$hash_vars$flags_gsea
+end.rcode-->
+
+<!--begin.rcode child=file.path(template_folder, "func_initial_details.txt")
+end.rcode-->
+<!--begin.rcode child=file.path(template_folder, "func_deg_details.txt")
+end.rcode-->
+<!--begin.rcode child=file.path(template_folder, "func_top_genes.txt")
+end.rcode-->
+
+
+<!--begin.rcode ORA_analysis, echo=FALSE, results='asis', message=FALSE, warning=FALSE, eval = !is.null(plotter$hash_vars$flags_ora)
+  res_ora <- list()
+  for(funsys in names(flags_ora)) {
+    if(flags_ora[[funsys]] == TRUE) {
+      # plotter$hash_vars$enrich_obj <- func_results$ORA[[funsys]]
+      # exp_res <- knitr::knit_expand(file.path(template_folder, "ora_plots_all_objects.txt"))
+      # res_ora[[funsys]] <- knitr::knit(text=exp_res, quiet=TRUE)
+      res_ora[[funsys]] <- paste0("Found ", funsys)
+    } else {
+      res_ora[[funsys]] <- paste0("<h2> <strong>No ORA enrichment found for ", funsys, "</strong></h2>")
+    }
+    cat(knitr::knit_child(text = res_ora, quiet = TRUE), sep = "\n")
+  }
+end.rcode-->
+
+# <!--begin.rcode GSEA_analysis, eval = !is.null(plotter$hash_vars$flags_gsea)
+#   res_gsea <- list()
+#   for(funsys in names(flags_gsea)) {
+#     if(flags_gsea[[funsys]] == TRUE) {
+#       plotter$hash_vars$enrich_obj <- func_results$GSEA[[funsys]]
+#       exp_res <- knitr::knit_expand(file.path(template_folder, "gsea_plots_all_objects.txt"))
+#       res_gsea[[funsys]] <- knitr::knit(text=exp_res, quiet=TRUE)
+#     } else {
+#       res_gsea[[funsys]] <- paste0("## **No GSEA enrichment found for ", funsys, "**\n")
+#     }
+#   }
+#   cat(unlist(res_gsea), sep = '\n')
+# end.rcode-->
+
+# <!--begin.rcode PCA_enr, echo=FALSE, results='asis', message=FALSE, warning=FALSE
+# res_PCA <- list()
+
+# for(funsys in names(flags_ora)) {
+#   if (funsys %in% c("BP", "MF", "CC")){
+#     plotter$hash_vars$pca_enr_all <- func_results$PCA_enrichments$all_genes[[funsys]]
+#     plotter$hash_vars$pca_enr_degs <- func_results$PCA_enrichments$DEGs[[funsys]]
+#     plotter$hash_vars$pca_cl_all <- func_results$PCA_clusters_results$all_genes[[funsys]]
+#     plotter$hash_vars$pca_cl_degs <- func_results$PCA_clusters_results$DEGs[[funsys]]
+#     pca_enr <- knitr::knit_expand(file.path(template_folder, "pca_enr.txt"))
+#     res_PCA[[funsys]] <- knitr::knit(text=pca_enr, quiet=TRUE)
+#   }
+# }
+
+# cat(unlist(res_PCA), sep = '\n')
+# end.rcode-->
+
+# <h2> <strong>Values of options passed to the Functional Hunter main function</strong></h2>
+# First column contains the option names; second column contains the given values for each option.
+# Note that large data objects (e.g. expression results, 
+#   organism table and custom annotation files) are not shown.
+# <!--begin.rcode opt_vals, echo = FALSE, results='asis'
+# final_main_params <- func_results$final_main_params[! sapply(func_results$final_main_params, is.list)]
+# print(knitr::kable(cbind(final_main_params)))
+# end.rcode-->

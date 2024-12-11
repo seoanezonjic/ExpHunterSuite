@@ -1,0 +1,94 @@
+<!--begin.rcode , echo=FALSE, results='asis', message=FALSE, warning=FALSE
+	print_go_tables <- function(all_enr) {
+		if (any(sapply(all_enr, nrow) > 0 )) {
+		 merged_df <- all_enr |>
+		 purrr::imap(~ rename_fdr_column(.x, .y)) |>
+		 purrr::reduce(dplyr::full_join, by = c("GO.ID", "Term"))
+		 merged_columns <- colnames(merged_df)[!colnames(merged_df) %in% c("GO.ID", "Term")]
+		 merged_df[,merged_columns]<- format(merged_df[,merged_columns], scientific = TRUE, digits = 3)
+		 plotter$hash_vars$merged_df <- merged_df
+		 cat(plotter$prettify_div(plotter$table(list(id = "merged_df", header = NULL, row_names = NULL,
+		 	styled = "dt")), preset = "magic"))
+		 } else {
+			cat("\nThere are not significant enrichments to show\n<br>")
+		 }		
+	}
+
+	rename_fdr_column <- function(df, name) {
+		 df <- df[df$fdr <= 0.05,]
+		 df |>
+		   dplyr::select(GO.ID, Term, fdr) |>
+		   dplyr::rename(!!name := fdr)
+	}
+
+	facto_plot <- function(input_data) {
+		FactoMineR::plot.PCA(input_data, invisible = "quali", axes = c(last_dim, last_dim + 1), 
+								  title = paste0(last_dim, " and ", last_dim + 1, " PCs"))
+	}
+
+	hcpc_tree <- function() {
+		plot(data_frame, choice="tree", title="")
+	}
+
+	hcpc_map <- function() {
+		plot(data_frame, axes= 1:2, choice="map", draw.tree= FALSE)
+	}
+			
+end.rcode-->
+<!--begin.rcode "{{funsys}}_enr", echo=FALSE, results='asis', message=FALSE, warning=FALSE
+cat("<h2> <strong>{{funsys}} - Enrichments for Principal Components</strong></h2>")
+
+cat("<h3> <strong>Functional enrichments of PCs using all genes</strong></h3>")
+if (!is.null(func_results$pca_data$all_genes)){
+		last_dim <- 1
+		while (last_dim < func_results$pca_data$all_genes$dim_to_keep){
+			plotter$hash_vars$pca_data <- func_results$pca_data$all_genes$pca_data
+			cat(plotter$prettify_div(plotter$static_plot_main(id = "pca_data", header = NULL, row_names = NULL,
+				resizable = TRUE, plotting_function = facto_plot, custom_format = TRUE, plot_type = "plot"), preset = "magic"))
+			last_dim <- last_dim + 2
+		} 
+
+		cat("<br> This table shows the enrichment FDR of Gene ontology terms in gene contibution to PCs<br>")
+		print_go_tables(plotter$hash_vars$pca_enr_all)
+
+		cat("<h3> <strong>Functional enrichments of HCPC clusters using all genes</strong>")
+		plotter$hash_vars$res.hcpc <- func_results$pca_data$all_genes$res.hcpc
+		cat(plotter$prettify_div(plotter$static_plot_main(id = "res.hcpc", header = NULL, row_names = NULL,
+			resizable = TRUE, plotting_function = hcpc_tree, custom_format = TRUE, plot_type = "autoplot"), preset = "magic"))
+		cat(plotter$prettify_div(plotter$static_plot_main(id = "res.hcpc", header = NULL, row_names = NULL,
+			resizable = TRUE, plotting_function = hcpc_map, custom_format = TRUE, plot_type = "autoplot"), preset = "magic"))
+		cat("<br> This table shows the enrichment FDR of Gene ontology terms in gene contibution to HCPC clusters<br>")
+		print_go_tables(plotter$hash_vars$pca_cl_all)
+
+} else {
+	cat("PCA was not performed for all genes<br>\n")
+}
+
+cat("<h3> <strong>Functional enrichments of PCs using only DEGs</strong></h3>")
+
+if (!is.null(func_results$pca_data$DEGs)){
+
+	last_dim <- 1
+	while (last_dim < func_results$pca_data$DEGs$dim_to_keep){
+		plotter$hash_vars$pca_data <- func_results$pca_data$DEG$pca_data
+		cat(plotter$prettify_div(plotter$static_plot_main(id = "pca_data", header = NULL, row_names = NULL,
+			resizable = TRUE, plotting_function = facto_plot, custom_format = TRUE, plot_type = "plot"), preset = "magic"))
+		last_dim <- last_dim + 2
+	} 
+
+	cat("<br> This table shows the enrichment FDR of Gene ontology terms in gene contibution to PCs<br>")
+	print_go_tables(plotter$hash_vars$pca_enr_degs)
+
+	cat("<h3> <strong>Functional enrichments of HCPC clusters using only DEGs</strong></h3>")
+	plotter$hash_vars$res.hcpc <- func_results$pca_data$DEGs$res.hcpc
+		cat(plotter$prettify_div(plotter$static_plot_main(id = "res.hcpc", header = NULL, row_names = NULL,
+			resizable = TRUE, plotting_function = hcpc_tree, custom_format = TRUE, plot_type = "autoplot"), preset = "magic"))
+		cat(plotter$prettify_div(plotter$static_plot_main(id = "res.hcpc", header = NULL, row_names = NULL,
+			resizable = TRUE, plotting_function = hcpc_map, custom_format = TRUE, plot_type = "autoplot"), preset = "magic"))
+	cat("<br> This table shows the enrichment FDR of Gene ontology terms in gene contibution to HCPC clusters<br>")
+	print_go_tables(plotter$hash_vars$pca_cl_degs)
+} else {
+	cat("PCA was not performed for differentially expressed genes<br>\n")
+}
+
+end.rcode-->
