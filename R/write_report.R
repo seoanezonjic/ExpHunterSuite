@@ -3,8 +3,10 @@
 #' This function allows you to report the DEG analysis.
 #' @param exp_results DEG analysis results object
 #' @param output_files output file path
-#' @param template_folder RMD templates folder
+#' @param template_folder htmlreportR templates folder
 #' @param opt option list
+#' @param source_folder Folder where js and css templates to load in htmlreportR
+#' object are located.
 #' @return void
 #' @export
 #' @importFrom rmarkdown render
@@ -13,17 +15,22 @@
 #' degh_output <- list() # data(degh_output)
 #' write_expression_report(degh_output)
 write_expression_report <- function(exp_results, 
-    output_files=getwd(),
+    output_files = getwd(),
     template_folder = NULL, 
-    opt=NULL){
+    opt = NULL,
+    source_folder = NULL){
     if (is.null(template_folder))
-        template_folder <- file.path(find.package('ExpHunterSuite'), 'templates')
+      template_folder <- file.path(find.package('ExpHunterSuite'), 'templates')
     
     if(length(exp_results) == 0){
-        warning("Experiment results is not complete")
-        return(NULL)
+      warning("Experiment results is not complete")
+      return(NULL)
     }
-    if(is.null(opt)){ opt <- exp_results[['final_main_params']]}
+    if(is.null(opt)){
+      opt <- exp_results[['final_main_params']]}
+    if(is.null(source_folder)){
+      source_folder <- file.path(find.package("htmlreportR"), "inst")
+    }
     template <- file.path(template_folder, "main_report.txt")
     tmp_folder <- file.path(output_files, "tmp_lib")
     container <- list(opt = opt,
@@ -58,13 +65,13 @@ write_expression_report <- function(exp_results,
     library_sizes = exp_results[["library_sizes"]],
     target = exp_results[["target"]])
     
-    outf <- file.path(normalizePath(output_files),"DEG_report.html")
+    outf <- file.path(normalizePath(output_files), "DEG_report.html")
     plotter <- htmlreportR:::htmlReport$new(title_doc = "DEG_report", 
-                                           container = container,
-                                           tmp_folder = tmp_folder,
-                                           src = source_folder,
-                                           compress_obj = TRUE,
-                                           type_index = "contents_list")
+                                            container = container,
+                                            tmp_folder = tmp_folder,
+                                            src = source_folder,
+                                            compress_obj = TRUE,
+                                            type_index = "contents_list")
     plotter$build(template)
     plotter$write_report(outf)
     message(paste0("Report written in ", outf))
@@ -145,75 +152,128 @@ merge_dim_table_metrics <- function(merged_dim_table){
         return(dim_data_merged)
 } 
 
+#' Write global coRmiT report
+#'
+#' This function writes a report of coRmiT results.
+#' @param cormit_res coRmiT results object
+#' @param output_files output file path
+#' @param template_folder htmlreportR templates folder
+#' @param opt option list
+#' @param source_folder Folder where js and css templates to load in htmlreportR
+#' object are located.
+#' @return void
+#' @export
+#' @importFrom rmarkdown render
+#' @examples
+#' # Load DE analysis results
+#' degh_output <- list() # data(degh_output)
+#' write_global_cormit(degh_output)
 
-write_global_cormit <- function(
-strategies,
-cont_tables,
-mirna_names,
-miRNAseq,
-miRNA_cont_tables,
-gene_id_translation,
-RNAseq,
-report_name,
-template_folder,
-output_files,
-mapping_output,
-output_pairs,
-all_cor_dist,
-int_miRNA_cont_tables,
-int_cont_tables,
-integrated_pairs,
-selected_predicted_databases,#
-all_pairs, #
-genomic_ranges,
-genome_ref,
-multimir_stats
-){
-
-    integrated_pairs <- as.data.frame(integrated_pairs)
-    miRNA_cont_tables <- as.data.frame(miRNA_cont_tables)
+write_global_cormit <- function(cormit_res, 
+    output_files=getwd(),
+    template_folder = NULL,
+    source_folder = NULL){
+    integrated_pairs <- as.data.frame(cormit_res$integrated_pairs)
+    miRNA_cont_tables <- as.data.frame(cormit_res$miRNA_cont_tables)
+    mirna_names <- cormit_res$mirna_names
     integrated_pairs <- integrated_pairs[integrated_pairs$miRNAseq %in% unique(miRNA_cont_tables[miRNA_cont_tables$db_group == "multimir", "miRNA"]),]
-     miRNA_cont_tables$miRNA <- mirna_names[match(miRNA_cont_tables$miRNA, mirna_names$ACCESSION), "NAME"]   
-     rmarkdown::render(
-               file.path(template_folder, 'global_cormit.Rmd'), 
-               output_file = file.path(output_files, report_name), 
-               intermediates_dir = file.path(output_files))
-
-
-
-    if (!is.null(genomic_ranges)){
-        g_ranges <- read.table(genomic_ranges, header = FALSE)
+    miRNA_cont_tables$miRNA <- mirna_names[match(miRNA_cont_tables$miRNA, mirna_names$ACCESSION), "NAME"]
+    cormit_res$integrated_pairs <- integrated_pairs
+    cormit_res$miRNA_cont_tables <- miRNA_cont_tables
+    if(is.null(template_folder)){
+      template_folder <- file.path(find.package('ExpHunterSuite'), 'templates')
+    }
+    if(length(cormit_res) == 0){
+        warning("coRmiT object is incomplete")
+        return(NULL)
+    }
+    if(is.null(opt)){
+        opt <- list(report_name = cormit_res$opt$report,
+        output_files = cormit_res$opt$output_files,
+        # p_val_cutoff = cormit_res$opt$p_val_cutoff,
+        # corr_cutoff = cormit_res$opt$corr_cutoff,
+        # eval_method = cormit_res$opt$eval_method,
+        # sample_proportion = cormit_res$opt$sample_proportion,
+        genomic_ranges = cormit_res$opt$genomic_ranges,
+        genome_ref = cormit_res$opt$genome_ref,
+        mapping_output = cormit_res$opt$mapping_output,
+        output_pairs = cormit_res$opt$output_pairs)
+    }
+    if(is.null(source_folder)){
+      source_folder <- file.path(find.package("htmlreportR"), "inst")
+    }
+    template <- file.path(template_folder, "global_cormit.txt")
+    tmp_folder <- file.path(output_files, "tmp_lib")
+    container <- list(miRNA_cor_results = cormit_res$miRNA_cor_results,
+                      strategies = cormit_res$strategies,
+                      all_pairs = cormit_res$all_pairs,
+                      miRNA_cont_tables = cormit_res$miRNA_cont_tables,
+                      cont_tables = cormit_res$cont_tables,
+                      mirna_names = cormit_res$mirna_names,
+                      int_miRNA_cont_tables = cormit_res$int_miRNA_cont_tables,
+                      int_cont_tables = cormit_res$int_cont_tables,
+                      integrated_pairs = cormit_res$integrated_pairs,
+                      gene_id_translation = cormit_res$gene_id_translation,
+                      miRNAseq = cormit_res$miRNAseq,
+                      RNAseq = cormit_res$RNAseq,
+                      sel_pred_data = cormit_res$selected_predicted_databases,
+                      all_cor_dist = cormit_res$all_cor_dist,
+                      multimir_stats = cormit_res$multimir_stats,
+                      # p_val_cutoff = opt$p_val_cutoff,
+                      # corr_cutoff = opt$corr_cutoff,
+                      # eval_method = opt$eval_method,
+                      # sample_proportion = opt$sample_proportion,
+                      genomic_ranges = opt$genomic_ranges,
+                      genome_ref = opt$genome_ref,
+                      mapping_output = opt$mapping_output,
+                      output_pairs = opt$output_pairs)
+    
+    outf <- file.path(normalizePath(opt$output_files), "coRmiT_report.html")
+    plotter <- htmlreportR:::htmlReport$new(title_doc = "coRmiT report", 
+                                            container = container,
+                                            tmp_folder = tmp_folder,
+                                            src = source_folder,
+                                            compress_obj = TRUE,
+                                            type_index = "contents_list")
+    plotter$build(template)
+    plotter$write_report(outf)
+    message(paste0("Report written in ", outf))
+    if (!is.null(opt$genomic_ranges)){
+        g_ranges <- read.table(opt$genomic_ranges, header = FALSE)
         g_ranges <- g_ranges[,c(1,2,3,4,6)]
         colnames(g_ranges) <- c("chromosome", "start","end","miRNA","strand")
         annotated <- annotate_genomic_ranges(g_ranges, genome_ref)
         annotated <- annotated[!grepl("MIR",annotated$annot.symbol),]
         miRNA_annot <- aggregate(annot.symbol ~ miRNA, annotated, unique)
-        miRNA_annot$annot.symbol <- unlist(lapply(miRNA_annot$annot.symbol,paste, collapse = ","))
-        integrated_pairs$miRNA_loci <- miRNA_annot[match(integrated_pairs$miRNAseq, miRNA_annot$miRNA),"annot.symbol"]
+        miRNA_annot$annot.symbol <- unlist(lapply(miRNA_annot$annot.symbol,
+                                                  paste, collapse = ","))
+        miRNA_loci <- miRNA_annot[match(integrated_pairs$miRNAseq,
+                                        miRNA_annot$miRNA),"annot.symbol"]
+        integrated_pairs$miRNA_loci <- miRNA_loci
         integrated_pairs[is.na(integrated_pairs$miRNA_loci),"miRNA_loci"] <- ""
     }    
 
-    integrated_pairs$miRNA <- mirna_names[match(integrated_pairs$miRNAseq, mirna_names$ACCESSION), "NAME"]
-    
-    output_pairs_all <- add_attrib_to_pairs(integrated_pairs, RNAseq, miRNAseq)
-    colnames(output_pairs_all)[match( c("normalized_counts_RNA_vs_miRNA_normalized_counts_correlation","normalized_counts_RNA_vs_miRNA_normalized_counts_pval"), colnames(output_pairs_all))] <- c("Raw_correlation", "Raw_cor_Pcalue")
-    gene_id_translation <- as.data.frame(gene_id_translation)
+    integrated_pairs$miRNA <- mirna_names[match(cormit_res$integrated_pairs$miRNAseq,
+                                                mirna_names$ACCESSION), "NAME"]
+    output_pairs_all <- add_attrib_to_pairs(integrated_pairs, cormit_res$RNAseq, cormit_res$miRNAseq)
+    colnames(output_pairs_all)[match(c("normalized_counts_RNA_vs_miRNA_normalized_counts_correlation","normalized_counts_RNA_vs_miRNA_normalized_counts_pval"), colnames(output_pairs_all))] <- c("Raw_correlation", "Raw_cor_Pcalue")
+    gene_id_translation <- as.data.frame(cormit_res$gene_id_translation)
     output_pairs_all$Target_SYMBOL <- gene_id_translation[match(output_pairs_all$Target_ID, gene_id_translation$ensembl_gene_id), "Symbol"]
    
-    if (!output_pairs %in% c("predicted", "validated", "multimir"))   
-        output_pairs <- "multimir"
+    if (!cormit_res$output_pairs %in% c("predicted", "validated", "multimir"))   
+        cormit_res$output_pairs <- "multimir"
   
-    integrated_pairs$db_type <- ifelse(integrated_pairs[,output_pairs], "DB","ND")
+    integrated_pairs$db_type <- ifelse(integrated_pairs[,cormit_res$output_pairs], "DB","ND")
    
     out_pairs <- data.frame()
     genes_attr <- data.frame()
-    attr <- all_pairs[,c("miRNAseq", "RNAseq", "validated_c", "predicted_c")]
+    attr <- cormit_res$all_pairs[,c("miRNAseq", "RNAseq", "validated_c", "predicted_c")]
     for (miRNA in unique(integrated_pairs$miRNA)){ 
 
         DB <- data.frame(miRNA = paste0(miRNA, "_DB"), 
                          genes= paste(integrated_pairs$RNAseq[integrated_pairs$db_type== "DB" & integrated_pairs$miRNA == miRNA], collapse = ","))
         
-        if (output_pairs == "All") {
+        if (cormit_res$output_pairs == "All") {
 
             ALL <- data.frame(miRNA = paste0(miRNA, "_ALL"), 
             genes= paste(integrated_pairs$RNAseq,collapse = ","))
@@ -223,7 +283,7 @@ multimir_stats
         }
     }
 
-best_strats <- select_best_strategy(int_miRNA_cont_tables[int_miRNA_cont_tables$db_group == "multimir",])[,c("miRNA", "Odds_ratio")]
+best_strats <- select_best_strategy(cormit_res$int_miRNA_cont_tables[cormit_res$int_miRNA_cont_tables$db_group == "multimir",])[,c("miRNA", "Odds_ratio")]
 output_pairs_all <- merge(output_pairs_all, best_strats, by.x ="miRNA_ID", by.y = "miRNA", all.x = TRUE)
 
 
@@ -403,7 +463,7 @@ write_clusters_to_enrichment <- function(
 #' @param group_results experimental - whether to group results in the emap plot
 #'  and functional (f). Default = "fc"
 #' @param max_genes maximum number of genes to plot in cnet plot
-#' @param corr_threshold minimun module eigengene-trait vector absolute Pearson R value  
+#' @param corr_threshold minimum module eigengene-trait vector absolute Pearson R value  
 #' @param pvalcutoff maximum module eigengene-trait vector correlation P value 
 #' @return void
 #' @importFrom rmarkdown render
@@ -414,73 +474,91 @@ write_clusters_to_enrichment <- function(
 #' func_results <- list() 
 #' func_results <- main_functional_hunter(degh_output, "Mouse")
 #' write_functional_report(degh_output, func_results)
-write_functional_report <- function(
-hunter_results, 
-func_results, 
-output_files=getwd(), 
-fc_colname="mean_logFCs", 
-organisms_table=NULL, 
-template_folder = file.path(find.package('ExpHunterSuite'), 'templates'),
-cores = 2,
-task_size = 1, 
-report = "fc",
-showCategories = 30,
-group_results = FALSE,
-max_genes = 200,
-corr_threshold = 0.8,
-pvalcutoff = 0.05
-    ){
-    # TO parallelize properly
-    clean_tmpfiles_mod <- function() {
-      message("Calling clean_tmpfiles_mod()")
+write_functional_report <- function(hunter_results, func_results, cores = 2,
+                                    output_files = getwd(),
+                                    organisms_table = NULL,
+                                    fc_colname = "mean_logFCs", task_size = 1, 
+                                    report = "fc", source_folder = NULL,
+                                    group_results = FALSE, showCategories = 30,
+                                    corr_threshold = 0.8, pvalcutoff = 0.05,
+                                    template_folder = NULL, max_genes = 200) {
+    if(is.null(template_folder)){
+      template_folder <- file.path(find.package('ExpHunterSuite'), 'templates')
     }
-    assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
-
- 
+    if(length(hunter_results) == 0){
+      warning("Incomplete hunter results")
+      return(NULL)
+    }
+    if(length(func_results) == 0){
+      warning("Incomplete functional results")
+      return(NULL)
+    }
+    if(is.null(source_folder)){
+      source_folder <- file.path(find.package("htmlreportR"), "inst")
+    }
+    tmp_folder <- file.path(output_files, "tmp_lib")
+    # # TO parallelize properly
+    # clean_tmpfiles_mod <- function() {
+    #   message("Calling clean_tmpfiles_mod()")
+    # }
+    # assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
     results_path <- normalizePath(output_files)
     model_organism <- func_results$final_main_params$model_organism
-
     if(is.null(organisms_table)){
         organisms_table <- get_organism_table()
     }
     current_organism_info <- subset(organisms_table, 
-    rownames(organisms_table) %in% model_organism) 
-    
+    rownames(organisms_table) %in% model_organism)
     # Prepare the flag lists
     flags_ora <- sapply(func_results$ORA, nrow) != 0
     names(flags_ora) <- names(func_results$ORA)
     flags_gsea <- sapply(func_results$GSEA, nrow) != 0
     names(flags_gsea) <- names(func_results$GSEA)
-
     # JRP to clean up - should take target directly
     experiments <- hunter_results$sample_groups
     sample_classes <- apply(experiments, 1, function(x) paste0("* [", x[1],
                       "] ", x[2]))
-
     attr_vector <- func_results$DEGH_results_annot[
        !is.na(func_results$DEGH_results_annot$ENTREZID), fc_colname]
     names(attr_vector) <- func_results$DEGH_results_annot[
        !is.na(func_results$DEGH_results_annot$ENTREZID), "ENTREZID"]
     gene_attribute_name <- "Log2FC"
-
     enrichments_ORA <- func_results$WGCNA_ORA
     DEGH_results <- func_results$DEGH_results_annot
     enrichments_ORA_expanded <- func_results$WGCNA_ORA_expanded
-
+    container <- list(hunter_results = hunter_results, max_genes = max_genes,
+                  func_results = func_results,
+                  model_organism = model_organism,
+                  current_organism_info = current_organism_info,
+                  flags_ora = flags_ora, flags_gsea = flags_gsea,
+                  sample_classes = sample_classes,
+                  attr_vector = attr_vector,
+                  gene_attribute_name = gene_attribute_name,
+                  enrichments_ORA = enrichments_ORA,
+                  ennrichments_ORA_expanded = enrichments_ORA_expanded,
+                  DEGH_results = DEGH_results)
     if(grepl("f", report)){
         message("\tRendering regular report")
+        template <- file.path(template_folder, "functional_report.txt")
         outf <- file.path(results_path, "functional_report.html")
-        rmarkdown::render(file.path(template_folder, 'functional_report.Rmd'), 
-            output_file = outf, intermediates_dir = results_path)  
-
+        plotter <- htmlreportR:::htmlReport$new(title_doc = "functional report",
+                                                container = container,
+                                                tmp_folder = tmp_folder,
+                                                src = source_folder,
+                                                compress_obj = TRUE,
+                                                type_index = "contents_list")
+        plotter$build(template)
+        plotter$write_report(outf)
+        message(paste0("Report written in ", outf))
+        stop('Cluster report called but it is not ready yet. Reaching this
+                  point is a good thing, but means extra work')
     }
-    
-    
     if(!any(grepl("WGCNA", names(func_results))) && grepl("c|i", report)) {
         message("Cluster reports chosen but no cluster results available. 
                 Reports wont be plotted")
     } else {
-        mod_t_cor_p <- hunter_results$WGCNA_all$package_objects$module_trait_cor_p
+        res <- hunter_results$WGCNA_all$package_objects$module_trait_cor_p
+        mod_t_cor_p <- res
         mod_t_cor <- hunter_results$WGCNA_all$package_objects$module_trait_cor
         corr_cl <- mod_t_cor[abs(mod_t_cor[,"treat_Ctrl"]) > corr_threshold 
                                 & mod_t_cor_p[,"treat_Ctrl"] < 0.05,]
@@ -488,17 +566,16 @@ pvalcutoff = 0.05
         corr_cl <- gsub("Cluster_","",corr_cl)
         if (length(corr_cl) > 0) {
             enrichments_ORA <- lapply(enrichments_ORA, 
-                                filter_cluster_enrichment, filter_list = corr_cl)
+                                      filter_cluster_enrichment,
+                                      filter_list = corr_cl)
         } else {
             warning(paste0(c("There are not clusters with higher absolute ",
                              "correlation with treat/control hinger than ",
                              corr_threshold, ". Modify corr_threshold option. ",
                              "Reporting enrichments of all clusters...")))
         }
-    
     }
     if(grepl("c", report)){
-    
             write_merged_cluster_report(enrichments_ORA, results_path, 
                                 template_folder, sample_classes, DEGH_results, 
                                 showCategories, group_results)
@@ -532,11 +609,19 @@ pvalcutoff = 0.05
         wgcna_pval_cl_trait <- as.matrix(pack_obj$module_trait_cor_p)
         wgcna_corr_cl_trait <- as.matrix(pack_obj$module_trait_cor)
         wgcna_count_sample_trait <- as.matrix(trait_module[, !grepl("^ME",
-          colnames(trait_module))])
+                                                colnames(trait_module))])
         wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait, 
           norm_by_col = TRUE)
 
         message("\tRendering specific cluster reports")
+        c_update <- list(norm_counts = norm_counts,
+                         scaled_counts_table = scaled_counts_table, cls = cls,
+                         cl_eigvalues = cl_eigvalues,
+                         cl_eigvalues_gnorm = cl_eigvalues_gnorm,
+                         wgcna_pval_cl_trait = wgcna_pval_cl_trait,
+                         wgcna_corr_cl_trait = wgcna_corr_cl_trait,
+                         wgcna_count_sample_trait = wgcna_count_sample_trait)
+        container <- c(container, c_update)
         parallel_list(cls, function(cl) {
         #lapply(cls, function(cl) {
             cl_flags_ora <- lapply(enrichments_ORA_expanded, function(x) {
@@ -544,9 +629,10 @@ pvalcutoff = 0.05
             })
             temp_path_cl <- file.path(results_path, paste0(cl,"_temp_cl_rep"))
             outf_cls_i <- file.path(results_path, paste0("cl_func_",cl,".html"))
-            DEGH_results <- DEGH_results[which(DEGH_results$Cluster_ID == cl), ]
+            DEGH_subset <- DEGH_results[which(DEGH_results$Cluster_ID == cl), ]
+            container$DEGH_results <- DEGH_subset
             rmarkdown::render(file.path(template_folder, 
-                   'cl_func_report.Rmd'), output_file = outf_cls_i, 
+                   'cl_func_report.txt'), output_file = outf_cls_i, 
                    clean=TRUE, intermediates_dir = temp_path_cl)
         #}) 
         }, workers=cores, task_size=task_size)
