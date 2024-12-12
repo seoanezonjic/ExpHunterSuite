@@ -375,7 +375,6 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode pval_corr, echo = FALSE, warning = FALSE, eval = length(plotter$hash_vars$all_counts_for_plotting) > 1
-	saveRDS(plotter, "~/projects/Hunter_hepatocytes/exec_DEG_wf/degenes_Hunter.R_0011/plotter.rds")
 	cat(plotter$create_title("FDR Correlations", id = "FDR_corr", hlevel = 3, indexable = FALSE))
 	columns <<- c("combined_FDR", plotter$hash_vars$final_FDR_names)
 	cat(plotter$prettify_div(plotter$static_plot_main(id = "df", header = NULL, row_names = NULL,
