@@ -9,21 +9,21 @@
 	enrich_dotplot <- function(input_obj) {
 		enrichplot::dotplot(input_obj, showCategory=n_category)
 	}
-	encrich_density <- function(input_obj) {
-		enrich_density(input_obj, attributes = attr_vector, showCategory = n_category) +
-		ggplot2::labs(x = gene_attribute_name, y = NULL, fill = "Enrichment\nFDR") +
+	custom_enrich_density <- function(input_obj) {
+		enrich_density(enrich_result = input_obj, attributes = plotter$hash_vars$attr_vector, showCategory = n_category) +
+		ggplot2::labs(x = plotter$hash_vars$gene_attribute_name, y = NULL, fill = "Enrichment\nFDR") +
 		ggplot2::scale_fill_gradient2(low = "#3838F3", high = "#F33838", mid = "white",
-																	na.value = "#50EA55", midpoint = pvalcutoff)
+									  na.value = "#50EA55", midpoint = plotter$hash_vars$pvalcutoff)
 	}
 	enrich_cnet <- function(input_obj) {
-		enrichplot::cnetplot(input_obj, showCategory=n_category, foldChange=attr_vector) +
-	 	{if(!is.null(attr_vector)) ggplot2::scale_color_gradient2(name = gene_attribute_name, low = "#0000BF", high = "#bf0000", na.value = "#50EA55") }
+		enrichplot::cnetplot(input_obj, showCategory=n_category, foldChange=plotter$hash_vars$attr_vector) +
+	 	{if(!is.null(plotter$hash_vars$attr_vector)) ggplot2::scale_color_gradient2(name = plotter$hash_vars$gene_attribute_name, low = "#0000BF", high = "#bf0000", na.value = "#50EA55") }
 	}
 	enrich_emap <- function(input_obj) {
 		enrichplot::emapplot(input_obj, showCategory = n_category,  min_edge = 0.0000000000000001)
 	}
 	enrich_heatplot <- function(input_obj) {
-		enrichplot::heatplot(input_obj, showCategory = n_category, foldChange = attr_vector)
+		enrichplot::heatplot(input_obj, showCategory = n_category, foldChange = plotter$hash_vars$attr_vector)
 	}
 	enrich_upsetplot <- function(input_obj) {
 		enrichplot::upsetplot(input_obj, n=n_category)
@@ -32,7 +32,6 @@ end.rcode-->
 
 <!--begin.rcode "{{funsys}}_plots_ora"
 
-if(!exists("attr_vector")) attr_vector <- NULL
 # Add main label
 cat("<h2> <strong>{{funsys}} - Over Representation Analysis</strong></h2>",
 		"<p>The ORA method takes a group of significant genes and performs a Fisher's exact test for each term of the selected functional category.</p>")
@@ -46,13 +45,13 @@ cat("<strong>Dotplot</strong>",
      The x-axis represents the gene ratio and the dot size the number of genes associated with the functional category.</p>")
 cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", resizable = TRUE, custom_format = TRUE,
 		plotting_function = enrich_dotplot, plot_type = "plot"), preset = "magic"))
-if(!is.null(attr_vector)){
-	cat("<p><strong>Distributions of ", gene_attribute_name, "</p></strong>", 
-	  "<p>This plot shows the distribution of gene ",gene_attribute_name," that enriched the top enriched functional term/pathways.
+if(!is.null(plotter$hash_vars$attr_vector)){
+	cat("<p><strong>Distributions of ", plotter$hash_vars$gene_attribute_name, "</p></strong>", 
+	  "<p>This plot shows the distribution of gene ", plotter$hash_vars$gene_attribute_name," that enriched the top enriched functional term/pathways.
 	   The X axis repressent the distribution values. The color of the distribution repressents the FDR of the enrichment.
 	   The vertical lines represents the first, second and third quartiles.</p>")
 	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", resizable = TRUE, custom_format = TRUE,
-		  plotting_function = enrich_density, plot_type = "plot"), preset = "magic"))
+		  plotting_function = custom_enrich_density, plot_type = "plot"), preset = "magic"))
 }
 cat("<p><strong>Gene-Concept Network</strong></p>", 
 	  "<p>The network connects the top functional categories (brown nodes) to their associated genes (grey or colored nodes).

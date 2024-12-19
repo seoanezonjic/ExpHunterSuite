@@ -192,37 +192,16 @@ if("KEGG" %in% enrich_dbs) {
 
 clusters_flag <- grepl("c", opt$report_modes) || grepl("i", opt$report_modes)
 
-
-# func_results <- main_functional_hunter(
-#        hunter_results = hunter_results,
-#        model_organism = opt$model_organism,
-#        annot_table = annot_table,
-#        input_gene_id = input_gene_id,
-#        custom = all_custom_gmt,
-#        enrich_dbs = enrich_dbs,
-#        kegg_data_file = kegg_data_file,
-#        enrich_methods = enrich_methods,
-#        annotation_source = "orgdb", # Other option Biomart, to be added
-#        pthreshold = opt$pthreshold,
-#        qthreshold = opt$qthreshold,
-#        cores = opt$cores,
-#        task_size = opt$task_size,
-#        output_files = opt$output_files,
-#        organisms_table = organisms_table,
-#        fc_colname = fc_colname,
-#        universe = opt$universe,
-#        clean_parentals = opt$clean_parentals,
-#        simplify = opt$simplify,
-#        top_categories = opt$top_categories,
-#        sim_thr = opt$sim_thr,
-#        summary_common_name = opt$summary_common_name,
-#        clusters_flag = clusters_flag
-# )
-# saveRDS(func_results, "~/projects/Hunter_migration/exec_DEG_wf/functional_Hunter.R_0001/func_results.rds")
-func_results <- readRDS("~/projects/Hunter_migration/exec_DEG_wf/functional_Hunter.R_0001/func_results.rds")
+func_results <- main_functional_hunter(hunter_results = hunter_results, model_organism = opt$model_organism,
+                    annot_table = annot_table, input_gene_id = input_gene_id, custom = all_custom_gmt,
+                    enrich_dbs = enrich_dbs, kegg_data_file = kegg_data_file, enrich_methods = enrich_methods,
+                    annotation_source = "orgdb", # Other option Biomart, to be added
+                    pthreshold = opt$pthreshold, qthreshold = opt$qthreshold, cores = opt$cores, task_size = opt$task_size,
+                    output_files = opt$output_files, organisms_table = organisms_table, fc_colname = fc_colname,
+                    universe = opt$universe, clean_parentals = opt$clean_parentals, simplify = opt$simplify,
+                    top_categories = opt$top_categories, sim_thr = opt$sim_thr,
+                    summary_common_name = opt$summary_common_name, clusters_flag = clusters_flag)
 write_enrich_files(func_results, opt$output_files)
-
-save.image('Testing.RData')
 write_functional_report(hunter_results = hunter_results, cores = opt$cores,
                         func_results = func_results, task_size = opt$task_size,
                         output_files = opt$output_files,
@@ -232,5 +211,5 @@ write_functional_report(hunter_results = hunter_results, cores = opt$cores,
                         showCategories = opt$showCategories,
                         max_genes = opt$max_genes_plot,
                         group_results = opt$group_results,
-                        corr_threshold =opt$corr_threshold,
+                        corr_threshold = opt$corr_threshold,
                         pvalcutoff = opt$pthreshold, report = opt$report_modes)

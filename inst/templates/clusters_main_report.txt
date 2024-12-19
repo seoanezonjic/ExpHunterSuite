@@ -30,7 +30,7 @@ output:
   }   
 </style>
 
-<!--begin.rcode config, include=FALSE, message=FALSE
+<!--begin.rcode config,
 require(ggplot2)
 require(knitr)
 require(clusterProfiler)
@@ -38,9 +38,9 @@ require(enrichplot)
 require(DOSE)
 end.rcode-->
 
-<!--begin.rcode child="func_initial_details.Rmd", eval=!is.null(sample_classes)
+<!--begin.rcode child=file.path(template_folder, "func_initial_details.txt"), eval=!is.null(plotter$hash_vars$sample_classes)
 end.rcode-->
-<!--begin.rcode child="func_deg_details.Rmd", eval=!is.null(sample_classes)
+<!--begin.rcode child=file.path(template_folder, "func_deg_details.txt"), eval=!is.null(plotter$hash_vars$sample_classes)
 end.rcode-->
 
 <h2> <strong>Overview of clusters</strong></h2>
@@ -48,52 +48,43 @@ The following table shows the numbers of prevalent vs. non-prevalent genes found
 each cluster (first two columns), followed by the number  of significantly enriched 
 categories found in each cluster for each of the annotation sources found using the ORA method (remaining columns).
 
-<!--begin.rcode func_specific, echo=FALSE, results='asis', eval=!is.null(sample_classes)
+<!--begin.rcode func_specific, echo=FALSE, results='asis', eval=!is.null(plotter$hash_vars$sample_classes)
 
 # JRP - to decide - count entrez NAs to make consistent, or remove as not used for enrichements? For now we leave
-# DEGH_results_clust_stats <- DEGH_results[! is.na(DEGH_results$entrezgene) &  DEGH_results$Cluster_ID != 0,]
-DEGH_results_clust_stats <- DEGH_results[DEGH_results$Cluster_ID != 0,] 
-prev_cluster <- t(table(DEGH_results_clust_stats$genes_tag, DEGH_results_clust_stats$Cluster_ID))
-
-enr_per_cluster <- sapply(func_results$WGCNA_ORA_expanded, function(enr_list) {
+# plotter$hash_vars$DEGH_results_clust_stats <- plotter$hash_vars$DEGH_results[! is.na(plotter$hash_vars$DEGH_results$entrezgene) &  plotter$hash_vars$DEGH_results$Cluster_ID != 0,]
+plotter$hash_vars$DEGH_results_clust_stats <- plotter$hash_vars$DEGH_results[plotter$hash_vars$DEGH_results$Cluster_ID != 0,] 
+prev_cluster <- t(base::table(plotter$hash_vars$DEGH_results_clust_stats$genes_tag, plotter$hash_vars$DEGH_results_clust_stats$Cluster_ID))
+enr_per_cluster <- sapply(plotter$hash_vars$func_results$WGCNA_ORA_expanded, function(enr_list) {
   sapply(enr_list, nrow)
 })
 # Have to ensure row names match up
-cluster_info <- cbind(prev_cluster, enr_per_cluster[row.names(prev_cluster),])
+plotter$hash_vars$cluster_info <- as.data.frame(cbind(prev_cluster, enr_per_cluster[row.names(prev_cluster), ]))
+cat(plotter$prettify_div(plotter$table(list(id = "cluster_info", header = NULL, row_names = NULL,
+    styled = "dt", table_rownames = FALSE, text = FALSE)), preset = "magic"))
+plotter$hash_vars$to_show <- plotter$hash_vars$DEGH_results[,c("Cluster_ID","SYMBOL","genes_tag",colnames(plotter$hash_vars$DEGH_results)[1])]
+plotter$hash_vars$to_show$Cluster_ID <- as.character(plotter$hash_vars$to_show$Cluster_ID)
+cat(plotter$prettify_div(plotter$table(list(id = "to_show", header = NULL, row_names = NULL,
+    styled = "dt", table_rownames = FALSE, text = "dynamic")), preset = "magic"))
 
-DT::datatable(cluster_info, filter = 'top', rownames = FALSE, extensions = c('Buttons','ColReorder'),
-                    options = list(
-                      colReorder = TRUE,
-                      dom = 'lftBip',
-                        buttons = c('copy', 'csv', 'excel')
-))
 
-to_show <- DEGH_results[,c("Cluster_ID","SYMBOL","genes_tag",colnames(DEGH_results)[1])]
-to_show$Cluster_ID <- as.character(to_show$Cluster_ID)
-DT::datatable(to_show, filter = 'top', rownames = FALSE, extensions = c('Buttons', 'ColReorder'),
-                    options = list(
-                      colReorder = TRUE,
-                      dom = 'lftBip',
-                        buttons = c('copy', 'csv', 'excel')
-))
 
-cat("The following modules were run:\n")
-cat(names(flags_cluster))
+cat("<p>The following modules were run:</p>")
+cat(plotter$make_html_list(id = "flags_cluster", type = "ul", func = names))
 
-cat("Results were found in at least one module for the following:\n")
-cat(names(flags_cluster[flags_cluster==TRUE]))
-
+cat("<p>Results were found in at least one module for the following:</p>")
+plotter$hash_vars$results_cluster <- plotter$hash_vars$flags_cluster[plotter$hash_vars$flags_cluster==TRUE]
+cat(plotter$make_html_list(id = "results_cluster", type = "ul", func = names))
 end.rcode-->
 
 <!--begin.rcode multiple_children, echo=FALSE, results='asis'
 res <- list()
-for(funsys in names(flags_cluster)) {
-  if(flags_cluster[[funsys]] == TRUE) {
-    enrich_obj <- enrichments_ORA[[funsys]]
-    exp_res <- knitr::knit_expand("ora_plots_compareCluster.Rmd")
+for(funsys in names(plotter$hash_vars$flags_cluster)) {
+  if(plotter$hash_vars$flags_cluster[[funsys]] == TRUE) {
+    plotter$hash_vars$enrich_obj <- plotter$hash_vars$enrichments_ORA[[funsys]]
+    exp_res <- knitr::knit_expand(file.path(template_folder, "ora_plots_compareCluster.txt"))
     res[[funsys]] <- knitr::knit(text=exp_res, quiet=TRUE)
   } else {
-    res[[funsys]] <- paste0("## **No enrichment found for ", funsys, "**\n")
+    res[[funsys]] <- paste0("<h2> <strong>No enrichment found for ", funsys, "</strong></h2>")
   }
 }
 cat(unlist(res), sep = '\n')

@@ -1,11 +1,13 @@
 
 
-<h2> <strong>Used data in this analysis</strong></h2>
+<h2> <strong>Data used in this analysis</strong></h2>
 <p>Specifically, in this experiment set, known experiment labels are:</p>
 
 <!--begin.rcode
 	text <- paste(plotter$hash_vars$sample_classes[-1], collapse = "\n")
-	cat(replace_paired_mark(text, "(\\*)(.*)", c("<ul>", "</ul>")))
+	cat("<ul>\n")
+	cat(replace_paired_mark(text, "(\\*)(.*)", c("<li>", "</li>")))
+	cat("</ul>")
 end.rcode-->
 
 <h2> <strong>General description</strong></h2>
@@ -26,7 +28,7 @@ The functional categories can be:</p>
 
 </ul>
 
-<p>All the functional categories are computed with CluterProfiler and GO caterogires are computed also with TopGo.</p>
+<p>All the functional categories are computed with ClusterProfiler and GO categories are computed also with TopGo.</p>
 <p>Some sections will not show if there are not sinficative results. Each category is analysed using Over representation analysis (ORA) and Gene Set Analysis (GSEA).
 The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.
 In the case of the GSEA method, all the genes are sorted by their fold-change and the algorithm scan which genes with similar fold-change shares a term of the selected functional category.</p>

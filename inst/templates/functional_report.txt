@@ -40,7 +40,6 @@ end.rcode-->
 <!--begin.rcode ORA_analysis, eval = !is.null(plotter$hash_vars$flags_ora)
   res_ora <- vector(mode = "list", length = length(flags_ora))
   names(res_ora) <- names(flags_ora)
-  cat("<h1>This is outside the loop</h1>")
   for(funsys in names(flags_ora)) {
     if(flags_ora[[funsys]] == TRUE) {
       plotter$hash_vars$enrich_obj <- func_results$ORA[[funsys]]

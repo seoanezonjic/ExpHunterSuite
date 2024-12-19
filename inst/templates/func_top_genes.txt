@@ -48,12 +48,12 @@ end.rcode-->
 cat("<h3><strong>Top positive</strong></h3>")
 # Render
 cat(plotter$prettify_div(plotter$table(list(id = "topgenes", header = NULL, row_names = NULL,
-						 styled = "dt")), preset = "magic"))
+						 text = "dynamic", styled = "dt")), preset = "magic"))
 end.rcode-->
 <!--begin.rcode render_botgenes, echo = FALSE, results = 'asis'
 cat("<h3><strong>Top negative</strong></h3>")
 # Render
 cat(plotter$prettify_div(plotter$table(list(id = "topgenes", header = NULL, row_names = NULL,
-						 styled = "dt")), preset = "magic"))
+						 text = "dynamic", styled = "dt")), preset = "magic"))
 end.rcode-->
 

@@ -8,7 +8,7 @@
 		 merged_df[,merged_columns]<- format(merged_df[,merged_columns], scientific = TRUE, digits = 3)
 		 plotter$hash_vars$merged_df <- merged_df
 		 cat(plotter$prettify_div(plotter$table(list(id = "merged_df", header = NULL, row_names = NULL,
-		 	styled = "dt")), preset = "magic"))
+		 	styled = "dt", table_rownames = FALSE, text = "dynamic")), preset = "magic"))
 		 } else {
 			cat("\nThere are not significant enrichments to show\n<br>")
 		 }		
@@ -50,7 +50,6 @@ if (!is.null(func_results$pca_data$all_genes)){
 
 		cat("<br> This table shows the enrichment FDR of Gene ontology terms in gene contibution to PCs<br>")
 		print_go_tables(plotter$hash_vars$pca_enr_all)
-
 		cat("<h3> <strong>Functional enrichments of HCPC clusters using all genes</strong>")
 		plotter$hash_vars$res.hcpc <- func_results$pca_data$all_genes$res.hcpc
 		cat(plotter$prettify_div(plotter$static_plot_main(id = "res.hcpc", header = NULL, row_names = NULL,

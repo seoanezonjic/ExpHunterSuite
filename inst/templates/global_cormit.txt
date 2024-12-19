@@ -38,6 +38,46 @@ This report summarizes the results of ExpHunterSuite CoRmiT, comparing RNAseq an
 
 cols <- c("Eg Em"= "#1F77B4", "Cg Cm"="#FF7F0E", "Eg Cm"="#2CA02C", "Hg Cm"="#D62728", "Eg Hm"="#9467BD", "Hg Em"="#8C564B", "Hg Hm"="#E377C2", "Cg Hm" ="#767676", "Cg Em" ="#000000" ) #, "#7F7F7F", "#BCBD22", "#17BECF")
 
+plot_cor_dist <- function(ggplot_obj) {
+  if(isTRUE(plot_p_val)) {
+    ggplot_obj <- ggplot_obj + ggplot2::aes(x = strategy, y = pval, fill = strategy) +
+    ggplot2::geom_hline(yintercept = 0.05, colour="grey", linetype = "dashed")
+  } else {
+    ggplot_obj <- ggplot_obj + ggplot2::aes(x = strategy, y = correlation, fill = strategy)
+  }
+  ggplot_obj <- ggplot_obj + ggplot2::geom_violin(col = "white", trim = FALSE, scale = "width", draw_quantiles = draw_quantiles) + #ggplot2::ylim(-1.000001, min + 0.00001) +
+  ggplot2::geom_boxplot(width=0.05)+ ggplot2::ylim(ylim) + ggplot2::coord_flip() +
+  ggplot2::theme(axis.text.y = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank()) +
+  ggplot2::labs(fill = "Strategy") + ggplot2::scale_fill_manual(values = cols)
+  return(ggplot_obj)
+}
+
+plot_cont_tables <- function(ggplot_obj) {
+  ggplot_obj <- ggplot_obj +  ggplot2::aes(x=corr_cutoff, y=Odds_ratio,color = strategy) +
+  ggplot2::geom_point(ggplot2::aes(shape = RNA_strat), size = 4, stat="identity", alpha = 0.8) +
+  ggplot2::geom_line(ggplot2::aes(linetype = miRNA_strat), size = 0.7, stat="identity", alpha = 0.8)+
+  ggplot2::xlab("Pearson's R threshold") + ggplot2::ylab("Odds ratio") + ggplot2::theme_minimal()+
+  ggplot2::theme(legend.position="bottom", legend.box = "vertical", axis.text = ggplot2::element_text(size = 17),
+                 axis.title = ggplot2::element_text(size = 20, face = "bold"),
+                 legend.text = ggplot2::element_text(size = 17),
+                 legend.title = ggplot2::element_text(size=17, face = "bold")) +
+  ggplot2::guides(colour = ggplot2::guide_legend(nrow = 4)) +
+  ggplot2::scale_color_manual(name = "Strategy", values = cols)
+  return(ggplot_obj)
+}
+
+plot_strats_mult <- function(ggplot_obj) {
+  ggplot_obj <- ggplot_obj +  ggplot2::aes(x = miRNA, y = Odds_ratio, fill  = strategy) + 
+  ggplot2::geom_bar(stat = "identity", width = 0.8) + ggplot2::scale_fill_manual(values = cols) + 
+  ggplot2::geom_text(ggplot2::aes(label=as.character(corr_cutoff)), vjust=-0.3, size=3.5,  colour = "black") +
+  ggplot2::geom_text(ggplot2::aes(label = TP), size=3.5, vjust = 1.5, colour = "white") +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 1, size = 18),
+                 axis.text.y = ggplot2::element_text(size = 18), 
+                 axis.title.y = ggplot2::element_text(size = 18, face = "bold"),
+                 axis.title.x = ggplot2::element_text()) + ggplot2::theme_bw()
+  return(ggplot_obj)
+}
+
 end.rcode-->
 <h2> <strong>General Overview - Quality Control</strong></h2>
 
@@ -91,16 +131,14 @@ all_cor_dist_fil <- plotter$hash_vars$all_cor_dist[!plotter$hash_vars$all_cor_di
 all_cor_dist_fil$strategy <- as.factor(all_cor_dist_fil$strategy)
 all_cor_dist_fil$strategy_old <- all_cor_dist_fil$strategy 
 levels(all_cor_dist_fil$strategy) <- set_strats_readable(levels(all_cor_dist_fil$strategy))
+plotter$hash_vars$all_cor_dist_fil <- all_cor_dist_fil
+draw_quantiles <- c(0.1, 0.05)
+ylim <- c(-1, 1)
+plot_p_val <- FALSE
 
-pp <- ggplot2::ggplot(all_cor_dist_fil, ggplot2::aes(x = strategy, y = correlation, fill = strategy)) +
-  ggplot2::geom_violin(col = "white",trim = FALSE, scale = "width",draw_quantiles = c(0.1, 0.05)) + #ggplot2::ylim(-1.000001, min + 0.00001) +
-  ggplot2::geom_boxplot(width=0.05)+ ggplot2::ylim(-1, 1) +
-  ggplot2::coord_flip() +
-  ggplot2::theme(axis.text.y = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank()) +
-  ggplot2::labs(fill = "Strategy") + 
-  ggplot2::scale_fill_manual(values = cols)
+cat(plotter$prettify_div(plotter$static_ggplot_main(id = "all_cor_dist_fil", text = "dynamic", header = NULL, row_names = NULL, resizable = TRUE,
+                                                    plotting_function = plot_cor_dist), preset = "magic"))
 
-pp
 end.rcode-->
 
 <h3> <strong>Correlation P values distribution</strong></h3>
@@ -109,17 +147,11 @@ Distributions of correlation P values between miRNAs and target genes obtained u
 The dashed line represents a threshold of 0.05 
 
 <!--begin.rcode methods_comparison_violin_p, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE
-
-pp <- ggplot2::ggplot(all_cor_dist_fil, ggplot2::aes(x = strategy, y = pval, fill = strategy)) +
-  ggplot2::geom_violin(trim = FALSE, scale = "width") + 
-  ggplot2::geom_boxplot(width=0.05)+ ggplot2::ylim(-0.01, 1) +
-  ggplot2::geom_hline(yintercept = 0.05, colour="grey", linetype = "dashed")+
-  ggplot2::coord_flip() +
-  ggplot2::theme(axis.text.y = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank()) +
-  ggplot2::labs(fill = "Strategy") + 
-  ggplot2::scale_fill_manual(values = cols)
-pp
-
+  draw_quantiles <- NULL
+  ylim <- c(-0.01, 1)
+  plot_p_val <- TRUE
+  cat(plotter$prettify_div(plotter$static_ggplot_main(id = "all_cor_dist_fil", text = "dynamic", header = NULL, row_names = NULL, resizable = TRUE,
+                         plotting_function = plot_cor_dist), preset = "magic"))
 end.rcode-->
 
 <h3> <strong>Overall Odds Ratio</strong></h3>
@@ -129,29 +161,18 @@ The color indicate the strategies and shape and linetype represent the type of s
 Y axis represent Overall Odds Ratio and X represent the correlation thresholds. 
 
 <!--begin.rcode overall_OR, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, fig.width = 10, fig.height = 10  
-plotter$hash_vars$cont_tables$strategy <- set_strats_readable(plotter$hash_vars$cont_tables$strategy)
-plotter$hash_vars$cont_tables <- plotter$hash_vars$cont_tables[!grepl("DEG",plotter$hash_vars$cont_tables$strat) & !grepl("E0",plotter$hash_vars$cont_tables$strat),]
+  plotter$hash_vars$cont_tables$strategy <- set_strats_readable(plotter$hash_vars$cont_tables$strategy)
+  plotter$hash_vars$cont_tables <- plotter$hash_vars$cont_tables[!grepl("DEG",plotter$hash_vars$cont_tables$strat) & !grepl("E0",plotter$hash_vars$cont_tables$strat),]
 
-strat_names <- t(as.data.frame(strsplit(plotter$hash_vars$cont_tables$strategy, " ")))
+  strat_names <- t(as.data.frame(strsplit(plotter$hash_vars$cont_tables$strategy, " ")))
 
-plotter$hash_vars$cont_tables$RNA_strat <- strat_names[,1]
-plotter$hash_vars$cont_tables$miRNA_strat <- strat_names[,2]
+  plotter$hash_vars$cont_tables$RNA_strat <- strat_names[,1]
+  plotter$hash_vars$cont_tables$miRNA_strat <- strat_names[,2]
 
-plotter$hash_vars$cont_tables_pred <- plotter$hash_vars$cont_tables[plotter$hash_vars$cont_tables$db_group == "multimir",]
-ggplot2::ggplot(plotter$hash_vars$cont_tables_pred, ggplot2::aes(x=corr_cutoff, y=Odds_ratio,color = strategy)) +
-            ggplot2::geom_point(ggplot2::aes( shape = RNA_strat),size = 4, stat="identity", alpha = 0.8) +
-            ggplot2::geom_line(ggplot2::aes(linetype = miRNA_strat), size = 0.7, stat="identity", alpha = 0.8)+
-            ggplot2::xlab("Pearson's R threshold") + ggplot2::ylab("Odds ratio") +
-            ggplot2::theme_minimal()+
-      ggplot2::theme(legend.position="bottom",
-            legend.box = "vertical",
-            axis.text = ggplot2::element_text(size = 17),
-            axis.title = ggplot2::element_text(size = 20, face = "bold"),
-            legend.text = ggplot2::element_text(size = 17),
-            legend.title = ggplot2::element_text(size=17, face = "bold")) +
-      ggplot2::guides(colour = ggplot2::guide_legend(nrow = 4))+
-      ggplot2::scale_color_manual(name = "Strategy",
-                                  values = cols)
+  plotter$hash_vars$cont_tables_pred <- plotter$hash_vars$cont_tables[plotter$hash_vars$cont_tables$db_group == "multimir",]
+
+  cat(plotter$prettify_div(plotter$static_ggplot_main(id = "cont_tables_pred", text = "dynamic", header = NULL, row_names = NULL, resizable = TRUE,
+                           plotting_function = plot_cont_tables), preset = "magic"))
 end.rcode-->
 
 
@@ -163,24 +184,23 @@ This section describes the optimal pairs for each miRNA were selected through th
 <h3> <strong>General overview of integrated pairs</strong></h3>
 
 <!--begin.rcode overall_results_table, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE, fig.width = 4, fig.height = 4
-      overall_stats <- plotter$hash_vars$all_pairs[!is.na(plotter$hash_vars$all_pairs$normalized_counts_RNA_vs_miRNA_normalized_counts_correlation),]
-      overall_stats$miRNA <- plotter$hash_vars$mirna_names[match(overall_stats$miRNAseq, plotter$hash_vars$mirna_names$ACCESSION), "NAME"]
+  overall_stats <- plotter$hash_vars$all_pairs[!is.na(plotter$hash_vars$all_pairs$normalized_counts_RNA_vs_miRNA_normalized_counts_correlation),]
+  overall_stats$miRNA <- plotter$hash_vars$mirna_names[match(overall_stats$miRNAseq, plotter$hash_vars$mirna_names$ACCESSION), "NAME"]
 
-      int_stats <- overall_stats[overall_stats$miRNA %in% unique(plotter$hash_vars$miRNA_cont_tables[plotter$hash_vars$miRNA_cont_tables$db_group == "multimir", "miRNA"]),]
-      int_stats <- int_stats[int_stats$integrated_strat,]
-      overall_summary <- data.frame("Input miRNA" = length(unique(overall_stats$miRNAseq)),
-                                    "Input RNA" = length(unique(overall_stats$RNAseq)),
-                                    "miRNA with targets" = length(unique(int_stats$miRNAseq)),
-                                    "RNA targets" = length(unique(int_stats$RNAseq)),
-                                    "Total integrated pairs" = nrow(int_stats),
-                                    "Pairs in any DBs" = sum(int_stats$multimir),
-                                    "Pairs in prediction DBs" = sum(int_stats$predicted),
-                                    "Pairs in validation DBs" =sum(int_stats$validated),
-                                    check.names = FALSE)
-      overall_summary <- as.data.frame(t(overall_summary))
-      colnames(overall_summary) <- "Count"
-knitr::kable(overall_summary)
-
+  int_stats <- overall_stats[overall_stats$miRNA %in% unique(plotter$hash_vars$miRNA_cont_tables[plotter$hash_vars$miRNA_cont_tables$db_group == "multimir", "miRNA"]),]
+  int_stats <- int_stats[int_stats$integrated_strat,]
+  overall_summary <- data.frame("Input miRNA" = length(unique(overall_stats$miRNAseq)),
+                                "Input RNA" = length(unique(overall_stats$RNAseq)),
+                                "miRNA with targets" = length(unique(int_stats$miRNAseq)),
+                                "RNA targets" = length(unique(int_stats$RNAseq)),
+                                "Total integrated pairs" = nrow(int_stats),
+                                "Pairs in any DBs" = sum(int_stats$multimir),
+                                "Pairs in prediction DBs" = sum(int_stats$predicted),
+                                "Pairs in validation DBs" =sum(int_stats$validated),
+                                check.names = FALSE)
+  overall_summary <- as.data.frame(t(overall_summary))
+  colnames(overall_summary) <- "Count"
+  knitr::kable(overall_summary)
 end.rcode-->
 
 <h3> <strong>Selected strategy for miRNAs</strong></h3>
@@ -195,19 +215,10 @@ miRNA_cont_tables_mult$strategy <- set_strats_readable(miRNA_cont_tables_mult$st
 
   best_strats_mult$strat_corr<- paste(best_strats_mult$strategy , as.character(best_strats_mult$corr_cutoff), sep = " ")
   best_strats_mult$strat_pairs <- as.character(best_strats_mult$TP+ best_strats_mult$FP)
+  plotter$hash_vars$best_strats_mult <- best_strats_mult
 
-  ggplot2::ggplot(best_strats_mult, ggplot2::aes(x = miRNA, y = Odds_ratio, fill  = strategy)) + 
-  ggplot2::geom_bar(stat = "identity", width = 0.8) + 
-  ggplot2::geom_text(ggplot2::aes(label=as.character(corr_cutoff)), vjust=-0.3, size=3.5,  colour = "black") +
-  ggplot2::geom_text(ggplot2::aes(label = TP), size=3.5, vjust = 1.5, colour = "white")+
-  ggplot2::scale_fill_manual(values = cols) + 
-  ggplot2::theme_bw() +
-  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60,hjust=1,vjust=1, size = 18),
-                 axis.text.y = ggplot2::element_text(size = 18), 
-                 axis.title.y = ggplot2::element_text(size = 18, face = "bold"),
-                 axis.title.x = ggplot2::element_text())
-
-
+  cat(plotter$prettify_div(plotter$static_ggplot_main(id = "best_strats_mult", text = "dynamic", header = NULL, row_names = NULL, resizable = TRUE,
+                           plotting_function = plot_strats_mult), preset = "magic"))
 end.rcode-->
 
 

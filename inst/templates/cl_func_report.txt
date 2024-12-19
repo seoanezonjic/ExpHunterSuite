@@ -31,37 +31,38 @@ output:
 </style>
 
 <!--begin.rcode func_initial_details, eval=exists("cl_flags_ora"), echo=FALSE, results='asis', message=FALSE, warning=FALSE
-initial_out <- knitr::knit_expand(file.path(template_folder, "func_initial_details.Rmd"))
-initial <- knitr::knit(text=initial_out, quiet=TRUE)
-cat(initial, sep='\n')
+  initial_out <- knitr::knit_expand(file.path(template_folder, "func_initial_details.txt"))
+  initial <- knitr::knit(text=initial_out, quiet=TRUE)
+  cat(initial, sep='\n')
 end.rcode-->
+
 <!--begin.rcode func_deg_details, echo=FALSE, results='asis', message=FALSE, warning=FALSE
-degh_out <- knitr::knit_expand(file.path(template_folder, "func_deg_details.Rmd"))
-degh <- knitr::knit(text=degh_out, quiet=TRUE)
-cat(degh, sep='\n')
+  degh_out <- knitr::knit_expand(file.path(template_folder, "func_deg_details.txt"))
+  degh <- knitr::knit(text=degh_out, quiet=TRUE)
+  cat(degh, sep='\n')
 end.rcode-->
 
 <!--begin.rcode load_correlation_stats, echo=FALSE, results='asis', message=FALSE, warning=FALSE
-cor_out <- knitr::knit_expand(file.path(template_folder, "partial/corr_cl_stats.Rmd"))
-rescorr <- knitr::knit(text=cor_out, quiet=TRUE)
-cat(rescorr,sep='\n')
+  cor_out <- knitr::knit_expand(file.path(template_folder, "partial/corr_cl_stats.txt"))
+  rescorr <- knitr::knit(text=cor_out, quiet=TRUE)
+  cat(rescorr,sep='\n')
 end.rcode-->
 
 <!--begin.rcode ORA_analysis, eval=exists("cl_flags_ora"), echo=FALSE, results='asis', message=FALSE, warning=FALSE
-gene_set <- "ORA"
-default_width <- 5
-res <- list()
-for(funsys in names(cl_flags_ora)) {
-  if(cl_flags_ora[[funsys]] == TRUE) {
-    func_clusters <- func_results$WGCNA_ORA_expanded[[funsys]]
-    enrich_obj <- func_clusters[[which(names(func_clusters) == cl)]]
-    gene_attribute_name <- "fold change"
-    exp_res <- knitr::knit_expand("ora_plots_all_objects.Rmd")
-    res[[funsys]] <- knitr::knit(text=exp_res, quiet = TRUE)
-  } else {
-    res[[funsys]] <- paste0("## **No enrichment found for ", funsys, "**\n")
+  gene_set <- "ORA"
+  default_width <- 5
+  res <- list()
+  for(funsys in names(cl_flags_ora)) {
+    if(cl_flags_ora[[funsys]] == TRUE) {
+      func_clusters <- func_results$WGCNA_ORA_expanded[[funsys]]
+      plotter$hash_vars$enrich_obj <- func_clusters[[which(names(func_clusters) == plotter$hash_vars$cl)]]
+      gene_attribute_name <- "fold change"
+      exp_res <- knitr::knit_expand(file.path(template_folder, "ora_plots_all_objects.txt"))
+      res[[funsys]] <- knitr::knit(text=exp_res, quiet = TRUE)
+    } else {
+      res[[funsys]] <- paste0("<h2> <strong>No enrichment found for ", funsys, "</strong></h2>")
+    }
   }
-}
-cat(unlist(res), sep = '\n')
+  cat(unlist(res), sep = '\n')
 end.rcode-->
 

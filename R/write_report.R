@@ -63,7 +63,8 @@ write_expression_report <- function(exp_results,
     string_factors = exp_results[["string_factors"]],
     PCA_res = exp_results[["PCA_res"]],
     library_sizes = exp_results[["library_sizes"]],
-    target = exp_results[["target"]])
+    target = exp_results[["target"]],
+    WGCNA_results = exp_results[["WGCNA_results"]])
     
     outf <- file.path(normalizePath(output_files), "DEG_report.html")
     plotter <- htmlreportR:::htmlReport$new(title_doc = "DEG_report", 
@@ -227,7 +228,6 @@ write_global_cormit <- function(cormit_res,
                       genome_ref = opt$genome_ref,
                       mapping_output = opt$mapping_output,
                       output_pairs = opt$output_pairs)
-    
     outf <- file.path(normalizePath(opt$output_files), "coRmiT_report.html")
     plotter <- htmlreportR:::htmlReport$new(title_doc = "coRmiT report", 
                                             container = container,
@@ -330,23 +330,41 @@ write_summarize_heatmaps <- function(summarized_ORA, output_path) {
                         high = "white", 
                         midpoint = 0.5, 
                         limits = c(0, 1)),
-                        file = file.path(output_path, paste0("full_",funsys,'_heatmap.html')))
+                        file = file.path(output_path, paste0("full_",
+                                         funsys,'_heatmap.html')))
   }
 }
 
-
-write_merged_cluster_report <- function(enrichments_ORA, results_path, template_folder, 
-    sample_classes=NULL, DEGH_results=NULL, showCategories, group_results) {
+#' Write clustering report for functional Hunter
+#' This function will usually be called by write_functional_report.
+#' @inheritParams write_functional_report
+write_merged_cluster_report <- function(enrichments_ORA, results_path,
+    template_folder, sample_classes=NULL, DEGH_results=NULL, showCategories,
+    group_results, func_results = NULL, source_folder = NULL) {
     message("\tRendering full cluster reports")
     if(is.null(enrichments_ORA)) {
         message("No WGCNA ORA results, not printing cluster report")
     } else {
-        flags_cluster <- sapply(enrichments_ORA, function(x) nrow(x@compareClusterResult)) != 0
+        if(is.null(source_folder)) {
+            source_folder <- file.path(find.pakage("htmlreportR"), "inst")
+        }
+        flags_cluster <- sapply(enrichments_ORA,
+                                function(x) nrow(x@compareClusterResult)) != 0
         names(flags_cluster) <- names(enrichments_ORA)
         outf_cls <- file.path(results_path, "clusters_func_report.html")
-        rmarkdown::render(file.path(template_folder, 
-          'clusters_main_report.Rmd'), output_file = outf_cls, 
-          intermediates_dir = results_path)
+        tmp_folder <- file.path(results_path, "tmp_lib")
+        template <- file.path(template_folder, "clusters_main_report.txt")
+        container <- list(flags_cluster = flags_cluster,
+            DEGH_results = DEGH_results, sample_classes = sample_classes,
+            func_results = func_results, enrichments_ORA = enrichments_ORA,
+            group_results = group_results, showCategories = showCategories)
+        plotter <- htmlreportR:::htmlReport$new(container = container,
+                                 title_doc = "clusters functional report",
+                                 tmp_folder = tmp_folder, src = source_folder,
+                                 compress_obj = TRUE)
+        plotter$build(template)
+        plotter$write_report(outf_cls)
+        message(paste0("Report written in ", outf_cls))
     }
 }
 
@@ -463,8 +481,9 @@ write_clusters_to_enrichment <- function(
 #' @param group_results experimental - whether to group results in the emap plot
 #'  and functional (f). Default = "fc"
 #' @param max_genes maximum number of genes to plot in cnet plot
-#' @param corr_threshold minimum module eigengene-trait vector absolute Pearson R value  
-#' @param pvalcutoff maximum module eigengene-trait vector correlation P value 
+#' @param corr_threshold minimum module eigengene-trait vector absolute Pearson
+#' R value  
+#' @param pvalcutoff maximum module eigengene-trait vector correlation P value
 #' @return void
 #' @importFrom rmarkdown render
 #' @export
@@ -536,7 +555,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
                   gene_attribute_name = gene_attribute_name,
                   enrichments_ORA = enrichments_ORA,
                   ennrichments_ORA_expanded = enrichments_ORA_expanded,
-                  DEGH_results = DEGH_results)
+                  DEGH_results = DEGH_results, pvalcutoff = pvalcutoff)
     if(grepl("f", report)){
         message("\tRendering regular report")
         template <- file.path(template_folder, "functional_report.txt")
@@ -550,8 +569,6 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
         plotter$build(template)
         plotter$write_report(outf)
         message(paste0("Report written in ", outf))
-        stop('Cluster report called but it is not ready yet. Reaching this
-                  point is a good thing, but means extra work')
     }
     if(!any(grepl("WGCNA", names(func_results))) && grepl("c|i", report)) {
         message("Cluster reports chosen but no cluster results available. 
@@ -576,9 +593,12 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
         }
     }
     if(grepl("c", report)){
-            write_merged_cluster_report(enrichments_ORA, results_path, 
-                                template_folder, sample_classes, DEGH_results, 
-                                showCategories, group_results)
+            message("Launching cluster report")
+            write_merged_cluster_report(enrichments_ORA = enrichments_ORA,
+                results_path = results_path, template_folder = template_folder,
+                sample_classes = sample_classes, DEGH_results = DEGH_results, 
+                showCategories = showCategories, group_results = group_results,
+                func_results = func_results, source_folder = source_folder)
             write_summarize_heatmaps(func_results$summarized_ora, results_path)
     }
 
@@ -593,7 +613,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
 
         message("\tRendering individual cluster reports")
         if(is.null(enrichments_ORA)) {
-          message("No WGCNA ORA results,not printing individual cluster report")
+          message("No WGCNA ORA results, not printing individual cluster report")
         } else {
         cls  <- unique(DEGH_results$Cluster_ID)
         cls <- cls[cls != 0]
@@ -631,9 +651,17 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
             outf_cls_i <- file.path(results_path, paste0("cl_func_",cl,".html"))
             DEGH_subset <- DEGH_results[which(DEGH_results$Cluster_ID == cl), ]
             container$DEGH_results <- DEGH_subset
-            rmarkdown::render(file.path(template_folder, 
-                   'cl_func_report.txt'), output_file = outf_cls_i, 
-                   clean=TRUE, intermediates_dir = temp_path_cl)
+            container$cl <- cl
+            template <- file.path(template_folder, "cl_func_report.txt")
+            plotter <- htmlreportR:::htmlReport$new(title_doc = "functional report",
+                                                container = container,
+                                                tmp_folder = temp_path_cl,
+                                                src = source_folder,
+                                                compress_obj = TRUE,
+                                                type_index = "contents_list")
+            plotter$build(template)
+            plotter$write_report(outf_cls_i)
+            message(paste0("Report written in ", outf_cls_i))
         #}) 
         }, workers=cores, task_size=task_size)
         unlink(list.files(results_path, pattern="_temp_cl_rep$", 
