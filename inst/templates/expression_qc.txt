@@ -46,7 +46,7 @@
 	plot_cpm_density <- function(ggplot_obj) { 
 	   ggplot_obj + ggplot2::aes(x = value, colour = variable) +
 	   ggplot2::geom_density() + ggplot2::xlab(expression(log[2](cpm + 1))) +
-	   ggplot2::geom_vline(xintercept = log2(opt$reads + 1))
+	   ggplot2::geom_vline(xintercept = log2(plotter$hash_vars$opt$reads + 1))
 	}
 
 end.rcode-->
@@ -228,7 +228,7 @@ to decrease with sample rank)</p>
    cat("<p> Variance of gene counts across samples are represented. Genes with lower variance than selected threshold (dashed grey line) were filtered out. </p>")
 end.rcode-->
 
-<!--begin.rcode variance_dist, echo = FALSE, eval=!grepl("F", opt$modules), warning = FALSE, message = FALSE
+<!--begin.rcode variance_dist, echo = FALSE, eval=!grepl("F", plotter$hash_vars$opt$modules), warning = FALSE, message = FALSE
 
 plotter$hash_vars$gene_count_var <- data.frame(variance = plotter$hash_vars$var_filter[["variance_dis"]])
 

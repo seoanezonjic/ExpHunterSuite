@@ -28,18 +28,18 @@ end.rcode-->
 <!--begin.rcode expression_qc, child=file.path(template_folder, "expression_qc.txt")
 end.rcode-->
 
-<!--begin.rcode child=file.path(template_folder, "dea_results.txt"), eval = any(grepl("[DENL]", opt$modules))
+<!--begin.rcode child=file.path(template_folder, "dea_results.txt"), eval = any(grepl("[DENL]", plotter$hash_vars$opt$modules))
 end.rcode--> 
 
-# <!--begin.rcode child=file.path(template_folder, "WGCNA_results.txt"), eval = grepl("W", opt$modules)
-# end.rcode--> 
+<!--begin.rcode child=file.path(template_folder, "WGCNA_results.txt"), eval = grepl("W", plotter$hash_vars$opt$modules)
+end.rcode--> 
  
 ## These last two modules have not been used in years, literally. They might break.
 
-# <!--begin.rcode child=file.path(template_folder,"diffcoexp_results.txt"), eval = grepl("X", opt$modules)
+# <!--begin.rcode child=file.path(template_folder,"diffcoexp_results.txt"), eval = grepl("X", plotter$hash_vars$opt$modules)
 # end.rcode--> 
  
-# <!--begin.rcode child=file.path(template_folder,"PCIT_results.txt"), eval = grepl("P", opt$modules)
+# <!--begin.rcode child=file.path(template_folder,"PCIT_results.txt"), eval = grepl("P", plotter$hash_vars$opt$modules)
 # end.rcode--> 
 
 <h3> <strong>Values of options used to run DEGenesHunter</strong></h3>
