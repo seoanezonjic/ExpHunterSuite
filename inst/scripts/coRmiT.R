@@ -224,8 +224,6 @@ cormit_res <- c(miRNA_cor_results,
          genome_ref = opt$genome_ref,
          mapping_output = opt$mapping_output,
          output_pairs = opt$output_pairs))
-save.image('Testing.RData')
-stop('Test')
 write_global_cormit(cormit_res = cormit_res,
                     template_folder = template_folder,
                     output_files = opt$output_files,
