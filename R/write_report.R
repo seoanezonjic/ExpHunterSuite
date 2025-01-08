@@ -346,7 +346,7 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
         message("No WGCNA ORA results, not printing cluster report")
     } else {
         if(is.null(source_folder)) {
-            source_folder <- file.path(find.pakage("htmlreportR"), "inst")
+            source_folder <- file.path(find.package("htmlreportR"), "inst")
         }
         flags_cluster <- sapply(enrichments_ORA,
                                 function(x) nrow(x@compareClusterResult)) != 0
@@ -395,71 +395,65 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
 #' @importFrom enrichplot dotplot
 #' @importFrom ggplot2 ggsave
 #' @export
-write_clusters_to_enrichment <- function( 
-  output_path="results",
-  output_file="results",
-  mode="PR",
-  enrichments_ORA=NULL,
-  task_size = 1,
-  workers = 1,
-  template_folder = file.path(find.package('ExpHunterSuite'), 'templates'),
-  top_categories = NULL,
-  group_results = FALSE,
-  n_category = 30,
-  sim_thr = 0.7, 
-  summary_common_name = "ancestor", 
-  pvalcutoff = 0.1, 
-  gene_attributes=NULL,
-  gene_attribute_name=NULL, 
-  max_genes = 200,
-  simplify = FALSE,
-  clean_parentals = FALSE) {
-
-  enrichments_ORA_merged <- process_cp_list(enrichments_ORA, simplify_results = simplify, 
-    clean_parentals = clean_parentals)
- 
-  if(!is.null(top_categories))
-         enrichments_ORA_merged <- filter_top_categories(enrichments_ORA_merged, top_categories)
-
-
-  if (grepl("R", mode)){
-      enrichments_for_reports <- parse_results_for_report(enrichments_ORA)  
-      write_enrich_clusters(enrichments_ORA, output_path)
-      write_func_cluster_report(enrichments_for_reports, output_path, gene_attributes, 
-        workers = workers, task_size = task_size, template_folder=template_folder, gene_attribute_name=gene_attribute_name)
-  }
-
-
-
-  if (grepl("P", mode)) {
-    for (funsys in names(enrichments_ORA_merged)){
-      if (length(unique(enrichments_ORA_merged[[funsys]]@compareClusterResult$Description)) < 2 ) next
-
-      if (group_results == TRUE){
-        pp <- enrichplot::emapplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, pie="Count", layout = "nicely", 
-                    shadowtext = FALSE, node_label = "group", group_category = TRUE, 
-                    nCluster = min(floor(nrow(enrichments_ORA_merged[[funsys]])/7), 20), nWords = 6, repel = TRUE)
-      }else{
-        pp <- enrichplot::emapplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, pie="Count", layout = "nicely", 
-                    shadowtext = FALSE, repel = TRUE)
+write_clusters_to_enrichment <- function(output_path="results",
+      output_file="results", mode="PR", enrichments_ORA=NULL, task_size = 1,
+      workers = 1, top_categories = NULL, group_results = FALSE,
+      n_category = 30, sim_thr = 0.7, pvalcutoff = 0.1, gene_attributes=NULL,
+      max_genes = 200, summary_common_name = "ancestor", simplify = FALSE,
+      gene_attribute_name=NULL, clean_parentals = FALSE,
+      template_folder = file.path(find.package('ExpHunterSuite'), 'templates')){
+      enrichments_ORA_merged <- process_cp_list(enrichments_ORA,
+                simplify_results = simplify, clean_parentals = clean_parentals)
+      if(!is.null(top_categories)) {
+        enrichments_ORA_merged <- filter_top_categories(enrichments_ORA_merged,
+                                                        top_categories)
       }
-
-      ggplot2::ggsave(filename = file.path(output_path,paste0("emaplot_",funsys,".png")), pp, width = 30, height = 30, dpi = 300, units = "cm", device='png')
-
-      pp <- enrichplot::dotplot(enrichments_ORA_merged[[funsys]], showCategory= n_category, label_format = 70)
-      ggplot2::ggsave(filename = file.path(output_path,paste0("dotplot_",funsys,".png")), pp, width = 60, height = 40, dpi = 300, units = "cm", device='png')
-
-    }
-  }
-
-  if (grepl("S", mode)) {
-    summarized_merged_ora <- summarize_merged_ora(enrichments_ORA_merged, sim_thr, summary_common_name, pvalcutoff)
-    write_summarize_heatmaps(summarized_merged_ora, output_path)
-  }
-  if(grepl("R", mode)) {
-    write_merged_cluster_report(enrichments_ORA_merged, results_path=output_path, template_folder, 
-            showCategories=n_category, group_results=group_results)
-  }
+      if (grepl("R", mode)){
+          enrichments_for_reports <- parse_results_for_report(enrichments_ORA)  
+          write_enrich_clusters(enrichments_ORA, output_path)
+          write_func_cluster_report(enrichments_for_reports, output_path,
+            gene_attributes, workers = workers, task_size = task_size,
+            template_folder = template_folder,
+            gene_attribute_name = gene_attribute_name)
+      }
+      if (grepl("P", mode)) {
+        for (funsys in names(enrichments_ORA_merged)){
+            enrich <- enrichments_ORA_merged[[funsys]]
+            desc <- enrich@compareClusterResult$Description
+          if (length(unique(desc)) < 2 ) next
+          if (group_results == TRUE){
+            n_Cluster <- min(floor(nrow(enrich)/7), 20)
+            pp <- enrichplot::emapplot(enrich, showCategory= n_category,
+                                      pie="Count", layout = "nicely",
+                                      shadowtext = FALSE, node_label = "group",
+                                      group_category = TRUE, 
+                                      nCluster = min(floor(nrow(enrich)/7), 20),
+                                                     nWords = 6, repel = TRUE)
+          }else{
+            pp <- enrichplot::emapplot(enrich, showCategory= n_category,
+                                       pie="Count", layout = "nicely", 
+                                       shadowtext = FALSE, repel = TRUE)
+          }
+          ggplot2::ggsave(filename = file.path(output_path,
+                            paste0("emaplot_", funsys, ".png")), pp, width = 30,
+                            height = 30, dpi = 300, units = "cm", device='png')
+          pp <- enrichplot::dotplot(enrich, showCategory= n_category,
+                                    label_format = 70)
+          ggplot2::ggsave(filename = file.path(output_path,
+                            paste0("dotplot_", funsys, ".png")), pp, width = 60,
+                            height = 40, dpi = 300, units = "cm", device='png')
+        }
+      }
+      if (grepl("S", mode)) {
+        summarized_merged_ora <- summarize_merged_ora(enrichments_ORA_merged,
+                                       sim_thr, summary_common_name, pvalcutoff)
+        write_summarize_heatmaps(summarized_merged_ora, output_path)
+      }
+      if(grepl("R", mode)) {
+        write_merged_cluster_report(enrichments_ORA_merged,
+                         results_path=output_path, template_folder, 
+                         showCategories=n_category, group_results=group_results)
+      }
 }
 
 
@@ -736,23 +730,32 @@ parse_strat_text <- function(strategies){
 
 
 write_func_cluster_report <- function(enrichments_for_reports, output_path, 
-  gene_attributes, workers, task_size, template_folder, gene_attribute_name="fold change", max_genes = 200){
+  gene_attributes, workers, task_size, template_folder, max_genes = 200,
+  gene_attribute_name="fold change"){
   clean_tmpfiles_mod <- function() {
     message("Calling clean_tmpfiles_mod()")
   }
-  assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
-
+  #assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
   parallel_list(names(enrichments_for_reports), function(cluster) {
-    temp_path_cl <- file.path(output_path, paste0(cluster,"_temp"))
+    temp_path_cl <- file.path(output_path, paste0(cluster, "_temp"))
     func_results <- enrichments_for_reports[[cluster]]
     cl_flags_ora <- sapply(func_results, nrow) > 0
     attr_vector <- gene_attributes[[cluster]]
-    outfile <- file.path(output_path, paste0(cluster, "_func_report.html"))
-    test_env <- list2env(list(func_results=func_results, 
-      cl_flags_ora=cl_flags_ora))
-    rmarkdown::render(file.path(template_folder, 
-                   'clusters_to_enrichment.Rmd'), output_file = outfile, 
-               clean=TRUE, intermediates_dir = temp_path_cl, envir=test_env)
+    outfile <- file.path(output_path, paste0(cluster, "_to_enrichment",
+                                             "_report.html"))
+    container <- list(func_results = func_results, cl_flags_ora = cl_flags_ora,
+                      max_genes = max_genes)
+    message("\tRendering regular report")
+    template <- file.path(template_folder, "clusters_to_enrichment.txt")
+    plotter <- htmlreportR:::htmlReport$new(title_doc = "func cluster",
+                                            container = container,
+                                            tmp_folder = temp_path_cl,
+                                            src = source_folder,
+                                            compress_obj = TRUE,
+                                            type_index = "contents_list")
+    plotter$build(template)
+    plotter$write_report(outfile)
+    message(paste0("Report written in ", outfile))
   }, workers=workers, task_size=task_size)
   # temp files not deleted properly in parallel 
   unlink(list.files(output_path, pattern="_temp$", full.names=TRUE), 
