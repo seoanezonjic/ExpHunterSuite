@@ -27,6 +27,10 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
         "organism_table.txt")
 }
 
+# THIS NEEDS TO GO AFTER I'M DONE WITH DEVEL PHASE
+devtools::load_all('~/dev_R/htmlreportR')
+source_folder <- file.path(find.package("htmlreportR"), "inst")
+
 ########################## OPTIONS
 option_list <- list(
   optparse::make_option(c("-i", "--input_file"), type="character", default=NULL,
@@ -158,22 +162,13 @@ ce_list <- main_clusters_to_enrichment(
 )
 enrichments_ORA <- ce_list[["enrichments_ORA"]]
 
-write_clusters_to_enrichment(
-  output_path=output_path,
-  mode=opt$mode,
-  enrichments_ORA=enrichments_ORA,
-  task_size = opt$task_size,
-  workers = opt$workers,
-  template_folder = template_folder,
-  top_categories = opt$top_categories,
-  group_results = opt$group_results,
-  n_category = opt$showCategories,
-  sim_thr = opt$sim_thr, 
-  summary_common_name = opt$summary_common_name, 
-  pvalcutoff = opt$pvalcutoff,
+write_clusters_to_enrichment(output_path = output_path, mode = opt$mode,
+  enrichments_ORA=enrichments_ORA, task_size = opt$task_size,
+  workers = opt$workers, template_folder = template_folder,
+  top_categories = opt$top_categories, group_results = opt$group_results,
+  n_category = opt$showCategories, sim_thr = opt$sim_thr, 
+  summary_common_name = opt$summary_common_name, pvalcutoff = opt$pvalcutoff,
   gene_attributes = ce_list[["gene_attributes"]],
   gene_attribute_name = ce_list[["gene_attribute_name"]], 
-  max_genes = opt$max_genes_plot,
-  simplify = opt$simplify,
-  clean_parentals = opt$clean_parentals
-)
+  max_genes = opt$max_genes_plot, simplify = opt$simplify,
+  clean_parentals = opt$clean_parentals)
