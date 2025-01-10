@@ -67,20 +67,18 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode PCA_enr, echo=FALSE, results='asis', message=FALSE, warning=FALSE
-res_PCA <- list()
-
-for(funsys in names(flags_ora)) {
-  if (funsys %in% c("BP", "MF", "CC")){
-    plotter$hash_vars$pca_enr_all <- plotter$hash_vars$func_results$PCA_enrichments$all_genes[[funsys]]
-    plotter$hash_vars$pca_enr_degs <- plotter$hash_vars$func_results$PCA_enrichments$DEGs[[funsys]]
-    plotter$hash_vars$pca_cl_all <- plotter$hash_vars$func_results$PCA_clusters_results$all_genes[[funsys]]
-    plotter$hash_vars$pca_cl_degs <- plotter$hash_vars$func_results$PCA_clusters_results$DEGs[[funsys]]
-    pca_enr <- knitr::knit_expand(file.path(template_folder, "pca_enr.txt"))
-    res_PCA[[funsys]] <- knitr::knit(text=pca_enr, quiet=TRUE)
+  res_PCA <- list()
+  for(funsys in names(flags_ora)) {
+    if (funsys %in% c("BP", "MF", "CC")){
+      plotter$hash_vars$pca_enr_all <- plotter$hash_vars$func_results$PCA_enrichments$all_genes[[funsys]]
+      plotter$hash_vars$pca_enr_degs <- plotter$hash_vars$func_results$PCA_enrichments$DEGs[[funsys]]
+      plotter$hash_vars$pca_cl_all <- plotter$hash_vars$func_results$PCA_clusters_results$all_genes[[funsys]]
+      plotter$hash_vars$pca_cl_degs <- plotter$hash_vars$func_results$PCA_clusters_results$DEGs[[funsys]]
+      pca_enr <- knitr::knit_expand(file.path(template_folder, "pca_enr.txt"))
+      res_PCA[[funsys]] <- knitr::knit(text=pca_enr, quiet=TRUE)
+    }
   }
-}
-
-cat(unlist(res_PCA), sep = '\n')
+  cat(unlist(res_PCA), sep = '\n')
 end.rcode-->
 
 <h2> <strong>Values of options passed to the Functional Hunter main function</strong></h2>
@@ -88,6 +86,6 @@ First column contains the option names; second column contains the given values 
 Note that large data objects (e.g. expression results, 
   organism table and custom annotation files) are not shown.
 <!--begin.rcode opt_vals, echo = FALSE, results='asis'
-final_main_params <- func_results$final_main_params[! sapply(func_results$final_main_params, is.list)]
-print(knitr::kable(cbind(final_main_params)))
+  final_main_params <- func_results$final_main_params[! sapply(func_results$final_main_params, is.list)]
+  print(knitr::kable(cbind(final_main_params)))
 end.rcode-->
