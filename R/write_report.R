@@ -639,6 +639,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
                          wgcna_corr_cl_trait = wgcna_corr_cl_trait,
                          wgcna_count_sample_trait = wgcna_count_sample_trait)
         container <- c(container, c_update)
+        template <- file.path(template_folder, "cl_func_report.txt")
         parallel_list(cls, function(cl) {
         #lapply(cls, function(cl) {
             cl_flags_ora <- lapply(enrichments_ORA_expanded, function(x) {
@@ -649,7 +650,6 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
             DEGH_subset <- DEGH_results[which(DEGH_results$Cluster_ID == cl), ]
             container$DEGH_results <- DEGH_subset
             container$cl <- cl
-            template <- file.path(template_folder, "cl_func_report.txt")
             plotter <- htmlreportR:::htmlReport$new(title_doc = "functional report",
                                                 container = container,
                                                 tmp_folder = temp_path_cl,
