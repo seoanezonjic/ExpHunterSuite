@@ -656,6 +656,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
                                                 src = source_folder,
                                                 compress_obj = TRUE,
                                                 type_index = "contents_list")
+            plotter$hash_vars$cl_flags_ora <- cl_flags_ora
             plotter$build(template)
             plotter$write_report(outf_cls_i)
             message(paste0("Report written in ", outf_cls_i))
