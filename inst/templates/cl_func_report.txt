@@ -30,7 +30,7 @@ output:
   }   
 </style>
 
-<!--begin.rcode func_initial_details, eval=exists("cl_flags_ora"), echo=FALSE, results='asis', message=FALSE, warning=FALSE
+<!--begin.rcode func_initial_details, eval=!is.null(plotter$hash_vars$cl_flags_ora), echo=FALSE, results='asis', message=FALSE, warning=FALSE
   initial_out <- knitr::knit_expand(file.path(template_folder, "func_initial_details.txt"))
   initial <- knitr::knit(text=initial_out, quiet=TRUE)
   cat(initial, sep='\n')
@@ -48,7 +48,7 @@ end.rcode-->
   cat(rescorr,sep='\n')
 end.rcode-->
 
-<!--begin.rcode ORA_analysis, eval=exists("cl_flags_ora"), echo=FALSE, results='asis', message=FALSE, warning=FALSE
+<!--begin.rcode ORA_analysis, eval=!is.null(plotter$hash_vars$cl_flags_ora), echo=FALSE, results='asis', message=FALSE, warning=FALSE
   gene_set <- "ORA"
   default_width <- 5
   res <- list()
