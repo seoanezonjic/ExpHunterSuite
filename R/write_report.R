@@ -29,7 +29,7 @@ write_expression_report <- function(exp_results,
     if(is.null(opt)){
       opt <- exp_results[['final_main_params']]}
     if(is.null(source_folder)){
-      source_folder <- file.path(find.package("htmlreportR"), "inst")
+      source_folder <- find.package("htmlreportR")
     }
     template <- file.path(template_folder, "main_report.txt")
     tmp_folder <- file.path(output_files, "tmp_lib")
@@ -201,7 +201,7 @@ write_global_cormit <- function(cormit_res,
         output_pairs = cormit_res$opt$output_pairs)
     }
     if(is.null(source_folder)){
-      source_folder <- file.path(find.package("htmlreportR"), "inst")
+      source_folder <- find.package("htmlreportR")
     }
     template <- file.path(template_folder, "global_cormit.txt")
     tmp_folder <- file.path(output_files, "tmp_lib")
@@ -346,7 +346,7 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
         message("No WGCNA ORA results, not printing cluster report")
     } else {
         if(is.null(source_folder)) {
-            source_folder <- file.path(find.package("htmlreportR"), "inst")
+            source_folder <- find.package("htmlreportR")
         }
         flags_cluster <- sapply(enrichments_ORA,
                                 function(x) nrow(x@compareClusterResult)) != 0
@@ -409,7 +409,7 @@ write_clusters_to_enrichment <- function(output_path="results",
                                                         top_categories)
       }
       if(is.null(source_folder)) {
-        source_folder <- file.path(find.package("htmlreportR"), "inst")
+        source_folder <- find.package("htmlreportR")
       }
       if (grepl("R", mode)){
           enrichments_for_reports <- parse_results_for_report(enrichments_ORA)  
@@ -510,7 +510,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
       return(NULL)
     }
     if(is.null(source_folder)){
-      source_folder <- file.path(find.package("htmlreportR"), "inst")
+      source_folder <- find.package("htmlreportR")
     }
     tmp_folder <- file.path(output_files, "tmp_lib")
     # # TO parallelize properly
@@ -739,7 +739,7 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
     message("Calling clean_tmpfiles_mod()")
   }
   if(is.null(source_folder)) {
-    source_folder <- file.path(find.package("htmlreportR"), "inst")
+    source_folder <- find.package("htmlreportR")
   }
   #assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
   parallel_list(names(enrichments_for_reports), function(cluster) {
