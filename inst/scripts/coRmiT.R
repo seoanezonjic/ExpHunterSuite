@@ -222,7 +222,6 @@ cormit_res <- c(miRNA_cor_results,
          output_pairs = opt$output_pairs))
 write_global_cormit(cormit_res = cormit_res,
                     template_folder = template_folder,
-                    output_files = opt$output_files,
-                    source_folder = source_folder)
+                    output_files = opt$output_files)
 
 #do.call("write_miRNA_cor_report", miRNA_cor_results)

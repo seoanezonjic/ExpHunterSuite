@@ -198,10 +198,10 @@ func_results <- main_functional_hunter(hunter_results = hunter_results, model_or
                     top_categories = opt$top_categories, sim_thr = opt$sim_thr,
                     summary_common_name = opt$summary_common_name, clusters_flag = clusters_flag)
 write_enrich_files(func_results, opt$output_files)
+
 write_functional_report(hunter_results = hunter_results, cores = opt$cores,
                         func_results = func_results, task_size = opt$task_size,
                         output_files = opt$output_files,
-                        source_folder = source_folder,
                         organisms_table = organisms_table,
                         template_folder = template_folder,
                         showCategories = opt$showCategories,
