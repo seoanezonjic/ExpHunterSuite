@@ -52,8 +52,8 @@ end.rcode-->
   gene_set <- "ORA"
   default_width <- 5
   res <- list()
-  for(funsys in names(cl_flags_ora)) {
-    if(cl_flags_ora[[funsys]] == TRUE) {
+  for(funsys in names(plotter$hash_vars$cl_flags_ora)) {
+    if(plotter$hash_vars$cl_flags_ora[[funsys]] == TRUE) {
       func_clusters <- func_results$WGCNA_ORA_expanded[[funsys]]
       plotter$hash_vars$enrich_obj <- func_clusters[[which(names(func_clusters) == plotter$hash_vars$cl)]]
       gene_attribute_name <- "fold change"
