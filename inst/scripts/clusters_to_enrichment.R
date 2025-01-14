@@ -27,10 +27,6 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
         "organism_table.txt")
 }
 
-# THIS NEEDS TO GO AFTER I'M DONE WITH DEVEL PHASE
-devtools::load_all('~/dev_R/htmlreportR')
-source_folder <- file.path(find.package("htmlreportR"), "inst")
-
 ########################## OPTIONS
 option_list <- list(
   optparse::make_option(c("-i", "--input_file"), type="character", default=NULL,

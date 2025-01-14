@@ -35,10 +35,6 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 ##                                                                      ##
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
-# THIS NEEDS TO GO AFTER I'M DONE WITH DEVEL PHASE
-devtools::load_all('~/dev_R/htmlreportR')
-source_folder <- file.path(find.package("htmlreportR"), "inst")
-
 option_list <- list(
   optparse::make_option(c("-i", "--input_hunter_folder"), type="character",
     help="DEgenes Hunter differential expression analysis output folder"), 

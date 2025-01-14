@@ -113,10 +113,6 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 ################### INITIALIZE
 
-# THIS NEEDS TO GO AFTER I'M DONE WITH DEVEL PHASE
-devtools::load_all('~/dev_R/htmlreportR')
-source_folder <- file.path(find.package("htmlreportR"), "inst")
-
 options(scipen = 0.001, 
         digits = 3)
 

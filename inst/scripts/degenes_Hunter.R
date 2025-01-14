@@ -35,10 +35,6 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   template_folder <- file.path(root_path, 'templates')
 }
 
-# THIS NEEDS TO GO AFTER I'M DONE WITH DEVEL PHASE
-devtools::load_all('~/dev_R/htmlreportR')
-source_folder <- file.path(find.package("htmlreportR"), "inst")
-
 # Prepare command line input 
 option_list <- list(
   optparse::make_option(c("-i", "--input_file"), type="character", default=NULL,

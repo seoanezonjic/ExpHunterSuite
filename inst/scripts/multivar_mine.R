@@ -2,9 +2,7 @@
 
 
 render_pca_report <- function(multivar_res, output_files,template_folder, multivar_type) {
-  devtools::load_all("/mnt/home/users/bio_267_uma/josecordoba/software/htmlreportR")
-  source_folder <- find.package('htmlreportR')
-
+  source_folder <- find.package("htmlreportR")
   if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' )
     source_folder <- file.path(source_folder, "inst")
 
