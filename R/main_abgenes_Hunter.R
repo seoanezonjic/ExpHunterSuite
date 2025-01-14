@@ -108,6 +108,9 @@ write_abgenes_report <- function(final_results, output_dir = getwd(),
 	if(is.null(template_folder)) {
 		stop("No template folder was provided.")
 	}
+	if(is.null(source_folder)) {
+		source_folder <- file.path(find.package("htmlreportR"), "inst")
+	}
 	if(!file.exists(source_folder)) {
 		stop(paste0("Source folder not found. Was ", source_folder))
 	}

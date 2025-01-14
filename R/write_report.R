@@ -400,7 +400,7 @@ write_clusters_to_enrichment <- function(output_path="results",
       workers = 1, top_categories = NULL, group_results = FALSE,
       n_category = 30, sim_thr = 0.7, pvalcutoff = 0.1, gene_attributes=NULL,
       max_genes = 200, summary_common_name = "ancestor", simplify = FALSE,
-      gene_attribute_name=NULL, clean_parentals = FALSE,
+      gene_attribute_name=NULL, clean_parentals = FALSE, source_folder = NULL,
       template_folder = file.path(find.package('ExpHunterSuite'), 'templates')){
       enrichments_ORA_merged <- process_cp_list(enrichments_ORA,
                 simplify_results = simplify, clean_parentals = clean_parentals)
@@ -408,12 +408,15 @@ write_clusters_to_enrichment <- function(output_path="results",
         enrichments_ORA_merged <- filter_top_categories(enrichments_ORA_merged,
                                                         top_categories)
       }
+      if(is.null(source_folder)) {
+        source_folder <- file.path(find.package("htmlreportR"), "inst")
+      }
       if (grepl("R", mode)){
           enrichments_for_reports <- parse_results_for_report(enrichments_ORA)  
           write_enrich_clusters(enrichments_ORA, output_path)
           write_func_cluster_report(enrichments_for_reports, output_path,
             gene_attributes, workers = workers, task_size = task_size,
-            template_folder = template_folder,
+            template_folder = template_folder, source_folder = source_folder,
             gene_attribute_name = gene_attribute_name)
       }
       if (grepl("P", mode)) {
@@ -731,9 +734,12 @@ parse_strat_text <- function(strategies){
 
 write_func_cluster_report <- function(enrichments_for_reports, output_path, 
   gene_attributes, workers, task_size, template_folder, max_genes = 200,
-  gene_attribute_name="fold change"){
+  gene_attribute_name="fold change", source_folder = NULL){
   clean_tmpfiles_mod <- function() {
     message("Calling clean_tmpfiles_mod()")
+  }
+  if(is.null(source_folder)) {
+    source_folder <- file.path(find.package("htmlreportR"), "inst")
   }
   #assignInNamespace("clean_tmpfiles", clean_tmpfiles_mod, ns = "rmarkdown")
   parallel_list(names(enrichments_for_reports), function(cluster) {
