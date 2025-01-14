@@ -67,11 +67,11 @@ cat(plotter$prettify_div(plotter$table(list(id = "to_show", header = NULL, row_n
     styled = "dt", table_rownames = FALSE, text = "dynamic")), preset = "magic"))
 
 cat("<p>The following modules were run:</p>")
-cat(htmlreportR::make_html_list(id = "flags_cluster", type = "ul", func = names))
+cat(htmlreportR:::make_html_list(list_content = plotter$hash_vars$flags_cluster))
 
 cat("<p>Results were found in at least one module for the following:</p>")
 plotter$hash_vars$results_cluster <- plotter$hash_vars$flags_cluster[plotter$hash_vars$flags_cluster==TRUE]
-cat(htmlreportR::make_html_list(id = "results_cluster", type = "ul", func = names))
+cat(htmlreportR:::make_html_list(list_content = plotter$hash_vars$results_cluster))
 end.rcode-->
 
 <!--begin.rcode multiple_children, echo=FALSE, results='asis'
