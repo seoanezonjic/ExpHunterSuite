@@ -49,55 +49,6 @@ tag_qc <- function(seu, minqcfeats, percentmt){
   return(seu)
 }
 
-
-##########################################################################
-
-
-#' do_dimred
-#' Perform linear (PCA) and non-linear (UMAP/tSNE) dimensionality reduction
-#'
-#' @param seu Seurat object
-#' @param ndims Number of PC to be used for UMAP / tSNE
-#' @param dimreds character vector with the dimensional reductions to perform. E.g. c("pca", "tsne", "umap")
-#' @param reduction Dimensional reduction to use for UMAP /tSNE. "pca" if no integration, or "harmony" if integration
-#'
-#' @keywords preprocessing, dimensionality, reduction, PCA, UMAP, tSNE
-#' 
-#' @return Seurat object
-do_dimred <- function(seu, ndims, dimreds, reduction = "pca"){
-  if ("pca" %in% dimreds){
-    seu <- RunPCA(seu, features = VariableFeatures(object = seu))
-  }
-  if ("umap" %in% dimreds){
-    seu <- RunUMAP(seu, dims = 1:ndims, reduction = reduction)
-  }
-  if ("tsne" %in% dimreds){
-    seu <- RunTSNE(seu, dims = 1:ndims, reduction = reduction)
-  }
-  return(seu)
-}
-
-
-##########################################################################
-
-
-#' do_clustering
-#' Perform clustering of cells
-#'
-#' @param seu Seurat object
-#' @param ndims Number of PC to be used for clustering
-#' @param resolution Granularity of the downstream clustering (higher values -> greater number of clusters)
-#' @param reduction Dimensional reduction to use for clustering. "pca" if no integration, or "harmony" if integration
-#' 
-#' @keywords preprocessing, clustering
-#' 
-#' @return Seurat object
-do_clustering <- function(seu, ndims, resolution, reduction){
-  seu <- FindNeighbors(seu, dims = 1:ndims, reduction = reduction)
-  seu <- FindClusters(seu, resolution = resolution)
-  return(seu)
-}
-
 #' add_exp_design
 #' Add experimental condition to Seurat metadata
 #'
