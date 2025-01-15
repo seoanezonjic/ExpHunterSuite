@@ -1,0 +1,121 @@
+
+<!--begin.rcode setup
+	get_metadata <- function(seu) {
+		seu_meta <- seu@meta.data
+		seu_meta <- seu_meta[colnames(seu_meta) != "orig.ident"]
+		return(seu_meta)
+	}
+
+	subset_metadata <- function(meta) {
+		return(meta[rownames(meta) %in% metric, ])
+	}
+
+	plot_vln <- function(metadata, feature){
+	  meta <- metadata[, c("orig.ident", feature, "filter")]
+	  colnames(seu)[2] <- "values"
+	  ggplot() + 
+	    geom_point(seu,
+	               mapping = aes(orig.ident, values, fill = orig.ident),
+	               shape = 21,
+	               colour = "white",
+	               size = 2,
+	               stroke = 0.5,
+	               position = "jitter",
+	               alpha = 0.3) +
+	    geom_violin(seu,
+	                mapping = aes(orig.ident, values, fill = orig.ident),
+	                width = 0.5,
+	                color = "black") +
+	    xlab(NULL) +
+	    ylab(feature) +
+	    labs(fill = NULL) +
+	    theme_bw()
+	}
+
+	custom_ft_scatter <- function(seu) {
+		title <- paste0(feature1, " vs ", feature2)
+		Seurat::FeatureScatter(seu, feature1 = feature1, feature2 = feature2) +
+		ggplot2::ggtitle(title)
+	}
+
+	custom_ft_plot <- function(seu) {
+		top <- head(Seurat::VariableFeatures(seu, 10))
+		plot <- Seurat::VariableFeaturePlot(seu) +
+				ggplot2::theme(legend.position="top")
+		labeled_plot <- Seurat::LabelPoints(plot = plot, points = top,
+											repel = TRUE, xnudge = 0, ynudge = 0) + 
+    					ggplot2::theme(legend.position="none")
+    	return(labeled_plot)
+	}
+	metrics <- c("ncount_rna", "nfeature_rna", "percent.mt", "percent.rb")
+	plotter$hash_vars$meta <- get_metadata(plotter$hash_vars$qc)
+	attr_cols <- which(!colnames(plotter$hash_vars$meta) %in% metrics)
+	use_canvas <- plotter$hash_vars$use_canvas
+end.rcode-->
+
+<h1><strong>Single Cell RNA-Seq Quality Control</strong></h1>
+
+<h2> Legend </h2>
+
+<ul>
+	<li> nFeature_RNA: unique expressed features per cell. Empty droplets will present low values. </li>
+	<li> nCount_RNA: reads per cell. Doublets might present high values. </li>
+	<li> percent.mt: mitochondrial counts per cell (%). Contaminated or dying cells might present high values. </li>
+	<li> percent.rb: ribosomal counts per cell (%) </li>
+</ul>
+
+<p> For more information on single cell QC metrics, please refer to:
+Ilicic, Tomislav, Jong Kyoung Kim, Aleksandra A Kolodziejczyk, Frederik Otzen Bagger,
+Davis James McCarthy, John C Marioni, and Sarah A Teichmann. 2016.
+“Classification of Low Quality Cells from Single-Cell Rna-Seq Data.”
+*Genome Biology* 17 (1): 1–15. </p>
+
+<!--begin.rcode Filtering title
+	cat(plotter$create_title("Filtering metrics", "filter", hlevel = 1, indexable = TRUE, clickable = FALSE,
+                              t_id = "filter", clickable_text = ""))
+end.rcode-->
+
+<!--begin.rcode boxplots
+	cat(plotter$create_title("Filtering summary", "filter violin", hlevel = 2, indexable = FALSE,
+							  clickable = FALSE, clickable_text = ""))
+	for(metric in metrics) {
+		if(use_canvas){
+			plot <- plotter$boxplot(list(id = "meta", title = metric, header = NULL, row_names = NULL, text = "dynamic",
+										 format = "long", smp_attr = attr_cols, func = subset_metadata,
+										 group = "qc", config = list(graphOrientation = "vertical")))
+		} else {
+			plot <- plotter$static_plot_main("meta", custom_format = TRUE,
+	                             plotting_function = plot_vln)
+		}
+			cat(plotter$prettify_div(plot, preset = "magic"))
+	}
+end.rcode-->
+
+<!--begin.rcode metrics_corr, eval = FALSE
+	cat(plotter$create_title("Filtering summary", "filter violin", hlevel = 2, indexable = FALSE,
+							  clickable = FALSE, clickable_text = ""))
+	cat(plotter$prettify_div(plotter$static_plot_main(list(id = "meta", title = "")), preset = "magic"))
+end.rcode-->
+
+<!--begin.rcode var_ft
+	cat(plotter$create_title("Variable feature search", "var_ft", hlevel = 2, indexable = FALSE,
+							  clickable = FALSE, clickable_text = ""))
+	cat(plotter$prettify_div(plotter$static_plot_main(id = "seu", custom_format = TRUE,
+													  plotting_function = custom_ft_plot),
+													  preset = "magic"))
+end.rcode-->
+
+<!--begin.rcode ft_scatter
+	cat(plotter$create_title("Correlation between features", "ft_scatter", hlevel = 1, indexable = TRUE,
+							  clickable = FALSE))
+	pairs <- list(c("percent.mt", "ncount_rna"), c("ncount_rna", "nfeature_rna"),
+				  c("ncount_rna", "percent.rb"), c("percent.rb", "percent.mt"))
+	for(pair in pairs) {
+		feature1 <- pair[1]
+		feature2 <- pair[2]
+		title <- paste0(feature1, " vs ", feature2)
+		cat(plotter$prettify_div(plotter$static_plot_main(id = "seu", custom_format = TRUE,
+							plotting_function = custom_ft_scatter), preset = "magic"))
+	}
+
+end.rcode-->
