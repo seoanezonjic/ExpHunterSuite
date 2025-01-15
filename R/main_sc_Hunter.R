@@ -1,6 +1,6 @@
 
-#' main_analyze_seurat
-#' `main_analyze_seurat` is the main seurat analysis function. Can be used
+#' main_sc_Hunter
+#' `main_sc_Hunter` is the main seurat analysis function. Can be used
 #' for integrative or non-integrative analysis.
 #'
 #' @param seu A seurat object.
@@ -46,7 +46,7 @@
 #' provide a more accurate annotation, but increase noise and computational 
 #' time. Will not be used if ref_de_method is empty.
 
-main_analyze_seurat <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
+main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                            		  resolution, p_adj_cutoff = 5e-3,
                            		  integrate = FALSE, cluster_annotation = NULL,
                            		  cell_annotation = NULL, DEG_columns = NULL,
