@@ -666,10 +666,6 @@ read_and_format_targets <- function(file) {
   return(markers)
 }
 
-
-##########################################################################
-
-
 #' extract_metadata
 #' Extract metadata dataframe from Seurat objects
 #' 
@@ -686,4 +682,15 @@ extract_metadata <- function(seu){
     seu <- do.call(rbind, seu)
     }
 return(seu)
+}
+
+#' find_doublets
+#' `find_doublets` is a wrapper for the recommended steps for doublet
+#' calculation in package DoubletFinder
+#'
+
+find_doublets <- function(seu, PCA_dims) {
+  nExp <- round(ncol(seu) * 0.04)  # Expect 4% doublets
+  seu <- doubletFinder(seu, pN = 0.25, pK = 0.09, nExp = nExp, PCs = 1:10)
+  return(seu)
 }

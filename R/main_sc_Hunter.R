@@ -45,18 +45,22 @@
 #' @param ref_n Top N reference markers to consider in annotation. Higher values
 #' provide a more accurate annotation, but increase noise and computational 
 #' time. Will not be used if ref_de_method is empty.
+#' @param doublets A vector containing UMIs to be marked as doublets. NULL by
+#' default. Per-sample analysis finds this vector for every sample, integrative
+#' mode requires this vector.
 
 main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
-                           		  resolution, p_adj_cutoff = 5e-3,
-                           		  integrate = FALSE, cluster_annotation = NULL,
-                           		  cell_annotation = NULL, DEG_columns = NULL,
-                           		  scalefactor = 10000, hvgs, int_columns = NULL,
-                           		  normalmethod = "LogNormalize", ndims,
-                                verbose = FALSE, output = getwd(),
-                                save_RDS = FALSE, reduce = FALSE, ref_label,
-                                SingleR_ref = NULL, ref_de_method = NULL,
-                                ref_n = NULL, BPPARAM = NULL){
-  qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt)
+                           resolution, p_adj_cutoff = 5e-3,
+                           integrate = FALSE, cluster_annotation = NULL,
+                           cell_annotation = NULL, DEG_columns = NULL,
+                           scalefactor = 10000, hvgs, int_columns = NULL,
+                           normalmethod = "LogNormalize", ndims,
+                           verbose = FALSE, output = getwd(),
+                           save_RDS = FALSE, reduce = FALSE, ref_label,
+                           SingleR_ref = NULL, ref_de_method = NULL,
+                           ref_n = NULL, BPPARAM = NULL, doublets = NULL){
+  qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
+               doublet_UMIs = NULL)
   colnames(qc@meta.data) <- tolower(colnames(qc@meta.data))
   if(!reduce) {
     seu <- subset(qc, subset = qc != 'High_MT,Low_nFeature')
@@ -90,6 +94,9 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   }
   seu <- Seurat::RunUMAP(object = seu, dims = seq(ndims),
                          reduction = reduction, verbose = verbose)
+  if(!integrate) {
+    doublet_UMIs <- find_doublets(seu)
+  }
   seu <- Seurat::FindNeighbors(object = seu, dims = seq(ndims),
                                reduction = reduction, verbose = verbose)
   if(is.null(SingleR_ref)) {
