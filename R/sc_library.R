@@ -481,7 +481,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
 #' of cells for each sample in a seurat object, and returns a vector with the
 #' union of these genes.
 #'
-#' @inheritParams qc_pct
+#' @inheritParams get_qc_pct
 #' @return A vector containing the union of the top N genes of each sample of
 #' input Seurat object.
 
@@ -512,7 +512,8 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts") {
 #' `get_qc_pct` creates a gene expressio matrix of the union of the top N genes
 #' expressed in every sample in a seurat object.
 #' @param top Top N genes to take from each sample.
-#' @inheritParams breakdown_query get_query_pct
+#' @inheritParams breakdown_query
+#' @inheritParams get_query_pct
 
 get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
                    sigfig = 2) {
