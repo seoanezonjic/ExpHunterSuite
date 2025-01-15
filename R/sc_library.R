@@ -720,24 +720,3 @@ make_vln <- function(seu, feature){
     labs(fill = NULL) +
     theme_bw()
 }
-
-##########################################################################
-
-
-#' ensure_list
-#' Makes sure you have list of Seurat objects (even if you have only one)
-#' 
-#' @param seu Seurat object / list of Seurat objects
-#' 
-#' @keywords preprocessing, report, list
-#' 
-#' @return List of Seurat objects
-ensure_list <- function(seu){
-  if (!is.list(seu)){
-    seu <- list(seu)
-  }
-  return(seu)
-}
-
-##########################################################################
-
