@@ -240,13 +240,16 @@ main_analyze_seurat <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 #' @return nothing
 
 write_seurat_report <- function(final_results, output = getwd(), name = NULL,
-                                template_folder, source_folder = "none",
+                                template_folder, source_folder = NULL,
                                 target_genes = NULL, int_columns = NULL,
                                 DEG_list = NULL, cell_annotation = NULL,
                                 template = NULL, out_name = NULL,
                                 use_canvas = TRUE){
   if(is.null(template_folder)) {
     stop("No template folder was provided.")
+  }
+  if(is.null(source_folder)) {
+    source_folder <- find.package("htmlreportR")
   }
   if(!file.exists(source_folder)) {
     stop(paste0("Source folder not found. Was ", source_folder, " ."))
