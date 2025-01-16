@@ -22,30 +22,34 @@ read_input <- function(name, input, mincells, minfeats, exp_design){
 #' tag_gc
 #' Perform Quality Control
 #'
-#' @param seu Seurat object
-#' @param minqcfeats Min number of features for which a cell is selected
-#' @param percentmt Max percentage of reads mapped to mitochondrial genes for which a cell is selected
+#' @param seu Seurat object to tag
+#' @param minqcfeats Min number of features for which a cell is selected.
+#' Default 500
+#' @param percentmt Max percentage of reads mapped to mitochondrial genes for
+#' which a cell is selected. Default 5
+#' @param doublet_list Vector of UMIs to be marked as doublet. Default NULL
 #'
 #' @keywords preprocessing, qc
 #' 
-#' @return Seurat object
-tag_qc <- function(seu, minqcfeats, percentmt){
-  seu[["percent.mt"]] <- Seurat::PercentageFeatureSet(seu, pattern = "^MT-")
-  seu[["percent.rb"]] <- Seurat::PercentageFeatureSet(seu, pattern = "^RP[SL]")
-  seu[['qc']] <- ifelse(seu@meta.data$nFeature_RNA < minqcfeats,
-                        'Low_nFeature', 'Pass')
-  seu[['qc']] <- ifelse(seu@meta.data$nFeature_RNA < minqcfeats &
-                        seu@meta.data$qc != 'Pass' &
-                        seu@meta.data$qc != 'Low_nFeature',
-                        paste('Low_nFeature', seu@meta.data$qc, sep = ','),
-                              seu@meta.data$qc)
-  seu[['qc']] <- ifelse(seu@meta.data$percent.mt > percentmt &
-                        seu@meta.data$qc == 'Pass','High_MT', seu@meta.data$qc)
-  seu[['qc']] <- ifelse(seu@meta.data$nFeature_RNA < minqcfeats &
-                        seu@meta.data$qc != 'Pass' &
-                        seu@meta.data$qc != 'High_MT',
-                        paste('High_MT', seu@meta.data$qc, sep = ','),
-                              seu@meta.data$qc)
+#' @return Seurat object with tagged metadata
+
+tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL){
+  seu@meta.data$percent.mt <- Seurat::PercentageFeatureSet(seu,
+                                                           pattern = "^MT-")
+  seu@meta.data$percent.rb <- Seurat::PercentageFeatureSet(seu,
+                                                           pattern = "^RP[SL]")
+  seu@meta.data$qc <- vector(mode = "character", length = nrow(seu@meta.data))
+  seu@meta.data$qc[seu@meta.data$nFeature_RNA < minqcfeats] <- "Low_nFeature"
+  high_mt <- seu@meta.data$percent.mt > percentmt
+  seu@meta.data$qc[high_mt] <- paste(seu@meta.data$qc[high_mt], "High_MT",
+                                     sep = ",")
+  if(!is.null(doublet_list)) {
+     message("Doublet list provided. Marking UMIs")
+     doublet <- rownames(seu@meta.data) %in% doublet_list
+     seu@meta.data$qc[doublet] <- paste(seu@meta.data$qc[doublet], "Doublet",
+                                        sep = ",")
+  }
+  seu@meta.data$qc[seu@meta.data$qc == ""] = "Pass"
   return(seu)
 }
 
@@ -689,8 +693,13 @@ return(seu)
 #' calculation in package DoubletFinder
 #'
 
-find_doublets <- function(seu, PCA_dims) {
-  nExp <- round(ncol(seu) * 0.04)  # Expect 4% doublets
-  seu <- doubletFinder(seu, pN = 0.25, pK = 0.09, nExp = nExp, PCs = 1:10)
-  return(seu)
+find_doublets <- function(seu) {
+  nExp <- round(ncol(seu) * 0.04)  # Expect 4% doublets BUT WHY???
+  seu <- DoubletFinder::doubletFinder(seu, pN = 0.25, pK = 0.09, nExp = nExp,
+                                      PCs = 1:10)
+  doublet_col <- grep('DF.classifications*', colnames(seu@meta.data))
+  doublets <- seu@meta.data[seu@meta.data[, doublet_col] == "Doublet", ]
+  doublet_UMIs <- rownames(doublets)
+  res <- list(seu = seu, UMIs = doublet_UMIs)
+  return(res)
 }
