@@ -19,15 +19,15 @@ read_input <- function(name, input, mincells, minfeats, exp_design){
   return(seu)
 }
 
-#' tag_gc
-#' Perform Quality Control
+#' tag_qc
+#' Tag barcodes not passing QC filters
 #'
 #' @param seu Seurat object to tag
 #' @param minqcfeats Min number of features for which a cell is selected.
 #' Default 500
 #' @param percentmt Max percentage of reads mapped to mitochondrial genes for
 #' which a cell is selected. Default 5
-#' @param doublet_list Vector of UMIs to be marked as doublet. Default NULL
+#' @param doublet_list Vector of barcodes to be marked as doublet. Default NULL
 #'
 #' @keywords preprocessing, qc
 #' 
@@ -44,12 +44,28 @@ tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL){
   seu@meta.data$qc[high_mt] <- paste(seu@meta.data$qc[high_mt], "High_MT",
                                      sep = ",")
   if(!is.null(doublet_list)) {
-     message("Doublet list provided. Marking UMIs")
-     doublet <- rownames(seu@meta.data) %in% doublet_list
-     seu@meta.data$qc[doublet] <- paste(seu@meta.data$qc[doublet], "Doublet",
-                                        sep = ",")
+     message("Doublet list provided. Marking barcodes")
+     seu <- tag_doublets(seu, doublet_list)
   }
   seu@meta.data$qc[seu@meta.data$qc == ""] = "Pass"
+  commas <- grep("^,", seu@meta.data$qc)
+  seu@meta.data$qc[commas] <- sub(",", "", seu@meta.data$qc[commas])
+  colnames(seu@meta.data) <- tolower(colnames(seu@meta.data))
+  return(seu)
+}
+
+# tag_doublets
+#' Tag barcodes in a seurat object that appear in a vector of doublets
+#'
+#' @inheritParams tag_qc
+#'
+#' @return Seurat object with tagged doublets
+
+tag_doublets <- function(seu, doublet_list) {
+  doublet <- rownames(seu@meta.data) %in% doublet_list
+  seu@meta.data$qc[doublet] <- paste(seu@meta.data$qc[doublet], "Doublet",
+                                        sep = ",")
+  seu@meta.data$qc <- gsub("Pass,Doublet", "Doublet", seu@meta.data$qc)
   return(seu)
 }
 
@@ -100,8 +116,8 @@ merge_seurat <- function(project_name, exp_design, count_path,
     seu <- subset(seu, subset = nFeature_RNA > 500 & nCount_RNA > 1000
                                 & percent.mt < 20)
     })
-  merged_seu <- merge(seu.list[[1]], y = seu.list[-1], add.cell.ids = samples,
-                      project = project_name)
+  merged_seu <- merge(seu.list[[1]], y = seu.list[-1],
+                      add.cell.ids = exp_design$sample, project = project_name)
   return(merged_seu)
 }
 
@@ -678,6 +694,7 @@ read_and_format_targets <- function(file) {
 #' @keywords preprocessing, report, metadata
 #' 
 #' @return Dataframe with metadata
+
 extract_metadata <- function(seu){
   if (!is.list(seu)){
     seu <- seu[[]]
@@ -685,13 +702,14 @@ extract_metadata <- function(seu){
     seu <- lapply(seu, "[[")
     seu <- do.call(rbind, seu)
     }
-return(seu)
+  return(seu)
 }
 
 #' find_doublets
 #' `find_doublets` is a wrapper for the recommended steps for doublet
 #' calculation in package DoubletFinder
 #'
+#' @param seu Seurat object
 
 find_doublets <- function(seu) {
   nExp <- round(ncol(seu) * 0.04)  # Expect 4% doublets BUT WHY???
@@ -699,7 +717,8 @@ find_doublets <- function(seu) {
                                       PCs = 1:10)
   doublet_col <- grep('DF.classifications*', colnames(seu@meta.data))
   doublets <- seu@meta.data[seu@meta.data[, doublet_col] == "Doublet", ]
-  doublet_UMIs <- rownames(doublets)
-  res <- list(seu = seu, UMIs = doublet_UMIs)
+  doublet_barcodes <- rownames(doublets)
+  seu <- subset(seu, cells = doublet_barcodes, invert = TRUE)
+  res <- list(seu = seu, barcodes = doublet_barcodes)
   return(res)
 }
