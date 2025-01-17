@@ -4,6 +4,7 @@
 #' for integrative or non-integrative analysis.
 #'
 #' @param seu A seurat object.
+#' @param name Project name. Default NULL (no project name)
 #' @param minqcfeats An integer. Minimum features to consider a cell valid
 #' @param percentmt A float. Maximun MT percentage to consider a cell valid
 #' @param query A string vector. List of genes to explore in dataset
@@ -45,12 +46,12 @@
 #' @param ref_n Top N reference markers to consider in annotation. Higher values
 #' provide a more accurate annotation, but increase noise and computational 
 #' time. Will not be used if ref_de_method is empty.
-#' @param doublets A vector containing UMIs to be marked as doublets. NULL by
-#' default. Per-sample analysis finds this vector for every sample, integrative
-#' mode requires this vector.
+#' @param doublet_list A vector containing barcodes to be marked as doublets.
+#' NULL by default. Per-sample analysis finds this vector
+#' for every sample, integrative mode requires this vector.
 
 main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
-                           resolution, p_adj_cutoff = 5e-3,
+                           resolution, p_adj_cutoff = 5e-3, name = NULL,
                            integrate = FALSE, cluster_annotation = NULL,
                            cell_annotation = NULL, DEG_columns = NULL,
                            scalefactor = 10000, hvgs, int_columns = NULL,
@@ -58,10 +59,9 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                            verbose = FALSE, output = getwd(),
                            save_RDS = FALSE, reduce = FALSE, ref_label,
                            SingleR_ref = NULL, ref_de_method = NULL,
-                           ref_n = NULL, BPPARAM = NULL, doublets = NULL){
+                           ref_n = NULL, BPPARAM = NULL, doublet_list = NULL){
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
-               doublet_UMIs = NULL)
-  colnames(qc@meta.data) <- tolower(colnames(qc@meta.data))
+               doublet_list = doublet_list)
   if(!reduce) {
     seu <- subset(qc, subset = qc != 'High_MT,Low_nFeature')
     aggr.ref <- FALSE
@@ -95,7 +95,18 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   seu <- Seurat::RunUMAP(object = seu, dims = seq(ndims),
                          reduction = reduction, verbose = verbose)
   if(!integrate) {
-    doublet_UMIs <- find_doublets(seu)
+    doublets <- find_doublets(seu)
+    seu <- doublets$seu
+    doublet_list <- doublets$barcodes
+    message("Removing doublets from Seurat object")
+    seu <- subset(seu, cells = doublet_list, invert = TRUE)
+    file_conn <- file(file.path(getwd(), "doublet_list.txt"))
+    # Sample name is included in barcode when merging, we include it here
+    # so it can be recognised in merged object.
+    sample_doublet_list <- paste(name, doublet_list, sep = "_")
+    writeLines(sample_doublet_list, file_conn)
+    close(file_conn)
+    qc <- tag_doublets(seu = qc, doublet_list = doublet_list)
   }
   seu <- Seurat::FindNeighbors(object = seu, dims = seq(ndims),
                                reduction = reduction, verbose = verbose)
@@ -290,9 +301,9 @@ write_seurat_report <- function(final_results, output = getwd(), name = NULL,
                     markers = final_results$markers, use_canvas = use_canvas,
                     cell_annotation = cell_annotation,
                     integrate = final_results$integrate)
-  plotter <- htmlreportR:::htmlReport$new(title_doc = paste0("Single-Cell ", name, " report"), 
-                            container = container, tmp_folder = tmp_folder,
-                            src = source_folder)
+  plotter <- htmlreportR:::htmlReport$new(title_doc = paste0("Single-Cell ",
+                            name, " report"), container = container,
+                            tmp_folder = tmp_folder, src = source_folder)
   plotter$build(template)
   plotter$write_report(out_file)
   message(paste0("Report written in ", out_file))
