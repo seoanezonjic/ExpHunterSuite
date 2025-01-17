@@ -47,8 +47,13 @@
     					ggplot2::theme(legend.position="none")
     	return(labeled_plot)
 	}
+	aggregate_data <- function(data) {
+		res <- data.frame(table(data$qc))
+		return(res)
+	}
 	metrics <- c("ncount_rna", "nfeature_rna", "percent.mt", "percent.rb")
 	plotter$hash_vars$meta <- get_metadata(plotter$hash_vars$qc)
+	plotter$hash_vars$aggr_meta <- aggregate_data(plotter$hash_vars$meta)
 	attr_cols <- which(!colnames(plotter$hash_vars$meta) %in% metrics)
 	use_canvas <- plotter$hash_vars$use_canvas
 end.rcode-->
@@ -75,7 +80,7 @@ Davis James McCarthy, John C Marioni, and Sarah A Teichmann. 2016.
                               t_id = "filter", clickable_text = ""))
 end.rcode-->
 
-<!--begin.rcode boxplots
+<!--begin.rcode Filter plots
 	cat(plotter$create_title("Filtering summary", "filter violin", hlevel = 2, indexable = FALSE,
 							  clickable = FALSE, clickable_text = ""))
 	for(metric in metrics) {
@@ -89,12 +94,11 @@ end.rcode-->
 		}
 			cat(plotter$prettify_div(plot, preset = "magic"))
 	}
-end.rcode-->
-
-<!--begin.rcode metrics_corr, eval = FALSE
-	cat(plotter$create_title("Filtering summary", "filter violin", hlevel = 2, indexable = FALSE,
-							  clickable = FALSE, clickable_text = ""))
-	cat(plotter$prettify_div(plotter$static_plot_main(list(id = "meta", title = "")), preset = "magic"))
+	cat(plotter$prettify_div(plotter$barplot(list(id = "aggr_meta", title = "Nº of cells", header = NULL, row_names = NULL,
+												  text = 1, text = FALSE, transpose = TRUE, fields = 2:1, smp_attr = 1,
+												  config = list(colorBy = "Var1", graphOrientation = "vertical",
+												  	showLegend = TRUE, smpLabelImage = TRUE))),
+							 preset = "magic"))
 end.rcode-->
 
 <!--begin.rcode var_ft
