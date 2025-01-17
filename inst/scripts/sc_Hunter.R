@@ -43,6 +43,8 @@ option_list <- list(
               help = "Name of analysis."),
   optparse::make_option(c("-o", "--output"), type = "character", default = NULL,
               help = "Output folder."),
+  optparse::make_option(c("--doublet_file"), type = "character", default = NULL,
+              help = "File containing vector of barcodes to be tagged as doublet and removed from analysis."),
   optparse::make_option("--filter", type = "character", default = NULL,
               help = "TRUE for using only detected cell-associated barcodes,
                       FALSE for using all detected barcodes."),
@@ -97,7 +99,7 @@ option_list <- list(
             help = "Randomly subset seurat object to 3000 cells, for quick testing."),
   optparse::make_option("--SingleR_ref", type = "character", default = "",
             help = "Path to reference to use in SingleR annotation."),
-    optparse::make_option("--ref_version", type = "character", default = "",
+  optparse::make_option("--ref_version", type = "character", default = "",
             help = "SingleR reference version."),
   optparse::make_option("--ref_label", type = "character", default = "main",
             help = "Column of reference metadata to use for annotation."),
@@ -139,6 +141,16 @@ if(opt$cell_annotation != "") {
   cell_annotation <- read.table(opt$cell_annotation, sep = "\t", header = TRUE)
 } else {
   cell_annotation <- NULL
+}
+if(!is.null(opt$doublet_file)) {
+  if (file.exists(opt$doublet_file)) {
+    doublet_list <- read.table(opt$doublet_file)[[1]]
+  } else {
+    stop(paste0("Doublet file does not exist. File supplied was \"",
+                opt$doublet_file, "\""))
+  }
+} else {
+  doublet_list <- NULL
 }
 
 if(opt$integrate) {
@@ -207,7 +219,7 @@ if(!opt$loadRDS) {
   }
   if(opt$integrate) {
     if(opt$imported_counts == "") {
-      seu <- merge_seurat(project = opt$name, exp_design = exp_design,
+      seu <- merge_seurat(project_name = opt$name, exp_design = exp_design,
                           suffix = opt$suffix, count_path = opt$input)  
     } else {
       seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(opt$imported_counts, gene.column = 1),
@@ -234,21 +246,21 @@ if(opt$loadRDS) {
   final_results <- readRDS(file)
 } else {
   message("Analyzing seurat object")
-  final_results <- main_sc_Hunter(seu = seu, cluster_annotation = cluster_annotation,
-                                      ndims = opt$ndims, resolution = opt$resolution, int_columns = int_columns,
-                                      cell_annotation = cell_annotation, DEG_columns = DEG_columns,
-                                      minqcfeats = opt$minqcfeats, percentmt = opt$percentmt, hvgs = opt$hvgs,
-                                      scalefactor = opt$scalefactor, normalmethod = opt$normalmethod,
-                                      p_adj_cutoff = opt$p_adj_cutoff, verbose = opt$verbose, sigfig = 2,
-                                      output = opt$output, integrate = opt$integrate, query = unlist(target_genes),
-                                      reduce = opt$reduce, save_RDS = opt$saveRDS, SingleR_ref = SingleR_ref,
-                                      ref_label = opt$ref_label, ref_de_method = ref_de_method, ref_n = ref_n,
-                                      BPPARAM = BPPARAM)
+  final_results <- main_sc_Hunter(seu = seu, cluster_annotation = cluster_annotation, name = opt$name,
+                                  ndims = opt$ndims, resolution = opt$resolution, int_columns = int_columns,
+                                  cell_annotation = cell_annotation, DEG_columns = DEG_columns,
+                                  minqcfeats = opt$minqcfeats, percentmt = opt$percentmt, hvgs = opt$hvgs,
+                                  scalefactor = opt$scalefactor, normalmethod = opt$normalmethod,
+                                  p_adj_cutoff = opt$p_adj_cutoff, verbose = opt$verbose, sigfig = 2,
+                                  output = opt$output, integrate = opt$integrate, query = unlist(target_genes),
+                                  reduce = opt$reduce, save_RDS = opt$saveRDS, SingleR_ref = SingleR_ref,
+                                  ref_label = opt$ref_label, ref_de_method = ref_de_method, ref_n = ref_n,
+                                  BPPARAM = BPPARAM, doublet_list = doublet_list)
 }
 
-message("-----------------------------------")
-message("---------Writing QC report---------")
-message("-----------------------------------")
+message("--------------------------------------------")
+message("-------------Writing QC report--------------")
+message("--------------------------------------------")
 
 write_seurat_report(final_results = final_results, template_folder = template_folder,
                     template = "sc_quality_control.txt", output = file.path(opt$output, "report"),
@@ -256,7 +268,7 @@ write_seurat_report(final_results = final_results, template_folder = template_fo
                     name = opt$name, out_name = "qc_report.html", use_canvas = TRUE)
 
 message("--------------------------------------------")
-message("---------Writing integrative report---------")
+message("----------Writing analysis report-----------")
 message("--------------------------------------------")
 
 write_seurat_report(final_results = final_results, template_folder = template_folder,
