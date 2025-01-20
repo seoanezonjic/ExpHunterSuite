@@ -63,7 +63,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                doublet_list = doublet_list)
   if(!reduce) {
-    seu <- subset(qc, subset = qc != 'High_MT,Low_nFeature')
+    seu <- subset(qc, subset = qc == 'Pass')
     aggr.ref <- FALSE
     fine.tune <- TRUE
   } else {

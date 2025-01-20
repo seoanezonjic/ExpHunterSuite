@@ -35,9 +35,9 @@ read_input <- function(name, input, mincells, minfeats, exp_design){
 
 tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL){
   seu@meta.data$percent.mt <- Seurat::PercentageFeatureSet(seu,
-                                                           pattern = "^MT-")
+                                                        pattern = "(?i)^MT-")
   seu@meta.data$percent.rb <- Seurat::PercentageFeatureSet(seu,
-                                                           pattern = "^RP[SL]")
+                                                        pattern = "(?i)^RP[SL]")
   seu@meta.data$qc <- vector(mode = "character", length = nrow(seu@meta.data))
   seu@meta.data$qc[seu@meta.data$nFeature_RNA < minqcfeats] <- "Low_nFeature"
   high_mt <- seu@meta.data$percent.mt > percentmt
