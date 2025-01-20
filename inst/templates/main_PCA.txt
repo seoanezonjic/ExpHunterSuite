@@ -14,7 +14,8 @@
 
 <!--begin.rcode general_multivariate_config
 cat(plotter$create_title("<b>Principal Component Analysis Report</b>", "main_title", hlevel = 1))
-last_title <- 1
+plotter$hash_vars$last_title <- 1
+
 
 target <- plotter$hash_vars$target
 end.rcode-->

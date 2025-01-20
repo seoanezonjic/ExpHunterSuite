@@ -6,9 +6,9 @@ render_pca_report <- function(multivar_res, output_files,template_folder, multiv
   if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' )
     source_folder <- file.path(source_folder, "inst")
 
-  plotter <- htmlReport$new(title_doc = "PCA report", 
+  plotter <- htmlreportR:::htmlReport$new(title_doc = "PCA report", 
                           container = c(multivar_res, list(multivar_type = multivar_type)), 
-                          tmp_folder = file.path(output_files, "tmp"),
+                          tmp_folder = file.path(normalizePath(output_files), "tmp"),
                           src = source_folder,
                           compress_obj = FALSE,
                           type_index = "menu")
@@ -35,7 +35,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   # Load custom libraries
   custom_libraries <- list.files(file.path(root_path, "R"), full.names = TRUE)
     # template_folder <- file.path(root_path, 'inst/templates')
-  template_folder <- file.path(root_path, 'inst/templates', 'htmlreport_migration')
+  template_folder <- file.path(root_path, 'inst/templates')
 
   invisible(sapply(custom_libraries, source)) # source(file.path(root_path, 'R', lib))
   
@@ -43,7 +43,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   require('ExpHunterSuite')
   root_path <- find.package('ExpHunterSuite')
   # template_folder <- file.path(root_path, 'templates')
-  template_folder <- file.path(root_path, 'templates', 'htmlreport_migration')
+  template_folder <- file.path(root_path, 'templates')
 }
 
 
@@ -77,7 +77,7 @@ option_list <- list(
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 
-input_file <- read.table(file.path(opt$input_file), header = TRUE, row.names = 1)
+input_file <- read.table(file.path(opt$input_file), header = TRUE, row.names = 1, check.names = F)
 target <- NULL 
 if (!is.null(opt$supp_file)) {
   target <- read.table(opt$supp_file, header = TRUE)
