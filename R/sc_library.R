@@ -198,7 +198,6 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   } else {
     colnames(markers_df)[pcols] <- "p_val_adj"
   }
-  markers_df <- markers_df[markers_df$p_val_adj <= p_adj_cutoff, ]
   fcols <- grep("log2FC", colnames(markers_df))
   if(any(is.na(markers_df[, fcols]))) {
     warning("WARNING: NAs detected in marker log2FC. Coercing to 0.",
@@ -212,27 +211,35 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
     colnames(markers_df)[fcols] <- "avg_log2FC"
   }
   for(cluster in unique(markers_df$cluster)) {
-    subset <- markers_df[markers_df$cluster == cluster, ]
-    subset <- subset[order(subset$p_val_adj), ]
-    max_log2FC <- max(subset$avg_log2FC)
-    scores <- vector(mode = "numeric", length = length(canon_types))
-    names(scores) <- canon_types
-    for(type in canon_types) {
-      type_markers <- cell_annotation[cell_annotation$type == type, ]$marker
-      found_markers <- which(subset$gene %in% type_markers)
-      scores[[type]] <- sum(subset$avg_log2FC[found_markers] / max_log2FC)
-    }
-    if(max(unlist(scores)) == 0 || is.na(max(unlist(scores)))) {
-      cluster_match <- "Unknown"
+    subset <- markers_df[markers_df$cluster == cluster &
+                         markers_df$p_val_adj <= p_adj_cutoff, ]
+    if(nrow(subset) < 1) {
+      warning(paste("WARNING: cluster", cluster, "contains no significant
+                     markers", sep = " "), immediate. = TRUE)
+      subset <- data.frame(gene = "None", p_val = 1, avg_log2FC = 1, pct.1 = 0,
+                           pct.2 = 0, p_val_adj = 1, cluster = cluster,
+                           cell_type = paste0(cluster, ". Unknown"))
     } else {
-      cluster_match <- names(scores[which(scores == max(scores))])
-      cluster_match <- paste0(cluster_match, collapse = " / ")
+      subset <- subset[order(subset$p_val_adj), ]
+      max_log2FC <- max(subset$avg_log2FC)
+      scores <- vector(mode = "numeric", length = length(canon_types))
+      names(scores) <- canon_types
+      for(type in canon_types) {
+        type_markers <- cell_annotation[cell_annotation$type == type, ]$marker
+        found_markers <- which(subset$gene %in% type_markers)
+        scores[[type]] <- sum(subset$avg_log2FC[found_markers] / max_log2FC)
+      }
+      if(max(unlist(scores)) == 0 || is.na(max(unlist(scores)))) {
+        cluster_match <- "Unknown"
+      } else {
+        cluster_match <- names(scores[which(scores == max(scores))])
+        cluster_match <- paste0(cluster_match, collapse = " / ")
+      }
+      subset$cell_type <- paste0(subset$cluster, ". ", cluster_match)
     }
-    subset$cell_type <- paste0(subset$cluster, ". ", cluster_match)
     subset_list[[as.numeric(cluster) + 1]] <- subset
   }
   stats_table <- do.call(rbind, subset_list)
-  stats_table <- stats_table[order(stats_table$cluster), ]
   columns <- colnames(stats_table)
   anno_types <- strsplit(stats_table$cell_type, "\\. ")
   anno_types <- sapply(anno_types, `[`, 2)
