@@ -175,6 +175,9 @@ collapse_markers <- function(markers_list) {
 
 match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   canon_types <- unique(cell_annotation$type)
+  if(any(markers_df$cluster == 0)) {
+    markers_df$cluster <- markers_df$cluster + 1
+  }
   clusters <- unique(markers_df$cluster)
   subset_list <- vector(mode = "list", length = length(clusters))
   pcols <- grep("p_val_adj", colnames(markers_df))
@@ -216,9 +219,12 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
     if(nrow(subset) < 1) {
       warning(paste("WARNING: cluster", cluster, "contains no significant
                      markers", sep = " "), immediate. = TRUE)
-      subset <- data.frame(gene = "None", p_val = 1, avg_log2FC = 1, pct.1 = 0,
-                           pct.2 = 0, p_val_adj = 1, cluster = cluster,
-                           cell_type = paste0(cluster, ". Unknown"))
+      subset <- markers_df[markers_df$cluster == cluster, ][1,]
+      subset$gene <- "None"
+      subset$avg_log2FC <- 1
+      subset$p_val_adj <- 1
+      subset$cluster <- cluster
+      subset$cell_type <- paste0(cluster, ". Unknown")
     } else {
       subset <- subset[order(subset$p_val_adj), ]
       max_log2FC <- max(subset$avg_log2FC)
@@ -237,9 +243,10 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
       }
       subset$cell_type <- paste0(subset$cluster, ". ", cluster_match)
     }
-    subset_list[[as.numeric(cluster) + 1]] <- subset
+    subset_list[[as.numeric(cluster)]] <- subset
   }
   stats_table <- do.call(rbind, subset_list)
+  stats_table <- stats_table[order(stats_table$cluster), ]
   columns <- colnames(stats_table)
   anno_types <- strsplit(stats_table$cell_type, "\\. ")
   anno_types <- sapply(anno_types, `[`, 2)
