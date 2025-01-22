@@ -41,3 +41,21 @@
 #' @examples
 #' data(degh_output)
 "degh_output"
+
+#' Subset of the pbmc dataset distributed in package SeuratObject
+#'
+#' @docType data
+#'
+#' @usage data(pbmc_tiny)
+#'
+#' @format A seurat object containing the 15 first samples of the
+#' pbmc_small dataset.
+#'
+#' @keywords datasets
+#'
+#' @source Created with data-raw/pbmc_tiny.R. Original source:
+#' https://search.r-project.org/CRAN/refmans/SeuratObject/html/pbmc_small.html
+#'
+#' @examples
+#' data(pbmc_tiny)
+"pbmc_tiny"
