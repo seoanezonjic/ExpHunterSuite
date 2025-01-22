@@ -231,7 +231,7 @@ if(!opt$loadRDS) {
   } else {
     input <- file.path(opt$input, ifelse(opt$filter, "filtered_feature_bc_matrix",
                                                    "raw_feature_bc_matrix"))
-    seu <- read_input(name = opt$name, input = input, mincells = opt$mincells,
+    seu <- read_sc_counts(name = opt$name, input = input, mincells = opt$mincells,
                       minfeats = opt$minfeats, exp_design = exp_design)
   }
   if(opt$reduce) {
