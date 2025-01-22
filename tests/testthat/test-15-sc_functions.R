@@ -105,7 +105,7 @@ test_that("collapse_markers base use case", {
   expect_equal(output_df, expected_df)
 })
 
-pbmc_tiny <- pbmc_small[, 1:15]
+data(pbmc_tiny)
 test_pbmc <- pbmc_tiny
 test_pbmc@meta.data$groups <- "g1"
 test_pbmc@meta.data$groups[7:15] <- "g2"
@@ -116,31 +116,31 @@ test_pbmc@meta.data$cell_types <- "typeA"
 test_pbmc@meta.data$cell_types[3:5] <- "typeB"
 test_pbmc@meta.data$cell_types[15] <- "typeB"
 
-test_that("has_exclusive_idents works in base case", {
+test_that(".has_exclusive_idents works in base case", {
   expected_warning <- "Defaulting to general marker analysis"
-  expect_warning(has_exclusive_idents(seu = test_pbmc, cond = "groups",
+  expect_warning(.has_exclusive_idents(seu = test_pbmc, cond = "groups",
                                   idents = "seurat_clusters"), expected_warning)
-  expect_true(suppressWarnings(has_exclusive_idents(seu = test_pbmc,
+  expect_true(suppressWarnings(.has_exclusive_idents(seu = test_pbmc,
                                   idents = "seurat_clusters", cond = "groups")))
 })
 
-test_that("has_exclusive_idents works with alternate ident", {
+test_that(".has_exclusive_idents works with alternate ident", {
   expected_warning <- "Defaulting to general marker analysis"
-  expect_warning(has_exclusive_idents(seu = test_pbmc, cond = "groups",
+  expect_warning(.has_exclusive_idents(seu = test_pbmc, cond = "groups",
                                   idents = "cell_types"), expected_warning)
-  expect_true(suppressWarnings(has_exclusive_idents(seu = test_pbmc,
+  expect_true(suppressWarnings(.has_exclusive_idents(seu = test_pbmc,
                                   idents = "cell_types", cond = "groups")))
 })
 
-test_that("has_exclusive_idents can handle more than one positive", {
+test_that(".has_exclusive_idents can handle more than one positive", {
   expected_warning <- paste0("g1-1, g2-1")
-  expect_warning(has_exclusive_idents(seu = test_pbmc, cond = "groups",
+  expect_warning(.has_exclusive_idents(seu = test_pbmc, cond = "groups",
                                   idents = "seurat_clusters"), expected_warning)
-  expect_true(suppressWarnings(has_exclusive_idents(seu = test_pbmc,
+  expect_true(suppressWarnings(.has_exclusive_idents(seu = test_pbmc,
                                   idents = "seurat_clusters", cond = "groups")))
 })
 
-test_that("has_exclusive_idents can predict pairs that should appear but
+test_that(".has_exclusive_idents can predict pairs that should appear but
            do not (behaves correctly for strictly exclusive idents)", {
   test_pbmc <- pbmc_tiny
   test_pbmc@meta.data$groups <- "g1"
@@ -148,18 +148,18 @@ test_that("has_exclusive_idents can predict pairs that should appear but
   test_pbmc@meta.data$seurat_clusters <- 0
   test_pbmc@meta.data$seurat_clusters[7:15] <- 1
   expected_warning <- paste0("g2-0, g1-1")
-  expect_warning(has_exclusive_idents(seu = test_pbmc, cond = "groups",
+  expect_warning(.has_exclusive_idents(seu = test_pbmc, cond = "groups",
                                   idents = "seurat_clusters"), expected_warning)
-  expect_true(suppressWarnings(has_exclusive_idents(seu = test_pbmc,
+  expect_true(suppressWarnings(.has_exclusive_idents(seu = test_pbmc,
                                   idents = "seurat_clusters", cond = "groups")))
 })
 
-test_that("has_exclusive_idents can identify that no exclusive idents
+test_that(".has_exclusive_idents can identify that no exclusive idents
            exist", {
   test_pbmc <- pbmc_tiny
   test_pbmc@meta.data$seurat_clusters <- 0
   test_pbmc@meta.data$seurat_clusters[c(8:15)] <- 1
-  expect_false(suppressWarnings(has_exclusive_idents(seu = test_pbmc,
+  expect_false(suppressWarnings(.has_exclusive_idents(seu = test_pbmc,
                                   idents = "seurat_clusters", cond = "groups")))
 })
 
@@ -306,7 +306,7 @@ test_that("get_sc_markers skips exclusive clusters in DEG analysis, alternate
 
 test_that("annotate_clusters simply assigns names to clusters", {
   test_pbmc <- pbmc_tiny
-  Idents(test_pbmc) <- 1:15
+  Seurat::Idents(test_pbmc) <- 1:15
   new_clusters <- rep("TypeA", 15)
   new_clusters[c(3, 7, 10)] <- "TypeB"
   new_clusters[c(2, 5, 13)] <- "TypeC"
