@@ -11,9 +11,15 @@
 #' @param exp_design experiment design table
 #' 
 #' @return Seurat object
+#' @examples
+#'  \dontrun{
+#'    read_sc_counts(name = "experiment_name", mincells = 1, minfeats = 1,
+#'                   input = "path\to\counts\matrices",
+#'                   exp_design = exp_design)
+#'  }
 #' @export
 
-read_sc_counts <- function(name, input, mincells, minfeats, exp_design){
+read_sc_counts <- function(name, input, mincells = 1, minfeats = 1, exp_design){
   mtx <- Seurat::Read10X(input)
   seu <- Seurat::CreateSeuratObject(counts = mtx, project = name,
                                     min.cells = mincells,
@@ -36,6 +42,14 @@ read_sc_counts <- function(name, input, mincells, minfeats, exp_design){
 #' @keywords preprocessing, qc
 #' 
 #' @return Seurat object with tagged metadata
+#' @examples
+#' data(pbmc_tiny)
+#' # Integrative experiment, previously loaded doublet list:
+#' tag_qc(seu = pbmc_tiny, minqcfeats = 500, percentmt = 5,
+#'        doublet_list = c("ATGCCAGAACGACT", "CATGGCCTGTGCAT"))
+#' # Per-sample experiment, no prior doublet knowledge
+#' tag_qc(seu = pbmc_tiny, minqcfeats = 500, percentmt = 5,
+#'        doublet_list = NULL)
 #' @export
 
 tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL){
@@ -65,6 +79,10 @@ tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL){
 #' @inheritParams tag_qc
 #'
 #' @return Seurat object with tagged doublets
+#' @examples
+#' data(pbmc_tiny)
+#' tag_doublets(seu = pbmc_tiny,
+#'              doublet_list = c("ATGCCAGAACGACT", "CATGGCCTGTGCAT"))
 #' @export
 
 tag_doublets <- function(seu, doublet_list) {
@@ -76,18 +94,28 @@ tag_doublets <- function(seu, doublet_list) {
 }
 
 #' add_exp_design
-#' Add experimental condition to Seurat metadata
+#' Add experimental condition to single-sample Seurat metadata
 #'
 #' @param seu Seurat object
 #' @param name Sample name
-#' @param exp_design Experiment design table in CSV format
+#' @param exp_design Data frame containing experiment design
 #' 
 #' @keywords preprocessing, subsetting, integration
 #' 
 #' @return Seurat object with the experimental conditions added as metadata
+#' @examples
+#' data(pbmc_tiny)
+#' pbmc_tiny$sample <- "sampleA"
+#' exp_design <- data.frame(sample = c("sampleA", "sampleB", "sampleC"),
+#'                          new_field = c("info_A", "info_B", "info_C"))
+#' add_exp_design(seu = pbmc_tiny, name = "sampleA", exp_design = exp_design)
 #' @export
 
 add_exp_design <- function(seu, name, exp_design){
+  if(length(unique(seu@meta.data$orig.ident)) > 1) {
+    stop(paste0("Seurat object contains more than one sample. ",
+                "Please use Seurat::AddMetaData"))
+  }
   exp_design <- as.list(exp_design[exp_design$sample == name,])
   for (i in names(exp_design)){
     seu@meta.data[[i]] <- c(rep(exp_design[[i]], nrow(seu@meta.data)))
@@ -104,7 +132,7 @@ add_exp_design <- function(seu, name, exp_design){
 #'
 #' @importFrom Seurat Read10X CreateSeuratObject
 #' @param project_name Will appear in output project.name slot.
-#' @param exp_design Experiment design table in TSV format
+#' @param exp_design Experiment design table in TSV format.
 #' @param count_path Directory that will be searched for count matrices.
 #' @param suffix Suffix to paste with main count_path. Avoids unnecessary
 #' globbing.
@@ -112,6 +140,11 @@ add_exp_design <- function(seu, name, exp_design){
 #' @keywords preprocessing, merging, integration
 #' 
 #' @return Merged Seurat object
+#' @examples
+#'  \dontrun{
+#'    merge_seurat(project_name = "experiment_name", exp_design = exp_design,
+#'                 count_path = "path/to/counts/folder", suffix = "path/suffix")
+#'  }
 #' @export
 
 merge_seurat <- function(project_name, exp_design, count_path,
@@ -137,6 +170,11 @@ merge_seurat <- function(project_name, exp_design, count_path,
 #' @param new_clusters Vector of names to assign to clusters.
 #'
 #' @return Annotated seu object
+#' @examples
+#'  \dontrun{
+#'    annotate_clusters(project_name = "experiment_name", exp_design = exp_design,
+#'                 count_path = "path/to/counts/folder", suffix = "path/suffix")
+#'  }
 #' @export
 
 
