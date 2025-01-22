@@ -122,5 +122,6 @@ Imports:
     yaml (>= 2.3.7),
     rtracklayer (>= 1.62.0),
     AnnotationDbi (>= 1.64.0),
-    htmlreportR (>= 1.0.0)
+    htmlreportR (>= 1.0.0),
+    Seurat (>= 5.1.0)
 Config/testthat/edition: 3
