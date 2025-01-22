@@ -76,17 +76,19 @@ test_that("match_cell_types, draw between more than one cell type", {
 
 test_that("match_cell_types, cluster with no significant markers", {
   test_markers_df <- markers_df
-  test_markers_df$p_val_adj[1:2] <- 1
+  test_markers_df$p_val_adj[1] <- 1
   test_markers_df$cluster <- 4:1
   genes <- toupper(letters[1:3])
   types <- c("type1", "type2", "type3")
   cell_annotation <- data.frame(markers = genes, type = types)
   expected_df <- test_markers_df[order(test_markers_df$cluster), ]
-  expected_df$gene[3:4] <- "None"
+  expected_df$gene[4] <- "None"
   expected_df$cell_type <- c("1. Unknown (a)", "2. type3",
-                             "3. Unknown (b)", "4. Unknown (c)")
-  output_df <- expect_warning(match_cell_types(test_markers_df,
-                              cell_annotation)$stats_table)
+                             "3. type2", "4. Unknown (b)")
+  expect_warning(match_cell_types(test_markers_df, cell_annotation),
+                 "WARNING: cluster 4 contains no significant markers")
+  output_df <- suppressWarnings(match_cell_types(test_markers_df,
+                              cell_annotation))$stats_table
   expect_equal(output_df, expected_df)
 })
 
@@ -218,7 +220,8 @@ test_that("get_query_pct gives warning if any query genes are not found", {
   expected_df[2, ] <- c(0, 0, 20)
   expected_df[3, ] <- c(100, 80, 80)
   colnames(expected_df) <- query
-  expect_warning(get_query_pct(test_pbmc, missing_query, "sample"), "NOEXPA, NOEXPB")
+  warnings <- capture_warnings(get_query_pct(test_pbmc, missing_query, "sample"))
+  expect_match(warnings, "NOEXPA, NOEXPB")
   output_df <- suppressWarnings(get_query_pct(test_pbmc, missing_query, "sample"))
   expect_equal(output_df, expected_df)
 })
