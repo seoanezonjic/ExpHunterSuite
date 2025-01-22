@@ -2,24 +2,28 @@
 % Please edit documentation in R/sc_library.R
 \name{tag_qc}
 \alias{tag_qc}
-\title{tag_gc
-Perform Quality Control}
+\title{tag_qc
+Tag barcodes not passing QC filters}
 \usage{
-tag_qc(seu, minqcfeats, percentmt)
+tag_qc(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL)
 }
 \arguments{
-\item{seu}{Seurat object}
+\item{seu}{Seurat object to tag}
 
-\item{minqcfeats}{Min number of features for which a cell is selected}
+\item{minqcfeats}{Min number of features for which a cell is selected.
+Default 500}
 
-\item{percentmt}{Max percentage of reads mapped to mitochondrial genes for which a cell is selected}
+\item{percentmt}{Max percentage of reads mapped to mitochondrial genes for
+which a cell is selected. Default 5}
+
+\item{doublet_list}{Vector of barcodes to be marked as doublet. Default NULL}
 }
 \value{
-Seurat object
+Seurat object with tagged metadata
 }
 \description{
-tag_gc
-Perform Quality Control
+tag_qc
+Tag barcodes not passing QC filters
 }
 \keyword{preprocessing,}
 \keyword{qc}

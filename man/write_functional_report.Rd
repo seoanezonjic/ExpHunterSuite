@@ -8,18 +8,19 @@ This function allows you to report the Functional analysis.}
 write_functional_report(
   hunter_results,
   func_results,
-  output_files = getwd(),
-  fc_colname = "mean_logFCs",
-  organisms_table = NULL,
-  template_folder = file.path(find.package("ExpHunterSuite"), "templates"),
   cores = 2,
+  output_files = getwd(),
+  organisms_table = NULL,
+  fc_colname = "mean_logFCs",
   task_size = 1,
   report = "fc",
-  showCategories = 30,
+  source_folder = NULL,
   group_results = FALSE,
-  max_genes = 200,
+  showCategories = 30,
   corr_threshold = 0.8,
-  pvalcutoff = 0.05
+  pvalcutoff = 0.05,
+  template_folder = NULL,
+  max_genes = 200
 )
 }
 \arguments{
@@ -27,32 +28,33 @@ write_functional_report(
 
 \item{func_results}{functional results}
 
-\item{output_files}{output folder.}
+\item{cores}{(OPTIONAL) cores for parallel features}
 
-\item{fc_colname}{(OPTIONAL) main logFC colname (into hunter_results
-dataframe)}
+\item{output_files}{output folder.}
 
 \item{organisms_table}{(OPTIONAL) configuration table for given organism.
 Use see get_organism_table()}
 
-\item{template_folder}{(OPTIONAL) RMD templates folder}
-
-\item{cores}{(OPTIONAL) cores for parallel features}
+\item{fc_colname}{(OPTIONAL) main logFC colname (into hunter_results
+dataframe)}
 
 \item{task_size}{number of elements per packages used}
 
 \item{report}{string with reports to be written. Allowed: clusters (c)}
 
-\item{showCategories}{number of categories in the figures (per cluster)}
-
 \item{group_results}{experimental - whether to group results in the emap plot
 and functional (f). Default = "fc"}
 
-\item{max_genes}{maximum number of genes to plot in cnet plot}
+\item{showCategories}{number of categories in the figures (per cluster)}
 
-\item{corr_threshold}{minimun module eigengene-trait vector absolute Pearson R value}
+\item{corr_threshold}{minimum module eigengene-trait vector absolute Pearson
+R value}
 
 \item{pvalcutoff}{maximum module eigengene-trait vector correlation P value}
+
+\item{template_folder}{(OPTIONAL) RMD templates folder}
+
+\item{max_genes}{maximum number of genes to plot in cnet plot}
 }
 \value{
 void

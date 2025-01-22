@@ -12,18 +12,19 @@ write_clusters_to_enrichment(
   enrichments_ORA = NULL,
   task_size = 1,
   workers = 1,
-  template_folder = file.path(find.package("ExpHunterSuite"), "templates"),
   top_categories = NULL,
   group_results = FALSE,
   n_category = 30,
   sim_thr = 0.7,
-  summary_common_name = "ancestor",
   pvalcutoff = 0.1,
   gene_attributes = NULL,
-  gene_attribute_name = NULL,
   max_genes = 200,
+  summary_common_name = "ancestor",
   simplify = FALSE,
-  clean_parentals = FALSE
+  gene_attribute_name = NULL,
+  clean_parentals = FALSE,
+  source_folder = NULL,
+  template_folder = file.path(find.package("ExpHunterSuite"), "templates")
 )
 }
 \arguments{
@@ -39,8 +40,6 @@ write_clusters_to_enrichment(
 
 \item{workers}{(OPTIONAL) cores for parallel features}
 
-\item{template_folder}{(OPTIONAL) RMD templates folder}
-
 \item{top_categories}{numbers of categories from each cluster to use for merge}
 
 \item{group_results}{experimental - whether to group results in the emap plot}
@@ -49,20 +48,22 @@ write_clusters_to_enrichment(
 
 \item{sim_thr}{value to use when combining similar categories in summary mode}
 
-\item{summary_common_name}{'significant' to use the most significant term to label each summarized group
-'ancestor' to use the common ancestor of the group"}
-
 \item{pvalcutoff}{used to select terms for summarizing}
 
 \item{gene_attributes}{named list of attributes e.g. FCs for emap plot coloured nodes (genes)}
 
-\item{gene_attribute_name}{name for the legend in the emap plot for the nodes (genes)}
-
 \item{max_genes}{maximum number of genes to plot in cnet plot}
+
+\item{summary_common_name}{'significant' to use the most significant term to label each summarized group
+'ancestor' to use the common ancestor of the group"}
 
 \item{simplify}{Activate for process ClusterProfiler results with simplify function}
 
+\item{gene_attribute_name}{name for the legend in the emap plot for the nodes (genes)}
+
 \item{clean_parentals}{Activate to reduce significant terms in GO by removin the parentals}
+
+\item{template_folder}{(OPTIONAL) RMD templates folder}
 }
 \value{
 void

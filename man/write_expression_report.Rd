@@ -8,7 +8,8 @@ write_expression_report(
   exp_results,
   output_files = getwd(),
   template_folder = NULL,
-  opt = NULL
+  opt = NULL,
+  source_folder = NULL
 )
 }
 \arguments{
@@ -16,9 +17,12 @@ write_expression_report(
 
 \item{output_files}{output file path}
 
-\item{template_folder}{RMD templates folder}
+\item{template_folder}{htmlreportR templates folder}
 
 \item{opt}{option list}
+
+\item{source_folder}{Folder where js and css templates to load in htmlreportR
+object are located.}
 }
 \value{
 void

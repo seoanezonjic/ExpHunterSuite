@@ -19,7 +19,8 @@ main_clusters_to_enrichment(
   qvalcutoff = 0.2,
   all_custom_gmt = NULL,
   kegg_data_file = NULL,
-  universe = NULL
+  universe = NULL,
+  readable = TRUE
 )
 }
 \arguments{
