@@ -218,8 +218,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
     subset <- markers_df[markers_df$cluster == cluster &
                          markers_df$p_val_adj <= p_adj_cutoff, ]
     if(nrow(subset) < 1) {
-      warning(paste("WARNING: cluster", cluster, "contains no significant
-                     markers", sep = " "), immediate. = TRUE)
+      warning(paste("WARNING: cluster", cluster, "contains no significant",
+                     "markers", sep = " "), immediate. = TRUE)
       subset <- markers_df[markers_df$cluster == cluster, ][1,]
       subset$gene <- "None"
       subset$avg_log2FC <- 1
