@@ -18,7 +18,4 @@ data(pbmc_tiny)
 \description{
 Subset of the pbmc dataset distributed in package SeuratObject
 }
-\examples{
-data(pbmc_tiny)
-}
 \keyword{datasets}
