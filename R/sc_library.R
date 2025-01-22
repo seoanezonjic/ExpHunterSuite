@@ -11,7 +11,9 @@
 #' @param exp_design experiment design table
 #' 
 #' @return Seurat object
-read_input <- function(name, input, mincells, minfeats, exp_design){
+#' @export
+
+read_sc_counts <- function(name, input, mincells, minfeats, exp_design){
   mtx <- Seurat::Read10X(input)
   seu <- Seurat::CreateSeuratObject(counts = mtx, project = name,
                                     min.cells = mincells,
@@ -34,6 +36,7 @@ read_input <- function(name, input, mincells, minfeats, exp_design){
 #' @keywords preprocessing, qc
 #' 
 #' @return Seurat object with tagged metadata
+#' @export
 
 tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL){
   seu@meta.data$percent.mt <- Seurat::PercentageFeatureSet(seu,
@@ -62,6 +65,7 @@ tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL){
 #' @inheritParams tag_qc
 #'
 #' @return Seurat object with tagged doublets
+#' @export
 
 tag_doublets <- function(seu, doublet_list) {
   doublet <- rownames(seu@meta.data) %in% doublet_list
@@ -81,6 +85,8 @@ tag_doublets <- function(seu, doublet_list) {
 #' @keywords preprocessing, subsetting, integration
 #' 
 #' @return Seurat object with the experimental conditions added as metadata
+#' @export
+
 add_exp_design <- function(seu, name, exp_design){
   exp_design <- as.list(exp_design[exp_design$sample == name,])
   for (i in names(exp_design)){
@@ -106,6 +112,8 @@ add_exp_design <- function(seu, name, exp_design){
 #' @keywords preprocessing, merging, integration
 #' 
 #' @return Merged Seurat object
+#' @export
+
 merge_seurat <- function(project_name, exp_design, count_path,
                          suffix=''){
   full_paths <- Sys.glob(paste(count_path, suffix, sep = "/"))
@@ -129,7 +137,8 @@ merge_seurat <- function(project_name, exp_design, count_path,
 #' @param new_clusters Vector of names to assign to clusters.
 #'
 #' @return Annotated seu object
-#'
+#' @export
+
 
 annotate_clusters <- function(seu, new_clusters = NULL ) {
   names(new_clusters) <- levels(seu)
@@ -146,6 +155,7 @@ annotate_clusters <- function(seu, new_clusters = NULL ) {
 #' @returns A data frame. Column `cluster` contains element names of original
 #' list (seurat clusters) and column `genes` contains, for each row, the top
 #' markers of that element from the original list separated by commas.
+#' @export
 
 collapse_markers <- function(markers_list) {
   df_list <- vector(mode = "list", length = length(markers_list))
@@ -173,6 +183,7 @@ collapse_markers <- function(markers_list) {
 #' @param top Top markers by p-value to use in cell type assignment
 #' @returns A markers data frame with a new column for cell type assigned to
 #' cluster.
+#' @export
 
 match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   canon_types <- unique(cell_annotation$type)
@@ -289,7 +300,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' @param verbose A boolean. Will be passed to Seurat function calls.
 #' @returns A list containing one marker or DEG data frame per cluster, plus
 #' an additional one for global DEGs if performing differential analysis.
-
+#' @export
 
 get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
                            verbose = FALSE) {
@@ -357,12 +368,13 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 #' @param verbose A boolean. Will be passed to Seurat function calls.
 #' @param idents Identity class to which to set seurat object before calculating
 #' markers in case conserved mode cannot be triggered.
+#' @export
 
 calculate_markers <- function(seu, int_columns, verbose = FALSE, idents = NULL,
                               DEG = FALSE, integrate = FALSE) {
   run_conserved <- ifelse(test = length(int_columns) == 1 & integrate,
                           no = FALSE,
-                          yes = !has_exclusive_idents(seu = seu,
+                          yes = !.has_exclusive_idents(seu = seu,
                                   idents = idents, cond = tolower(int_columns)))
   if(run_conserved) {
     markers <- get_sc_markers(seu = seu, cond = int_columns, DEG = FALSE,
@@ -387,6 +399,7 @@ calculate_markers <- function(seu, int_columns, verbose = FALSE, idents = NULL,
 #' @importFrom Seurat GetAssayData
 #' @inheritParams get_query_distribution
 #' @returns A list with the three query analysis objects.
+#' @export
 
 analyze_query <- function(seu, query, sigfig) {
   if(all(!query %in% rownames(Seurat::GetAssayData(seu)))) {
@@ -420,6 +433,7 @@ analyze_query <- function(seu, query, sigfig) {
 #' @param seu Clustered seurat object.
 #' @param sigfig Significant figure cutoff
 #' @returns A data frame with cell type distribution in each sample.
+#' @export
 
 get_clusters_distribution <- function(seu, sigfig = 3) {
   clusters_column <- ifelse("cell_type" %in% colnames(seu@meta.data), 
@@ -438,6 +452,7 @@ get_clusters_distribution <- function(seu, sigfig = 3) {
 #' @param query Vector of query genes whose expression to analyse.
 #' @param sigfig Significant figure cutoff
 #' @return A data frame with expression levels for query genes in each sample.
+#' @export
 
 get_query_distribution <- function(seu, query, sigfig = 3) {
   genes <- SeuratObject::FetchData(seu, query)
@@ -461,6 +476,7 @@ get_query_distribution <- function(seu, query, sigfig = 3) {
 #' @param query Vector of query genes whose expression to analyse.
 #' @param sigfig Significant figure cutoff
 #' @return A data frame with expression levels for query genes in each sample.
+#' @export
 
 get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
                           layer = "counts") {
@@ -524,6 +540,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
 #' @inheritParams get_qc_pct
 #' @return A vector containing the union of the top N genes of each sample of
 #' input Seurat object.
+#' @export
 
 get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts") {
   if(top < 1) {
@@ -554,6 +571,7 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts") {
 #' @param top Top N genes to take from each sample.
 #' @inheritParams breakdown_query
 #' @inheritParams get_query_pct
+#' @export
 
 get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
                    sigfig = 2) {
@@ -576,6 +594,7 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
 #'
 #' @returns A data frame of the proportion of cells (between 0 and 1) that
 #' express each query gene.
+#' @export
 
 breakdown_query <- function(seu, query, assay = "RNA", layer = "counts") {
   if(nrow(seu@meta.data) > 1) {
@@ -602,10 +621,10 @@ breakdown_query <- function(seu, query, assay = "RNA", layer = "counts") {
   return(pct)   
 }
 
-#' has_exclusive_idents
-#' `has_exclusive_idents` checks whether any condition-identity pairs in
+#' .has_exclusive_idents
+#' `.has_exclusive_idents` checks whether any condition-identity pairs in
 #' seurat object has less than three occurrences, which makes certain analyses
-#' impossible.
+#' impossible. Not exported
 #'
 #' @param seu Seurat object
 #' @param cond Condition to check
@@ -614,7 +633,7 @@ breakdown_query <- function(seu, query, assay = "RNA", layer = "counts") {
 #'
 #' @returns A boolean. `TRUE` if it contains exclusive pairs, `FALSE` otherwise.
 
-has_exclusive_idents <- function(seu, cond, idents) {
+.has_exclusive_idents <- function(seu, cond, idents) {
   meta <- seu@meta.data[, c(cond, idents)]
   groups <- unique(meta[[cond]])
   clusters <- unique(meta[[idents]])
@@ -646,6 +665,7 @@ has_exclusive_idents <- function(seu, cond, idents) {
 #' @param column Column with value by which to subset input
 #' @param value Value to search within column
 #' @returns A subset of the seurat object, which itself is a seurat object.
+#' @export
 
 subset_seurat <- function(seu, column, value) {
   expr <- Seurat::FetchData(seu, vars = column)
@@ -663,6 +683,7 @@ subset_seurat <- function(seu, column, value) {
 #' downsampling by its respective variable.
 #' @param keep A vector of genes to keep when downsampling features.
 #' @returns A downsampled seurat object.
+#' @export
 
 downsample_seurat <- function(seu, cells = NULL, features = NULL, keep = "",
                               assay = "RNA", layer = "counts") {
@@ -697,6 +718,7 @@ downsample_seurat <- function(seu, cells = NULL, features = NULL, keep = "",
 #' @param file Path to target gene file
 #' 
 #' @return A list with one element per cell type
+#' @export
 
 read_and_format_targets <- function(file) {
   markers_df <- read.table(file, sep = "\t", header = FALSE,
@@ -715,6 +737,7 @@ read_and_format_targets <- function(file) {
 #' @keywords preprocessing, report, metadata
 #' 
 #' @return Dataframe with metadata
+#' @export
 
 extract_metadata <- function(seu){
   if (!is.list(seu)){
@@ -731,6 +754,7 @@ extract_metadata <- function(seu){
 #' calculation in package DoubletFinder
 #'
 #' @param seu Seurat object
+#' @export
 
 find_doublets <- function(seu) {
   nExp <- round(ncol(seu) * 0.04)  # Expect 4% doublets BUT WHY???
