@@ -303,7 +303,8 @@ write_seurat_report <- function(final_results, output = getwd(), name = NULL,
                     integrate = final_results$integrate)
   plotter <- htmlreportR:::htmlReport$new(title_doc = paste0("Single-Cell ",
                             name, " report"), container = container,
-                            tmp_folder = tmp_folder, src = source_folder)
+                            tmp_folder = tmp_folder, src = source_folder,
+                            compress_obj = TRUE)
   plotter$build(template)
   plotter$write_report(out_file)
   message(paste0("Report written in ", out_file))
