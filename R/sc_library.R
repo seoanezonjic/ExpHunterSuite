@@ -3,6 +3,7 @@
 #' read_sc_counts
 #' Create seurat object from cellranger counts
 #'
+#' @importFrom Seurat Read10X CreateSeuratObject
 #' @param name sample name
 #' @param input path to cellranger counts
 #' @param mincells min number of cells for which a feature is recorded
@@ -22,6 +23,7 @@ read_input <- function(name, input, mincells, minfeats, exp_design){
 #' tag_qc
 #' Tag barcodes not passing QC filters
 #'
+#' @importFrom Seurat PercentageFeatureSet
 #' @param seu Seurat object to tag
 #' @param minqcfeats Min number of features for which a cell is selected.
 #' Default 500
@@ -94,6 +96,7 @@ add_exp_design <- function(seu, name, exp_design){
 #' `merge_seurat` loads single-cell count matrices and creates a merged
 #' seurat object.
 #'
+#' @importFrom Seurat Read10X CreateSeuratObject
 #' @param project_name Will appear in output project.name slot.
 #' @param exp_design Experiment design table in TSV format
 #' @param count_path Directory that will be searched for count matrices.
@@ -112,9 +115,6 @@ merge_seurat <- function(project_name, exp_design, count_path,
     seu <- Seurat::CreateSeuratObject(counts = d10x, project = sample, min.cells = 1,
                               min.features = 1)
     seu <- add_exp_design(seu = seu, name = sample, exp_design = exp_design)
-    seu[["percent.mt"]] <- Seurat::PercentageFeatureSet(seu, pattern = "^MT-")
-    seu <- subset(seu, subset = nFeature_RNA > 500 & nCount_RNA > 1000
-                                & percent.mt < 20)
     })
   merged_seu <- merge(seu.list[[1]], y = seu.list[-1],
                       add.cell.ids = exp_design$sample, project = project_name)
@@ -124,6 +124,7 @@ merge_seurat <- function(project_name, exp_design, count_path,
 #' annotate_clusters
 #' `annotate_clusters` renames seurat clusters according to dictionary
 #'
+#' @importFrom Seurat RenameIdents Idents
 #' @param seu Non-annotated seu with markers
 #' @param new_clusters Vector of names to assign to clusters.
 #'
@@ -276,6 +277,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' `get_sc_markers` performs differential expression analysis on OR selects
 #' conserver markers from a seurat object.
 #'
+#' @importFrom Seurat Idents FindMarkers FindConservedMarkers
 #' @param seu Seurat object to analyse.
 #' @param DEG A boolean.
 #'   * `TRUE`: Function will calculate differentally expressed genes.
@@ -287,6 +289,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' @param verbose A boolean. Will be passed to Seurat function calls.
 #' @returns A list containing one marker or DEG data frame per cluster, plus
 #' an additional one for global DEGs if performing differential analysis.
+
 
 get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
                            verbose = FALSE) {
@@ -349,6 +352,7 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 
 #' calculate_markers
 #'
+#' @importFrom Seurat Idents FindAllMarkers
 #' @inheritParams get_sc_markers
 #' @param verbose A boolean. Will be passed to Seurat function calls.
 #' @param idents Identity class to which to set seurat object before calculating
@@ -380,6 +384,7 @@ calculate_markers <- function(seu, int_columns, verbose = FALSE, idents = NULL,
 #' `get_query_distribution`, `get_query_pct` by samples and `get_query_pct` by
 #' samples and cell types.
 #'
+#' @importFrom Seurat GetAssayData
 #' @inheritParams get_query_distribution
 #' @returns A list with the three query analysis objects.
 
@@ -515,6 +520,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
 #' of cells for each sample in a seurat object, and returns a vector with the
 #' union of these genes.
 #'
+#' @importFrom Seurat GetAssayData
 #' @inheritParams get_qc_pct
 #' @return A vector containing the union of the top N genes of each sample of
 #' input Seurat object.
@@ -635,6 +641,7 @@ has_exclusive_idents <- function(seu, cond, idents) {
 #' `subset_seurat` subsets a seurat object by a specified value of provided
 #' column.
 #'
+#' @importFrom Seurat FetchData
 #' @param seu Seurat object
 #' @param column Column with value by which to subset input
 #' @param value Value to search within column
