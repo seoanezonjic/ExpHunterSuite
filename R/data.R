@@ -49,11 +49,11 @@
 #' @usage data(pbmc_tiny)
 #'
 #' @format A seurat object containing the 15 first samples of the
-#' pbmc_small dataset.
+#' pbmc_small dataset, subset to 10 features.
 #'
 #' @keywords datasets
 #'
-#' @source Created with data-raw/pbmc_tiny.R. Original source:
+#' @source Created with data-raw/pbmc_tiny.R. pbmc_small source:
 #' https://search.r-project.org/CRAN/refmans/SeuratObject/html/pbmc_small.html
 #'
 "pbmc_tiny"
