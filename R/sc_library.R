@@ -171,15 +171,14 @@ merge_seurat <- function(project_name, exp_design, count_path,
 #'
 #' @return Annotated seu object
 #' @examples
-#'  \dontrun{
-#'    annotate_clusters(project_name = "experiment_name", exp_design = exp_design,
-#'                 count_path = "path/to/counts/folder", suffix = "path/suffix")
-#'  }
+#' data(pbmc_tiny)
+#' pbmc_tiny$seurat_clusters <- 1
+#' annotate_clusters(seu = pbmc_tiny, new_clusters = "typeA")
 #' @export
 
-
 annotate_clusters <- function(seu, new_clusters = NULL ) {
-  names(new_clusters) <- levels(seu)
+  Seurat::Idents(seu) <- seu$seurat_clusters
+  names(new_clusters) <- Seurat::Idents(seu)
   seu <- Seurat::RenameIdents(seu, new_clusters)
   seu@meta.data$cell_type <- Seurat::Idents(seu)
   return(seu)
@@ -189,24 +188,32 @@ annotate_clusters <- function(seu, new_clusters = NULL ) {
 #' `collapse_markers` takes list of marker gene data frames and collapses it
 #' into a cluster-markers data frame.
 #'
+#' @importFrom plyr rbind.fill
 #' @param marker_list A list containing marker gene data frames.
 #' @returns A data frame. Column `cluster` contains element names of original
 #' list (seurat clusters) and column `genes` contains, for each row, the top
 #' markers of that element from the original list separated by commas.
+#' @examples
+#'  \dontrun{
+#'    collapse_markers(markers_list = list_of_marker_dfs)
+#'  }
 #' @export
 
 collapse_markers <- function(markers_list) {
   df_list <- vector(mode = "list", length = length(markers_list))
   for(i in seq(length(markers_list))) {
     df_list[[i]] <- as.data.frame(markers_list[[i]])
-    df_list[[i]]$cluster <- i - 1
     df_list[[i]]$gene <- rownames(df_list[[i]])
     rownames(df_list[[i]]) <- NULL
   }
   merged_df <- do.call(plyr::rbind.fill, df_list)
   merged_df <- cbind(merged_df$gene, merged_df[, colnames(merged_df) != "gene"])
   fcols <- grep("log2FC", colnames(merged_df))
-  merged_df$avg_log2FC <- rowMeans(merged_df[, fcols])
+  if(length(fcols) > 1) {
+    merged_df$avg_log2FC <- rowMeans(merged_df[, fcols])
+  } else {
+    merged_df$avg_log2FC <- merged_df$fcols
+  }
   colnames(merged_df)[1] <- "gene"
   return(merged_df)
 }
@@ -221,6 +228,11 @@ collapse_markers <- function(markers_list) {
 #' @param top Top markers by p-value to use in cell type assignment
 #' @returns A markers data frame with a new column for cell type assigned to
 #' cluster.
+#' @examples
+#'  \dontrun{
+#'    match_cell_types(markers_df = markers_df, p_adj_cutoff = 1e-5,
+#'                     cell_annotation = markers_celltypes_df)
+#'  }
 #' @export
 
 match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
@@ -324,7 +336,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 
 #' get_sc_markers
 #' `get_sc_markers` performs differential expression analysis on OR selects
-#' conserver markers from a seurat object.
+#' conserved markers from a seurat object.
 #'
 #' @importFrom Seurat Idents FindMarkers FindConservedMarkers
 #' @param seu Seurat object to analyse.
@@ -338,6 +350,12 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' @param verbose A boolean. Will be passed to Seurat function calls.
 #' @returns A list containing one marker or DEG data frame per cluster, plus
 #' an additional one for global DEGs if performing differential analysis.
+#' @examples
+#' data(pbmc_tiny)
+#' pbmc_tiny$seurat_clusters <- 1
+#' pbmc_tiny$seurat_clusters[8:15] <- 2
+#' get_sc_markers(seu = pbmc_tiny, cond = "groups", DEG = TRUE, verbose = TRUE,
+#'                subset_by = "seurat_clusters")
 #' @export
 
 get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
@@ -726,7 +744,10 @@ subset_seurat <- function(seu, column, value) {
 downsample_seurat <- function(seu, cells = NULL, features = NULL, keep = "",
                               assay = "RNA", layer = "counts") {
   if(!is.null(features)) {
-    seu <- SeuratObject::JoinLayers(seu)
+    if(length(unique(seu$orig.ident)) > 1)
+    {
+      seu <- SeuratObject::JoinLayers(seu)
+    }
     counts <- SeuratObject::GetAssayData(seu, assay = assay, layer = layer)
     if(is.numeric(features)) {
       gene_list <- sample(rownames(counts), size = features, replace = F)
