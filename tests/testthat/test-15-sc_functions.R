@@ -100,7 +100,6 @@ test_that("collapse_markers base use case", {
   expected_df <- data.frame(gene = as.character(rep(1:3, 2)),
                             a_avg_log2FC = c(rep(1, 3), rep(-2, 3)),
                             b_avg_log2FC = c(rep(-1, 3), rep (2, 3)),
-                            cluster = c(rep(0, 3), rep(1, 3)),
                             avg_log2FC = rep(0, 6))
   expect_equal(output_df, expected_df)
 })
@@ -178,71 +177,73 @@ test_that("get_clusters_distribution properly calculates percentages", {
   expect_equal(output_pct, expected_pct)
 })
 
+query <- c("PPBP", "IGLL5", "VDAC3")
+
 test_that("get_query_distribution properly sums expression levels in samples", {
   test_pbmc <- pbmc_tiny
   test_pbmc@meta.data$sample <- c(rep("A", 5), rep("B", 5), rep("C", 5))
-  query <- c("MS4A1", "CD79A", "HLA-DRB5")
   expected_exp <- data.frame(matrix(nrow = 3, ncol = 3))
   rownames(expected_exp) <- c("A", "B", "C")
-  expected_exp[, 1] <- c(0, 0, 28.40)
-  expected_exp[, 2] <- c(0, 0, 23.1)
-  expected_exp[, 3] <- c(0, 5.06, 22.10)
+  expected_exp[, 1] <- c(4.75, 0, 3.98)
+  expected_exp[, 2] <- c(0, 0, 12.4)
+  expected_exp[, 3] <- c(4.38, 9.67, 7.33)
   colnames(expected_exp) <- query
   output_exp <- get_query_distribution(test_pbmc, query, 3)
   expect_equal(output_exp, expected_exp)
 })
-
 
 test_pbmc <- pbmc_tiny
 test_pbmc@meta.data$sample <- c(rep("A", 5), rep("B", 5), rep("C", 5))
 test_pbmc@meta.data$seurat_clusters <- rep(0:4, 3)
 cell_types <- c("0. typeA", "1. typeB", "2. typeC", "3. typeD", "4. typeE")
 test_pbmc@meta.data$cell_type <- rep(cell_types, 3)
-query <- c("MS4A1", "CD79A", "HLA-DRB5")
 
 test_that("get_query_pct works in simple case", {
-  query <- c("MS4A1", "CD79A", "HLA-DRB5")
   expected_df <- matrix(nrow = 3, ncol = 3)
   rownames(expected_df) <- c("A", "B", "C")
-  expected_df[1, ] <- rep(0, 3)
-  expected_df[2, ] <- c(0, 0, 20)
-  expected_df[3, ] <- c(100, 80, 80)
+  expected_df[1, ] <- c(20, 0, 20)
+  expected_df[2, ] <- c(0, 0, 40)
+  expected_df[3, ] <- c(20, 40, 20)
   colnames(expected_df) <- query
-  output_df <- get_query_pct(test_pbmc, query, "sample")
+  output_df <- suppressMessages(get_query_pct(test_pbmc, query, "sample"))
   expect_equal(output_df, expected_df)
 })
 
 test_that("get_query_pct gives warning if any query genes are not found", {
-  missing_query <- c("MS4A1", "CD79A", "HLA-DRB5", "NOEXPA", "NOEXPB")
+  missing_query <- c(query, "NOEXPA", "NOEXPB")
   expected_df <- matrix(nrow = 3, ncol = 3)
   rownames(expected_df) <- c("A", "B", "C")
-  expected_df[1, ] <- rep(0, 3)
-  expected_df[2, ] <- c(0, 0, 20)
-  expected_df[3, ] <- c(100, 80, 80)
+  expected_df[1, ] <- c(20, 0, 20)
+  expected_df[2, ] <- c(0, 0, 40)
+  expected_df[3, ] <- c(20, 40, 20)
   colnames(expected_df) <- query
-  warnings <- capture_warnings(get_query_pct(test_pbmc, missing_query, "sample"))
+  warnings <- capture_warnings(suppressMessages(get_query_pct(test_pbmc,
+                               missing_query, "sample")))
   expect_match(warnings, "NOEXPA, NOEXPB")
-  output_df <- suppressWarnings(get_query_pct(test_pbmc, missing_query, "sample"))
+  output_df <- suppressWarnings(suppressMessages(get_query_pct(test_pbmc,
+                               missing_query, "sample")))
   expect_equal(output_df, expected_df)
 })
 
 test_that("get_query_pct works with query of length one", {
-  single_query <- c("HLA-DRB5")
+  single_query <- "PPBP"
   expected_df <- matrix(nrow = 3, ncol = 1)
   rownames(expected_df) <- c("A", "B", "C")
-  expected_df[, 1] <- c(0, 20, 80)
+  expected_df[, 1] <- c(20, 0, 20)
   colnames(expected_df) <- single_query
-  output_df <- get_query_pct(test_pbmc, single_query, "sample")
+  output_df <- suppressMessages(get_query_pct(test_pbmc, single_query,
+                                "sample"))
   expect_equal(output_df, expected_df)
 })
 
 test_that("get_query_pct works with alternate 'by' arguments", {
-  single_query <- c("HLA-DRB5")
+  single_query <- "PPBP"
   expected_df <- matrix(nrow = 5, ncol = 1)
   rownames(expected_df) <- c(paste0(0:4, ". type", toupper(letters[1:5])))
-  expected_df[, 1] <- c(33, 67, 33, 0, 33)
+  expected_df[, 1] <- c(0, 33, 33, 0, 0)
   colnames(expected_df) <- single_query
-  output_df <- get_query_pct(test_pbmc, single_query, "cell_type")
+  output_df <- suppressMessages(get_query_pct(test_pbmc, single_query,
+                                "cell_type"))
   testthat::expect_equal(output_df, expected_df)
 })
 
@@ -305,26 +306,20 @@ test_that("get_sc_markers skips exclusive clusters in DEG analysis, alternate
 })
 
 test_that("annotate_clusters simply assigns names to clusters", {
-  test_pbmc <- pbmc_tiny
-  Seurat::Idents(test_pbmc) <- 1:15
-  new_clusters <- rep("TypeA", 15)
-  new_clusters[c(3, 7, 10)] <- "TypeB"
-  new_clusters[c(2, 5, 13)] <- "TypeC"
+  test_pbmc$seurat_clusters <- 1:15
+  Seurat::Idents(test_pbmc) <- test_pbmc$seurat_clusters
+  new_clusters <- paste0("Type", toupper(letters[1:15]))
   annotated <- suppressWarnings(annotate_clusters(test_pbmc, new_clusters))
   output <- annotated@meta.data$cell_type
-  expected <- c("TypeA", "TypeC", "TypeB", "TypeA", "TypeC",
-                "TypeA", "TypeB", "TypeA", "TypeA", "TypeB",
-                "TypeA", "TypeA", "TypeC", "TypeA", "TypeA")
-  expect_equal(as.character(output), expected)
+  expect_equal(as.character(output), new_clusters)
 })
 
 test_pbmc <- pbmc_tiny
 test_pbmc@meta.data$sample <- c(rep("A", 5), rep("B", 5), rep("C", 5))
 test_pbmc@meta.data$seurat_clusters <- c(rep(0, 5), rep (1, 5), rep (2, 5))
-query <- c("MS4A1", "CD79A", "HLA-DRB5")
 
 test_that("breakdown_query works in simple case", {
-  expected_df <- c(0.33, 0.27, 0.33)
+  expected_df <- c(0.130, 0.130, 0.270)
   names(expected_df) <- query
   output_df <- signif(breakdown_query(test_pbmc, query), 2)
   expect_equal(output_df, expected_df)
@@ -333,7 +328,7 @@ test_that("breakdown_query works in simple case", {
 test_that("breakdown_query gives warning if any query genes are not found", {
   library(Seurat)
   missing_query <- c(query, "NOEXPA", "NOEXPB")
-  expected_df <- c(0.33, 0.27, 0.33)
+  expected_df <- c(0.130, 0.130, 0.270)
   names(expected_df) <- query
   expect_warning(breakdown_query(test_pbmc, missing_query), "NOEXPA, NOEXPB")
   output_df <- suppressWarnings(signif(breakdown_query(test_pbmc,
@@ -342,8 +337,8 @@ test_that("breakdown_query gives warning if any query genes are not found", {
 })
 
 test_that("breakdown_query works with query of length one", {
-  single_query <- c("HLA-DRB5")
-  expected_df <- 0.33
+  single_query <- c("PPBP")
+  expected_df <- 0.13
   names(expected_df) <- single_query
   output_df <- signif(breakdown_query(test_pbmc, single_query), 2)
   expect_equal(output_df, expected_df)
@@ -357,21 +352,18 @@ cell_types <- c("0. typeA", "1. typeB", "2. typeC", "3. typeD", "4. typeE")
 test_pbmc@meta.data$cell_type <- rep(cell_types, 3)
 query <- c("MS4A1", "CD79A", "HLA-DRB5")
 counts <- GetAssayData(test_pbmc)
-gene_list <- c("MS4A1", "CD79B", "CD79A", "LTB", "TCL1A")
-expected_vector <- c("MS4A1", "CD79B", "CD79A","LTB", "TCL1A")
-counts <- counts[gene_list, ]
+expected_vector <- c("PPBP", "VDAC3", "IGLL5")
+expected_big <- c("PPBP", "IGLL5", "VDAC3", "CD1C", "AKR1C3", "PF4", "MYL9",
+                  "GNLY", "TREML1", "CA2")
 test_pbmc <- subset(test_pbmc, features = rownames(counts))
 
 test_that("get_top_genes works as expected", {
-  simple_vector <- get_top_genes(test_pbmc, top = 5)
-  greater_vector <- get_top_genes(test_pbmc, top = 10e99)
-  expect_equal(expected_vector, simple_vector)
-  expect_equal(expected_vector, greater_vector)
+  expect_equal(get_top_genes(test_pbmc, top = 1), expected_vector)
+  expect_equal(get_top_genes(test_pbmc, top = 10), expected_big)
   expect_error(get_top_genes(test_pbmc, top = 0), "greater than 1, was 0")
 })
 
 test_that("get_top_genes works even if N is greater than number of expressed
        genes", {
-  output_vector <- get_top_genes(test_pbmc, top = 10e99999)
-  testthat::expect_equal(expected_vector, output_vector)
+  expect_equal(get_top_genes(test_pbmc, top = 10e99999), expected_big)
 })
