@@ -178,7 +178,7 @@ merge_seurat <- function(project_name, exp_design, count_path,
 
 annotate_clusters <- function(seu, new_clusters = NULL ) {
   Seurat::Idents(seu) <- seu$seurat_clusters
-  names(new_clusters) <- Seurat::Idents(seu)
+  names(new_clusters) <- levels(seu)
   seu <- Seurat::RenameIdents(seu, new_clusters)
   seu@meta.data$cell_type <- Seurat::Idents(seu)
   return(seu)
@@ -237,10 +237,10 @@ collapse_markers <- function(markers_list) {
 
 match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   canon_types <- unique(cell_annotation$type)
-  if(any(markers_df$cluster == 0)) {
-    markers_df$cluster <- markers_df$cluster + 1
+  if(any(markers_df$seurat_clusters == 0)) {
+    markers_df$seurat_clusters <- markers_df$seurat_clusters + 1
   }
-  clusters <- unique(markers_df$cluster)
+  clusters <- unique(markers_df$seurat_clusters)
   subset_list <- vector(mode = "list", length = length(clusters))
   pcols <- grep("p_val_adj", colnames(markers_df))
   if(any(is.na(markers_df[, pcols]))) {
@@ -275,17 +275,17 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   } else {
     colnames(markers_df)[fcols] <- "avg_log2FC"
   }
-  for(cluster in unique(markers_df$cluster)) {
-    subset <- markers_df[markers_df$cluster == cluster &
+  for(cluster in unique(markers_df$seurat_clusters)) {
+    subset <- markers_df[markers_df$seurat_clusters == cluster &
                          markers_df$p_val_adj <= p_adj_cutoff, ]
     if(nrow(subset) < 1) {
       warning(paste("WARNING: cluster", cluster, "contains no significant",
                      "markers", sep = " "), immediate. = TRUE)
-      subset <- markers_df[markers_df$cluster == cluster, ][1,]
+      subset <- markers_df[markers_df$seurat_clusters == cluster, ][1,]
       subset$gene <- "None"
       subset$avg_log2FC <- 1
       subset$p_val_adj <- 1
-      subset$cluster <- cluster
+      subset$seurat_clusters <- cluster
       subset$cell_type <- paste0(cluster, ". Unknown")
     } else {
       subset <- subset[order(subset$p_val_adj), ]
@@ -303,19 +303,19 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
         cluster_match <- names(scores[which(scores == max(scores))])
         cluster_match <- paste0(cluster_match, collapse = " / ")
       }
-      subset$cell_type <- paste0(subset$cluster, ". ", cluster_match)
+      subset$cell_type <- paste0(subset$seurat_clusters, ". ", cluster_match)
     }
     subset_list[[as.numeric(cluster)]] <- subset
   }
   stats_table <- do.call(rbind, subset_list)
-  stats_table <- stats_table[order(stats_table$cluster), ]
+  stats_table <- stats_table[order(stats_table$seurat_clusters), ]
   columns <- colnames(stats_table)
   anno_types <- strsplit(stats_table$cell_type, "\\. ")
   anno_types <- sapply(anno_types, `[`, 2)
   types <- unique(anno_types)
   for(type in types) {
     matches <- which(anno_types == type)
-    type_clusters <- stats_table$cluster[matches]
+    type_clusters <- stats_table$seurat_clusters[matches]
     uniques <- unique(type_clusters)
     if(length(uniques) > 1) {
       indices <- vector(mode = "double", length = length(uniques))
@@ -327,7 +327,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
       stats_table[matches, ]$cell_type <- dupe_cluster
     }
   }
-  sum_columns <- c("gene", "p_val_adj", "avg_log2FC", "cluster", "cell_type")
+  sum_columns <- c("gene", "p_val_adj", "avg_log2FC", "seurat_clusters", "cell_type")
   res <- list(stats_table = stats_table,
               cell_types = unique(stats_table$cell_type),
               summary = stats_table[, sum_columns])
@@ -388,6 +388,7 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
       markers <- Seurat::FindConservedMarkers(seu, ident.1 = sub_values[i],
                                               grouping.var = cond,
                                               verbose = verbose)
+      markers[[subset_by]] <- sub_values[i]
     }
     nums <- sapply(markers, is.numeric)
     markers[nums] <- lapply(markers[nums], signif, 2)
