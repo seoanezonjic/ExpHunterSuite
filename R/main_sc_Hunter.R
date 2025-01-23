@@ -110,7 +110,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   }
   seu <- Seurat::FindNeighbors(object = seu, dims = seq(ndims),
                                reduction = reduction, verbose = verbose)
-  if(is.null(SingleR_ref)) {
+  if(is.null(SingleR_ref | !integrate)) {
     seu <- Seurat::FindClusters(seu, resolution = resolution, verbose = verbose)
     # Seurat starts counting clusters from 0, which is the source of many
     # headaches when working in R, which starts counting from 1. Therefore,
@@ -119,7 +119,8 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     seu@meta.data$seurat_clusters <- as.numeric(seu@meta.data$seurat_clusters)
     Seurat::Idents(seu) <- "seurat_clusters"
   } else {
-    message("Annotation by clusters not active. Skipping clustering step")
+    message(paste0("Annotation by clusters not active and multiple samples",
+                   "detected. Skipping clustering"))
   }
   if(!is.null(SingleR_ref)) {
     message(paste0("SingleR reference provided. Annotating cells. This option",
