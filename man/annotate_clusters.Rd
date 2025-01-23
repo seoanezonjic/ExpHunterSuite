@@ -19,3 +19,8 @@ Annotated seu object
 annotate_clusters
 \code{annotate_clusters} renames seurat clusters according to dictionary
 }
+\examples{
+data(pbmc_tiny)
+pbmc_tiny$seurat_clusters <- 1
+annotate_clusters(seu = pbmc_tiny, new_clusters = "typeA")
+}

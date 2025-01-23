@@ -21,3 +21,8 @@ collapse_markers
 \code{collapse_markers} takes list of marker gene data frames and collapses it
 into a cluster-markers data frame.
 }
+\examples{
+ \dontrun{
+   collapse_markers(markers_list = list_of_marker_dfs)
+ }
+}

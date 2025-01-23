@@ -4,7 +4,7 @@
 \alias{get_sc_markers}
 \title{get_sc_markers
 \code{get_sc_markers} performs differential expression analysis on OR selects
-conserver markers from a seurat object.}
+conserved markers from a seurat object.}
 \usage{
 get_sc_markers(seu, cond = NULL, subset_by, DEG = FALSE, verbose = FALSE)
 }
@@ -32,5 +32,12 @@ an additional one for global DEGs if performing differential analysis.
 \description{
 get_sc_markers
 \code{get_sc_markers} performs differential expression analysis on OR selects
-conserver markers from a seurat object.
+conserved markers from a seurat object.
+}
+\examples{
+data(pbmc_tiny)
+pbmc_tiny$seurat_clusters <- 1
+pbmc_tiny$seurat_clusters[8:15] <- 2
+get_sc_markers(seu = pbmc_tiny, cond = "groups", DEG = TRUE, verbose = TRUE,
+               subset_by = "seurat_clusters")
 }

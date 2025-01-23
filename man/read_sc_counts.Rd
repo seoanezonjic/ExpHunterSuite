@@ -5,7 +5,7 @@
 \title{read_sc_counts
 Create seurat object from cellranger counts}
 \usage{
-read_sc_counts(name, input, mincells, minfeats, exp_design)
+read_sc_counts(name, input, mincells = 1, minfeats = 1, exp_design)
 }
 \arguments{
 \item{name}{sample name}
@@ -24,4 +24,11 @@ Seurat object
 \description{
 read_sc_counts
 Create seurat object from cellranger counts
+}
+\examples{
+ \dontrun{
+   read_sc_counts(name = "experiment_name", mincells = 1, minfeats = 1,
+                  input = "path\to\counts\matrices",
+                  exp_design = exp_design)
+ }
 }

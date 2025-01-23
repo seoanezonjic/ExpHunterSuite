@@ -17,3 +17,8 @@ Seurat object with tagged doublets
 \description{
 Tag barcodes in a seurat object that appear in a vector of doublets
 }
+\examples{
+data(pbmc_tiny)
+tag_doublets(seu = pbmc_tiny,
+             doublet_list = c("ATGCCAGAACGACT", "CATGGCCTGTGCAT"))
+}

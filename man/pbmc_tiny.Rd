@@ -6,10 +6,10 @@
 \title{Subset of the pbmc dataset distributed in package SeuratObject}
 \format{
 A seurat object containing the 15 first samples of the
-pbmc_small dataset.
+pbmc_small dataset, subset to 10 features.
 }
 \source{
-Created with data-raw/pbmc_tiny.R. Original source:
+Created with data-raw/pbmc_tiny.R. pbmc_small source:
 https://search.r-project.org/CRAN/refmans/SeuratObject/html/pbmc_small.html
 }
 \usage{

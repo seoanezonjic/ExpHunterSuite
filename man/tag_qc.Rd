@@ -25,5 +25,14 @@ Seurat object with tagged metadata
 tag_qc
 Tag barcodes not passing QC filters
 }
+\examples{
+data(pbmc_tiny)
+# Integrative experiment, previously loaded doublet list:
+tag_qc(seu = pbmc_tiny, minqcfeats = 500, percentmt = 5,
+       doublet_list = c("ATGCCAGAACGACT", "CATGGCCTGTGCAT"))
+# Per-sample experiment, no prior doublet knowledge
+tag_qc(seu = pbmc_tiny, minqcfeats = 500, percentmt = 5,
+       doublet_list = NULL)
+}
 \keyword{preprocessing,}
 \keyword{qc}

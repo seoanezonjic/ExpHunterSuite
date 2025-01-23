@@ -26,3 +26,9 @@ match_cell_types
 marker file. It then looks for matches between the two and assigns a cell
 type to each cluster of the data frame.
 }
+\examples{
+ \dontrun{
+   match_cell_types(markers_df = markers_df, p_adj_cutoff = 1e-5,
+                    cell_annotation = markers_celltypes_df)
+ }
+}

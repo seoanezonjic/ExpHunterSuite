@@ -11,7 +11,7 @@ merge_seurat(project_name, exp_design, count_path, suffix = "")
 \arguments{
 \item{project_name}{Will appear in output project.name slot.}
 
-\item{exp_design}{Experiment design table in TSV format}
+\item{exp_design}{Experiment design table in TSV format.}
 
 \item{count_path}{Directory that will be searched for count matrices.}
 
@@ -25,6 +25,12 @@ Merged Seurat object
 merge_seurat
 \code{merge_seurat} loads single-cell count matrices and creates a merged
 seurat object.
+}
+\examples{
+ \dontrun{
+   merge_seurat(project_name = "experiment_name", exp_design = exp_design,
+                count_path = "path/to/counts/folder", suffix = "path/suffix")
+ }
 }
 \keyword{integration}
 \keyword{merging,}
