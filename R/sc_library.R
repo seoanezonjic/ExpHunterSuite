@@ -466,21 +466,26 @@ calculate_markers <- function(seu, int_columns, verbose = FALSE, idents = NULL,
 #' @importFrom Seurat GetAssayData
 #' @inheritParams get_query_distribution
 #' @returns A list with the three query analysis objects.
+#' @examples
+#' data(pbmc_tiny)
+#' pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
+#' analyze_query(pbmc_tiny, c("PPBP", "CA2"), 2, sample_col = "orig.ident")
 #' @export
 
-analyze_query <- function(seu, query, sigfig) {
+analyze_query <- function(seu, query, sigfig, sample_col = "sample") {
   if(all(!query %in% rownames(Seurat::GetAssayData(seu)))) {
     warning("None of the query genes are expressed in the dataset",
              immediate. = TRUE)
     res <- NULL
   } else {
-    query_exp <- get_query_distribution(seu = seu, query = query, sigfig = sigfig)
-    query_pct <- get_query_pct(seu = seu, query = query, by = "sample",
+    query_exp <- get_query_distribution(seu = seu, query = query,
+                                     sigfig = sigfig, sample_col = sample_col)
+    query_pct <- get_query_pct(seu = seu, query = query, by = sample_col,
                            sigfig = sigfig)
     if("cell_type" %in% colnames(seu@meta.data)) {
-      get_by <- c("sample", "cell_type")
+      get_by <- c(sample_col, "cell_type")
     } else {
-      get_by <- c("sample", "seurat_clusters")
+      get_by <- c(sample_col, "seurat_clusters")
     }
     query_cluster_pct <- get_query_pct(seu = seu, query = query, by = get_by,
                                        sigfig = sigfig)
@@ -518,12 +523,14 @@ get_clusters_distribution <- function(seu, sigfig = 3) {
 #' @param seu Seurat object
 #' @param query Vector of query genes whose expression to analyse.
 #' @param sigfig Significant figure cutoff
+#' @param sample_col Name of column that specifies sample. Default "sample",
+#' as per our workflow.
 #' @return A data frame with expression levels for query genes in each sample.
 #' @export
 
-get_query_distribution <- function(seu, query, sigfig = 3) {
+get_query_distribution <- function(seu, query, sigfig = 3, sample_col = "sample") {
   genes <- SeuratObject::FetchData(seu, query)
-  genes <- cbind(seu@meta.data$sample, genes)
+  genes <- cbind(seu@meta.data[sample_col], genes)
   colnames(genes)[1] <- "sample"
   gene_distribution <- aggregate(genes[, -1], list(genes$sample), FUN = sum)
   gene_distribution[, -1] <- signif(gene_distribution[, -1], sigfig)
@@ -555,7 +562,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
   names(subset_list) <- items
   for(i in seq(length(items))) {
     message(paste("Subsetting", by[1],  paste0(i, "/", length(items)), sep = " "))
-    subset <- subset_seurat(seu, by[1], items[i])
+    subset <- subset_seurat(seu, by[1], as.character(items[i]))
     subset_list[[as.character(items[i])]] <- subset
   }
   if(length(by) == 2){
