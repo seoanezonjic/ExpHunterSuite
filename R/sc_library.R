@@ -375,7 +375,7 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
       if(any(ncells < 3)) {
         warning(paste0('Cluster ', i, ' contains less than three cells for',
                         ' condition \'', conds[which(ncells < 3)],
-                        '\'. Skipping DEG analysis', collapse = ""),
+                        '\'. Skipping DEG analysis\n', collapse = ""),
                 immediate. = TRUE)
         markers <- data.frame(FALSE)
       } else {
@@ -425,10 +425,18 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 #' @param verbose A boolean. Will be passed to Seurat function calls.
 #' @param idents Identity class to which to set seurat object before calculating
 #' markers in case conserved mode cannot be triggered.
+#' @param min.pct,logfc.threshold See ?Seurat::FindAllMarkers
+#' @examples
+#'  \dontrun{
+#'    data(pbmc_tiny)
+#'    calculate_markers(seu = pbmc_tiny, int_columns = "groups",
+#'                      verbose = TRUE, idents = "letter.idents")
+#'  }
 #' @export
 
 calculate_markers <- function(seu, int_columns, verbose = FALSE, idents = NULL,
-                              DEG = FALSE, integrate = FALSE) {
+                              integrate = FALSE, min.pct = 0.25,
+                              logfc.threshold = 0.25) {
   run_conserved <- ifelse(test = length(int_columns) == 1 & integrate,
                           no = FALSE,
                           yes = !.has_exclusive_idents(seu = seu,
@@ -438,9 +446,11 @@ calculate_markers <- function(seu, int_columns, verbose = FALSE, idents = NULL,
                               subset_by = idents, verbose = verbose)
     markers <- collapse_markers(markers$markers)
   }else{
-    Seurat::Idents(seu) <- idents
-    markers <- Seurat::FindAllMarkers(seu, only.pos = TRUE, min.pct = 0.25,
-                                      logfc.threshold = 0.25, verbose = verbose)
+    Seurat::Idents(seu) <- seu@meta.data[[idents]]
+    markers <- Seurat::FindAllMarkers(seu, only.pos = TRUE, min.pct = min.pct,
+                                      logfc.threshold = logfc.threshold,
+                                      verbose = verbose)
+    colnames(markers)[colnames(markers) == "cluster"] <- "seurat_clusters"
     rownames(markers) <- NULL
   }
   markers <- cbind(markers$gene, markers[, -grep("gene", colnames(markers))])
