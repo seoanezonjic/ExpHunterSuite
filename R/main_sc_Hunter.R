@@ -117,7 +117,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     # we introduce this correction. Weirdly enough, coercing it to numeric
     # already adds 1.
     seu@meta.data$seurat_clusters <- as.numeric(seu@meta.data$seurat_clusters)
-    Seurat::Idents(seu) <- "seurat_clusters"
+    Seurat::Idents(seu) <- seu@meta.data$seurat_clusters
   } else {
     message(paste0("Annotation by clusters not active and multiple samples",
                    " detected. Skipping clustering"))
