@@ -17,6 +17,11 @@ Dataframe with metadata
 extract_metadata
 Extract metadata dataframe from Seurat objects
 }
+\examples{
+data(pbmc_tiny)
+tiny_list <- list(pbmc_tiny1 = pbmc_tiny, pbmc_tiny2 = pbmc_tiny)
+extract_metadata(seu = tiny_list)
+}
 \keyword{metadata}
 \keyword{preprocessing,}
 \keyword{report,}

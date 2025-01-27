@@ -7,12 +7,15 @@
 each cluster for each different sample in a seurat object. If clusters are
 annotated, it will show cell types instead of cluster number.}
 \usage{
-get_clusters_distribution(seu, sigfig = 3)
+get_clusters_distribution(seu, sigfig = 3, sample_col = "sample")
 }
 \arguments{
 \item{seu}{Clustered seurat object.}
 
 \item{sigfig}{Significant figure cutoff}
+
+\item{sample_col}{Name of column that specifies sample. Default "sample",
+as per our workflow.}
 }
 \value{
 A data frame with cell type distribution in each sample.
@@ -22,4 +25,9 @@ get_clusters_distribution
 \code{get_clusters_distribution} calculates the percentage of cells that make up
 each cluster for each different sample in a seurat object. If clusters are
 annotated, it will show cell types instead of cluster number.
+}
+\examples{
+data(pbmc_tiny)
+pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
+get_clusters_distribution(pbmc_tiny, 2, "orig.ident")
 }

@@ -6,7 +6,7 @@
 \code{get_query_distribution} builds a table of query genes expression levels
 across all samples of a Seurat object}
 \usage{
-get_query_distribution(seu, query, sigfig = 3)
+get_query_distribution(seu, query, sigfig = 3, sample_col = "sample")
 }
 \arguments{
 \item{seu}{Seurat object}
@@ -14,6 +14,9 @@ get_query_distribution(seu, query, sigfig = 3)
 \item{query}{Vector of query genes whose expression to analyse.}
 
 \item{sigfig}{Significant figure cutoff}
+
+\item{sample_col}{Name of column that specifies sample. Default "sample",
+as per our workflow.}
 }
 \value{
 A data frame with expression levels for query genes in each sample.
@@ -22,4 +25,8 @@ A data frame with expression levels for query genes in each sample.
 get_query_distribution
 \code{get_query_distribution} builds a table of query genes expression levels
 across all samples of a Seurat object
+}
+\examples{
+data(pbmc_tiny)
+get_query_distribution(pbmc_tiny, c("PPBP", "CA2"), 2, "orig.ident")
 }

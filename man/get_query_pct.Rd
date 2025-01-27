@@ -9,17 +9,9 @@ object which expresses genes specified in a list of queries.}
 get_query_pct(seu, query, by, sigfig = 2, assay = "RNA", layer = "counts")
 }
 \arguments{
-\item{seu}{Seurat object}
-
 \item{query}{Vector of query genes whose expression to analyse.}
 
 \item{sigfig}{Significant figure cutoff}
-
-\item{assay}{Seurat assay from which to extract data. Default is "RNA",
-the default assay.}
-
-\item{layer}{Layer of Seurat object from which to extract data. Default is
-"counts", normalised assay data.}
 }
 \value{
 A data frame with expression levels for query genes in each sample.
@@ -28,4 +20,9 @@ A data frame with expression levels for query genes in each sample.
 get_query_pct
 \code{get_query_pct} gets the percentage of cells in each sample of a seurat
 object which expresses genes specified in a list of queries.
+}
+\examples{
+data(pbmc_tiny)
+pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
+get_query_pct(pbmc_tiny, c("PPBP", "CA2"), "seurat_clusters", 2)
 }

@@ -7,7 +7,7 @@
 \code{get_query_distribution}, \code{get_query_pct} by samples and \code{get_query_pct} by
 samples and cell types.}
 \usage{
-analyze_query(seu, query, sigfig)
+analyze_query(seu, query, sigfig, sample_col = "sample")
 }
 \arguments{
 \item{seu}{Seurat object}
@@ -15,6 +15,9 @@ analyze_query(seu, query, sigfig)
 \item{query}{Vector of query genes whose expression to analyse.}
 
 \item{sigfig}{Significant figure cutoff}
+
+\item{sample_col}{Name of column that specifies sample. Default "sample",
+as per our workflow.}
 }
 \value{
 A list with the three query analysis objects.
@@ -24,4 +27,9 @@ analyze_query
 \code{analyze_query} is a wrapper for the three query analysis steps:
 \code{get_query_distribution}, \code{get_query_pct} by samples and \code{get_query_pct} by
 samples and cell types.
+}
+\examples{
+data(pbmc_tiny)
+pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
+analyze_query(pbmc_tiny, c("PPBP", "CA2"), 2, sample_col = "orig.ident")
 }

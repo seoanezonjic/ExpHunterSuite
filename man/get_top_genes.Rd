@@ -7,7 +7,13 @@
 of cells for each sample in a seurat object, and returns a vector with the
 union of these genes.}
 \usage{
-get_top_genes(seu, top = 20, assay = "RNA", layer = "counts")
+get_top_genes(
+  seu,
+  top = 20,
+  assay = "RNA",
+  layer = "counts",
+  sample_col = "sample"
+)
 }
 \arguments{
 \item{seu}{Seurat object}
@@ -19,6 +25,9 @@ the default assay.}
 
 \item{layer}{Layer of Seurat object from which to extract data. Default is
 "counts", normalised assay data.}
+
+\item{sample_col}{Name of column that specifies sample. Default "sample",
+as per our workflow.}
 }
 \value{
 A vector containing the union of the top N genes of each sample of
@@ -29,4 +38,8 @@ get_top_genes
 \code{get_top_genes} extracts the top N genes expressed in the highest percentage
 of cells for each sample in a seurat object, and returns a vector with the
 union of these genes.
+}
+\examples{
+data(pbmc_tiny)
+get_top_genes(seu = pbmc_tiny, top = 5, assay = "RNA", layer = "counts",
 }

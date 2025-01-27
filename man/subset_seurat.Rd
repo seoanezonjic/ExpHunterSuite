@@ -23,3 +23,7 @@ subset_seurat
 \code{subset_seurat} subsets a seurat object by a specified value of provided
 column.
 }
+\examples{
+data(pbmc_tiny)
+head(subset_seurat(seu = pbmc_tiny, column = "groups", value = "g2"))
+}

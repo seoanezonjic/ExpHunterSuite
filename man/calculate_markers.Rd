@@ -9,8 +9,9 @@ calculate_markers(
   int_columns,
   verbose = FALSE,
   idents = NULL,
-  DEG = FALSE,
-  integrate = FALSE
+  integrate = FALSE,
+  min.pct = 0.25,
+  logfc.threshold = 0.25
 )
 }
 \arguments{
@@ -21,12 +22,18 @@ calculate_markers(
 \item{idents}{Identity class to which to set seurat object before calculating
 markers in case conserved mode cannot be triggered.}
 
-\item{DEG}{A boolean.
-\itemize{
-\item \code{TRUE}: Function will calculate differentally expressed genes.
-\item \code{FALSE} (the default): Function will calculate cluster markers.
-}}
+\item{min.pct, logfc.threshold}{See ?Seurat::FindAllMarkers}
+}
+\value{
+Marker or DEG data frame.
 }
 \description{
 calculate_markers
+}
+\examples{
+ \dontrun{
+   data(pbmc_tiny)
+   calculate_markers(seu = pbmc_tiny, int_columns = "groups",
+                     verbose = TRUE, idents = "letter.idents")
+ }
 }

@@ -17,3 +17,8 @@ A list with one element per cell type
 read_and_format_targets
 \code{read_and_format_targets} formats a marker-celltype table into a list
 }
+\examples{
+ \dontrun{
+   read_and_format_markers("path/to/markers/table")
+ }
+}

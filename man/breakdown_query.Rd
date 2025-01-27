@@ -9,17 +9,7 @@ the specified parameter.}
 breakdown_query(seu, query, assay = "RNA", layer = "counts")
 }
 \arguments{
-\item{seu}{Seurat object}
-
 \item{query}{Vector of query genes whose expression to analyse.}
-
-\item{assay}{Seurat assay from which to extract data. Default is "RNA",
-the default assay.}
-
-\item{layer}{Layer of Seurat object from which to extract data. Default is
-"counts", normalised assay data.}
-
-\item{sigfig}{Significant figure cutoff, default 2}
 }
 \value{
 A data frame of the proportion of cells (between 0 and 1) that
@@ -29,4 +19,8 @@ express each query gene.
 breakdown_query
 \code{breakdown_query} breaks down the expression of a list of query genes by
 the specified parameter.
+}
+\examples{
+data(pbmc_tiny)
+breakdown_query(seu = pbmc_tiny, query = c("PPBP", "CA2"))
 }

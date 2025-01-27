@@ -33,3 +33,8 @@ downsample_seurat
 specified number of cells and features. You can also input specific lists
 if you know which cells and/or features you want to retrieve.
 }
+\examples{
+data(pbmc_tiny)
+print(pbmc_tiny)
+print(downsample_seurat(seu = pbmc_tiny, cells = 2, features = 5))
+}

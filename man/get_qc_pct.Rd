@@ -3,10 +3,18 @@
 \name{get_qc_pct}
 \alias{get_qc_pct}
 \title{get_qc_pct
-\code{get_qc_pct} creates a gene expressio matrix of the union of the top N genes
+\code{get_qc_pct} creates a gene expression matrix of the union of the top N genes
 expressed in every sample in a seurat object.}
 \usage{
-get_qc_pct(seu, top = 20, assay = "RNA", layer = "counts", by, sigfig = 2)
+get_qc_pct(
+  seu,
+  top = 20,
+  assay = "RNA",
+  layer = "counts",
+  by,
+  sigfig = 2,
+  sample_col = "sample"
+)
 }
 \arguments{
 \item{seu}{Seurat object}
@@ -20,9 +28,20 @@ the default assay.}
 "counts", normalised assay data.}
 
 \item{sigfig}{Significant figure cutoff, default 2}
+
+\item{sample_col}{Name of column that specifies sample. Default "sample",
+as per our workflow.}
+
+\item{query}{Vector of query genes whose expression to analyse.}
 }
 \description{
 get_qc_pct
-\code{get_qc_pct} creates a gene expressio matrix of the union of the top N genes
+\code{get_qc_pct} creates a gene expression matrix of the union of the top N genes
 expressed in every sample in a seurat object.
+}
+\examples{
+data(pbmc_tiny)
+pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
+get_qc_pct(seu = pbmc_tiny, top = 5, assay = "RNA", layer = "counts",
+           sample_col = "orig.ident", by = "seurat_clusters", sigfig = 2)
 }
