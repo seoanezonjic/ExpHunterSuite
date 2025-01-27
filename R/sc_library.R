@@ -627,18 +627,23 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
 #' @inheritParams get_qc_pct
 #' @return A vector containing the union of the top N genes of each sample of
 #' input Seurat object.
+#' @examples
+#' data(pbmc_tiny)
+#' get_top_genes(seu = pbmc_tiny, top = 5, assay = "RNA", layer = "counts",
+#                sample_col = "orig.ident")
 #' @export
 
-get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts") {
+get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
+                          sample_col = "sample") {
   if(top < 1) {
     stop(paste0("Invalid \"top\" argument. Must be greater than 1, was ",
                  top))
   }
-  samples <- unique(seu@meta.data$sample)
+  samples <- as.character(unique(seu[[sample_col, drop = TRUE]]))
   top_samples <- vector(mode = "list", length = length(samples))
   names(top_samples) <- samples
   for(sample in samples) {
-    subset <- subset_seurat(seu, "sample", sample)
+    subset <- subset_seurat(seu, sample_col, sample)
     genes <- Seurat::GetAssayData(subset, assay, layer)
     expressed_genes <- vector(mode = "integer", length = nrow(genes))
     names(expressed_genes) <- rownames(genes)
@@ -653,24 +658,9 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts") {
 }
 
 #' get_qc_pct
-#' `get_qc_pct` creates a gene expressio matrix of the union of the top N genes
+#' `get_qc_pct` creates a gene expression matrix of the union of the top N genes
 #' expressed in every sample in a seurat object.
 #' @param top Top N genes to take from each sample.
-#' @inheritParams breakdown_query
-#' @inheritParams get_query_pct
-#' @export
-
-get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
-                   sigfig = 2) {
-  top_genes <- get_top_genes(seu = seu, top = top, assay = assay, layer = layer)
-  res <- get_query_pct(seu = seu, query = top_genes, by = by, sigfig = sigfig)
-  return(res)
-}
-
-#' breakdown_query
-#' `breakdown_query` breaks down the expression of a list of query genes by
-#' the specified parameter.
-#'
 #' @param seu Seurat object
 #' @param query Vector of query genes whose expression to analyse.
 #' @param sigfig Significant figure cutoff, default 2
@@ -678,9 +668,33 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
 #' the default assay.
 #' @param layer Layer of Seurat object from which to extract data. Default is
 #' "counts", normalised assay data.
-#'
+#' @param sample_col Name of column that specifies sample. Default "sample",
+#' as per our workflow.
+#' @return 
+#' @examples
+#' data(pbmc_tiny)
+#' pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
+#' get_qc_pct(seu = pbmc_tiny, top = 5, assay = "RNA", layer = "counts",
+#'            sample_col = "orig.ident", by = "seurat_clusters", sigfig = 2)
+#' @export
+
+get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
+                       sigfig = 2, sample_col = "sample") {
+  top_genes <- get_top_genes(seu = seu, top = top, assay = assay, layer = layer,
+                             sample_col = sample_col)
+  res <- get_query_pct(seu = seu, query = top_genes, by = by, sigfig = sigfig)
+  return(res)
+}
+
+#' breakdown_query
+#' `breakdown_query` breaks down the expression of a list of query genes by
+#' the specified parameter.
+#' @inheritParams get_query_pct
 #' @return A data frame of the proportion of cells (between 0 and 1) that
 #' express each query gene.
+#' @examples
+#' data(pbmc_tiny)
+#' breakdown_query(seu = pbmc_tiny, query = c("PPBP", "CA2"))
 #' @export
 
 breakdown_query <- function(seu, query, assay = "RNA", layer = "counts") {
@@ -752,6 +766,9 @@ breakdown_query <- function(seu, query, assay = "RNA", layer = "counts") {
 #' @param column Column with value by which to subset input
 #' @param value Value to search within column
 #' @return A subset of the seurat object, which itself is a seurat object.
+#' @examples
+#' data(pbmc_tiny)
+#' head(subset_seurat(seu = pbmc_tiny, column = "groups", value = "g2"))
 #' @export
 
 subset_seurat <- function(seu, column, value) {
@@ -770,6 +787,10 @@ subset_seurat <- function(seu, column, value) {
 #' downsampling by its respective variable.
 #' @param keep A vector of genes to keep when downsampling features.
 #' @return A downsampled seurat object.
+#' @examples
+#' data(pbmc_tiny)
+#' print(pbmc_tiny)
+#' print(downsample_seurat(seu = pbmc_tiny, cells = 2, features = 5))
 #' @export
 
 downsample_seurat <- function(seu, cells = NULL, features = NULL, keep = "",
@@ -804,10 +825,13 @@ downsample_seurat <- function(seu, cells = NULL, features = NULL, keep = "",
 
 #' read_and_format_targets
 #' `read_and_format_targets` formats a marker-celltype table into a list
-#' 
+#'
 #' @param file Path to target gene file
-#' 
 #' @return A list with one element per cell type
+#' @examples
+#'  \dontrun{
+#'    read_and_format_markers("path/to/markers/table")
+#'  }
 #' @export
 
 read_and_format_targets <- function(file) {
@@ -822,11 +846,13 @@ read_and_format_targets <- function(file) {
 #' extract_metadata
 #' Extract metadata dataframe from Seurat objects
 #' 
-#' @param seu Seurat object / list of Seurat objects
-#' 
+#' @param seu Seurat object / list of Seurat objects 
 #' @keywords preprocessing, report, metadata
-#' 
 #' @return Dataframe with metadata
+#' @examples 
+#' data(pbmc_tiny)
+#' tiny_list <- list(pbmc_tiny1 = pbmc_tiny, pbmc_tiny2 = pbmc_tiny)
+#' extract_metadata(seu = tiny_list)
 #' @export
 
 extract_metadata <- function(seu){
@@ -844,6 +870,13 @@ extract_metadata <- function(seu){
 #' calculation in package DoubletFinder
 #'
 #' @param seu Seurat object
+#' @return A list. Item "seu" contains seurat object with tagged doublets
+#' in metadata slot. Item "barcodes" contains a vector of cell barcodes
+#' corresponding to barcodes.
+#' @examples
+#'  \dontrun{
+#'    find_doublets(seu = pbmc_tiny)
+#'  }
 #' @export
 
 find_doublets <- function(seu) {
