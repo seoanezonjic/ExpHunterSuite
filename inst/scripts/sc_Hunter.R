@@ -223,7 +223,7 @@ if(!opt$loadRDS) {
                           suffix = opt$suffix, count_path = opt$input)  
     } else {
       seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(opt$imported_counts, gene.column = 1),
-                                               project = opt$name, min.cells = 1, min.features = 1)
+                                        project = opt$name, min.cells = 1, min.features = 1)
       seu_meta <- read.table(file.path(opt$imported_counts, "meta.tsv"), sep = "\t", header = TRUE)
       rownames(merged_seu_meta) <- colnames(merged_seu)
       seu <- Seurat::AddMetaData(merged_seu, merged_seu_meta, row.names("Cell_ID"))
@@ -264,8 +264,8 @@ message("--------------------------------------------")
 
 write_seurat_report(final_results = final_results, template_folder = template_folder,
                     template = "sc_quality_control.txt", output = file.path(opt$output, "report"),
-                    target_genes = target_genes,
-                    name = opt$name, out_name = "qc_report.html", use_canvas = TRUE)
+                    target_genes = target_genes, name = opt$name, out_name = "qc_report.html",
+                    use_canvas = TRUE)
 
 message("--------------------------------------------")
 message("----------Writing analysis report-----------")
