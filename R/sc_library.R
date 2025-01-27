@@ -526,6 +526,7 @@ get_clusters_distribution <- function(seu, sigfig = 3, sample_col = "sample") {
 #' `get_query_distribution` builds a table of query genes expression levels
 #' across all samples of a Seurat object
 #'
+#' @importFrom stats aggregate
 #' @param seu Seurat object
 #' @param query Vector of query genes whose expression to analyse.
 #' @param sigfig Significant figure cutoff
@@ -541,7 +542,7 @@ get_query_distribution <- function(seu, query, sigfig = 3, sample_col = "sample"
   genes <- SeuratObject::FetchData(seu, query)
   genes <- cbind(seu@meta.data[sample_col], genes)
   colnames(genes)[1] <- "sample"
-  gene_distribution <- aggregate(genes[, -1], list(genes$sample), FUN = sum)
+  gene_distribution <- stats::aggregate(genes[, -1], list(genes$sample), FUN = sum)
   gene_distribution[, -1] <- signif(gene_distribution[, -1], sigfig)
   rownames(gene_distribution) <- gene_distribution[, 1]
   gene_distribution <- gene_distribution[, -1, drop = FALSE]
