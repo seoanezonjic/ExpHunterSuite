@@ -2,7 +2,7 @@
 <!--begin.rcode setup
     colGEX <- c("grey85", "#FEE5D9", "#FCBBA1", "#FC9272", "#FB6A4A", "#EF3B2C", "#CB181D", "#99000D")
     int_columns <- plotter$hash_vars$int_columns
-    target_genes <- plotter$hash_vars$target_genes
+    query <- plotter$hash_vars$query
     markers <- plotter$hash_vars$markers
     DEG_list <- plotter$hash_vars$DEG_list
     
@@ -349,7 +349,7 @@ end.rcode-->
 
 end.rcode-->
 
-<!--begin.rcode query_title, eval = !is.null(plotter$hash_vars$target_genes)
+<!--begin.rcode query_title, eval = !is.null(plotter$hash_vars$query)
     cat(plotter$create_title("Query gene analysis", "query_title", hlevel = 1,
                               indexable = TRUE, clickable = FALSE, t_id = "query_title",
                               clickable_text = ""))
@@ -395,15 +395,15 @@ end.rcode-->
     cat(plotter$create_collapsable_container(id = "query_cluster", html_code = html_code))
 end.rcode-->
 
-<!--begin.rcode query_genes, eval = !is.null(plotter$hash_vars$target_genes)
+<!--begin.rcode query_genes, eval = !is.null(plotter$hash_vars$query)
     cat(plotter$create_title("Query genes distribution", "query genes distribution", hlevel = 2,
                               indexable = FALSE, clickable = TRUE, t_id = "query_distrib",
                               clickable_text = ""))
     paragraph <- "<p>These genes have <strong>NOT</strong> been used to annotate clusters</p>"
-    genes_code <- vector(mode = "character", length = length(plotter$hash_vars$target_genes))
-    names(genes_code) <- names(plotter$hash_vars$target_genes)
-    for(element_name in names(plotter$hash_vars$target_genes)) {
-      features <- plotter$hash_vars$target_genes[[element_name]]
+    genes_code <- vector(mode = "character", length = length(plotter$hash_vars$query))
+    names(genes_code) <- names(plotter$hash_vars$query)
+    for(element_name in names(plotter$hash_vars$query)) {
+      features <- plotter$hash_vars$query[[element_name]]
       title <- plotter$create_title(paste0("Query gene group: ", element_name),
                                     paste0(element_name, " distr"),
                                     hlevel = 2, indexable = FALSE, clickable = FALSE,
@@ -431,12 +431,12 @@ end.rcode-->
     cat(plotter$create_collapsable_container(id = "query_distrib", html_code = genes_code))
 end.rcode-->
 
-<!--begin.rcode Query_patterns, eval = !is.null(plotter$hash_vars$target_genes)
+<!--begin.rcode Query_patterns, eval = !is.null(plotter$hash_vars$query)
     cat(plotter$create_title("Query expression map", "query maps", hlevel = 3, indexable = FALSE,
                               clickable = FALSE, t_id = "query_maps", clickable_text = ""))
     expressed_genes <- rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu, "RNA"))
-    for(element_name in names(plotter$hash_vars$target_genes)) {
-        for(feature in plotter$hash_vars$target_genes[[element_name]]) {
+    for(element_name in names(plotter$hash_vars$query)) {
+        for(feature in plotter$hash_vars$query[[element_name]]) {
             if(feature %in% expressed_genes) {
                 cat(plotter$create_title(paste0("Query gene group: ", element_name),
                                          paste0(element_name, " map"), hlevel = 3, indexable = FALSE,
