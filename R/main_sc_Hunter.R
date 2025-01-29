@@ -9,9 +9,9 @@
 #' @param percentmt A float. Maximun MT percentage to consider a cell valid
 #' @param query A string vector. List of genes to explore in dataset
 #' @param sigfig An integer. Significant figures to output
-#' @param resolution An integer. Controls clustering granularity
-#' @param p_adj_cutoff A float. Adjusted p-value cutoff by which to consider a maker
-#' valid for cell type annotation
+#' @param resolution An integer. Controls clustering granularity. Default 0.5
+#' @param p_adj_cutoff A float. Adjusted p-value cutoff by which to consider a
+#' marker valid for cell type annotation.
 #' @param integrate A boolean.
 #'   * `TRUE`: Integrate seurat object using the `harmony` package.
 #'   * `FALSE` (the default): Do not perform integration.
@@ -21,12 +21,14 @@
 #' @param DEG_columns A string vector. Categories by which DEG analysis will be
 #' performed
 #' @param scalefactor An integer. Factor by which to scale data in normalisation
-#' @param hvgs An integer. Number of highly-variable features to select
+#' @param hvgs An integer. Number of highly-variable features to select.
+#' default 2000.
 #' @param int_columns A string vector. Categories to consider in integrative
 #' analysis.
 #' @param normalmethod A string. Method to use in normalisation. Default is
 #' "LogNormalize", the Seurat default.
 #' @param ndims An integer. Target dimensions in dimensionality reduction.
+#' Default 10.
 #' @param verbose. A boolean.
 #'   * `TRUE`: Prints progress bars and messages to closely monitor progress.
 #'   * `FALSE` (the default): Print minimal progress messages.
@@ -49,12 +51,58 @@
 #' @param doublet_list A vector containing barcodes to be marked as doublets.
 #' NULL by default. Per-sample analysis finds this vector
 #' for every sample, integrative mode requires this vector.
+#' @param subset_by Condition by which to subset seurat object in analysis.
+#' only relevant in integrative analysis.
+#' @param verbose If TRUE, informative messages will be printed during
+#' execution. In FALSE, minimal information to monitor progress will be printed.
+#' @param BPPARAM Parameters to pass to BiocParallel framework.
+#' @export
+#' @examples
+#'  \dontrun{
+#'    main_sc_Hunter(seu = seurat_object, minqcfeats = 500, percenmt = 5,
+#'                   query = "TREM2", sigfig = 2, resolution = 0.5,
+#'                   p_adj_cutoff = 5e-3, name = "project_name",
+#'                   integrate = TRUE, cluster_annotation = NULL,
+#'                   cell_annotation = cell_types, DEG_columns = "genotype",
+#'                   scalefactor = 10000, hvgs = 2000, subset_by = "genotype",
+#'                   normalmethod = "LogNormalize", ndims = 10, verbose = FALSE,
+#'                   output = getwd(), save_RDS = FALSE, reduce = FALSE,
+#'                   ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL,
+#'                   ref_n = NULL, BPPARAM = NULL, doublet_list = NULL)
+#'  }
+#' @return final_results list. Contains multiple items:
+#' * qc: seurat object prior to filtering and analysis.
+#' * seu: processed seurat object.
+#' * sample_qc_pct: Gene expression matrix of union of top N expressed genes in
+#'                  all samples.
+#' * clusters_pct: A data frame with expression levels for query genes in each
+#'                 cluster (or cell type, if annotated).
+#' * query_exp: A data frame with expression levels for query genes in each
+#'              sample.
+#' * query_pct: A data frame with expression levels for query genes in each 
+#'              sample.
+#' * query_cluster_pct: Same as query_pct, but subset by one or even two
+#'                      conditions.
+#' * markers: Data frame of marker genes.
+#' * SingleR_annotation: Trained SingleR annotation object.
+#' * DEG_list: List of differentially expressed genes across speficied
+#'             conditions. Performed globally and in each cluster or cell type
+#'             subset.
+#' * subset_seu: Analyzed seurat objects, subset by integration condition.
+#' * subset_DEGs: Same as DEG_list, but subset by integration condition.
+#' * integrate: Whether or not to trigger integrative analysis. Workflow
+#'              contains a few key differences depending on this argument.
+#' @details subset_seu and subset_DEGs only trigger if two conditions have
+#' been provided for integrative analysis, and they will contain two objects,
+#' each only containing samples corresponding to one of the two possible values
+#' in the second experimental condition. That allows isolating the effect
+#' of each experimental condition to be analyzed and compared separately.
 
 main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
-                           resolution, p_adj_cutoff = 5e-3, name = NULL,
+                           resolution = 0.5, p_adj_cutoff = 5e-3, name = NULL,
                            integrate = FALSE, cluster_annotation = NULL,
                            cell_annotation = NULL, DEG_columns = NULL,
-                           scalefactor = 10000, hvgs, int_columns = NULL,
+                           scalefactor = 10000, hvgs = 2000, subset_by = NULL,
                            normalmethod = "LogNormalize", ndims,
                            verbose = FALSE, output = getwd(),
                            save_RDS = FALSE, reduce = FALSE, ref_label,
