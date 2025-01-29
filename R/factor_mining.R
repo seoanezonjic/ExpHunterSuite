@@ -1,8 +1,12 @@
 merge_dim_tables <- function(dim_data_simp){
+
 	quali_data <- data.frame()
 	quanti_data <- data.frame()
 	cat_data <- data.frame()
 	dim_data_simp$call <- NULL
+	if(is.null(dim_data_simp))
+		return(NULL)
+
 	for(dimension in names(dim_data_simp)){
 		
 		dim_data <- dim_data_simp[[dimension]]
@@ -51,7 +55,9 @@ compute_pca <- function(pca_data,
 						numeric_factors = NULL, 
 						transpose = TRUE,
 						add_samples = NULL,
-						min_dimensions = 2) {
+						min_dimensions = 2,
+						scale.unit = TRUE,
+            hcpc_consol = TRUE) {
 
 	if (transpose) 
 		pca_data <- as.data.frame(t(pca_data))
@@ -84,7 +90,7 @@ compute_pca <- function(pca_data,
 	}
 
 	pca_res <- FactoMineR::PCA(pca_data, ncp = dim_to_keep, 
-										scale.unit=TRUE, 
+										scale.unit=scale.unit, 
 										graph = FALSE,
 										quanti.sup = numeric_factors, 
 										quali.sup=string_factors,
@@ -92,7 +98,7 @@ compute_pca <- function(pca_data,
  	dim_data <- FactoMineR::dimdesc(pca_res, axes=seq(1, dim_to_keep))
     dim_data_merged <- merge_dim_tables(dim_data)
 
-  res.hcpc <- FactoMineR::HCPC(pca_res, graph = FALSE, nb.clust = -1)
+  res.hcpc <- FactoMineR::HCPC(pca_res, graph = FALSE, nb.clust = -1, consol = hcpc_consol)
 
 	return(list(pca_data = pca_res,
 							dim_to_keep = dim_to_keep,
@@ -102,14 +108,15 @@ compute_pca <- function(pca_data,
 }
 
 
-#' @importFrom FactoMineR CA dimdesc HCPC
+#' @importFrom FactoMineR MCA dimdesc HCPC
 compute_mca <- function(mca_data, 
 						target = NULL, 
 						string_factors = NULL, 
 						numeric_factors = NULL, 
 						transpose = TRUE,
 						add_samples = NULL,
-						min_dimensions = 2) {
+						min_dimensions = 2,
+            hcpc_consol = TRUE) {
 
 	if (transpose) 
 		mca_data <- as.data.frame(t(mca_data))
@@ -125,19 +132,20 @@ compute_mca <- function(mca_data,
 		if (!is.null(string_factors)) {
 		  mca_data <- merge_factors(mca_data, target, string_factors)
 		}
-	} 
-
-	raw_mca_data <- mca_data[!rownames(mca_data) %in% add_samples,
+		raw_mca_data <- mca_data[!rownames(mca_data) %in% add_samples,
 							 ! colnames(mca_data) %in% c(numeric_factors, string_factors)]
-
+	} else {
+		raw_mca_data <- mca_data
+	} 
+	
 	std_mca <- FactoMineR::MCA(raw_mca_data, 	graph = FALSE)                                                     
+
 	dim_to_keep <- get_PCA_dimensions(std_mca, min_dimensions = min_dimensions)
 
 	
+	add_samples_idx <- NULL
 	if (!is.null(add_samples)) {
 		add_samples_idx <- match(add_samples, rownames(mca_data))
-	} else {
-		add_samples_idx <- NULL
 	}
 
 	mca_res <- FactoMineR::MCA(mca_data, ncp = dim_to_keep, 
@@ -145,10 +153,12 @@ compute_mca <- function(mca_data,
 										quanti.sup = numeric_factors, 
 										quali.sup=string_factors,
 										ind.sup = add_samples_idx)	
- 	dim_data <- FactoMineR::dimdesc(mca_res, axes=seq(1, dim_to_keep))
-    dim_data_merged <- merge_dim_tables(dim_data)
-
-  res.hcpc <- FactoMineR::HCPC(mca_res, graph = FALSE, nb.clust = -1)
+	dim_data <- NULL
+	if(!is.null(target)){
+ 			dim_data <- FactoMineR::dimdesc(mca_res, axes=seq(1, dim_to_keep))
+ 	}
+  dim_data_merged <- merge_dim_tables(dim_data)
+  res.hcpc <- FactoMineR::HCPC(mca_res, graph = FALSE, nb.clust = -1, consol = hcpc_consol)
 
 	return(list(pca_data = mca_res,
 							dim_to_keep = dim_to_keep,
@@ -158,68 +168,6 @@ compute_mca <- function(mca_data,
 }
 
 
-
-#' @importFrom FactoMineR CA dimdesc HCPC
-compute_mfa <- function(input_data_list, 
-						table_types = c("n"),
-						target = NULL, 
-						string_factors = NULL, 
-						numeric_factors = NULL, 
-						transpose = TRUE,
-						add_samples = NULL,
-						min_dimensions = 2) {
-
-	table_lengths <- sapply(input_data_list, ncol)
-	input_data <- Reduce(function(d1,d2) merge(d1, d2, all=T, by = "row.names"), input_data_list)
-
-	rownames(input_data) <- input_data$Row.names
-	input_data$Row.names <- NULL
-
-	if (transpose) 
-		input_data <- as.data.frame(t(input_data))
-	 
-	if (!is.null(target)) {
-		rownames(target) <- as.character(target$sample)
-
-		if (!is.null(numeric_factors)){
-			input_data <- merge_factors(input_data, target, numeric_factors)
-
-		}
-
-		if (!is.null(string_factors)) {
-		  input_data <- merge_factors(input_data, target, string_factors)
-		}
-	} 
-
-	raw_input_data <- input_data[!rownames(input_data) %in% add_samples,
-							 ! colnames(input_data) %in% c(numeric_factors, string_factors)]
-
-	std_mfa <- FactoMineR::MCA(raw_input_data, 	graph = FALSE)                                                     
-	dim_to_keep <- get_PCA_dimensions(std_mfa, min_dimensions = min_dimensions)
-
-	
-	if (!is.null(add_samples)) {
-		add_samples_idx <- match(add_samples, rownames(mca_data))
-	} else {
-		add_samples_idx <- NULL
-	}
-
-	mca_res <- FactoMineR::MCA(mca_data, ncp = dim_to_keep, 
-										graph = FALSE,
-										quanti.sup = numeric_factors, 
-										quali.sup=string_factors,
-										ind.sup = add_samples_idx)	
- 	dim_data <- FactoMineR::dimdesc(mca_res, axes=seq(1, dim_to_keep))
-    dim_data_merged <- merge_dim_tables(dim_data)
-
-  res.hcpc <- FactoMineR::HCPC(mca_res, graph = FALSE, nb.clust = -1)
-
-	return(list(pca_data = mca_res,
-							dim_to_keep = dim_to_keep,
-							dim_data = dim_data,
-							dim_data_merged = dim_data_merged,
-							res.hcpc = res.hcpc))
-}
 
 get_cluster_string_assoc <- function(res.hcpc, string_factors){
 
@@ -294,4 +242,115 @@ filter_eigenvectors <- function(eigenvectors, cor_sig, pval_cutoff) {
 	})
 	names(eigenvec_fil) <- names(eigenvectors)
 	return(eigenvec_fil)
+}
+
+merge_all_df <- function(data_list) {
+  merged_df <- data_list[[1]]
+  if (length(data_list) == 1)
+      return(merged_df)
+  for (i in seq(2,length(data_list))) {
+     merged_df <-  merge(merged_df, data_list[[i]], by = "row.names", all = TRUE)
+     rownames(merged_df) <- merged_df$Row.names
+     merged_df$Row.names <- NULL
+  }
+  return(merged_df)
+}
+
+parse_multivar_input <- function(tagged_str) {
+  tagged_files <- split_str(tagged_str, ",")
+  tagged_files <- as.data.frame(sapply(tagged_files, function(x) split_str(x, ":")))
+  rownames(tagged_files) <- c("name", "type")
+  tagged_files["name",] <- gsub("\\..*", "", tagged_files["name",])
+  return(tagged_files)
+}
+
+process_supp_files_ind <- function(all_files, supp_desc) {
+  supp_desc <- as.data.frame(t(supp_desc))
+  supp_num_files <- supp_desc[supp_desc$type == "c","name"]
+  supp_num_files <- all_files[supp_num_files]
+  supp_str_files <- supp_desc[supp_desc$type == "n","name"]
+  supp_str_files <- all_files[supp_str_files]
+
+  return(list(supp_str_files = supp_str_files,
+              supp_num_files = supp_num_files))
+}
+
+#' @importFrom FactoMineR MFA dimdesc HCPC
+compute_mfa <- function(act_des, 
+                        supp_desc = NULL, 
+                        all_files,
+                        min_dimensions = 2,
+                        hcpc_consol = TRUE){
+ 
+  groups <- unlist(c(act_des[1,], supp_desc[1,]))
+  data_types <- unlist(c(act_des[2,], supp_desc[2,]))
+  group_lengths <- sapply(all_files[groups], ncol)
+  merged_df <- merge_all_df(all_files[groups])
+  n_act <- length(act_des[1,])
+  supp_groups_i <- seq(n_act + 1, length(groups))
+ 
+  std_mfa <- FactoMineR::MFA(merged_df,
+                             group = group_lengths, 
+                             type = data_types, 
+                             name.group= groups, 
+                             graph =FALSE, 
+                             num.group.sup = supp_groups_i)
+  dim_to_keep <- get_PCA_dimensions(std_mfa$global.pca, 
+                                    min_dimensions = min_dimensions)
+
+  res.mfa <- FactoMineR::MFA(merged_df, 
+                             ncp = dim_to_keep,
+                             group = group_lengths, 
+                             type = data_types, 
+                             name.group= groups, 
+                             graph =FALSE, 
+                             num.group.sup = supp_groups_i)
+
+  res.hcpc <- FactoMineR::HCPC(res.mfa, graph = F, consol = hcpc_consol)
+  dim_data <-  FactoMineR::dimdesc(res.mfa, c(1,2))
+
+  dim_data_merged <- merge_dim_tables(dim_data)
+  return(list(pca_data =  res.mfa, 
+              res.hcpc = res.hcpc,
+              dim_data_merged = dim_data_merged,
+              dim_data = dim_data,
+              dim_to_keep = dim_to_keep))
+}
+
+perform_individual_analysis <- function(
+  table_data, 
+  all_files, 
+  numeric_factors = NULL, 
+  string_factors = NULL, 
+  target = NULL, 
+  add_samples = NULL, 
+  min_dimensions = 2,
+	hcpc_consol = TRUE
+  ){
+ 
+  input_file <- all_files[[table_data[1]]]
+  analysis_type <- ifelse(table_data[2] %in% c("s","c"),"pca", "mca")
+  
+  if (analysis_type == "pca") {
+      pca_res <- compute_pca(pca_data = input_file,
+                             transpose =FALSE,
+                             string_factors = string_factors, 
+                             numeric_factors = numeric_factors,
+                             add_samples = add_samples,
+                             target = target,
+                             scale.unit = table_data[2] == "s",
+                             hcpc_consol = hcpc_consol)
+
+  } else if (analysis_type == "mca") {
+
+      pca_res <- compute_mca(mca_data = input_file,
+                             transpose = FALSE,
+                             string_factors = string_factors, 
+                             numeric_factors = numeric_factors,
+                             add_samples = add_samples,
+                             target = target,
+                             hcpc_consol = hcpc_consol)
+  }
+
+    return(pca_res)
 }
