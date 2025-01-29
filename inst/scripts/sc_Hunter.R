@@ -142,7 +142,7 @@ if(opt$cell_annotation != "") {
 } else {
   cell_annotation <- NULL
 }
-if(!is.null(opt$doublet_file)) {
+if(opt$doublet_file != "") {
   if (file.exists(opt$doublet_file)) {
     doublet_list <- read.table(opt$doublet_file)[[1]]
   } else {
@@ -247,7 +247,7 @@ if(opt$loadRDS) {
 } else {
   message("Analyzing seurat object")
   final_results <- main_sc_Hunter(seu = seu, cluster_annotation = cluster_annotation, name = opt$name,
-                                  ndims = opt$ndims, resolution = opt$resolution, int_columns = int_columns,
+                                  ndims = opt$ndims, resolution = opt$resolution, subset_by = int_columns,
                                   cell_annotation = cell_annotation, DEG_columns = DEG_columns,
                                   minqcfeats = opt$minqcfeats, percentmt = opt$percentmt, hvgs = opt$hvgs,
                                   scalefactor = opt$scalefactor, normalmethod = opt$normalmethod,
