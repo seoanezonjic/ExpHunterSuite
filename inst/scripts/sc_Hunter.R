@@ -225,8 +225,8 @@ if(!opt$loadRDS) {
       seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(opt$imported_counts, gene.column = 1),
                                         project = opt$name, min.cells = 1, min.features = 1)
       seu_meta <- read.table(file.path(opt$imported_counts, "meta.tsv"), sep = "\t", header = TRUE)
-      rownames(merged_seu_meta) <- colnames(merged_seu)
-      seu <- Seurat::AddMetaData(merged_seu, merged_seu_meta, row.names("Cell_ID"))
+      rownames(seu_meta) <- colnames(seu)
+      seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
     }
   } else {
     input <- file.path(opt$input, ifelse(opt$filter, "filtered_feature_bc_matrix",
@@ -262,7 +262,7 @@ message("--------------------------------------------")
 message("-------------Writing QC report--------------")
 message("--------------------------------------------")
 
-write_seurat_report(final_results = final_results, template_folder = template_folder,
+write_sc_report(final_results = final_results, template_folder = template_folder,
                     template = "sc_quality_control.txt", output = file.path(opt$output, "report"),
                     target_genes = target_genes, name = opt$name, out_name = "qc_report.html",
                     use_canvas = TRUE)
@@ -271,7 +271,7 @@ message("--------------------------------------------")
 message("----------Writing analysis report-----------")
 message("--------------------------------------------")
 
-write_seurat_report(final_results = final_results, template_folder = template_folder,
+write_sc_report(final_results = final_results, template_folder = template_folder,
                     output = file.path(opt$output, "report"),
                     target_genes = target_genes, name = opt$name,
                     int_columns = int_columns, cell_annotation = cell_annotation,

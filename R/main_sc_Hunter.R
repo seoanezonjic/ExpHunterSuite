@@ -285,7 +285,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   return(final_results)
 }
 
-#' write_seurat_report
+#' write_sc_report
 #' Write integration HTML report
 #'
 #' @inheritParams main_sc_Hunter
@@ -307,7 +307,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 #' 
 #' @return nothing
 
-write_seurat_report <- function(final_results, output = getwd(), name = NULL,
+write_sc_report <- function(final_results, output = getwd(), name = NULL,
                                 template_folder, source_folder = NULL,
                                 query = NULL, int_columns = NULL,
                                 cell_annotation = NULL, template = NULL,
