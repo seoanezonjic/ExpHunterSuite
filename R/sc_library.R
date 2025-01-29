@@ -189,7 +189,7 @@ annotate_clusters <- function(seu, new_clusters = NULL ) {
 #' into a cluster-markers data frame.
 #'
 #' @importFrom plyr rbind.fill
-#' @param marker_list A list containing marker gene data frames.
+#' @param markers_list A list containing marker gene data frames.
 #' @return A data frame. Column `cluster` contains element names of original
 #' list (seurat clusters) and column `genes` contains, for each row, the top
 #' markers of that element from the original list separated by commas.
@@ -225,7 +225,7 @@ collapse_markers <- function(markers_list) {
 #'
 #' @param markers_df Data frame of markers, clusters and p-values
 #' @param cell_annotation Table of cell types and their associated markers
-#' @param top Top markers by p-value to use in cell type assignment
+#' @param p_adj_cutoff Minimum adjusted p-value of markers to consider.
 #' @return A markers data frame with a new column for cell type assigned to
 #' cluster.
 #' @examples
@@ -426,24 +426,28 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 #' @param idents Identity class to which to set seurat object before calculating
 #' markers in case conserved mode cannot be triggered.
 #' @param min.pct,logfc.threshold See ?Seurat::FindAllMarkers
+#' @param subset_by Metadata column by which seurat object will be subset for
+#' marker calculation.
+#' @param integrate Whether or not integrative analysis is active. Does not
+#' bother with subsetting if FALSE.'
 #' @return Marker or DEG data frame.
 #' @examples
 #'  \dontrun{
 #'    data(pbmc_tiny)
-#'    calculate_markers(seu = pbmc_tiny, int_columns = "groups",
+#'    calculate_markers(seu = pbmc_tiny, subset_by = "groups",
 #'                      verbose = TRUE, idents = "letter.idents")
 #'  }
 #' @export
 
-calculate_markers <- function(seu, int_columns, verbose = FALSE, idents = NULL,
+calculate_markers <- function(seu, subset_by, verbose = FALSE, idents = NULL,
                               integrate = FALSE, min.pct = 0.25,
                               logfc.threshold = 0.25) {
-  run_conserved <- ifelse(test = length(int_columns) == 1 & integrate,
+  run_conserved <- ifelse(test = length(subset_by) == 1 & integrate,
                           no = FALSE,
                           yes = !.has_exclusive_idents(seu = seu,
-                                  idents = idents, cond = tolower(int_columns)))
+                                  idents = idents, cond = tolower(subset_by)))
   if(run_conserved) {
-    markers <- get_sc_markers(seu = seu, cond = int_columns, DEG = FALSE,
+    markers <- get_sc_markers(seu = seu, cond = subset_by, DEG = FALSE,
                               subset_by = idents, verbose = verbose)
     markers <- collapse_markers(markers$markers)
   }else{
@@ -556,10 +560,14 @@ get_query_distribution <- function(seu, query, sigfig = 3, sample_col = "sample"
 #' `get_query_pct` gets the percentage of cells in each sample of a seurat
 #' object which expresses genes specified in a list of queries.
 #'
-#' @inheritParams breakdown_query
+#' @param seu Seurat object to analyze.
 #' @param query Vector of query genes whose expression to analyse.
 #' @param sigfig Significant figure cutoff
-#' @return A data frame with expression levels for query genes in each sample.
+#' @param by Factor (metadata column name) by which query will be broken down.
+#' @param assay Seurat object assay to break down
+#' @param layer Layer of seurat object assay to break down
+#' @return A data frame with percentage of cells expressing query genes in each
+#'         sample.
 #' @examples
 #' data(pbmc_tiny)
 #' pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
@@ -625,7 +633,12 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
 #' union of these genes.
 #'
 #' @importFrom Seurat GetAssayData
-#' @inheritParams get_qc_pct
+#' @inheritParams get_query_pct
+#' @param seu Seurat object to analyze
+#' @param top Top N genes to retrieve.
+#' @param sample_col Seurat object metadata column containing sample
+#' information. Default "sample", as per our workflow.
+#'
 #' @return A vector containing the union of the top N genes of each sample of
 #' input Seurat object.
 #' @examples
@@ -661,17 +674,10 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
 #' get_qc_pct
 #' `get_qc_pct` creates a gene expression matrix of the union of the top N genes
 #' expressed in every sample in a seurat object.
-#' @param top Top N genes to take from each sample.
-#' @param seu Seurat object
-#' @param query Vector of query genes whose expression to analyse.
-#' @param sigfig Significant figure cutoff, default 2
-#' @param assay Seurat assay from which to extract data. Default is "RNA",
-#' the default assay.
-#' @param layer Layer of Seurat object from which to extract data. Default is
-#' "counts", normalised assay data.
-#' @param sample_col Name of column that specifies sample. Default "sample",
-#' as per our workflow.
-#' @return 
+#' @inheritParams get_query_pct
+#' @inheritParams get_top_genes
+#' @return Gene expression matrix of union of top N expressed genes in all
+#' samples.
 #' @examples
 #' data(pbmc_tiny)
 #' pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
@@ -783,7 +789,7 @@ subset_seurat <- function(seu, column, value) {
 #' specified number of cells and features. You can also input specific lists
 #' if you know which cells and/or features you want to retrieve.
 #'
-#' @param seu Seurat object.
+#' @inheritParams get_query_pct
 #' @param cells,features Lists or integers. An integer will trigger random
 #' downsampling by its respective variable.
 #' @param keep A vector of genes to keep when downsampling features.
