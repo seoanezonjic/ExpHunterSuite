@@ -23,13 +23,13 @@
 #' @param scalefactor An integer. Factor by which to scale data in normalisation
 #' @param hvgs An integer. Number of highly-variable features to select.
 #' default 2000.
-#' @param int_columns A string vector. Categories to consider in integrative
+#' @param subset_by A string vector. Categories to consider in integrative
 #' analysis.
 #' @param normalmethod A string. Method to use in normalisation. Default is
 #' "LogNormalize", the Seurat default.
 #' @param ndims An integer. Target dimensions in dimensionality reduction.
 #' Default 10.
-#' @param verbose. A boolean.
+#' @param verbose A boolean.
 #'   * `TRUE`: Prints progress bars and messages to closely monitor progress.
 #'   * `FALSE` (the default): Print minimal progress messages.
 #' @param output A string. Path to output directory.
@@ -51,10 +51,6 @@
 #' @param doublet_list A vector containing barcodes to be marked as doublets.
 #' NULL by default. Per-sample analysis finds this vector
 #' for every sample, integrative mode requires this vector.
-#' @param subset_by Condition by which to subset seurat object in analysis.
-#' only relevant in integrative analysis.
-#' @param verbose If TRUE, informative messages will be printed during
-#' execution. In FALSE, minimal information to monitor progress will be printed.
 #' @param BPPARAM Parameters to pass to BiocParallel framework.
 #' @export
 #' @examples
@@ -291,17 +287,21 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 
 #' write_seurat_report
 #' Write integration HTML report
-#' 
-#' @param int integrated seurat object
+#'
+#' @inheritParams main_sc_Hunter
+#' @param final_results Output from main_sc_Hunter function
 #' @param output directory where report will be saved
 #' @param name experiment name, will be used to build output file name
+#' @param out_name suffix to add to output file name. Useful when rendering
+#' different templates with this function (as is the case in our workflow)
 #' @param template_folder directory where template is located
+#' @param template Template to render
 #' @param source_folder htmlreportR source folder
 #' @param int_columns factors present in experiment design
 #' @param use_canvas Parameter to select whether or not CanvasXpress plots will be
 #' triggered in templates where this control parameter has been implemented.
 #' Setting it to FALSE can be useful for big datasets, as CanvasXpress might
-#' have trouble in certain plots.
+#' have trouble in certain plots
 #'
 #' @keywords preprocessing, write, report
 #' 
@@ -309,10 +309,9 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 
 write_seurat_report <- function(final_results, output = getwd(), name = NULL,
                                 template_folder, source_folder = NULL,
-                                target_genes = NULL, int_columns = NULL,
-                                DEG_list = NULL, cell_annotation = NULL,
-                                template = NULL, out_name = NULL,
-                                use_canvas = TRUE){
+                                query = NULL, int_columns = NULL,
+                                cell_annotation = NULL, template = NULL,
+                                out_name = NULL, use_canvas = TRUE){
   if(is.null(template_folder)) {
     stop("No template folder was provided.")
   }
@@ -342,7 +341,7 @@ write_seurat_report <- function(final_results, output = getwd(), name = NULL,
                     marker_meta = final_results$marker_meta,
                     subset_seu = final_results$subset_seu,
                     subset_DEGs = final_results$subset_DEGs,
-                    target_genes = target_genes,
+                    query = query,
                     sample_qc_pct = final_results$sample_qc_pct,
                     clusters_pct = final_results$clusters_pct,
                     query_exp = final_results$query_exp,
