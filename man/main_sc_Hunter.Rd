@@ -12,7 +12,7 @@ main_sc_Hunter(
   percentmt,
   query,
   sigfig = 2,
-  resolution,
+  resolution = 0.5,
   p_adj_cutoff = 0.005,
   name = NULL,
   integrate = FALSE,
@@ -20,8 +20,8 @@ main_sc_Hunter(
   cell_annotation = NULL,
   DEG_columns = NULL,
   scalefactor = 10000,
-  hvgs,
-  int_columns = NULL,
+  hvgs = 2000,
+  subset_by = NULL,
   normalmethod = "LogNormalize",
   ndims,
   verbose = FALSE,
@@ -47,10 +47,10 @@ main_sc_Hunter(
 
 \item{sigfig}{An integer. Significant figures to output}
 
-\item{resolution}{An integer. Controls clustering granularity}
+\item{resolution}{An integer. Controls clustering granularity. Default 0.5}
 
-\item{p_adj_cutoff}{A float. Adjusted p-value cutoff by which to consider a maker
-valid for cell type annotation}
+\item{p_adj_cutoff}{A float. Adjusted p-value cutoff by which to consider a
+marker valid for cell type annotation.}
 
 \item{name}{Project name. Default NULL (no project name)}
 
@@ -70,15 +70,20 @@ performed}
 
 \item{scalefactor}{An integer. Factor by which to scale data in normalisation}
 
-\item{hvgs}{An integer. Number of highly-variable features to select}
+\item{hvgs}{An integer. Number of highly-variable features to select.
+default 2000.}
 
-\item{int_columns}{A string vector. Categories to consider in integrative
-analysis.}
+\item{subset_by}{Condition by which to subset seurat object in analysis.
+only relevant in integrative analysis.}
 
 \item{normalmethod}{A string. Method to use in normalisation. Default is
 "LogNormalize", the Seurat default.}
 
-\item{ndims}{An integer. Target dimensions in dimensionality reduction.}
+\item{ndims}{An integer. Target dimensions in dimensionality reduction.
+Default 10.}
+
+\item{verbose}{If TRUE, informative messages will be printed during
+execution. In FALSE, minimal information to monitor progress will be printed.}
 
 \item{output}{A string. Path to output directory.}
 
@@ -107,9 +112,14 @@ reference.}
 provide a more accurate annotation, but increase noise and computational
 time. Will not be used if ref_de_method is empty.}
 
+\item{BPPARAM}{Parameters to pass to BiocParallel framework.}
+
 \item{doublet_list}{A vector containing barcodes to be marked as doublets.
 NULL by default. Per-sample analysis finds this vector
 for every sample, integrative mode requires this vector.}
+
+\item{int_columns}{A string vector. Categories to consider in integrative
+analysis.}
 
 \item{verbose.}{A boolean.
 \itemize{
@@ -117,8 +127,55 @@ for every sample, integrative mode requires this vector.}
 \item \code{FALSE} (the default): Print minimal progress messages.
 }}
 }
+\value{
+final_results list. Contains multiple items:
+\itemize{
+\item qc: seurat object prior to filtering and analysis.
+\item seu: processed seurat object.
+\item sample_qc_pct: Gene expression matrix of union of top N expressed genes in
+all samples.
+\item clusters_pct: A data frame with expression levels for query genes in each
+cluster (or cell type, if annotated).
+\item query_exp: A data frame with expression levels for query genes in each
+sample.
+\item query_pct: A data frame with expression levels for query genes in each
+sample.
+\item query_cluster_pct: Same as query_pct, but subset by one or even two
+conditions.
+\item markers: Data frame of marker genes.
+\item SingleR_annotation: Trained SingleR annotation object.
+\item DEG_list: List of differentially expressed genes across speficied
+conditions. Performed globally and in each cluster or cell type
+subset.
+\item subset_seu: Analyzed seurat objects, subset by integration condition.
+\item subset_DEGs: Same as DEG_list, but subset by integration condition.
+\item integrate: Whether or not to trigger integrative analysis. Workflow
+contains a few key differences depending on this argument.
+}
+}
 \description{
 main_sc_Hunter
 \code{main_sc_Hunter} is the main seurat analysis function. Can be used
 for integrative or non-integrative analysis.
+}
+\details{
+subset_seu and subset_DEGs only trigger if two conditions have
+been provided for integrative analysis, and they will contain two objects,
+each only containing samples corresponding to one of the two possible values
+in the second experimental condition. That allows isolating the effect
+of each experimental condition to be analyzed and compared separately.
+}
+\examples{
+ \dontrun{
+   main_sc_Hunter(seu = seurat_object, minqcfeats = 500, percenmt = 5,
+                  query = "TREM2", sigfig = 2, resolution = 0.5,
+                  p_adj_cutoff = 5e-3, name = "project_name",
+                  integrate = TRUE, cluster_annotation = NULL,
+                  cell_annotation = cell_types, DEG_columns = "genotype",
+                  scalefactor = 10000, hvgs = 2000, subset_by = "genotype",
+                  normalmethod = "LogNormalize", ndims = 10, verbose = FALSE,
+                  output = getwd(), save_RDS = FALSE, reduce = FALSE,
+                  ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL,
+                  ref_n = NULL, BPPARAM = NULL, doublet_list = NULL)
+ }
 }

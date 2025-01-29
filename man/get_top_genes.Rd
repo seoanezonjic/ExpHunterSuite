@@ -16,18 +16,16 @@ get_top_genes(
 )
 }
 \arguments{
-\item{seu}{Seurat object}
+\item{seu}{Seurat object to analyze}
 
-\item{top}{Top N genes to take from each sample.}
+\item{top}{Top N genes to retrieve.}
 
-\item{assay}{Seurat assay from which to extract data. Default is "RNA",
-the default assay.}
+\item{assay}{Seurat object assay to break down}
 
-\item{layer}{Layer of Seurat object from which to extract data. Default is
-"counts", normalised assay data.}
+\item{layer}{Layer of seurat object assay to break down}
 
-\item{sample_col}{Name of column that specifies sample. Default "sample",
-as per our workflow.}
+\item{sample_col}{Seurat object metadata column containing sample
+information. Default "sample", as per our workflow.}
 }
 \value{
 A vector containing the union of the top N genes of each sample of

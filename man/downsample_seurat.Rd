@@ -17,12 +17,16 @@ downsample_seurat(
 )
 }
 \arguments{
-\item{seu}{Seurat object.}
+\item{seu}{Seurat object to analyze.}
 
 \item{cells, features}{Lists or integers. An integer will trigger random
 downsampling by its respective variable.}
 
 \item{keep}{A vector of genes to keep when downsampling features.}
+
+\item{assay}{Seurat object assay to break down}
+
+\item{layer}{Layer of seurat object assay to break down}
 }
 \value{
 A downsampled seurat object.

@@ -9,7 +9,7 @@ into a cluster-markers data frame.}
 collapse_markers(markers_list)
 }
 \arguments{
-\item{marker_list}{A list containing marker gene data frames.}
+\item{markers_list}{A list containing marker gene data frames.}
 }
 \value{
 A data frame. Column \code{cluster} contains element names of original

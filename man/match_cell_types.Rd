@@ -14,7 +14,7 @@ match_cell_types(markers_df, cell_annotation, p_adj_cutoff = 1e-05)
 
 \item{cell_annotation}{Table of cell types and their associated markers}
 
-\item{top}{Top markers by p-value to use in cell type assignment}
+\item{p_adj_cutoff}{Minimum adjusted p-value of markers to consider.}
 }
 \value{
 A markers data frame with a new column for cell type assigned to

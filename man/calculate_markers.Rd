@@ -6,7 +6,7 @@
 \usage{
 calculate_markers(
   seu,
-  int_columns,
+  subset_by,
   verbose = FALSE,
   idents = NULL,
   integrate = FALSE,
@@ -17,10 +17,16 @@ calculate_markers(
 \arguments{
 \item{seu}{Seurat object to analyse.}
 
+\item{subset_by}{Metadata column by which seurat object will be subset for
+marker calculation.}
+
 \item{verbose}{A boolean. Will be passed to Seurat function calls.}
 
 \item{idents}{Identity class to which to set seurat object before calculating
 markers in case conserved mode cannot be triggered.}
+
+\item{integrate}{Whether or not integrative analysis is active. Does not
+bother with subsetting if FALSE.'}
 
 \item{min.pct, logfc.threshold}{See ?Seurat::FindAllMarkers}
 }
@@ -33,7 +39,7 @@ calculate_markers
 \examples{
  \dontrun{
    data(pbmc_tiny)
-   calculate_markers(seu = pbmc_tiny, int_columns = "groups",
+   calculate_markers(seu = pbmc_tiny, subset_by = "groups",
                      verbose = TRUE, idents = "letter.idents")
  }
 }

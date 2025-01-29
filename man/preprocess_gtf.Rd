@@ -8,11 +8,12 @@ preprocess_gtf(gtf)
 }
 \arguments{
 \item{gtf}{GTF file to process.}
-
-\item{outdir}{Processed files directory.}
 }
 \value{
-A list containing all three generated objects.
+A list. Items txdb contains the database, count_ranges describes
+known exons in the genome, gene_name_mapping condenses gene information.
+gene_name_mapping contains several columns: chromosome, nucleotide start,
+nucleotide end, strand, gene ID, gene name, gene type and original gene name.
 }
 \description{
 \code{preprocess_gtf} takes a GTF file and a directory path. It outputs a txdb,
@@ -21,4 +22,8 @@ count ranges, and gene_mapping files, which it writes to provided directory.
 \examples{
 gtf <- system.file("extData/testdata", "gencode.v45.toy.annotation.gtf",
                     package = "ExpHunterSuite")
+processed <- preprocess_gtf(gtf)
+head(processed$txdb)
+head(processed$count_ranges)
+head(processed$gene_name_mapping)
 }

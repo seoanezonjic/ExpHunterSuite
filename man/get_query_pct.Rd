@@ -9,12 +9,21 @@ object which expresses genes specified in a list of queries.}
 get_query_pct(seu, query, by, sigfig = 2, assay = "RNA", layer = "counts")
 }
 \arguments{
+\item{seu}{Seurat object to analyze.}
+
 \item{query}{Vector of query genes whose expression to analyse.}
 
+\item{by}{Factor (metadata column name) by which query will be broken down.}
+
 \item{sigfig}{Significant figure cutoff}
+
+\item{assay}{Seurat object assay to break down}
+
+\item{layer}{Layer of seurat object assay to break down}
 }
 \value{
-A data frame with expression levels for query genes in each sample.
+A data frame with percentage of cells expressing query genes in each
+sample.
 }
 \description{
 get_query_pct
