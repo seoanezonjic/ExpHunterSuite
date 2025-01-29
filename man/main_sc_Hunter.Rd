@@ -73,8 +73,8 @@ performed}
 \item{hvgs}{An integer. Number of highly-variable features to select.
 default 2000.}
 
-\item{subset_by}{Condition by which to subset seurat object in analysis.
-only relevant in integrative analysis.}
+\item{subset_by}{A string vector. Categories to consider in integrative
+analysis.}
 
 \item{normalmethod}{A string. Method to use in normalisation. Default is
 "LogNormalize", the Seurat default.}
@@ -82,8 +82,11 @@ only relevant in integrative analysis.}
 \item{ndims}{An integer. Target dimensions in dimensionality reduction.
 Default 10.}
 
-\item{verbose}{If TRUE, informative messages will be printed during
-execution. In FALSE, minimal information to monitor progress will be printed.}
+\item{verbose}{A boolean.
+\itemize{
+\item \code{TRUE}: Prints progress bars and messages to closely monitor progress.
+\item \code{FALSE} (the default): Print minimal progress messages.
+}}
 
 \item{output}{A string. Path to output directory.}
 
@@ -117,15 +120,6 @@ time. Will not be used if ref_de_method is empty.}
 \item{doublet_list}{A vector containing barcodes to be marked as doublets.
 NULL by default. Per-sample analysis finds this vector
 for every sample, integrative mode requires this vector.}
-
-\item{int_columns}{A string vector. Categories to consider in integrative
-analysis.}
-
-\item{verbose.}{A boolean.
-\itemize{
-\item \code{TRUE}: Prints progress bars and messages to closely monitor progress.
-\item \code{FALSE} (the default): Print minimal progress messages.
-}}
 }
 \value{
 final_results list. Contains multiple items:
