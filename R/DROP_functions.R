@@ -6,11 +6,17 @@
 #' @importFrom GenomeInfoDb keepStandardChromosomes
 #' @importFrom AnnotationDbi saveDb
 #' @param gtf GTF file to process.
-#' @param outdir Processed files directory.
-#' @returns A list containing all three generated objects.
+#' @returns A list. Items txdb contains the database, count_ranges describes
+#' known exons in the genome, gene_name_mapping condenses gene information.
+#' gene_name_mapping contains several columns: chromosome, nucleotide start,
+#' nucleotide end, strand, gene ID, gene name, gene type and original gene name.
 #' @examples
 #' gtf <- system.file("extData/testdata", "gencode.v45.toy.annotation.gtf",
 #'                     package = "ExpHunterSuite")
+#' processed <- preprocess_gtf(gtf)
+#' head(processed$txdb)
+#' head(processed$count_ranges)
+#' head(processed$gene_name_mapping)
 #' @export
 
 preprocess_gtf <- function(gtf) {
@@ -47,12 +53,12 @@ preprocess_gtf <- function(gtf) {
     if('gene_biotype' %in% colnames(gtf_df)) {
       colnames(gtf_df)[colnames(gtf_df) == "gene_biotype"] <- "gene_type"
     }
-    # Subset to the following columns only
-    columns <- c('seqnames', 'start', 'end', 'strand', 'gene_id',
-                 'gene_name', 'gene_type', 'gene_status')
-    columns <- intersect(columns, colnames(gtf_df))
-    gtf_df <- gtf_df[, columns]
-    return(gtf_df) 
+  # Subset to the following columns only
+  columns <- c('seqnames', 'start', 'end', 'strand', 'gene_id',
+               'gene_name', 'gene_type', 'gene_status')
+  columns <- intersect(columns, colnames(gtf_df))
+  gtf_df <- gtf_df[, columns]
+  return(gtf_df) 
 }
 
 #' Add HPO terms to table
