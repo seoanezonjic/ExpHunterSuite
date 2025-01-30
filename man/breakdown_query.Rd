@@ -3,7 +3,7 @@
 \name{breakdown_query}
 \alias{breakdown_query}
 \title{breakdown_query
-\code{breakdown_query} breaks down the expression of a list of query genes by
+breaks down the expression of a list of query genes by
 the specified parameter.}
 \usage{
 breakdown_query(seu, query, assay = "RNA", layer = "counts")
@@ -23,7 +23,7 @@ express each query gene.
 }
 \description{
 breakdown_query
-\code{breakdown_query} breaks down the expression of a list of query genes by
+breaks down the expression of a list of query genes by
 the specified parameter.
 }
 \examples{

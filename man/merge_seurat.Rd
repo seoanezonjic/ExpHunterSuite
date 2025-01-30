@@ -3,7 +3,7 @@
 \name{merge_seurat}
 \alias{merge_seurat}
 \title{merge_seurat
-\code{merge_seurat} loads single-cell count matrices and creates a merged
+loads single-cell count matrices and creates a merged
 seurat object.}
 \usage{
 merge_seurat(project_name, exp_design, count_path, suffix = "")
@@ -23,7 +23,7 @@ Merged Seurat object
 }
 \description{
 merge_seurat
-\code{merge_seurat} loads single-cell count matrices and creates a merged
+loads single-cell count matrices and creates a merged
 seurat object.
 }
 \examples{

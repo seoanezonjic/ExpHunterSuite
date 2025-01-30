@@ -3,7 +3,7 @@
 \name{analyze_query}
 \alias{analyze_query}
 \title{analyze_query
-\code{analyze_query} is a wrapper for the three query analysis steps:
+is a wrapper for the three query analysis steps:
 \code{get_query_distribution}, \code{get_query_pct} by samples and \code{get_query_pct} by
 samples and cell types.}
 \usage{
@@ -24,7 +24,7 @@ A list with the three query analysis objects.
 }
 \description{
 analyze_query
-\code{analyze_query} is a wrapper for the three query analysis steps:
+is a wrapper for the three query analysis steps:
 \code{get_query_distribution}, \code{get_query_pct} by samples and \code{get_query_pct} by
 samples and cell types.
 }

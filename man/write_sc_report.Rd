@@ -12,7 +12,7 @@ write_sc_report(
   template_folder,
   source_folder = NULL,
   query = NULL,
-  int_columns = NULL,
+  subset_by = NULL,
   cell_annotation = NULL,
   template = NULL,
   out_name = NULL,
@@ -32,7 +32,7 @@ write_sc_report(
 
 \item{query}{A string vector. List of genes to explore in dataset}
 
-\item{int_columns}{factors present in experiment design}
+\item{subset_by}{factors present in experiment design}
 
 \item{cell_annotation}{A data frame. Table of markers to use for cell type
 annotation}

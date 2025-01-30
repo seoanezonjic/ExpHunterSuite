@@ -3,7 +3,7 @@
 \name{subset_seurat}
 \alias{subset_seurat}
 \title{subset_seurat
-\code{subset_seurat} subsets a seurat object by a specified value of provided
+subsets a seurat object by a specified value of provided
 column.}
 \usage{
 subset_seurat(seu, column, value)
@@ -20,7 +20,7 @@ A subset of the seurat object, which itself is a seurat object.
 }
 \description{
 subset_seurat
-\code{subset_seurat} subsets a seurat object by a specified value of provided
+subsets a seurat object by a specified value of provided
 column.
 }
 \examples{

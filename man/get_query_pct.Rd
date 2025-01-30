@@ -3,7 +3,7 @@
 \name{get_query_pct}
 \alias{get_query_pct}
 \title{get_query_pct
-\code{get_query_pct} gets the percentage of cells in each sample of a seurat
+gets the percentage of cells in each sample of a seurat
 object which expresses genes specified in a list of queries.}
 \usage{
 get_query_pct(seu, query, by, sigfig = 2, assay = "RNA", layer = "counts")
@@ -27,7 +27,7 @@ sample.
 }
 \description{
 get_query_pct
-\code{get_query_pct} gets the percentage of cells in each sample of a seurat
+gets the percentage of cells in each sample of a seurat
 object which expresses genes specified in a list of queries.
 }
 \examples{

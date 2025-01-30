@@ -3,7 +3,7 @@
 \name{add_exp_design}
 \alias{add_exp_design}
 \title{add_exp_design
-Add experimental condition to single-sample Seurat metadata}
+adds experimental condition to single-sample Seurat metadata}
 \usage{
 add_exp_design(seu, name, exp_design)
 }
@@ -19,7 +19,7 @@ Seurat object with the experimental conditions added as metadata
 }
 \description{
 add_exp_design
-Add experimental condition to single-sample Seurat metadata
+adds experimental condition to single-sample Seurat metadata
 }
 \examples{
 data(pbmc_tiny)

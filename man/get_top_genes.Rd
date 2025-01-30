@@ -3,7 +3,7 @@
 \name{get_top_genes}
 \alias{get_top_genes}
 \title{get_top_genes
-\code{get_top_genes} extracts the top N genes expressed in the highest percentage
+extracts the top N genes expressed in the highest percentage
 of cells for each sample in a seurat object, and returns a vector with the
 union of these genes.}
 \usage{
@@ -33,7 +33,7 @@ input Seurat object.
 }
 \description{
 get_top_genes
-\code{get_top_genes} extracts the top N genes expressed in the highest percentage
+extracts the top N genes expressed in the highest percentage
 of cells for each sample in a seurat object, and returns a vector with the
 union of these genes.
 }

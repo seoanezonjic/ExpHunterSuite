@@ -3,7 +3,7 @@
 \name{get_qc_pct}
 \alias{get_qc_pct}
 \title{get_qc_pct
-\code{get_qc_pct} creates a gene expression matrix of the union of the top N genes
+creates a gene expression matrix of the union of the top N genes
 expressed in every sample in a seurat object.}
 \usage{
 get_qc_pct(
@@ -38,7 +38,7 @@ samples.
 }
 \description{
 get_qc_pct
-\code{get_qc_pct} creates a gene expression matrix of the union of the top N genes
+creates a gene expression matrix of the union of the top N genes
 expressed in every sample in a seurat object.
 }
 \examples{

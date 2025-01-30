@@ -34,7 +34,8 @@ bother with subsetting if FALSE.'}
 Marker or DEG data frame.
 }
 \description{
-calculate_markers
+is a wrapper that dynamically decides the best strategy to find marker genes
+in a seurat dataset
 }
 \examples{
  \dontrun{

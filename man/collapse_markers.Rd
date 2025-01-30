@@ -3,7 +3,7 @@
 \name{collapse_markers}
 \alias{collapse_markers}
 \title{collapse_markers
-\code{collapse_markers} takes list of marker gene data frames and collapses it
+takes list of marker gene data frames and collapses it
 into a cluster-markers data frame.}
 \usage{
 collapse_markers(markers_list)
@@ -18,7 +18,7 @@ markers of that element from the original list separated by commas.
 }
 \description{
 collapse_markers
-\code{collapse_markers} takes list of marker gene data frames and collapses it
+takes list of marker gene data frames and collapses it
 into a cluster-markers data frame.
 }
 \examples{

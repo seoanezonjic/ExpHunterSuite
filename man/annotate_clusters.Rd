@@ -3,7 +3,7 @@
 \name{annotate_clusters}
 \alias{annotate_clusters}
 \title{annotate_clusters
-\code{annotate_clusters} renames seurat clusters according to dictionary}
+renames seurat clusters according to dictionary}
 \usage{
 annotate_clusters(seu, new_clusters = NULL)
 }
@@ -17,7 +17,7 @@ Annotated seu object
 }
 \description{
 annotate_clusters
-\code{annotate_clusters} renames seurat clusters according to dictionary
+renames seurat clusters according to dictionary
 }
 \examples{
 data(pbmc_tiny)

@@ -3,7 +3,7 @@
 \name{get_query_distribution}
 \alias{get_query_distribution}
 \title{get_query_distribution
-\code{get_query_distribution} builds a table of query genes expression levels
+builds a table of query genes expression levels
 across all samples of a Seurat object}
 \usage{
 get_query_distribution(seu, query, sigfig = 3, sample_col = "sample")
@@ -23,7 +23,7 @@ A data frame with expression levels for query genes in each sample.
 }
 \description{
 get_query_distribution
-\code{get_query_distribution} builds a table of query genes expression levels
+builds a table of query genes expression levels
 across all samples of a Seurat object
 }
 \examples{

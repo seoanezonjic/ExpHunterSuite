@@ -3,7 +3,7 @@
 \name{get_clusters_distribution}
 \alias{get_clusters_distribution}
 \title{get_clusters_distribution
-\code{get_clusters_distribution} calculates the percentage of cells that make up
+calculates the percentage of cells that make up
 each cluster for each different sample in a seurat object. If clusters are
 annotated, it will show cell types instead of cluster number.}
 \usage{
@@ -22,7 +22,7 @@ A data frame with cell type distribution in each sample.
 }
 \description{
 get_clusters_distribution
-\code{get_clusters_distribution} calculates the percentage of cells that make up
+calculates the percentage of cells that make up
 each cluster for each different sample in a seurat object. If clusters are
 annotated, it will show cell types instead of cluster number.
 }

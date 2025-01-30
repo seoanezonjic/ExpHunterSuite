@@ -3,7 +3,7 @@
 \name{get_sc_markers}
 \alias{get_sc_markers}
 \title{get_sc_markers
-\code{get_sc_markers} performs differential expression analysis on OR selects
+performs differential expression analysis on OR selects
 conserved markers from a seurat object.}
 \usage{
 get_sc_markers(seu, cond = NULL, subset_by, DEG = FALSE, verbose = FALSE)
@@ -31,7 +31,7 @@ an additional one for global DEGs if performing differential analysis.
 }
 \description{
 get_sc_markers
-\code{get_sc_markers} performs differential expression analysis on OR selects
+performs differential expression analysis on OR selects
 conserved markers from a seurat object.
 }
 \examples{

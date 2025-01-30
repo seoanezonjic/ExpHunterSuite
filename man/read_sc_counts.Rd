@@ -3,7 +3,7 @@
 \name{read_sc_counts}
 \alias{read_sc_counts}
 \title{read_sc_counts
-Create seurat object from cellranger counts}
+creates a seurat object from cellranger counts}
 \usage{
 read_sc_counts(name, input, mincells = 1, minfeats = 1, exp_design)
 }
@@ -23,7 +23,7 @@ Seurat object
 }
 \description{
 read_sc_counts
-Create seurat object from cellranger counts
+creates a seurat object from cellranger counts
 }
 \examples{
  \dontrun{

@@ -3,7 +3,7 @@
 \name{tag_qc}
 \alias{tag_qc}
 \title{tag_qc
-Tag barcodes not passing QC filters}
+tags cell IDs not passing QC filters}
 \usage{
 tag_qc(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL)
 }
@@ -23,7 +23,7 @@ Seurat object with tagged metadata
 }
 \description{
 tag_qc
-Tag barcodes not passing QC filters
+tags cell IDs not passing QC filters
 }
 \examples{
 data(pbmc_tiny)
