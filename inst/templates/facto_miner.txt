@@ -1,6 +1,5 @@
 
 <!--begin.rcode {{called_from}}_setup_facto_miner
-save(opts_chunk,file = "/mnt/home/users/bio_267_uma/josecordoba/test/test_multivar/test3.Rdata")
 
 ### plotting_functions
 inertia_plot <- function(ggplot_obj) { 
@@ -13,6 +12,13 @@ inertia_plot <- function(ggplot_obj) {
 																						labels = scales::percent)) + 
 								ggplot2::theme(legend.position = "bottom", 
 															 axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
+}
+
+var_violin <- function(ggplot_obj) {
+	ggplot_obj +
+	ggplot2::geom_violin(ggplot2::aes(y = !!rlang::sym(var), x = clust),trim=FALSE) + 
+	ggplot2::geom_boxplot(ggplot2::aes(y = !!rlang::sym(var), x = clust),width=0.1)
+
 }
 
 pairs_plot_pca <- function(data_frame) {
@@ -42,8 +48,6 @@ plot_pca <- function(pca_data) {
 }
 
 plot_pca_hab <- function(pca_data) {
-	save(pca_data,main_cat,file = "/mnt/home/users/bio_267_uma/josecordoba/test/test_multivar/test2.Rdata")
-
 	factoextra::fviz_pca_ind(pca_data, repel = TRUE, habillage = main_cat)
 }
 
@@ -178,6 +182,7 @@ plotter$hash_vars[["all_factor_clusters"]] <- all_factor_clusters
 if (!is.null(plotter$hash_vars$dim_data_merged)){
 	
 	dim_data_quant <- plotter$hash_vars$dim_data_merged$quantitative
+	dim_data_quant_act <- dim_data_quant[!dim_data_quant$factor %in% plotter$hash_vars$numeric_factors,]
 	dim_data_quant <- dim_data_quant[dim_data_quant$factor %in% plotter$hash_vars$numeric_factors,]
 	if (nrow(dim_data_quant) > 0 ) {
 		dim_data_quant$dimension <- gsub("Dim.", "PC", dim_data_quant$dimension)
@@ -188,10 +193,24 @@ if (!is.null(plotter$hash_vars$dim_data_merged)){
 		dim_data_quant$text_corr <- paste(as.character(dim_data_quant$correlation),as.character(dim_data_quant$significance), sep = " ")
 
 	}
+
+	if (nrow(dim_data_quant_act) >0 ) {
+		dim_data_quant_act$dimension <- gsub("Dim.", "PC", dim_data_quant_act$dimension)
+
+		dim_data_quant_act <- dim_data_quant_act |> 
+							 dplyr::group_by(dimension) |> 
+							 dplyr::top_n(10, wt = correlation) |> 
+							 dplyr::arrange(dimension, desc(correlation)) 
+		dim_data_quant_act <- as.data.frame(dim_data_quant_act)[,c("factor", "dimension", "correlation", "p.value")]	
+	}
+	plotter$hash_vars[["dim_data_quant_act"]] <- dim_data_quant_act
 	plotter$hash_vars[["dim_data_quant"]] <- dim_data_quant
 
 	##dim data qual
 	dim_data_qual <- plotter$hash_vars$dim_data_merged$qualitative
+	dim_data_qual_act <- dim_data_qual[!dim_data_qual$factor %in% plotter$hash_vars$string_factors,]
+	dim_data_qual <- dim_data_qual[dim_data_qual$factor %in% plotter$hash_vars$string_factors,]
+
 	if (nrow(dim_data_qual) >0 ) {
 		dim_data_qual$dimension <- gsub("Dim.", "PC", dim_data_qual$dimension)
 		dim_data_qual$R2 <- round(dim_data_qual$R2, digits = 3)
@@ -201,7 +220,19 @@ if (!is.null(plotter$hash_vars$dim_data_merged)){
 
 		dim_data_qual$text_adjust <- paste(as.character(dim_data_qual$R2),as.character(dim_data_qual$significance), sep = " ")
 	}
+
+	if (nrow(dim_data_qual_act) >0 ) {
+		dim_data_qual_act$dimension <- gsub("Dim.", "PC", dim_data_qual_act$dimension)
+
+		dim_data_qual_act <- dim_data_qual_act |> 
+							 dplyr::group_by(dimension) |> 
+							 dplyr::top_n(10, wt = R2) |> 
+							 dplyr::arrange(dimension, desc(R2))
+ 		dim_data_qual_act <- as.data.frame(dim_data_qual_act)[,c("factor", "dimension", "R2", "p.value")]	
+
+	}
 	plotter$hash_vars[["dim_data_qual"]] <- dim_data_qual
+	plotter$hash_vars[["dim_data_qual_act"]] <- dim_data_qual_act
 
 
 	## dim data cat
@@ -396,6 +427,19 @@ end.rcode-->
 end.rcode-->
 
 
+<!--begin.rcode {{called_from}}_dim_qual_act , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5, eval = plotter$hash_vars$multivar_type %in% c("mca","mfa")
+
+	cat(plotter$create_title("<b>TOP active qualitative variables</b>", "main_pc_qual_act", 
+			hlevel = plotter$hash_vars$last_title + 2))
+	cat("This table summarizes the top 10 active qualitative variables associated with PCs.<br>")
+	
+	if (nrow(plotter$hash_vars$dim_data_cat) > 0 ) {
+		cat(plotter$table(list(id = "dim_data_qual_act", header = NULL, row_names = NULL, styled = "dt", text ="dynamic", table_rownames = F)))	
+	} else {
+		cat("None of the categories was significantly associated with any PC")
+	}
+
+end.rcode-->
 
 
 
@@ -471,6 +515,22 @@ end.rcode-->
 
 end.rcode-->
 
+<!--begin.rcode {{called_from}}_dim_quant_act , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5, eval = plotter$hash_vars$multivar_type %in% c("pca","mfa")
+
+	cat(plotter$create_title("<b>TOP active quantitative variables</b>", "main_pc_quant_act", 
+			hlevel = plotter$hash_vars$last_title + 2))
+	cat("This table summarizes the top 10 active quantitative variables associated with PCs.<br>")
+	
+	if (nrow(plotter$hash_vars$dim_data_cat) > 0 ) {
+		cat(plotter$table(list(id = "dim_data_quant_act", header = NULL, row_names = NULL, styled = "dt", text ="dynamic", table_rownames = F)))	
+	} else {
+		cat("None of the factors was significantly associated with any PC")
+	}
+
+end.rcode-->
+
+
+
 
 <!--begin.rcode {{called_from}}_hcpc_main, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
 
@@ -511,7 +571,7 @@ end.rcode-->
 
 <!--begin.rcode {{called_from}}_cluster_string , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
 
-	cat(plotter$create_title("<b>Relationship between HCPC clusters and supplementary qualitative variables</b>", "main_pc_quant", 
+	cat(plotter$create_title("<b>Relationship between HCPC clusters and supplementary qualitative variables</b>", "main_hcpc_qual", 
 			hlevel = plotter$hash_vars$last_title + 2))
 
 	cat("Fisher's exact test is computed between clusters and experimental treats. Fisher's exact test P values and FDR are showed.<br>")
@@ -527,3 +587,20 @@ end.rcode-->
 end.rcode-->
 
 
+<!--begin.rcode {{called_from}}_cluster_num , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$numeric_factors)
+
+cat(plotter$create_title("<b>Distribution of supplementary quantitative variables in HCPC clusters</b></b>", "main_hcpc_quant", 
+			hlevel = plotter$hash_vars$last_title + 2))
+
+clust <- plotter$hash_vars$res.hcpc$data.clust
+target_clust <- merge(plotter$hash_vars$target, clust[,"clust", drop = F], by = "row.names")
+rownames(target_clust) <- target_clust$Row.names
+for (var in plotter$hash_vars$numeric_factors) {
+	clust_var <- target_clust[,c(var,"clust")]
+	plotter$hash_vars[["clust_var"]] <- clust_var
+	cat(paste0("<b>", var, "</b><br>This plot shows the distribution of '",var,"' among the HCPC clusters."))
+	cat(plotter$static_ggplot_main(id = "clust_var", header = NULL, row_names = NULL,resizable = TRUE, plotting_function = var_violin))
+
+}
+plotter$hash_vars[["clust_sum_var"]] <- NULL
+end.rcode-->

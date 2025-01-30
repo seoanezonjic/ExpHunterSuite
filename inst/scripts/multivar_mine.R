@@ -88,7 +88,7 @@ pca_res <- lapply(act_des, perform_individual_analysis,
                           hcpc_consol = opt$hcpc_consol)
 
 
-ind_analysis <- names(pca_res)
+pca_res$ind_analysis <- names(pca_res)
 
 if(length(act_des) > 1) {
   pca_res$mfa <- compute_mfa(act_des,supp_desc,input_tables, hcpc_consol = opt$hcpc_consol)
@@ -100,11 +100,10 @@ pca_res$target <- merged_supp_tables
 pca_res$act_groups <- colnames(act_des)
 pca_res$numeric_factors <- numeric_factors
 pca_res$string_factors <- string_factors
-
 dir.create(pca_output)
 save(pca_res,act_des, file = file.path(pca_output, "multivar_tmp.rdata"))
 
-for(ind_an in ind_analysis){
+for(ind_an in pca_res$ind_analysis){
   write_general_pca(pca_res[[ind_an]], pca_output, tag = paste0(ind_an, "_"))
 }
 
