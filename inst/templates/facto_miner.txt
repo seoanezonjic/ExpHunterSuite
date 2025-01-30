@@ -15,15 +15,27 @@ inertia_plot <- function(ggplot_obj) {
 }
 
 var_violin <- function(ggplot_obj) {
-	stat.test <- ggplot_obj$data |> rstatix::t_test(as.formula(paste0(var," ~ clust")),  p.adjust.method = "BH") |> rstatix::add_y_position()
-	if (nrow(stat.test) == 1)
-		stat.test$p.adj <- stat.test$p
-	ggplot_obj +
+
+	ggplot_obj <- ggplot_obj +
 	ggplot2::geom_violin(ggplot2::aes(y = !!rlang::sym(var), x = clust),trim=FALSE) + 
 	ggplot2::geom_boxplot(ggplot2::aes(y = !!rlang::sym(var), x = clust),width=0.1) +
-	ggpubr::stat_pvalue_manual(stat.test, label = "FDR = {p.adj}") + 
 	ggpubr::stat_compare_means(ggplot2::aes(y = !!rlang::sym(var), x = clust),method = "anova") + 
 	ggplot2::labs(x = "HCPC cluster")
+	tryCatch({
+  		stat.test <- ggplot_obj$data |> 
+    	rstatix::t_test(as.formula(paste0(var, " ~ clust")), p.adjust.method = "BH") |> 
+    	rstatix::add_y_position()
+  
+		if (nrow(stat.test) == 1) {
+		    stat.test$p.adj <- stat.test$p
+		}
+  
+		ggplot_obj + ggpubr::stat_pvalue_manual(stat.test, label = "FDR = {p.adj}")
+
+	}, error = function(e) {
+	  return(ggplot_obj)
+	})
+	
 }
 
 pairs_plot_pca <- function(data_frame) {
