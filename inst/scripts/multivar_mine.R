@@ -48,7 +48,10 @@ option_list <- list(
     help="Comma seppatared list of samples to be used as supplementary samples/individuals"),
   optparse::make_option(c("-c", "--hcpc_consol"), type="logical", action = "store_false",
     default=TRUE,
-    help="Deactivate HCPC consolidation through k-means.")
+    help="Deactivate HCPC consolidation through k-means."),
+  optparse::make_option(c("-n", "--n_clusters"), type="integer",
+    default=-1,
+    help="Number of HCPC clusters.")
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
@@ -85,13 +88,16 @@ pca_res <- lapply(act_des, perform_individual_analysis,
                           numeric_factors = numeric_factors,
                           string_factors = string_factors, 
                           target = merged_supp_tables,
-                          hcpc_consol = opt$hcpc_consol)
+                          hcpc_consol = opt$hcpc_consol,
+                          n_clusters = opt$n_clusters)
 
 
 pca_res$ind_analysis <- names(pca_res)
 
 if(length(act_des) > 1) {
-  pca_res$mfa <- compute_mfa(act_des,supp_desc,input_tables, hcpc_consol = opt$hcpc_consol)
+  pca_res$mfa <- compute_mfa(act_des,supp_desc,input_tables, 
+                          hcpc_consol = opt$hcpc_consol,
+                          n_clusters = opt$n_clusters)
 }
 
 

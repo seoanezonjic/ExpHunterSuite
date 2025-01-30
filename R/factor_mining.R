@@ -57,7 +57,8 @@ compute_pca <- function(pca_data,
 						add_samples = NULL,
 						min_dimensions = 2,
 						scale.unit = TRUE,
-            hcpc_consol = TRUE) {
+            hcpc_consol = TRUE,
+            n_clusters = -1) {
 
 	if (transpose) 
 		pca_data <- as.data.frame(t(pca_data))
@@ -98,7 +99,7 @@ compute_pca <- function(pca_data,
  	dim_data <- FactoMineR::dimdesc(pca_res, axes=seq(1, dim_to_keep))
     dim_data_merged <- merge_dim_tables(dim_data)
 
-  res.hcpc <- FactoMineR::HCPC(pca_res, graph = FALSE, nb.clust = -1, consol = hcpc_consol)
+  res.hcpc <- FactoMineR::HCPC(pca_res, graph = FALSE, consol = hcpc_consol, nb.clust = n_clusters)
 
 	return(list(pca_data = pca_res,
 							dim_to_keep = dim_to_keep,
@@ -116,7 +117,8 @@ compute_mca <- function(mca_data,
 						transpose = TRUE,
 						add_samples = NULL,
 						min_dimensions = 2,
-            hcpc_consol = TRUE) {
+            hcpc_consol = TRUE,
+            n_clusters = -1) {
 
 	if (transpose) 
 		mca_data <- as.data.frame(t(mca_data))
@@ -158,7 +160,7 @@ compute_mca <- function(mca_data,
  			dim_data <- FactoMineR::dimdesc(mca_res, axes=seq(1, dim_to_keep))
  	}
   dim_data_merged <- merge_dim_tables(dim_data)
-  res.hcpc <- FactoMineR::HCPC(mca_res, graph = FALSE, nb.clust = -1, consol = hcpc_consol)
+  res.hcpc <- FactoMineR::HCPC(mca_res, graph = FALSE, consol = hcpc_consol, nb.clust = n_clusters)
 
 	return(list(pca_data = mca_res,
 							dim_to_keep = dim_to_keep,
@@ -280,7 +282,8 @@ compute_mfa <- function(act_des,
                         supp_desc = NULL, 
                         all_files,
                         min_dimensions = 2,
-                        hcpc_consol = TRUE){
+                        hcpc_consol = TRUE,
+           							n_clusters = -1){
  
   groups <- unlist(c(act_des[1,], supp_desc[1,]))
   data_types <- unlist(c(act_des[2,], supp_desc[2,]))
@@ -306,7 +309,7 @@ compute_mfa <- function(act_des,
                              graph =FALSE, 
                              num.group.sup = supp_groups_i)
 
-  res.hcpc <- FactoMineR::HCPC(res.mfa, graph = F, consol = hcpc_consol)
+  res.hcpc <- FactoMineR::HCPC(res.mfa, graph = F, consol = hcpc_consol, nb.clust = n_clusters)
   dim_data <-  FactoMineR::dimdesc(res.mfa, c(1,2))
 
   dim_data_merged <- merge_dim_tables(dim_data)
@@ -325,7 +328,8 @@ perform_individual_analysis <- function(
   target = NULL, 
   add_samples = NULL, 
   min_dimensions = 2,
-	hcpc_consol = TRUE
+	hcpc_consol = TRUE,
+	n_clusters = -1
   ){
  
   input_file <- all_files[[table_data[1]]]
@@ -339,7 +343,8 @@ perform_individual_analysis <- function(
                              add_samples = add_samples,
                              target = target,
                              scale.unit = table_data[2] == "s",
-                             hcpc_consol = hcpc_consol)
+                             hcpc_consol = hcpc_consol,
+                             n_clusters = n_clusters)
 
   } else if (analysis_type == "mca") {
 
@@ -349,7 +354,8 @@ perform_individual_analysis <- function(
                              numeric_factors = numeric_factors,
                              add_samples = add_samples,
                              target = target,
-                             hcpc_consol = hcpc_consol)
+                             hcpc_consol = hcpc_consol,
+                             n_clusters = n_clusters)
   }
 
     return(pca_res)
