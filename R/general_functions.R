@@ -279,3 +279,25 @@ name_column <- function(column, row_names){
 name_all_columns <- function(data_frame) {
    lapply(data_frame, name_column, row_names = rownames(data_frame))
 }
+
+#' parse_filter
+#'
+#' parses an object and a string into an expression that filters the object.
+#' @param object Object to filter.
+#' @param expression Expression to parse as filter.
+#' @return filtered object
+#' @examples
+#' data_frame <- head(mtcars)
+#' filter <- parse_filter(object = "data_frame", expression = "mpg > 20")
+#' data_frame[filter, ]
+#' @export
+
+parse_filter <- function(object, expression) {
+  split_expression <- strsplit(expression, " ")[[1]]
+  column <- split_expression[1]
+  operator <- split_expression[2]
+  value <- split_expression[3]
+  subset_expr <- parse(text = paste0(object, '["', column, '"] ',
+                       operator, ' ', value))
+  return(eval(subset_expr))
+}
