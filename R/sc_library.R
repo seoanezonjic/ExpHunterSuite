@@ -1,7 +1,7 @@
 
 
 #' read_sc_counts
-#' Create seurat object from cellranger counts
+#' creates a seurat object from cellranger counts
 #'
 #' @importFrom Seurat Read10X CreateSeuratObject
 #' @param name sample name
@@ -29,7 +29,7 @@ read_sc_counts <- function(name, input, mincells = 1, minfeats = 1, exp_design){
 }
 
 #' tag_qc
-#' Tag barcodes not passing QC filters
+#' tags cell IDs not passing QC filters
 #'
 #' @importFrom Seurat PercentageFeatureSet
 #' @param seu Seurat object to tag
@@ -74,7 +74,7 @@ tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL){
 }
 
 # tag_doublets
-#' Tag barcodes in a seurat object that appear in a vector of doublets
+#' tags barcodes in a seurat object that appear in a vector of doublets
 #'
 #' @inheritParams tag_qc
 #'
@@ -94,7 +94,7 @@ tag_doublets <- function(seu, doublet_list) {
 }
 
 #' add_exp_design
-#' Add experimental condition to single-sample Seurat metadata
+#' adds experimental condition to single-sample Seurat metadata
 #'
 #' @param seu Seurat object
 #' @param name Sample name
@@ -127,7 +127,7 @@ add_exp_design <- function(seu, name, exp_design){
 ##########################################################################
 
 #' merge_seurat
-#' `merge_seurat` loads single-cell count matrices and creates a merged
+#' loads single-cell count matrices and creates a merged
 #' seurat object.
 #'
 #' @importFrom Seurat Read10X CreateSeuratObject
@@ -163,7 +163,7 @@ merge_seurat <- function(project_name, exp_design, count_path,
 }
 
 #' annotate_clusters
-#' `annotate_clusters` renames seurat clusters according to dictionary
+#' renames seurat clusters according to dictionary
 #'
 #' @importFrom Seurat RenameIdents Idents
 #' @param seu Non-annotated seu with markers
@@ -185,7 +185,7 @@ annotate_clusters <- function(seu, new_clusters = NULL ) {
 }
 
 #' collapse_markers
-#' `collapse_markers` takes list of marker gene data frames and collapses it
+#' takes list of marker gene data frames and collapses it
 #' into a cluster-markers data frame.
 #'
 #' @importFrom plyr rbind.fill
@@ -219,7 +219,7 @@ collapse_markers <- function(markers_list) {
 }
 
 #' match_cell_types
-#' `match_cell_types` takes a cluster-marker gene data frame and a cell type
+#' takes a cluster-marker gene data frame and a cell type
 #' marker file. It then looks for matches between the two and assigns a cell
 #' type to each cluster of the data frame.
 #'
@@ -335,7 +335,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 }
 
 #' get_sc_markers
-#' `get_sc_markers` performs differential expression analysis on OR selects
+#' performs differential expression analysis on OR selects
 #' conserved markers from a seurat object.
 #'
 #' @importFrom Seurat Idents FindMarkers FindConservedMarkers
@@ -420,6 +420,8 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 
 #' calculate_markers
 #'
+#' is a wrapper that dynamically decides the best strategy to find marker genes
+#' in a seurat dataset
 #' @importFrom Seurat Idents FindAllMarkers
 #' @inheritParams get_sc_markers
 #' @param verbose A boolean. Will be passed to Seurat function calls.
@@ -464,7 +466,7 @@ calculate_markers <- function(seu, subset_by, verbose = FALSE, idents = NULL,
 }
 
 #' analyze_query
-#' `analyze_query` is a wrapper for the three query analysis steps:
+#' is a wrapper for the three query analysis steps:
 #' `get_query_distribution`, `get_query_pct` by samples and `get_query_pct` by
 #' samples and cell types.
 #'
@@ -503,7 +505,7 @@ analyze_query <- function(seu, query, sigfig, sample_col = "sample") {
 
 
 #' get_clusters_distribution
-#' `get_clusters_distribution` calculates the percentage of cells that make up
+#' calculates the percentage of cells that make up
 #' each cluster for each different sample in a seurat object. If clusters are
 #' annotated, it will show cell types instead of cluster number.
 #'
@@ -527,7 +529,7 @@ get_clusters_distribution <- function(seu, sigfig = 3, sample_col = "sample") {
 }
 
 #' get_query_distribution
-#' `get_query_distribution` builds a table of query genes expression levels
+#' builds a table of query genes expression levels
 #' across all samples of a Seurat object
 #'
 #' @importFrom stats aggregate
@@ -557,7 +559,7 @@ get_query_distribution <- function(seu, query, sigfig = 3, sample_col = "sample"
 }
 
 #' get_query_pct
-#' `get_query_pct` gets the percentage of cells in each sample of a seurat
+#' gets the percentage of cells in each sample of a seurat
 #' object which expresses genes specified in a list of queries.
 #'
 #' @param seu Seurat object to analyze.
@@ -628,7 +630,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
 }
 
 #' get_top_genes
-#' `get_top_genes` extracts the top N genes expressed in the highest percentage
+#' extracts the top N genes expressed in the highest percentage
 #' of cells for each sample in a seurat object, and returns a vector with the
 #' union of these genes.
 #'
@@ -672,7 +674,7 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
 }
 
 #' get_qc_pct
-#' `get_qc_pct` creates a gene expression matrix of the union of the top N genes
+#' creates a gene expression matrix of the union of the top N genes
 #' expressed in every sample in a seurat object.
 #' @inheritParams get_query_pct
 #' @inheritParams get_top_genes
@@ -694,7 +696,7 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
 }
 
 #' breakdown_query
-#' `breakdown_query` breaks down the expression of a list of query genes by
+#' breaks down the expression of a list of query genes by
 #' the specified parameter.
 #' @inheritParams get_query_pct
 #' @return A data frame of the proportion of cells (between 0 and 1) that
@@ -730,7 +732,7 @@ breakdown_query <- function(seu, query, assay = "RNA", layer = "counts") {
 }
 
 #' .has_exclusive_idents
-#' `.has_exclusive_idents` checks whether any condition-identity pairs in
+#' checks whether any condition-identity pairs in
 #' seurat object has less than three occurrences, which makes certain analyses
 #' impossible. Not exported
 #'
@@ -765,7 +767,7 @@ breakdown_query <- function(seu, query, assay = "RNA", layer = "counts") {
 }
 
 #' subset_seurat
-#' `subset_seurat` subsets a seurat object by a specified value of provided
+#' subsets a seurat object by a specified value of provided
 #' column.
 #'
 #' @importFrom Seurat FetchData
