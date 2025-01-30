@@ -188,7 +188,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     print(SingleR::plotDeltaDistribution(SingleR_annotation))
     dev.off()
     message("Calculating cell type markers")
-    markers <- calculate_markers(seu = seu, int_columns = int_columns,
+    markers <- calculate_markers(seu = seu, subset_by = subset_by,
                                  integrate = integrate, verbose = verbose,
                                  idents = "cell_type")
   } else {
@@ -196,7 +196,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
       message(paste0("No reference provided for cell type annotation.",
                      " Dynamically annotating clusters."))
       message("Calculating cluster markers")
-      markers <- calculate_markers(seu = seu, int_columns = int_columns,
+      markers <- calculate_markers(seu = seu, subset_by = subset_by,
                                    integrate = integrate, verbose = verbose,
                                    idents = "seurat_clusters")
       message("Annotating clusters")
@@ -210,12 +210,12 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
       message("Clusters annotation file provided. Annotating clusters.")
       seu <- annotate_clusters(seu = seu,
                                new_clusters = cluster_annotation$name)
-      markers <- calculate_markers(seu = seu, int_columns = int_columns,
+      markers <- calculate_markers(seu = seu, subset_by = subset_by,
                                    integrate = integrate, verbose = verbose,
                                    idents = "cell_type")
     } else {
       warning("No data provided for cluster annotation.", immediate. = TRUE)
-      markers <- calculate_markers(seu = seu, int_columns = int_columns,
+      markers <- calculate_markers(seu = seu, subset_by = subset_by,
                                    integrate = integrate, verbose = verbose,
                                    idents = "seurat_clusters")
     }
@@ -246,7 +246,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                                        subset_by = subset_by, verbose = verbose)
       DEG_list[[condition]] <- condition_DEGs
     }
-    if(length(int_columns) == 2) {
+    if(length(subset_by) == 2) {
       message(paste0("Analysing DEGs by subgroups. Subsetting by condition: ",
               DEG_conditions[1], ", analyzing effects of ", DEG_conditions[2]))
       subset_DEGs <- vector(mode = "list", length = 2)
@@ -297,7 +297,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 #' @param template_folder directory where template is located
 #' @param template Template to render
 #' @param source_folder htmlreportR source folder
-#' @param int_columns factors present in experiment design
+#' @param subset_by factors present in experiment design
 #' @param use_canvas Parameter to select whether or not CanvasXpress plots will be
 #' triggered in templates where this control parameter has been implemented.
 #' Setting it to FALSE can be useful for big datasets, as CanvasXpress might
@@ -308,10 +308,10 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 #' @return nothing
 
 write_sc_report <- function(final_results, output = getwd(), name = NULL,
-                                template_folder, source_folder = NULL,
-                                query = NULL, int_columns = NULL,
-                                cell_annotation = NULL, template = NULL,
-                                out_name = NULL, use_canvas = TRUE){
+                            template_folder, source_folder = NULL,
+                            query = NULL, subset_by = NULL,
+                            cell_annotation = NULL, template = NULL,
+                            out_name = NULL, use_canvas = TRUE){
   if(is.null(template_folder)) {
     stop("No template folder was provided.")
   }
@@ -336,7 +336,7 @@ write_sc_report <- function(final_results, output = getwd(), name = NULL,
   tmp_folder <- file.path(output, paste0(name, "_tmp_lib"))
   dir.create(tmp_folder)
   container <- list(seu = final_results$seu, qc = final_results$qc,
-                    int_columns = int_columns, use_canvas = use_canvas,
+                    subset_by = subset_by, use_canvas = use_canvas,
                     DEG_list = final_results$DEG_list,
                     marker_meta = final_results$marker_meta,
                     subset_seu = final_results$subset_seu,
