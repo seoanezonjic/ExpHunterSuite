@@ -116,7 +116,12 @@ option_list <- list(
             help = "Save final RDS object."),
   optparse::make_option("--loadRDS", type = "logical", default = FALSE, action = "store_true",
             help = "Load RDS object instead of re-processing the entire experiment.
-            Loads it from default pipeline saving location.")
+            Loads it from default pipeline saving location."),
+  optparse::make_option("--filter_dataset", type = "logical", default = FALSE, action = "store_true",
+            help = "Filter imported counts according to string"),
+  optparse::make_option("--ref_filter", type = "logical", default = FALSE, action = "store_true",
+            help = "Filter SingleR reference according to string")
+
 )  
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
@@ -207,6 +212,13 @@ if(!opt$loadRDS) {
     }
     message("Loading provided SingleR reference")
     SingleR_ref <- HDF5Array::loadHDF5SummarizedExperiment(dir = path_to_ref, prefix = "")
+    if(opt$ref_filter != "") {
+      message("Filtering reference")
+      col_data <- SummarizedExperiment::colData(SingleR_ref)
+      filter <- parse_filter("col_data", opt$ref_filter)
+      col_data <- col_data[, filter]
+      SummarizedExperiment::colData(SingleR_ref) <- col_data
+    }
   } else {
     SingleR_ref <- NULL
   }
@@ -233,6 +245,17 @@ if(!opt$loadRDS) {
                                                    "raw_feature_bc_matrix"))
     seu <- read_sc_counts(name = opt$name, input = input, mincells = opt$mincells,
                       minfeats = opt$minfeats, exp_design = exp_design)
+  }
+  if(opt$filter_dataset != "") {
+    message("Filtering input data")
+    expressions <- strsplit(opt$filter, ";")[[1]]
+    filter <- vector(mode = "list", length = length(expressions))
+    for(i in seq(expressions)) {
+      filter[[i]] <- parse_filter(object = "seu@meta.data",
+                                  expression = expressions[i]) 
+    }
+    filter <- Reduce("|", filter)
+    seu <- seu[, filter]
   }
   if(opt$reduce) {
     message('Downsampling seurat object')
@@ -263,16 +286,16 @@ message("-------------Writing QC report--------------")
 message("--------------------------------------------")
 
 write_sc_report(final_results = final_results, template_folder = template_folder,
-                    template = "sc_quality_control.txt", output = file.path(opt$output, "report"),
-                    target_genes = target_genes, name = opt$name, out_name = "qc_report.html",
-                    use_canvas = TRUE)
+                template = "sc_quality_control.txt", output = file.path(opt$output, "report"),
+                query = unlist(target_genes), name = opt$name, out_name = "qc_report.html",
+                use_canvas = TRUE)
 
 message("--------------------------------------------")
 message("----------Writing analysis report-----------")
 message("--------------------------------------------")
 
 write_sc_report(final_results = final_results, template_folder = template_folder,
-                    output = file.path(opt$output, "report"),
-                    target_genes = target_genes, name = opt$name,
-                    int_columns = int_columns, cell_annotation = cell_annotation,
-                    template = "sc_analysis.txt", out_name = out_suffix)
+                output = file.path(opt$output, "report"),
+                query = unlist(target_genes), name = opt$name,
+                subset_by = int_columns, cell_annotation = cell_annotation,
+                template = "sc_analysis.txt", out_name = out_suffix)
