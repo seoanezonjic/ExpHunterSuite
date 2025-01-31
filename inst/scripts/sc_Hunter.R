@@ -117,9 +117,9 @@ option_list <- list(
   optparse::make_option("--loadRDS", type = "logical", default = FALSE, action = "store_true",
             help = "Load RDS object instead of re-processing the entire experiment.
             Loads it from default pipeline saving location."),
-  optparse::make_option("--filter_dataset", type = "logical", default = FALSE, action = "store_true",
+  optparse::make_option("--filter_dataset", type = "character", default = "",
             help = "Filter imported counts according to string"),
-  optparse::make_option("--ref_filter", type = "logical", default = FALSE, action = "store_true",
+  optparse::make_option("--ref_filter", type = "character", default = "",
             help = "Filter SingleR reference according to string")
 
 )  
@@ -147,10 +147,10 @@ if(opt$cell_annotation != "") {
 } else {
   cell_annotation <- NULL
 }
-if(opt$doublet_file != "") {
-  if (file.exists(opt$doublet_file)) {
+if(!is.null(opt$doublet_file)) {
+  if(file.exists(opt$doublet_file)) {
     doublet_list <- read.table(opt$doublet_file)[[1]]
-  } else {
+  } else if(opt$doublet_file != ""){
     stop(paste0("Doublet file does not exist. File supplied was \"",
                 opt$doublet_file, "\""))
   }
@@ -212,12 +212,29 @@ if(!opt$loadRDS) {
     }
     message("Loading provided SingleR reference")
     SingleR_ref <- HDF5Array::loadHDF5SummarizedExperiment(dir = path_to_ref, prefix = "")
+    if(opt$filter_dataset != "") {
+    message("Filtering input data")
+    expressions <- strsplit(opt$filter, ";")[[1]]
+    filter <- vector(mode = "list", length = length(expressions))
+    for(i in seq(expressions)) {
+      filter[[i]] <- parse_filter(object = "seu@meta.data",
+                                  expression = expressions[i]) 
+    }
+    filter <- Reduce("|", filter)
+    seu <- seu[, filter]
+  }
     if(opt$ref_filter != "") {
       message("Filtering reference")
+      ref_filter <- readLines(opt$ref_filter)
+      expressions <- strsplit(ref_filter, ";")[[1]]
       col_data <- SummarizedExperiment::colData(SingleR_ref)
-      filter <- parse_filter("col_data", opt$ref_filter)
-      col_data <- col_data[, filter]
-      SummarizedExperiment::colData(SingleR_ref) <- col_data
+      filter <- vector(mode = "list", length = length(expressions))
+      for(i in seq(expressions)) {
+        filter[[i]] <- parse_filter(object = "as.data.frame(col_data)",
+                                    expression = expressions[i]) 
+      }
+      filter <- Reduce("|", filter)
+      SingleR_ref <- SingleR_ref[, filter]
     }
   } else {
     SingleR_ref <- NULL
