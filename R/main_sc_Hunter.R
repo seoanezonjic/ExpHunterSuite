@@ -111,20 +111,30 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     aggr.ref <- FALSE
     fine.tune <- TRUE
   } else {
-    message("Reduce argument is set to TRUE. Skipping QC subsetting. Updating
-             SingleR configuration")
+    message(paste0("Reduce argument is set to TRUE. Skipping QC subsetting. ",
+                   "Updating SingleR configuration"))
     seu <- qc
     aggr.ref <- TRUE
     fine.tune <- FALSE
   }
-  message('Normalizing data')
   seu <- SeuratObject::JoinLayers(seu)
+  message('Normalizing data')
+  norm_start <- Sys.time()
   seu <- Seurat::NormalizeData(object = seu, verbose = verbose,
   									           normalization.method = normalmethod,
                                scale.factor = scalefactor)
+  norm_end <- Sys.time()
+  if(verbose) {
+    message(paste0("Normalization time: ", norm_end-norm_start))
+  }
   message('Scaling data')
+  scale_start <- Sys.time()
   seu <- Seurat::ScaleData(object = seu, verbose = verbose,
   								         features = rownames(seu))
+  scale_end <- Sys.time()
+  if(verbose) {
+    message(paste0("Scaling time: ", scale_end-scale_start))
+  }
   message('Finding variable features')
   seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs, verbose = verbose)
   message('Reducing dimensionality')  
@@ -167,6 +177,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                    " detected. Skipping clustering"))
   }
   if(!is.null(SingleR_ref)) {
+    annot_start <- Sys.time()
     message(paste0("SingleR reference provided. Annotating cells. This option",
     " overrides all other annotation methods."))
     counts_matrix <- Seurat::GetAssayData(seu)
@@ -179,6 +190,10 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                                            aggr.ref = aggr.ref,
                                            fine.tune = fine.tune)
     seu@meta.data$cell_type <- SingleR_annotation$labels
+    annot_end <- Sys.time()
+    if(verbose) {
+      message(paste0("Annotation time: ", annot_end-annot_start))
+    }
     # Save annotation results and quick plot saving.
     # Temporary to check diagnostics, will be gone in the future.
     pdf(file.path(output, "ScoreHeatmap.pdf"), width = 20, height = 10)
@@ -221,7 +236,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     }
   }
   SingleR_annotation <- NULL
-  message("Extracting expression quality metrics.")
+  message("Extracting expression quality metrics")
   sample_qc_pct <- get_qc_pct(seu, by = "sample")
   message("Extracting query expression metrics. This might take a while.")
   clusters_pct <- get_clusters_distribution(seu = seu, sigfig = sigfig)
@@ -234,7 +249,6 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   subset_seu <- NULL
   if(!is.null(DEG_columns) & integrate) {
     message('Performing DEG analysis.')
-    save(list = ls(), file = "env.RData")
     DEG_conditions <- unlist(strsplit(DEG_columns, split = ","))
     DEG_list <- vector(mode = "list", length = length(DEG_conditions))
     names(DEG_list) <- DEG_conditions
