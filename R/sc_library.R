@@ -361,6 +361,10 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
                            verbose = FALSE) {
   conds <- unique(seu@meta.data[[cond]])
+  if(length(conds) != 2) {
+    stop(paste0("ERROR: get_sc_markers only works with condition with two ",
+                 "values. Provided condition has ", length(conds)))
+  }
   marker_meta <- list(high = paste0(cond, ": ", conds[1]),
                       low = paste0(cond, ": ", conds[2]))
   sub_values <- as.character(sort(unique(seu@meta.data[[subset_by]])))
