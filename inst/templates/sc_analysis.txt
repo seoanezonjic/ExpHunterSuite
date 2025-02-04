@@ -94,7 +94,7 @@ end.rcode-->
                                          "our workflow finds cluster markers and compares them to the cell types annotation file. It then\n",
                                          "analyses matches and determines the most likely cell type for the cluster. These markers are\n",
                                          "plotted in the following graphs.</p>")
-    collapse_list["subtitle"] <- "<h2>Expression of cell type markers across experiment clusters</h2>"
+    collapse_list["subtitle"] <- "<h2>Expression of cell type markers across experiment identities</h2>"
     for(element_name in elements) {
         features <- plotter$hash_vars$cell_annotation[plotter$hash_vars$cell_annotation$type == element_name, ]$marker
         collapse_list[element_name] <- paste(paste0("<h2>", element_name, " markers</h2>"),
@@ -108,7 +108,7 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode top_markers
-    slot <- ifelse(is.null(plotter$hash_vars$markers$cell_type), no = "cell_type", yes = "cluster")
+    slot <- ifelse(is.null(plotter$hash_vars$markers$cell_type), no = "cell_type", yes = "seurat_clusters")
     types <- as.character(unique(plotter$hash_vars$markers[[slot]]))
     collapse_list <- vector(mode = "character", length = length(types))
     for(type in seq(types)) {
@@ -230,10 +230,10 @@ end.rcode-->
             }
         }
         samples_html <- paste(samples_html, collapse = "\n")
-        cat(plotter$create_title(paste0(condition, " DEG analysis by cluster"), paste0(condition, " DEG clusters"),
+        cat(plotter$create_title(paste0(condition, " DEG analysis by identity"), paste0(condition, " DEG identities"),
                                  hlevel = 2, indexable = FALSE, clickable = TRUE,
-                                 t_id = paste0(condition, "_cluster_DEG"), clickable_text = ""))
-        cat(plotter$create_collapsable_container(id = paste0(condition, "_cluster_DEG"), html_code = samples_html))
+                                 t_id = paste0(condition, "_identity_DEG"), clickable_text = ""))
+        cat(plotter$create_collapsable_container(id = paste0(condition, "_identity_DEG"), html_code = samples_html))
     }
 end.rcode-->
 
@@ -319,10 +319,10 @@ end.rcode-->
         subset_html <- vector(mode = "character", length = length(subset_DEG) - 1)
         for(j in seq(length(subset_DEG) - 1)) {
             level <- names(subset_DEG)[j]
-            title <- paste0("Cluster ", level)
+            title <- paste0("Identity ", level)
             plotter$hash_vars$condition_DEGs <- subset_DEG[[j]]
             if(FALSE %in% subset_DEG[[j]]) {
-                    main <- plotter$prettify_div(paste0("<p>Cluster ", j, "contained exclusive clusters,
+                    main <- plotter$prettify_div(paste0("<p>Subset ", j, "contained exclusive identities,
                                              DEG analysis was not possible."), preset = "magic")
                     subset_html <- main
             }else{
@@ -341,10 +341,10 @@ end.rcode-->
             }
         }
         subset_html <- paste(subset_html, collapse = "\n")
-        cat(plotter$create_title(paste0(subset, " DEG analysis by cluster"), paste0(subset, " DEG clusters"),
+        cat(plotter$create_title(paste0(subset, " DEG analysis by identity"), paste0(subset, " DEG identities"),
                                  hlevel = 2, indexable = FALSE, clickable = TRUE,
-                                 t_id = paste0(subset, "_cluster_DEG"), clickable_text = ""))
-        cat(plotter$create_collapsable_container(id = paste0(subset, "_cluster_DEG"), html_code = subset_html))
+                                 t_id = paste0(subset, "_identity_DEG"), clickable_text = ""))
+        cat(plotter$create_collapsable_container(id = paste0(subset, "_identity_DEG"), html_code = subset_html))
     }
 
 end.rcode-->
@@ -389,17 +389,17 @@ end.rcode-->
                                                   transpose = TRUE)), preset = "magic")
     }
     html_code <- paste(query_clusters, collapse = "\n")
-    cat(plotter$create_title("Query gene cell percentages by cluster", "query cluster", hlevel = 2,
-                              indexable = FALSE, clickable = TRUE, t_id = "query_cluster",
+    cat(plotter$create_title("Query gene cell percentages by identity", "query identity", hlevel = 2,
+                              indexable = FALSE, clickable = TRUE, t_id = "query_identity",
                               clickable_text = ""))
-    cat(plotter$create_collapsable_container(id = "query_cluster", html_code = html_code))
+    cat(plotter$create_collapsable_container(id = "query_identity", html_code = html_code))
 end.rcode-->
 
 <!--begin.rcode query_genes, eval = !is.null(plotter$hash_vars$query)
     cat(plotter$create_title("Query genes distribution", "query genes distribution", hlevel = 2,
                               indexable = FALSE, clickable = TRUE, t_id = "query_distrib",
                               clickable_text = ""))
-    paragraph <- "<p>These genes have <strong>NOT</strong> been used to annotate clusters</p>"
+    paragraph <- "<p>These genes have <strong>NOT</strong> been used to annotate cell types</p>"
     genes_code <- vector(mode = "character", length = length(plotter$hash_vars$query))
     names(genes_code) <- names(plotter$hash_vars$query)
     for(element_name in names(plotter$hash_vars$query)) {
