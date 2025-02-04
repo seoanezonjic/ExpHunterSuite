@@ -29,11 +29,6 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   template_folder <- file.path(root_path, 'templates')
 }
 
-# Parallelisation options
-
-library(future)
-options(future.globals.maxSize = 18 * 1024^6)
-
 ##########################################
 ## OPTPARSE
 ##########################################
@@ -121,12 +116,12 @@ option_list <- list(
             help = "Filter imported counts according to string"),
   optparse::make_option("--ref_filter", type = "character", default = "",
             help = "Filter SingleR reference according to string")
-
 )  
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
-plan("multicore", workers = opt$cpu)
+message(paste0("Analyzing ", opt$name))
+
 if(opt$cpu > 1) {
   BiocParallel::register(BiocParallel::MulticoreParam(opt$cpu))
   BPPARAM <- BiocParallel::MulticoreParam(opt$cpu)
@@ -147,7 +142,8 @@ if(opt$cell_annotation != "") {
 } else {
   cell_annotation <- NULL
 }
-if(!is.null(opt$doublet_file)) {
+
+if(opt$doublet_file != "") {
   if(file.exists(opt$doublet_file)) {
     doublet_list <- read.table(opt$doublet_file)[[1]]
   } else if(opt$doublet_file != ""){
@@ -190,8 +186,11 @@ if(opt$integrate) {
 
 if(opt$DEG_columns == "") {
   DEG_columns <- int_columns
-} else {
+} else if(opt$DEG_columns != "none"){
   DEG_columns <- opt$DEG_columns
+} else {
+  message("DEG_columns set to \"none\". DEG analysis inactive.")
+  DEG_columns <- NULL
 }
 
 # Input reading and integration variables setup
@@ -222,7 +221,7 @@ if(!opt$loadRDS) {
     }
     filter <- Reduce("|", filter)
     seu <- seu[, filter]
-  }
+    }
     if(opt$ref_filter != "") {
       message("Filtering reference")
       ref_filter <- readLines(opt$ref_filter)
@@ -265,7 +264,7 @@ if(!opt$loadRDS) {
   }
   if(opt$filter_dataset != "") {
     message("Filtering input data")
-    expressions <- strsplit(opt$filter, ";")[[1]]
+    expressions <- strsplit(opt$filter_dataset, ";")[[1]]
     filter <- vector(mode = "list", length = length(expressions))
     for(i in seq(expressions)) {
       filter[[i]] <- parse_filter(object = "seu@meta.data",
