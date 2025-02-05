@@ -2,7 +2,8 @@
 <!--begin.rcode setup_expression_qc
 
 	custom_PerformanceAnalytics <- function() {
-		PerformanceAnalytics::chart.Correlation(R = data_frame, histogram = TRUE, pch = 19, log = "xy")
+		PerformanceAnalytics::chart.Correlation(R = data_frame, histogram = TRUE,
+			pch = 19, log = "xy")
 	}
 
 	custom_heatmap_cor <- function() {
