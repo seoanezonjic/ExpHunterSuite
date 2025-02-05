@@ -65,8 +65,12 @@
 	}
 
 	plot_FDR_corr <- function() {
+		## na.action gives warnings because of the nature of the ... argument.
+		## na.action is used by stats::pairs, but it is also passed to functions
+		## that do not use it, thus the warning. Do not worry about them, in
+		## fact, removing na.action might break actually important things.
 		PerformanceAnalytics::chart.Correlation(data_frame[, columns],
-			histogram=TRUE, pch=19, log="xy", na.action = na.omit)
+			histogram=TRUE, pch=19, log="xy", na.action = stats::na.omit)
 	}
 	aux_func <- function(data_frame){
 			eval(parse(text = paste(deparse(plotting_function),
