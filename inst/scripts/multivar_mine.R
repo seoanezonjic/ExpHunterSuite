@@ -59,7 +59,7 @@ if(!file.exists(opt$output_files))
   dir.create(opt$output_files, recursive = TRUE)
 
 input_files <- split_str(opt$input_files, ",")
-input_tables <- lapply(input_files, read.table, header = T, check.names = F, row.names = 1)
+input_tables <- lapply(input_files, read.table, header = T,sep = "\t", check.names = F, row.names = 1)
 names(input_tables) <- gsub("\\..*", "", basename(input_files))
 
 act_des <- parse_multivar_input(opt$act_des)

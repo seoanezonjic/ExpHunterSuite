@@ -290,7 +290,10 @@ compute_mfa <- function(act_des,
   group_lengths <- sapply(all_files[groups], ncol)
   merged_df <- merge_all_df(all_files[groups])
   n_act <- length(act_des[1,])
-  supp_groups_i <- seq(n_act + 1, length(groups))
+  
+  supp_groups_i <-NULL 
+  if (!is.null(supp_desc))
+	  supp_groups_i <- seq(n_act + 1, length(groups))
  
   std_mfa <- FactoMineR::MFA(merged_df,
                              group = group_lengths, 
