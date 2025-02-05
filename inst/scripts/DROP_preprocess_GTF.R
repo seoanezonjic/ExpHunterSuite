@@ -4,7 +4,7 @@
 ## LOAD LIBRARIES
 ##########################################
 
-if( Sys.getenv('ABGHUNTER_MODE') == 'DEVELOPMENT' ){
+if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   # Obtain this script directory
   full.fpath <- normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
                   commandArgs())], '='))[2])
@@ -33,16 +33,15 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 preprocessing_results <- preprocess_gtf(opt$gtf)
 
 if(is.null(opt$output_dir)) {
-  ### I want this to point do inst/DROP_data, or root/DROP_data in installed package
-  output_dir <- system.file("DROP_data", package= "ExpHunterSuite")
+  output_dir <- getwd()
 } else {
   output_dir <- opt$output_dir
 }
 
 gtf_name <- basename(tools::file_path_sans_ext(opt$gtf))
-db_file <- file.path(outdir, paste0(gtf_name, "_txdb.db"))
-cr_file <- file.path(outdir, paste0(gtf_name, "_count_ranges.rds"))
-map_file <- file.path(outdir, paste0(gtf_name, "_gene_name_mapping.tsv"))
+db_file <- file.path(output_dir, paste0(gtf_name, "_txdb.db"))
+cr_file <- file.path(output_dir, paste0(gtf_name, "_count_ranges.rds"))
+map_file <- file.path(output_dir, paste0(gtf_name, "_gene_name_mapping.tsv"))
 
 AnnotationDbi::saveDb(preprocessing_results$txdb, db_file)
 saveRDS(preprocessing_results$count_ranges, cr_file)
