@@ -2,7 +2,8 @@
 #' 
 #' `preprocess_gtf` takes a GTF file and a directory path. It outputs a txdb,
 #'count ranges, and gene_mapping files, which it writes to provided directory.
-#' @importFrom GenomicFeatures makeTxDbFromGFF exonsBy
+#' @importFrom txdbmaker makeTxDbFromGFF
+#' @importFrom GenomicFeatures exonsBy
 #' @importFrom GenomeInfoDb keepStandardChromosomes
 #' @importFrom AnnotationDbi saveDb
 #' @param gtf GTF file to process.
@@ -21,7 +22,7 @@
 
 preprocess_gtf <- function(gtf) {
   message("Generating TxDb from provided GTF file")
-  txdb <- GenomicFeatures::makeTxDbFromGFF(gtf) # Adjusted (came from snakemake)
+  txdb <- txdbmaker::makeTxDbFromGFF(gtf) # Adjusted (came from snakemake)
   txdb <- GenomeInfoDb::keepStandardChromosomes(txdb)
   message("Calculating count ranges")
   count_ranges <- GenomicFeatures::exonsBy(txdb, by = "gene")
