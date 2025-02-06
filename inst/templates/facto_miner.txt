@@ -199,7 +199,13 @@ plotter$hash_vars[["all_factor_clusters"]] <- all_factor_clusters
 if (!is.null(plotter$hash_vars$dim_data_merged)){
 	
 	dim_data_quant <- plotter$hash_vars$dim_data_merged$quantitative
-	dim_data_quant_act <- dim_data_quant[!dim_data_quant$factor %in% plotter$hash_vars$numeric_factors,]
+
+	if (!is.null(plotter$hash_vars$numeric_factors)) {
+		dim_data_quant_act <- dim_data_quant[!dim_data_quant$factor %in% plotter$hash_vars$numeric_factors,]
+	} else  {
+		dim_data_quant_act <- dim_data_quant
+	}
+	
 	dim_data_quant <- dim_data_quant[dim_data_quant$factor %in% plotter$hash_vars$numeric_factors,]
 	if (nrow(dim_data_quant) > 0 ) {
 		dim_data_quant$dimension <- gsub("Dim.", "PC", dim_data_quant$dimension)
@@ -225,7 +231,12 @@ if (!is.null(plotter$hash_vars$dim_data_merged)){
 
 	##dim data qual
 	dim_data_qual <- plotter$hash_vars$dim_data_merged$qualitative
-	dim_data_qual_act <- dim_data_qual[!dim_data_qual$factor %in% plotter$hash_vars$string_factors,]
+
+	if (!is.null(plotter$hash_vars$numeric_factors)) {
+		dim_data_qual_act <- dim_data_qual[!dim_data_qual$factor %in% plotter$hash_vars$string_factors,]
+	} else {
+		dim_data_qual_act <- dim_data_qual
+	}
 	dim_data_qual <- dim_data_qual[dim_data_qual$factor %in% plotter$hash_vars$string_factors,]
 
 	if (nrow(dim_data_qual) >0 ) {
@@ -450,7 +461,7 @@ end.rcode-->
 			hlevel = plotter$hash_vars$last_title + 2))
 	cat("This table summarizes the top 10 active qualitative variables associated with PCs.<br>")
 	
-	if (nrow(plotter$hash_vars$dim_data_cat) > 0 ) {
+	if (nrow(plotter$hash_vars$dim_data_qual_act) > 0 ) {
 		cat(plotter$table(list(id = "dim_data_qual_act", header = NULL, row_names = NULL, styled = "dt", text ="dynamic", table_rownames = F)))	
 	} else {
 		cat("None of the categories was significantly associated with any PC")
@@ -538,7 +549,7 @@ end.rcode-->
 			hlevel = plotter$hash_vars$last_title + 2))
 	cat("This table summarizes the top 10 active quantitative variables associated with PCs.<br>")
 	
-	if (nrow(plotter$hash_vars$dim_data_cat) > 0 ) {
+	if (nrow(plotter$hash_vars$dim_data_quant_act) > 0 ) {
 		cat(plotter$table(list(id = "dim_data_quant_act", header = NULL, row_names = NULL, styled = "dt", text ="dynamic", table_rownames = F)))	
 	} else {
 		cat("None of the factors was significantly associated with any PC")
