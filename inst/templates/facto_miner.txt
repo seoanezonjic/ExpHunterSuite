@@ -605,11 +605,10 @@ end.rcode-->
 	cat("Fisher's exact test is computed between clusters and experimental treats. Fisher's exact test P values and FDR are showed.<br>")
 
 	if (nrow(plotter$hash_vars$all_factor_clusters) > 0 ) {
-
-		cat(plotter$table(list(id = "all_factor_clusters", header = NULL, row_names = NULL, styled = "dt")))
+		cat(plotter$table(list(id = "all_factor_clusters", header = NULL, row_names = NULL, styled = "dt", text = "dynamic", table_rownames = F)))
 
 	} else {
-		cat("None of the clusters was significantly associated with any experimental group<br>")
+		cat("None of the clusters was significanstly associated with any experimental group<br>")
 
 	}
 end.rcode-->
