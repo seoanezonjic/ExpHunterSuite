@@ -383,6 +383,7 @@ merge_counts <- function(cpu, sample_anno, count_files, count_ranges) {
 #' `filter_counts` takes a counts table, a txdb object and a fpkm_cutoff to
 #' build an OutriderDataSet object and filter it by fpkm.
 #' @inheritParams main_abgenes_Hunter
+#' @param txdb Txdb database object.
 #' @param counts A counts table.
 #' @returns A filtered OutriderDataSet built from the merged table.
 #' @importFrom OUTRIDER OutriderDataSet filterExpression
@@ -441,6 +442,7 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
 #' `get_ods_results` extracts the results from an ods object.
 #' @inheritParams main_abgenes_Hunter
 #' @param ods A fitted outrider dataset.
+#' @param sample_anno Sample annotation data frame.
 #' @returns A list with two items. The first one, named "all", contains all
 #' results. The second one, "table", only contains significant results.
 #' @export
@@ -490,6 +492,7 @@ get_bcv <- function(ods) {
 #' Function to merge bam stats.
 #' `merge_bam_stats` Merges the bam stat files contained in the specified path.
 #' @inheritParams main_abgenes_Hunter
+#' @param ods Input OUTRIDER dataset
 #' @returns A list containing two merged counts matrices, one for local and
 #'  one for xternal counts, and a merged bam stats table.
 #' @export
@@ -511,6 +514,7 @@ merge_bam_stats <- function(ods, stats_path) {
 #' one sample, and only samples containing at least one aberrantly expressed
 #' gene. It keeps p-value and z-score information.
 #' @inheritParams main_abgenes_Hunter
+#' @param results Aberrant expression results data frame.
 #' @returns A table containing the merged bam stats.
 #' @export
 
@@ -576,6 +580,8 @@ get_counts_correlation <- function(ods, normalized) {
 #' @param groups A string. Column of ods colData to use as secondary grouping
 #' atribute. Default: "EXTERNAL".
 #' @param nClust Number of clusters in which data should be divided.
+#' @param type A string. "sample" to clusterize sample correlation data, "gene"
+#' for genes.
 #' @returns A data frame. Rows are named after samples. Columns are nClust
 #' (cluster where sample belongs) and specified groups column.
 
@@ -599,9 +605,14 @@ get_counts_correlation <- function(ods, normalized) {
 #' `get_gene_sample_correlations` Extracts the correlation between counts across
 #' all samples and clusterizes it.
 #' @inheritParams .estimateThetaWithoutAutoCorrect
+#' @param nGenes An integer. op genes to select.
+#' @param rowCentered A boolean.
+#'   * `TRUE` (the default) : rows will be centered.
+#'   * `FALSE`: rows will not be centered.
 #' @param normalized A boolean.
-#'   * `TRUE` : raw counts.
+#'   * `TRUE` (the default) : raw counts.
 #'   * `FALSE`: normalized counts.
+#' @param bcvQuantile An integer. Quantile cutoff.
 #' @returns A data frame containing the correlations between the log2 of counts
 #' calculated with the spearman method. It constains a column of clusters
 #' (calculated with euclidean distance) and a row of EXTERNAL metadata ('yes'

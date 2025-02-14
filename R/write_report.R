@@ -159,7 +159,6 @@ merge_dim_table_metrics <- function(merged_dim_table){
 #' @param cormit_res coRmiT results object
 #' @param output_files output file path
 #' @param template_folder htmlreportR templates folder
-#' @param opt option list
 #' @param source_folder Folder where js and css templates to load in htmlreportR
 #' object are located.
 #' @return void
@@ -389,7 +388,8 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
 #' @param gene_attribute_name name for the legend in the emap plot for the nodes (genes)
 #' @param max_genes maximum number of genes to plot in cnet plot
 #' @param simplify Activate for process ClusterProfiler results with simplify function
-#' @param clean_parentals Activate to reduce significant terms in GO by removin the parentals 
+#' @param clean_parentals Activate to reduce significant terms in GO by removin the parentals
+#' @param source_folder htmlreportR source folder to load js and css libraries
 #' @return void
 #' @importFrom enrichplot emapplot
 #' @importFrom enrichplot dotplot
@@ -481,6 +481,7 @@ write_clusters_to_enrichment <- function(output_path="results",
 #' @param corr_threshold minimum module eigengene-trait vector absolute Pearson
 #' R value  
 #' @param pvalcutoff maximum module eigengene-trait vector correlation P value
+#' @param source_folder htmlreportR source folder to load js and css libraries
 #' @return void
 #' @importFrom rmarkdown render
 #' @export
