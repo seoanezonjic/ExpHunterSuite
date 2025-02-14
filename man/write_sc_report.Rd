@@ -42,8 +42,8 @@ annotation}
 \item{out_name}{suffix to add to output file name. Useful when rendering
 different templates with this function (as is the case in our workflow)}
 
-\item{use_canvas}{Parameter to select whether or not CanvasXpress plots will be
-triggered in templates where this control parameter has been implemented.
+\item{use_canvas}{Parameter to select whether or not CanvasXpress plots will
+be triggered in templates where this control parameter has been implemented.
 Setting it to FALSE can be useful for big datasets, as CanvasXpress might
 have trouble in certain plots}
 }

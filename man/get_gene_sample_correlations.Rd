@@ -20,9 +20,19 @@ get_gene_sample_correlations(
 
 \item{normalized}{A boolean.
 \itemize{
-\item \code{TRUE} : raw counts.
+\item \code{TRUE} (the default) : raw counts.
 \item \code{FALSE}: normalized counts.
 }}
+
+\item{nGenes}{An integer. op genes to select.}
+
+\item{rowCentered}{A boolean.
+\itemize{
+\item \code{TRUE} (the default) : rows will be centered.
+\item \code{FALSE}: rows will not be centered.
+}}
+
+\item{bcvQuantile}{An integer. Quantile cutoff.}
 }
 \value{
 A data frame containing the correlations between the log2 of counts

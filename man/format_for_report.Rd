@@ -12,6 +12,8 @@ gene. It keeps p-value and z-score information.}
 format_for_report(results, z_score_cutoff, p_adj_cutoff)
 }
 \arguments{
+\item{results}{Aberrant expression results data frame.}
+
 \item{z_score_cutoff}{Cutoff that gene zScore must surpass in order to be
 considered aberrantly expressed.}
 

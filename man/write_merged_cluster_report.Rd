@@ -26,6 +26,8 @@ write_merged_cluster_report(
 and functional (f). Default = "fc"}
 
 \item{func_results}{functional results}
+
+\item{source_folder}{htmlreportR source folder to load js and css libraries}
 }
 \description{
 Write clustering report for functional Hunter

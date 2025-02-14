@@ -42,6 +42,8 @@ dataframe)}
 
 \item{report}{string with reports to be written. Allowed: clusters (c)}
 
+\item{source_folder}{htmlreportR source folder to load js and css libraries}
+
 \item{group_results}{experimental - whether to group results in the emap plot
 and functional (f). Default = "fc"}
 

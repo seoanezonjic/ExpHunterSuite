@@ -11,6 +11,8 @@ filter_counts(counts, txdb, fpkm_cutoff)
 \arguments{
 \item{counts}{A counts table.}
 
+\item{txdb}{Txdb database object.}
+
 \item{fpkm_cutoff}{Min FPKM value for read filtering. Default 3.}
 }
 \value{

@@ -23,6 +23,9 @@ specified in the ods object from which it was calculated.}
 atribute. Default: "EXTERNAL".}
 
 \item{nClust}{Number of clusters in which data should be divided.}
+
+\item{type}{A string. "sample" to clusterize sample correlation data, "gene"
+for genes.}
 }
 \value{
 A data frame. Rows are named after samples. Columns are nClust

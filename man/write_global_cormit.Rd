@@ -20,8 +20,6 @@ write_global_cormit(
 
 \item{source_folder}{Folder where js and css templates to load in htmlreportR
 object are located.}
-
-\item{opt}{option list}
 }
 \value{
 void

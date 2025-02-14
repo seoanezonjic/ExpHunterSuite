@@ -63,6 +63,8 @@ write_clusters_to_enrichment(
 
 \item{clean_parentals}{Activate to reduce significant terms in GO by removin the parentals}
 
+\item{source_folder}{htmlreportR source folder to load js and css libraries}
+
 \item{template_folder}{(OPTIONAL) RMD templates folder}
 }
 \value{

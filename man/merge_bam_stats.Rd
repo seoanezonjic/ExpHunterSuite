@@ -8,6 +8,8 @@
 merge_bam_stats(ods, stats_path)
 }
 \arguments{
+\item{ods}{Input OUTRIDER dataset}
+
 \item{stats_path}{Bam stats directories of each sample. Stats generated
 with samtools idxstats (see Aberrant_Expression workflow for how to generate
 this file).}
