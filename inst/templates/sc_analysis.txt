@@ -1,7 +1,7 @@
 
 <!--begin.rcode setup
     colGEX <- c("grey85", "#FEE5D9", "#FCBBA1", "#FC9272", "#FB6A4A", "#EF3B2C", "#CB181D", "#99000D")
-    int_columns <- plotter$hash_vars$int_columns
+    subset_by <- plotter$hash_vars$subset_by
     query <- plotter$hash_vars$query
     markers <- plotter$hash_vars$markers
     DEG_list <- plotter$hash_vars$DEG_list
@@ -81,8 +81,8 @@ end.rcode-->
 <!--begin.rcode sample_qc_pct
     cat(plotter$create_title("Top genes expression heatmap", "sample QC", hlevel = 2, indexable = FALSE,
                               clickable = FALSE, t_id = "sample_qc_pct", clickable_text = ""))
-    cat(plotter$prettify_div(plotter$heatmap(list(id = "sample_qc_pct",  title = "Top gene expression across
-                                                  samples", header = NULL, text = FALSE, row_names = NULL,
+    cat(plotter$prettify_div(plotter$heatmap(list(id = "sample_qc_pct",  title = paste0("Top gene expression across",
+                                                  "samples"), header = NULL, text = FALSE, row_names = NULL,
                                                   transpose = TRUE)), preset = "magic"))
 end.rcode-->
 
@@ -147,7 +147,7 @@ end.rcode-->
 
 <!--begin.rcode umap_splits, eval = plotter$hash_vars$integrate
     label <- FALSE
-    for(condition in int_columns) {
+    for(condition in subset_by) {
         split.by <- condition
         html_code <- plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
                                           plotting_function = Custom_DimPlot), preset = "magic")
@@ -160,7 +160,7 @@ end.rcode-->
 
 <!--begin.rcode umap_groups, eval = plotter$hash_vars$integrate
     label <- FALSE
-    for(condition in int_columns) {
+    for(condition in subset_by) {
         split.by <- NULL
         group.by <- condition
         html_code <- plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
@@ -238,20 +238,20 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode subset_titles, eval = !is.null(plotter$hash_vars$subset_seu)
-    cat(plotter$create_title(paste0("Responses of different ", int_columns[1], "s to ", int_columns[2], " variation"),
+    cat(plotter$create_title(paste0("Responses of different ", subset_by[1], "s to ", subset_by[2], " variation"),
                              "subsets_title", hlevel = 1, indexable = TRUE, clickable = FALSE, t_id = "subsets_title",
                              clickable_text = ""))
     cat(paste0("<p>In this next section of the report, clustering and DEG analysis is shown for each group in the 
-                \"", int_columns[1], "\" experimental category. This will allow the analysis of the \"", int_columns[2],
+                \"", subset_by[1], "\" experimental category. This will allow the analysis of the \"", subset_by[2],
                "\"\n factor on each subgroup independently.</p>"))
 end.rcode-->
 
 <!--begin.rcode subset_Complete_UMAP, eval = !is.null(plotter$hash_vars$subset_seu)
     cat(paste0("<p>These UMAPs are subsets of the original UMAP, showing only each group in the
-                \"", int_columns[1], "\" experimental category. Similar to the global UMAP splits</p>"))
+                \"", subset_by[1], "\" experimental category. Similar to the global UMAP splits</p>"))
     for(i in seq(length(plotter$hash_vars$subset_seu))) {
         plotter$hash_vars$current_subset <- plotter$hash_vars$subset_seu[[i]]
-        value <- unique(plotter$hash_vars$current_subset@meta.data[[int_columns[1]]])
+        value <- unique(plotter$hash_vars$current_subset@meta.data[[subset_by[1]]])
         cat(plotter$create_title(paste(value, "dimensionality reduction", sep = " "), paste0(value, " dimreds"), hlevel = 2,
                                 indexable = FALSE, clickable = FALSE, t_id = paste0(value, "_dimreds"), clickable_text = ""))
         reduction <- "umap"
@@ -265,30 +265,30 @@ end.rcode-->
 
 <!--begin.rcode subset_umap_splits, eval = !is.null(plotter$hash_vars$subset_seu)
     label <- FALSE
-    split.by <- int_columns[2]
+    split.by <- subset_by[2]
     for(i in seq(length(plotter$hash_vars$subset_seu))) {
         plotter$hash_vars$current_subset <- plotter$hash_vars$subset_seu[[i]]
-        value <- unique(plotter$hash_vars$current_subset@meta.data[[int_columns[1]]])
-        cat(plotter$create_title(paste(value, "split by", int_columns[2], sep = " "), paste0(value, " splits by ", int_columns[2]), hlevel = 2,
-                                indexable = FALSE, clickable = TRUE, t_id = paste0(value, "_splits_by_", int_columns[2]), clickable_text = ""))
+        value <- unique(plotter$hash_vars$current_subset@meta.data[[subset_by[1]]])
+        cat(plotter$create_title(paste(value, "split by", subset_by[2], sep = " "), paste0(value, " splits by ", subset_by[2]), hlevel = 2,
+                                indexable = FALSE, clickable = TRUE, t_id = paste0(value, "_splits_by_", subset_by[2]), clickable_text = ""))
         html_code <- plotter$prettify_div(plotter$static_plot_main("current_subset", custom_format = TRUE,
                                           plotting_function = Custom_DimPlot), preset = "magic")
-        cat(plotter$create_collapsable_container(id = paste0(value, "_splits_by_", int_columns[2]), html_code = html_code))
+        cat(plotter$create_collapsable_container(id = paste0(value, "_splits_by_", subset_by[2]), html_code = html_code))
     }
 end.rcode-->
 
 <!--begin.rcode subset_umap_groups, eval = !is.null(plotter$hash_vars$subset_seu)
     label <- FALSE
     split.by <- NULL
-    group.by <- int_columns[2]
+    group.by <- subset_by[2]
     for(i in seq(length(plotter$hash_vars$subset_seu))) {
         plotter$hash_vars$current_subset <- plotter$hash_vars$subset_seu[[i]]
-        value <- unique(plotter$hash_vars$current_subset@meta.data[[int_columns[1]]])
-        cat(plotter$create_title(paste(value, "grouped by", int_columns[2], sep = " "), paste0(value, " groups by ", int_columns[2]), hlevel = 2,
-                                indexable = FALSE, clickable = TRUE, t_id = paste0(value, "_groups_by_", int_columns[2]), clickable_text = ""))
+        value <- unique(plotter$hash_vars$current_subset@meta.data[[subset_by[1]]])
+        cat(plotter$create_title(paste(value, "grouped by", subset_by[2], sep = " "), paste0(value, " groups by ", subset_by[2]), hlevel = 2,
+                                indexable = FALSE, clickable = TRUE, t_id = paste0(value, "_groups_by_", subset_by[2]), clickable_text = ""))
         html_code <- plotter$prettify_div(plotter$static_plot_main("current_subset", custom_format = TRUE,
                                           plotting_function = Custom_DimPlot), preset = "magic")
-        cat(plotter$create_collapsable_container(id = paste0(value, "_groups_by_", int_columns[2]), html_code = html_code))
+        cat(plotter$create_collapsable_container(id = paste0(value, "_groups_by_", subset_by[2]), html_code = html_code))
     }
 end.rcode-->
 
@@ -298,7 +298,7 @@ end.rcode-->
         cat(plotter$create_title(paste0(subset, " differential expression analysis"), paste0(subset, " DEG"), hlevel = 1, indexable = FALSE,
                                  clickable = FALSE, t_id = paste0(subset, "_DEG"), clickable_text = ""))
         cat(paste0("<p>These DEGs have been calculated independently for the \"", subset, "\"
-            value of the \"", int_columns[1], "\" factor. </p>"))
+            value of the \"", subset_by[1], "\" factor. </p>"))
         subset_meta <- plotter$hash_vars$subset_DEGs[[subset]]$meta
         subset_DEG <- plotter$hash_vars$subset_DEGs[[subset]]$markers
         level <- "global"
