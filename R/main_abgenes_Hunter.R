@@ -102,7 +102,7 @@ write_abgenes_results <- function(final_results, output_dir) {
 }
 
 write_abgenes_report <- function(final_results, output_dir = getwd(),
-							 template_folder = NULL, source_folder = "none",
+							 template_folder = NULL, source_folder = NULL,
 							 p_adj_cutoff = 0.05, z_score_cutoff = 3,
 							 top_N = 10){
 	if(is.null(template_folder)) {
@@ -148,4 +148,5 @@ write_abgenes_report <- function(final_results, output_dir = getwd(),
 	                      	  			   type_index = "menu")
 	plotter$build(template)
 	plotter$write_report(out_file)
+	message(paste0("Report written in ", out_file))
 }
