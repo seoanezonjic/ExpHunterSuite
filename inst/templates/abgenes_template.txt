@@ -178,8 +178,7 @@ end.rcode-->
 </div>
 
 <!--begin.rcode Expressed_genes_dt
-    cat(plotter$table(
-        "expressed_genes", header = NULL, row_names = NULL, table_rownames = FALSE, styled = "dt"))
+    cat(plotter$table(list(id = "expressed_genes", header = NULL, row_names = NULL, table_rownames = FALSE, styled = "dt", text = "dynamic")))
 end.rcode-->
 
 <div id = "OUTRIDER_Overview">
@@ -187,12 +186,11 @@ end.rcode-->
     cat(plotter$create_title("OUTRIDER Overview", hlevel = 1, indexable = TRUE,
         id = "OUTRIDER_Overview"))
     if(nrow(plotter$hash_vars$outrider_res_table) > 0) {
-        cat(plotter$table(
-        "outrider_res_table", header = NULL, row_names = NULL, table_rownames = FALSE, styled = "dt"))
-        } else {
-            cat("<p>No aberrants found in dataset. Perhaps thresholds are too strict, or dataset
-                is too small. We suggest at least 30 samples.")
-        }
+        cat(plotter$table(list(id = "outrider_res_table", header = NULL, row_names = NULL, table_rownames = FALSE, styled = "dt", text = "dynamic")))
+    } else {
+        cat("<p>No aberrants found in dataset. Perhaps thresholds are too strict, or dataset
+            is too small. We suggest at least 30 samples.")
+    }
     
 end.rcode-->
 
