@@ -415,7 +415,6 @@ filter_counts <- function(counts, txdb, fpkm_cutoff) {
 run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
   ods_unfitted <- ods_unfitted[
            SummarizedExperiment::mcols(ods_unfitted)$passedFilter, ]
-
   gr <- unlist(S4Vectors::endoapply(SummarizedExperiment::rowRanges(
                              ods_unfitted), range))
   if(length(gr) > 0){
@@ -423,11 +422,8 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
       SummarizedExperiment::rowRanges(ods_unfitted) <- gr
       SummarizedExperiment::rowData(ods_unfitted) <- rd
   }
-
   ods_unfitted <- OUTRIDER::estimateSizeFactors(ods_unfitted)
-
   b <- min(ncol(ods_unfitted), nrow(ods_unfitted)) / max_dim_proportion
-  
   maxSteps <- 15
   if(max_dim_proportion < 4) {
     maxSteps <- 20
@@ -436,7 +432,6 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
   pars_q <- unique(round(exp(seq(log(5), log(b), length.out = Nsteps))))
   ods_unfitted <- OUTRIDER::findEncodingDim(ods_unfitted, params = pars_q,
                       implementation = implementation)
-
   ods <- OUTRIDER::OUTRIDER(ods_unfitted, implementation = implementation)
   message("outrider fitting finished")
   return(ods)   
