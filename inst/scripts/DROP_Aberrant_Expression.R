@@ -70,23 +70,13 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 BiocParallel::register(BiocParallel::MulticoreParam(opt$cpu))
 
-final_results <- main_abgenes_Hunter(
-  sample_annotation = opt$sample_annotation,
-  anno_database = opt$anno_database,
-  count_ranges = opt$count_ranges,
-  gene_mapping_file = opt$gene_mapping_file,
-  count_files = opt$count_files,
-  dataset = opt$dataset,
-  cpu = opt$cpu,
-  fpkm_cutoff = opt$fpkm_cutoff,
-  implementation = opt$implementation,
-  max_dim_proportion = opt$max_tested_dimension_proportion,
-  p_adj_cutoff = opt$p_adj_cutoff,
-  z_score_cutoff = opt$z_score_cutoff,
-  hpo_file = opt$hpo_file,
-  stats_path = opt$stats_path,
-  top_N = opt$top_N)
+final_results <- main_abgenes_Hunter(sample_annotation = opt$sample_annotation, anno_database = opt$anno_database,
+                                     count_ranges = opt$count_ranges, gene_mapping_file = opt$gene_mapping_file,
+                                     count_files = opt$count_files, dataset = opt$dataset, cpu = opt$cpu,
+                                     fpkm_cutoff = opt$fpkm_cutoff, implementation = opt$implementation,
+                                     max_dim_proportion = opt$max_tested_dimension_proportion, p_adj_cutoff = opt$p_adj_cutoff,
+                                     z_score_cutoff = opt$z_score_cutoff, hpo_file = opt$hpo_file, stats_path = opt$stats_path,
+                                     top_N = opt$top_N)
 
 write_abgenes_report(final_results = final_results, template_folder = template_folder, output_dir = opt$report_dir,
-                     source_folder = source_folder, p_adj_cutoff = opt$p_adj_cutoff, z_score_cutoff = opt$z_score_cutoff,
-                     top_N = opt$top_N)
+                     p_adj_cutoff = opt$p_adj_cutoff, z_score_cutoff = opt$z_score_cutoff, top_N = opt$top_N)
