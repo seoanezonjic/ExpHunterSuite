@@ -312,8 +312,8 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 #' @param template Template to render
 #' @param source_folder htmlreportR source folder
 #' @param subset_by factors present in experiment design
-#' @param use_canvas Parameter to select whether or not CanvasXpress plots will be
-#' triggered in templates where this control parameter has been implemented.
+#' @param use_canvas Parameter to select whether or not CanvasXpress plots will
+#' be triggered in templates where this control parameter has been implemented.
 #' Setting it to FALSE can be useful for big datasets, as CanvasXpress might
 #' have trouble in certain plots
 #'
