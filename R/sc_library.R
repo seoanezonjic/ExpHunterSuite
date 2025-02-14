@@ -509,9 +509,9 @@ analyze_query <- function(seu, query, sigfig, sample_col = "sample") {
 
 
 #' get_clusters_distribution
-#' calculates the percentage of cells that make up
-#' each cluster for each different sample in a seurat object. If clusters are
-#' annotated, it will show cell types instead of cluster number.
+#' calculates the percentage of cells that make up each cluster for each
+#' different sample in a seurat object. If clusters are annotated, it will
+#' show cell types instead of cluster number.
 #'
 #' @inheritParams get_query_distribution
 #' @param seu Clustered seurat object.
