@@ -125,5 +125,6 @@ Imports:
     htmlreportR (>= 1.0.0),
     Seurat (>= 5.1.0),
     factoextra (>= 1.0.7),
-    GGally (>= 2.2.1)
+    GGally (>= 2.2.1),
+    txdbmaker (>= 1.0.1)
 Config/testthat/edition: 3
