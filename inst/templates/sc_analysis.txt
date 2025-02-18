@@ -18,7 +18,7 @@
 
     Custom_DimPlot <- function(seu) {
         ident <- ifelse("cell_type" %in% colnames(seu@meta.data),
-                        yes = "cell_type", no = "seurat_clusters")
+                        yes = "cell_type", no = "cluster")
         Seurat::Idents(seu) <- seu@meta.data[[ident]]
         res <- Seurat::DimPlot(seu, reduction = reduction, label = label, repel = TRUE, split.by = split.by,
                         group.by = group.by) 
@@ -108,12 +108,12 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode top_markers
-    slot <- ifelse(is.null(plotter$hash_vars$markers$cell_type), no = "cell_type", yes = "seurat_clusters")
+    slot <- ifelse(is.null(plotter$hash_vars$markers$cell_type), no = "cell_type", yes = "cluster")
     types <- as.character(unique(plotter$hash_vars$markers[[slot]]))
     collapse_list <- vector(mode = "character", length = length(types))
     for(type in seq(types)) {
         plotter$hash_vars$type_markers <- plotter$hash_vars$markers[plotter$hash_vars$markers[slot] == types[type], ]
-        plotter$hash_vars$type_markers$seurat_clusters <- as.character(plotter$hash_vars$type_markers$seurat_clusters)
+        plotter$hash_vars$type_markers$cluster <- as.character(plotter$hash_vars$type_markers$cluster)
         collapse_list[type] <- paste(paste0("<h2>Top markers for identity ", types[type]),
                                             plotter$prettify_div(plotter$table(list(id = "type_markers", header = NULL,
                                                     row_names = NULL, table_rownames = FALSE, styled = "dt",
