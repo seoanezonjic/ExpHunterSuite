@@ -367,3 +367,25 @@ test_that("get_top_genes works even if N is greater than number of expressed
        genes", {
   expect_equal(get_top_genes(test_pbmc, top = 10e99999), expected_big)
 })
+
+test_that("check_sc_input fails when specified column does not exist", {
+  expect_error(check_sc_input(metadata = test_pbmc@meta.data,
+               DEG_columns = "fairies"), "contain an invalid number")
+})
+
+test_that("check_sc_input can handle different columns failing", {
+  expect_error(check_sc_input(metadata = test_pbmc@meta.data,
+               DEG_columns = c("fairies", "mittens")),
+               "\"fairies\", \"mittens\"")
+})
+
+test_that("check_sc_input does not fail in check is successful", {
+  expect_no_error(check_sc_input(metadata = test_pbmc@meta.data,
+               DEG_columns = "groups"))
+})
+
+test_that("check_sc_input fails if one column passes and the other does not", {
+  expect_error(check_sc_input(metadata = test_pbmc@meta.data,
+               DEG_columns = c("groups", "orig.ident")), "\"orig.ident\"")
+})
+
