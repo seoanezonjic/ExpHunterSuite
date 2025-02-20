@@ -1,5 +1,4 @@
 
-
 #' read_sc_counts
 #' creates a seurat object from cellranger counts
 #'
@@ -24,7 +23,7 @@ read_sc_counts <- function(name, input, mincells = 1, minfeats = 1, exp_design){
   seu <- Seurat::CreateSeuratObject(counts = mtx, project = name,
                                     min.cells = mincells,
                                     min.features = minfeats)
-  seu <- add_exp_design(seu = seu, name = name, exp_design = exp_design)
+  seu <- add_sc_design(seu = seu, name = name, exp_design = exp_design)
   return(seu)
 }
 
@@ -93,7 +92,7 @@ tag_doublets <- function(seu, doublet_list) {
   return(seu)
 }
 
-#' add_exp_design
+#' add_sc_design
 #' adds experimental condition to single-sample Seurat metadata
 #'
 #' @param seu Seurat object
@@ -108,10 +107,10 @@ tag_doublets <- function(seu, doublet_list) {
 #' pbmc_tiny$sample <- "sampleA"
 #' exp_design <- data.frame(sample = c("sampleA", "sampleB", "sampleC"),
 #'                          new_field = c("info_A", "info_B", "info_C"))
-#' add_exp_design(seu = pbmc_tiny, name = "sampleA", exp_design = exp_design)
+#' add_sc_design(seu = pbmc_tiny, name = "sampleA", exp_design = exp_design)
 #' @export
 
-add_exp_design <- function(seu, name, exp_design){
+add_sc_design <- function(seu, name, exp_design){
   if(length(unique(seu@meta.data$orig.ident)) > 1) {
     stop(paste0("Seurat object contains more than one sample. ",
                 "Please use Seurat::AddMetaData"))
@@ -131,6 +130,7 @@ add_exp_design <- function(seu, name, exp_design){
 #' seurat object.
 #'
 #' @importFrom Seurat Read10X CreateSeuratObject
+#' @importFrom SeuratObject JoinLayers
 #' @param project_name Will appear in output project.name slot.
 #' @param exp_design Experiment design table in TSV format.
 #' @param count_path Directory that will be searched for count matrices.
@@ -155,10 +155,11 @@ merge_seurat <- function(project_name, exp_design, count_path,
     d10x <- Seurat::Read10X(sample_path)
     seu <- Seurat::CreateSeuratObject(counts = d10x, project = sample, min.cells = 1,
                               min.features = 1)
-    seu <- add_exp_design(seu = seu, name = sample, exp_design = exp_design)
+    seu <- add_sc_design(seu = seu, name = sample, exp_design = exp_design)
     })
   merged_seu <- merge(seu.list[[1]], y = seu.list[-1],
                       add.cell.ids = exp_design$sample, project = project_name)
+  merged_seu <- SeuratObject::JoinLayers(merged_seu)
   return(merged_seu)
 }
 
