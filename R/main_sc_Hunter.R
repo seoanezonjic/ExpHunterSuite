@@ -52,6 +52,9 @@
 #' NULL by default. Per-sample analysis finds this vector
 #' for every sample, integrative mode requires this vector.
 #' @param BPPARAM Parameters to pass to BiocParallel framework.
+#' @param integration_method A string. Method to use in integration. "Harmony"
+#' (the default), "RPCA", "CCA".
+#' "FastMNN" or "scVI".
 #' @export
 #' @examples
 #'  \dontrun{
@@ -64,7 +67,8 @@
 #'                   normalmethod = "LogNormalize", ndims = 10, verbose = FALSE,
 #'                   output = getwd(), save_RDS = FALSE, reduce = FALSE,
 #'                   ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL,
-#'                   ref_n = NULL, BPPARAM = NULL, doublet_list = NULL)
+#'                   ref_n = NULL, BPPARAM = NULL, doublet_list = NULL,
+#'                   integration_method = "Harmony")
 #'  }
 #' @return final_results list. Contains multiple items:
 #' * qc: seurat object prior to filtering and analysis.
@@ -103,7 +107,9 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                            verbose = FALSE, output = getwd(),
                            save_RDS = FALSE, reduce = FALSE, ref_label,
                            SingleR_ref = NULL, ref_de_method = NULL,
-                           ref_n = NULL, BPPARAM = NULL, doublet_list = NULL){
+                           ref_n = NULL, BPPARAM = NULL, doublet_list = NULL,
+                           integration_method = "Harmony"){
+  check_sc_input(metadata = seu@meta.data, DEG_columns = DEG_columns)
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                doublet_list = doublet_list)
   if(!reduce) {
@@ -117,7 +123,11 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     aggr.ref <- TRUE
     fine.tune <- FALSE
   }
-  seu <- SeuratObject::JoinLayers(seu)
+  if(integrate) {
+    int_column <- subset_by[1]
+    message(paste0("Splitting seurat object by ", int_column, "."))
+    seu[["RNA"]] <- split(seu[["RNA"]], f = seu[[int_column, drop = TRUE]])
+  }
   message('Normalizing data')
   norm_start <- Sys.time()
   seu <- Seurat::NormalizeData(object = seu, verbose = verbose,
@@ -136,17 +146,21 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     message(paste0("Scaling time: ", scale_end-scale_start))
   }
   message('Finding variable features')
-  seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs, verbose = verbose)
+  seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs, verbose = verbose,
+                                      selection.method = "vst", assay = "RNA")
   message('Reducing dimensionality')  
   seu <- Seurat::RunPCA(seu, verbose = verbose)
   reduction <- "pca"
   if(integrate) {
   	message('Integrating seurat object')
-  	seu <- harmony::RunHarmony(object = seu, "sample", plot_convergence = FALSE,
-  	 							verbose = verbose)
-    reduction <- "harmony"
+    seu <- Seurat::IntegrateLayers(object = seu, orig.reduction = "pca",
+      new.reduction = integration_method, verbose = FALSE,
+      method = paste0(integration_method, "Integration"), assay = "RNA",
+      scale.layer = "scale.data")
+    reduction <- integration_method
   }
   seu <- Seurat::RunUMAP(object = seu, dims = seq(ndims),
+                         reduction.name = "umap",
                          reduction = reduction, verbose = verbose)
   if(!integrate) {
     doublets <- find_doublets(seu)
@@ -162,8 +176,8 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     close(file_conn)
     qc <- tag_doublets(seu = qc, doublet_list = doublet_list)
   }
-  seu <- Seurat::FindNeighbors(object = seu, dims = seq(ndims),
-                               reduction = reduction, verbose = verbose)
+  seu <- Seurat::FindNeighbors(object = seu, dims = 1:2,
+                               reduction = "umap", verbose = verbose)
   if(is.null(SingleR_ref) | !integrate) {
     seu <- Seurat::FindClusters(seu, resolution = resolution, verbose = verbose)
     # Seurat starts counting clusters from 0, which is the source of many
@@ -176,6 +190,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     message(paste0("Annotation by clusters not active and multiple samples",
                    " detected. Skipping clustering"))
   }
+  seu <- SeuratObject::JoinLayers(seu)
   if(!is.null(SingleR_ref)) {
     annot_start <- Sys.time()
     message(paste0("SingleR reference provided. Annotating cells. This option",
@@ -371,4 +386,25 @@ write_sc_report <- function(final_results, output = getwd(), name = NULL,
   plotter$build(template)
   plotter$write_report(out_file)
   message(paste0("Report written in ", out_file))
+}
+
+#' check_sc_input
+#' check input of main SC analysis function
+
+check_sc_input <- function(metadata, DEG_columns){
+  colnames(metadata) <- tolower(colnames(metadata))
+  PASS <- rep(TRUE, length(DEG_columns))
+  names(PASS) <- DEG_columns
+  for(DEG_column in DEG_columns) {
+    uniques <- length(unique(metadata[[DEG_column]]))
+    if(uniques != 2) {
+      PASS[DEG_column] <- FALSE
+    }
+  }
+  if(any(!PASS)) {
+    stop(paste0("ERROR. Please check DEG_columns have exactly two unique ",
+      "values. DEG_column(s) \"",
+      paste(names(PASS[PASS==FALSE]), collapse = "\", \""), "\" contain an invalid",
+      " number"))
+  }
 }
