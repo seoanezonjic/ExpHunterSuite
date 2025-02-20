@@ -14,14 +14,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   main_path_script <- dirname(full.fpath)
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
-  custom_libraries <- c('main_degenes_Hunter.R', 'io_handling.R', 
-    'general_functions.R', 'dif_expression_packages.R', 
-    'qc_and_benchmarking_functions.R', 'correlation_packages.R', 
-    'plotting_functions.R', 'write_report.R', "statistics_functions.R", "factor_mining.R",
-    "sc_library.R", "main_sc_Hunter.R")
-  for (lib in custom_libraries){
-    source(file.path(root_path, 'R', lib))
-  }
+  devtools::load_all(root_path)
   template_folder <- file.path(root_path, 'inst', 'templates')
 }else{
   require('ExpHunterSuite')
@@ -38,7 +31,7 @@ option_list <- list(
               help = "Name of analysis."),
   optparse::make_option(c("-o", "--output"), type = "character", default = NULL,
               help = "Output folder."),
-  optparse::make_option(c("--doublet_file"), type = "character", default = NULL,
+  optparse::make_option(c("--doublet_file"), type = "character", default = "",
               help = "File containing vector of barcodes to be tagged as doublet and removed from analysis."),
   optparse::make_option("--filter", type = "character", default = NULL,
               help = "TRUE for using only detected cell-associated barcodes,
@@ -294,7 +287,7 @@ if(opt$loadRDS) {
                                   output = opt$output, integrate = opt$integrate, query = unlist(target_genes),
                                   reduce = opt$reduce, save_RDS = opt$saveRDS, SingleR_ref = SingleR_ref,
                                   ref_label = opt$ref_label, ref_de_method = ref_de_method, ref_n = ref_n,
-                                  BPPARAM = BPPARAM, doublet_list = doublet_list)
+                                  BPPARAM = BPPARAM, doublet_list = doublet_list, integration_method = "Harmony")
 }
 
 message("--------------------------------------------")
