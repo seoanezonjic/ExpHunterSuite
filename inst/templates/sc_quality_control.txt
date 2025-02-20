@@ -40,7 +40,8 @@
 
 	custom_ft_plot <- function(seu) {
 		top <- head(Seurat::VariableFeatures(seu, 10))
-		plot <- Seurat::VariableFeaturePlot(seu) +
+		plot <- Seurat::VariableFeaturePlot(seu, selection.method = "vst",
+			assay = "RNA") +
 				ggplot2::theme(legend.position="top")
 		labeled_plot <- Seurat::LabelPoints(plot = plot, points = top,
 											repel = TRUE, xnudge = 0, ynudge = 0) + 
@@ -97,11 +98,10 @@ end.rcode-->
 	cat(plotter$prettify_div(plotter$barplot(list(id = "aggr_meta", title = "Nº of cells", header = NULL, row_names = NULL,
 												  text = 1, text = FALSE, transpose = TRUE, fields = 2:1, smp_attr = 1,
 												  config = list(colorBy = "Var1", graphOrientation = "vertical",
-												  	showLegend = TRUE, smpLabelImage = TRUE))),
-							 preset = "magic"))
+												  	showLegend = TRUE, smpLabelImage = TRUE))), preset = "magic"))
 end.rcode-->
 
-<!--begin.rcode var_ft
+<!--begin.rcode var_ft, eval = !plotter$hash_vars$integrate
 	cat(plotter$create_title("Variable feature search", "var_ft", hlevel = 2, indexable = FALSE,
 							  clickable = FALSE, clickable_text = ""))
 	cat(plotter$prettify_div(plotter$static_plot_main(id = "seu", custom_format = TRUE,
@@ -121,5 +121,4 @@ end.rcode-->
 		cat(plotter$prettify_div(plotter$static_plot_main(id = "seu", custom_format = TRUE,
 							plotting_function = custom_ft_scatter), preset = "magic"))
 	}
-
 end.rcode-->
