@@ -183,7 +183,6 @@ end.rcode-->
 	        plotting_function = function(){
 	      		limma::vennDiagram(data_frame, circle.col = venn_colors)
 	      	}), preset = "magic"))
-
 end.rcode-->
 
 <!--begin.rcode setup_logFCplots, echo = FALSE
@@ -240,7 +239,7 @@ end.rcode-->
 	fc_thresholds <- c(0.01, 0.05,0.1, 0.2)
 	all_thresholds <- unique(c(plotter$hash_vars$opt$p_val_cutoff, fc_thresholds))
 	mean_wt = data.frame(FDR = all_thresholds, nlFDR = -log10(all_thresholds))
-	cat(plotter$prettify_div(plotter$static_plot_main("volcano_DE_all_genes", custom_format = TRUE,
+	cat(plotter$prettify_div(plotter$static_plot_main("volcano_DE_all_genes", resizable = TRUE, custom_format = TRUE,
                              plotting_function = DE_volcano), preset = "magic"))
 end.rcode-->
 
@@ -293,13 +292,13 @@ end.rcode-->
 							Treat = plotter$hash_vars$design_vector)
 	rownames(norm_bias) <- names(sums)
 	plotter$hash_vars$norm_bias <- norm_bias
-	cat(plotter$prettify_div(plotter$static_ggplot_main(id = "norm_bias", header = NULL, row_names = NULL,
-		resizable = TRUE, plotting_function = norm_plot), preset = "magic"))
+	cat(plotter$prettify_div(plotter$static_ggplot_main(id = "norm_bias", resizable = TRUE, header = NULL, row_names = NULL,
+		plotting_function = norm_plot), preset = "magic"))
 	cat("<p>The effective library size is the factor used by DESeq2 normalization algorithm for each sample. The effective library size must be dependent of raw library size.</p>")
 	cat(plotter$create_title("DESeq2 MA plot", id = "DE_MA", hlevel = 3, indexable = FALSE))
 	cat("<p> This is the MA plot from DESeq2 package")
 	plotter$hash_vars$ma_data <- plotter$hash_vars$package_objects[['DESeq2']][['de_deseq2']]
-	cat(plotter$prettify_div(plotter$static_plot_main("ma_data", custom_format = TRUE, plotting_function = plot_MA,
+	cat(plotter$prettify_div(plotter$static_plot_main("ma_data", resizable = TRUE, custom_format = TRUE, plotting_function = plot_MA,
 		plot_type = "autoplot"), preset = "magic"))
 	cat("<p>In DESeq2, the MA-plot (log ratio versus abundance) shows the log2 fold changes are attributable to a given variable over the mean of normalized counts. Points will be colored red if the adjusted Pvalue is less than 0.1. Points which fall out of the window are plotted as open triangles pointing either up or down.
 		 A table containing the DESeq2 DEGs is provided: in Results\\_DESeq2/DEgenes\\_DESEq2.txt
@@ -312,8 +311,8 @@ end.rcode-->
 		deseq_prevalent_normalized <- plotter$hash_vars$deseq_normalized_data[rownames(plotter$hash_vars$deseq_normalized_data) %in% DE_prevalent_genes, ]  
 		deseq_normalized_data_mtx <- log10(data.matrix(deseq_prevalent_normalized) + 1)
 		plotter$hash_vars$deseq_normalized_data_mtx <- deseq_normalized_data_mtx
-		cat(plotter$prettify_div(plotter$static_plot_main("deseq_normalized_data_mtx", header = NULL,
-			row_names = NULL, resizable = TRUE, plotting_function = plot_deseq_norm, custom_format = TRUE,
+		cat(plotter$prettify_div(plotter$static_plot_main("deseq_normalized_data_mtx", resizable = TRUE, header = NULL,
+			row_names = NULL, plotting_function = plot_deseq_norm, custom_format = TRUE,
 			plot_type = "autoplot"), preset = "magic"))
 	}else{
         cat("<p>Fewer than 2 prevalent differential expressed genes were found</p>")
@@ -326,8 +325,8 @@ end.rcode-->
 	plotter$hash_vars$full_edgeR <- plotter$hash_vars$all_counts_for_plotting[['edgeR']]
 	# Only way to make it accessible in autoplot
 	p_val_cutoff <<- plotter$hash_vars$opt$p_val_cutoff
-	cat(plotter$prettify_div(plotter$static_plot_main("full_edgeR", header = NULL, row_names = NULL,
-		resizable = TRUE, plotting_function = plot_edgeR_MA, custom_format = TRUE, plot_type = "autoplot"),
+	cat(plotter$prettify_div(plotter$static_plot_main("full_edgeR", resizable = TRUE, header = NULL, row_names = NULL,
+		plotting_function = plot_edgeR_MA, custom_format = TRUE, plot_type = "autoplot"),
 	    preset = "magic"))
 	cat("Differential gene expression data can be visualized as MA-plots (log ratio versus abundance) where each dot represents a gene. The differentially expressed genes are colored red and the non-differentially expressed ones are colored black.
 		 A table containing the edgeR DEGs is provided in Results\\_edgeR/DEgenes\\_edgeR.txt
@@ -340,8 +339,8 @@ end.rcode-->
 	limma_sig <<- row.names(plotter$hash_vars$all_counts_for_plotting[['limma']]) %in% row.names(plotter$hash_vars$DE_all_genes[plotter$hash_vars$DE_all_genes$limma_DEG == TRUE, ]) + 1
 	p_val_cutoff <<- plotter$hash_vars$opt$p_val_cutoff
 	lfc <<- plotter$hash_vars$opt$lfc
-	cat(plotter$prettify_div(plotter$static_plot_main("all_counts_for_plotting", header = NULL, plot_type = "autoplot",
-		row_names = NULL, resizable = TRUE, plotting_function = plot_limma_volcano, custom_format = TRUE),
+	cat(plotter$prettify_div(plotter$static_plot_main("all_counts_for_plotting", resizable = TRUE, header = NULL, plot_type = "autoplot",
+		row_names = NULL, plotting_function = plot_limma_volcano, custom_format = TRUE),
 		preset = "magic"))
 	cat("<p>Limma DEGs table can be found in Results_limma/DEGenes_limma.txt</p>")
 	cat("<p>Limma normalized counts table can be found in Results_limma/Normalized_counts_limma.txt</p>")
@@ -381,12 +380,12 @@ end.rcode-->
 <!--begin.rcode pval_corr, echo = FALSE, warning = FALSE, eval = length(plotter$hash_vars$all_counts_for_plotting) > 1
 	cat(plotter$create_title("FDR Correlations", id = "FDR_corr", hlevel = 3, indexable = FALSE))
 	columns <<- c("combined_FDR", plotter$hash_vars$final_FDR_names)
-	cat(plotter$prettify_div(plotter$static_plot_main(id = "df", header = NULL, row_names = NULL,
+	cat(plotter$prettify_div(plotter$static_plot_main(id = "df", resizable = TRUE, header = NULL, row_names = NULL,
 		custom_format = TRUE, plot_type = "autoplot", plotting_function = plot_FDR_corr), preset = "magic"))
 	columns <<- plotter$hash_vars$final_pvalue_names
-	cat(plotter$prettify_div(plotter$static_plot_main(id = "df", header = NULL, row_names = NULL,
+	cat(plotter$prettify_div(plotter$static_plot_main(id = "df", resizable = TRUE, header = NULL, row_names = NULL,
 		custom_format = TRUE, plot_type = "autoplot", plotting_function = plot_FDR_corr), preset = "magic"))
 	columns <<- c("mean_logFCs", plotter$hash_vars$final_logFC_names)
-	cat(plotter$prettify_div(plotter$static_plot_main(id = "df", header = NULL, row_names = NULL,
+	cat(plotter$prettify_div(plotter$static_plot_main(id = "df", resizable = TRUE, header = NULL, row_names = NULL,
 		custom_format = TRUE, plot_type = "autoplot", plotting_function = plot_FDR_corr), preset = "magic"))
 end.rcode-->
