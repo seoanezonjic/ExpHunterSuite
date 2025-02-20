@@ -113,7 +113,7 @@ end.rcode-->
     collapse_list <- vector(mode = "character", length = length(types))
     for(type in seq(types)) {
         plotter$hash_vars$type_markers <- plotter$hash_vars$markers[plotter$hash_vars$markers[slot] == types[type], ]
-        plotter$hash_vars$type_markers$cluster <- as.character(plotter$hash_vars$type_markers$cluster)
+        plotter$hash_vars$type_markers$seurat_clusters <- as.character(plotter$hash_vars$type_markers$seurat_clusters)
         collapse_list[type] <- paste(paste0("<h2>Top markers for identity ", types[type]),
                                             plotter$prettify_div(plotter$table(list(id = "type_markers", header = NULL,
                                                     row_names = NULL, table_rownames = FALSE, styled = "dt",
@@ -131,6 +131,18 @@ end.rcode-->
                         "not match cell type markers.</p>")
     cat(plotter$create_collapsable_container(id = "top_markers",
                                              html_code = paste(paragraph, top_markers_html,  sep = "\n")))
+end.rcode-->
+
+<!--begin.rcode Complete_PCA
+    cat(plotter$create_title("Dimensionality reduction", "dimreds", hlevel = 1, indexable = TRUE, clickable = FALSE,
+                              t_id = "dimreds", clickable_text = ""))
+    cat(plotter$create_title("PCA", "full_pca", hlevel = 2, indexable = TRUE, clickable = FALSE,
+                              t_id = "full_pca", clickable_text = ""))
+    reduction <- "pca"
+    label <- TRUE
+    group.by <- split.by <- NULL
+    cat(plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE, plotting_function = Custom_DimPlot),
+                             preset = "magic"))
 end.rcode-->
 
 <!--begin.rcode Complete_UMAP
