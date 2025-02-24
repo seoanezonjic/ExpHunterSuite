@@ -124,9 +124,8 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     fine.tune <- FALSE
   }
   if(integrate) {
-    int_column <- subset_by[1]
-    message(paste0("Splitting seurat object by ", int_column, "."))
-    seu[["RNA"]] <- split(seu[["RNA"]], f = seu[[int_column, drop = TRUE]])
+    message(paste0("Splitting seurat object by sample."))
+    seu[["RNA"]] <- split(seu[["RNA"]], f = seu$sample)
   }
   message('Normalizing data')
   norm_start <- Sys.time()
