@@ -33,7 +33,12 @@ main_sc_Hunter(
   ref_de_method = NULL,
   ref_n = NULL,
   BPPARAM = NULL,
-  doublet_list = NULL
+  doublet_list = NULL,
+  integration_method = "Harmony",
+  sketch = FALSE,
+  sketch_pct = 12,
+  sketch_ncells = 5000,
+  sketch_method = "LeverageScore"
 )
 }
 \arguments{
@@ -120,6 +125,23 @@ time. Will not be used if ref_de_method is empty.}
 \item{doublet_list}{A vector containing barcodes to be marked as doublets.
 NULL by default. Per-sample analysis finds this vector
 for every sample, integrative mode requires this vector.}
+
+\item{integration_method}{A string. Method to use in integration. "Harmony"
+(the default), "RPCA", "CCA", "FastMNN" or "scVI".}
+
+\item{sketch}{A boolean. If TRUE, data will be sketched. If FALSE
+(the default), data will be analysed as-is.}
+
+\item{sketch_pct}{A numeric. Percentage of total cells to consider
+representative of the experiment. Default 12, as suggested by sketching
+tutorial.}
+
+\item{sketch_ncells}{An integer. If estimated cell number optimal value for
+sketching is smaller than this number, sketching will not be performed.
+Default value of 5000, recommended by Seurat tutorials.}
+
+\item{sketch_method}{A string. Method to use in score calculation for
+sketching.}
 }
 \value{
 final_results list. Contains multiple items:
@@ -170,6 +192,8 @@ of each experimental condition to be analyzed and compared separately.
                   normalmethod = "LogNormalize", ndims = 10, verbose = FALSE,
                   output = getwd(), save_RDS = FALSE, reduce = FALSE,
                   ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL,
-                  ref_n = NULL, BPPARAM = NULL, doublet_list = NULL)
+                  ref_n = NULL, BPPARAM = NULL, doublet_list = NULL,
+                  integration_method = "Harmony", sketch_pct = 12,
+                  sketch_ncells = 5000)
  }
 }

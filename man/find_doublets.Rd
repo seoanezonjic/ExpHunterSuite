@@ -3,7 +3,7 @@
 \name{find_doublets}
 \alias{find_doublets}
 \title{find_doublets
-\code{find_doublets} is a wrapper for the recommended steps for doublet
+is a wrapper for the recommended steps for doublet
 calculation in package DoubletFinder}
 \usage{
 find_doublets(seu)
@@ -18,7 +18,7 @@ corresponding to barcodes.
 }
 \description{
 find_doublets
-\code{find_doublets} is a wrapper for the recommended steps for doublet
+is a wrapper for the recommended steps for doublet
 calculation in package DoubletFinder
 }
 \examples{

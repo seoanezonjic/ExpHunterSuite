@@ -53,8 +53,17 @@
 #' for every sample, integrative mode requires this vector.
 #' @param BPPARAM Parameters to pass to BiocParallel framework.
 #' @param integration_method A string. Method to use in integration. "Harmony"
-#' (the default), "RPCA", "CCA".
-#' "FastMNN" or "scVI".
+#' (the default), "RPCA", "CCA", "FastMNN" or "scVI".
+#' @param sketch A boolean. If TRUE, data will be sketched. If FALSE
+#' (the default), data will be analysed as-is.
+#' @param sketch_ncells An integer. If estimated cell number optimal value for
+#' sketching is smaller than this number, sketching will not be performed.
+#' Default value of 5000, recommended by Seurat tutorials.
+#' @param sketch_pct A numeric. Percentage of total cells to consider
+#' representative of the experiment. Default 12, as suggested by sketching
+#' tutorial.
+#' @param sketch_method A string. Method to use in score calculation for
+#' sketching.
 #' @export
 #' @examples
 #'  \dontrun{
@@ -68,7 +77,8 @@
 #'                   output = getwd(), save_RDS = FALSE, reduce = FALSE,
 #'                   ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL,
 #'                   ref_n = NULL, BPPARAM = NULL, doublet_list = NULL,
-#'                   integration_method = "Harmony")
+#'                   integration_method = "Harmony", sketch_pct = 12,
+#'                   sketch_ncells = 5000)
 #'  }
 #' @return final_results list. Contains multiple items:
 #' * qc: seurat object prior to filtering and analysis.
@@ -108,7 +118,9 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                            save_RDS = FALSE, reduce = FALSE, ref_label,
                            SingleR_ref = NULL, ref_de_method = NULL,
                            ref_n = NULL, BPPARAM = NULL, doublet_list = NULL,
-                           integration_method = "Harmony"){
+                           integration_method = "Harmony", sketch = FALSE,
+                           sketch_pct = 12, sketch_ncells = 5000,
+                           sketch_method = "LeverageScore"){
   check_sc_input(metadata = seu@meta.data, DEG_columns = DEG_columns)
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                doublet_list = doublet_list)
@@ -136,31 +148,58 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   if(verbose) {
     message(paste0("Normalization time: ", norm_end-norm_start))
   }
+    message('Finding variable features')
+  seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs, verbose = verbose,
+                                      selection.method = "vst", assay = "RNA")
+  if(sketch) {
+    message("Sketching sample data")
+    seu <- sketch_sc_experiment(seu = seu, min.ncells = sketch_ncells,
+      assay = "RNA", method = sketch_method, sketched.assay = "sketch",
+      cell.pct = sketch_pct)
+    if("sketch" %in% names(seu@assays)) {
+      assay <- "sketch"
+      seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs, verbose = verbose,
+                                      selection.method = "vst", assay = assay)
+    } else {
+      assay <- "RNA"
+    }
+  }
   message('Scaling data')
   scale_start <- Sys.time()
   seu <- Seurat::ScaleData(object = seu, verbose = verbose,
-  								         features = rownames(seu))
+                           features = rownames(seu))
   scale_end <- Sys.time()
   if(verbose) {
-    message(paste0("Scaling time: ", scale_end-scale_start))
+    message(paste0("Scaling time: ", scale_end - scale_start))
   }
-  message('Finding variable features')
-  seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs, verbose = verbose,
-                                      selection.method = "vst", assay = "RNA")
   message('Reducing dimensionality')  
-  seu <- Seurat::RunPCA(seu, verbose = verbose)
+  seu <- Seurat::RunPCA(seu, assay = assay, npcs = ndims, verbose = verbose)
   reduction <- "pca"
   if(integrate) {
   	message('Integrating seurat object')
     seu <- Seurat::IntegrateLayers(object = seu, orig.reduction = "pca",
-      new.reduction = integration_method, verbose = FALSE,
-      method = paste0(integration_method, "Integration"), assay = "RNA",
+      new.reduction = integration_method, verbose = FALSE, dims = seq(1, ndims),
+      method = paste0(integration_method, "Integration"), assay = assay,
       scale.layer = "scale.data")
     reduction <- integration_method
   }
-  seu <- Seurat::RunUMAP(object = seu, dims = seq(ndims),
-                         reduction.name = "umap",
-                         reduction = reduction, verbose = verbose)
+  seu <- Seurat::FindNeighbors(object = seu, dims = seq(1, ndims),
+                               assay = assay, reduction = reduction,
+                               verbose = verbose)
+  if(is.null(SingleR_ref) | !integrate) {
+    seu <- Seurat::FindClusters(seu, resolution = resolution, verbose = verbose)
+    # Seurat starts counting clusters from 0, which is the source of many
+    # headaches when working in R, which starts counting from 1. Therefore,
+    # we introduce this correction. Weirdly enough, coercing it to numeric
+    # already adds 1.
+    seu@meta.data$seurat_clusters <- as.numeric(seu@meta.data$seurat_clusters)
+    Seurat::Idents(seu) <- seu@meta.data$seurat_clusters
+  } else {
+    message(paste0("Annotation by clusters not active and multiple samples",
+                   " detected. Skipping clustering"))
+  }
+  seu <- Seurat::RunUMAP(object = seu, dims = seq(ndims), reduction = reduction,
+                         return.model = T, verbose = verbose)
   if(!integrate) {
     doublets <- find_doublets(seu)
     seu <- doublets$seu
@@ -174,20 +213,6 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     writeLines(sample_doublet_list, file_conn)
     close(file_conn)
     qc <- tag_doublets(seu = qc, doublet_list = doublet_list)
-  }
-  seu <- Seurat::FindNeighbors(object = seu, dims = 1:2,
-                               reduction = "umap", verbose = verbose)
-  if(is.null(SingleR_ref) | !integrate) {
-    seu <- Seurat::FindClusters(seu, resolution = resolution, verbose = verbose)
-    # Seurat starts counting clusters from 0, which is the source of many
-    # headaches when working in R, which starts counting from 1. Therefore,
-    # we introduce this correction. Weirdly enough, coercing it to numeric
-    # already adds 1.
-    seu@meta.data$seurat_clusters <- as.numeric(seu@meta.data$seurat_clusters)
-    Seurat::Idents(seu) <- seu@meta.data$seurat_clusters
-  } else {
-    message(paste0("Annotation by clusters not active and multiple samples",
-                   " detected. Skipping clustering"))
   }
   seu <- SeuratObject::JoinLayers(seu)
   if(!is.null(SingleR_ref)) {
@@ -227,7 +252,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
       message("Calculating cluster markers")
       markers <- calculate_markers(seu = seu, subset_by = subset_by,
                                    integrate = integrate, verbose = verbose,
-                                   idents = "seurat_clusters")
+                                   idents = "seurat_clusters", assay = assay)
       message("Annotating clusters")
       annotated_clusters <- match_cell_types(markers_df = markers,
                                              cell_annotation = cell_annotation,
@@ -248,8 +273,22 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                                    integrate = integrate, verbose = verbose,
                                    idents = "seurat_clusters")
     }
+    SingleR_annotation <- NULL
   }
-  SingleR_annotation <- NULL
+  if("sketch" %in% names(seu@assays)) {
+    message("Projecting sketched data")
+    seu[["sketch"]] <- split(seu[["sketch"]], f = seu$sample)
+    seu <- Seurat::ProjectIntegration(object = seu, sketched.assay = "sketch",
+      assay = "RNA", reduction = reduction)
+    seu <- Seurat::ProjectData(object = seu, sketched.assay = "sketch",
+      assay = "RNA", dims = seq(1, ndims), full.reduction = paste0(reduction, ".full"),
+      sketched.reduction = paste0(reduction, ".full")) ## WHY 30 dims???
+    seu <- Seurat::RunUMAP(seu, reduction = paste0(reduction, ".full"),
+      dims = seq(1, ndims), reduction.name = "umap.full", reduction.key = "UMAP_full_")
+    Seurat::DefaultAssay(seu) <- "RNA"
+    seu <- SeuratObject::JoinLayers(seu, assay = "RNA")
+    seu[["sketch"]] <- NULL
+  }
   message("Extracting expression quality metrics")
   sample_qc_pct <- get_qc_pct(seu, by = "sample")
   message("Extracting query expression metrics. This might take a while.")

@@ -11,7 +11,8 @@ calculate_markers(
   idents = NULL,
   integrate = FALSE,
   min.pct = 0.25,
-  logfc.threshold = 0.25
+  logfc.threshold = 0.25,
+  assay = "RNA"
 )
 }
 \arguments{
@@ -26,9 +27,12 @@ marker calculation.}
 markers in case conserved mode cannot be triggered.}
 
 \item{integrate}{Whether or not integrative analysis is active. Does not
-bother with subsetting if FALSE.'}
+bother with subsetting if FALSE.}
 
 \item{min.pct, logfc.threshold}{See ?Seurat::FindAllMarkers}
+
+\item{assay}{A string. Assay whose markers will be calculated. Default "RNA",
+as per usual workflow.}
 }
 \value{
 Marker or DEG data frame.

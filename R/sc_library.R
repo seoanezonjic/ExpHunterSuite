@@ -116,9 +116,7 @@ add_sc_design <- function(seu, name, exp_design){
                 "Please use Seurat::AddMetaData"))
   }
   exp_design <- as.list(exp_design[exp_design$sample == name,])
-  for (i in names(exp_design)){
-    seu@meta.data[[i]] <- c(rep(exp_design[[i]], nrow(seu@meta.data)))
-  }
+  seu <- Seurat::AddMetaData(object = seu, metadata = exp_design)
   return(seu)
 }
 
@@ -349,6 +347,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' @param subset_by Metadata column by which seurat object will be subset for
 #' marker calculation.
 #' @param verbose A boolean. Will be passed to Seurat function calls.
+#' @param assay A string. Assay whose markers will be calculated. Default "RNA",
+#' as per usual workflow.
 #' @return A list containing one marker or DEG data frame per cluster, plus
 #' an additional one for global DEGs if performing differential analysis.
 #' @examples
@@ -360,7 +360,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' @export
 
 get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
-                           verbose = FALSE) {
+                           verbose = FALSE, assay = "RNA") {
   conds <- unique(seu@meta.data[[cond]])
   if(length(conds) != 2) {
     stop(paste0("ERROR: get_sc_markers only works with condition with two ",
@@ -392,7 +392,7 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
     } else {
       markers <- Seurat::FindConservedMarkers(seu, ident.1 = sub_values[i],
                                               grouping.var = cond,
-                                              verbose = verbose)
+                                              verbose = verbose, assay = assay)
       markers[[subset_by]] <- sub_values[i]
     }
     nums <- sapply(markers, is.numeric)
@@ -436,7 +436,9 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 #' @param subset_by Metadata column by which seurat object will be subset for
 #' marker calculation.
 #' @param integrate Whether or not integrative analysis is active. Does not
-#' bother with subsetting if FALSE.'
+#' bother with subsetting if FALSE.
+#' @param assay A string. Assay whose markers will be calculated. Default "RNA",
+#' as per usual workflow.
 #' @return Marker or DEG data frame.
 #' @examples
 #'  \dontrun{
@@ -448,20 +450,22 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 
 calculate_markers <- function(seu, subset_by, verbose = FALSE, idents = NULL,
                               integrate = FALSE, min.pct = 0.25,
-                              logfc.threshold = 0.25) {
+                              logfc.threshold = 0.25, assay = "RNA") {
+
   run_conserved <- ifelse(test = length(subset_by) == 1 & integrate,
                           no = FALSE,
                           yes = !.has_exclusive_idents(seu = seu,
                                   idents = idents, cond = tolower(subset_by)))
   if(run_conserved) {
     markers <- get_sc_markers(seu = seu, cond = subset_by, DEG = FALSE,
-                              subset_by = idents, verbose = verbose)
+                              subset_by = idents, verbose = verbose,
+                              assay = assay)
     markers <- collapse_markers(markers$markers)
   }else{
     Seurat::Idents(seu) <- seu@meta.data[[idents]]
     markers <- Seurat::FindAllMarkers(seu, only.pos = TRUE, min.pct = min.pct,
                                       logfc.threshold = logfc.threshold,
-                                      verbose = verbose)
+                                      verbose = verbose, assay = assay)
     colnames(markers)[colnames(markers) == "cluster"] <- "seurat_clusters"
     rownames(markers) <- NULL
   }
@@ -880,7 +884,7 @@ extract_metadata <- function(seu){
 }
 
 #' find_doublets
-#' `find_doublets` is a wrapper for the recommended steps for doublet
+#' is a wrapper for the recommended steps for doublet
 #' calculation in package DoubletFinder
 #'
 #' @param seu Seurat object
@@ -903,4 +907,46 @@ find_doublets <- function(seu) {
   seu <- subset(seu, cells = doublet_barcodes, invert = TRUE)
   res <- list(seu = seu, barcodes = doublet_barcodes)
   return(res)
+}
+
+#' sketch_sc_experiment
+#' determines optimal cell number to sketch seurat assay. If it is larger than
+#' specified minimum, it proceeds with sketching, else it is skipped.
+#' @param seu Seurat object to sketch.
+#' @param min.ncells An integer. If estimated cell number optimal value for
+#' sketching is smaller than this number, sketching will not be performed.
+#' Default value of 5000, recommended by Seurat tutorials.
+#' @param force.ncells An integer. Number of cells to forcibly use in sketch.
+#' NA by default.
+#' @param assay A string. Name of assay to sketch. Default "RNA".
+#' @param method A string. Method to use for sketching. Default "LeverageScore".
+#' @param sketched.assay A string. Name of assay where sketch will be saved.
+#' @param cell.pct A numeric. Percentage of total cells to consider
+#' representative of the experiment. Default 12, as suggested by sketching
+#' tutorial.
+#' @return A seurat object with a new sketched assay.
+#' @examples
+#'  \dontrun{
+#'    sketched_experiment <- sketch_sc_experiment(seu = unsketched_experiment,
+#'           assay = "RNA", method = "LeverageScore", sketched.assay = "sketch",
+#'           cell.pct = 50)
+#'  }
+
+sketch_sc_experiment <- function(seu, min.ncells = 5000, assay = "RNA",
+                        method = "LeverageScore", sketched.assay = "sketch",
+                        cell.pct = 12, force.ncells = NA_integer_) {
+  if(is.na(force.ncells)) {
+    ncells <- ceiling(mean(table(seu$sample)) * cell.pct / 100)
+  } else {
+    ncells <- force.ncells
+  }
+  if(ncells < min.ncells) {
+    message("Optimal number of cells is lower than minimum, skipping sketch")
+    return(seu)
+  } else {
+    seu <- Seurat::SketchData(object = seu, ncells = ncells, method = method,
+                              assay = assay, sketched.assay = sketched.assay)
+    Seurat::DefaultAssay(seu) <- "sketch"
+    return(seu)
+  }
 }

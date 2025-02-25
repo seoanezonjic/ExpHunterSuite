@@ -6,7 +6,14 @@
 performs differential expression analysis on OR selects
 conserved markers from a seurat object.}
 \usage{
-get_sc_markers(seu, cond = NULL, subset_by, DEG = FALSE, verbose = FALSE)
+get_sc_markers(
+  seu,
+  cond = NULL,
+  subset_by,
+  DEG = FALSE,
+  verbose = FALSE,
+  assay = "RNA"
+)
 }
 \arguments{
 \item{seu}{Seurat object to analyse.}
@@ -24,6 +31,9 @@ marker calculation.}
 }}
 
 \item{verbose}{A boolean. Will be passed to Seurat function calls.}
+
+\item{assay}{A string. Assay whose markers will be calculated. Default "RNA",
+as per usual workflow.}
 }
 \value{
 A list containing one marker or DEG data frame per cluster, plus
