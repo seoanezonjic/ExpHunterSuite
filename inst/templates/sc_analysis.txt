@@ -10,6 +10,8 @@
         if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
             return("<p>Object contains none of the specified features</p>")
         }
+        Seurat::Idents(seu) <- ifelse(is.null(seu@meta.data$cell_type), yes = seu@meta.data$seurat_clusters,
+                                      no = seu@meta.data$cell_type)
         Seurat::Idents(seu) <- seu@meta.data$cell_type
         scCustomize::DotPlot_scCustom(seu, unique(features), flip_axes = TRUE, 
                                       colors_use = colGEX, x_lab_rotate = TRUE) +
