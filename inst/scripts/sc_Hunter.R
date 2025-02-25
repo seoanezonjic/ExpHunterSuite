@@ -66,6 +66,8 @@ option_list <- list(
   optparse::make_option("--int_columns", type = "character", default = "",
             help = "Comma-separated list of conditions by which to perform integration
                     analysis. If empty, all conditions will be analysed."),
+  optparse::make_option("--int_method", type = "character", default = "RPCA",
+            help = "Integration method. Valid methods: \"CCA\", \"RPCA\", \"Harmony\", \"FastMNN\", \"scVI\" "),
   optparse::make_option("--cluster_annotation", type = "character", default = "",
             help = "Clusters annotation file."),
   optparse::make_option("--target_genes", type = "character", default = "",
@@ -98,18 +100,29 @@ option_list <- list(
                     accurate annotation, but increase noise and computational time. Will not be used
                     if ref_de_method is empty."),
   optparse::make_option("--integrate", type = "logical", default = FALSE, action = "store_true",
-            help = "Activate integrative analysis. If FALSE (the default), script will assume
-                    only one sample."),
+            help = paste0("Activate integrative analysis. If FALSE (the default), script will assume ",
+                    "only one sample.")),
   optparse::make_option("--saveRDS", type = "logical", default = FALSE, action = "store_true",
             help = "Save final RDS object."),
   optparse::make_option("--loadRDS", type = "logical", default = FALSE, action = "store_true",
-            help = "Load RDS object instead of re-processing the entire experiment.
-            Loads it from default pipeline saving location."),
+            help = paste0("Load RDS object instead of re-processing the entire experiment. ",
+            "Loaded from default pipeline saving location.")),
   optparse::make_option("--filter_dataset", type = "character", default = "",
             help = "Filter imported counts according to string"),
   optparse::make_option("--ref_filter", type = "character", default = "",
-            help = "Filter SingleR reference according to string")
+            help = "Filter SingleR reference according to string"),
+  optparse::make_option("--sketch", type = "logical", default = FALSE, action = "store_true",
+            help = "Sketch experiment."),
+  optparse::make_option("--sketch_ncells", type = "integer", default = 5000,
+            help = paste0("An integer. If estimated cell number optimal value for sketching is smaller",
+  " than this number, sketching will not be performed. Default value of 5000, recommended by Seurat tutorials.")),
+  optparse::make_option("--sketch_pct", type = "numeric", default = 12,
+            help = paste0("A numeric. Percentage of total cells to consider representative of the",
+  " experiment. Default 12, as suggested by sketching tutorial")),
+  optparse::make_option("--sketch_method", type = "character", default = 12,
+            help = paste0("Score calculation method to select cells in sketch"))
 )  
+
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
@@ -151,6 +164,12 @@ if(opt$integrate) {
   out_suffix <- "integration_report.html"
 } else {
   out_suffix <- "sample_report.html"
+}
+
+if(opt$int_method == "") {
+  int_method = "RPCA"
+} else {
+  int_method = opt$int_method
 }
 
 if(opt$target_genes == ""){
@@ -287,7 +306,9 @@ if(opt$loadRDS) {
                                   output = opt$output, integrate = opt$integrate, query = unlist(target_genes),
                                   reduce = opt$reduce, save_RDS = opt$saveRDS, SingleR_ref = SingleR_ref,
                                   ref_label = opt$ref_label, ref_de_method = ref_de_method, ref_n = ref_n,
-                                  BPPARAM = BPPARAM, doublet_list = doublet_list, integration_method = "Harmony")
+                                  BPPARAM = BPPARAM, doublet_list = doublet_list, integration_method = int_method,
+                                  sketch = opt$sketch, sketch_ncells = opt$sketch_ncells, sketch_pct = opt$sketch_pct,
+                                  sketch_method = opt$sketch_method)
 }
 
 message("--------------------------------------------")
