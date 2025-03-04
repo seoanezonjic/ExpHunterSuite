@@ -318,8 +318,8 @@ multi_topGOTest <- function(funsys, genes_list, nodeSize = 5, org_db,
     geneSel <- get_default_geneSel(statistic)
 
   genes_list <- lapply(genes_list, function(l_genes){
-    if (is.numeric(l_genes)) { 
-      if (!statistic %in%  c("ks", "t"))
+    if(is.numeric(l_genes)) { 
+      if(!statistic %in%  c("ks", "t"))
         stop("ERROR: numeric scores can be only computed using 'ks' and 't' statistic")
       
       return(l_genes)      
@@ -358,16 +358,19 @@ multi_topGOTest <- function(funsys, genes_list, nodeSize = 5, org_db,
     if (length(GOdata@graph@nodes) == 0)
       return(data.frame())
 
-    result <- topGO::runTest(GOdata, algorithm = algorithm, 
-    statistic = statistic, scoreOrder = scoreOrder)
+      result <- topGO::runTest(GOdata, algorithm = algorithm, 
+      statistic = statistic, scoreOrder = scoreOrder)
     res_table <- topGO::GenTable(GOdata, 
                                  p.value = result,
                                  topNodes = length(result@score), 
                                  format.FUN = function(x, dig, eps){x})
     if(clean_parentals)
       res_table <- clean_topGO_parentals(res_table, funsys, p_value_cutoff)
-    
-    res_table$fdr <- p.adjust(res_table$p.value, method = "BH", n = length(res_table$p.value))
+    if("p.value" %in% colnames(res_table)) {
+      res_table$fdr <- p.adjust(res_table$p.value, method = "BH", n = length(res_table$p.value))  
+    } else {
+      res_table$fdr <- NA_real_
+    }
     res_table
   
   }, workers = workers, task_size = task_size )
