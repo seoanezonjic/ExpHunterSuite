@@ -655,7 +655,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
 #' @examples
 #' data(pbmc_tiny)
 #' get_top_genes(seu = pbmc_tiny, top = 5, assay = "RNA", layer = "counts",
-#                sample_col = "orig.ident")
+#'               sample_col = "orig.ident")
 #' @export
 
 get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
@@ -935,13 +935,27 @@ find_doublets <- function(seu) {
 sketch_sc_experiment <- function(seu, min.ncells = 5000, assay = "RNA",
                         method = "LeverageScore", sketched.assay = "sketch",
                         cell.pct = 12, force.ncells = NA_integer_) {
+  input_cells <- ncol(seu)
   if(is.na(force.ncells)) {
+    if(input_cells < 60000) {
+      message(paste0("Fewer than thirty thousand cells detected in experiment.",
+                    " Skipping sketch."))
+      return(seu)
+    }
     ncells <- ceiling(mean(table(seu$sample)) * cell.pct / 100)
+    total_selected <- ncells * length(unique(seu$sample))
+    if(total_selected < 30000) {
+      message(paste0("Selected fewer than thirty thousand cells to sketch. ",
+        "Increasing to thirty thousand."))
+      ncells <- ceiling(30000 / length(unique(seu$sample)))
+    }
   } else {
+    message("force.ncells has non-empty value. Forcing sketch.")
     ncells <- force.ncells
+    min.ncells <- 0
   }
   if(ncells < min.ncells) {
-    message("Optimal number of cells is lower than minimum, skipping sketch")
+    message("Optimal number of cells is lower than minimum, skipping sketch.")
     return(seu)
   } else {
     seu <- Seurat::SketchData(object = seu, ncells = ncells, method = method,

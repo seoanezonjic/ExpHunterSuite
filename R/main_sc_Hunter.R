@@ -120,7 +120,8 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                            ref_n = NULL, BPPARAM = NULL, doublet_list = NULL,
                            integration_method = "Harmony", sketch = FALSE,
                            sketch_pct = 12, sketch_ncells = 5000,
-                           sketch_method = "LeverageScore"){
+                           sketch_method = "LeverageScore",
+                           force_ncells = NA_integer_){
   check_sc_input(metadata = seu@meta.data, DEG_columns = DEG_columns)
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                doublet_list = doublet_list)
@@ -153,16 +154,21 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                                       selection.method = "vst", assay = "RNA")
   if(sketch) {
     message("Sketching sample data")
+    sketch_start <- Sys.time()
     seu <- sketch_sc_experiment(seu = seu, min.ncells = sketch_ncells,
       assay = "RNA", method = sketch_method, sketched.assay = "sketch",
-      cell.pct = sketch_pct)
-    if("sketch" %in% names(seu@assays)) {
-      assay <- "sketch"
-      seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs, verbose = verbose,
-                                      selection.method = "vst", assay = assay)
-    } else {
-      assay <- "RNA"
+      cell.pct = sketch_pct, force.ncells = force_ncells)
+    sketch_end <- Sys.time()
+    if(verbose) {
+      message(paste0("Sketching time: ", sketch_end-sketch_start))
     }
+  }
+  if("sketch" %in% names(seu@assays)) {
+    assay <- "sketch"
+    seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs,
+                   verbose = verbose, selection.method = "vst", assay = assay)
+  } else {
+    assay <- "RNA"
   }
   message('Scaling data')
   scale_start <- Sys.time()
