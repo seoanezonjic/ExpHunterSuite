@@ -152,7 +152,7 @@ end.rcode-->
                               t_id = "dimreds", clickable_text = ""))
     cat(plotter$create_title("UMAP", "full_umap", hlevel = 2, indexable = TRUE, clickable = FALSE,
                               t_id = "full_umap", clickable_text = ""))
-    reduction <- "umap"
+    reduction <- ifelse("umap.full" %in% names(plotter$hash_vars$seu@reductions), yes = "umap.full", no = "umap")
     label <- TRUE
     group.by <- split.by <- NULL
     cat(plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE, plotting_function = Custom_DimPlot),
