@@ -14,7 +14,14 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   main_path_script <- dirname(full.fpath)
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
-  devtools::load_all(root_path)
+  if(Sys.getenv("load_source") == "") {
+    devtools::load_all(root_path)  
+  } else {
+    custom_libraries <- c('sc_library.R', 'main_sc_Hunter.R')
+    for (lib in custom_libraries){
+      source(file.path(root_path, 'R', lib))
+    }
+  }
   template_folder <- file.path(root_path, 'inst', 'templates')
 }else{
   require('ExpHunterSuite')
@@ -114,19 +121,26 @@ option_list <- list(
   optparse::make_option("--sketch", type = "logical", default = FALSE, action = "store_true",
             help = "Sketch experiment."),
   optparse::make_option("--sketch_ncells", type = "integer", default = 5000,
-            help = paste0("An integer. If estimated cell number optimal value for sketching is smaller",
-  " than this number, sketching will not be performed. Default value of 5000, recommended by Seurat tutorials.")),
+            help = "An integer. If estimated cell number optimal value for sketching is smaller"),
+  optparse::make_option("--force_ncells", type = "integer", default = NA_integer_,
+            help = "An integer. Skip all sketching tests and force to sketch this many cells from each sample."),
   optparse::make_option("--sketch_pct", type = "numeric", default = 12,
             help = paste0("A numeric. Percentage of total cells to consider representative of the",
   " experiment. Default 12, as suggested by sketching tutorial")),
   optparse::make_option("--sketch_method", type = "character", default = 12,
             help = paste0("Score calculation method to select cells in sketch"))
-)  
+)
 
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
 message(paste0("Analyzing ", opt$name))
+
+if(opt$force_ncells == "") {
+  force_ncells <- NA_integer_
+} else {
+  force_ncells <- opt$force_ncells
+}
 
 if(opt$cpu > 1) {
   BiocParallel::register(BiocParallel::MulticoreParam(opt$cpu))
@@ -297,6 +311,8 @@ if(opt$loadRDS) {
   final_results <- readRDS(file)
 } else {
   message("Analyzing seurat object")
+  save.image('Testing.RData')
+  stop('test')
   final_results <- main_sc_Hunter(seu = seu, cluster_annotation = cluster_annotation, name = opt$name,
                                   ndims = opt$ndims, resolution = opt$resolution, subset_by = int_columns,
                                   cell_annotation = cell_annotation, DEG_columns = DEG_columns,
@@ -308,7 +324,7 @@ if(opt$loadRDS) {
                                   ref_label = opt$ref_label, ref_de_method = ref_de_method, ref_n = ref_n,
                                   BPPARAM = BPPARAM, doublet_list = doublet_list, integration_method = int_method,
                                   sketch = opt$sketch, sketch_ncells = opt$sketch_ncells, sketch_pct = opt$sketch_pct,
-                                  sketch_method = opt$sketch_method)
+                                  sketch_method = opt$sketch_method, force_ncells = force_ncells)
 }
 
 message("--------------------------------------------")
