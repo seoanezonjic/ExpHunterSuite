@@ -311,8 +311,6 @@ if(opt$loadRDS) {
   final_results <- readRDS(file)
 } else {
   message("Analyzing seurat object")
-  save.image('Testing.RData')
-  stop('test')
   final_results <- main_sc_Hunter(seu = seu, cluster_annotation = cluster_annotation, name = opt$name,
                                   ndims = opt$ndims, resolution = opt$resolution, subset_by = int_columns,
                                   cell_annotation = cell_annotation, DEG_columns = DEG_columns,
