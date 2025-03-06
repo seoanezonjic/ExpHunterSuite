@@ -38,7 +38,8 @@ main_sc_Hunter(
   sketch = FALSE,
   sketch_pct = 12,
   sketch_ncells = 5000,
-  sketch_method = "LeverageScore"
+  sketch_method = "LeverageScore",
+  force_ncells = NA_integer_
 )
 }
 \arguments{

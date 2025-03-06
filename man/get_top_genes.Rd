@@ -40,4 +40,5 @@ union of these genes.
 \examples{
 data(pbmc_tiny)
 get_top_genes(seu = pbmc_tiny, top = 5, assay = "RNA", layer = "counts",
+              sample_col = "orig.ident")
 }
