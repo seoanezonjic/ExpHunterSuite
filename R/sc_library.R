@@ -704,6 +704,48 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
   return(res)
 }
 
+get_expression_ncells <- function(seu, layer = "counts", min_counts = 10,
+                                  min_cells = 1) {
+  if("cell_type" %in% colnames(seu@meta.data)) {
+    meta <- seu$cell_type
+  } else {
+    meta <- seu$seurat_clusters
+  }
+  idents <- as.character(unique(meta))
+  matrices <- vector(mode = "list", length = length(idents))
+  names(matrices) <- idents
+  for(ident in idents) {
+    ident_seu <- seu[, meta == ident]
+    matrices[[ident]] <- SeuratObject::GetAssayData(ident_seu, layer = layer)
+  }
+  matrices <- lapply(matrices, .clean_low_counts, min_counts = min_counts)
+  ft_matrices <- .process_matrix_list(matrices)
+  ncell_matrices <- .process_matrix_list(matrices, .is_expressed_matrix,
+                                         min_counts = min_counts)
+  return(list(ft_res = ft_matrices, ncell_res = ncell_matrices))
+}
+
+.clean_low_counts <- function(matrix, min_counts = 10) {
+  matrix[matrix < min_counts] <- 0
+  return(matrix)
+}
+
+.is_expressed_matrix <- function(matrix, min_counts = 1) {
+  matrix[matrix >= min_counts] <- 1
+  return(matrix)
+}
+
+.process_matrix_list <- function(matrix_list, processing_function = NULL,
+                                 min_counts = 0) {
+  if(!is.null(processing_function)) {
+    matrix_list <- lapply(matrix_list, processing_function, min_counts = min_counts)
+  }
+  res <- lapply(matrix_list, Matrix::rowSums)
+  res <- do.call(rbind, res)
+  res <- res[, Matrix::colSums(res) > 0]
+  return(as.data.frame(res))
+}
+
 #' breakdown_query
 #' breaks down the expression of a list of query genes by
 #' the specified parameter.
