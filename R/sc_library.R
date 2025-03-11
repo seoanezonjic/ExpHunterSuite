@@ -704,6 +704,18 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
   return(res)
 }
 
+#' get_fc_vs_ncells
+#' takes a seurat object and a list of differentially expressed gene data
+#' frames, and converts them to two heatmaps with the same dimensions. The first
+#' contains the amount of cells of each type that express each gene, and the
+#' second the log2FC of said gene for every given cell type.
+#'
+#' @param seu Input seurat object.
+#' @param DEG_list List of differentially expressed genes per cell type.
+#' @param min_avg_log2FC Minimum absolute log2FC cutoff.
+#' @param p_val_cutoff Max adjusted p value cutoff.
+#' @param min_counts Minimum gene counts to consider a gene as expressed.
+
 get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
                              p_val_cutoff = 0.01, min_counts = 1) {
   if("cell_type" %in% colnames(seu@meta.data)) {
@@ -723,14 +735,15 @@ get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
     matrix <- SeuratObject::GetAssayData(ident_seu, layer = "counts")
     matrix <- matrix[rownames(matrix) %in% union_DEGenes, ]
     matrices[[ident]] <- matrix
-    DEG_matrices[[ident]] <- .process_DEG_matrix(DEG_list[[ident]],
+    DEG_matrices[[ident]] <- .process_DEG_matrix(DEG_matrix = DEG_list[[ident]],
                    min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff,
                    genes_list = union_DEGenes, ident = ident)
   }
   DEG_df <- do.call(rbind, DEG_matrices)
   ncell_df <- .process_matrix_list(matrices, .is_expressed_matrix,
                                    min_counts = min_counts)
-  return(list(DEG_df = DEG_df, ncell_df = ncell_df))
+  return(list(DEG_df = DEG_df[, order(colnames(DEG_df))],
+              ncell_df = ncell_df[, order(colnames(ncell_df))]))
 }
 
 .process_DEG_matrix <- function(DEG_matrix, min_avg_log2FC = 0.2, ident = NULL,
