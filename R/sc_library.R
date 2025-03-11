@@ -704,8 +704,8 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
   return(res)
 }
 
-get_expression_ncells <- function(seu, layer = "counts", min_counts = 10,
-                                  min_cells = 1) {
+get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
+                             p_val_cutoff = 0.01, min_counts = 1) {
   if("cell_type" %in% colnames(seu@meta.data)) {
     meta <- seu$cell_type
   } else {
@@ -714,20 +714,52 @@ get_expression_ncells <- function(seu, layer = "counts", min_counts = 10,
   idents <- as.character(unique(meta))
   matrices <- vector(mode = "list", length = length(idents))
   names(matrices) <- idents
+  DEG_matrices <- matrices
+  DEG_list$global <- NULL
+  union_DEGenes <- unique(do.call(c, lapply(DEG_list, function(matrix)
+                          return(rownames(matrix)))))
   for(ident in idents) {
     ident_seu <- seu[, meta == ident]
-    matrices[[ident]] <- SeuratObject::GetAssayData(ident_seu, layer = layer)
+    matrix <- SeuratObject::GetAssayData(ident_seu, layer = "counts")
+    matrix <- matrix[rownames(matrix) %in% union_DEGenes, ]
+    matrices[[ident]] <- matrix
+    DEG_matrices[[ident]] <- .process_DEG_matrix(DEG_list[[ident]],
+                   min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff,
+                   genes_list = union_DEGenes, ident = ident)
   }
-  matrices <- lapply(matrices, .clean_low_counts, min_counts = min_counts)
-  ft_matrices <- .process_matrix_list(matrices)
-  ncell_matrices <- .process_matrix_list(matrices, .is_expressed_matrix,
-                                         min_counts = min_counts)
-  return(list(ft_res = ft_matrices, ncell_res = ncell_matrices))
+  DEG_df <- do.call(rbind, DEG_matrices)
+  ncell_df <- .process_matrix_list(matrices, .is_expressed_matrix,
+                                   min_counts = min_counts)
+  return(list(DEG_df = DEG_df, ncell_df = ncell_df))
 }
 
-.clean_low_counts <- function(matrix, min_counts = 10) {
-  matrix[matrix < min_counts] <- 0
-  return(matrix)
+.process_DEG_matrix <- function(DEG_matrix, min_avg_log2FC = 0.2, ident = NULL,
+                                p_val_cutoff = 0.01, genes_list = NULL) {
+  DEG_matrix <- DEG_matrix[, c("avg_log2FC", "p_val_adj", "gene")]
+  DEG_matrix$ident <- ident
+  rownames(DEG_matrix) <- NULL
+  DEG_matrix <- DEG_matrix[abs(DEG_matrix$avg_log2FC) >= min_avg_log2FC, ]
+  if(min(DEG_matrix$p_val_adj > p_val_cutoff)) {
+    warning("Min adjusted p-value is higher than cutoff. Skipping filter")
+  } else {
+    DEG_matrix <- DEG_matrix[abs(DEG_matrix$p_val_adj) <= p_val_cutoff, ]
+  }
+  if(!is.null(genes_list)) {
+    missing <- which(!genes_list %in% DEG_matrix$gene)
+    missing_df <- data.frame(matrix(data = 0, ncol = ncol(DEG_matrix),
+                                    nrow = length(missing)))
+    colnames(missing_df) <- colnames(DEG_matrix)
+    missing_df$gene <- genes_list[missing]
+    missing_df$ident <- ident
+    DEG_matrix <- rbind(DEG_matrix, missing_df)
+  }
+  DEG_matrix$p_val_adj <- NULL
+  DEG_matrix <- DEG_matrix[order(DEG_matrix$gene), ]
+  res <- data.frame(matrix(ncol = nrow(DEG_matrix), nrow = 1))
+  colnames(res) <- DEG_matrix$gene
+  rownames(res) <- ident
+  res[1, ] <- DEG_matrix$avg_log2FC
+  return(res)
 }
 
 .is_expressed_matrix <- function(matrix, min_counts = 1) {
@@ -736,7 +768,7 @@ get_expression_ncells <- function(seu, layer = "counts", min_counts = 10,
 }
 
 .process_matrix_list <- function(matrix_list, processing_function = NULL,
-                                 min_counts = 0) {
+                                 min_counts = 1) {
   if(!is.null(processing_function)) {
     matrix_list <- lapply(matrix_list, processing_function, min_counts = min_counts)
   }
