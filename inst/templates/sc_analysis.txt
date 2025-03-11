@@ -5,6 +5,7 @@
     query <- plotter$hash_vars$query
     markers <- plotter$hash_vars$markers
     DEG_list <- plotter$hash_vars$DEG_list
+    DEG_metrics_list <- plotter$hash_vars$DEG_metrics_list
     
     Custom_DotPlot <- function(seu) {
         if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
@@ -194,6 +195,23 @@ end.rcode-->
     cat(plotter$prettify_div(plotter$heatmap(list(id = "clusters_pct", title = "Cell type percentage by sample",
                                              header = NULL, text = FALSE, row_names = NULL,
                                              transpose = TRUE)), preset = "magic"))
+end.rcode-->
+
+<!--begin.rcode DEG_metrics, eval = length(DEG_metrics_list) > 0
+    cat(plotter$create_title("Differential expression metrics", "DEG_metrics", hlevel = 1, indexable = TRUE,
+                          clickable = FALSE, t_id = "DEG_metrics", clickable_text = ""))
+    for(i in seq(length(DEG_metrics_list))) {
+        condition <- names(DEG_metrics_list)[i]
+        condition_metrics <- DEG_metrics_list[[condition]]
+        plotter$hash_vars$condition_FCs <- condition_metrics$DEG_df
+        plotter$hash_vars$condition_ncells <- condition_metrics$ncell_df
+        cat(plotter$create_title(paste0("DEGs metrics for condition ", condition), paste0(condition, "_DEG_metrics"), hlevel = 2,
+                     indexable = TRUE, clickable = FALSE, t_id = paste0(condition, "_DEG_metrics"), clickable_text = ""))
+        cat(plotter$prettify_div(plotter$heatmap(list(id = "condition_FCs", header = FALSE, row_names = FALSE, text = "dynamic",
+                                             extra_data = list(id ="condition_ncells", header = FALSE, row_names = FALSE, text = "dynamic"),
+                                             config = list(sizeLegendTitle = "Number of cells"),
+                                             title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
+    }
 end.rcode-->
 
 <!--begin.rcode DEG_analysis, eval = length(DEG_list) > 0
