@@ -129,12 +129,14 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     seu <- subset(qc, subset = qc == 'Pass')
     aggr.ref <- FALSE
     fine.tune <- TRUE
+    k.weight <- NULL
   } else {
     message(paste0("Reduce argument is set to TRUE. Skipping QC subsetting. ",
                    "Updating SingleR configuration"))
     seu <- qc
     aggr.ref <- TRUE
     fine.tune <- FALSE
+    k.weight <- 42
   }
   if(integrate) {
     message(paste0("Splitting seurat object by sample."))
@@ -186,7 +188,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     seu <- Seurat::IntegrateLayers(object = seu, orig.reduction = "pca",
       new.reduction = integration_method, verbose = FALSE, dims = seq(1, ndims),
       method = paste0(integration_method, "Integration"), assay = assay,
-      scale.layer = "scale.data")
+      scale.layer = "scale.data", k.weight = k.weight)
     reduction <- integration_method
   }
   seu <- Seurat::FindNeighbors(object = seu, dims = seq(1, ndims),
@@ -282,12 +284,16 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     SingleR_annotation <- NULL
   }
   if("sketch" %in% names(seu@assays)) {
+    refdata <- list(seurat_clusters = "seurat_clusters",
+                    cell_type = "cell_type")
+    refdata <- refdata[names(refdata) %in% colnames(seu@meta.data)]
     message("Projecting sketched data")
     seu[["sketch"]] <- split(seu[["sketch"]], f = seu$sample)
     seu <- Seurat::ProjectIntegration(object = seu, sketched.assay = "sketch",
       assay = "RNA", reduction = reduction)
     seu <- Seurat::ProjectData(object = seu, sketched.assay = "sketch",
-      assay = "RNA", dims = seq(1, ndims), full.reduction = paste0(reduction, ".full"),
+      assay = "RNA", dims = seq(1, ndims), refdata = refdata,
+      full.reduction = paste0(reduction, ".full"),
       sketched.reduction = paste0(reduction, ".full")) ## WHY 30 dims???
     seu <- Seurat::RunUMAP(seu, reduction = paste0(reduction, ".full"),
       dims = seq(1, ndims), reduction.name = "umap.full", reduction.key = "UMAP_full_")
@@ -311,6 +317,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     DEG_conditions <- unlist(strsplit(DEG_columns, split = ","))
     DEG_list <- vector(mode = "list", length = length(DEG_conditions))
     names(DEG_list) <- DEG_conditions
+    DEG_metrics_list <- DEG_list
     subset_by <- ifelse("cell_type" %in% colnames(seu@meta.data),
                         yes = "cell_type", no = "seurat_clusters")
     for(condition in DEG_conditions) {
@@ -318,6 +325,10 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
       condition_DEGs <- get_sc_markers(seu = seu, cond = condition, DEG = TRUE,
                                        subset_by = subset_by, verbose = verbose)
       DEG_list[[condition]] <- condition_DEGs
+      message("Extracting DEG cell metrics")
+      DEG_metrics_list[[condition]] <- get_fc_vs_ncells(seu = seu,
+        DEG_list = condition_DEGs$markers, min_avg_log2FC = 0.2, p_val_cutoff = 0.01,
+        min_counts = 1)
     }
     if(length(subset_by) == 2) {
       message(paste0("Analysing DEGs by subgroups. Subsetting by condition: ",
@@ -347,6 +358,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   final_results$markers <- markers
   final_results$SingleR_annotation <- SingleR_annotation
   final_results$DEG_list <- DEG_list
+  final_results$DEG_metrics_list <- DEG_metrics_list
   final_results$subset_seu <- subset_seu
   final_results$subset_DEGs <- subset_DEGs
   final_results$integrate <- integrate
@@ -410,11 +422,11 @@ write_sc_report <- function(final_results, output = getwd(), name = NULL,
   dir.create(tmp_folder)
   container <- list(seu = final_results$seu, qc = final_results$qc,
                     subset_by = subset_by, use_canvas = use_canvas,
-                    DEG_list = final_results$DEG_list,
+                    DEG_list = final_results$DEG_list, query = query,
+                    DEG_metrics_list = final_results$DEG_metrics_list,
                     marker_meta = final_results$marker_meta,
                     subset_seu = final_results$subset_seu,
                     subset_DEGs = final_results$subset_DEGs,
-                    query = query,
                     sample_qc_pct = final_results$sample_qc_pct,
                     clusters_pct = final_results$clusters_pct,
                     query_exp = final_results$query_exp,
