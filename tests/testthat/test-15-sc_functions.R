@@ -389,3 +389,28 @@ test_that("check_sc_input fails if one column passes and the other does not", {
                DEG_columns = c("groups", "orig.ident")), "\"orig.ident\"")
 })
 
+test_that("get_fc_vs_ncells works as intended", {
+  test_pbmc <- pbmc_tiny
+  test_pbmc$cell_type <- "g1"
+  test_pbmc$cell_type[8:15] <- "g2"
+  DEG_g1 <- data.frame(avg_log2FC = c(0, 0.2, 1, -0.1),
+                       p_val_adj = c(0, 0, 0, 0),
+                       gene = c("PPBP", "IGLL5", "VDAC3", "GNLY"))
+  rownames(DEG_g1) <- DEG_g1$gene
+  DEG_g2 <- data.frame(avg_log2FC = c(1, 0.2, 0.2, -0.4),
+                       p_val_adj = c(0, 1, 0, 1),
+                       gene = c("PPBP", "IGLL5", "VDAC3", "GNLY"))
+  rownames(DEG_g2) <- DEG_g2$gene
+  DEG_list <- list(global = "This should not exist", g1 = DEG_g1, g2 = DEG_g2)
+  output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
+                             min_avg_log2FC = 0.2, p_val_cutoff = 0.01,
+                             min_counts = 1)
+  expected_DEGs <- data.frame(GNLY = rep(0, 2), IGLL5 = c(0.2, 0.0),
+                              PPBP = c(0, 1), VDAC3 = c(1.0, 0.2))
+  expected_ncells <- data.frame(GNLY = 1:0, IGLL5 = c(0, 2), PPBP = rep(1, 2),
+                                VDAC3 = rep(2, 2))
+  rownames(expected_DEGs) <- c("g1", "g2")
+  rownames(expected_ncells) <- c("g1", "g2")
+  expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
+  expect_equal(output, expected)
+})
