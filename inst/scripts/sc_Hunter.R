@@ -136,7 +136,7 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
 message(paste0("Analyzing ", opt$name))
 
-if(opt$force_ncells == "") {
+if(is.na(opt$force_ncells)) {
   force_ncells <- NA_integer_
 } else {
   force_ncells <- opt$force_ncells
