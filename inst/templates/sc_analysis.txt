@@ -207,8 +207,8 @@ end.rcode-->
         plotter$hash_vars$condition_ncells <- condition_metrics$ncell_df
         cat(plotter$create_title(paste0("DEGs metrics for condition ", condition), paste0(condition, "_DEG_metrics"), hlevel = 2,
                      indexable = TRUE, clickable = FALSE, t_id = paste0(condition, "_DEG_metrics"), clickable_text = ""))
-        cat(plotter$prettify_div(plotter$heatmap(list(id = "condition_FCs", header = FALSE, row_names = FALSE, text = "dynamic",
-                                             extra_data = list(id ="condition_ncells", header = FALSE, row_names = FALSE, text = "dynamic"),
+        cat(plotter$prettify_div(plotter$heatmap(list(id = "condition_FCs", header = NULL, row_names = NULL, text = "dynamic",
+                                             extra_data = list(id ="condition_ncells", header = NULL, row_names = NULL, text = "dynamic"),
                                              config = list(sizeLegendTitle = "Number of cells"),
                                              title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
     }
