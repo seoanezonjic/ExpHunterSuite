@@ -740,10 +740,14 @@ get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
                    genes_list = union_DEGenes, ident = ident)
   }
   DEG_df <- do.call(rbind, DEG_matrices)
+  ## Have to remove zeroes again, not in process_DEG_matrix, because we want to
+  ## remove genes set to zero in ALL idents, not ident by ident
+  DEG_df <- DEG_df[, colSums(DEG_df) > 0]
   ncell_df <- .process_matrix_list(matrices, .is_expressed_matrix,
                                    min_counts = min_counts)
+  ncell_df <- ncell_df[, colnames(ncell_df) %in% colnames(DEG_df)]
   return(list(DEG_df = DEG_df[, order(colnames(DEG_df))],
-              ncell_df = ncell_df[, order(colnames(ncell_df))]))
+              ncell_df = data.frame(ncell_df[, order(colnames(ncell_df))])))
 }
 
 .process_DEG_matrix <- function(DEG_matrix, min_avg_log2FC = 0.2, ident = NULL,

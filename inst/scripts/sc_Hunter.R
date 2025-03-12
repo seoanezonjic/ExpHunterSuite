@@ -14,13 +14,16 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   main_path_script <- dirname(full.fpath)
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
-  if(Sys.getenv("load_source") == "") {
-    devtools::load_all(root_path)  
-  } else {
+  if(Sys.getenv("singularity") == "TRUE") {
+    devtools::load_all(Sys.getenv("HTMLREPORT_PATH"))
     custom_libraries <- c('sc_library.R', 'main_sc_Hunter.R')
+    source_folder <- file.path(find.package("htmlreportR"), "inst")
     for (lib in custom_libraries){
       source(file.path(root_path, 'R', lib))
     }
+  } else {
+    source_folder <- NULL
+    devtools::load_all(root_path)
   }
   template_folder <- file.path(root_path, 'inst', 'templates')
 }else{
@@ -128,7 +131,11 @@ option_list <- list(
             help = paste0("A numeric. Percentage of total cells to consider representative of the",
   " experiment. Default 12, as suggested by sketching tutorial")),
   optparse::make_option("--sketch_method", type = "character", default = 12,
-            help = paste0("Score calculation method to select cells in sketch"))
+            help = paste0("Score calculation method to select cells in sketch")),
+  optparse::make_option("--DEG_p_val_cutoff", type = "numeric", default = 0.5,
+            help = paste0("Adjusted p-val cutoff for significant DEGs")),
+  optparse::make_option("--min_avg_log2FC", type = "numeric", default = 5e-3,
+            help = paste0("Avg log2fc cutoff for significant DEGs"))
 )
 
 
@@ -217,6 +224,17 @@ if(opt$DEG_columns == "") {
 } else {
   message("DEG_columns set to \"none\". DEG analysis inactive.")
   DEG_columns <- NULL
+}
+if(opt$DEG_p_val_cutoff == "") {
+  DEG_p_val_cutoff <- 5e-3
+} else {
+  DEG_p_val_cutoff <- opt$DEG_p_val_cutoff
+}
+
+if(opt$min_avg_log2FC == "") {
+  min_avg_log2FC <- 0.5
+} else {
+  min_avg_log2FC <- opt$min_avg_log2FC
 }
 
 # Input reading and integration variables setup
@@ -322,14 +340,15 @@ if(opt$loadRDS) {
                                   ref_label = opt$ref_label, ref_de_method = ref_de_method, ref_n = ref_n,
                                   BPPARAM = BPPARAM, doublet_list = doublet_list, integration_method = int_method,
                                   sketch = opt$sketch, sketch_ncells = opt$sketch_ncells, sketch_pct = opt$sketch_pct,
-                                  sketch_method = opt$sketch_method, force_ncells = force_ncells)
+                                  sketch_method = opt$sketch_method, force_ncells = force_ncells,
+                                  DEG_p_val_cutoff = DEG_p_val_cutoff, min_avg_log2FC = min_avg_log2FC)
 }
 
 message("--------------------------------------------")
 message("-------------Writing QC report--------------")
 message("--------------------------------------------")
 
-write_sc_report(final_results = final_results, template_folder = template_folder,
+write_sc_report(final_results = final_results, template_folder = template_folder, source_folder = source_folder,
                 template = "sc_quality_control.txt", output = file.path(opt$output, "report"),
                 query = unlist(target_genes), name = opt$name, out_name = "qc_report.html",
                 use_canvas = TRUE)
@@ -339,7 +358,7 @@ message("----------Writing analysis report-----------")
 message("--------------------------------------------")
 
 write_sc_report(final_results = final_results, template_folder = template_folder,
-                output = file.path(opt$output, "report"),
+                output = file.path(opt$output, "report"), source_folder = source_folder,
                 query = unlist(target_genes), name = opt$name,
                 subset_by = int_columns, cell_annotation = cell_annotation,
                 template = "sc_analysis.txt", out_name = out_suffix)

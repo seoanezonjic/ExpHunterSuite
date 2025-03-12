@@ -64,6 +64,10 @@
 #' tutorial.
 #' @param sketch_method A string. Method to use in score calculation for
 #' sketching.
+#' @param DEG_p_val_cutoff Adjusted p-val cutoff for significant DEGs.
+#' Default 5e-3.
+#' @param min_avg_log2FC Average log2fc cutoff for significant DEGs.
+#' Default 0.5.
 #' @export
 #' @examples
 #'  \dontrun{
@@ -78,7 +82,8 @@
 #'                   ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL,
 #'                   ref_n = NULL, BPPARAM = NULL, doublet_list = NULL,
 #'                   integration_method = "Harmony", sketch_pct = 12,
-#'                   sketch_ncells = 5000)
+#'                   sketch_ncells = 5000, DEG_p_val_cutoff = 5e-3,
+#'                   min_avg_log2FC = 0.5)
 #'  }
 #' @return final_results list. Contains multiple items:
 #' * qc: seurat object prior to filtering and analysis.
@@ -121,7 +126,8 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                            integration_method = "Harmony", sketch = FALSE,
                            sketch_pct = 12, sketch_ncells = 5000,
                            sketch_method = "LeverageScore",
-                           force_ncells = NA_integer_){
+                           force_ncells = NA_integer_,
+                           DEG_p_val_cutoff = 5e-3, min_avg_log2FC = 0.5){
   check_sc_input(metadata = seu@meta.data, DEG_columns = DEG_columns)
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                doublet_list = doublet_list)
@@ -296,7 +302,8 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
       full.reduction = paste0(reduction, ".full"),
       sketched.reduction = paste0(reduction, ".full")) ## WHY 30 dims???
     seu <- Seurat::RunUMAP(seu, reduction = paste0(reduction, ".full"),
-      dims = seq(1, ndims), reduction.name = "umap.full", reduction.key = "UMAP_full_")
+      dims = seq(1, ndims), reduction.name = "umap.full",
+      reduction.key = "UMAP_full_")
     Seurat::DefaultAssay(seu) <- "RNA"
     seu <- SeuratObject::JoinLayers(seu, assay = "RNA")
     seu[["sketch"]] <- NULL
@@ -327,8 +334,8 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
       DEG_list[[condition]] <- condition_DEGs
       message("Extracting DEG cell metrics")
       DEG_metrics_list[[condition]] <- get_fc_vs_ncells(seu = seu,
-        DEG_list = condition_DEGs$markers, min_avg_log2FC = 0.2, p_val_cutoff = 0.01,
-        min_counts = 1)
+        DEG_list = condition_DEGs$markers, min_avg_log2FC = min_avg_log2FC,
+        p_val_cutoff = DEG_p_val_cutoff, min_counts = minqcfeats)
     }
     if(length(subset_by) == 2) {
       message(paste0("Analysing DEGs by subgroups. Subsetting by condition: ",
@@ -459,8 +466,7 @@ check_sc_input <- function(metadata, DEG_columns){
   }
   if(any(!PASS)) {
     stop(paste0("ERROR. Please check DEG_columns have exactly two unique ",
-      "values. DEG_column(s) \"",
-      paste(names(PASS[PASS==FALSE]), collapse = "\", \""), "\" contain an invalid",
-      " number"))
+      "values. DEG_column(s) \"", paste(names(PASS[PASS==FALSE]),
+        collapse = "\", \""), "\" contain an invalid number."))
   }
 }
