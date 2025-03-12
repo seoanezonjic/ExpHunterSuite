@@ -119,18 +119,25 @@ write_general_pca <- function(pca_data, output_files, tag = ""){
   pca_res <- pca_data$dim_data_merged
   
   merged_metrics <- merge_dim_table_metrics(pca_res)
+  if (!is.null(merged_metrics))
+      write.table(merged_metrics, file = file.path(output_files, paste0(tag, "dim_metrics.txt")),sep = "\t", quote = FALSE, row.names=FALSE)
   
   dimnames(pca_data$pca_data$svd$V) <- dimnames(pca_data$pca_data$var$cor)
   write.table(pca_data$pca_data$svd$V, quote = FALSE, file = file.path(output_files, paste0(tag, "eigenvectors.txt")), sep = "\t")
-  write.table(merged_metrics, file = file.path(output_files, paste0(tag, "dim_metrics.txt")),sep = "\t", quote = FALSE, row.names=FALSE)
   hcpc_table <- pca_data$res.hcpc$call$X
   hcpc_table$samples <- rownames(hcpc_table)
   write.table(hcpc_table, file = file.path(output_files, paste0(tag, "hcpc.txt")),sep = "\t", quote = FALSE, row.names=FALSE)
-  
+  if (!is.null(pca_data$pca_data$var$cor)){
+    write.table(pca_data$pca_data$var$cor, file = file.path(output_files, paste0(tag, "pca_vars.txt")), quote = F, sep = "\t")
+  } else {
+    write.table(pca_data$pca_data$var$eta2, file = file.path(output_files, paste0(tag, "pca_vars.txt")), quote = F, sep = "\t")
+  }
+
 }
 
 merge_dim_table_metrics <- function(merged_dim_table){
-
+        if (is.null(merged_dim_table))
+            return(NULL)
         
         if(nrow(merged_dim_table$qualitative) > 0) {
             names(merged_dim_table$qualitative)[names(merged_dim_table$qualitative) == "R2"] <- "metric"
@@ -768,4 +775,21 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
   # temp files not deleted properly in parallel 
   unlink(list.files(output_path, pattern="_temp$", full.names=TRUE), 
     recursive=TRUE)
+}
+
+
+render_multivar_report <- function(multivar_res, output_files,template_folder, string_factors = NULL, numeric_factors = NULL) {
+  source_folder <- find.package("htmlreportR")
+  if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' )
+    source_folder <- file.path(source_folder, "inst")
+
+  plotter <- htmlreportR:::htmlReport$new(title_doc = "PCA report", 
+                          container = multivar_res, 
+                          tmp_folder = file.path(normalizePath(output_files), "tmp"),
+                          src = source_folder,
+                          compress_obj = FALSE,
+                          type_index = "menu")
+  
+  plotter$build(file.path(template_folder, 'multivar_main.txt'))
+  plotter$write_report(file.path(opt$output_files, "PCA_report.html"))
 }

@@ -1,0 +1,92 @@
+
+<style>
+.content {
+    display: flex;
+    justify-content: center; /* Center horizontally */
+}
+.subcontent {
+    width: 50%; /* Set a width for the content */
+    justify-content: center; /* Horizontally center contents */    
+}
+</style>
+<div class="content">
+<div class="subcontent">
+
+
+<!--begin.rcode general_multivariate_config
+    individual_report <- length(plotter$hash_vars$act_groups) == 1 
+
+    cat(plotter$create_title(paste0("<b>Multivar_Mine Report</b>"), "main_title", hlevel = 1))
+
+
+
+    target <- plotter$hash_vars$target  
+    plotter$hash_vars$last_title <- 1
+
+end.rcode-->
+
+
+<!--begin.rcode eval=individual_report
+
+plotter$hash_vars <- c(plotter$hash_vars, plotter$hash_vars[[plotter$hash_vars$act_groups]])
+plotter$hash_vars$multivar_type <- names(plotter$hash_vars$act_groups)
+called_from <- "multivar_ind"
+tmpl <- knitr::knit_expand(file.path(template_folder,"facto_miner.txt"))
+rendered_tmpl <- knitr::knit(text = tmpl, quiet = TRUE)
+cat(rendered_tmpl)
+
+end.rcode-->
+
+<!--begin.rcode eval=!individual_report
+plotter$hash_vars$last_title <- 2
+for(i_multivar in seq(1, length(plotter$hash_vars$act_groups))){
+
+    an_name <- plotter$hash_vars$act_groups[i_multivar]
+    an_type <- names(plotter$hash_vars$act_groups[i_multivar])
+    plotter$hash_vars$pca_data <- plotter$hash_vars[[an_name]]$pca_data    
+    plotter$hash_vars$dim_to_keep <- plotter$hash_vars[[an_name]]$dim_to_keep
+    plotter$hash_vars$dim_data <- plotter$hash_vars[[an_name]]$dim_data
+    plotter$hash_vars$dim_data_merged <- plotter$hash_vars[[an_name]]$dim_data_merged
+    plotter$hash_vars$res.hcpc <- plotter$hash_vars[[an_name]]$res.hcpc
+
+    title <- paste0("<b>", an_name," (", an_type, ")</b>")
+
+    cat(plotter$create_title(title, paste0("ind_title_", an_name), 
+            hlevel = 2, indexable = TRUE, clickable = TRUE, t_id = an_name, clickable_text =""))
+    plotter$hash_vars$multivar_type <- an_type
+    called_from <- paste0("multivar_ind_", an_name)
+
+    cat(paste0("<div id='",an_name,"' style='visibility: hidden; height: 1px;'>"))
+
+        tmpl <- knitr::knit_expand(file.path(template_folder, "facto_miner.txt"))
+        rendered_tmpl <- knitr::knit(text = tmpl, quiet = TRUE)
+        cat(rendered_tmpl)
+    cat("</div>")
+
+}
+
+end.rcode-->
+<!--begin.rcode eval=!individual_report
+    plotter$hash_vars$last_title <- 2
+    plotter$hash_vars$pca_data <- plotter$hash_vars$mfa$pca_data
+    plotter$hash_vars$dim_to_keep <- plotter$hash_vars$mfa$dim_to_keep
+    plotter$hash_vars$dim_data <- plotter$hash_vars$mfa$dim_data
+    plotter$hash_vars$dim_data_merged <- plotter$hash_vars$mfa$dim_data_merged
+    plotter$hash_vars$res.hcpc <- plotter$hash_vars$mfa$res.hcpc
+
+    plotter$hash_vars$multivar_type <- "mfa"
+
+    cat(plotter$create_title("<b> Integrated Analysis (mfa)</b>", "integrated_analysis", 
+            hlevel = 2, indexable = TRUE, clickable = TRUE, t_id = "mfa", clickable_text =""))
+
+    called_from <- paste0("integrated_analysis")
+    cat("<div id='mfa' style='visibility: visible; height: auto;'>")
+        tmpl <- knitr::knit_expand(file.path(template_folder, "facto_miner.txt"))
+        rendered_tmpl <- knitr::knit(text = tmpl, quiet = TRUE)
+        cat(rendered_tmpl)
+    cat("</div>")
+
+end.rcode-->
+
+</div>
+</div>
