@@ -5,7 +5,7 @@
     query <- plotter$hash_vars$query
     markers <- plotter$hash_vars$markers
     DEG_list <- plotter$hash_vars$DEG_list
-    DEG_metrics_list <- plotter$hash_vars$DEG_metrics_list
+    DEG_query_list <- plotter$hash_vars$DEG_query_list
     
     Custom_DotPlot <- function(seu) {
         if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
@@ -197,16 +197,16 @@ end.rcode-->
                                              transpose = TRUE)), preset = "magic"))
 end.rcode-->
 
-<!--begin.rcode DEG_metrics, eval = length(DEG_metrics_list) > 0
-    cat(plotter$create_title("Differential expression metrics", "DEG_metrics", hlevel = 1, indexable = TRUE,
-                          clickable = FALSE, t_id = "DEG_metrics", clickable_text = ""))
-    for(i in seq(length(DEG_metrics_list))) {
-        condition <- names(DEG_metrics_list)[i]
-        condition_metrics <- DEG_metrics_list[[condition]]
+<!--begin.rcode DEG_query, eval = length(DEG_query_list) > 0
+    cat(plotter$create_title("Differential expression metrics", "DEG_query", hlevel = 1, indexable = TRUE,
+                          clickable = FALSE, t_id = "DEG_query", clickable_text = ""))
+    for(i in seq(length(DEG_query_list))) {
+        condition <- names(DEG_query_list)[i]
+        condition_metrics <- DEG_query_list[[condition]]
         plotter$hash_vars$condition_FCs <- condition_metrics$DEG_df
         plotter$hash_vars$condition_ncells <- condition_metrics$ncell_df
-        cat(plotter$create_title(paste0("DEGs metrics for condition ", condition), paste0(condition, "_DEG_metrics"), hlevel = 2,
-                     indexable = TRUE, clickable = FALSE, t_id = paste0(condition, "_DEG_metrics"), clickable_text = ""))
+        cat(plotter$create_title(paste0("DEGs metrics for condition ", condition), paste0(condition, "_DEG_query"), hlevel = 2,
+                     indexable = TRUE, clickable = FALSE, t_id = paste0(condition, "_DEG_query"), clickable_text = ""))
         cat(plotter$prettify_div(plotter$heatmap(list(id = "condition_FCs", header = NULL, row_names = NULL, text = "dynamic",
                                              extra_data = list(id ="condition_ncells", header = NULL, row_names = NULL, text = "dynamic"),
                                              config = list(sizeLegendTitle = "Number of cells"),
@@ -461,6 +461,23 @@ end.rcode-->
     genes_code <- paste(genes_code, collapse = "\n")
     genes_code <- paste(paragraph, genes_code, sep = "\n")
     cat(plotter$create_collapsable_container(id = "query_distrib", html_code = genes_code))
+end.rcode-->
+
+<!--begin.rcode DEG_query, eval = length(DEG_query_list) > 0
+    cat(plotter$create_title("Differential expression metrics of query genes", "DEG_query", hlevel = 1, indexable = TRUE,
+                          clickable = FALSE, t_id = "DEG_query", clickable_text = ""))
+    for(i in seq(length(DEG_query_list))) {
+        condition <- names(DEG_query_list)[i]
+        condition_metrics <- DEG_query_list[[condition]]
+        plotter$hash_vars$condition_FCs <- condition_metrics$DEG_df
+        plotter$hash_vars$condition_ncells <- condition_metrics$ncell_df
+        cat(plotter$create_title(paste0("DEGs metrics for condition ", condition), paste0(condition, "_DEG_query"), hlevel = 2,
+                     indexable = TRUE, clickable = FALSE, t_id = paste0(condition, "_DEG_query"), clickable_text = ""))
+        cat(plotter$prettify_div(plotter$heatmap(list(id = "condition_FCs", header = NULL, row_names = NULL, text = "dynamic",
+                                             extra_data = list(id ="condition_ncells", header = NULL, row_names = NULL, text = "dynamic"),
+                                             config = list(sizeLegendTitle = "Number of cells"),
+                                             title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
+    }
 end.rcode-->
 
 <!--begin.rcode Query_patterns, eval = !is.null(plotter$hash_vars$query)
