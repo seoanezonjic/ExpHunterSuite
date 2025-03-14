@@ -135,7 +135,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     seu <- subset(qc, subset = qc == 'Pass')
     aggr.ref <- FALSE
     fine.tune <- TRUE
-    k.weight <- NULL
+    k.weight <- 100
   } else {
     message(paste0("Reduce argument is set to TRUE. Skipping QC subsetting. ",
                    "Updating SingleR configuration"))
@@ -325,6 +325,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     DEG_list <- vector(mode = "list", length = length(DEG_conditions))
     names(DEG_list) <- DEG_conditions
     DEG_metrics_list <- DEG_list
+    DEG_query_list <- DEG_list
     subset_by <- ifelse("cell_type" %in% colnames(seu@meta.data),
                         yes = "cell_type", no = "seurat_clusters")
     for(condition in DEG_conditions) {
@@ -333,9 +334,14 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                                        subset_by = subset_by, verbose = verbose)
       DEG_list[[condition]] <- condition_DEGs
       message("Extracting DEG cell metrics")
-      DEG_metrics_list[[condition]] <- get_fc_vs_ncells(seu = seu,
+      DEG_query_list[[condition]] <- get_fc_vs_ncells(seu = seu,
         DEG_list = condition_DEGs$markers, min_avg_log2FC = min_avg_log2FC,
         p_val_cutoff = DEG_p_val_cutoff, min_counts = minqcfeats)
+      if(!is.null(query)) {
+        DEG_query_list[[condition]] <- get_fc_vs_ncells(seu = seu,
+                    DEG_list = condition_DEGs$markers, min_counts = minqcfeats,
+                    query = query)
+      }
     }
     if(length(subset_by) == 2) {
       message(paste0("Analysing DEGs by subgroups. Subsetting by condition: ",
@@ -353,6 +359,8 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     }
   } else {
     DEG_list <- NULL
+    DEG_metrics_list <- NULL
+    DEG_query_list <- NULL
   }
   final_results <- list()
   final_results$qc <- qc
@@ -366,6 +374,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   final_results$SingleR_annotation <- SingleR_annotation
   final_results$DEG_list <- DEG_list
   final_results$DEG_metrics_list <- DEG_metrics_list
+  final_results$DEG_query_list <- DEG_query_list
   final_results$subset_seu <- subset_seu
   final_results$subset_DEGs <- subset_DEGs
   final_results$integrate <- integrate
@@ -431,6 +440,7 @@ write_sc_report <- function(final_results, output = getwd(), name = NULL,
                     subset_by = subset_by, use_canvas = use_canvas,
                     DEG_list = final_results$DEG_list, query = query,
                     DEG_metrics_list = final_results$DEG_metrics_list,
+                    DEG_query_list = final_results$DEG_query_list,
                     marker_meta = final_results$marker_meta,
                     subset_seu = final_results$subset_seu,
                     subset_DEGs = final_results$subset_DEGs,
@@ -445,7 +455,7 @@ write_sc_report <- function(final_results, output = getwd(), name = NULL,
   plotter <- htmlreportR:::htmlReport$new(title_doc = paste0("Single-Cell ",
                             name, " report"), container = container,
                             tmp_folder = tmp_folder, src = source_folder,
-                            compress_obj = TRUE)
+                            compress_obj = FALSE)
   plotter$build(template)
   plotter$write_report(out_file)
   message(paste0("Report written in ", out_file))
