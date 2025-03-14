@@ -11,11 +11,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   organisms_table_file <- file.path(root_path, "inst","external_data", 
         "organism_table.txt")
   # Load custom libraries
-   custom_libraries <- c('functional_analysis_library.R', 'miRNA_RNA_functions.R')
-  for (lib in custom_libraries){
-    source(file.path(root_path, 'R', lib))
-  }
-
+  devtools::load_all(root_path)
   source_folder <- file.path(root_path, 'inst')
 }else{
   require('ExpHunterSuite')
@@ -23,7 +19,6 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   source_folder <- file.path(root_path)
   organisms_table_file <- file.path(root_path, "external_data", 
         "organism_table.txt")
-
 }
 
 
@@ -65,14 +60,16 @@ if (opt$mirna) {
   table_to_annot$miRNA_name <- translate_miRNA_ids(ids_to_translate)
 
 } else {
-
   translated_keytypes <- translate_ids_orgdb(ids = ids_to_translate, 
                       input_id=opt$input_keytype, output_id = opt$output_keytype, org_db=org_db)
-
   translated_ids <- translated_keytypes[match(ids_to_translate, 
                                           translated_keytypes[,opt$input_keytype]) ,opt$output_keytype]
-
   table_to_annot[,opt$output_keytype] <- translated_ids
+  if(any(is.na(table_to_annot$SYMBOL))) {
+    NAs <- which(is.na(table_to_annot$SYMBOL))
+    warning(paste0(length(NAs), " ensembl_IDs could not be translated."))
+    table_to_annot$SYMBOL[NAs] <- table_to_annot$X[NAs]
+  }
 }
 
 write.table(table_to_annot, sep = "\t", quote = FALSE, row.names = (opt$column == "rownames"), file = opt$output_file)
