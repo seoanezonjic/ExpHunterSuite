@@ -392,17 +392,17 @@ test_that("check_sc_input fails if one column passes and the other does not", {
 test_pbmc <- pbmc_tiny
 test_pbmc$cell_type <- "g1"
 test_pbmc$cell_type[8:15] <- "g2"
-
-test_that("get_fc_vs_ncells works as intended", {
-  DEG_g1 <- data.frame(avg_log2FC = c(0, 0.2, 1, -0.1),
+DEG_g1 <- data.frame(avg_log2FC = c(0, 0.2, 1, -0.1),
                        p_val_adj = c(0, 0, 0, 0),
                        gene = c("PPBP", "IGLL5", "VDAC3", "GNLY"))
-  rownames(DEG_g1) <- DEG_g1$gene
-  DEG_g2 <- data.frame(avg_log2FC = c(1, 0.2, 0.2, -0.4),
+rownames(DEG_g1) <- DEG_g1$gene
+DEG_g2 <- data.frame(avg_log2FC = c(1, 0.2, 0.2, -0.4),
                        p_val_adj = c(0, 1, 0, 1),
                        gene = c("PPBP", "IGLL5", "VDAC3", "GNLY"))
-  rownames(DEG_g2) <- DEG_g2$gene
-  DEG_list <- list(global = "This should not exist", g1 = DEG_g1, g2 = DEG_g2)
+rownames(DEG_g2) <- DEG_g2$gene
+DEG_list <- list(global = "This should not exist", g1 = DEG_g1, g2 = DEG_g2)
+
+test_that("get_fc_vs_ncells works as intended", {
   output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
                              min_avg_log2FC = 0.2, p_val_cutoff = 0.01,
                              min_counts = 1)
@@ -410,6 +410,50 @@ test_that("get_fc_vs_ncells works as intended", {
                               VDAC3 = c(1.0, 0.2))
   expected_ncells <- data.frame(IGLL5 = c(0, 2), PPBP = rep(1, 2),
                                 VDAC3 = rep(2, 2))
+  rownames(expected_DEGs) <- c("g1", "g2")
+  rownames(expected_ncells) <- c("g1", "g2")
+  expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
+  expect_equal(output, expected)
+})
+
+test_that("get_fc_vs_ncells works with target list", {
+  output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
+                             min_avg_log2FC = Inf, p_val_cutoff = -Inf,
+                             min_counts = 1, query = c("PPBP", "VDAC3"))
+  expected_DEGs <- data.frame(PPBP = 0:1, VDAC3 = c(1.0, 0.2))
+  expected_ncells <- data.frame(PPBP = rep(1, 2), VDAC3 = rep(2, 2))
+  rownames(expected_DEGs) <- c("g1", "g2")
+  rownames(expected_ncells) <- c("g1", "g2")
+  expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
+  expect_equal(output, expected)
+})
+
+test_that("get_fc_vs_ncells can handle no target genes being present in seurat
+         object", {
+  ## This test could use some work, the function is being ran twice. There
+  ## should be a way to capture the warning while still saving output.
+  expect_warning(get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
+                             min_avg_log2FC = Inf, p_val_cutoff = -Inf,
+                             min_counts = 1, query = c("None", "Zilch")),
+                 "None of specified target genes are differentially expressed.")
+  output <- suppressWarnings(get_fc_vs_ncells(seu = test_pbmc,
+                             DEG_list = DEG_list, min_avg_log2FC = Inf,
+                             p_val_cutoff = -Inf,
+                             min_counts = 1, query = c("None", "Zilch")))
+  expect_equal(output, NULL)
+})
+
+test_that("get_fc_vs_ncells can handle some target genes not being present in
+         seurat object", {
+  expect_warning(get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
+                 min_avg_log2FC = Inf, p_val_cutoff = -Inf, min_counts = 1,
+                 query = c("None", "Zilch", "PPBP")), 'None", "Zilch"')
+  output <- suppressWarnings(get_fc_vs_ncells(seu = test_pbmc,
+                             DEG_list = DEG_list, min_avg_log2FC = Inf,
+                             p_val_cutoff = -Inf, min_counts = 1,
+                             query = c("None", "Zilch", "PPBP")))
+  expected_DEGs <- data.frame(PPBP = 0:1)
+  expected_ncells <- data.frame(PPBP = rep(1, 2))
   rownames(expected_DEGs) <- c("g1", "g2")
   rownames(expected_ncells) <- c("g1", "g2")
   expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
