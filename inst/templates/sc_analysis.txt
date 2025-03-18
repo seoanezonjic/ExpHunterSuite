@@ -7,7 +7,14 @@
     DEG_list <- plotter$hash_vars$DEG_list
     DEG_metrics_list <- plotter$hash_vars$DEG_metrics_list
     DEG_query_list <- plotter$hash_vars$DEG_query_list
-    saveRDS(plotter, "plotter.rds")
+    extra_columns <- plotter$hash_vars$extra_columns
+    metadata <- plotter$hash_vars$seu@meta.data
+    get_cells_metadata <- function(heatmap) {
+        samples <- rownames(heatmap)
+        sample_metadata <- unique(metadata[, c("sample", extra_columns)])
+        rownames(sample_metadata) <- NULL
+        sample_metadata <- sample_metadata[match(samples, sample_metadata$sample), ]
+    }
     
     Custom_DotPlot <- function(seu) {
         if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
@@ -86,9 +93,16 @@ end.rcode-->
 <!--begin.rcode sample_qc_pct
     cat(plotter$create_title("Top genes expression heatmap", "sample QC", hlevel = 2, indexable = FALSE,
                               clickable = FALSE, t_id = "sample_qc_pct", clickable_text = ""))
-    cat(plotter$prettify_div(plotter$heatmap(list(id = "sample_qc_pct",  title = paste0("Top gene expression across",
+    if(!is.null(extra_columns)) {
+        extra_metadata <- get_cells_metadata(plotter$hash_vars$sample_qc_pct)
+        pct_heatmap_overlay <- as.list(extra_metadata[, extra_columns, drop = FALSE])
+    } else {
+        pct_heatmap_overlay <- NULL
+    }
+    cat(plotter$prettify_div(plotter$heatmap(list(id = "sample_qc_pct", title = paste0("Top gene expression across ",
                                                   "samples"), header = NULL, text = FALSE, row_names = NULL,
-                                                  transpose = TRUE)), preset = "magic"))
+                                                  transpose = TRUE, inject_smp_attr = pct_heatmap_overlay,
+                                                  config = list(smpOverlays = names(pct_heatmap_overlay)))), preset = "magic"))
 end.rcode-->
 
 <!--begin.rcode cell_markers, eval = !is.null(plotter$hash_vars$cell_annotation)
@@ -168,12 +182,12 @@ end.rcode-->
     label <- FALSE
     for(condition in subset_by) {
         split.by <- condition
-        html_code <- plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
-                                          plotting_function = Custom_DimPlot), preset = "magic")
+        html_code <- paste0("Each UMAP shown in this section corresponds to one value of split condition.",
+                             plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
+                                                  plotting_function = Custom_DimPlot), preset = "magic"))
         cat(plotter$create_title(paste0("Grid UMAP representation splitting by ", condition), paste0(condition, " split"), hlevel = 2,
                                  indexable = FALSE, clickable = TRUE, t_id = paste0(condition, "_split"),
                                  clickable_text = ""))
-        cat(plotter$prettify_div("Each UMAP shown in this section corresponds to one value of split condition."))
         cat(plotter$create_collapsable_container(id = paste0(condition, "_split"), html_code = html_code))
     }
 end.rcode-->
@@ -183,12 +197,12 @@ end.rcode-->
     for(condition in subset_by) {
         split.by <- NULL
         group.by <- condition
-        html_code <- plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
-                                          plotting_function = Custom_DimPlot), preset = "magic")
+        html_code <- paste0("Recoloring of general UMAP by each value of highlight condition.",
+                             plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
+                                                  plotting_function = Custom_DimPlot), preset = "magic"))
         cat(plotter$create_title(paste0("General UMAP representation highlighting ", condition), paste0(condition, " grouped"), hlevel = 2,
                                  indexable = FALSE, clickable = TRUE, t_id = paste0(condition, "_grouped"),
                                  clickable_text = ""))
-        cat(plotter$prettify_div("Recoloring of general UMAP by each value of highlight condition."))
         cat(plotter$create_collapsable_container(id = paste0(condition, "_grouped"), html_code = html_code))
     }
 end.rcode-->
@@ -197,10 +211,10 @@ end.rcode-->
     cat(plotter$create_title("Cluster composition of samples", "cluster distribution", hlevel = 2,
                               indexable = FALSE, clickable = FALSE, t_id = "cluster_distribution",
                               clickable_text = ""))
-    cat("<p>This plot represents the cluster composition of each sample.</p>")
     cat(plotter$prettify_div(plotter$heatmap(list(id = "clusters_pct", title = "Cell type percentage by sample",
                                              header = NULL, text = FALSE, row_names = NULL,
-                                             transpose = TRUE)), preset = "magic"))
+                                             transpose = TRUE, inject_smp_attr = pct_heatmap_overlay,
+                                             config = list(smpOverlays = names(pct_heatmap_overlay)))), preset = "magic"))
 end.rcode-->
 
 <!--begin.rcode DEGstart, eval = length(DEG_list) > 0
@@ -504,10 +518,10 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode opt
-    cat(plotter$create_title("Execution parameters", "opt", hlevel = 2, indexable = TRUE,
+    cat(plotter$create_title("<b>EXECUTION PARAMETERS</b>", "opt", hlevel = 1, indexable = TRUE,
         clickable = FALSE, t_id = "opt", clickable_text = ""))
     opt_names <- names(plotter$hash_vars$opt)
     opt_values <- paste(plotter$hash_vars$opt)
     opt_vector <- paste(opt_names, opt_values, sep = ": ")
-    cat(plotter$prettify_div(make_html_list(opt_vector), preset = "magic"))
+    cat(make_html_list(opt_vector))
 end.rcode-->
