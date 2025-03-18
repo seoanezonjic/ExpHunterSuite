@@ -781,7 +781,7 @@ get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
   if(is.null(DEG_matrix)) {
     res <- NULL
   } else {
-      DEG_matrix <- DEG_matrix[, c("avg_log2FC", "p_val_adj", "gene")]
+    DEG_matrix <- DEG_matrix[, c("avg_log2FC", "p_val_adj", "gene")]
     DEG_matrix$ident <- ident
     rownames(DEG_matrix) <- NULL
     DEG_matrix <- DEG_matrix[abs(DEG_matrix$avg_log2FC) >= min_avg_log2FC, ]
@@ -958,33 +958,28 @@ subset_seurat <- function(seu, column, value, expr = FALSE) {
 #' print(downsample_seurat(seu = pbmc_tiny, cells = 2, features = 5))
 #' @export
 
-downsample_seurat <- function(seu, cells = NULL, features = NULL, keep = "",
+downsample_seurat <- function(seu, cells = 500, features = 5000, keep = "",
                               assay = "RNA", layer = "counts") {
-  if(!is.null(features)) {
-    if(length(unique(seu$orig.ident)) > 1)
-    {
-      seu <- SeuratObject::JoinLayers(seu)
-    }
-    counts <- SeuratObject::GetAssayData(seu, assay = assay, layer = layer)
-    if(is.numeric(features)) {
-      gene_list <- sample(rownames(counts), size = features, replace = F)
-      if(!"" %in% keep) {
-        gene_list <- unique(c(gene_list), keep)
-      }
-    } else {
-      gene_list <- features
-    }
-    counts <- counts[gene_list, ]
-    seu <- subset(seu, features = rownames(counts))
+  if(length(unique(seu$orig.ident)) > 1) {
+    seu <- SeuratObject::JoinLayers(seu)
   }
-  if(!is.null(cells)) {
-    if(is.numeric(cells)) {
-      cell_list <- sample(colnames(seu), size = cells, replace = F)
-    } else {
-      cell_list <- cells
-    }
-    seu <- seu[, cell_list]
+  counts <- SeuratObject::GetAssayData(seu, assay = assay, layer = layer)
+  if(is.numeric(features)) {
+    gene_list <- sample(rownames(counts), size = features, replace = F)
+  } else {
+    gene_list <- features
   }
+  if(paste0(keep, collapse = "") != "") {
+    gene_list <- unique(c(gene_list), keep)
+  }
+  counts <- counts[gene_list, ]
+  seu <- subset(seu, features = rownames(counts))
+  if(is.numeric(cells)) {
+    cell_list <- sample(colnames(seu), size = cells, replace = F)
+  } else {
+    cell_list <- cells
+  }
+  seu <- seu[, cell_list]
   return(seu)
 }
 
