@@ -5,7 +5,9 @@
     query <- plotter$hash_vars$query
     markers <- plotter$hash_vars$markers
     DEG_list <- plotter$hash_vars$DEG_list
+    DEG_metrics_list <- plotter$hash_vars$DEG_metrics_list
     DEG_query_list <- plotter$hash_vars$DEG_query_list
+    saveRDS(plotter, "plotter.rds")
     
     Custom_DotPlot <- function(seu) {
         if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
@@ -74,10 +76,10 @@
     
 end.rcode-->
 
-<h1><strong>Single Cell RNA-Seq Integration analysis</strong></h1>
+<h1><strong>SINGLE CELL RNA-SEQ INTEGRATION ANALYSIS</strong></h1>
 
 <!--begin.rcode intro
-cat(plotter$create_title("Quality Control", "QC", hlevel = 1, indexable = TRUE, clickable = FALSE,
+cat(plotter$create_title("<b>QUALITY CONTROL</b>", "QC", hlevel = 1, indexable = TRUE, clickable = FALSE,
                           t_id = "QC", clickable_text = ""))
 end.rcode-->
 
@@ -136,8 +138,10 @@ end.rcode-->
                                              html_code = paste(paragraph, top_markers_html,  sep = "\n")))
 end.rcode-->
 
-<!--begin.rcode Complete_PCA
-    cat(plotter$create_title("Dimensionality reduction", "dimreds", hlevel = 1, indexable = TRUE, clickable = FALSE,
+<!--begin.rcode Complete_PCA, eval = FALSE
+    # This block is set to never run, as it only exists for technical purposes. If you see this and are interested in
+    # plotting the PCA, you can safely set it to TRUE.
+    cat(plotter$create_title("<b>PCA (DEBUG BLOCK)</b>", "dimreds", hlevel = 1, indexable = TRUE, clickable = FALSE,
                               t_id = "dimreds", clickable_text = ""))
     cat(plotter$create_title("PCA", "full_pca", hlevel = 2, indexable = TRUE, clickable = FALSE,
                               t_id = "full_pca", clickable_text = ""))
@@ -149,7 +153,7 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode Complete_UMAP
-    cat(plotter$create_title("Dimensionality reduction", "dimreds", hlevel = 1, indexable = TRUE, clickable = FALSE,
+    cat(plotter$create_title("<b>DIMENSIONALITY REDUCTION</b>", "dimreds", hlevel = 1, indexable = TRUE, clickable = FALSE,
                               t_id = "dimreds", clickable_text = ""))
     cat(plotter$create_title("UMAP", "full_umap", hlevel = 2, indexable = TRUE, clickable = FALSE,
                               t_id = "full_umap", clickable_text = ""))
@@ -166,9 +170,10 @@ end.rcode-->
         split.by <- condition
         html_code <- plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
                                           plotting_function = Custom_DimPlot), preset = "magic")
-        cat(plotter$create_title(paste0("Split by ", condition), paste0(condition, " split"), hlevel = 2,
+        cat(plotter$create_title(paste0("Grid UMAP representation splitting by ", condition), paste0(condition, " split"), hlevel = 2,
                                  indexable = FALSE, clickable = TRUE, t_id = paste0(condition, "_split"),
                                  clickable_text = ""))
+        cat(plotter$prettify_div("Each UMAP shown in this section corresponds to one value of split condition."))
         cat(plotter$create_collapsable_container(id = paste0(condition, "_split"), html_code = html_code))
     }
 end.rcode-->
@@ -180,9 +185,10 @@ end.rcode-->
         group.by <- condition
         html_code <- plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
                                           plotting_function = Custom_DimPlot), preset = "magic")
-        cat(plotter$create_title(paste0("Grouped by ", condition), paste0(condition, " grouped"), hlevel = 2,
+        cat(plotter$create_title(paste0("General UMAP representation highlighting ", condition), paste0(condition, " grouped"), hlevel = 2,
                                  indexable = FALSE, clickable = TRUE, t_id = paste0(condition, "_grouped"),
                                  clickable_text = ""))
+        cat(plotter$prettify_div("Recoloring of general UMAP by each value of highlight condition."))
         cat(plotter$create_collapsable_container(id = paste0(condition, "_grouped"), html_code = html_code))
     }
 end.rcode-->
@@ -197,25 +203,34 @@ end.rcode-->
                                              transpose = TRUE)), preset = "magic"))
 end.rcode-->
 
-<!--begin.rcode DEG_query, eval = length(DEG_query_list) > 0
-    cat(plotter$create_title("Differential expression metrics", "DEG_query", hlevel = 1, indexable = TRUE,
-                          clickable = FALSE, t_id = "DEG_query", clickable_text = ""))
-    for(i in seq(length(DEG_query_list))) {
-        condition <- names(DEG_query_list)[i]
-        condition_metrics <- DEG_query_list[[condition]]
-        plotter$hash_vars$condition_FCs <- condition_metrics$DEG_df
-        plotter$hash_vars$condition_ncells <- condition_metrics$ncell_df
-        cat(plotter$create_title(paste0("DEGs metrics for condition ", condition), paste0(condition, "_DEG_query"), hlevel = 2,
-                     indexable = TRUE, clickable = FALSE, t_id = paste0(condition, "_DEG_query"), clickable_text = ""))
-        cat(plotter$prettify_div(plotter$heatmap(list(id = "condition_FCs", header = NULL, row_names = NULL, text = "dynamic",
-                                             extra_data = list(id ="condition_ncells", header = NULL, row_names = NULL, text = "dynamic"),
-                                             config = list(sizeLegendTitle = "Number of cells"),
-                                             title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
+<!--begin.rcode DEGstart, eval = length(DEG_list) > 0
+    cat(plotter$create_title("<b>DIFFERENTIAL EXPRESSION ANALYSIS</b>", "DEG_start", hlevel = 1, indexable = TRUE,
+                          clickable = FALSE, t_id = "DEG_metrics", clickable_text = ""))
+end.rcode-->
+
+<!--begin.rcode DEG_metrics, eval = !is.null(plotter$hash_vars$DEG_metrics_list[[1]])
+    cat(plotter$create_title("Differential expression metrics per cell", "DEG_metrics", hlevel = 2, indexable = TRUE,
+                          clickable = FALSE, t_id = "DEG_metrics", clickable_text = ""))
+    for(i in seq(length(DEG_metrics_list))) {
+        condition <- names(DEG_metrics_list)[i]
+        condition_metrics <- DEG_metrics_list[[condition]]
+        if(is.null(condition_metrics)) {
+            cat(plotter$prettify_div(paste0("DEG analysis for condition ", condition, " not present."), preset = "magic"))
+        } else {
+            plotter$hash_vars$condition_FCs <- condition_metrics$DEG_df
+            plotter$hash_vars$condition_ncells <- condition_metrics$ncell_df
+            cat(plotter$create_title(paste0("DEGs metrics for condition ", condition), paste0(condition, "_DEG_metrics"), hlevel = 2,
+                         indexable = TRUE, clickable = FALSE, t_id = paste0(condition, "_DEG_metrics"), clickable_text = ""))
+            cat(plotter$prettify_div(plotter$heatmap(list(id = "condition_FCs", header = NULL, row_names = NULL, text = "dynamic",
+                                                 extra_data = list(id ="condition_ncells", header = NULL, row_names = NULL, text = "dynamic"),
+                                                 config = list(sizeLegendTitle = "Number of cells"),
+                                                 title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
+        }  
     }
 end.rcode-->
 
 <!--begin.rcode DEG_analysis, eval = length(DEG_list) > 0
-    cat(plotter$create_title("Differential expression analysis", "DEG", hlevel = 1, indexable = TRUE,
+    cat(plotter$create_title("Differentially expressed genes", "DEG", hlevel = 2, indexable = TRUE,
                               clickable = FALSE, t_id = "DEG", clickable_text = ""))
     for(i in seq(length(DEG_list))) {
         condition <- names(DEG_list)[i]
@@ -270,8 +285,8 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode subset_titles, eval = !is.null(plotter$hash_vars$subset_seu)
-    cat(plotter$create_title(paste0("Responses of different ", subset_by[1], "s to ", subset_by[2], " variation"),
-                             "subsets_title", hlevel = 1, indexable = TRUE, clickable = FALSE, t_id = "subsets_title",
+    cat(plotter$create_title(paste0("<b>RESPONSES OF DIFFERENT ", toupper(subset_by[1]), "S TO ", toupper(subset_by[2]), " VARIATION</b>"),
+                             "subsets_title", hlevel = 2, indexable = TRUE, clickable = FALSE, t_id = "subsets_title",
                              clickable_text = ""))
     cat(paste0("<p>In this next section of the report, clustering and DEG analysis is shown for each group in the 
                 \"", subset_by[1], "\" experimental category. This will allow the analysis of the \"", subset_by[2],
@@ -327,10 +342,10 @@ end.rcode-->
 <!--begin.rcode subset_DEGs, eval = !is.null(plotter$hash_vars$subset_DEGs)
     for(i in seq(length(plotter$hash_vars$subset_DEGs))) {
         subset <- names(plotter$hash_vars$subset_DEGs)[i]
-        cat(plotter$create_title(paste0(subset, " differential expression analysis"), paste0(subset, " DEG"), hlevel = 1, indexable = FALSE,
+        cat(plotter$create_title(paste0(subset, " differential expression analysis"), paste0(subset, " DEG"), hlevel = 2, indexable = FALSE,
                                  clickable = FALSE, t_id = paste0(subset, "_DEG"), clickable_text = ""))
-        cat(paste0("<p>These DEGs have been calculated independently for the \"", subset, "\"
-            value of the \"", subset_by[1], "\" factor. </p>"))
+        text <- paste0("<p>These DEGs have been calculated independently for the \"", subset, "\"
+            value of the \"", subset_by[1], "\" factor. </p>")
         subset_meta <- plotter$hash_vars$subset_DEGs[[subset]]$meta
         subset_DEG <- plotter$hash_vars$subset_DEGs[[subset]]$markers
         level <- "global"
@@ -344,7 +359,7 @@ end.rcode-->
         html_code <- plotter$prettify_div(plotter$table(list(id = "condition_DEGs", header = NULL, row_names = NULL,
                                                             table_rownames = FALSE, styled = "dt", text = "dynamic",
                                                             func = get_top_DEGs)), preset = "magic")
-        html_code <- paste(subset_legend, html_code, sep = "\n")
+        html_code <- paste(text, subset_legend, html_code, sep = "\n")
         cat(plotter$create_title(paste0(subset, " global DEGenes table"), paste0(subset, " global DEG table"), hlevel = 3, indexable = FALSE,
                                       clickable = TRUE, t_id = paste0(subset, "_global_DEG_table"), clickable_text = ""))
         cat(plotter$create_collapsable_container(id = paste0(subset, "_global_DEG_table"), html_code = html_code))
@@ -382,7 +397,7 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode query_title, eval = !is.null(plotter$hash_vars$query)
-    cat(plotter$create_title("Query gene analysis", "query_title", hlevel = 1,
+    cat(plotter$create_title("<b>QUERY GENE ANALYSIS</b>", "query_title", hlevel = 1,
                               indexable = TRUE, clickable = FALSE, t_id = "query_title",
                               clickable_text = ""))
 end.rcode-->
@@ -432,39 +447,31 @@ end.rcode-->
                               indexable = FALSE, clickable = TRUE, t_id = "query_distrib",
                               clickable_text = ""))
     paragraph <- "<p>These genes have <strong>NOT</strong> been used to annotate cell types</p>"
-    genes_code <- vector(mode = "character", length = length(plotter$hash_vars$query))
-    names(genes_code) <- names(plotter$hash_vars$query)
-    for(element_name in names(plotter$hash_vars$query)) {
-      features <- plotter$hash_vars$query[[element_name]]
-      title <- plotter$create_title(paste0("Query gene group: ", element_name),
-                                    paste0(element_name, " distr"),
-                                    hlevel = 2, indexable = FALSE, clickable = FALSE,
-                                    t_id = paste0(element_name, "_distr"), clickable_text = "")
-      if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
-          element_code <- "<p>None of the features in this group have been detected in dataset</p>"
-      } else {
-          code <- plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
-                                       plotting_function = Custom_DotPlot), preset = "magic")
-          table_title <- plotter$create_title(paste0(element_name, " query table"),
-                                              paste0(element_name, " Query Table"),
-                                              hlevel = 3, indexable = FALSE, clickable = TRUE,
-                                              t_id = paste0(element_name, "_query_table"), clickable_text = "")
-          table <- plotter$prettify_div(plotter$table(list(id = "markers", header = NULL, row_names = NULL,
-                                                      table_rownames = FALSE, styled = "dt", func = subset_table, text = "dynamic")),
-                                                      preset = "magic")
-          table <- plotter$create_collapsable_container(id = paste0(element_name, "_query_table"),
-                                                        html_code = table)
-          element_code <- paste(code, table_title, table, sep = "\n")
-      }
-      genes_code[element_name] <- paste(title, element_code, sep = "\n")
+    features <- plotter$hash_vars$query
+    title <- plotter$create_title(paste0("Query gene group: ", element_name),
+                                  paste0(element_name, " distr"),
+                                  hlevel = 2, indexable = FALSE, clickable = FALSE,
+                                  t_id = paste0(element_name, "_distr"), clickable_text = "")
+    if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
+        genes_code <- "<p>None of the features have been detected in dataset</p>"
+    } else {
+        code <- plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
+                                     plotting_function = Custom_DotPlot), preset = "magic")
+        table_title <- plotter$create_title("Query genes table", "Query genes Table",
+                                            hlevel = 3, indexable = FALSE, clickable = TRUE,
+                                            t_id = paste0("query_table"), clickable_text = "")
+        table <- plotter$prettify_div(plotter$table(list(id = "markers", header = NULL, row_names = NULL,
+                                                    table_rownames = FALSE, styled = "dt", func = subset_table, text = "dynamic")),
+                                                    preset = "magic")
+        table <- plotter$create_collapsable_container(id = "query_table", html_code = table)
+        genes_code <- paste(code, table_title, table, sep = "\n")
     }
-    genes_code <- paste(genes_code, collapse = "\n")
     genes_code <- paste(paragraph, genes_code, sep = "\n")
     cat(plotter$create_collapsable_container(id = "query_distrib", html_code = genes_code))
 end.rcode-->
 
 <!--begin.rcode DEG_query, eval = length(DEG_query_list) > 0
-    cat(plotter$create_title("Differential expression metrics of query genes", "DEG_query", hlevel = 1, indexable = TRUE,
+    cat(plotter$create_title("Differential expression metrics of query genes", "DEG_query", hlevel = 2, indexable = TRUE,
                           clickable = FALSE, t_id = "DEG_query", clickable_text = ""))
     for(i in seq(length(DEG_query_list))) {
         condition <- names(DEG_query_list)[i]
@@ -487,10 +494,6 @@ end.rcode-->
     for(element_name in names(plotter$hash_vars$query)) {
         for(feature in plotter$hash_vars$query[[element_name]]) {
             if(feature %in% expressed_genes) {
-                cat(plotter$create_title(paste0("Query gene group: ", element_name),
-                                         paste0(element_name, " map"), hlevel = 3, indexable = FALSE,
-                                         clickable = FALSE, t_id = paste0(element_name, "_map"),
-                                         clickable_text = ""))
                 cat(plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
                     plotting_function = Custom_ftplot), preset = "magic"))
             } else {
@@ -498,4 +501,13 @@ end.rcode-->
             }
         }
     }
+end.rcode-->
+
+<!--begin.rcode opt
+    cat(plotter$create_title("Execution parameters", "opt", hlevel = 2, indexable = TRUE,
+        clickable = FALSE, t_id = "opt", clickable_text = ""))
+    opt_names <- names(plotter$hash_vars$opt)
+    opt_values <- paste(plotter$hash_vars$opt)
+    opt_vector <- paste(opt_names, opt_values, sep = ": ")
+    cat(plotter$prettify_div(make_html_list(opt_vector), preset = "magic"))
 end.rcode-->

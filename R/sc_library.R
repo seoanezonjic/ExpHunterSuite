@@ -497,7 +497,7 @@ analyze_query <- function(seu, query, sigfig, sample_col = "sample") {
     query_exp <- get_query_distribution(seu = seu, query = query,
                                      sigfig = sigfig, sample_col = sample_col)
     query_pct <- get_query_pct(seu = seu, query = query, by = sample_col,
-                           sigfig = sigfig)
+                               sigfig = sigfig)
     if("cell_type" %in% colnames(seu@meta.data)) {
       get_by <- c(sample_col, "cell_type")
     } else {
@@ -610,8 +610,11 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
         sublist_name <- as.character(sec_items[j])
         message(paste("Re-subsetting by", by[2],
                        paste0(j, "/", length(sec_items)), sep = " "))
+        # Expr set to TRUE because double subset can result in only selecting
+        # cells that have not been selected by sketch, which breaks seurat
+        # object subsetting.
         new_subset[[sublist_name]] <- subset_seurat(subset_list[[element]],
-                                                    by[2],
+                                                    by[2], expr = TRUE,
                                                     as.character(sec_items[j]))
       }
       subset_list[[element]] <- new_subset
@@ -626,7 +629,6 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
         pct_list[[element]] <- pct_list[[element]][order(unlist(
                                                           as.numeric(rows))), ]
       }
-       
     }
     names(pct_list) <- names(subset_list)
   } else {
@@ -776,32 +778,36 @@ get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
 
 .process_DEG_matrix <- function(DEG_matrix, min_avg_log2FC = 0.2, ident = NULL,
                                 p_val_cutoff = 0.01, genes_list = NULL) {
-  DEG_matrix <- DEG_matrix[, c("avg_log2FC", "p_val_adj", "gene")]
-  DEG_matrix$ident <- ident
-  rownames(DEG_matrix) <- NULL
-  DEG_matrix <- DEG_matrix[abs(DEG_matrix$avg_log2FC) >= min_avg_log2FC, ]
-  if(min(DEG_matrix$p_val_adj > p_val_cutoff)) {
-    warning("Min adjusted p-value is higher than cutoff. Skipping filter")
+  if(is.null(DEG_matrix)) {
+    res <- NULL
   } else {
-    DEG_matrix <- DEG_matrix[abs(DEG_matrix$p_val_adj) <= p_val_cutoff, ]
-  }
-  if(!is.null(genes_list)) {
-    missing <- which(!genes_list %in% DEG_matrix$gene)
-    if(length(missing) > 0) {
-    missing_df <- data.frame(matrix(data = 0, ncol = ncol(DEG_matrix),
-                                    nrow = length(missing)))
-    colnames(missing_df) <- colnames(DEG_matrix)
-    missing_df$gene <- genes_list[missing]
-    missing_df$ident <- ident
-    DEG_matrix <- rbind(DEG_matrix, missing_df)
+      DEG_matrix <- DEG_matrix[, c("avg_log2FC", "p_val_adj", "gene")]
+    DEG_matrix$ident <- ident
+    rownames(DEG_matrix) <- NULL
+    DEG_matrix <- DEG_matrix[abs(DEG_matrix$avg_log2FC) >= min_avg_log2FC, ]
+    if(min(DEG_matrix$p_val_adj > p_val_cutoff)) {
+      warning("Min adjusted p-value is higher than cutoff. Skipping filter")
+    } else {
+      DEG_matrix <- DEG_matrix[abs(DEG_matrix$p_val_adj) <= p_val_cutoff, ]
     }
-  }
-  DEG_matrix$p_val_adj <- NULL
-  DEG_matrix <- DEG_matrix[order(DEG_matrix$gene), ]
-  res <- data.frame(matrix(ncol = nrow(DEG_matrix), nrow = 1))
-  colnames(res) <- DEG_matrix$gene
-  rownames(res) <- ident
-  res[1, ] <- DEG_matrix$avg_log2FC
+    if(!is.null(genes_list)) {
+      missing <- which(!genes_list %in% DEG_matrix$gene)
+      if(length(missing) > 0) {
+      missing_df <- data.frame(matrix(data = 0, ncol = ncol(DEG_matrix),
+                                      nrow = length(missing)))
+      colnames(missing_df) <- colnames(DEG_matrix)
+      missing_df$gene <- genes_list[missing]
+      missing_df$ident <- ident
+      DEG_matrix <- rbind(DEG_matrix, missing_df)
+      }
+    }
+    DEG_matrix$p_val_adj <- NULL
+    DEG_matrix <- DEG_matrix[order(DEG_matrix$gene), ]
+    res <- data.frame(matrix(ncol = nrow(DEG_matrix), nrow = 1))
+    colnames(res) <- DEG_matrix$gene
+    rownames(res) <- ident
+    res[1, ] <- DEG_matrix$avg_log2FC
+    }
   return(res)
 }
 
@@ -832,14 +838,25 @@ get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
 #' breakdown_query(seu = pbmc_tiny, query = c("PPBP", "CA2"))
 #' @export
 
-breakdown_query <- function(seu, query, assay = "RNA", layer = "counts") {
-  if(nrow(seu@meta.data) > 1) {
-    genes <- SeuratObject::GetAssayData(seu, assay = assay, layer = layer)
-    missing <- !(query %in% rownames(genes))
+breakdown_query <- function(input, query, assay = "RNA", layer = "counts") {
+  # This pseudo-method dispatch comes from an error when subsetting a seurat
+  # object only by cells NOT selected by sketch. Once it is solved, this will
+  # always assume a seurat object.
+  if("Seurat" %in% class(input)) {
+    if(nrow(input) > 1) {
+      genes <- SeuratObject::GetAssayData(input, assay = assay, layer = layer)
+    } else {
+      genes <- input[[assay]][[, layer]]
+    }
   } else {
-    genes <- seu[[assay]][[, layer]]
-    missing <- !(query %in% names(genes))
+    genes <- input
   }
+  if(is.null(names(genes))) {
+    features <- rownames(genes)
+  } else {
+    features <- names(genes)
+  }
+  missing <- !query %in% rownames(genes)
   if(any(missing)) {
     warning(paste0("Query gene(s) ", paste0(query[missing], collapse = ", "),
                    " not present in seurat object."), immediate. = TRUE)
@@ -897,19 +914,31 @@ breakdown_query <- function(seu, query, assay = "RNA", layer = "counts") {
 #' subsets a seurat object by a specified value of provided
 #' column.
 #'
-#' @importFrom Seurat FetchData
-#' @param seu Seurat object
-#' @param column Column with value by which to subset input
-#' @param value Value to search within column
-#' @return A subset of the seurat object, which itself is a seurat object.
+#' @importFrom Seurat FetchData GetAssayData
+#' @param seu Seurat object.
+#' @param column Column with value by which to subset input.
+#' @param value Value to search within column.
+#' @param expr Directly subset expression matrix instead of seurat object.
+#' @return A subset of the seurat object, which itself is a seurat object or an
+#' expression matrix if expr is set to TRUE.
 #' @examples
 #' data(pbmc_tiny)
-#' head(subset_seurat(seu = pbmc_tiny, column = "groups", value = "g2"))
+#' head(subset_seurat(seu = pbmc_tiny, column = "groups", value = "g2",
+#' expr = FALSE))
 #' @export
 
-subset_seurat <- function(seu, column, value) {
-  expr <- Seurat::FetchData(seu, vars = column)
-  subset <- seu[, which(expr == value)]
+subset_seurat <- function(seu, column, value, expr = FALSE) {
+  # Argument "expr" comes from an error when subsetting a seurat
+  # object only by cells NOT selected by sketch. Once it is solved, this will
+  # always return a seurat object.
+  expr_vec <- Seurat::FetchData(seu, vars = column)
+  if(expr) {
+    cells <- rownames(expr)
+    expr_data <- Seurat::GetAssayData(seu)
+    subset <- expr_data[, colnames(expr_data) %in% cells]
+  } else {
+    subset <- seu[, which(expr_vec == value)]  
+  }
   return(subset)
 }
 
@@ -1040,7 +1069,7 @@ find_doublets <- function(seu) {
 #' @param method A string. Method to use for sketching. Default "LeverageScore".
 #' @param sketched.assay A string. Name of assay where sketch will be saved.
 #' @param cell.pct A numeric. Percentage of total cells to consider
-#' representative of the experiment. Default 12, as suggested by sketching
+#' representative of the experiment. Default 25, as suggested by sketching
 #' tutorial.
 #' @return A seurat object with a new sketched assay.
 #' @examples
@@ -1050,35 +1079,32 @@ find_doublets <- function(seu) {
 #'           cell.pct = 50)
 #'  }
 
-sketch_sc_experiment <- function(seu, min.ncells = 5000, assay = "RNA",
-                        method = "LeverageScore", sketched.assay = "sketch",
-                        cell.pct = 12, force.ncells = NA_integer_) {
+sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
+                        sketched.assay = "sketch", cell.pct = 25,
+                        force.ncells = NA_integer_) {
+  perform_sketch <- FALSE
   input_cells <- ncol(seu)
   if(is.na(force.ncells)) {
     if(input_cells < 60000) {
       message(paste0("Fewer than thirty thousand cells detected in experiment.",
-                    " Skipping sketch."))
-      return(seu)
+                     " Skipping sketch."))
     }
     ncells <- ceiling(mean(table(seu$sample)) * cell.pct / 100)
-    total_selected <- ncells * length(unique(seu$sample))
-    if(total_selected < 30000) {
-      message(paste0("Selected fewer than thirty thousand cells to sketch. ",
-        "Increasing to thirty thousand."))
-      ncells <- ceiling(30000 / length(unique(seu$sample)))
-    }
   } else {
     message("force.ncells has non-empty value. Forcing sketch.")
+    perform_sketch <- TRUE
     ncells <- force.ncells
     min.ncells <- 0
   }
-  if(ncells < min.ncells) {
-    message("Optimal number of cells is lower than minimum, skipping sketch.")
-    return(seu)
+  if(ncells * length(unique(seu$sample)) < 30000) {
+    message("Fewer than thirty thousand cells selected. Disabling sketch.")
   } else {
+    perform_sketch <- TRUE
+  }
+  if(perform_sketch) {
     seu <- Seurat::SketchData(object = seu, ncells = ncells, method = method,
                               assay = assay, sketched.assay = sketched.assay)
-    Seurat::DefaultAssay(seu) <- "sketch"
-    return(seu)
+    Seurat::DefaultAssay(seu) <- "sketch" 
   }
+  return(seu)
 }

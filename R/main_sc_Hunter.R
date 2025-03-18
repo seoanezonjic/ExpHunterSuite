@@ -56,9 +56,6 @@
 #' (the default), "RPCA", "CCA", "FastMNN" or "scVI".
 #' @param sketch A boolean. If TRUE, data will be sketched. If FALSE
 #' (the default), data will be analysed as-is.
-#' @param sketch_ncells An integer. If estimated cell number optimal value for
-#' sketching is smaller than this number, sketching will not be performed.
-#' Default value of 5000, recommended by Seurat tutorials.
 #' @param sketch_pct A numeric. Percentage of total cells to consider
 #' representative of the experiment. Default 12, as suggested by sketching
 #' tutorial.
@@ -163,9 +160,9 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   if(sketch) {
     message("Sketching sample data")
     sketch_start <- Sys.time()
-    seu <- sketch_sc_experiment(seu = seu, min.ncells = sketch_ncells,
-      assay = "RNA", method = sketch_method, sketched.assay = "sketch",
-      cell.pct = sketch_pct, force.ncells = force_ncells)
+    seu <- sketch_sc_experiment(seu = seu, assay = "RNA",
+      method = sketch_method, sketched.assay = "sketch", cell.pct = sketch_pct,
+      force.ncells = force_ncells)
     sketch_end <- Sys.time()
     if(verbose) {
       message(paste0("Sketching time: ", sketch_end-sketch_start))
@@ -308,6 +305,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     seu <- SeuratObject::JoinLayers(seu, assay = "RNA")
     seu[["sketch"]] <- NULL
   }
+  assay <- "RNA"
   message("Extracting expression quality metrics")
   sample_qc_pct <- get_qc_pct(seu, by = "sample")
   message("Extracting query expression metrics. This might take a while.")
@@ -334,7 +332,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                                        subset_by = subset_by, verbose = verbose)
       DEG_list[[condition]] <- condition_DEGs
       message("Extracting DEG cell metrics")
-      DEG_query_list[[condition]] <- get_fc_vs_ncells(seu = seu,
+      DEG_metrics_list[[condition]] <- get_fc_vs_ncells(seu = seu,
         DEG_list = condition_DEGs$markers, min_avg_log2FC = min_avg_log2FC,
         p_val_cutoff = DEG_p_val_cutoff, min_counts = minqcfeats)
       if(!is.null(query)) {
@@ -410,7 +408,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 
 write_sc_report <- function(final_results, output = getwd(), name = NULL,
                             template_folder, source_folder = NULL,
-                            query = NULL, subset_by = NULL,
+                            query = NULL, subset_by = NULL, opt,
                             cell_annotation = NULL, template = NULL,
                             out_name = NULL, use_canvas = TRUE){
   if(is.null(template_folder)) {
@@ -436,7 +434,7 @@ write_sc_report <- function(final_results, output = getwd(), name = NULL,
   out_file <- file.path(output, paste0(name, "_", out_name))
   tmp_folder <- file.path(output, paste0(name, "_tmp_lib"))
   dir.create(tmp_folder)
-  container <- list(seu = final_results$seu, qc = final_results$qc,
+  container <- list(opt = opt, seu = final_results$seu, qc = final_results$qc,
                     subset_by = subset_by, use_canvas = use_canvas,
                     DEG_list = final_results$DEG_list, query = query,
                     DEG_metrics_list = final_results$DEG_metrics_list,
