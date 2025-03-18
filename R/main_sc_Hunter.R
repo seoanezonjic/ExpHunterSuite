@@ -139,7 +139,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     seu <- qc
     aggr.ref <- TRUE
     fine.tune <- FALSE
-    k.weight <- 42
+    k.weight <- 30
   }
   if(integrate) {
     message(paste0("Splitting seurat object by sample."))
@@ -410,7 +410,8 @@ write_sc_report <- function(final_results, output = getwd(), name = NULL,
                             template_folder, source_folder = NULL,
                             query = NULL, subset_by = NULL, opt,
                             cell_annotation = NULL, template = NULL,
-                            out_name = NULL, use_canvas = TRUE){
+                            out_name = NULL, use_canvas = TRUE,
+                            extra_columns = NULL){
   if(is.null(template_folder)) {
     stop("No template folder was provided.")
   }
@@ -449,6 +450,7 @@ write_sc_report <- function(final_results, output = getwd(), name = NULL,
                     query_cluster_pct = final_results$query_cluster_pct,
                     markers = final_results$markers, use_canvas = use_canvas,
                     cell_annotation = cell_annotation,
+                    extra_columns = extra_columns,
                     integrate = final_results$integrate)
   plotter <- htmlreportR:::htmlReport$new(title_doc = paste0("Single-Cell ",
                             name, " report"), container = container,
