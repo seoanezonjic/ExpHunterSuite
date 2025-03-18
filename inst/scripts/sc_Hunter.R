@@ -16,7 +16,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   # Load custom libraries
   if(Sys.getenv("singularity") == "TRUE") {
     devtools::load_all(Sys.getenv("HTMLREPORT_PATH"))
-    custom_libraries <- c('sc_library.R', 'main_sc_Hunter.R')
+    custom_libraries <- c('sc_library.R', 'main_sc_Hunter.R', 'general_functions.R')
     source_folder <- file.path(find.package("htmlreportR"), "inst")
     for (lib in custom_libraries){
       source(file.path(root_path, 'R', lib))
@@ -76,6 +76,8 @@ option_list <- list(
   optparse::make_option("--int_columns", type = "character", default = "",
             help = "Comma-separated list of conditions by which to perform integration
                     analysis. If empty, all conditions will be analysed."),
+  optparse::make_option("--extra_columns", type = "character", default = "",
+            help = "Comma-separated list of extra conditions to represent in certain plots."),
   optparse::make_option("--int_method", type = "character", default = "RPCA",
             help = "Integration method. Valid methods: \"CCA\", \"RPCA\", \"Harmony\", \"FastMNN\", \"scVI\" "),
   optparse::make_option("--cluster_annotation", type = "character", default = "",
@@ -123,8 +125,6 @@ option_list <- list(
             help = "Filter SingleR reference according to string"),
   optparse::make_option("--sketch", type = "logical", default = FALSE, action = "store_true",
             help = "Sketch experiment."),
-  optparse::make_option("--sketch_ncells", type = "integer", default = 5000,
-            help = "An integer. If estimated cell number optimal value for sketching is smaller"),
   optparse::make_option("--force_ncells", type = "integer", default = NA_integer_,
             help = "An integer. Skip all sketching tests and force to sketch this many cells from each sample."),
   optparse::make_option("--sketch_pct", type = "numeric", default = 12,
@@ -140,6 +140,13 @@ option_list <- list(
 
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+
+if(Sys.getenv("singularity") == "TRUE") {
+    ## Script refuses to work without future in singularity mode
+    # future::plan("multisession", workers = opt$cpu, gc = TRUE)
+    options(future.globals.maxSize = 1000e+09)
+    options(Seurat.object.assay.version = 'v5')
+}
 
 message(paste0("Analyzing ", opt$name))
 
@@ -215,6 +222,12 @@ if(opt$integrate) {
 } else {
   message("Starting non-integrative analysis")
   int_columns <- NULL
+}
+
+if(opt$extra_columns == "") {
+  extra_columns <- NULL
+} else {
+  extra_columns <- tolower(unlist(strsplit(opt$extra_columns, ",")))
 }
 
 if(opt$DEG_columns == "") {
@@ -351,7 +364,7 @@ message("--------------------------------------------")
 write_sc_report(final_results = final_results, template_folder = template_folder, source_folder = source_folder,
                 template = "sc_quality_control.txt", output = file.path(opt$output, "report"),
                 query = unlist(target_genes), name = opt$name, out_name = "qc_report.html",
-                use_canvas = TRUE)
+                use_canvas = TRUE, opt = opt)
 
 message("--------------------------------------------")
 message("----------Writing analysis report-----------")
@@ -359,6 +372,6 @@ message("--------------------------------------------")
 
 write_sc_report(final_results = final_results, template_folder = template_folder,
                 output = file.path(opt$output, "report"), source_folder = source_folder,
-                query = unlist(target_genes), name = opt$name,
+                query = unlist(target_genes), name = opt$name, extra_columns = extra_columns,
                 subset_by = int_columns, cell_annotation = cell_annotation,
-                template = "sc_analysis.txt", out_name = out_suffix)
+                template = "sc_analysis.txt", out_name = out_suffix, opt = opt)
