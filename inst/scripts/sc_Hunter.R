@@ -73,7 +73,7 @@ option_list <- list(
   optparse::make_option("--suffix", type = "character", help = "Suffix to specific file"),
   optparse::make_option("--samples_to_integrate", type = "character", default = "",
             help = "Path to file containing samples to be processed."),
-  optparse::make_option("--int_columns", type = "character", default = "",
+  optparse::make_option("--subset_by", type = "character", default = "",
             help = "Comma-separated list of conditions by which to perform integration
                     analysis. If empty, all conditions will be analysed."),
   optparse::make_option("--extra_columns", type = "character", default = "",
@@ -88,7 +88,7 @@ option_list <- list(
             help = "Provided CPUs."),
   optparse::make_option("--imported_counts", type = "character", default = "",
             help = "Imported counts directory."),
-  optparse::make_option("--DEG_columns", type = "character", default = "",
+  optparse::make_option("--DEG_target", type = "character", default = "",
             help = "Columns for DEG analysis."),
   optparse::make_option("--cell_annotation", type = "character", default = "",
             help = "Cell types annotation file. Will be used to dynamically
@@ -210,18 +210,16 @@ if(opt$target_genes == ""){
 }
 
 exp_design <- read.table(opt$exp_design, sep = "\t", header = TRUE)
-
+subset_by <- NULL
 if(opt$integrate) {
-  if(opt$int_columns == "") {
-  warning("No conditions specified for analysis. Analysing every condition")
-  int_columns <- tolower(colnames(exp_design)[!colnames(exp_design)=="sample"])
+  if(opt$subset_by == "") {
+  message("No conditions specified for analysis. Data will not be subset.")
   } else {
-    int_columns <- tolower(unlist(strsplit(opt$int_columns, ",")))
+    subset_by <- tolower(unlist(strsplit(opt$subset_by, ",")))
+    message(paste0("Selected ", length(subset_by), " subset condition(s): ", paste0(subset_by, collapse = ", ")))    
   }
-  message(paste0("Selected ", length(int_columns), " condition(s) for analysis: ", paste0(int_columns, collapse = ", ")))
 } else {
   message("Starting non-integrative analysis")
-  int_columns <- NULL
 }
 
 if(opt$extra_columns == "") {
@@ -230,14 +228,29 @@ if(opt$extra_columns == "") {
   extra_columns <- tolower(unlist(strsplit(opt$extra_columns, ",")))
 }
 
-if(opt$DEG_columns == "") {
-  DEG_columns <- int_columns
-} else if(opt$DEG_columns != "none"){
-  DEG_columns <- opt$DEG_columns
+if(opt$DEG_target == "") {
+  message("DEG analysis disabled.")
+  DEG_target <- NULL
 } else {
-  message("DEG_columns set to \"none\". DEG analysis inactive.")
-  DEG_columns <- NULL
+  DEG_target <- unlist(strsplit(opt$DEG_target, ";"))
+  DEG_target <- unlist(lapply(DEG_target, strsplit, split = ":"), recursive = FALSE)
+  DEG_target <- lapply(DEG_target, function(vector) {
+    if(length(vector) < 2) {
+      res <- c(vector, "all")
+    } else {
+      res <- vector
+    }
+    return(res)
+  })
+  DEG_names <- unlist(lapply(DEG_target, `[[`, 1))
+  DEG_names <- strsplit(DEG_names, ">")
+  DEG_columns <- unlist(lapply(DEG_names, `[[`, 2))
+  DEG_names <- unlist(lapply(DEG_names, `[[`, 1))
+  DEG_values <- unlist(lapply(DEG_target, `[[`, 2))
+  DEG_target <- data.frame(column = DEG_columns, values = DEG_values)
+  rownames(DEG_target) <- DEG_names
 }
+
 if(opt$DEG_p_val_cutoff == "") {
   DEG_p_val_cutoff <- 5e-3
 } else {
@@ -268,17 +281,6 @@ if(!opt$loadRDS) {
     }
     message("Loading provided SingleR reference")
     SingleR_ref <- HDF5Array::loadHDF5SummarizedExperiment(dir = path_to_ref, prefix = "")
-    if(opt$filter_dataset != "") {
-    message("Filtering input data")
-    expressions <- strsplit(opt$filter, ";")[[1]]
-    filter <- vector(mode = "list", length = length(expressions))
-    for(i in seq(expressions)) {
-      filter[[i]] <- parse_filter(object = "seu@meta.data",
-                                  expression = expressions[i]) 
-    }
-    filter <- Reduce("|", filter)
-    seu <- seu[, filter]
-    }
     if(opt$ref_filter != "") {
       message("Filtering reference")
       ref_filter <- readLines(opt$ref_filter)
@@ -321,13 +323,20 @@ if(!opt$loadRDS) {
   }
   if(opt$filter_dataset != "") {
     message("Filtering input data")
-    expressions <- strsplit(opt$filter_dataset, ";")[[1]]
+    expressions <- strsplit(opt$filter_dataset, "&|\\|")[[1]]
+    expressions <- gsub(" $", "", expressions)
+    expressions <- gsub("^ ", "", expressions)
+    if(grepl("&", opt$filter_dataset)) {
+      operator <- "&"
+    } else {
+      operator <- "|"
+    }
     filter <- vector(mode = "list", length = length(expressions))
     for(i in seq(expressions)) {
       filter[[i]] <- parse_filter(object = "seu@meta.data",
                                   expression = expressions[i]) 
     }
-    filter <- Reduce("|", filter)
+    filter <- Reduce(operator, filter)
     seu <- seu[, filter]
   }
   if(opt$reduce) {
@@ -343,8 +352,8 @@ if(opt$loadRDS) {
 } else {
   message("Analyzing seurat object")
   final_results <- main_sc_Hunter(seu = seu, cluster_annotation = cluster_annotation, name = opt$name,
-                                  ndims = opt$ndims, resolution = opt$resolution, subset_by = int_columns,
-                                  cell_annotation = cell_annotation, DEG_columns = DEG_columns,
+                                  ndims = opt$ndims, resolution = opt$resolution, subset_by = subset_by,
+                                  cell_annotation = cell_annotation, DEG_target = DEG_target,
                                   minqcfeats = opt$minqcfeats, percentmt = opt$percentmt, hvgs = opt$hvgs,
                                   scalefactor = opt$scalefactor, normalmethod = opt$normalmethod,
                                   p_adj_cutoff = opt$p_adj_cutoff, verbose = opt$verbose, sigfig = 2,
@@ -373,5 +382,5 @@ message("--------------------------------------------")
 write_sc_report(final_results = final_results, template_folder = template_folder,
                 output = file.path(opt$output, "report"), source_folder = source_folder,
                 query = unlist(target_genes), name = opt$name, extra_columns = extra_columns,
-                subset_by = int_columns, cell_annotation = cell_annotation,
+                subset_by = subset_by, cell_annotation = cell_annotation,
                 template = "sc_analysis.txt", out_name = out_suffix, opt = opt)
