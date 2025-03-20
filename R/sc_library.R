@@ -349,6 +349,10 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' @param verbose A boolean. Will be passed to Seurat function calls.
 #' @param assay A string. Assay whose markers will be calculated. Default "RNA",
 #' as per usual workflow.
+#' @param values A comma-separated string delimiting values of cond column by
+#' which to perform the comparison. Must specify two conditions. Default NULL,
+#' will use all values. If there are more than two, function will return an
+#' error.
 #' @return A list containing one marker or DEG data frame per cluster, plus
 #' an additional one for global DEGs if performing differential analysis.
 #' @examples
@@ -360,8 +364,12 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' @export
 
 get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
-                           verbose = FALSE, assay = "RNA") {
-  conds <- unique(seu@meta.data[[cond]])
+                           verbose = FALSE, assay = "RNA", values = NULL) {
+  if(is.null(values) | values == "all") {
+    conds <- unique(seu@meta.data[[cond]])
+  } else {
+    conds <- c(unlist(strsplit(values, ",")))
+  }
   if(length(conds) != 2) {
     stop(paste0("ERROR: get_sc_markers only works with condition with two ",
                  "values. Provided condition has ", length(conds)))
@@ -434,7 +442,7 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 #' markers in case conserved mode cannot be triggered.
 #' @param min.pct,logfc.threshold See ?Seurat::FindAllMarkers
 #' @param subset_by Metadata column by which seurat object will be subset for
-#' marker calculation.
+#' marker calculation. Default NULL.
 #' @param integrate Whether or not integrative analysis is active. Does not
 #' bother with subsetting if FALSE.
 #' @param assay A string. Assay whose markers will be calculated. Default "RNA",
@@ -448,7 +456,7 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 #'  }
 #' @export
 
-calculate_markers <- function(seu, subset_by, verbose = FALSE, idents = NULL,
+calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE, idents = NULL,
                               integrate = FALSE, min.pct = 0.25,
                               logfc.threshold = 0.25, assay = "RNA") {
 
@@ -778,7 +786,7 @@ get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
 
 .process_DEG_matrix <- function(DEG_matrix, min_avg_log2FC = 0.2, ident = NULL,
                                 p_val_cutoff = 0.01, genes_list = NULL) {
-  if(is.null(DEG_matrix)) {
+  if(is.null(DEG_matrix) | FALSE %in% DEG_matrix) {
     res <- NULL
   } else {
     DEG_matrix <- DEG_matrix[, c("avg_log2FC", "p_val_adj", "gene")]
@@ -1069,7 +1077,7 @@ find_doublets <- function(seu) {
 #' @return A seurat object with a new sketched assay.
 #' @examples
 #'  \dontrun{
-#'    sketched_experiment <- sketch_sc_experiment(seu = unsketched_experiment,
+#'    sketched_experiment <- sketch_sc_experiment(seu = nonsketched_experiment,
 #'           assay = "RNA", method = "LeverageScore", sketched.assay = "sketch",
 #'           cell.pct = 50)
 #'  }
@@ -1085,6 +1093,9 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
                      " Skipping sketch."))
     }
     ncells <- ceiling(mean(table(seu$sample)) * cell.pct / 100)
+    if(ncells < 5000) {
+      warning("WARNING: Fewer than 5000 cells selected for sketching.")
+    }
   } else {
     message("force.ncells has non-empty value. Forcing sketch.")
     perform_sketch <- TRUE
