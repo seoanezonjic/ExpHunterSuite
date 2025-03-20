@@ -18,7 +18,7 @@
 #' @param cluster_annotation A data frame. Table to use to rename clusters.
 #' @param cell_annotation A data frame. Table of markers to use for cell type
 #' annotation
-#' @param DEG_columns A string vector. Categories by which DEG analysis will be
+#' @param DEG_target A string vector. Categories by which DEG analysis will be
 #' performed
 #' @param scalefactor An integer. Factor by which to scale data in normalisation
 #' @param hvgs An integer. Number of highly-variable features to select.
@@ -72,7 +72,7 @@
 #'                   query = "TREM2", sigfig = 2, resolution = 0.5,
 #'                   p_adj_cutoff = 5e-3, name = "project_name",
 #'                   integrate = TRUE, cluster_annotation = NULL,
-#'                   cell_annotation = cell_types, DEG_columns = "genotype",
+#'                   cell_annotation = cell_types, DEG_target = "genotype",
 #'                   scalefactor = 10000, hvgs = 2000, subset_by = "genotype",
 #'                   normalmethod = "LogNormalize", ndims = 10, verbose = FALSE,
 #'                   output = getwd(), save_RDS = FALSE, reduce = FALSE,
@@ -113,7 +113,7 @@
 main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                            resolution = 0.5, p_adj_cutoff = 5e-3, name = NULL,
                            integrate = FALSE, cluster_annotation = NULL,
-                           cell_annotation = NULL, DEG_columns = NULL,
+                           cell_annotation = NULL, DEG_target = NULL,
                            scalefactor = 10000, hvgs = 2000, subset_by = NULL,
                            normalmethod = "LogNormalize", ndims,
                            verbose = FALSE, output = getwd(),
@@ -125,7 +125,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                            sketch_method = "LeverageScore",
                            force_ncells = NA_integer_,
                            DEG_p_val_cutoff = 5e-3, min_avg_log2FC = 0.5){
-  check_sc_input(metadata = seu@meta.data, DEG_columns = DEG_columns)
+  #check_sc_input(metadata = seu@meta.data, DEG_target = DEG_target)
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                doublet_list = doublet_list)
   if(!reduce) {
@@ -317,41 +317,44 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   }
   subset_DEGs <- NULL
   subset_seu <- NULL
-  if(!is.null(DEG_columns) & integrate) {
+  if(!is.null(DEG_target) & integrate) {
     message('Performing DEG analysis.')
-    DEG_conditions <- unlist(strsplit(DEG_columns, split = ","))
-    DEG_list <- vector(mode = "list", length = length(DEG_conditions))
-    names(DEG_list) <- DEG_conditions
+    DEG_comparisons <- rownames(DEG_target)
+    DEG_list <- vector(mode = "list", length = length(DEG_comparisons))
+    names(DEG_list) <- DEG_comparisons
     DEG_metrics_list <- DEG_list
     DEG_query_list <- DEG_list
-    subset_by <- ifelse("cell_type" %in% colnames(seu@meta.data),
+    subset_DEGs <- ifelse("cell_type" %in% colnames(seu@meta.data),
                         yes = "cell_type", no = "seurat_clusters")
-    for(condition in DEG_conditions) {
-      message(paste0("Calculating DEGs for condition ", condition, "."))
-      condition_DEGs <- get_sc_markers(seu = seu, cond = condition, DEG = TRUE,
-                                       subset_by = subset_by, verbose = verbose)
-      DEG_list[[condition]] <- condition_DEGs
+    for(comparison in DEG_comparisons) {
+      message(paste0("Calculating DEGs for comparison ", comparison, "."))
+      condition <- DEG_target[comparison, "column"]
+      values <- DEG_target[comparison, "values"]
+      comparison_DEGs <- get_sc_markers(seu = seu, cond = condition, DEG = TRUE,
+                                       subset_by = subset_DEGs, verbose = verbose,
+                                       values = values)
+      DEG_list[[comparison]] <- comparison_DEGs
       message("Extracting DEG cell metrics")
-      DEG_metrics_list[[condition]] <- get_fc_vs_ncells(seu = seu,
-        DEG_list = condition_DEGs$markers, min_avg_log2FC = min_avg_log2FC,
+      DEG_metrics_list[[comparison]] <- get_fc_vs_ncells(seu = seu,
+        DEG_list = comparison_DEGs$markers, min_avg_log2FC = min_avg_log2FC,
         p_val_cutoff = DEG_p_val_cutoff, min_counts = minqcfeats)
       if(!is.null(query)) {
-        DEG_query_list[[condition]] <- get_fc_vs_ncells(seu = seu,
-                    DEG_list = condition_DEGs$markers, min_counts = minqcfeats,
+        DEG_query_list[[comparison]] <- get_fc_vs_ncells(seu = seu,
+                    DEG_list = comparison_DEGs$markers, min_counts = minqcfeats,
                     query = query)
       }
     }
     if(length(subset_by) == 2) {
       message(paste0("Analysing DEGs by subgroups. Subsetting by condition: ",
-              DEG_conditions[1], ", analyzing effects of ", DEG_conditions[2]))
+              DEG_comparison[1], ", analyzing effects of ", DEG_comparison[2]))
       subset_DEGs <- vector(mode = "list", length = 2)
-      condition_values <- unique(seu@meta.data[[DEG_conditions[1]]])
+      condition_values <- unique(seu@meta.data[[DEG_comparison[1]]])
       names(subset_DEGs) <- condition_values
       subset_seu <- subset_DEGs
       for(value in condition_values) {
-        subset_seu[[value]] <- subset_seurat(seu, DEG_conditions[1], value)
+        subset_seu[[value]] <- subset_seurat(seu, DEG_comparison[1], value)
         subset_DEGs[[value]] <- get_sc_markers(seu = subset_seu[[value]],
-                                  cond = DEG_conditions[2], DEG = TRUE,
+                                  cond = DEG_comparison[2], DEG = TRUE,
                                   subset_by = subset_by, verbose = verbose)
       }
     }
@@ -464,18 +467,18 @@ write_sc_report <- function(final_results, output = getwd(), name = NULL,
 #' check_sc_input
 #' check input of main SC analysis function
 
-check_sc_input <- function(metadata, DEG_columns){
+check_sc_input <- function(metadata, DEG_target){
   colnames(metadata) <- tolower(colnames(metadata))
-  PASS <- rep(TRUE, length(DEG_columns))
-  names(PASS) <- DEG_columns
-  for(DEG_column in DEG_columns) {
+  PASS <- rep(TRUE, length(DEG_target))
+  names(PASS) <- DEG_target
+  for(DEG_column in DEG_target) {
     uniques <- length(unique(metadata[[DEG_column]]))
     if(uniques != 2) {
       PASS[DEG_column] <- FALSE
     }
   }
   if(any(!PASS)) {
-    stop(paste0("ERROR. Please check DEG_columns have exactly two unique ",
+    stop(paste0("ERROR. Please check DEG_target have exactly two unique ",
       "values. DEG_column(s) \"", paste(names(PASS[PASS==FALSE]),
         collapse = "\", \""), "\" contain an invalid number."))
   }
