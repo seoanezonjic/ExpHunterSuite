@@ -364,8 +364,11 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' @export
 
 get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
-                           verbose = FALSE, assay = "RNA", values = NULL) {
-  if(is.null(values) | values == "all") {
+                           verbose = FALSE, assay = "RNA", values = NULL,
+                           min.pct = 0.1) {
+  if(is.null(values)) {
+    conds <- unique(seu@meta.data[[cond]])
+  } else if (values == "all") {
     conds <- unique(seu@meta.data[[cond]])
   } else {
     conds <- c(unlist(strsplit(values, ",")))
@@ -394,7 +397,8 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
       } else {
         Seurat::Idents(subset_seu) <- cond  
         markers <- Seurat::FindMarkers(subset_seu, ident.1 = conds[1],
-                                       ident.2 = conds[2], verbose = verbose)
+                                       ident.2 = conds[2], verbose = verbose,
+                                       min.pct = min.pct)
         markers$gene <- rownames(markers)
       }
     } else {
@@ -459,9 +463,9 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE, idents = NULL,
                               integrate = FALSE, min.pct = 0.25,
                               logfc.threshold = 0.25, assay = "RNA") {
-
-  run_conserved <- ifelse(test = length(subset_by) == 1 & integrate,
-                          no = FALSE,
+  test <- length(subset_by) == 1 & integrate
+  test <- test & length(unique(seu@meta.data[[subset_by]])) == 2
+  run_conserved <- ifelse(test = test, no = FALSE,
                           yes = !.has_exclusive_idents(seu = seu,
                                   idents = idents, cond = tolower(subset_by)))
   if(run_conserved) {
@@ -496,23 +500,24 @@ calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE, idents = N
 #' analyze_query(pbmc_tiny, c("PPBP", "CA2"), 2, sample_col = "orig.ident")
 #' @export
 
-analyze_query <- function(seu, query, sigfig, sample_col = "sample") {
+analyze_query <- function(seu, query, sigfig, sample_col = "sample",
+  layer = "data") {
   if(all(!query %in% rownames(seu))) {
     warning("None of the query genes are expressed in the dataset",
              immediate. = TRUE)
     res <- NULL
   } else {
-    query_exp <- get_query_distribution(seu = seu, query = query,
+    query_exp <- get_query_distribution(seu = seu, query = query, layer = layer,
                                      sigfig = sigfig, sample_col = sample_col)
     query_pct <- get_query_pct(seu = seu, query = query, by = sample_col,
-                               sigfig = sigfig)
+                               sigfig = sigfig, layer = layer)
     if("cell_type" %in% colnames(seu@meta.data)) {
       get_by <- c(sample_col, "cell_type")
     } else {
       get_by <- c(sample_col, "seurat_clusters")
     }
     query_cluster_pct <- get_query_pct(seu = seu, query = query, by = get_by,
-                                       sigfig = sigfig)
+                                       sigfig = sigfig, layer = layer)
     res <- list(query_exp = query_exp, query_pct = query_pct,
                 query_cluster_pct = query_cluster_pct)
   }
@@ -561,8 +566,9 @@ get_clusters_distribution <- function(seu, sigfig = 3, sample_col = "sample") {
 #' get_query_distribution(pbmc_tiny, c("PPBP", "CA2"), 2, "orig.ident")
 #' @export
 
-get_query_distribution <- function(seu, query, sigfig = 3, sample_col = "sample") {
-  genes <- SeuratObject::FetchData(seu, query)
+get_query_distribution <- function(seu, query, sigfig = 3, layer = "data",
+  sample_col = "sample") {
+  genes <- SeuratObject::FetchData(seu, query, layer = layer)
   genes <- cbind(seu@meta.data[sample_col], genes)
   colnames(genes)[1] <- "sample"
   gene_distribution <- stats::aggregate(genes[, -1], list(genes$sample), FUN = sum)
@@ -594,7 +600,7 @@ get_query_distribution <- function(seu, query, sigfig = 3, sample_col = "sample"
 #' @export
 
 get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
-                          layer = "counts") {
+                          layer = "data") {
   if(length(by) < 1 || 2 < length(by)) {
     stop("Invalid 'by' length. Must be 1 or 2")
   }
@@ -621,9 +627,9 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
         # Expr set to TRUE because double subset can result in only selecting
         # cells that have not been selected by sketch, which breaks seurat
         # object subsetting.
-        new_subset[[sublist_name]] <- subset_seurat(subset_list[[element]],
-                                                    by[2], expr = TRUE,
-                                                    as.character(sec_items[j]))
+        new_subset[[sublist_name]] <- subset_seurat(column = by[2], expr = TRUE,
+               seu = subset_list[[element]], value = as.character(sec_items[j]),
+               layer = layer)
       }
       subset_list[[element]] <- new_subset
       pct_list[[element]] <- lapply(X = subset_list[[element]],
@@ -796,7 +802,7 @@ get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
     if(min(DEG_matrix$p_val_adj > p_val_cutoff)) {
       warning("Min adjusted p-value is higher than cutoff. Skipping filter")
     } else {
-      DEG_matrix <- DEG_matrix[abs(DEG_matrix$p_val_adj) <= p_val_cutoff, ]
+      DEG_matrix <- DEG_matrix[DEG_matrix$p_val_adj <= p_val_cutoff, ]
     }
     if(!is.null(genes_list)) {
       missing <- which(!genes_list %in% DEG_matrix$gene)
@@ -846,7 +852,7 @@ get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
 #' breakdown_query(seu = pbmc_tiny, query = c("PPBP", "CA2"))
 #' @export
 
-breakdown_query <- function(input, query, assay = "RNA", layer = "counts") {
+breakdown_query <- function(input, query, assay = "RNA", layer = "data") {
   # This pseudo-method dispatch comes from an error when subsetting a seurat
   # object only by cells NOT selected by sketch. Once it is solved, this will
   # always assume a seurat object.
@@ -907,7 +913,7 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "counts") {
   }
   if(any(sum_matches < 3)) {
     mismatch <- pairs[which(sum_matches < 3), ]
-    warning('One or more identities contain less than three cells for one or ',
+    warning('One or more identities contain fewer than three cells for one or ',
             'more categories. Affected pair(s): ',
             paste(apply(mismatch, 1, paste, collapse = "-"), collapse = ", "),
             ". \nDefaulting to general marker analysis.")
@@ -935,15 +941,16 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "counts") {
 #' expr = FALSE))
 #' @export
 
-subset_seurat <- function(seu, column, value, expr = FALSE) {
+subset_seurat <- function(seu, column, value, expr = FALSE, layer = "data") {
   # Argument "expr" comes from an error when subsetting a seurat
   # object only by cells NOT selected by sketch. Once it is solved, this will
   # always return a seurat object.
   expr_vec <- Seurat::FetchData(seu, vars = column)
   if(expr) {
-    cells <- rownames(expr)
-    expr_data <- Seurat::GetAssayData(seu)
-    subset <- expr_data[, colnames(expr_data) %in% cells]
+    expr_vec <- expr_vec[expr_vec == value, , drop = FALSE]
+    cells <- rownames(expr_vec)
+    expr_data <- Seurat::GetAssayData(seu, layer = layer)
+    subset <- expr_data[, colnames(expr_data) %in% cells, drop = FALSE]
   } else {
     subset <- seu[, which(expr_vec == value)]  
   }
