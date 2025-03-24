@@ -188,7 +188,8 @@ test_that("get_query_distribution properly sums expression levels in samples", {
   expected_exp[, 2] <- c(0, 0, 12.4)
   expected_exp[, 3] <- c(4.38, 9.67, 7.33)
   colnames(expected_exp) <- query
-  output_exp <- get_query_distribution(test_pbmc, query, 3)
+  output_exp <- get_query_distribution(seu = test_pbmc, query = query,
+                sigfig = 3, layer = "counts")
   expect_equal(output_exp, expected_exp)
 })
 
@@ -205,7 +206,8 @@ test_that("get_query_pct works in simple case", {
   expected_df[2, ] <- c(0, 0, 40)
   expected_df[3, ] <- c(20, 40, 20)
   colnames(expected_df) <- query
-  output_df <- suppressMessages(get_query_pct(test_pbmc, query, "sample"))
+  output_df <- suppressMessages(get_query_pct(seu = test_pbmc, query = query, by = "sample",
+                                layer = "counts"))
   expect_equal(output_df, expected_df)
 })
 
@@ -217,11 +219,11 @@ test_that("get_query_pct gives warning if any query genes are not found", {
   expected_df[2, ] <- c(0, 0, 40)
   expected_df[3, ] <- c(20, 40, 20)
   colnames(expected_df) <- query
-  warnings <- capture_warnings(suppressMessages(get_query_pct(test_pbmc,
-                               missing_query, "sample")))
+  warnings <- capture_warnings(suppressMessages(get_query_pct(seu = test_pbmc,
+                               query = missing_query, by = "sample")))
   expect_match(warnings, "NOEXPA, NOEXPB")
-  output_df <- suppressWarnings(suppressMessages(get_query_pct(test_pbmc,
-                               missing_query, "sample")))
+  output_df <- suppressWarnings(suppressMessages(get_query_pct(seu = test_pbmc,
+                               query = missing_query, by = "sample")))
   expect_equal(output_df, expected_df)
 })
 
@@ -231,8 +233,8 @@ test_that("get_query_pct works with query of length one", {
   rownames(expected_df) <- c("A", "B", "C")
   expected_df[, 1] <- c(20, 0, 20)
   colnames(expected_df) <- single_query
-  output_df <- suppressMessages(get_query_pct(test_pbmc, single_query,
-                                "sample"))
+  output_df <- suppressMessages(get_query_pct(seu = test_pbmc, by = "sample",
+                                query = single_query))
   expect_equal(output_df, expected_df)
 })
 
@@ -242,33 +244,31 @@ test_that("get_query_pct works with alternate 'by' arguments", {
   rownames(expected_df) <- c(paste0(0:4, ". type", toupper(letters[1:5])))
   expected_df[, 1] <- c(0, 33, 33, 0, 0)
   colnames(expected_df) <- single_query
-  output_df <- suppressMessages(get_query_pct(test_pbmc, single_query,
-                                "cell_type"))
+  output_df <- suppressMessages(get_query_pct(seu = test_pbmc, by = "cell_type",
+                                query = single_query))
   testthat::expect_equal(output_df, expected_df)
 })
 
-# Test disabled until I figure out a way to add a "counts" element to assays
-# in a way that lets me access it in the same way that get_query_pct does.
-# That method breaks in test dataset, I have not figured out what makes it
-# different. Does not have to do with different seurat version.
-# test_that("get_query_pct works with 'by' argument of length 2", {
-#   pbmc_updated <- Seurat::CreateSeuratObject(counts = pbmc_tiny$RNA$counts)
-#   pbmc_updated@meta.data$sample <- c(rep("A", 5), rep("B", 5), rep("C", 5))
-#   pbmc_updated@meta.data$seurat_clusters <- rep(0:4, 3)
-#   types <- paste0("type", toupper(letters[1:5]))
-#   matA <- matrix(data = 0, nrow = 5, ncol = 3)
-#   matB = matC <- matA
-#   matB[, 3] <- c(0, 100, rep(0, 3))
-#   matC[, 1] <- rep(100, 5)
-#   matC[, 2] <- c(0, rep(100, 4))
-#   matC[, 3] <- c(rep(100, 3), 0, 100)
-#   colnames(matA) = colnames(matB) = colnames(matC) <- query
-#   rownames(matA) = rownames(matB) = rownames(matC) <- types
-#   expected_list <- list(A = matA, B = matB, C = matC)
-#   output_list <- get_query_pct(pbmc_updated, query,
-#                                by = c("sample", "seurat_clusters"))
-#   expect_equal(output_list, expected_list)
-# })
+test_that("get_query_pct works with 'by' argument of length 2", {
+  pbmc_updated <- Seurat::CreateSeuratObject(counts = pbmc_tiny$RNA$counts)
+  pbmc_updated@meta.data$sample <- c(rep("A", 5), rep("B", 5), rep("C", 5))
+  pbmc_updated@meta.data$seurat_clusters <- rep(0:4, 3)
+  dfA <- matrix(data = 0, nrow = 5, ncol = 3)
+  colnames(dfA) <- query
+  rownames(dfA) <- 0:4
+  dfB <- dfC <- dfA
+  dfA[, 1] <- c(0, 0, 100, 0, 0)
+  dfA[, 3] <- c(0, 0, 0, 100, 0)
+  dfB[, 3] <- c(0, 100, 0, 0, 100)
+  dfC[, 1] <- c(0, 100, 0, 0, 0)
+  dfC[, 2] <- c(100, 0, 100, 0, 0)
+  dfC[, 3] <- c(0, 100, 0, 0, 0)
+  expected_list <- list(A = dfA, B = dfB, C = dfC)
+  output_list <- get_query_pct(seu = pbmc_updated, query =  query,
+                               by = c("sample", "seurat_clusters"),
+                               layer = "counts")
+  expect_equal(output_list, expected_list)
+})
 
 test_pbmc <- pbmc_tiny
 test_pbmc@meta.data$groups <- "g1"
