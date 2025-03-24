@@ -65,6 +65,7 @@
 #' Default 5e-3.
 #' @param min_avg_log2FC Average log2fc cutoff for significant DEGs.
 #' Default 0.5.
+#' @param min_cell_pct Minimum threshold of percentage of cells expressing DEG.
 #' @export
 #' @examples
 #'  \dontrun{
@@ -124,7 +125,8 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                            sketch_pct = 12, sketch_ncells = 5000,
                            sketch_method = "LeverageScore",
                            force_ncells = NA_integer_,
-                           DEG_p_val_cutoff = 5e-3, min_avg_log2FC = 0.5){
+                           DEG_p_val_cutoff = 5e-3, min_avg_log2FC = 0.5,
+                           min_cell_pct = 1){
   #check_sc_input(metadata = seu@meta.data, DEG_target = DEG_target)
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                doublet_list = doublet_list)
@@ -315,7 +317,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   } else {
     query_data <- NULL
   }
-  subset_DEGs <- NULL
+  subset_target <- NULL
   subset_seu <- NULL
   if(!is.null(DEG_target) & integrate) {
     message('Performing DEG analysis.')
@@ -324,15 +326,15 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     names(DEG_list) <- DEG_comparisons
     DEG_metrics_list <- DEG_list
     DEG_query_list <- DEG_list
-    subset_DEGs <- ifelse("cell_type" %in% colnames(seu@meta.data),
+    subset_target <- ifelse("cell_type" %in% colnames(seu@meta.data),
                         yes = "cell_type", no = "seurat_clusters")
     for(comparison in DEG_comparisons) {
       message(paste0("Calculating DEGs for comparison ", comparison, "."))
       condition <- DEG_target[comparison, "column"]
       values <- DEG_target[comparison, "values"]
       comparison_DEGs <- get_sc_markers(seu = seu, cond = condition, DEG = TRUE,
-                                       subset_by = subset_DEGs, verbose = verbose,
-                                       values = values)
+                                   subset_by = subset_target, verbose = verbose,
+                                   values = values, min.pct = min_cell_pct)
       DEG_list[[comparison]] <- comparison_DEGs
       message("Extracting DEG cell metrics")
       DEG_metrics_list[[comparison]] <- get_fc_vs_ncells(seu = seu,
@@ -344,6 +346,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                     query = query)
       }
     }
+    subset_DEGs <- NULL
     if(length(subset_by) == 2) {
       message(paste0("Analysing DEGs by subgroups. Subsetting by condition: ",
               DEG_comparison[1], ", analyzing effects of ", DEG_comparison[2]))
@@ -414,7 +417,8 @@ write_sc_report <- function(final_results, output = getwd(), name = NULL,
                             query = NULL, subset_by = NULL, opt,
                             cell_annotation = NULL, template = NULL,
                             out_name = NULL, use_canvas = TRUE,
-                            extra_columns = NULL){
+                            extra_columns = NULL, DEG_p_val_cutoff = NA_real_,
+                            min_avg_log2FC = NA_real_){
   if(is.null(template_folder)) {
     stop("No template folder was provided.")
   }
@@ -443,6 +447,8 @@ write_sc_report <- function(final_results, output = getwd(), name = NULL,
                     DEG_list = final_results$DEG_list, query = query,
                     DEG_metrics_list = final_results$DEG_metrics_list,
                     DEG_query_list = final_results$DEG_query_list,
+                    DEG_p_val_cutoff = DEG_p_val_cutoff,
+                    min_avg_log2FC = min_avg_log2FC,
                     marker_meta = final_results$marker_meta,
                     subset_seu = final_results$subset_seu,
                     subset_DEGs = final_results$subset_DEGs,
