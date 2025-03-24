@@ -120,24 +120,25 @@ option_list <- list(
             help = paste0("Load RDS object instead of re-processing the entire experiment. ",
             "Loaded from default pipeline saving location.")),
   optparse::make_option("--filter_dataset", type = "character", default = "",
-            help = "Filter imported counts according to string"),
+            help = "Filter imported counts according to string."),
   optparse::make_option("--ref_filter", type = "character", default = "",
-            help = "Filter SingleR reference according to string"),
+            help = "Filter SingleR reference according to string."),
   optparse::make_option("--sketch", type = "logical", default = FALSE, action = "store_true",
             help = "Sketch experiment."),
   optparse::make_option("--force_ncells", type = "integer", default = NA_integer_,
             help = "An integer. Skip all sketching tests and force to sketch this many cells from each sample."),
   optparse::make_option("--sketch_pct", type = "numeric", default = 12,
             help = paste0("A numeric. Percentage of total cells to consider representative of the",
-  " experiment. Default 12, as suggested by sketching tutorial")),
+  " experiment. Default 12, as suggested by sketching tutorial.")),
   optparse::make_option("--sketch_method", type = "character", default = 12,
-            help = paste0("Score calculation method to select cells in sketch")),
-  optparse::make_option("--DEG_p_val_cutoff", type = "numeric", default = 0.5,
-            help = paste0("Adjusted p-val cutoff for significant DEGs")),
-  optparse::make_option("--min_avg_log2FC", type = "numeric", default = 5e-3,
-            help = paste0("Avg log2fc cutoff for significant DEGs"))
+            help = "Score calculation method to select cells in sketch."),
+  optparse::make_option("--DEG_p_val_cutoff", type = "numeric", default = 2,
+            help = "Adjusted p-val cutoff for significant DEGs."),
+  optparse::make_option("--min_avg_log2FC", type = "numeric", default = 1e-3,
+            help = "Avg log2fc cutoff for significant DEGs."),
+  optparse::make_option("--min_cell_pct", type = "numeric", default = 0.1,
+            help = "Min percentage of cells expressing DEG in each group.")
 )
-
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
@@ -251,18 +252,6 @@ if(opt$DEG_target == "") {
   rownames(DEG_target) <- DEG_names
 }
 
-if(opt$DEG_p_val_cutoff == "") {
-  DEG_p_val_cutoff <- 5e-3
-} else {
-  DEG_p_val_cutoff <- opt$DEG_p_val_cutoff
-}
-
-if(opt$min_avg_log2FC == "") {
-  min_avg_log2FC <- 0.5
-} else {
-  min_avg_log2FC <- opt$min_avg_log2FC
-}
-
 # Input reading and integration variables setup
 if(opt$samples_to_integrate == "") {
   samples <- exp_design$sample
@@ -363,7 +352,8 @@ if(opt$loadRDS) {
                                   BPPARAM = BPPARAM, doublet_list = doublet_list, integration_method = int_method,
                                   sketch = opt$sketch, sketch_ncells = opt$sketch_ncells, sketch_pct = opt$sketch_pct,
                                   sketch_method = opt$sketch_method, force_ncells = force_ncells,
-                                  DEG_p_val_cutoff = DEG_p_val_cutoff, min_avg_log2FC = min_avg_log2FC)
+                                  DEG_p_val_cutoff = opt$DEG_p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
+                                  min_cell_pct = opt$min_cell_pct)
 }
 
 message("--------------------------------------------")
@@ -382,5 +372,6 @@ message("--------------------------------------------")
 write_sc_report(final_results = final_results, template_folder = template_folder,
                 output = file.path(opt$output, "report"), source_folder = source_folder,
                 query = unlist(target_genes), name = opt$name, extra_columns = extra_columns,
-                subset_by = subset_by, cell_annotation = cell_annotation,
-                template = "sc_analysis.txt", out_name = out_suffix, opt = opt)
+                subset_by = subset_by, cell_annotation = cell_annotation, opt$DEG_p_val_cutoff,
+                min_avg_log2FC = opt$min_avg_log2FC, template = "sc_analysis.txt",
+                out_name = out_suffix, opt = opt)
