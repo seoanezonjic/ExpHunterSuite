@@ -412,7 +412,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 #' 
 #' @return nothing
 
-write_sc_report <- function(final_results, output = getwd(), name = NULL,
+write_sc_report <- function(final_results, output = getwd(),
                             template_folder, source_folder = NULL,
                             query = NULL, subset_by = NULL, opt,
                             cell_annotation = NULL, template = NULL,
@@ -439,16 +439,16 @@ write_sc_report <- function(final_results, output = getwd(), name = NULL,
   if(!file.exists(template)) {
     stop("Specified template does not exist in template folder.")
   }
-  out_file <- file.path(output, paste0(name, "_", out_name))
-  tmp_folder <- file.path(output, paste0(name, "_tmp_lib"))
+  out_file <- file.path(output, paste0(opt$name, "_", out_name))
+  tmp_folder <- file.path(output, paste0(opt$name, "_tmp_lib"))
   dir.create(tmp_folder)
   container <- list(opt = opt, seu = final_results$seu, qc = final_results$qc,
                     subset_by = subset_by, use_canvas = use_canvas,
                     DEG_list = final_results$DEG_list, query = query,
                     DEG_metrics_list = final_results$DEG_metrics_list,
                     DEG_query_list = final_results$DEG_query_list,
-                    DEG_p_val_cutoff = DEG_p_val_cutoff,
-                    min_avg_log2FC = min_avg_log2FC,
+                    DEG_p_val_cutoff = opt$DEG_p_val_cutoff,
+                    min_avg_log2FC = opt$min_avg_log2FC,
                     marker_meta = final_results$marker_meta,
                     subset_seu = final_results$subset_seu,
                     subset_DEGs = final_results$subset_DEGs,
@@ -462,7 +462,7 @@ write_sc_report <- function(final_results, output = getwd(), name = NULL,
                     extra_columns = extra_columns,
                     integrate = final_results$integrate)
   plotter <- htmlreportR:::htmlReport$new(title_doc = paste0("Single-Cell ",
-                            name, " report"), container = container,
+                            opt$name, " report"), container = container,
                             tmp_folder = tmp_folder, src = source_folder,
                             compress_obj = FALSE)
   plotter$build(template)
