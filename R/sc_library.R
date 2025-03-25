@@ -413,7 +413,7 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
   }
   if(DEG) {
     message("Calculating global DEGs")
-    Seurat::Idents(seu) <- cond
+    Seurat::Idents(seu) <- seu@meta.data[, tolower(cond)]
     global_markers <- Seurat::FindMarkers(seu, ident.1 = conds[1],
                                 ident.2 = conds[2], verbose = verbose)
     global_markers$gene <- rownames(global_markers)
@@ -753,6 +753,8 @@ get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
   names(matrices) <- idents
   DEG_matrices <- matrices
   DEG_list$global <- NULL
+  empty_DEGs <- unlist(lapply(DEG_list, function(x) return(isFALSE(unlist(x)))))
+  DEG_list[empty_DEGs] <- NULL
   union_DEGenes <- unique(do.call(c, lapply(DEG_list, function(matrix)
                           return(rownames(matrix)))))
   for(ident in idents) {
@@ -768,6 +770,7 @@ get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
   ## Have to remove zeroes again, not in process_DEG_matrix, because we want to
   ## remove genes set to zero in ALL idents, not ident by ident
   DEG_df <- DEG_df[, colSums(DEG_df) > 0]
+  DEG_df <- DEG_df[rowSums(DEG_df) > 0, ]
   if(!is.null(query)) {
     ## This could also be improved. Instead of doing this, .process_DEG_matrix
     ## should be called with query supplied in genes_list argument.
@@ -784,10 +787,15 @@ get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
             "dataset."))
   }
   ncell_df <- .process_matrix_list(matrices, .is_expressed_matrix,
-                                   min_counts = min_counts)
-  ncell_df <- ncell_df[, colnames(ncell_df) %in% colnames(DEG_df), drop = FALSE]
-  return(list(DEG_df = DEG_df[, order(colnames(DEG_df)), drop = FALSE],
-              ncell_df = ncell_df[, order(colnames(ncell_df)), drop = FALSE]))
+              min_counts = min_counts)
+  # Different genes or cell types/clusters might be discarded due to DEG
+  # thresholds or count thresholds. We must update both data frames accordingly.
+  # This could be a function instead of this repetitive code.
+  col_intersection <- intersect(colnames(ncell_df), colnames(DEG_df))
+  row_intersection <- intersect(rownames(ncell_df), rownames(DEG_df))
+  DEG_df <- DEG_df[row_intersection, col_intersection, drop = FALSE]
+  ncell_df <- ncell_df[row_intersection, col_intersection, drop = FALSE]
+  return(list(DEG_df = DEG_df, ncell_df = ncell_df))
 }
 
 .process_DEG_matrix <- function(DEG_matrix, min_avg_log2FC = 0.2, ident = NULL,
@@ -799,11 +807,7 @@ get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
     DEG_matrix$ident <- ident
     rownames(DEG_matrix) <- NULL
     DEG_matrix <- DEG_matrix[abs(DEG_matrix$avg_log2FC) >= min_avg_log2FC, ]
-    if(min(DEG_matrix$p_val_adj > p_val_cutoff)) {
-      warning("Min adjusted p-value is higher than cutoff. Skipping filter")
-    } else {
-      DEG_matrix <- DEG_matrix[DEG_matrix$p_val_adj <= p_val_cutoff, ]
-    }
+    DEG_matrix <- DEG_matrix[DEG_matrix$p_val_adj <= p_val_cutoff, ]
     if(!is.null(genes_list)) {
       missing <- which(!genes_list %in% DEG_matrix$gene)
       if(length(missing) > 0) {
@@ -821,12 +825,13 @@ get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
     colnames(res) <- DEG_matrix$gene
     rownames(res) <- ident
     res[1, ] <- DEG_matrix$avg_log2FC
-    }
+  }
   return(res)
 }
 
 .is_expressed_matrix <- function(matrix, min_counts = 1) {
-  matrix[matrix >= min_counts] <- 1
+  matrix@x[matrix@x < min_counts] <- 0
+  matrix@x[matrix@x > 0] <- 1
   return(matrix)
 }
 
