@@ -189,7 +189,7 @@ test_that("get_query_distribution properly sums expression levels in samples", {
   expected_exp[, 3] <- c(4.38, 9.67, 7.33)
   colnames(expected_exp) <- query
   output_exp <- get_query_distribution(seu = test_pbmc, query = query,
-                sigfig = 3, layer = "counts")
+                sigfig = 3, layer = "data")
   expect_equal(output_exp, expected_exp)
 })
 
