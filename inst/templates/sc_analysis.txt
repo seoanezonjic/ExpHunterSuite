@@ -1,6 +1,7 @@
 
 <!--begin.rcode setup
     colGEX <- c("grey85", "#FEE5D9", "#FCBBA1", "#FC9272", "#FB6A4A", "#EF3B2C", "#CB181D", "#99000D")
+    opt <- plotter$hash_vars$opt
     subset_by <- plotter$hash_vars$subset_by
     query <- plotter$hash_vars$query
     markers <- plotter$hash_vars$markers
@@ -69,13 +70,13 @@
     DEGs_volcano <- function(input_DEGs) {
         EnhancedVolcano::EnhancedVolcano(input_DEGs, lab = rownames(input_DEGs), title = level,
                                          x = 'avg_log2FC', y = 'p_val_adj', ylim = -0.5, 
-                                         pCutoff = plotter$hash_vars$DEG_pval_cutoff,
-                                         FCcutoff = plotter$hash_vars$min_avg_log2FC)
+                                         pCutoff = opt$DEG_p_val_cutoff,
+                                         FCcutoff = opt$min_avg_log2FC)
     }
 
     get_top_DEGs <- function(input_DEGs) {
-        test <- input_DEGs$p_val_adj < plotter$hash_vars$DEG_pval_cutoff
-        test <- test & abs(input_DEGs$avg_log2FC > plotter$hash_vars$min_avg_log2FC)
+        test <- input_DEGs$p_val_adj < opt$DEG_p_val_cutoff
+        test <- test & abs(input_DEGs$avg_log2FC > opt$min_avg_log2FC)
         res <- input_DEGs[test, ]
         res <- res[, c("gene", "p_val", "p_val_adj", "avg_log2FC", "pct.1", "pct.2")]
         return(res)
@@ -218,24 +219,28 @@ end.rcode-->
 
 <!--begin.rcode DEGstart, eval = length(DEG_list) > 0
     cat(plotter$create_title("<b>DIFFERENTIAL EXPRESSION ANALYSIS</b>", "DEG_start", hlevel = 1, indexable = TRUE,
-                          clickable = FALSE, t_id = "DEG_metrics", clickable_text = ""))
+                          clickable = FALSE, t_id = "DEG_start", clickable_text = ""))
 end.rcode-->
 
 <!--begin.rcode DEG_metrics, eval = !is.null(plotter$hash_vars$DEG_metrics_list[[1]])
     cat(plotter$create_title("Differential expression metrics per cell", "DEG_metrics", hlevel = 2, indexable = TRUE,
                           clickable = FALSE, t_id = "DEG_metrics", clickable_text = ""))
     for(i in seq(length(DEG_metrics_list))) {
-        condition <- names(DEG_metrics_list)[i]
-        condition_metrics <- DEG_metrics_list[[condition]]
-        if(is.null(condition_metrics)) {
-            cat(plotter$prettify_div(paste0("DEG analysis for condition ", condition, " not present."), preset = "magic"))
+        comparison <- names(DEG_metrics_list)[i]
+        comparison_meta <- DEG_list[[comparison]]$meta
+        comparison_metrics <- DEG_metrics_list[[comparison]]
+        if(is.null(comparison_metrics)) {
+            cat(plotter$prettify_div(paste0("DEG analysis for comparison ", comparison, " not present."), preset = "magic"))
         } else {
-            plotter$hash_vars$condition_FCs <- condition_metrics$DEG_df
-            plotter$hash_vars$condition_ncells <- condition_metrics$ncell_df
-            cat(plotter$create_title(paste0("DEGs metrics for condition ", condition), paste0(condition, "_DEG_metrics"), hlevel = 2,
-                         indexable = TRUE, clickable = FALSE, t_id = paste0(condition, "_DEG_metrics"), clickable_text = ""))
-            cat(plotter$prettify_div(plotter$heatmap(list(id = "condition_FCs", header = NULL, row_names = NULL, text = "dynamic",
-                                                 extra_data = list(id ="condition_ncells", header = NULL, row_names = NULL, text = "dynamic"),
+            DEG_legend <- paste0("<p>", comparison_meta$high, " (positive log2FC) vs ",
+                             comparison_meta$low, " (negative log2FC). </p>")
+            cat(DEG_legend)
+            plotter$hash_vars$comparison_FCs <- comparison_metrics$DEG_df
+            plotter$hash_vars$comparison_ncells <- comparison_metrics$ncell_df
+            cat(plotter$create_title(paste0("DEGs metrics for comparison ", comparison), paste0(comparison, "_DEG_metrics"), hlevel = 2,
+                         indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEG_metrics"), clickable_text = ""))
+            cat(plotter$prettify_div(plotter$heatmap(list(id = "comparison_FCs", header = NULL, row_names = NULL, text = "dynamic",
+                                                 extra_data = list(id ="comparison_ncells", header = NULL, row_names = NULL, text = "dynamic"),
                                                  config = list(sizeLegendTitle = "Number of cells"),
                                                  title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
         }  
@@ -485,9 +490,13 @@ end.rcode-->
 
 <!--begin.rcode DEG_query, eval = length(DEG_query_list) > 0
     cat(plotter$create_title("Differential expression metrics of query genes", "DEG_query", hlevel = 2, indexable = TRUE,
-                          clickable = FALSE, t_id = "DEG_query", clickable_text = ""))
+                              clickable = FALSE, t_id = "DEG_query", clickable_text = ""))
     for(i in seq(length(DEG_query_list))) {
         condition <- names(DEG_query_list)[i]
+        comparison_meta <- DEG_list[[comparison]]$meta
+        DEG_legend <- paste0("<p>", comparison_meta$high, " (positive log2FC) vs ",
+                             comparison_meta$low, " (negative log2FC). </p>")
+        cat(DEG_legend)
         condition_metrics <- DEG_query_list[[condition]]
         plotter$hash_vars$condition_FCs <- condition_metrics$DEG_df
         plotter$hash_vars$condition_ncells <- condition_metrics$ncell_df
