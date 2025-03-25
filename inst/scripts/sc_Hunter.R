@@ -362,7 +362,7 @@ message("--------------------------------------------")
 
 write_sc_report(final_results = final_results, template_folder = template_folder, source_folder = source_folder,
                 template = "sc_quality_control.txt", output = file.path(opt$output, "report"),
-                query = unlist(target_genes), name = opt$name, out_name = "qc_report.html",
+                query = unlist(target_genes), out_name = "qc_report.html",
                 use_canvas = TRUE, opt = opt)
 
 message("--------------------------------------------")
@@ -371,7 +371,6 @@ message("--------------------------------------------")
 
 write_sc_report(final_results = final_results, template_folder = template_folder,
                 output = file.path(opt$output, "report"), source_folder = source_folder,
-                query = unlist(target_genes), name = opt$name, extra_columns = extra_columns,
-                subset_by = subset_by, cell_annotation = cell_annotation, opt$DEG_p_val_cutoff,
-                min_avg_log2FC = opt$min_avg_log2FC, template = "sc_analysis.txt",
+                query = unlist(target_genes), extra_columns = extra_columns,
+                subset_by = subset_by, cell_annotation = cell_annotation, template = "sc_analysis.txt",
                 out_name = out_suffix, opt = opt)
