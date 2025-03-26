@@ -17,9 +17,7 @@
 #'   * `FALSE` (the default): Do not perform integration.
 #' @param cluster_annotation A data frame. Table to use to rename clusters.
 #' @param cell_annotation A data frame. Table of markers to use for cell type
-#' annotation
-#' @param DEG_target A string vector. Categories by which DEG analysis will be
-#' performed
+#' annotation.
 #' @param scalefactor An integer. Factor by which to scale data in normalisation
 #' @param hvgs An integer. Number of highly-variable features to select.
 #' default 2000.
@@ -61,11 +59,6 @@
 #' tutorial.
 #' @param sketch_method A string. Method to use in score calculation for
 #' sketching.
-#' @param DEG_p_val_cutoff Adjusted p-val cutoff for significant DEGs.
-#' Default 5e-3.
-#' @param min_avg_log2FC Average log2fc cutoff for significant DEGs.
-#' Default 0.5.
-#' @param min_cell_pct Minimum threshold of percentage of cells expressing DEG.
 #' @param k_weight Number of neighbors to consider when weighting anchors. Used
 #' in integration.
 #' @export
@@ -113,22 +106,15 @@
 #' in the second experimental condition. That allows isolating the effect
 #' of each experimental condition to be analyzed and compared separately.
 
-main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
-                           resolution = 0.5, p_adj_cutoff = 5e-3, name = NULL,
-                           integrate = FALSE, cluster_annotation = NULL,
-                           cell_annotation = NULL, DEG_target = NULL,
-                           scalefactor = 10000, hvgs = 2000, subset_by = NULL,
-                           normalmethod = "LogNormalize", ndims,
-                           verbose = FALSE, output = getwd(),
-                           save_RDS = FALSE, reduce = FALSE, ref_label,
-                           SingleR_ref = NULL, ref_de_method = NULL,
-                           ref_n = NULL, BPPARAM = NULL, doublet_list = NULL,
-                           integration_method = "Harmony", sketch = FALSE,
-                           sketch_pct = 12, sketch_ncells = 5000,
-                           sketch_method = "LeverageScore",
-                           force_ncells = NA_integer_,
-                           DEG_p_val_cutoff = 5e-3, min_avg_log2FC = 0.5,
-                           min_cell_pct = 1, k_weight = 100){
+main_analyze_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
+  resolution = 0.5, p_adj_cutoff = 5e-3, name = NULL, integrate = FALSE,
+  cluster_annotation = NULL, cell_annotation = NULL, scalefactor = 10000,
+  hvgs = 2000, subset_by = NULL, ndims = 10, normalmethod = "LogNormalize",
+  verbose = FALSE, output = getwd(), save_RDS = FALSE, reduce = FALSE,
+  ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL, ref_n = NULL,
+  BPPARAM = NULL, doublet_list = NULL, integration_method = "Harmony",
+  sketch = FALSE, sketch_pct = 25, k_weight = 100, sketch_ncells = 5000,
+  force_ncells = NA_integer_, sketch_method = "LeverageScore"){
   #check_sc_input(metadata = seu@meta.data, DEG_target = DEG_target)
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                doublet_list = doublet_list)
@@ -320,8 +306,52 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   }
   subset_target <- NULL
   subset_seu <- NULL
-  if(!is.null(DEG_target) & integrate) {
-    message('Performing DEG analysis.')
+  final_results <- list()
+  final_results$qc <- qc
+  final_results$seu <- seu
+  final_results$sample_qc_pct <- sample_qc_pct
+  final_results$clusters_pct <- clusters_pct
+  final_results$query_exp <- query_data$query_exp
+  final_results$query_pct <- query_data$query_pct
+  final_results$query_cluster_pct <- query_data$query_cluster_pct
+  final_results$markers <- markers
+  final_results$SingleR_annotation <- SingleR_annotation
+  final_results$DEG_list <- DEG_list
+  final_results$DEG_metrics_list <- DEG_metrics_list
+  final_results$DEG_query_list <- DEG_query_list
+  final_results$subset_seu <- subset_seu
+  final_results$subset_DEGs <- subset_DEGs
+  final_results$integrate <- integrate
+  if(save_RDS){
+    message('Writing results to disk.')
+    saveRDS(final_results, file.path(output,
+                           paste0(seu@project.name, ".final_results.rds")))
+  }
+
+  return(final_results)
+}
+
+#' main_sc_Hunter
+#' `main_sc_Hunter` is the main seurat analysis function. Can be used
+#' for integrative or non-integrative analysis.
+#'
+
+#' @param DEG_target A string vector. Categories by which DEG analysis will be
+#' performed
+#' @param DEG_p_val_cutoff Adjusted p-val cutoff for significant DEGs.
+#' Default 5e-3.
+#' @param min_avg_log2FC Average log2fc cutoff for significant DEGs.
+#' Default 0.5.
+#' @param min_cell_proportion Minimum threshold of percentage of cells expressing DEG.
+
+main_sc_Hunter <- function(DEG_target = NULL, DEG_p_val_cutoff = 1e-3,
+  counts_matrix = stop("No counts matrix supplied."), min_avg_log2FC = 0.5,
+  metadata = stop("No metadata supplied."), min_cell_proportion = 1,
+  query = NULL) {
+  if(is.null(DEG_target)) {
+    res <- list(DEG_list = NULL, DEG_metrics = NULL, DEG_query = NULL)
+  } else {
+    message('Starting DEG analysis.')
     DEG_comparisons <- rownames(DEG_target)
     DEG_list <- vector(mode = "list", length = length(DEG_comparisons))
     names(DEG_list) <- DEG_comparisons
@@ -334,8 +364,8 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
       condition <- DEG_target[comparison, "column"]
       values <- DEG_target[comparison, "values"]
       comparison_DEGs <- get_sc_markers(seu = seu, cond = condition, DEG = TRUE,
-                                   subset_by = subset_target, verbose = verbose,
-                                   values = values, min.pct = min_cell_pct)
+                                subset_by = subset_target, verbose = verbose,
+                                values = values, min.pct = min_cell_proportion)
       DEG_list[[comparison]] <- comparison_DEGs
       message("Extracting DEG cell metrics")
       ## Here we need to control a list of FALSE data frames being returned
@@ -374,34 +404,9 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                         subset_by = subset_target, verbose = verbose)
       }
     }
-  } else {
-    DEG_list <- NULL
-    DEG_metrics_list <- NULL
-    DEG_query_list <- NULL
   }
-  final_results <- list()
-  final_results$qc <- qc
-  final_results$seu <- seu
-  final_results$sample_qc_pct <- sample_qc_pct
-  final_results$clusters_pct <- clusters_pct
-  final_results$query_exp <- query_data$query_exp
-  final_results$query_pct <- query_data$query_pct
-  final_results$query_cluster_pct <- query_data$query_cluster_pct
-  final_results$markers <- markers
-  final_results$SingleR_annotation <- SingleR_annotation
-  final_results$DEG_list <- DEG_list
-  final_results$DEG_metrics_list <- DEG_metrics_list
-  final_results$DEG_query_list <- DEG_query_list
-  final_results$subset_seu <- subset_seu
-  final_results$subset_DEGs <- subset_DEGs
-  final_results$integrate <- integrate
-  if(save_RDS){
-    message('Writing results to disk.')
-    saveRDS(final_results, file.path(output,
-                           paste0(seu@project.name, ".final_results.rds")))
-  }
-  return(final_results)
 }
+
 
 #' write_sc_report
 #' Write integration HTML report
