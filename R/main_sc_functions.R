@@ -1,7 +1,7 @@
 
-#' main_sc_Hunter
-#' `main_sc_Hunter` is the main seurat analysis function. Can be used
-#' for integrative or non-integrative analysis.
+#' main_analyze_sc
+#' is the main seurat analysis function, which can be used for integrative or
+#' non-integrative analysis.
 #'
 #' @param seu A seurat object.
 #' @param name Project name. Default NULL (no project name)
@@ -64,7 +64,7 @@
 #' @export
 #' @examples
 #'  \dontrun{
-#'    main_sc_Hunter(seu = seurat_object, minqcfeats = 500, percenmt = 5,
+#'    main_analyze_sc(seu = seurat_object, minqcfeats = 500, percenmt = 5,
 #'                   query = "TREM2", sigfig = 2, resolution = 0.5,
 #'                   p_adj_cutoff = 5e-3, name = "project_name",
 #'                   integrate = TRUE, cluster_annotation = NULL,
@@ -143,7 +143,7 @@ main_analyze_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   if(verbose) {
     message(paste0("Normalization time: ", norm_end-norm_start))
   }
-    message('Finding variable features')
+  message('Finding variable features')
   seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs, verbose = verbose,
                                       selection.method = "vst", assay = "RNA")
   if(sketch) {
