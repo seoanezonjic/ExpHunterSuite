@@ -389,7 +389,7 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
       meta <- as.character(subset_seu@meta.data[[cond]])
       ncells <- c(sum(meta==conds[1]), sum(meta==conds[2]))
       if(any(ncells < 3)) {
-        warning(paste0('Cluster ', i, ' contains less than three cells for',
+        warning(paste0('Cluster ', i, ' contains fewer than three cells for',
                         ' condition \'', conds[which(ncells < 3)],
                         '\'. Skipping DEG analysis\n', collapse = ""),
                 immediate. = TRUE)
@@ -464,7 +464,9 @@ calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE, idents = N
                               integrate = FALSE, min.pct = 0.25,
                               logfc.threshold = 0.25, assay = "RNA") {
   test <- length(subset_by) == 1 & integrate
-  test <- test & length(unique(seu@meta.data[[subset_by]])) == 2
+  if(isTRUE(test)) {
+    test <- test & length(unique(seu@meta.data[[subset_by]])) == 2
+  }
   run_conserved <- ifelse(test = test, no = FALSE,
                           yes = !.has_exclusive_idents(seu = seu,
                                   idents = idents, cond = tolower(subset_by)))
@@ -739,7 +741,7 @@ get_fc_vs_ncells <- function(seu, DEG_list, min_avg_log2FC = 0.2,
                              p_val_cutoff = 0.01, min_counts = 1,
                              query = NULL) {
   if(!is.null(query)) {
-    message("Target gene list provided. Disabling DEG cutoffs.")
+    message("Starting analysis for target gene list. DEG cutoffs diabled.")
     min_avg_log2FC <- 0
     p_val_cutoff <- 1
   }
