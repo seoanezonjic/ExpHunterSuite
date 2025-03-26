@@ -79,7 +79,9 @@ option_list <- list(
   optparse::make_option("--extra_columns", type = "character", default = "",
             help = "Comma-separated list of extra conditions to represent in certain plots."),
   optparse::make_option("--int_method", type = "character", default = "RPCA",
-            help = "Integration method. Valid methods: \"CCA\", \"RPCA\", \"Harmony\", \"FastMNN\", \"scVI\" "),
+            help = "Integration method. Valid methods: \"CCA\", \"RPCA\", \"Harmony\", \"FastMNN\", \"scVI\"."),
+    optparse::make_option("--k_weight", type = "integer", default = 100,
+            help = "Number of neighbors to consider when weighting anchors. Used in integration."),
   optparse::make_option("--cluster_annotation", type = "character", default = "",
             help = "Clusters annotation file."),
   optparse::make_option("--target_genes", type = "character", default = "",
@@ -248,7 +250,7 @@ if(opt$DEG_target == "") {
   DEG_columns <- unlist(lapply(DEG_names, `[[`, 2))
   DEG_names <- unlist(lapply(DEG_names, `[[`, 1))
   DEG_values <- unlist(lapply(DEG_target, `[[`, 2))
-  DEG_target <- data.frame(column = DEG_columns, values = DEG_values)
+  DEG_target <- data.frame(column = tolower(DEG_columns), values = DEG_values)
   rownames(DEG_target) <- DEG_names
 }
 
@@ -353,7 +355,7 @@ if(opt$loadRDS) {
                                   sketch = opt$sketch, sketch_ncells = opt$sketch_ncells, sketch_pct = opt$sketch_pct,
                                   sketch_method = opt$sketch_method, force_ncells = force_ncells,
                                   DEG_p_val_cutoff = opt$DEG_p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
-                                  min_cell_pct = opt$min_cell_pct)
+                                  min_cell_pct = opt$min_cell_pct, k_weight = opt$k_weight)
 }
 
 message("--------------------------------------------")
