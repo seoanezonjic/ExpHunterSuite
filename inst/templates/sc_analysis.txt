@@ -222,28 +222,28 @@ end.rcode-->
                           clickable = FALSE, t_id = "DEG_start", clickable_text = ""))
 end.rcode-->
 
-<!--begin.rcode DEG_metrics, eval = !is.null(plotter$hash_vars$DEG_metrics_list[[1]])
+<!--begin.rcode DEG_metrics, eval = length(plotter$hash_vars$DEG_metrics_list) > 0
     cat(plotter$create_title("Differential expression metrics per cell", "DEG_metrics", hlevel = 2, indexable = TRUE,
                           clickable = FALSE, t_id = "DEG_metrics", clickable_text = ""))
     for(i in seq(length(DEG_metrics_list))) {
         comparison <- names(DEG_metrics_list)[i]
         comparison_meta <- DEG_list[[comparison]]$meta
         comparison_metrics <- DEG_metrics_list[[comparison]]
-        if(is.null(comparison_metrics)) {
-            cat(plotter$prettify_div(paste0("DEG analysis for comparison ", comparison, " not present."), preset = "magic"))
+        plotter$hash_vars$comparison_FCs <- comparison_metrics$DEG_df
+        plotter$hash_vars$comparison_ncells <- comparison_metrics$ncell_df
+        cat(plotter$create_title(paste0("DEG metrics for comparison ", comparison), paste0(comparison, "_DEG_metrics"), hlevel = 2,
+                     indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEG_metrics"), clickable_text = ""))
+        if(any(dim(plotter$hash_vars$comparison_FCs) < 1)) {
+            cat(paste0("<p> No significant DEGs found for comparison ", comparison, ".</p>"))
         } else {
             DEG_legend <- paste0("<p>", comparison_meta$high, " (positive log2FC) vs ",
-                             comparison_meta$low, " (negative log2FC). </p>")
+            comparison_meta$low, " (negative log2FC). </p>")
             cat(DEG_legend)
-            plotter$hash_vars$comparison_FCs <- comparison_metrics$DEG_df
-            plotter$hash_vars$comparison_ncells <- comparison_metrics$ncell_df
-            cat(plotter$create_title(paste0("DEGs metrics for comparison ", comparison), paste0(comparison, "_DEG_metrics"), hlevel = 2,
-                         indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEG_metrics"), clickable_text = ""))
             cat(plotter$prettify_div(plotter$heatmap(list(id = "comparison_FCs", header = NULL, row_names = NULL, text = "dynamic",
-                                                 extra_data = list(id ="comparison_ncells", header = NULL, row_names = NULL, text = "dynamic"),
-                                                 config = list(sizeLegendTitle = "Number of cells"),
-                                                 title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
-        }  
+                                             extra_data = list(id ="comparison_ncells", header = NULL, row_names = NULL, text = "dynamic"),
+                                             config = list(sizeLegendTitle = "Number of cells"),
+                                             title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
+        }
     }
 end.rcode-->
 
@@ -253,7 +253,7 @@ end.rcode-->
     for(i in seq(length(DEG_list))) {
         comparison <- names(DEG_list)[i]
         comparison_DEGs <- DEG_list[[comparison]]
-        cat(plotter$create_title(paste0("DEGs analysis ", comparison), paste0(comparison, "_DEGs"), hlevel = 2,
+        cat(plotter$create_title(paste0("DEG analysis: comparison ", comparison), paste0(comparison, "_DEGs"), hlevel = 2,
                              indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEGs"),
                              clickable_text = ""))
         level <- "global"
@@ -420,25 +420,15 @@ end.rcode-->
                               clickable_text = ""))
 end.rcode-->
 
-<!--begin.rcode query_exp, eval = !is.null(plotter$hash_vars$query_exp)
+<!--begin.rcode query_analysis, eval = !is.null(plotter$hash_vars$query_exp)
     cat(plotter$create_title("Query gene expression heatmap", "query_heatmap", hlevel = 2,
                               indexable = FALSE, clickable = FALSE, t_id = "query_heatmap",
                               clickable_text = ""))
     cat("<p>This plot represents gene expression profile across samples of query genes.
          Represented as the natural logarithm of count ratio, multiplied by a scale factor
          (see config file for exact value of scale factor).</p>")
-    cat(plotter$prettify_div(plotter$heatmap(list(id = "query_exp",
-                             title = "Query gene expression across samples", inject_smp_attr = sample_heatmap_overlay,
-                             header = NULL, text = FALSE, row_names = NULL, config = list(smpOverlays = names(sample_heatmap_overlay)),
-                             transpose = TRUE)), preset = "magic"))
-end.rcode-->
-
-<!--begin.rcode query_pct, eval = !is.null(plotter$hash_vars$query_pct)
-    cat(plotter$create_title("Query gene cell percentages", "query_samples", hlevel = 2,
-                              indexable = FALSE, clickable = FALSE, t_id = "query_samples",
-                              clickable_text = ""))
-    cat(paste0("This plot represents the percentage of cells that express the query genes in each sample."))
-    cat(plotter$prettify_div(plotter$heatmap(list(id = "query_pct",
+    cat(plotter$prettify_div(plotter$heatmap(list(id = "query_exp", extra_data = list(id ="query_pct", header = NULL,
+                             row_names = NULL, text = "dynamic"),
                              title = "Percentage of cells expressing query gene", inject_smp_attr = sample_heatmap_overlay,
                              header = NULL, text = FALSE, row_names = NULL, config = list(smpOverlays = names(sample_heatmap_overlay)),
                              transpose = TRUE)), preset = "magic"))
@@ -494,18 +484,23 @@ end.rcode-->
     for(i in seq(length(DEG_query_list))) {
         condition <- names(DEG_query_list)[i]
         comparison_meta <- DEG_list[[comparison]]$meta
-        DEG_legend <- paste0("<p>", comparison_meta$high, " (positive log2FC) vs ",
-                             comparison_meta$low, " (negative log2FC). </p>")
-        cat(DEG_legend)
+
         condition_metrics <- DEG_query_list[[condition]]
         plotter$hash_vars$condition_FCs <- condition_metrics$DEG_df
         plotter$hash_vars$condition_ncells <- condition_metrics$ncell_df
-        cat(plotter$create_title(paste0("DEGs metrics for condition ", condition), paste0(condition, "_DEG_query"), hlevel = 2,
+        cat(plotter$create_title(paste0("DEG query metrics for condition ", condition), paste0(condition, "_DEG_query"), hlevel = 2,
                      indexable = TRUE, clickable = FALSE, t_id = paste0(condition, "_DEG_query"), clickable_text = ""))
-        cat(plotter$prettify_div(plotter$heatmap(list(id = "condition_FCs", header = NULL, row_names = NULL, text = "dynamic",
-                                             extra_data = list(id ="condition_ncells", header = NULL, row_names = NULL, text = "dynamic"),
-                                             config = list(sizeLegendTitle = "Number of cells"),
-                                             title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
+        DEG_legend <- paste0("<p>", comparison_meta$high, " (positive log2FC) vs ",
+                             comparison_meta$low, " (negative log2FC). </p>")
+        if(any(dim(plotter$hash_vars$condition_FCs) < 1)) {
+            cat(paste0("<p> No significant DEGs found for comparison ", condition, ".</p>"))
+        } else {
+            cat(DEG_legend)
+            cat(plotter$prettify_div(plotter$heatmap(list(id = "condition_FCs", header = NULL, row_names = NULL, text = "dynamic",
+                                     extra_data = list(id ="condition_ncells", header = NULL, row_names = NULL, text = "dynamic"),
+                                     config = list(sizeLegendTitle = "Number of cells"),
+                                     title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
+        }
     }
 end.rcode-->
 
