@@ -66,6 +66,8 @@
 #' @param min_avg_log2FC Average log2fc cutoff for significant DEGs.
 #' Default 0.5.
 #' @param min_cell_pct Minimum threshold of percentage of cells expressing DEG.
+#' @param k_weight Number of neighbors to consider when weighting anchors. Used
+#' in integration.
 #' @export
 #' @examples
 #'  \dontrun{
@@ -81,7 +83,7 @@
 #'                   ref_n = NULL, BPPARAM = NULL, doublet_list = NULL,
 #'                   integration_method = "Harmony", sketch_pct = 12,
 #'                   sketch_ncells = 5000, DEG_p_val_cutoff = 5e-3,
-#'                   min_avg_log2FC = 0.5)
+#'                   min_avg_log2FC = 0.5, k_weight = 90)
 #'  }
 #' @return final_results list. Contains multiple items:
 #' * qc: seurat object prior to filtering and analysis.
@@ -126,7 +128,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                            sketch_method = "LeverageScore",
                            force_ncells = NA_integer_,
                            DEG_p_val_cutoff = 5e-3, min_avg_log2FC = 0.5,
-                           min_cell_pct = 1){
+                           min_cell_pct = 1, k_weight = 100){
   #check_sc_input(metadata = seu@meta.data, DEG_target = DEG_target)
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                doublet_list = doublet_list)
@@ -134,14 +136,13 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     seu <- subset(qc, subset = qc == 'Pass')
     aggr.ref <- FALSE
     fine.tune <- TRUE
-    k.weight <- 100
   } else {
     message(paste0("Reduce argument is set to TRUE. Skipping QC subsetting. ",
                    "Updating SingleR configuration"))
     seu <- qc
     aggr.ref <- TRUE
     fine.tune <- FALSE
-    k.weight <- 30
+    k_weight <- 30
   }
   if(integrate) {
     message(paste0("Splitting seurat object by sample."))
@@ -193,7 +194,7 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     seu <- Seurat::IntegrateLayers(object = seu, orig.reduction = "pca",
       new.reduction = integration_method, verbose = FALSE, dims = seq(1, ndims),
       method = paste0(integration_method, "Integration"), assay = assay,
-      scale.layer = "scale.data", k.weight = k.weight)
+      scale.layer = "scale.data", k.weight = k_weight)
     reduction <- integration_method
   }
   seu <- Seurat::FindNeighbors(object = seu, dims = seq(1, ndims),
@@ -337,6 +338,10 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                                    values = values, min.pct = min_cell_pct)
       DEG_list[[comparison]] <- comparison_DEGs
       message("Extracting DEG cell metrics")
+      ## Here we need to control a list of FALSE data frames being returned
+      ## from get_sc_markers, it's a possible case if cluster-conditon
+      ## combinations do not allow a differential analysis for specified
+      ## condition.
       DEG_metrics_list[[comparison]] <- get_fc_vs_ncells(seu = seu,
         DEG_list = comparison_DEGs$markers, min_avg_log2FC = min_avg_log2FC,
         p_val_cutoff = DEG_p_val_cutoff, min_counts = minqcfeats)
@@ -348,17 +353,25 @@ main_sc_Hunter <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     }
     subset_DEGs <- NULL
     if(length(subset_by) == 2) {
-      message(paste0("Analysing DEGs by subgroups. Subsetting by condition: ",
-              DEG_comparison[1], ", analyzing effects of ", DEG_comparison[2]))
+      message(paste0("Analysing DEGs by subgroups. Subsetting by condition \"",
+              subset_by[1], "\", analyzing effects of condition \"",
+              subset_by[2], "\"."))
       subset_DEGs <- vector(mode = "list", length = 2)
-      condition_values <- unique(seu@meta.data[[DEG_comparison[1]]])
+      condition_target <- DEG_target[DEG_target$column == subset_by[1], ]
+      if(condition_target$values == "all") {
+        condition_values <- unique(seu@meta.data[[subset_by[1]]])
+      } else {
+        condition_values <- strsplit(condition_target$values, ",")[[1]]
+      }
       names(subset_DEGs) <- condition_values
       subset_seu <- subset_DEGs
+      target_subset <- DEG_target[DEG_target$column == subset_by[2], ]
+      subset_values <- target_subset$values
       for(value in condition_values) {
-        subset_seu[[value]] <- subset_seurat(seu, DEG_comparison[1], value)
+        subset_seu[[value]] <- subset_seurat(seu, subset_by[1], value)
         subset_DEGs[[value]] <- get_sc_markers(seu = subset_seu[[value]],
-                                  cond = DEG_comparison[2], DEG = TRUE,
-                                  subset_by = subset_by, verbose = verbose)
+                        cond = subset_by[2], DEG = TRUE, values = subset_values,
+                        subset_by = subset_target, verbose = verbose)
       }
     }
   } else {
