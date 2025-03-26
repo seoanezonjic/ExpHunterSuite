@@ -406,9 +406,9 @@ test_that("get_fc_vs_ncells works as intended", {
   output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
                              min_avg_log2FC = 0.2, p_val_cutoff = 0.01,
                              min_counts = 1)
-  expected_DEGs <- data.frame(IGLL5 = c(0.2, 0.0), PPBP = c(0, 1),
+  expected_DEGs <- data.frame(PPBP = c(0, 1), IGLL5 = c(0.2, 0.0),
                               VDAC3 = c(1.0, 0.2))
-  expected_ncells <- data.frame(IGLL5 = c(0, 2), PPBP = rep(1, 2),
+  expected_ncells <- data.frame(PPBP = rep(1, 2), IGLL5 = c(0, 2),
                                 VDAC3 = rep(2, 2))
   rownames(expected_DEGs) <- c("g1", "g2")
   rownames(expected_ncells) <- c("g1", "g2")
@@ -459,3 +459,19 @@ test_that("get_fc_vs_ncells can handle some target genes not being present in
   expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
   expect_equal(output, expected)
 })
+
+test_that("get_fc_vs_ncells can handle FALSE and NULL values in DEG_list", {
+  test_DEG_list <- DEG_list
+  test_DEG_list$g3 <- data.frame(FALSE)
+  output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = test_DEG_list,
+                 min_avg_log2FC = Inf, p_val_cutoff = -Inf, min_counts = 1,
+                 query = "PPBP")
+  expected_DEGs <- data.frame(PPBP = 0:1)
+  expected_ncells <- data.frame(PPBP = rep(1, 2))
+  rownames(expected_DEGs) <- c("g1", "g2")
+  rownames(expected_ncells) <- c("g1", "g2")
+  expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
+  expect_equal(output, expected)
+})
+
+
