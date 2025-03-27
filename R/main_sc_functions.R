@@ -1,5 +1,5 @@
 
-#' main_analyze_sc
+#' main_annotate_sc
 #' is the main seurat analysis function, which can be used for integrative or
 #' non-integrative analysis.
 #'
@@ -64,7 +64,7 @@
 #' @export
 #' @examples
 #'  \dontrun{
-#'    main_analyze_sc(seu = seurat_object, minqcfeats = 500, percenmt = 5,
+#'    main_annotate_sc(seu = seurat_object, minqcfeats = 500, percenmt = 5,
 #'                   query = "TREM2", sigfig = 2, resolution = 0.5,
 #'                   p_adj_cutoff = 5e-3, name = "project_name",
 #'                   integrate = TRUE, cluster_annotation = NULL,
@@ -106,7 +106,7 @@
 #' in the second experimental condition. That allows isolating the effect
 #' of each experimental condition to be analyzed and compared separately.
 
-main_analyze_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
+main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   resolution = 0.5, p_adj_cutoff = 5e-3, name = NULL, integrate = FALSE,
   cluster_annotation = NULL, cell_annotation = NULL, scalefactor = 10000,
   hvgs = 2000, subset_by = NULL, ndims = 10, normalmethod = "LogNormalize",
@@ -215,84 +215,16 @@ main_analyze_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     qc <- tag_doublets(seu = qc, doublet_list = doublet_list)
   }
   seu <- SeuratObject::JoinLayers(seu)
-  if(!is.null(SingleR_ref)) {
-    annot_start <- Sys.time()
-    message(paste0("SingleR reference provided. Annotating cells. This option",
-    " overrides all other annotation methods."))
-    counts_matrix <- Seurat::GetAssayData(seu)
-    SingleR_annotation <- SingleR::SingleR(test = counts_matrix,
-                                           ref = SingleR_ref,
-                                           labels =  SingleR_ref[[ref_label]],
-                                           assay.type.test = "scale.data",
-                                           de.method = ref_de_method,
-                                           de.n = ref_n, BPPARAM = BPPARAM,
-                                           aggr.ref = aggr.ref,
-                                           fine.tune = fine.tune)
-    seu@meta.data$cell_type <- SingleR_annotation$labels
-    annot_end <- Sys.time()
-    if(verbose) {
-      message(paste0("Annotation time: ", annot_end-annot_start))
-    }
-    # Save annotation results and quick plot saving.
-    # Temporary to check diagnostics, will be gone in the future.
-    pdf(file.path(output, "ScoreHeatmap.pdf"), width = 20, height = 10)
-    print(SingleR::plotScoreHeatmap(SingleR_annotation))
-    dev.off()
-    pdf(file.path(output, "DeltaDistribution.pdf"), width = 20, height = 10)
-    print(SingleR::plotDeltaDistribution(SingleR_annotation))
-    dev.off()
-    message("Calculating cell type markers")
-    markers <- calculate_markers(seu = seu, subset_by = subset_by,
-                                 integrate = integrate, verbose = verbose,
-                                 idents = "cell_type")
-  } else {
-    if(!is.null(cell_annotation)) {
-      message(paste0("No reference provided for cell type annotation.",
-                     " Dynamically annotating clusters."))
-      message("Calculating cluster markers")
-      markers <- calculate_markers(seu = seu, subset_by = subset_by,
-                                   integrate = integrate, verbose = verbose,
-                                   idents = "seurat_clusters", assay = assay)
-      message("Annotating clusters")
-      annotated_clusters <- match_cell_types(markers_df = markers,
-                                             cell_annotation = cell_annotation,
-                                             p_adj_cutoff = p_adj_cutoff)
-      markers <- annotated_clusters$summary
-      seu <- annotate_clusters(seu = seu,
-                               new_clusters = annotated_clusters$cell_types)
-    } else if(!is.null(cluster_annotation)){
-      message("Clusters annotation file provided. Annotating clusters.")
-      seu <- annotate_clusters(seu = seu,
-                               new_clusters = cluster_annotation$name)
-      markers <- calculate_markers(seu = seu, subset_by = subset_by,
-                                   integrate = integrate, verbose = verbose,
-                                   idents = "cell_type")
-    } else {
-      warning("No data provided for cluster annotation.", immediate. = TRUE)
-      markers <- calculate_markers(seu = seu, subset_by = subset_by,
-                                   integrate = integrate, verbose = verbose,
-                                   idents = "seurat_clusters")
-    }
-    SingleR_annotation <- NULL
-  }
+  annotation <- annotate_seurat(seu = seu, SingleR_ref = SingleR_ref,
+    cell_annotation = cell_annotation, ref_n = ref_n, subset_by = subset_by,
+    cluster_annotation = cluster_annotation, p_adj_cutoff = p_adj_cutoff,
+    BPPARAM = BPPARAM, ref_de_method = ref_de_method, aggr.ref = aggr.ref,
+    fine.tune = fine.tune, assay = assay, integrate = integrate,
+    verbose = verbose)
+  seu <- annotation$seu
+  markers <- annotation$markers
   if("sketch" %in% names(seu@assays)) {
-    refdata <- list(seurat_clusters = "seurat_clusters",
-                    cell_type = "cell_type")
-    refdata <- refdata[names(refdata) %in% colnames(seu@meta.data)]
-    message("Projecting sketched data")
-    seu[["sketch"]] <- split(seu[["sketch"]], f = seu$sample)
-    seu <- Seurat::ProjectIntegration(object = seu, sketched.assay = "sketch",
-      assay = "RNA", reduction = reduction)
-    seu <- Seurat::ProjectData(object = seu, sketched.assay = "sketch",
-      assay = "RNA", dims = seq(1, ndims), refdata = refdata,
-      full.reduction = paste0(reduction, ".full"),
-      sketched.reduction = paste0(reduction, ".full")) ## WHY 30 dims???
-    seu <- Seurat::RunUMAP(seu, reduction = paste0(reduction, ".full"),
-      dims = seq(1, ndims), reduction.name = "umap.full",
-      reduction.key = "UMAP_full_")
-    Seurat::DefaultAssay(seu) <- "RNA"
-    seu <- SeuratObject::JoinLayers(seu, assay = "RNA")
-    seu[["sketch"]] <- NULL
+    seu <- project_sketch(seu = seu, reduction = reduction, ndims = ndims)
   }
   assay <- "RNA"
   message("Extracting expression quality metrics")
@@ -304,8 +236,6 @@ main_analyze_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   } else {
     query_data <- NULL
   }
-  subset_target <- NULL
-  subset_seu <- NULL
   final_results <- list()
   final_results$qc <- qc
   final_results$seu <- seu
@@ -315,19 +245,13 @@ main_analyze_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   final_results$query_pct <- query_data$query_pct
   final_results$query_cluster_pct <- query_data$query_cluster_pct
   final_results$markers <- markers
-  final_results$SingleR_annotation <- SingleR_annotation
-  final_results$DEG_list <- DEG_list
-  final_results$DEG_metrics_list <- DEG_metrics_list
-  final_results$DEG_query_list <- DEG_query_list
-  final_results$subset_seu <- subset_seu
-  final_results$subset_DEGs <- subset_DEGs
+  final_results$SingleR_annotation <- annotation$SingleR_annotation
   final_results$integrate <- integrate
   if(save_RDS){
     message('Writing results to disk.')
     saveRDS(final_results, file.path(output,
                            paste0(seu@project.name, ".final_results.rds")))
   }
-
   return(final_results)
 }
 
@@ -347,7 +271,7 @@ main_analyze_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 main_sc_Hunter <- function(DEG_target = NULL, DEG_p_val_cutoff = 1e-3,
   counts_matrix = stop("No counts matrix supplied."), min_avg_log2FC = 0.5,
   metadata = stop("No metadata supplied."), min_cell_proportion = 1,
-  query = NULL) {
+  query = NULL, subset_by = NULL) {
   if(is.null(DEG_target)) {
     res <- list(DEG_list = NULL, DEG_metrics = NULL, DEG_query = NULL)
   } else {
