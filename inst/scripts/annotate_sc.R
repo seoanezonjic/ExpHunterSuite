@@ -16,7 +16,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   # Load custom libraries
   if(Sys.getenv("singularity") == "TRUE") {
     devtools::load_all(Sys.getenv("HTMLREPORT_PATH"))
-    custom_libraries <- c('sc_library.R', 'main_sc_Hunter.R', 'general_functions.R')
+    custom_libraries <- c('sc_library.R', 'main_sc_functions.R', 'general_functions.R')
     source_folder <- file.path(find.package("htmlreportR"), "inst")
     for (lib in custom_libraries){
       source(file.path(root_path, 'R', lib))
@@ -90,8 +90,6 @@ option_list <- list(
             help = "Provided CPUs."),
   optparse::make_option("--imported_counts", type = "character", default = "",
             help = "Imported counts directory."),
-  optparse::make_option("--DEG_target", type = "character", default = "",
-            help = "Columns for DEG analysis."),
   optparse::make_option("--cell_annotation", type = "character", default = "",
             help = "Cell types annotation file. Will be used to dynamically
                     annotate clusters."),
@@ -133,13 +131,7 @@ option_list <- list(
             help = paste0("A numeric. Percentage of total cells to consider representative of the",
   " experiment. Default 12, as suggested by sketching tutorial.")),
   optparse::make_option("--sketch_method", type = "character", default = 12,
-            help = "Score calculation method to select cells in sketch."),
-  optparse::make_option("--DEG_p_val_cutoff", type = "numeric", default = 2,
-            help = "Adjusted p-val cutoff for significant DEGs."),
-  optparse::make_option("--min_avg_log2FC", type = "numeric", default = 1e-3,
-            help = "Avg log2fc cutoff for significant DEGs."),
-  optparse::make_option("--min_cell_pct", type = "numeric", default = 0.1,
-            help = "Min percentage of cells expressing DEG in each group.")
+            help = "Score calculation method to select cells in sketch.")
 )
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
@@ -231,28 +223,7 @@ if(opt$extra_columns == "") {
   extra_columns <- tolower(unlist(strsplit(opt$extra_columns, ",")))
 }
 
-if(opt$DEG_target == "") {
-  message("DEG analysis disabled.")
-  DEG_target <- NULL
-} else {
-  DEG_target <- unlist(strsplit(opt$DEG_target, ";"))
-  DEG_target <- unlist(lapply(DEG_target, strsplit, split = ":"), recursive = FALSE)
-  DEG_target <- lapply(DEG_target, function(vector) {
-    if(length(vector) < 2) {
-      res <- c(vector, "all")
-    } else {
-      res <- vector
-    }
-    return(res)
-  })
-  DEG_names <- unlist(lapply(DEG_target, `[[`, 1))
-  DEG_names <- strsplit(DEG_names, ">")
-  DEG_columns <- unlist(lapply(DEG_names, `[[`, 2))
-  DEG_names <- unlist(lapply(DEG_names, `[[`, 1))
-  DEG_values <- unlist(lapply(DEG_target, `[[`, 2))
-  DEG_target <- data.frame(column = tolower(DEG_columns), values = DEG_values)
-  rownames(DEG_target) <- DEG_names
-}
+# DEG_target <- generate_sc_target(DEG_target = opt$DEG_target)
 
 # Input reading and integration variables setup
 if(opt$samples_to_integrate == "") {
@@ -342,20 +313,19 @@ if(opt$loadRDS) {
   final_results <- readRDS(file)
 } else {
   message("Analyzing seurat object")
-  final_results <- main_sc_Hunter(seu = seu, cluster_annotation = cluster_annotation, name = opt$name,
-                                  ndims = opt$ndims, resolution = opt$resolution, subset_by = subset_by,
-                                  cell_annotation = cell_annotation, DEG_target = DEG_target,
-                                  minqcfeats = opt$minqcfeats, percentmt = opt$percentmt, hvgs = opt$hvgs,
-                                  scalefactor = opt$scalefactor, normalmethod = opt$normalmethod,
-                                  p_adj_cutoff = opt$p_adj_cutoff, verbose = opt$verbose, sigfig = 2,
-                                  output = opt$output, integrate = opt$integrate, query = unlist(target_genes),
-                                  reduce = opt$reduce, save_RDS = opt$saveRDS, SingleR_ref = SingleR_ref,
-                                  ref_label = opt$ref_label, ref_de_method = ref_de_method, ref_n = ref_n,
-                                  BPPARAM = BPPARAM, doublet_list = doublet_list, integration_method = int_method,
-                                  sketch = opt$sketch, sketch_ncells = opt$sketch_ncells, sketch_pct = opt$sketch_pct,
-                                  sketch_method = opt$sketch_method, force_ncells = force_ncells,
-                                  DEG_p_val_cutoff = opt$DEG_p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
-                                  min_cell_pct = opt$min_cell_pct, k_weight = opt$k_weight)
+  final_results <- main_annotate_sc(seu = seu, cluster_annotation = cluster_annotation, name = opt$name,
+                    ndims = opt$ndims, resolution = opt$resolution, subset_by = subset_by,
+                    cell_annotation = cell_annotation,
+                    minqcfeats = opt$minqcfeats, percentmt = opt$percentmt, hvgs = opt$hvgs,
+                    scalefactor = opt$scalefactor, normalmethod = opt$normalmethod,
+                    p_adj_cutoff = opt$p_adj_cutoff, verbose = opt$verbose, sigfig = 2,
+                    output = opt$output, integrate = opt$integrate, query = unlist(target_genes),
+                    reduce = opt$reduce, save_RDS = opt$saveRDS, SingleR_ref = SingleR_ref,
+                    ref_label = opt$ref_label, ref_de_method = ref_de_method, ref_n = ref_n,
+                    BPPARAM = BPPARAM, doublet_list = doublet_list, integration_method = int_method,
+                    sketch = opt$sketch, sketch_ncells = opt$sketch_ncells, sketch_pct = opt$sketch_pct,
+                    sketch_method = opt$sketch_method, force_ncells = force_ncells,
+                    k_weight = opt$k_weight)
 }
 
 message("--------------------------------------------")
