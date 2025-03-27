@@ -161,9 +161,9 @@ merge_seurat <- function(project_name, exp_design, count_path,
   return(merged_seu)
 }
 
-#' annotate_clusters
-#' renames seurat clusters according to dictionary
-#'
+#' rename_clusters
+#' renames seurat clusters according to dictionary, and stores result in new
+#' cell_type metadata column.
 #' @importFrom Seurat RenameIdents Idents
 #' @param seu Non-annotated seu with markers
 #' @param new_clusters Vector of names to assign to clusters.
@@ -172,10 +172,10 @@ merge_seurat <- function(project_name, exp_design, count_path,
 #' @examples
 #' data(pbmc_tiny)
 #' pbmc_tiny$seurat_clusters <- 1
-#' annotate_clusters(seu = pbmc_tiny, new_clusters = "typeA")
+#' rename_clusters(seu = pbmc_tiny, new_clusters = "typeA")
 #' @export
 
-annotate_clusters <- function(seu, new_clusters = NULL ) {
+rename_clusters <- function(seu, new_clusters = NULL ) {
   Seurat::Idents(seu) <- seu$seurat_clusters
   names(new_clusters) <- levels(seu)
   seu <- Seurat::RenameIdents(seu, new_clusters)
@@ -1126,5 +1126,129 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
                               assay = assay, sketched.assay = sketched.assay)
     Seurat::DefaultAssay(seu) <- "sketch" 
   }
+  return(seu)
+}
+
+annotate_seurat <- function(seu = stop(paste0("Please provide a seurat object",
+  " to annotate")), SingleR_ref = NULL, cell_annotation = NULL, ref_n = 25,
+  subset_by = NULL, cluster_annotation = NULL, p_adj_cutoff = 1e-5,
+  BPPARAM = BiocParalell::SerialParam(), ref_de_method = "wilcox",
+  verbose = FALSE, aggr.ref = FALSE, fine.tune = TRUE, assay = "RNA",
+  integrate = FALSE) {
+  annot_start <- Sys.time()
+  if(!is.null(SingleR_ref)) {
+    message(paste0("SingleR reference provided. Annotating cells. This option",
+            " overrides all other annotation methods."))
+    res <- annotate_SingleR(seu = seu, SingleR_ref = SingleR_ref,
+     BPPARAM = BPPARAM, ref_n = ref_n, ref_de_method = ref_de_method, 
+     aggr.ref = aggr.ref, fine.tune = fine.tune)
+  } else {
+    if(!is.null(cell_annotation)) {
+      message(paste0("No reference provided for cell type annotation.",
+                     " Dynamically annotating clusters."))
+      res <- annotate_clusters(seu = seu, subset_by = subset_by, assay = assay,
+        integrate = integrate, idents = "seurat_clusters", verbose = verbose,
+        p_adj_cutoff = p_adj_cutoff)
+    } else {
+    if(!is.null(cluster_annotation)){
+      message("Clusters annotation file provided. Annotating clusters.")
+      seu <- rename_clusters(seu = seu,
+                             new_clusters = cluster_annotation$name)
+      idents <- "cell_type"
+    } else {
+      warning("No data provided for cluster annotation.", immediate. = TRUE)
+      idents <- "seurat_clusters"
+    }
+    markers <- calculate_markers(seu = seu, subset_by = subset_by,
+                 integrate = integrate, verbose = verbose,
+                 idents = idents, assay = assay)
+    res <- list(seu = seu, markers = markers)
+    }
+  }
+  annot_end <- Sys.time()
+  if(verbose) {
+    message(paste0("Annotation time: ", annot_end - annot_start))
+  }
+  return(res)
+}
+
+annotate_SingleR <- function(seu = stop(paste0("Please provide a seurat object",
+  " to annotate")), SingleR_ref = NULL, BPPARAM = NULL, ref_n = 25,
+  ref_de_method = "wilcox", aggr.ref = FALSE, fine.tune = TRUE, assay = "RNA") {
+    counts_matrix <- Seurat::GetAssayData(seu, assay = assay)
+    SingleR_annotation <- SingleR::SingleR(test = counts_matrix,
+      ref = SingleR_ref, labels = SingleR_ref[[ref_label]],
+      assay.type.test = "scale.data", de.method = ref_de_method,
+      de.n = ref_n, BPPARAM = BPPARAM, aggr.ref = aggr.ref,
+      fine.tune = fine.tune)
+    seu@meta.data$cell_type <- SingleR_annotation$labels
+    #print(SingleR::plotScoreHeatmap(SingleR_annotation))
+    pdf(file.path(output, "DeltaDistribution.pdf"), width = 20, height = 10)
+    #print(SingleR::plotDeltaDistribution(SingleR_annotation))
+    message("Calculating cell type markers")
+    markers <- calculate_markers(seu = seu, subset_by = subset_by,
+                                 integrate = integrate, verbose = verbose,
+                                 idents = "cell_type")
+    return(list(seu = seu, markers = markers,
+            SingleR_annotation = SingleR_annotation))
+}
+
+annotate_clusters <- function(seu = stop(paste0("Please provide a seurat ",
+  "object to annotate")), subset_by = NULL, assay = "RNA", integrate = FALSE,
+  idents = "seurat_clusters", verbose = FALSE, p_adj_cutoff = 1e-5) {
+  message("Calculating cluster markers")
+      markers <- calculate_markers(seu = seu, subset_by = subset_by,
+                                   integrate = integrate, verbose = verbose,
+                                   idents = "seurat_clusters", assay = assay)
+      message("Annotating clusters")
+      annotated_clusters <- match_cell_types(markers_df = markers,
+                                             cell_annotation = cell_annotation,
+                                             p_adj_cutoff = p_adj_cutoff)
+      markers <- annotated_clusters$summary
+      seu <- rename_clusters(seu = seu,
+                             new_clusters = annotated_clusters$cell_types)
+      return(list(seu = seu, markers = markers))
+}
+
+generate_sc_target <- function(DEG_target = stop("Missing target string")) {
+  processed_target <- unlist(strsplit(DEG_target, ";"))
+  processed_target <- unlist(lapply(processed_target, strsplit, split = ":"),
+                       recursive = FALSE)
+  processed_target <- lapply(processed_target, function(vector) {
+    if(length(vector) < 2) {
+      processed_target <- c(vector, "all")
+    } else {
+      processed_target <- vector
+    }
+    return(processed_target)
+  })
+  DEG_names <- unlist(lapply(processed_target, `[[`, 1))
+  DEG_names <- strsplit(DEG_names, ">")
+  DEG_columns <- unlist(lapply(DEG_names, `[[`, 2))
+  DEG_names <- unlist(lapply(DEG_names, `[[`, 1))
+  DEG_values <- unlist(lapply(processed_target, `[[`, 2))
+  processed_target <- data.frame(column = tolower(DEG_columns),
+                                 values = DEG_values)
+  rownames(processed_target) <- DEG_names
+  return(processed_target)
+}
+
+project_sketch <- function(seu, reduction, ndims) {
+  refdata <- list(seurat_clusters = "seurat_clusters", cell_type = "cell_type")
+  refdata <- refdata[names(refdata) %in% colnames(seu@meta.data)]
+  message("Projecting sketched data")
+  seu[["sketch"]] <- split(seu[["sketch"]], f = seu$sample)
+  seu <- Seurat::ProjectIntegration(object = seu, sketched.assay = "sketch",
+    assay = "RNA", reduction = reduction)
+  seu <- Seurat::ProjectData(object = seu, sketched.assay = "sketch",
+    assay = "RNA", dims = seq(1, ndims), refdata = refdata,
+    full.reduction = paste0(reduction, ".full"),
+    sketched.reduction = paste0(reduction, ".full")) ## WHY 30 dims???
+  seu <- Seurat::RunUMAP(seu, reduction = paste0(reduction, ".full"),
+    dims = seq(1, ndims), reduction.name = "umap.full",
+    reduction.key = "UMAP_full_")
+  Seurat::DefaultAssay(seu) <- "RNA"
+  seu <- SeuratObject::JoinLayers(seu, assay = "RNA")
+  seu[["sketch"]] <- NULL
   return(seu)
 }
