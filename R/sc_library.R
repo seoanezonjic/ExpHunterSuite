@@ -1100,27 +1100,28 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
                         sketched.assay = "sketch", cell.pct = 25,
                         force.ncells = NA_integer_) {
   perform_sketch <- FALSE
-  input_cells <- ncol(seu)
-  if(is.na(force.ncells)) {
-    if(input_cells < 60000) {
-      message(paste0("Fewer than thirty thousand cells detected in experiment.",
-                     " Skipping sketch."))
-    }
-    ncells <- ceiling(mean(table(seu$sample)) * cell.pct / 100)
-    if(ncells < 5000) {
-      warning("WARNING: Fewer than 5000 cells selected for sketching.")
-    }
-  } else {
+  if(!is.na(force.ncells)) {
     message("force.ncells has non-empty value. Forcing sketch.")
     perform_sketch <- TRUE
     ncells <- force.ncells
     min.ncells <- 0
-  }
-  if(ncells * length(unique(seu$sample)) < 30000) {
-    message("Fewer than thirty thousand cells selected. Disabling sketch.")
   } else {
-    perform_sketch <- TRUE
-  }
+    input_cells <- ncol(seu)
+    if(input_cells < 60000) {
+      message(paste0("Fewer than thirty thousand cells detected in experiment.",
+                     " Skipping sketch."))
+    } else {
+      ncells <- ceiling(mean(table(seu$sample)) * cell.pct / 100)
+      if(ncells < 5000) {
+        warning("WARNING: Fewer than 5000 cells selected for sketching.")
+      }
+      if(ncells * length(unique(seu$sample)) < 30000) {
+        message("Fewer than thirty thousand cells selected. Disabling sketch.")
+      } else {
+        perform_sketch <- TRUE
+      }
+    }
+  } 
   if(perform_sketch) {
     seu <- Seurat::SketchData(object = seu, ncells = ncells, method = method,
                               assay = assay, sketched.assay = sketched.assay)
@@ -1130,11 +1131,13 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
 }
 
 annotate_seurat <- function(seu = stop(paste0("Please provide a seurat object",
-  " to annotate")), SingleR_ref = NULL, cell_annotation = NULL, ref_n = 25,
-  subset_by = NULL, cluster_annotation = NULL, p_adj_cutoff = 1e-5,
-  BPPARAM = BiocParalell::SerialParam(), ref_de_method = "wilcox",
-  verbose = FALSE, aggr.ref = FALSE, fine.tune = TRUE, assay = "RNA",
-  integrate = FALSE) {
+                            " to annotate")), SingleR_ref = NULL, ref_n = 25,
+                            cell_annotation = NULL, subset_by = NULL,
+                            cluster_annotation = NULL, p_adj_cutoff = 1e-5,
+                            BPPARAM = BiocParalell::SerialParam(),
+                            ref_de_method = "wilcox", verbose = FALSE,
+                            aggr.ref = FALSE, fine.tune = TRUE, assay = "RNA",
+                            integrate = FALSE) {
   annot_start <- Sys.time()
   if(!is.null(SingleR_ref)) {
     message(paste0("SingleR reference provided. Annotating cells. This option",
@@ -1173,8 +1176,9 @@ annotate_seurat <- function(seu = stop(paste0("Please provide a seurat object",
 }
 
 annotate_SingleR <- function(seu = stop(paste0("Please provide a seurat object",
-  " to annotate")), SingleR_ref = NULL, BPPARAM = NULL, ref_n = 25,
-  ref_de_method = "wilcox", aggr.ref = FALSE, fine.tune = TRUE, assay = "RNA") {
+                             " to annotate")), SingleR_ref = NULL, ref_n = 25,
+                             BPPARAM = NULL, ref_de_method = "wilcox",
+                             aggr.ref = FALSE, fine.tune = TRUE, assay = "RNA"){
     counts_matrix <- Seurat::GetAssayData(seu, assay = assay)
     SingleR_annotation <- SingleR::SingleR(test = counts_matrix,
       ref = SingleR_ref, labels = SingleR_ref[[ref_label]],
@@ -1194,8 +1198,9 @@ annotate_SingleR <- function(seu = stop(paste0("Please provide a seurat object",
 }
 
 annotate_clusters <- function(seu = stop(paste0("Please provide a seurat ",
-  "object to annotate")), subset_by = NULL, assay = "RNA", integrate = FALSE,
-  idents = "seurat_clusters", verbose = FALSE, p_adj_cutoff = 1e-5) {
+                              "object to annotate")), subset_by = NULL,
+                              assay = "RNA", integrate = FALSE, verbose = FALSE,
+                              idents = "seurat_clusters", p_adj_cutoff = 1e-5){
   message("Calculating cluster markers")
       markers <- calculate_markers(seu = seu, subset_by = subset_by,
                                    integrate = integrate, verbose = verbose,
@@ -1210,7 +1215,7 @@ annotate_clusters <- function(seu = stop(paste0("Please provide a seurat ",
       return(list(seu = seu, markers = markers))
 }
 
-generate_sc_target <- function(DEG_target = stop("Missing target string")) {
+generate_sc_target <- function(DEG_target = stop("Missing target string")){
   processed_target <- unlist(strsplit(DEG_target, ";"))
   processed_target <- unlist(lapply(processed_target, strsplit, split = ":"),
                        recursive = FALSE)
@@ -1233,7 +1238,7 @@ generate_sc_target <- function(DEG_target = stop("Missing target string")) {
   return(processed_target)
 }
 
-project_sketch <- function(seu, reduction, ndims) {
+project_sketch <- function(seu, reduction, ndims){
   refdata <- list(seurat_clusters = "seurat_clusters", cell_type = "cell_type")
   refdata <- refdata[names(refdata) %in% colnames(seu@meta.data)]
   message("Projecting sketched data")
@@ -1250,5 +1255,45 @@ project_sketch <- function(seu, reduction, ndims) {
   Seurat::DefaultAssay(seu) <- "RNA"
   seu <- SeuratObject::JoinLayers(seu, assay = "RNA")
   seu[["sketch"]] <- NULL
+  return(seu)
+}
+
+process_doublets <- function(seu = stop("Missing seurat object"),
+                             qc = stop("Missing QC object"),
+                             doublet_path = getwd()){
+  doublets <- find_doublets(seu)
+  seu <- doublets$seu
+  doublet_list <- doublets$barcodes
+  message("Removing doublets from Seurat object")
+  seu <- subset(seu, cells = doublet_list, invert = TRUE)
+  file_conn <- file(file.path(doublet_path, paste0(unique(seu$sample),
+                    "_doublet_list.txt")))
+  # Sample name is included in barcode when merging, we include it here
+  # so it can be recognised in merged object.
+  sample_doublet_list <- paste(name, doublet_list, sep = "_")
+  writeLines(sample_doublet_list, file_conn)
+  close(file_conn)
+  qc <- tag_doublets(seu = qc, doublet_list = doublet_list)
+  return(list(seu = seu, qc = qc))
+}
+
+process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
+                           verbose = FALSE){
+  message("Sketching sample data")
+  sketch_start <- Sys.time()
+  seu <- sketch_sc_experiment(seu = seu, assay = "RNA",
+    method = sketch_method, sketched.assay = "sketch", cell.pct = sketch_pct,
+    force.ncells = force_ncells)
+  sketch_end <- Sys.time()
+  if(verbose) {
+    message(paste0("Sketching time: ", sketch_end-sketch_start))
+  }
+  if("sketch" %in% names(seu@assays)) {
+    Seurat::DefaultAssay(seu) <- "sketch"
+    seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs,
+                   verbose = verbose, selection.method = "vst", assay = "sketch")
+  } else {
+    Seurat::DefaultAssay(seu) <- "RNA"
+  }
   return(seu)
 }
