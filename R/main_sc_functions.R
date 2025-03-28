@@ -114,7 +114,8 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL, ref_n = NULL,
   BPPARAM = NULL, doublet_list = NULL, integration_method = "Harmony",
   sketch = FALSE, sketch_pct = 25, k_weight = 100, sketch_ncells = 5000,
-  force_ncells = NA_integer_, sketch_method = "LeverageScore"){
+  force_ncells = NA_integer_, sketch_method = "LeverageScore",
+  doublet_path = getwd()){
   #check_sc_input(metadata = seu@meta.data, DEG_target = DEG_target)
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                doublet_list = doublet_list)
@@ -147,23 +148,11 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs, verbose = verbose,
                                       selection.method = "vst", assay = "RNA")
   if(sketch) {
-    message("Sketching sample data")
-    sketch_start <- Sys.time()
-    seu <- sketch_sc_experiment(seu = seu, assay = "RNA",
-      method = sketch_method, sketched.assay = "sketch", cell.pct = sketch_pct,
-      force.ncells = force_ncells)
-    sketch_end <- Sys.time()
-    if(verbose) {
-      message(paste0("Sketching time: ", sketch_end-sketch_start))
-    }
+    seu <- process_sketch(seu = seu, sketch_method = sketch_method,
+                          sketch_pct = sketch_pct, force_ncells = force_ncells,
+                          hvgs = hvgs, verbose = verbose)
   }
-  if("sketch" %in% names(seu@assays)) {
-    assay <- "sketch"
-    seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs,
-                   verbose = verbose, selection.method = "vst", assay = assay)
-  } else {
-    assay <- "RNA"
-  }
+  assay <- Seurat::DefaultAssay(seu)
   message('Scaling data')
   scale_start <- Sys.time()
   seu <- Seurat::ScaleData(object = seu, verbose = verbose,
@@ -201,18 +190,8 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   seu <- Seurat::RunUMAP(object = seu, dims = seq(ndims), reduction = reduction,
                          return.model = T, verbose = verbose)
   if(!integrate) {
-    doublets <- find_doublets(seu)
-    seu <- doublets$seu
-    doublet_list <- doublets$barcodes
-    message("Removing doublets from Seurat object")
-    seu <- subset(seu, cells = doublet_list, invert = TRUE)
-    file_conn <- file(file.path(getwd(), "doublet_list.txt"))
-    # Sample name is included in barcode when merging, we include it here
-    # so it can be recognised in merged object.
-    sample_doublet_list <- paste(name, doublet_list, sep = "_")
-    writeLines(sample_doublet_list, file_conn)
-    close(file_conn)
-    qc <- tag_doublets(seu = qc, doublet_list = doublet_list)
+    processed_doublets <- process_doublets(seu = seu, qc = qc,
+                                           doublet_path = doublet_path)
   }
   seu <- SeuratObject::JoinLayers(seu)
   annotation <- annotate_seurat(seu = seu, SingleR_ref = SingleR_ref,
