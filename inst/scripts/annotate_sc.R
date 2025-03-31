@@ -315,9 +315,8 @@ if(opt$loadRDS) {
   message("Analyzing seurat object")
   final_results <- main_annotate_sc(seu = seu, cluster_annotation = cluster_annotation, name = opt$name,
                     ndims = opt$ndims, resolution = opt$resolution, subset_by = subset_by,
-                    cell_annotation = cell_annotation,
-                    minqcfeats = opt$minqcfeats, percentmt = opt$percentmt, hvgs = opt$hvgs,
-                    scalefactor = opt$scalefactor, normalmethod = opt$normalmethod,
+                    cell_annotation = cell_annotation, minqcfeats = opt$minqcfeats, percentmt = opt$percentmt,
+                    hvgs = opt$hvgs, scalefactor = opt$scalefactor, normalmethod = opt$normalmethod,
                     p_adj_cutoff = opt$p_adj_cutoff, verbose = opt$verbose, sigfig = 2,
                     output = opt$output, integrate = opt$integrate, query = unlist(target_genes),
                     reduce = opt$reduce, save_RDS = opt$saveRDS, SingleR_ref = SingleR_ref,
@@ -327,6 +326,12 @@ if(opt$loadRDS) {
                     sketch_method = opt$sketch_method, force_ncells = force_ncells,
                     k_weight = opt$k_weight)
 }
+
+message("--------------------------------------------")
+message("----------Saving results to disk------------")
+message("--------------------------------------------")
+
+write_annot_output(final_results = final_results, output_path = opt$output)
 
 message("--------------------------------------------")
 message("-------------Writing QC report--------------")
