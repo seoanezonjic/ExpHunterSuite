@@ -1138,23 +1138,20 @@ annotate_seurat <- function(seu = stop(paste0("Please provide a seurat object",
                             ref_de_method = "wilcox", verbose = FALSE,
                             aggr.ref = FALSE, fine.tune = TRUE, assay = "RNA",
                             integrate = FALSE) {
-  annot_start <- Sys.time()
   if(!is.null(SingleR_ref)) {
-    message(paste0("SingleR reference provided. Annotating cells. This option",
-            " overrides all other annotation methods."))
+    message("SingleR reference provided. Annotating cells.")
     res <- annotate_SingleR(seu = seu, SingleR_ref = SingleR_ref,
      BPPARAM = BPPARAM, ref_n = ref_n, ref_de_method = ref_de_method, 
      aggr.ref = aggr.ref, fine.tune = fine.tune)
   } else {
     if(!is.null(cell_annotation)) {
-      message(paste0("No reference provided for cell type annotation.",
-                     " Dynamically annotating clusters."))
+      message("Dynamically annotating clusters.")
       res <- annotate_clusters(seu = seu, subset_by = subset_by, assay = assay,
         integrate = integrate, idents = "seurat_clusters", verbose = verbose,
         p_adj_cutoff = p_adj_cutoff)
     } else {
     if(!is.null(cluster_annotation)){
-      message("Clusters annotation file provided. Annotating clusters.")
+      message("Clusters annotation file provided. Renaming clusters.")
       seu <- rename_clusters(seu = seu,
                              new_clusters = cluster_annotation$name)
       idents <- "cell_type"
@@ -1162,15 +1159,10 @@ annotate_seurat <- function(seu = stop(paste0("Please provide a seurat object",
       warning("No data provided for cluster annotation.", immediate. = TRUE)
       idents <- "seurat_clusters"
     }
-    markers <- calculate_markers(seu = seu, subset_by = subset_by,
-                 integrate = integrate, verbose = verbose,
-                 idents = idents, assay = assay)
+    markers <- calculate_markers(seu = seu, verbose = verbose, assay = assay,
+                  integrate = integrate, idents = idents, subset_by = subset_by)
     res <- list(seu = seu, markers = markers)
     }
-  }
-  annot_end <- Sys.time()
-  if(verbose) {
-    message(paste0("Annotation time: ", annot_end - annot_start))
   }
   return(res)
 }
