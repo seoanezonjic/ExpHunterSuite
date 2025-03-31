@@ -194,12 +194,17 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                                            doublet_path = doublet_path)
   }
   seu <- SeuratObject::JoinLayers(seu)
+  annot_start <- Sys.time()
   annotation <- annotate_seurat(seu = seu, SingleR_ref = SingleR_ref,
     cell_annotation = cell_annotation, ref_n = ref_n, subset_by = subset_by,
     cluster_annotation = cluster_annotation, p_adj_cutoff = p_adj_cutoff,
     BPPARAM = BPPARAM, ref_de_method = ref_de_method, aggr.ref = aggr.ref,
     fine.tune = fine.tune, assay = assay, integrate = integrate,
     verbose = verbose)
+  annot_end <- Sys.time()
+  if(verbose) {
+    message(paste0("Time to annotate: ", annot_end - annot_start))
+  }
   seu <- annotation$seu
   markers <- annotation$markers
   if("sketch" %in% names(seu@assays)) {
@@ -238,19 +243,25 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 #' `main_sc_Hunter` is the main seurat analysis function. Can be used
 #' for integrative or non-integrative analysis.
 #'
-
+#' @param counts_matrix Counts matrix to analyze.
+#' @param metadata Counts matrix metadata.
 #' @param DEG_target A string vector. Categories by which DEG analysis will be
 #' performed
 #' @param DEG_p_val_cutoff Adjusted p-val cutoff for significant DEGs.
 #' Default 5e-3.
 #' @param min_avg_log2FC Average log2fc cutoff for significant DEGs.
 #' Default 0.5.
-#' @param min_cell_proportion Minimum threshold of percentage of cells expressing DEG.
+#' @param min_cell_proportion Minimum threshold of percentage of cells
+#' expressing DEG.
+#' @param output_path Path where output will be written.
+#' @export
 
-main_sc_Hunter <- function(DEG_target = NULL, DEG_p_val_cutoff = 1e-3,
-  counts_matrix = stop("No counts matrix supplied."), min_avg_log2FC = 0.5,
-  metadata = stop("No metadata supplied."), min_cell_proportion = 1,
-  query = NULL, subset_by = NULL) {
+main_sc_Hunter <- function(counts_matrix = stop("No counts matrix supplied."),
+                           metadata = stop("No metadata supplied."),
+                           DEG_target = NULL, DEG_p_val_cutoff = 1e-3,
+                           min_avg_log2FC = 0.5, min_cell_proportion = 1,
+                           query = NULL, subset_by = NULL,
+                           output_path = getwd()) {
   if(is.null(DEG_target)) {
     res <- list(DEG_list = NULL, DEG_metrics = NULL, DEG_query = NULL)
   } else {
@@ -310,6 +321,31 @@ main_sc_Hunter <- function(DEG_target = NULL, DEG_p_val_cutoff = 1e-3,
   }
 }
 
+#' write_annot_output
+#' writes final counts matrix and annotated metadata of a seurat experiment.
+#'
+#' @param final_results final_results object output from main_annotate_sc
+#' @param output_path output where results will be saved
+#' @export
+#' @return NULL
+
+write_annot_output <- function(final_results = stop("Missing results object"),
+                               output_path = getwd()) {
+  seu <- final_results$seu
+  reduction <- ifelse("umap.full" %in% names(seu), yes = "umap.full",
+                       no = "umap")
+  metadata <- seu@meta.data
+  reduction <- seu[[reduction]]
+  counts_matrix <- Seurat::GetAssayData(seu, assay = "RNA", layer = "data")
+  Matrix::writeMM(counts_matrix, file = file.path(output_path, "counts.mtx"))
+  write.table(metadata, sep = "\t", quote = FALSE, row.names = TRUE,
+              file = file.path(output_path, "metadata.txt"))
+  write.table(reduction@cell.embeddings, sep = "\t", quote = FALSE,
+              row.names = TRUE,
+              file = file.path(output_path, "cell_embeddings.txt"))
+  message(paste0("Counts matrix saved to ", file.path(output_path,
+                 "counts.mtx")))
+}
 
 #' write_sc_report
 #' Write integration HTML report
