@@ -488,7 +488,7 @@ calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE, idents = N
   return(markers)
 }
 
-#' analyze_query
+#' analyze_sc_query
 #' is a wrapper for the three query analysis steps:
 #' `get_query_distribution`, `get_query_pct` by samples and `get_query_pct` by
 #' samples and cell types.
@@ -499,10 +499,10 @@ calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE, idents = N
 #' @examples
 #' data(pbmc_tiny)
 #' pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
-#' analyze_query(pbmc_tiny, c("PPBP", "CA2"), 2, sample_col = "orig.ident")
+#' analyze_sc_query(pbmc_tiny, c("PPBP", "CA2"), 2, sample_col = "orig.ident")
 #' @export
 
-analyze_query <- function(seu, query, sigfig, sample_col = "sample",
+analyze_sc_query <- function(seu, query, sigfig, sample_col = "sample",
   layer = "data") {
   if(all(!query %in% rownames(seu))) {
     warning("None of the query genes are expressed in the dataset",
