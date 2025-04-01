@@ -78,7 +78,7 @@
 #'                   sketch_ncells = 5000, DEG_p_val_cutoff = 5e-3,
 #'                   min_avg_log2FC = 0.5, k_weight = 90)
 #'  }
-#' @return final_results list. Contains multiple items:
+#' @returns invisible(final_results list. Contains multiple items:)
 #' * qc: seurat object prior to filtering and analysis.
 #' * seu: processed seurat object.
 #' * sample_qc_pct: Gene expression matrix of union of top N expressed genes in
@@ -325,26 +325,32 @@ main_sc_Hunter <- function(counts_matrix = stop("No counts matrix supplied."),
 #' writes final counts matrix and annotated metadata of a seurat experiment.
 #'
 #' @param final_results final_results object output from main_annotate_sc
-#' @param output_path output where results will be saved
+#' @param assay,layer Assay and layer from where counts will be retrieved.
+#' @param opt Options used in script call.
 #' @export
-#' @return NULL
+#' @returns invisible(NULL)
 
 write_annot_output <- function(final_results = stop("Missing results object"),
-                               output_path = getwd()) {
+                               opt = NULL, assay = "RNA", layer = "data") {
+  if(is.null(opt$output)) {
+    opt$output <- getwd()
+  }
   seu <- final_results$seu
   reduction <- ifelse("umap.full" %in% names(seu), yes = "umap.full",
                        no = "umap")
   metadata <- seu@meta.data
   reduction <- seu[[reduction]]
-  counts_matrix <- Seurat::GetAssayData(seu, assay = "RNA", layer = "data")
-  Matrix::writeMM(counts_matrix, file = file.path(output_path, "counts.mtx"))
+  counts <- Seurat::GetAssayData(seu, assay = assay, layer = layer)
+  DropletUtils::write10xCounts(path = file.path(opt$output, "counts"),
+                              x = counts, overwrite = TRUE, genome = opt$genome,
+                              gene.type = "Gene Expression")
   write.table(metadata, sep = "\t", quote = FALSE, row.names = TRUE,
-              file = file.path(output_path, "metadata.txt"))
+              file = file.path(opt$output, "meta.tsv"))
   write.table(reduction@cell.embeddings, sep = "\t", quote = FALSE,
               row.names = TRUE,
-              file = file.path(output_path, "cell_embeddings.txt"))
-  message(paste0("Counts matrix saved to ", file.path(output_path,
-                 "counts.mtx")))
+              file = file.path(opt$output, "cell_embeddings.txt"))
+  message(paste0("Counts matrix saved to ", file.path(opt$output, "counts")))
+  return(invisible(NULL))
 }
 
 #' write_sc_report
@@ -367,7 +373,7 @@ write_annot_output <- function(final_results = stop("Missing results object"),
 #'
 #' @keywords preprocessing, write, report
 #' 
-#' @return nothing
+#' @returns invisible(NULL)
 
 write_sc_report <- function(final_results, output = getwd(),
                             template_folder, source_folder = NULL,
@@ -425,6 +431,7 @@ write_sc_report <- function(final_results, output = getwd(),
   plotter$build(template)
   plotter$write_report(out_file)
   message(paste0("Report written in ", out_file))
+  return(invisible(NULL))
 }
 
 #' check_sc_input
