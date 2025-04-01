@@ -14,7 +14,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   main_path_script <- dirname(full.fpath)
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
-  if(Sys.getenv("singularity") == "TRUE") {
+  if(Sys.getenv("sketch") == "TRUE") {
     devtools::load_all(Sys.getenv("HTMLREPORT_PATH"))
     custom_libraries <- c('sc_library.R', 'main_sc_functions.R', 'general_functions.R')
     source_folder <- file.path(find.package("htmlreportR"), "inst")
@@ -131,7 +131,10 @@ option_list <- list(
             help = paste0("A numeric. Percentage of total cells to consider representative of the",
   " experiment. Default 12, as suggested by sketching tutorial.")),
   optparse::make_option("--sketch_method", type = "character", default = 12,
-            help = "Score calculation method to select cells in sketch.")
+            help = "Score calculation method to select cells in sketch."),
+  optparse::make_option("--genome", type = "character", default = "Unspecified",
+            help = paste0("Genome version. Optional, included as extra ",
+              "information in output and reports."))
 )
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
@@ -331,7 +334,7 @@ message("--------------------------------------------")
 message("----------Saving results to disk------------")
 message("--------------------------------------------")
 
-write_annot_output(final_results = final_results, output_path = opt$output)
+write_annot_output(final_results = final_results, opt = opt)
 
 message("--------------------------------------------")
 message("-------------Writing QC report--------------")
