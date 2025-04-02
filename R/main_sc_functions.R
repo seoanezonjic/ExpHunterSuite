@@ -255,71 +255,35 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 #' @param output_path Path where output will be written.
 #' @export
 
-main_sc_Hunter <- function(seu = stop("No seurat object supplied."),
-                           DEG_target = stop("No DEG target supplied"),
+main_sc_Hunter <- function(DEG_target = stop("No DEG target supplied"),
+                           seu = stop("No seurat object supplied."),
                            p_val_cutoff = 1e-3, min_avg_log2FC = 0.5,
                            min_counts = 10, verbose = FALSE, query = NULL,
-                           min_cell_proportion = 1,  
-                           subset_by = NULL, output_path = getwd()) {
+                           min_cell_proportion = 1, output_path = getwd()) {
   message('Starting DEG analysis.')
-  DEG_comparisons <- rownames(DEG_target)
-  DEG_list <- vector(mode = "list", length = length(DEG_comparisons))
-  names(DEG_list) <- DEG_comparisons
-  DEG_metrics_list <- DEG_list
-  DEG_query_list <- DEG_list
+  seu <- seu[, which(seu$sample %in% DEG_target$sample)]
+  seu$deg_group <- DEG_target$treat[match(seu$sample, DEG_target$sample)]
   subset_target <- ifelse("cell_type" %in% colnames(seu@meta.data),
-                      yes = "cell_type", no = "seurat_clusters")
-  for(comparison in DEG_comparisons) {
-    message(paste0("Calculating DEGs for comparison ", comparison, "."))
-    condition <- DEG_target[comparison, "column"]
-    values <- DEG_target[comparison, "values"]
-    comparison_DEGs <- get_sc_markers(seu = seu, cond = condition, DEG = TRUE,
-                              subset_by = subset_target, verbose = verbose,
-                              values = values, min.pct = min_cell_proportion)
-    DEG_list[[comparison]] <- comparison_DEGs
-    message("Extracting DEG cell metrics")
-    ## Here we need to control a list of FALSE data frames being returned
-    ## from get_sc_markers, it's a possible case if cluster-conditon
-    ## combinations do not allow a differential analysis for specified
-    ## condition.
-    DEG_metrics_list[[comparison]] <- get_fc_vs_ncells(seu = seu,
-      DEG_list = comparison_DEGs$markers, min_avg_log2FC = min_avg_log2FC,
-      p_val_cutoff = p_val_cutoff, min_counts = min_counts)
-    if(!is.null(query)) {
-      DEG_query_list[[comparison]] <- get_fc_vs_ncells(seu = seu,
-                  DEG_list = comparison_DEGs$markers, min_counts = min_counts,
-                  query = query)
-    }
+                           yes = "cell_type", no = "seurat_clusters")
+  DEGs <- get_sc_markers(seu = seu, cond = "DEG_group", DEG = TRUE,
+                         subset_by = subset_target, verbose = verbose,
+                         values = "Ctrl,Treat", min.pct = min_cell_proportion)
+  message("Extracting DEG cell metrics")
+  ## Here we need to control a list of FALSE data frames being returned
+  ## from get_sc_markers, it's a possible case if cluster-conditon
+  ## combinations do not allow a differential analysis for specified
+  ## condition.
+  DEG_metrics <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
+                  min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff,
+                  min_counts = min_counts)
+  if(!is.null(query)) {
+    DEG_query <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
+                                  min_counts = min_counts, query = query)
   }
-  subset_DEGs <- NULL
-  if(length(subset_by) == 2) {
-    message(paste0("Analysing DEGs by subgroups. Subsetting by condition \"",
-            subset_by[1], "\", analyzing effects of condition \"",
-            subset_by[2], "\"."))
-    subset_DEGs <- vector(mode = "list", length = 2)
-    condition_target <- DEG_target[DEG_target$column == subset_by[1], ]
-    if(condition_target$values == "all") {
-      condition_values <- unique(seu@meta.data[[subset_by[1]]])
-    } else {
-      condition_values <- strsplit(condition_target$values, ",")[[1]]
-    }
-    names(subset_DEGs) <- condition_values
-    subset_seu <- subset_DEGs
-    target_subset <- DEG_target[DEG_target$column == subset_by[2], ]
-    subset_values <- target_subset$values
-    for(value in condition_values) {
-      subset_seu[[value]] <- subset_seurat(seu, subset_by[1], value)
-      subset_DEGs[[value]] <- get_sc_markers(seu = subset_seu[[value]],
-                      cond = subset_by[2], DEG = TRUE, values = subset_values,
-                      subset_by = subset_target, verbose = verbose)
-    }
-  }
-  return(list(DEG_list = DEG_list, DEG_metrics_list = DEG_metrics_list,
-              DEG_query_list = DEG_query_list, subset_DEGs = subset_DEGs))
+  return(list(DEG = DEG, DEG_metrics = DEG_metrics, DEG_query = DEG_query))
 }
 
-main_analyze_sc_query <- function(input, query, sigfig, output_path) {
-  seu <- load_input() # This is done already in main DEG function, and controlled in script.
+main_analyze_sc_query <- function(seu, query, sigfig, output_path) {
   query_data <- analyze_sc_query(seu = seu, query = query, sigfig = sigfig)
   query_results <- list()
   query_results$query_exp <- query_data$query_exp
