@@ -27,12 +27,9 @@
 #' overview. Default 10.
 #' @return Aberrant expression object containing all analysis results.
 #' @importFrom data.table fread
-#' @importFrom dplyr left_join
 #' @importFrom utils write.table
 #' @importFrom SummarizedExperiment SummarizedExperiment colData rowData
 #' rowRanges mcols
-#' @importFrom OUTRIDER OutriderDataSet filterExpression estimateSizeFactors
-#' findEncodingDim OUTRIDER results plotEncDimSearch plotAberrantPerSample
 #' plotCountCorHeatmap plotCountGeneSampleHeatmap
 #' @importFrom AnnotationDbi loadDb
 #' @importFrom S4Vectors endoapply

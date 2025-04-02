@@ -2,7 +2,6 @@
 #' 
 #' `preprocess_gtf` takes a GTF file and a directory path. It outputs a txdb,
 #'count ranges, and gene_mapping files, which it writes to provided directory.
-#' @importFrom txdbmaker makeTxDbFromGFF
 #' @importFrom GenomicFeatures exonsBy
 #' @importFrom GenomeInfoDb keepStandardChromosomes
 #' @importFrom AnnotationDbi saveDb
@@ -177,7 +176,6 @@ preprocess_gtf <- function(gtf) {
 #' and calculates its biological coefficient of variation, adding it to the ODS.
 #' @param ods Outrider DataSet object.
 #' @returns An updated ODS containing estimated BCV.
-#' @importFrom OUTRIDER OutriderDataSet normalizationFactors counts fit theta
 #' @importFrom SummarizedExperiment colData
 
 .estimateThetaWithoutAutoCorrect <- function(ods){
@@ -386,7 +384,6 @@ merge_counts <- function(cpu, sample_anno, count_files, count_ranges) {
 #' @param txdb Txdb database object.
 #' @param counts A counts table.
 #' @returns A filtered OutriderDataSet built from the merged table.
-#' @importFrom OUTRIDER OutriderDataSet filterExpression
 #' @importFrom SummarizedExperiment colData rowData assay
 #' @export
 
@@ -749,15 +746,8 @@ get_expressed_genes <- function(ods) {
 #' @param ... Used for backwards compatibility (gene_assembly -> genome_assembly)
 #' @return a data.frame containing original data as well as the minor allele frequencies
 #' @examples
-#' file <- system.file("extdata", "GR_HG00187.Rds", package = "tMAE", mustWork = TRUE)
-#' gr <- readRDS(file)
-#' genome_assembly <- 'MafDb.ExAC.r1.0.hs37d5'
-#' \dontrun{
-#' res <- add_gnomAD_AF(gr, genome_assembly = genome_assembly, populations = "AF")
-#' }
-#'
-#' file <- system.file("extdata", "allelic_counts_HG00187.csv", package = "tMAE", mustWork = TRUE)
-#' maeCounts <- fread(file)                                                                       
+#' file <- system.file("extData", "allelic_counts_HG00187.csv", package = "ExpHunterSuite", mustWork = TRUE)
+#' maeCounts <- data.table::fread(file)                                                                       
 #' maeRes <- DESeq4MAE(maeCounts)                                                                 
 #' \dontrun{
 #' res <- add_gnomAD_AF(maeRes, genome_assembly = genome_assembly, populations = "AF")            
@@ -883,9 +873,9 @@ function(
 #' @return A ggplot object containing the MA plot.
 #' @export
 #' @examples
-#' file <- system.file("extdata", "allelic_counts_HG00187.csv",
-#'     package = "tMAE", mustWork = TRUE)
-#' maeCounts <- fread(file)
+#' file <- system.file("extData", "allelic_counts_HG00187.csv",
+#'     package = "ExpHunterSuite", mustWork = TRUE)
+#' maeCounts <- data.table::fread(file)
 #' res <- DESeq4MAE(maeCounts)
 #' plotMA4MAE(res)
 
@@ -938,9 +928,9 @@ plotMA4MAE <- function(data, title = NULL, padjCutoff = 0.05,
 #' @return A ggplot object containing the MA plot.
 #' @export
 #' @examples
-#' file <- system.file("extdata", "allelic_counts_HG00187.csv", 
-#'     package = "tMAE", mustWork = TRUE)
-#' maeCounts <- fread(file)
+#' file <- system.file("extData", "allelic_counts_HG00187.csv", 
+#'     package = "ExpHunterSuite", mustWork = TRUE)
+#' maeCounts <- data.table::fread(file)
 #' res <- DESeq4MAE(maeCounts)
 #' plotAllelicCounts(res)
 #' 
@@ -1066,8 +1056,8 @@ get_allele_specific_deseq_results <- function(dds_res){
 #' @return Mono-allelic results table containing original counts plus p-value, p-adjusted and freqALT columns.
 #' @export
 #' @examples
-#' file <- system.file("extdata", "allelic_counts_HG00187.csv", package = "tMAE", mustWork = TRUE)
-#' maeCounts <- fread(file)
+#' file <- system.file("extData", "allelic_counts_HG00187.csv", package = "ExpHunterSuite", mustWork = TRUE)
+#' maeCounts <- data.table::fread(file)
 #' DESeq4MAE(maeCounts)
 DESeq4MAE <- function(data, minCoverage = 10, disp = .05, independentFiltering = FALSE){
     

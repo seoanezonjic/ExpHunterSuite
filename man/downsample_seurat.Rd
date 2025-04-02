@@ -9,8 +9,8 @@ if you know which cells and/or features you want to retrieve.}
 \usage{
 downsample_seurat(
   seu,
-  cells = NULL,
-  features = NULL,
+  cells = 500,
+  features = 5000,
   keep = "",
   assay = "RNA",
   layer = "counts"

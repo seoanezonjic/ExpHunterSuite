@@ -468,7 +468,6 @@ filter_count <- function(reads,
     return(list(raw=raw, cpm_table=cpm_table))
 }
 
-#' @importFrom matrixStats rowVars
 #' @importFrom stats quantile formula
 #' @importFrom DESeq2 DESeqDataSetFromMatrix DESeq counts
 filter_by_variance <- function(count_matrix, q_filter, target){

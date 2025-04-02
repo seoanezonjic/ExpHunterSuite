@@ -6,7 +6,7 @@
 \usage{
 calculate_markers(
   seu,
-  subset_by,
+  subset_by = NULL,
   verbose = FALSE,
   idents = NULL,
   integrate = FALSE,
@@ -19,7 +19,7 @@ calculate_markers(
 \item{seu}{Seurat object to analyse.}
 
 \item{subset_by}{Metadata column by which seurat object will be subset for
-marker calculation.}
+marker calculation. Default NULL.}
 
 \item{verbose}{A boolean. Will be passed to Seurat function calls.}
 

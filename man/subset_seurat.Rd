@@ -6,17 +6,20 @@
 subsets a seurat object by a specified value of provided
 column.}
 \usage{
-subset_seurat(seu, column, value)
+subset_seurat(seu, column, value, expr = FALSE, layer = "data")
 }
 \arguments{
-\item{seu}{Seurat object}
+\item{seu}{Seurat object.}
 
-\item{column}{Column with value by which to subset input}
+\item{column}{Column with value by which to subset input.}
 
-\item{value}{Value to search within column}
+\item{value}{Value to search within column.}
+
+\item{expr}{Directly subset expression matrix instead of seurat object.}
 }
 \value{
-A subset of the seurat object, which itself is a seurat object.
+A subset of the seurat object, which itself is a seurat object or an
+expression matrix if expr is set to TRUE.
 }
 \description{
 subset_seurat
@@ -25,5 +28,6 @@ column.
 }
 \examples{
 data(pbmc_tiny)
-head(subset_seurat(seu = pbmc_tiny, column = "groups", value = "g2"))
+head(subset_seurat(seu = pbmc_tiny, column = "groups", value = "g2",
+expr = FALSE))
 }

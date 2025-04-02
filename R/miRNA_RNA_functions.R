@@ -486,8 +486,6 @@ correlate_profiles <- function(RNA_profiles, miRNA_profiles,corr_coef) {
 }
 
 
-
-#' @importFrom dplyr desc between row_number filter arrange group_by
 #' @importFrom rlang .data
 get_hub_genes_by_MM <- function(normalized_counts, hunter_results, top = 1){
     #maybe we can change this function by  splitting all DGH by modules

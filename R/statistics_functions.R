@@ -181,10 +181,12 @@ get_stats <- function(df){
 #' @return a data frame with several measures
 #' @export
 #' @examples
+#' \dontrun{
 #' cm <- matrix(c(4,3,2,1), ncol = 2)
 #' rownames(cm) <- c(TRUE,FALSE)
 #' colnames(cm) <- c(TRUE,FALSE)
 #' stats <- get_stats_from_cm(cm)
+#' }
 get_stats_from_cm <- function(cm){
   # >>>>>>>[ Real , Pred ]
   TP <- extract_from_cm(cm,"TRUE","TRUE")

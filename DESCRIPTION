@@ -56,20 +56,26 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 biocViews: GeneExpressionWorkflow
 Suggests: 
+    EnhancedVolcano,
+    GGally,
+    biomaRt,
+    factoextra,
+    ggupset,
+    yaml,
     optparse,
     PerformanceAnalytics,
     naivebayes,
     reshape2,
     org.Hs.eg.db,
     org.Mm.eg.db,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
 VignetteBuilder: knitr
 Imports: 
+    DoubletFinder (>= 2.0.4),
     ReactomePA (>= 1.46.0),
     limma (>= 3.58.0),
     edgeR (>= 4.0.15),
     NOISeq (>= 2.46.0),
-    biomaRt (>= 2.58.0),
     topGO (>= 2.54.0),
     diffcoexp (>= 1.22.0),
     DT (>= 0.30),
@@ -95,7 +101,6 @@ Imports:
     BiocParallel (>= 1.36.0),
     MKinfer (>= 1.1),
     matrixStats (>= 1.0.0),
-    ggupset (>= 0.3.0),
     rlang (>= 1.1.1),
     plyr (>= 1.8.9),
     tidyr (>= 1.3.0),
@@ -104,7 +109,6 @@ Imports:
     fastcluster (>= 1.2.3),
     DOSE (>= 3.28.0),
     heatmaply (>= 1.5.0),
-    EnhancedVolcano (>= 1.20.0),
     ggrepel (>= 0.9.4),
     clusterProfiler (>= 4.11.0),
     GenomicRanges (>= 1.54.0),
@@ -119,12 +123,14 @@ Imports:
     OUTRIDER (>= 1.20.0),
     MatrixGenerics (>= 1.14.0),
     GenomeInfoDb (>= 1.38.0),
-    yaml (>= 2.3.7),
     rtracklayer (>= 1.62.0),
     AnnotationDbi (>= 1.64.0),
     htmlreportR (>= 1.0.0),
     Seurat (>= 5.1.0),
-    factoextra (>= 1.0.7),
-    GGally (>= 2.2.1),
-    txdbmaker (>= 1.0.1)
+    txdbmaker (>= 1.0.1),
+    SeuratObject (>= 5.0.2),
+    SingleR (>= 2.6.0),
+    corto (>= 1.2.4),
+    methods,
+    BiocManager (>= 1.30.25)
 Config/testthat/edition: 3
