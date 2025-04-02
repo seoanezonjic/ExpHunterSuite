@@ -6,7 +6,13 @@
 builds a table of query genes expression levels
 across all samples of a Seurat object}
 \usage{
-get_query_distribution(seu, query, sigfig = 3, sample_col = "sample")
+get_query_distribution(
+  seu,
+  query,
+  sigfig = 3,
+  layer = "data",
+  sample_col = "sample"
+)
 }
 \arguments{
 \item{seu}{Seurat object}

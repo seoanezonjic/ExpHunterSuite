@@ -6,7 +6,7 @@
 gets the percentage of cells in each sample of a seurat
 object which expresses genes specified in a list of queries.}
 \usage{
-get_query_pct(seu, query, by, sigfig = 2, assay = "RNA", layer = "counts")
+get_query_pct(seu, query, by, sigfig = 2, assay = "RNA", layer = "data")
 }
 \arguments{
 \item{seu}{Seurat object to analyze.}

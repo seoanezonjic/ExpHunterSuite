@@ -12,7 +12,9 @@ get_sc_markers(
   subset_by,
   DEG = FALSE,
   verbose = FALSE,
-  assay = "RNA"
+  assay = "RNA",
+  values = NULL,
+  min.pct = 0.1
 )
 }
 \arguments{
@@ -34,6 +36,11 @@ marker calculation.}
 
 \item{assay}{A string. Assay whose markers will be calculated. Default "RNA",
 as per usual workflow.}
+
+\item{values}{A comma-separated string delimiting values of cond column by
+which to perform the comparison. Must specify two conditions. Default NULL,
+will use all values. If there are more than two, function will return an
+error.}
 }
 \value{
 A list containing one marker or DEG data frame per cluster, plus

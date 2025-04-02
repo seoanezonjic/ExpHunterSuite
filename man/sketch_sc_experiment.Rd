@@ -8,20 +8,15 @@ specified minimum, it proceeds with sketching, else it is skipped.}
 \usage{
 sketch_sc_experiment(
   seu,
-  min.ncells = 5000,
   assay = "RNA",
   method = "LeverageScore",
   sketched.assay = "sketch",
-  cell.pct = 12,
+  cell.pct = 25,
   force.ncells = NA_integer_
 )
 }
 \arguments{
 \item{seu}{Seurat object to sketch.}
-
-\item{min.ncells}{An integer. If estimated cell number optimal value for
-sketching is smaller than this number, sketching will not be performed.
-Default value of 5000, recommended by Seurat tutorials.}
 
 \item{assay}{A string. Name of assay to sketch. Default "RNA".}
 
@@ -30,11 +25,15 @@ Default value of 5000, recommended by Seurat tutorials.}
 \item{sketched.assay}{A string. Name of assay where sketch will be saved.}
 
 \item{cell.pct}{A numeric. Percentage of total cells to consider
-representative of the experiment. Default 12, as suggested by sketching
+representative of the experiment. Default 25, as suggested by sketching
 tutorial.}
 
 \item{force.ncells}{An integer. Number of cells to forcibly use in sketch.
 NA by default.}
+
+\item{min.ncells}{An integer. If estimated cell number optimal value for
+sketching is smaller than this number, sketching will not be performed.
+Default value of 5000, recommended by Seurat tutorials.}
 }
 \value{
 A seurat object with a new sketched assay.
@@ -46,7 +45,7 @@ specified minimum, it proceeds with sketching, else it is skipped.
 }
 \examples{
  \dontrun{
-   sketched_experiment <- sketch_sc_experiment(seu = unsketched_experiment,
+   sketched_experiment <- sketch_sc_experiment(seu = nonsketched_experiment,
           assay = "RNA", method = "LeverageScore", sketched.assay = "sketch",
           cell.pct = 50)
  }

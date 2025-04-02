@@ -6,11 +6,9 @@
 breaks down the expression of a list of query genes by
 the specified parameter.}
 \usage{
-breakdown_query(seu, query, assay = "RNA", layer = "counts")
+breakdown_query(input, query, assay = "RNA", layer = "data")
 }
 \arguments{
-\item{seu}{Seurat object to analyze.}
-
 \item{query}{Vector of query genes whose expression to analyse.}
 
 \item{assay}{Seurat object assay to break down}

@@ -16,8 +16,10 @@ a data frame with several measures
 Obtain full set of measures from a confusion matrix
 }
 \examples{
+\dontrun{
 cm <- matrix(c(4,3,2,1), ncol = 2)
 rownames(cm) <- c(TRUE,FALSE)
 colnames(cm) <- c(TRUE,FALSE)
 stats <- get_stats_from_cm(cm)
+}
 }
