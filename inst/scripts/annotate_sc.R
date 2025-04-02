@@ -80,13 +80,13 @@ option_list <- list(
             help = "Comma-separated list of extra conditions to represent in certain plots."),
   optparse::make_option("--int_method", type = "character", default = "RPCA",
             help = "Integration method. Valid methods: \"CCA\", \"RPCA\", \"Harmony\", \"FastMNN\", \"scVI\"."),
-    optparse::make_option("--k_weight", type = "integer", default = 100,
+  optparse::make_option("--k_weight", type = "integer", default = 100,
             help = "Number of neighbors to consider when weighting anchors. Used in integration."),
   optparse::make_option("--cluster_annotation", type = "character", default = "",
             help = "Clusters annotation file."),
   optparse::make_option("--target_genes", type = "character", default = "",
             help = "Path to target genes table, or comma-separated list of target genes."),
-  optparse::make_option("--cpu", type = "double", default = 1,
+  optparse::make_option("--cpu", type = "integer", default = 1,
             help = "Provided CPUs."),
   optparse::make_option("--imported_counts", type = "character", default = "",
             help = "Imported counts directory."),
@@ -139,7 +139,7 @@ option_list <- list(
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
-if(Sys.getenv("singularity") == "TRUE") {
+if(Sys.getenv("sketch") == "TRUE") {
     ## Script refuses to work without future in singularity mode
     # future::plan("multisession", workers = opt$cpu, gc = TRUE)
     options(future.globals.maxSize = 1000e+09)
