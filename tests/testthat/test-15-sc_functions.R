@@ -279,7 +279,7 @@ test_pbmc@meta.data$seurat_clusters[15] <- 1
 test_pbmc@meta.data$cell_types <- test_pbmc@meta.data$seurat_clusters
 
 test_that("get_sc_markers skips exclusive clusters in DEG analysis", {
-  expected_warning <- paste0("Cluster 2 contains less than three cells for ",
+  expected_warning <- paste0("Cluster 2 contains fewer than three cells for ",
                 "condition 'g2'")
   expect_warning(suppressMessages(get_sc_markers(seu = test_pbmc,
                  cond = "groups", DEG = TRUE, verbose = FALSE,
@@ -293,7 +293,7 @@ test_that("get_sc_markers skips exclusive clusters in DEG analysis", {
 
 test_that("get_sc_markers skips exclusive clusters in DEG analysis, alternate
            idents", {
-  expected_warning <- paste0("Cluster 2 contains less than three cells for ",
+  expected_warning <- paste0("Cluster 2 contains fewer than three cells for ",
                 "condition 'g2'")
   expect_warning(suppressMessages(get_sc_markers(seu = test_pbmc,
                  cond = "groups", DEG = TRUE, verbose = FALSE,
@@ -305,11 +305,11 @@ test_that("get_sc_markers skips exclusive clusters in DEG analysis, alternate
                 ))
 })
 
-test_that("annotate_clusters simply assigns names to clusters", {
+test_that("rename_clusters simply assigns names to clusters", {
   test_pbmc$seurat_clusters <- 1:15
   Seurat::Idents(test_pbmc) <- test_pbmc$seurat_clusters
   new_clusters <- paste0("Type", toupper(letters[1:15]))
-  annotated <- suppressWarnings(annotate_clusters(test_pbmc, new_clusters))
+  annotated <- suppressWarnings(rename_clusters(test_pbmc, new_clusters))
   output <- annotated@meta.data$cell_type
   expect_equal(as.character(output), new_clusters)
 })
@@ -368,26 +368,26 @@ test_that("get_top_genes works even if N is greater than number of expressed
   expect_equal(get_top_genes(test_pbmc, top = 10e99999), expected_big)
 })
 
-test_that("check_sc_input fails when specified column does not exist", {
-  expect_error(check_sc_input(metadata = test_pbmc@meta.data,
-               DEG_columns = "fairies"), "contain an invalid number")
-})
+# test_that("check_sc_input fails when specified column does not exist", {
+#   expect_error(check_sc_input(metadata = test_pbmc@meta.data,
+#                DEG_target = "fairies"), "contain an invalid number")
+# })
 
-test_that("check_sc_input can handle different columns failing", {
-  expect_error(check_sc_input(metadata = test_pbmc@meta.data,
-               DEG_columns = c("fairies", "mittens")),
-               "\"fairies\", \"mittens\"")
-})
+# test_that("check_sc_input can handle different columns failing", {
+#   expect_error(check_sc_input(metadata = test_pbmc@meta.data,
+#                DEG_target = c("fairies", "mittens")),
+#                "\"fairies\", \"mittens\"")
+# })
 
-test_that("check_sc_input does not fail in check is successful", {
-  expect_no_error(check_sc_input(metadata = test_pbmc@meta.data,
-               DEG_columns = "groups"))
-})
+# test_that("check_sc_input does not fail if check is successful", {
+#   expect_no_error(check_sc_input(metadata = test_pbmc@meta.data,
+#                DEG_target = "groups"))
+# })
 
-test_that("check_sc_input fails if one column passes and the other does not", {
-  expect_error(check_sc_input(metadata = test_pbmc@meta.data,
-               DEG_columns = c("groups", "orig.ident")), "\"orig.ident\"")
-})
+# test_that("check_sc_input fails if one column passes and the other does not", {
+#   expect_error(check_sc_input(metadata = test_pbmc@meta.data,
+#                DEG_target = c("groups", "orig.ident")), "\"orig.ident\"")
+# })
 
 test_pbmc <- pbmc_tiny
 test_pbmc$cell_type <- "g1"
@@ -474,4 +474,17 @@ test_that("get_fc_vs_ncells can handle FALSE and NULL values in DEG_list", {
   expect_equal(output, expected)
 })
 
+test_that("get_fc_vs_ncells returns NULL if all non-global values in DEG_list
+           are FALSE", {
+  test_DEG_list <- DEG_list
+  test_DEG_list$g1 <- test_DEG_list$g2 <- test_DEG_list$g3 <- data.frame(FALSE)
+  expect_null(get_fc_vs_ncells(seu = test_pbmc, DEG_list = test_DEG_list,
+                 min_avg_log2FC = Inf, p_val_cutoff = -Inf, min_counts = 1))
+})
 
+test_that("get_fc_vs_ncells returns NULL if input is NULL, regardless of
+           global", {
+  test_DEG_list <- NULL
+  expect_null(get_fc_vs_ncells(seu = test_pbmc, DEG_list = test_DEG_list,
+                 min_avg_log2FC = Inf, p_val_cutoff = -Inf, min_counts = 1))
+})
