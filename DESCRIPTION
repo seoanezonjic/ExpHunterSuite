@@ -72,6 +72,7 @@ Suggests:
 VignetteBuilder: knitr
 Imports: 
     DoubletFinder (>= 2.0.4),
+    DropletUtils,
     ReactomePA (>= 1.46.0),
     limma (>= 3.58.0),
     edgeR (>= 4.0.15),
