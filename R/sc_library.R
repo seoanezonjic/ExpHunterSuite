@@ -736,75 +736,113 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
 #' @param query A character vector. List of genes to analyze. Default
 #' NULL.
 
- get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
+get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
                              p_val_cutoff = 0.01, min_counts = 1,
                              query = NULL) {
   res <- NULL
-  if(!is.null(DEG_list)) {
+  return_output <- TRUE
+  if(length(DEG_list) < 1) {
+    warning("Empty DEG_list provided.")
+    return_output <- FALSE
+  } else {
     if(!is.null(query)) {
-        message("Starting analysis for target gene list. DEG cutoffs diabled.")
-        min_avg_log2FC <- 0
-        p_val_cutoff <- 1
+      message("Starting analysis for target gene list. DEG cutoffs disabled.")
+      if(all(!query %in% rownames(seu))) {
+        warning("None of the target genes are expressed in seurat object.")
+        return_output <- FALSE
       }
-      if("cell_type" %in% colnames(seu@meta.data)) {
-        meta <- seu$cell_type
+      min_avg_log2FC <- 0
+      p_val_cutoff <- 1
+    }
+    if("cell_type" %in% colnames(seu@meta.data)) {
+      meta <- seu$cell_type
+    } else {
+      meta <- seu$seurat_clusters
+    }
+    DEG_list$global <- NULL
+    empty_DEGs <- unlist(lapply(DEG_list, function(x) return(isFALSE(unlist(x)))))
+    DEG_list[empty_DEGs] <- NULL
+    if(length(DEG_list) < 1) {
+      warning("No per-identity DEG analysis present in DEG list.")
+      return_output <- FALSE
+    } else {
+      if(is.null(query)) {
+        gene_list <- .get_union_DEGenes(DEG_list = DEG_list)
       } else {
-        meta <- seu$seurat_clusters
+        gene_list <- query
       }
-      idents <- as.character(unique(meta))
-      matrices <- vector(mode = "list", length = length(idents))
-      names(matrices) <- idents
-      DEG_matrices <- matrices
-      DEG_list$global <- NULL
-      empty_DEGs <- unlist(lapply(DEG_list, function(x) return(isFALSE(unlist(x)))))
-      DEG_list[empty_DEGs] <- NULL
-      union_DEGenes <- unique(do.call(c, lapply(DEG_list, function(matrix)
-                              return(rownames(matrix)))))
-      for(ident in idents) {
-        ident_seu <- seu[, meta == ident]
-        matrix <- SeuratObject::GetAssayData(ident_seu, layer = "counts")
-        matrix <- matrix[rownames(matrix) %in% union_DEGenes, ]
-        matrices[[ident]] <- matrix
-        DEG_matrices[[ident]] <- .process_DEG_matrix(DEG_matrix = DEG_list[[ident]],
-                       min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff,
-                       genes_list = union_DEGenes, ident = ident)
-      }
-      DEG_df <- do.call(rbind, DEG_matrices)
-      ## Have to remove zeroes again, not in process_DEG_matrix, because we want to
-      ## remove genes set to zero in ALL idents, not ident by ident
-      DEG_df <- DEG_df[, colSums(DEG_df) > 0, drop = FALSE]
-      DEG_df <- DEG_df[rowSums(DEG_df) > 0, , drop = FALSE ]
-      if(!is.null(query)) {
-        ## This could also be improved. Instead of doing this, .process_DEG_matrix
-        ## should be called with query supplied in genes_list argument.
-        DEG_df <- DEG_df[, colnames(DEG_df) %in% query, drop = FALSE]
-        if(ncol(DEG_df) < 1) {
-          warning("None of specified target genes are differentially expressed.")
-        }
-        if(ncol(DEG_df) < length(query)) {
+      if(return_output) {
+        matrix_list <- .get_matrices(seu = seu, meta = meta, DEG_list = DEG_list,
+                        genes = gene_list, min_avg_log2FC = min_avg_log2FC,
+                        p_val_cutoff = p_val_cutoff)
+        DEG_df <- matrix_list$DEG_df
+        if(any(!query %in% colnames(DEG_df))) {
           warning(paste0("Target gene(s) \"",
                   paste(query[!query %in% colnames(DEG_df)],
                   collapse = "\", \""), "\" are not differentially expressed in ",
                   "dataset."))
         }
+        if(any(dim(DEG_df)) < 1) {
+          warning("None of specified target genes are differentially expressed.")
+          return_output <- FALSE
+        }
       }
-      ncell_df <- .process_matrix_list(matrices, .is_expressed_matrix,
-                  min_counts = min_counts)
-      # Different genes or cell types/clusters might be discarded due to DEG
-      # thresholds or count thresholds. We must update both data frames accordingly.
-      # This could be a function instead of this repetitive code.
-      col_intersection <- intersect(colnames(ncell_df), colnames(DEG_df))
-      row_intersection <- intersect(rownames(ncell_df), rownames(DEG_df))
-      DEG_df <- DEG_df[row_intersection, col_intersection, drop = FALSE]
-      ncell_df <- ncell_df[row_intersection, col_intersection, drop = FALSE]
-      if(nrow(DEG_df) < 1) {
-        res <- NULL
-      } else {
-        res <- list(DEG_df = DEG_df, ncell_df = ncell_df)
-      }
+    }
+  }
+  if(return_output) {
+    res <- .add_ncell_df(DEG_df = DEG_df, matrices = matrix_list$matrices,
+                         min_counts = min_counts)
   }
   return(res)
 }
+
+.get_matrices <- function(seu = stop("No seurat object provided"),
+                          meta = stop("No identities vector provided"),
+                          genes = stop("No gene list provided."),
+                          DEG_list = stop("No DEG_list provided"),
+                          min_avg_log2FC = 0.2, p_val_cutoff = 0.01) {
+  idents <- as.character(unique(meta))
+  matrices <- vector(mode = "list", length = length(idents))
+  names(matrices) <- idents
+  DEG_matrices <- matrices
+  for(ident in idents) {
+    ident_seu <- seu[, meta == ident]
+    matrix <- SeuratObject::GetAssayData(ident_seu, layer = "data")
+    matrix <- matrix[rownames(matrix) %in% genes, , drop = FALSE]
+    matrices[[ident]] <- matrix
+    DEG_matrices[[ident]] <- .process_DEG_matrix(DEG_matrix = DEG_list[[ident]],
+                   min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff,
+                   genes_list = genes, ident = ident)
+  }
+  DEG_df <- do.call(rbind, DEG_matrices)
+  ## Have to remove zeroes again, not in process_DEG_matrix, because we want to
+  ## remove genes set to zero in ALL idents, not ident by ident
+  DEG_df <- DEG_df[, colSums(DEG_df) > 0, drop = FALSE]
+  DEG_df <- DEG_df[rowSums(DEG_df) > 0, , drop = FALSE ]
+  return(list(DEG_df = DEG_df, matrices = matrices))
+}
+
+.get_union_DEGenes <- function(DEG_list) {
+  res <- unique(do.call(c, lapply(DEG_list,
+                function(matrix) return(rownames(matrix)))))
+  return(res)
+}
+
+.add_ncell_df <- function(matrices = stop("No counts matrices supplied"),
+                          DEG_df = stop("No DEG data frame supplied"),
+                          min_counts = 1) {
+  ncell_df <- .process_matrix_list(matrices, .is_expressed_matrix,
+              min_counts = min_counts)
+  # Different genes or cell types/clusters might be discarded due to DEG
+  # thresholds or count thresholds. We must update both data frames accordingly.
+  # This could be a function instead of this repetitive code.
+  col_intersection <- intersect(colnames(ncell_df), colnames(DEG_df))
+  row_intersection <- intersect(rownames(ncell_df), rownames(DEG_df))
+  DEG_df <- DEG_df[row_intersection, col_intersection, drop = FALSE]
+  ncell_df <- ncell_df[row_intersection, col_intersection, drop = FALSE]
+  return(list(DEG_df = DEG_df, ncell_df = ncell_df))
+}
+    
 
 .process_DEG_matrix <- function(DEG_matrix, min_avg_log2FC = 0.2, ident = NULL,
                                 p_val_cutoff = 0.01, genes_list = NULL) {
@@ -850,7 +888,7 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
   }
   res <- lapply(matrix_list, Matrix::rowSums)
   res <- do.call(rbind, res)
-  res <- res[, Matrix::colSums(res) > 0]
+  res <- res[, Matrix::colSums(res) > 0, drop = FALSE]
   return(as.data.frame(res))
 }
 
@@ -1140,7 +1178,7 @@ annotate_seurat <- function(seu = stop(paste0("Please provide a seurat object",
                             " to annotate")), SingleR_ref = NULL, ref_n = 25,
                             cell_annotation = NULL, subset_by = NULL,
                             cluster_annotation = NULL, p_adj_cutoff = 1e-5,
-                            BPPARAM = BiocParalell::SerialParam(),
+                            BPPARAM = BiocParallel::SerialParam(),
                             ref_de_method = "wilcox", verbose = FALSE,
                             aggr.ref = FALSE, fine.tune = TRUE, assay = "RNA",
                             integrate = FALSE) {
