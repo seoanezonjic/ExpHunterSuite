@@ -265,7 +265,7 @@ main_sc_Hunter <- function(DEG_target = stop("No DEG target supplied"),
   seu$deg_group <- DEG_target$treat[match(seu$sample, DEG_target$sample)]
   subset_target <- ifelse("cell_type" %in% colnames(seu@meta.data),
                            yes = "cell_type", no = "seurat_clusters")
-  DEGs <- get_sc_markers(seu = seu, cond = "DEG_group", DEG = TRUE,
+  DEGs <- get_sc_markers(seu = seu, cond = "deg_group", DEG = TRUE,
                          subset_by = subset_target, verbose = verbose,
                          values = "Ctrl,Treat", min.pct = min_cell_proportion)
   message("Extracting DEG cell metrics")
@@ -280,7 +280,7 @@ main_sc_Hunter <- function(DEG_target = stop("No DEG target supplied"),
     DEG_query <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
                                   min_counts = min_counts, query = query)
   }
-  return(list(DEG = DEG, DEG_metrics = DEG_metrics, DEG_query = DEG_query))
+  return(list(DEGs = DEGs, DEG_metrics = DEG_metrics, DEG_query = DEG_query))
 }
 
 main_analyze_sc_query <- function(seu, query, sigfig, output_path) {
