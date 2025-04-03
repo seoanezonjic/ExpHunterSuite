@@ -85,8 +85,6 @@ seu_meta <- read.table(file.path(opt$input, "meta.tsv"), sep = "\t", header = TR
 rownames(seu_meta) <- colnames(seu)
 seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
 seu$RNA$data <- seu$RNA$counts
-save.image('testing.RData')
-stop('test')
 DEG_results <- BiocParallel::bplapply(X = DEG_targets, FUN = main_sc_Hunter, BPPARAM = BPPARAM, seu = seu,
                                       p_val_cutoff = opt$p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
                                       min_cell_proportion = opt$min_cell_proportion, query = target_genes,
