@@ -435,7 +435,7 @@ test_that("get_fc_vs_ncells can handle no target genes being present in seurat
   expect_warning(get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
                              min_avg_log2FC = Inf, p_val_cutoff = -Inf,
                              min_counts = 1, query = c("None", "Zilch")),
-                 "None of specified target genes are differentially expressed.")
+                 "None of the target genes are expressed in seurat object.")
   output <- suppressWarnings(get_fc_vs_ncells(seu = test_pbmc,
                              DEG_list = DEG_list, min_avg_log2FC = Inf,
                              p_val_cutoff = -Inf,
@@ -478,13 +478,19 @@ test_that("get_fc_vs_ncells returns NULL if all non-global values in DEG_list
            are FALSE", {
   test_DEG_list <- DEG_list
   test_DEG_list$g1 <- test_DEG_list$g2 <- test_DEG_list$g3 <- data.frame(FALSE)
-  expect_null(get_fc_vs_ncells(seu = test_pbmc, DEG_list = test_DEG_list,
-                 min_avg_log2FC = Inf, p_val_cutoff = -Inf, min_counts = 1))
+  warnings <- capture_warnings(get_fc_vs_ncells(seu = test_pbmc, DEG_list = test_DEG_list,
+                 min_avg_log2FC = 0, p_val_cutoff = 1, min_counts = 1))
+  expect_match(warnings, "No per-identity DEG analysis present in DEG list.")
+  expect_null(suppressWarnings(get_fc_vs_ncells(seu = test_pbmc, DEG_list = test_DEG_list,
+                 min_avg_log2FC = 0, p_val_cutoff = 1, min_counts = 1)))
 })
 
 test_that("get_fc_vs_ncells returns NULL if input is NULL, regardless of
            global", {
   test_DEG_list <- NULL
-  expect_null(get_fc_vs_ncells(seu = test_pbmc, DEG_list = test_DEG_list,
-                 min_avg_log2FC = Inf, p_val_cutoff = -Inf, min_counts = 1))
+  warnings <- capture_warnings(get_fc_vs_ncells(seu = test_pbmc, min_counts = 1,
+    DEG_list = test_DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf))
+  expect_match(warnings, "Empty DEG_list provided")
+  expect_null(suppressWarnings(get_fc_vs_ncells(seu = test_pbmc, min_counts = 1,
+    DEG_list = test_DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf)))
 })
