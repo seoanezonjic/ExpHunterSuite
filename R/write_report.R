@@ -67,7 +67,7 @@ write_expression_report <- function(exp_results,
     WGCNA_results = exp_results[["WGCNA_results"]])
     
     outf <- file.path(normalizePath(output_files), "DEG_report.html")
-    plotter <- htmlreportR:::htmlReport$new(title_doc = "DEG_report", 
+    plotter <- htmlreportR::htmlReport$new(title_doc = "DEG_report", 
                                             container = container,
                                             tmp_folder = tmp_folder,
                                             src = source_folder,
@@ -235,7 +235,7 @@ write_global_cormit <- function(cormit_res,
                       mapping_output = opt$mapping_output,
                       output_pairs = opt$output_pairs)
     outf <- file.path(normalizePath(opt$output_files), "coRmiT_report.html")
-    plotter <- htmlreportR:::htmlReport$new(title_doc = "coRmiT report", 
+    plotter <- htmlreportR::htmlReport$new(title_doc = "coRmiT report", 
                                             container = container,
                                             tmp_folder = tmp_folder,
                                             src = source_folder,
@@ -364,7 +364,7 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
             DEGH_results = DEGH_results, sample_classes = sample_classes,
             func_results = func_results, enrichments_ORA = enrichments_ORA,
             group_results = group_results, showCategories = showCategories)
-        plotter <- htmlreportR:::htmlReport$new(container = container,
+        plotter <- htmlreportR::htmlReport$new(container = container,
                                  title_doc = "clusters functional report",
                                  tmp_folder = tmp_folder, src = source_folder,
                                  compress_obj = TRUE)
@@ -565,7 +565,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
         message("\tRendering regular report")
         template <- file.path(template_folder, "functional_report.txt")
         outf <- file.path(results_path, "functional_report.html")
-        plotter <- htmlreportR:::htmlReport$new(title_doc = "functional report",
+        plotter <- htmlreportR::htmlReport$new(title_doc = "functional report",
                                                 container = container,
                                                 tmp_folder = tmp_folder,
                                                 src = source_folder,
@@ -658,7 +658,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
             DEGH_subset <- DEGH_results[which(DEGH_results$Cluster_ID == cl), ]
             container$DEGH_results <- DEGH_subset
             container$cl <- cl
-            plotter <- htmlreportR:::htmlReport$new(title_doc = "functional report",
+            plotter <- htmlreportR::htmlReport$new(title_doc = "functional report",
                                                 container = container,
                                                 tmp_folder = temp_path_cl,
                                                 src = source_folder,
@@ -762,7 +762,7 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
                       max_genes = max_genes)
     message("\tRendering regular report")
     template <- file.path(template_folder, "clusters_to_enrichment.txt")
-    plotter <- htmlreportR:::htmlReport$new(title_doc = "func cluster",
+    plotter <- htmlreportR::htmlReport$new(title_doc = "func cluster",
                                             container = container,
                                             tmp_folder = temp_path_cl,
                                             src = source_folder,
@@ -783,7 +783,7 @@ render_multivar_report <- function(multivar_res, output_files,template_folder, s
   if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' )
     source_folder <- file.path(source_folder, "inst")
 
-  plotter <- htmlreportR:::htmlReport$new(title_doc = "PCA report", 
+  plotter <- htmlreportR::htmlReport$new(title_doc = "PCA report", 
                           container = multivar_res, 
                           tmp_folder = file.path(normalizePath(output_files), "tmp"),
                           src = source_folder,

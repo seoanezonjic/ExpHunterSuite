@@ -395,7 +395,7 @@ write_sc_report <- function(final_results, output = getwd(),
                     cell_annotation = cell_annotation,
                     extra_columns = extra_columns,
                     integrate = final_results$integrate)
-  plotter <- htmlreportR:::htmlReport$new(title_doc = paste0("Single-Cell ",
+  plotter <- htmlreportR::htmlReport$new(title_doc = paste0("Single-Cell ",
                             opt$name, " report"), container = container,
                             tmp_folder = tmp_folder, src = source_folder,
                             compress_obj = FALSE)
