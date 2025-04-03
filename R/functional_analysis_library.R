@@ -7,7 +7,6 @@
 #' @param data_matrix to be scaled
 #' @param norm_by_col boolean flag: if true scaling will be performed 
 #' by columns intead of by rows. Default: FALSE
-#' @importFrom matrixStats rowRanges rowDiffs
 #' @keywords method
 #' @return scaled matrix
 scale_data_matrix <- function(data_matrix, norm_by_col = FALSE) {
@@ -534,7 +533,8 @@ enrichKEGG_user_data <- function (
   qvalueCutoff = 0.2, 
   user_data, ...)
 {
-    res <- clusterProfiler:::enricher_internal(gene, 
+  enr_int <- getFromNamespace("enricher_internal", "clusterProfiler")
+    res <- enr_int(gene, 
       pvalueCutoff = pvalueCutoff,
       pAdjustMethod = pAdjustMethod, 
       universe = universe, 
@@ -1295,7 +1295,9 @@ enrich_density <- function(enrich_result,
                            showCategory = 30) {
 
   terms_attr <- get_attr_by_terms(enrich_result, attributes)
-  enrich_result <- enrichplot:::fortify.enrichResult(enrich_result,showCategory = showCategory,by = "p.adjust")
+  enr_fort <- getFromNamespace("fortify.enrichResult", "enrichplot")
+
+  enrich_result <- enr_fort(enrich_result,showCategory = showCategory,by = "p.adjust")
 
   enriched_dist <- merge(terms_attr, enrich_result, by ="ID", all.y = TRUE)
   plot <- ggplot2::ggplot(enriched_dist, ggplot2::aes(x = attribute, 

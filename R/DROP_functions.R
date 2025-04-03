@@ -74,7 +74,7 @@ preprocess_gtf <- function(gtf) {
 
 .add_HPO_cols <- function(RES, sample_id_col = 'sampleID', 
                          gene_name_col = 'hgncSymbol', hpo_file = NULL){
-  
+  sampleID <- . <- hgncSymbol <- HPO_id <- HPO_label <- Ngenes_per_pheno <- Nphenos_gene <- sa <- HPO_TERMS <- RNA_ID <- HPO_match <- NULL
   filename <- file.path(hpo_file) # Adjusted. Instead of trying to download it
                                   # it finds it locally. Same change as in original
                                   # DROP (thanks Jim!)
@@ -446,6 +446,7 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
 
 get_ods_results <- function(ods, p_adj_cutoff, z_score_cutoff,
                  gene_mapping_file, sample_anno) {
+    foldChange <- l2fc <- geneID <- gene_id <- . <- gene_name <- hgncSymbol <- sa <- hpo_file <- padjust <- zScore <- genes_tag <- NULL
     res <- OUTRIDER::results(ods, padjCutoff = p_adj_cutoff,
                                       zScoreCutoff = z_score_cutoff, all = TRUE)
     res[, foldChange := round(2^l2fc, 2)]
@@ -591,7 +592,7 @@ get_counts_correlation <- function(ods, normalized) {
   }
   ans <- as.data.frame(data[, groups])
   colnames(ans) <- groups
-  clusters <- cutree(hclust(dist(matrix)), nClust)
+  clusters <- stats::cutree(hclust(stats::dist(matrix)), nClust)
   ans[["nClust"]] <- as.character(clusters)
   rownames(ans) <- rownames(data)
   return(ans)
@@ -650,6 +651,7 @@ get_gene_sample_correlations <- function(ods, normalized = TRUE, nGenes = 500,
 }
 
 .extract_coverage_info <- function(bam_coverage, ods) {
+  read_count <- count_rank <- counted_frac <- record_count <- frac_rank <- sf_rank <- NULL
   cnts_mtx <- OUTRIDER::counts(ods, normalized = F)
   local_columns <- SummarizedExperiment::colData(ods)$EXTERNAL == "no"
   cnts_mtx_local <- cnts_mtx[, local_columns]
@@ -676,6 +678,7 @@ get_gene_sample_correlations <- function(ods, normalized = TRUE, nGenes = 500,
 }
 
 filter_matrix <- function(ods, cnts_mtx, cnts_mtx_local, has_external) {
+  filter <- NULL
   if(has_external){
     filter_mtx <- list(
       local = cnts_mtx_local,
@@ -800,12 +803,12 @@ score_data <- function(gr,
   if(!requireNamespace(pkg_name, quietly=TRUE)){
     warning("The given MafDb is not installed: '", pkg_name, "'. We will do it now!")
     if(!requireNamespace("BiocManager", quietly=TRUE)){
-      install.packages("BiocManager")
+      utils::install.packages("BiocManager")
     }
     BiocManager::install(pkg_name, ask=FALSE)
   }
   
-  mafdb <- getFromNamespace(pkg_name, pkg_name)
+  mafdb <- utils::getFromNamespace(pkg_name, pkg_name)
   mafdb
 }
 
@@ -881,6 +884,7 @@ function(
 
 plotMA4MAE <- function(data, title = NULL, padjCutoff = 0.05, 
                    allelicRatioCutoff = .8, rare_column = NULL){
+  FC <- altCount <- refCount <- Significant <- padj <- altRatio <- totalCount <- NULL
   stopifnot(c('altCount', 'refCount', 'altRatio', 'padj') %in% colnames(data))
   
   data <- data.table::as.data.table(data)
@@ -936,6 +940,7 @@ plotMA4MAE <- function(data, title = NULL, padjCutoff = 0.05,
 #' 
 plotAllelicCounts <- function(data, title = NULL, padjCutoff = 0.05, 
                        allelicRatioCutoff = .8, rare_column = NULL){
+  refCount <- altCount <- Significant <- padj <- altRatio <- NULL
   stopifnot(c('altCount', 'refCount') %in% colnames(data))
   
   data <- data.table::as.data.table(data)
@@ -986,7 +991,7 @@ allelic_granges_to_dt <- function(data){
     data$chr <- GenomeInfoDb::seqnames(data)
     data$alt_cov <- as.integer(floor(data$coverage * data$alt_allele_freq))
     data$ref_cov <- as.integer(data$coverage - data$alt_cov)
-    data$pos <- start(data)
+    data$pos <- GenomicRanges::start(data)
     data$ALT <- as.character(unlist(data$ALT))
     dt <- data.table::as.data.table(data)
     dt[, c("start", "end", "width", "strand", "QUAL", "FILTER", "GQ", "A", "C", "G", "T", "seqnames") := NULL]
@@ -997,6 +1002,7 @@ allelic_granges_to_dt <- function(data){
 # Performs the Negative Binomial Wald Test
 deseq_for_allele_specific_expression <- function(data, minCoverage=10,
                                                      disp=0.05, independentFiltering=FALSE){
+  totalCount <- . <- altCount <- refCount <- hgncid <- pos <- NULL
     # Obtain a data.table from imput
     if(any(class(data) == 'data.frame')){
         dt <- data.table::as.data.table(data)
@@ -1036,6 +1042,7 @@ deseq_for_allele_specific_expression <- function(data, minCoverage=10,
 
 # Get Allele Specific deseq results
 get_allele_specific_deseq_results <- function(dds_res){
+    altRatio <- altCount <- refCount <- NULL
     # get needed info
     dt <- dds_res$dt
     # add pvalue and padj
