@@ -4,7 +4,7 @@
 \alias{get_kegg_db_path}
 \title{get path for KEGG db for downloading/usage}
 \usage{
-get_kegg_db_path(kegg_data_file, current_organism_info)
+get_kegg_db_path(kegg_data_file, current_organism_info, root_path = NULL)
 }
 \arguments{
 \item{kegg_data_file}{file path. if null, inst/kegg_data_files will be used}
