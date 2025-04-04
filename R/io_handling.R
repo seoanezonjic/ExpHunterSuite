@@ -146,6 +146,7 @@ load_WGCNA_results <- function(path, main_deg_table){
 #' get path for KEGG db for downloading/usage
 #' @param kegg_data_file file path. if null, inst/kegg_data_files will be used
 #' @param current_organism_info information for the organism, including KEGG code
+#' @export
 get_kegg_db_path <- function(kegg_data_file, current_organism_info, root_path=NULL){
   if(is.null(kegg_data_file)) {
     kegg_code <- current_organism_info$KeggCode[1]
@@ -165,6 +166,7 @@ get_kegg_db_path <- function(kegg_data_file, current_organism_info, root_path=NU
 #' download kegg db for a given organism
 #' @param current_organism_info organism info for which to download the file
 #' @param file where to save the file
+#' @export
 download_latest_kegg_db <- function(current_organism_info, file) {
   organism <- current_organism_info$KeggCode[1]
   prepare_KEGG <- get("prepare_KEGG", envir=asNamespace("clusterProfiler"), inherits = FALSE)
