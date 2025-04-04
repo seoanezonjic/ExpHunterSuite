@@ -158,7 +158,7 @@ get_kegg_db_path <- function(kegg_data_file, current_organism_info, root_path){
       kegg_data_file <- file.path(root_path, 'inst', 'kegg_data_files', kegg_data_file)
     }
     else { 
-      kegg_data_file <- system.file("kegg_data_files", kegg_data_file, package="ExpHunterSuite")
+      kegg_data_file <- file.path(find.package('ExpHunterSuite'), "kegg_data_files", kegg_data_file)
     }
   }
   return(kegg_data_file)

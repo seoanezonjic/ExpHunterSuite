@@ -41,5 +41,4 @@ kegg_data_file <- get_kegg_db_path(opt$kegg_data_file, current_organism_info=cur
 
 if(! file.exists(dirname(kegg_data_file))) dir.create(dirname(kegg_data_file))
 
-
 download_latest_kegg_db(current_organism_info, kegg_data_file)
