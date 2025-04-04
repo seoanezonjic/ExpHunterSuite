@@ -820,9 +820,10 @@ function(
     max_af_cutoff = .001,
     populations = c('AF', 'AF_afr', 'AF_amr', 'AF_eas', 'AF_nfe', 'AF_popmax'),
     ... ){
+  MAX_AF <- rare <- ..populations <- NULL
   # create GRanges from a MAE count table
-  gr <- GRanges(seqnames = object$contig,
-                ranges = IRanges(start=object$position, width=1), 
+  gr <- GenomicRanges::GRanges(seqnames = object$contig,
+                ranges = IRanges::IRanges(start=object$position, width=1), 
                 strand = '*')
   # score the gr
   gr_scores <- score_data(gr,genome_assembly=genome_assembly,populations = populations, max_af_cutoff = max_af_cutoff,...)

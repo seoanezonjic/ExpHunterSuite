@@ -179,7 +179,7 @@ get_cluster_string_assoc <- function(res.hcpc, string_factors){
 		clusters_ct$sub <- paste(add_factor,clusters_ct$sub, sep = ":")
 		colnames(clusters_ct)[match(c("ref","sub"),colnames(clusters_ct))] <- c("Cluster","Category")
 		clusters_ct$fisher.test.pval <- v.fisher.test(clusters_ct)
-		clusters_ct$FDR <- p.adjust(clusters_ct$fisher.test.pval, method = "BH")
+		clusters_ct$FDR <- stats::p.adjust(clusters_ct$fisher.test.pval, method = "BH")
 		all_factor_clusters <- rbind(all_factor_clusters, clusters_ct)
 	}
 	return(all_factor_clusters)
@@ -215,6 +215,7 @@ get_and_parse_pca_eigenvectors <- 	function(pca_res, cor_pval_cutoff = 0.05, eig
 }
 
 get_and_parse_clusters <- function(pca_res){
+	clust <- NULL
 	clusters <- pca_res$res.hcpc$call$X
 	dims <- colnames(clusters)[grepl("Dim.", colnames(clusters))]
 	weights <- clusters |> dplyr::group_by(clust) |> dplyr::summarise_at(dims, mean)

@@ -113,6 +113,7 @@ Imports:
     ggrepel (>= 0.9.4),
     clusterProfiler (>= 4.11.0),
     GenomicRanges (>= 1.54.0),
+    IRanges,
     GenomicFeatures (>= 1.54.0),
     tximport (>= 1.30.0),
     annotatr (>= 1.28.0),
