@@ -93,6 +93,7 @@ add_translated_gene_ids <- function(DEGH_results,
 }
 
 get_sig_genes <- function(DEGH_results) {
+    genes_tag <- NULL
     prev_genes <- DEGH_results[DEGH_results$genes_tag == "PREVALENT_DEG" &
                                !is.na(DEGH_results$ENTREZID), "ENTREZID"]
                                "%>%" <- magrittr::"%>%"
@@ -366,7 +367,7 @@ multi_topGOTest <- function(funsys, genes_list, nodeSize = 5, org_db,
     if(clean_parentals)
       res_table <- clean_topGO_parentals(res_table, funsys, p_value_cutoff)
     if("p.value" %in% colnames(res_table)) {
-      res_table$fdr <- p.adjust(res_table$p.value, method = "BH", n = length(res_table$p.value))  
+      res_table$fdr <- stats::p.adjust(res_table$p.value, method = "BH", n = length(res_table$p.value))  
     } else {
       res_table$fdr <- NA_real_
     }
@@ -533,7 +534,7 @@ enrichKEGG_user_data <- function (
   qvalueCutoff = 0.2, 
   user_data, ...)
 {
-  enr_int <- getFromNamespace("enricher_internal", "clusterProfiler")
+  enr_int <- utils::getFromNamespace("enricher_internal", "clusterProfiler")
     res <- enr_int(gene, 
       pvalueCutoff = pvalueCutoff,
       pAdjustMethod = pAdjustMethod, 
@@ -1293,9 +1294,10 @@ parse_results_for_report <- function(enrichments, simplify_results = FALSE){
 enrich_density <- function(enrich_result, 
                            attributes, 
                            showCategory = 30) {
+  attribute <- Description <- p.adjust <- NULL
 
   terms_attr <- get_attr_by_terms(enrich_result, attributes)
-  enr_fort <- getFromNamespace("fortify.enrichResult", "enrichplot")
+  enr_fort <- utils::getFromNamespace("fortify.enrichResult", "enrichplot")
 
   enrich_result <- enr_fort(enrich_result,showCategory = showCategory,by = "p.adjust")
 

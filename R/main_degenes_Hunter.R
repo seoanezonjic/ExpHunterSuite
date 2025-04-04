@@ -79,6 +79,7 @@ main_degenes_Hunter <- function(
     multifactorial = "",
     library_sizes = NULL
   ){
+    Row.names <- NULL
     modified_input_args <- check_input_main_degenes_Hunter(raw, 
       minlibraries, pseudocounts,reads, external_DEA_data, modules, model_variables,
       active_modules, WGCNA_all, minpack_common, target, 
