@@ -60,21 +60,25 @@ if(opt$extra_columns == "") {
   extra_columns <- tolower(unlist(strsplit(opt$extra_columns, ",")))
 }
 
+message("Reconstructing Seurat object from directory ", opt$input)
 seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(opt$input, gene.column = 1),
                                   project = opt$name, min.cells = 1, min.features = 1)
 seu_meta <- read.table(file.path(opt$input, "meta.tsv"), sep = "\t", header = TRUE)
 rownames(seu_meta) <- colnames(seu)
 seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
 seu$RNA$data <- seu$RNA$counts
+message("Loading embedding information from directory ", opt$embeddings)
 embeddings <- read.table(file.path(opt$embeddings, "cell_embeddings.txt"), header = TRUE)
 seu$UMAP_full <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'UMAPfull_', assay = 'RNA')
 query_data <- main_analyze_sc_query(seu = seu, query = target_genes, sigfig = opt$sigfig)
 
 query_results <- list(seu = seu, query_data = query_data)
+
 message("--------------------------------------------")
-message("-------Writing query analysis report--------")
+message("------WRITING QUERY EXPRESSION REPORT-------")
 message("--------------------------------------------")
 
-write_sc_report(final_results = query_results, template_folder = template_folder, output = file.path(opt$output, "report"),
-                query = unlist(target_genes), extra_columns = extra_columns,
-                template = "sc_analysis.txt", out_name = "query_report.html", opt = opt)
+write_sc_report(final_results = query_results, template_folder = template_folder,
+                output = file.path(opt$output, "report"), query = unlist(target_genes),
+                extra_columns = extra_columns, template = "sc_query.txt",
+                out_name = "query_report.html", opt = opt)
