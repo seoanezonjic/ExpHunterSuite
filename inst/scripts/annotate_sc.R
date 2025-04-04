@@ -331,13 +331,13 @@ if(opt$loadRDS) {
 }
 
 message("--------------------------------------------")
-message("----------Saving results to disk------------")
+message("----------SAVING RESULTS TO DISK------------")
 message("--------------------------------------------")
 
 write_annot_output(final_results = final_results, opt = opt)
 
 message("--------------------------------------------")
-message("-------------Writing QC report--------------")
+message("------------WRITING QC REPORT---------------")
 message("--------------------------------------------")
 
 write_sc_report(final_results = final_results, template_folder = template_folder, source_folder = source_folder,
@@ -346,11 +346,11 @@ write_sc_report(final_results = final_results, template_folder = template_folder
                 use_canvas = TRUE, opt = opt)
 
 message("--------------------------------------------")
-message("----------Writing analysis report-----------")
+message("---------WRITING ANNOTATION REPORT----------")
 message("--------------------------------------------")
 
 write_sc_report(final_results = final_results, template_folder = template_folder,
                 output = file.path(opt$output, "report"), source_folder = source_folder,
                 query = unlist(target_genes), extra_columns = extra_columns,
-                subset_by = subset_by, cell_annotation = cell_annotation, template = "sc_analysis.txt",
+                subset_by = subset_by, cell_annotation = cell_annotation, template = "sc_annotation.txt",
                 out_name = out_suffix, opt = opt)
