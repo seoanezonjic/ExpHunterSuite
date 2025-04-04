@@ -146,8 +146,9 @@ load_WGCNA_results <- function(path, main_deg_table){
 #' get path for KEGG db for downloading/usage
 #' @param kegg_data_file file path. if null, inst/kegg_data_files will be used
 #' @param current_organism_info information for the organism, including KEGG code
+#' @param root_path only necessary if using the DEVELOPMENT mode - installs in the code dir
 #' @export
-get_kegg_db_path <- function(kegg_data_file, current_organism_info){
+get_kegg_db_path <- function(kegg_data_file, current_organism_info, root_path){
   if(is.null(kegg_data_file)) {
     kegg_code <- current_organism_info$KeggCode[1]
     kegg_data_file <- paste0(kegg_code, "_KEGG.rds")
