@@ -78,15 +78,23 @@ if(opt$target_genes == ""){
 }
 
 message("Reconstructing Seurat object from directory ", opt$input)
-
 seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(opt$input, gene.column = 1),
                                   project = opt$name, min.cells = 1, min.features = 1)
 seu_meta <- read.table(file.path(opt$input, "meta.tsv"), sep = "\t", header = TRUE)
 rownames(seu_meta) <- colnames(seu)
 seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
 seu$RNA$data <- seu$RNA$counts
-DEG_results <- BiocParallel::bplapply(X = DEG_targets, FUN = main_sc_Hunter, BPPARAM = BPPARAM, seu = seu,
+DEG_list <- BiocParallel::bplapply(X = DEG_targets, FUN = main_sc_Hunter, BPPARAM = BPPARAM, seu = seu,
                                       p_val_cutoff = opt$p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
                                       min_cell_proportion = opt$min_cell_proportion, query = target_genes,
                                       output_path = opt$output, min_counts = opt$min_counts, verbose = opt$verbose)
-names(DEG_results) <- unlist(strsplit(names(DEG_targets), "_target"))
+names(DEG_list) <- unlist(strsplit(names(DEG_targets), "_target"))
+DEG_results <- list(seu = seu, DEG_list = DEG_list, opt = opt)
+
+message("--------------------------------------------")
+message("---------WRITING SC HUNTER REPORT-----------")
+message("--------------------------------------------")
+
+write_sc_report(final_results = DEG_results, template_folder = template_folder,
+                output = file.path(opt$output, "report"), query = target_genes,
+                template = "sc_DEGs.txt", out_name = "DEG_report.html", opt = opt)
