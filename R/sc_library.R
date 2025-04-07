@@ -1179,14 +1179,16 @@ annotate_seurat <- function(seu = stop(paste0("Please provide a seurat object",
                             cell_annotation = NULL, subset_by = NULL,
                             cluster_annotation = NULL, p_adj_cutoff = 1e-5,
                             BPPARAM = BiocParallel::SerialParam(),
-                            ref_de_method = "wilcox", verbose = FALSE,
-                            aggr.ref = FALSE, fine.tune = TRUE, assay = "RNA",
-                            integrate = FALSE) {
+                            ref_de_method = "wilcox", ref_label = ref_label,
+                            verbose = FALSE, aggr.ref = FALSE, fine.tune = TRUE,
+                            assay = "RNA", integrate = FALSE,
+                            save_pdf = save_pdf) {
   if(!is.null(SingleR_ref)) {
     message("SingleR reference provided. Annotating cells.")
     res <- annotate_SingleR(seu = seu, SingleR_ref = SingleR_ref,
-     BPPARAM = BPPARAM, ref_n = ref_n, ref_de_method = ref_de_method, 
-     aggr.ref = aggr.ref, fine.tune = fine.tune)
+     BPPARAM = BPPARAM, ref_n = ref_n, ref_label = ref_label,
+     ref_de_method = ref_de_method, aggr.ref = aggr.ref, fine.tune = fine.tune,
+     save_pdf = save_pdf)
   } else {
     if(!is.null(cell_annotation)) {
       message("Dynamically annotating clusters.")
@@ -1214,7 +1216,9 @@ annotate_seurat <- function(seu = stop(paste0("Please provide a seurat object",
 annotate_SingleR <- function(seu = stop(paste0("Please provide a seurat object",
                              " to annotate")), SingleR_ref = NULL, ref_n = 25,
                              BPPARAM = NULL, ref_de_method = "wilcox",
-                             aggr.ref = FALSE, fine.tune = TRUE, assay = "RNA"){
+                             ref_label = ref_label, aggr.ref = FALSE,
+                             fine.tune = TRUE, assay = "RNA",
+                             save_pdf = getwd()){
     counts_matrix <- Seurat::GetAssayData(seu, assay = assay)
     SingleR_annotation <- SingleR::SingleR(test = counts_matrix,
       ref = SingleR_ref, labels = SingleR_ref[[ref_label]],
@@ -1222,9 +1226,9 @@ annotate_SingleR <- function(seu = stop(paste0("Please provide a seurat object",
       de.n = ref_n, BPPARAM = BPPARAM, aggr.ref = aggr.ref,
       fine.tune = fine.tune)
     seu@meta.data$cell_type <- SingleR_annotation$labels
-    #print(SingleR::plotScoreHeatmap(SingleR_annotation))
-    pdf(file.path(output, "DeltaDistribution.pdf"), width = 20, height = 10)
-    #print(SingleR::plotDeltaDistribution(SingleR_annotation))
+    pdf(file.path(save_pdf, "DeltaDistribution.pdf"), width = 20, height = 10)
+    print(SingleR::plotScoreHeatmap(SingleR_annotation))
+    print(SingleR::plotDeltaDistribution(SingleR_annotation))
     message("Calculating cell type markers")
     markers <- calculate_markers(seu = seu, subset_by = subset_by,
                                  integrate = integrate, verbose = verbose,

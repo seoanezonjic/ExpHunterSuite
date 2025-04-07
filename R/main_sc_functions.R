@@ -196,11 +196,11 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   seu <- SeuratObject::JoinLayers(seu)
   annot_start <- Sys.time()
   annotation <- annotate_seurat(seu = seu, SingleR_ref = SingleR_ref,
-    cell_annotation = cell_annotation, ref_n = ref_n, subset_by = subset_by,
-    cluster_annotation = cluster_annotation, p_adj_cutoff = p_adj_cutoff,
-    BPPARAM = BPPARAM, ref_de_method = ref_de_method, aggr.ref = aggr.ref,
-    fine.tune = fine.tune, assay = assay, integrate = integrate,
-    verbose = verbose)
+    cell_annotation = cell_annotation, ref_n = ref_n, ref_label = ref_label,
+    subset_by = subset_by, cluster_annotation = cluster_annotation,
+    p_adj_cutoff = p_adj_cutoff, BPPARAM = BPPARAM,
+    ref_de_method = ref_de_method, aggr.ref = aggr.ref, fine.tune = fine.tune,
+    assay = assay, integrate = integrate, verbose = verbose)
   annot_end <- Sys.time()
   if(verbose) {
     message(paste0("Time to annotate: ", annot_end - annot_start))
@@ -215,11 +215,6 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   sample_qc_pct <- get_qc_pct(seu, by = "sample")
   message("Extracting query expression metrics. This might take a while.")
   clusters_pct <- get_clusters_distribution(seu = seu, sigfig = sigfig)
-  if(!is.null(query)) {
-    query_data <- analyze_query(seu = seu, query = query, sigfig = sigfig)
-  } else {
-    query_data <- NULL
-  }
   final_results <- list()
   final_results$qc <- qc
   final_results$seu <- seu
@@ -228,11 +223,6 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   final_results$markers <- markers
   final_results$SingleR_annotation <- annotation$SingleR_annotation
   final_results$integrate <- integrate
-  if(save_RDS){
-    message('Writing results to disk.')
-    saveRDS(final_results, file.path(output,
-                           paste0(seu@project.name, ".final_results.rds")))
-  }
   return(final_results)
 }
 
@@ -319,7 +309,9 @@ write_annot_output <- function(final_results = stop("Missing results object"),
               file = file.path(opt$output, "counts", "meta.tsv"))
   write.table(reduction@cell.embeddings, sep = "\t", quote = FALSE,
               row.names = TRUE,
-              file = file.path(opt$output, "embeddings", "cell_embeddings.txt"))
+              file = file.path(opt$output, "embeddings", "cell_embeddings.tsv"))
+  write.table(final_results$markers, sep = "\t", quote = FALSE, row.names = TRUE,
+              file = file.path(opt$output, "markers.tsv"))
   message(paste0("Counts matrix saved to ", file.path(opt$output, "counts")))
   return(invisible(NULL))
 }
