@@ -34,13 +34,11 @@ option_list <- list(
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
-
-kegg_files_path <- file.path(root_path, 'inst', 'kegg_data_files')
-if(! file.exists(kegg_files_path)) dir.create(kegg_files_path)
-
 organisms_table <- get_organism_table(organisms_table_file)
 current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
 
-kegg_data_file <- get_kegg_db_path(opt$kegg_data_file, current_organism_info=current_organism_info)
+kegg_data_file <- get_kegg_db_path(opt$kegg_data_file, current_organism_info=current_organism_info, root_path)
+
+if(! file.exists(dirname(kegg_data_file))) dir.create(dirname(kegg_data_file))
 
 download_latest_kegg_db(current_organism_info, kegg_data_file)

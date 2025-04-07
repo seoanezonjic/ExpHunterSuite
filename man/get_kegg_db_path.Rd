@@ -4,12 +4,14 @@
 \alias{get_kegg_db_path}
 \title{get path for KEGG db for downloading/usage}
 \usage{
-get_kegg_db_path(kegg_data_file, current_organism_info)
+get_kegg_db_path(kegg_data_file, current_organism_info, root_path)
 }
 \arguments{
 \item{kegg_data_file}{file path. if null, inst/kegg_data_files will be used}
 
 \item{current_organism_info}{information for the organism, including KEGG code}
+
+\item{root_path}{only necessary if using the DEVELOPMENT mode - installs in the code dir}
 }
 \description{
 get path for KEGG db for downloading/usage
