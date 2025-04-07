@@ -26,9 +26,7 @@ option_list <- list(
   optparse::make_option(c("-n", "--name"), type = "character", default = NULL,
             help = "Experiment name."),
   optparse::make_option("--input", type = "character", default = NULL,
-            help = "Directory containing processed single-cell counts and metadata."),
-  optparse::make_option("--embeddings", type = "character", default = NULL,
-            help = "Directory containing embedding information."),
+            help = "Directory containing processed single-cell counts, metadata, embeddings and markers."),
   optparse::make_option("--target_genes", type = "character", default = "",
             help = "Path to target genes table, or comma-separated list of target genes."),
   optparse::make_option("--sigfig", type = "integer", default = 3,
@@ -63,13 +61,14 @@ if(opt$extra_columns == "") {
 message("Reconstructing Seurat object from directory ", opt$input)
 seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(opt$input, gene.column = 1),
                                   project = opt$name, min.cells = 1, min.features = 1)
-seu_meta <- read.table(file.path(opt$input, "meta.tsv"), sep = "\t", header = TRUE)
+seu_meta <- read.table(file.path(opt$input, "counts", "meta.tsv"), sep = "\t", header = TRUE)
 rownames(seu_meta) <- colnames(seu)
 seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
 seu$RNA$data <- seu$RNA$counts
-message("Loading embedding information from directory ", opt$embeddings)
-embeddings <- read.table(file.path(opt$embeddings, "cell_embeddings.txt"), header = TRUE)
+message("Loading embedding information from directory ", opt$input)
+embeddings <- read.table(file.path(opt$input, "embeddings", "cell_embeddings.tsv"), header = TRUE)
 seu$UMAP_full <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'UMAPfull_', assay = 'RNA')
+markers <- read.table(paste0(opt$input, "/markers.tsv"), header = TRUE)
 query_data <- main_analyze_sc_query(seu = seu, query = target_genes, sigfig = opt$sigfig)
 
 query_results <- list(seu = seu, query_data = query_data)
