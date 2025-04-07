@@ -1,2 +1,137 @@
-:D
+
+<!--begin.rcode setup
+    colGEX <- c("grey85", "#FEE5D9", "#FCBBA1", "#FC9272", "#FB6A4A", "#EF3B2C", "#CB181D", "#99000D")
+    opt <- plotter$hash_vars$opt
+    subset_by <- plotter$hash_vars$subset_by
+    query <- plotter$hash_vars$query
+    markers <- plotter$hash_vars$markers
+    DEG_list <- plotter$hash_vars$DEG_list
+    DEG_metrics_list <- plotter$hash_vars$DEG_metrics_list
+    DEG_query_list <- plotter$hash_vars$DEG_query_list
+    extra_columns <- plotter$hash_vars$extra_columns
+    metadata <- plotter$hash_vars$seu@meta.data
+    get_cells_metadata <- function(heatmap) {
+        samples <- rownames(heatmap)
+        sample_metadata <- unique(metadata[, c("sample", extra_columns)])
+        rownames(sample_metadata) <- NULL
+        sample_metadata <- sample_metadata[match(samples, sample_metadata$sample), ]
+    }
+    
+    Custom_DotPlot <- function(seu) {
+        if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
+            return("<p>Object contains none of the specified features</p>")
+        }
+        Seurat::Idents(seu) <- ifelse(is.null(seu@meta.data$cell_type), yes = seu@meta.data$seurat_clusters,
+                                      no = seu@meta.data$cell_type)
+        Seurat::Idents(seu) <- seu@meta.data$cell_type
+        scCustomize::DotPlot_scCustom(seu, unique(features), flip_axes = TRUE, 
+                                      colors_use = colGEX, x_lab_rotate = TRUE) +
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
+    }
+
+    subset_table <- function(df) {
+        res <- df[df$gene == features, ]
+        return(res)
+    }
+
+    Custom_ftplot <- function(seu) {
+        Seurat::Idents(seu) <- seu@meta.data$cell_type
+        scCustomize::FeaturePlot_scCustom(seu, reduction = "UMAP_full", pt.size = 0.1, num_columns = 1,
+                                          features = feature, na_cutoff = NA, label = TRUE) +
+        ggplot2::scale_color_gradientn(colors = colGEX) + ggplot2::coord_fixed()
+    }
+
+    if(!is.null(extra_columns)) {
+        extra_metadata <- get_cells_metadata(plotter$hash_vars$sample_qc_pct)
+        sample_heatmap_overlay <- as.list(extra_metadata[, extra_columns, drop = FALSE])
+    } else {
+        sample_heatmap_overlay <- NULL
+    }
+
+end.rcode-->
+
+<h1><strong>SINGLE CELL RNA-SEQ QUERY EXPRESSION ANALYSIS</strong></h1>
+
+<!--begin.rcode query_title
+    cat(plotter$create_title("<b>QUERY GENE ANALYSIS</b>", "query_title", hlevel = 1,
+                              indexable = TRUE, clickable = FALSE, t_id = "query_title",
+                              clickable_text = ""))
+end.rcode-->
+
+<!--begin.rcode query_analysis, eval = !is.null(plotter$hash_vars$query_exp)
+    cat(plotter$create_title("Query gene expression heatmap", "query_heatmap", hlevel = 2,
+                              indexable = FALSE, clickable = FALSE, t_id = "query_heatmap",
+                              clickable_text = ""))
+    cat("<p>This plot represents gene expression profile across samples of query genes.
+         Represented as the natural logarithm of count ratio, multiplied by a scale factor
+         (see config file for exact value of scale factor).</p>")
+    cat(plotter$prettify_div(plotter$heatmap(list(id = "query_exp", extra_data = list(id ="query_pct", header = NULL,
+                             row_names = NULL, text = "dynamic"),
+                             title = "Percentage of cells expressing query gene", inject_smp_attr = sample_heatmap_overlay,
+                             header = NULL, text = FALSE, row_names = NULL, config = list(smpOverlays = names(sample_heatmap_overlay)),
+                             transpose = TRUE)), preset = "magic"))
+end.rcode-->
+
+<!--begin.rcode query_cluster_pct, eval = !is.null(plotter$hash_vars$query_cluster_pct)
+    query_clusters <- vector(mode = "character", length = length(plotter$hash_vars$query_cluster_pct))
+    for(i in seq(length(plotter$hash_vars$query_cluster_pct))) {
+        plotter$hash_vars$query_combo <- plotter$hash_vars$query_cluster_pct[[i]]
+        name <- names(plotter$hash_vars$query_cluster_pct)[i]
+        query_clusters[i] <- plotter$prettify_div(plotter$heatmap(list(id = "query_combo", title = name,
+                                                  header = NULL, text = FALSE, row_names = NULL, 
+                                                  transpose = TRUE)), preset = "magic")
+    }
+    html_code <- paste(query_clusters, collapse = "\n")
+    cat(plotter$create_title("Query gene cell percentages by identity", "query identity", hlevel = 2,
+                              indexable = FALSE, clickable = TRUE, t_id = "query_identity",
+                              clickable_text = ""))
+    cat(plotter$create_collapsable_container(id = "query_identity", html_code = html_code))
+end.rcode-->
+
+<!--begin.rcode query_genes
+    cat(plotter$create_title("Query genes distribution", "query genes distribution", hlevel = 2,
+                              indexable = FALSE, clickable = TRUE, t_id = "query_distrib",
+                              clickable_text = ""))
+    paragraph <- "<p>These genes have <strong>NOT</strong> been used to annotate cell types</p>"
+    features <- plotter$hash_vars$query
+    if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
+        genes_code <- "<p>None of the features have been detected in dataset</p>"
+    } else {
+        code <- plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
+                                     plotting_function = Custom_DotPlot), preset = "magic")
+        table_title <- plotter$create_title("Query genes table", "Query genes Table",
+                                            hlevel = 3, indexable = FALSE, clickable = TRUE,
+                                            t_id = paste0("query_table"), clickable_text = "")
+        table <- plotter$prettify_div(plotter$table(list(id = "markers", header = NULL, row_names = NULL,
+                                                    table_rownames = FALSE, styled = "dt", func = subset_table, text = "dynamic")),
+                                                    preset = "magic")
+        table <- plotter$create_collapsable_container(id = "query_table", html_code = table)
+        genes_code <- paste(code, table_title, table, sep = "\n")
+    }
+    genes_code <- paste(paragraph, genes_code, sep = "\n")
+    cat(plotter$create_collapsable_container(id = "query_distrib", html_code = genes_code))
+end.rcode-->
+
+<!--begin.rcode Query_patterns
+    cat(plotter$create_title("Query expression map", "query maps", hlevel = 3, indexable = FALSE,
+                              clickable = FALSE, t_id = "query_maps", clickable_text = ""))
+    expressed_genes <- rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu, "RNA"))
+    for(feature in plotter$hash_vars$query) {
+        if(feature %in% expressed_genes) {
+            cat(plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
+                plotting_function = Custom_ftplot), preset = "magic"))
+        } else {
+            cat(paste0("<p>Feature ", feature, " is not significantly expressed.</p>"))
+        }
+    }
+end.rcode-->
+
+<!--begin.rcode opt
+    cat(plotter$create_title("<b>EXECUTION PARAMETERS</b>", "opt", hlevel = 1, indexable = TRUE,
+        clickable = FALSE, t_id = "opt", clickable_text = ""))
+    opt_names <- names(plotter$hash_vars$opt)
+    opt_values <- paste(plotter$hash_vars$opt)
+    opt_vector <- paste(opt_names, opt_values, sep = ": ")
+    cat(make_html_list(opt_vector))
+end.rcode-->
 
