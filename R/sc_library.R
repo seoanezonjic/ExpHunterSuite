@@ -462,8 +462,9 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE, idents = NULL,
                               integrate = FALSE, min.pct = 0.25,
                               logfc.threshold = 0.25, assay = "RNA") {
-  test <- length(subset_by) == 1 & integrate
-  if(isTRUE(test)) {
+  test <- FALSE
+  if(!is.null(subset_by)) {
+    test <- length(subset_by) == 1 & integrate
     test <- test & length(unique(seu@meta.data[[subset_by]])) == 2
   }
   run_conserved <- ifelse(test = test, no = FALSE,
@@ -770,6 +771,12 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
         gene_list <- .get_union_DEGenes(DEG_list = DEG_list)
       } else {
         gene_list <- query
+        if(any(!query %in% rownames(seu))) {
+          warning(paste0("Target gene(s) \"",
+          paste(query[!query %in% rownames(seu)], collapse = "\", \""),
+          "\" are not expressed in dataset."))
+        }
+        query <- query[query %in% rownames(seu)]
       }
       if(return_output) {
         matrix_list <- .get_matrices(seu = seu, meta = meta, DEG_list = DEG_list,
@@ -817,8 +824,8 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
   DEG_df <- do.call(rbind, DEG_matrices)
   ## Have to remove zeroes again, not in process_DEG_matrix, because we want to
   ## remove genes set to zero in ALL idents, not ident by ident
-  DEG_df <- DEG_df[, colSums(DEG_df) > 0, drop = FALSE]
-  DEG_df <- DEG_df[rowSums(DEG_df) > 0, , drop = FALSE ]
+  DEG_df <- DEG_df[, colSums(abs(DEG_df)) > 0, drop = FALSE]
+  DEG_df <- DEG_df[rowSums(abs(DEG_df)) > 0, , drop = FALSE ]
   return(list(DEG_df = DEG_df, matrices = matrices))
 }
 
@@ -849,6 +856,8 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
   if(is.null(DEG_matrix) | FALSE %in% DEG_matrix) {
     res <- NULL
   } else {
+    DEG_matrix <- DEG_matrix[rownames(DEG_matrix) %in% genes_list, ,
+                             drop = FALSE]
     DEG_matrix <- DEG_matrix[, c("avg_log2FC", "p_val_adj", "gene")]
     DEG_matrix$ident <- ident
     rownames(DEG_matrix) <- NULL
@@ -1175,40 +1184,29 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
 }
 
 annotate_seurat <- function(seu = stop(paste0("Please provide a seurat object",
-                            " to annotate")), SingleR_ref = NULL, ref_n = 25,
-                            cell_annotation = NULL, subset_by = NULL,
-                            cluster_annotation = NULL, p_adj_cutoff = 1e-5,
-                            BPPARAM = BiocParallel::SerialParam(),
-                            ref_de_method = "wilcox", ref_label = ref_label,
-                            verbose = FALSE, aggr.ref = FALSE, fine.tune = TRUE,
-                            assay = "RNA", integrate = FALSE,
-                            save_pdf = save_pdf) {
-  if(!is.null(SingleR_ref)) {
-    message("SingleR reference provided. Annotating cells.")
-    res <- annotate_SingleR(seu = seu, SingleR_ref = SingleR_ref,
-     BPPARAM = BPPARAM, ref_n = ref_n, ref_label = ref_label,
-     ref_de_method = ref_de_method, aggr.ref = aggr.ref, fine.tune = fine.tune,
-     save_pdf = save_pdf)
+                            " to annotate")), cell_annotation = NULL,
+                            subset_by = NULL, cluster_annotation = NULL,
+                            p_adj_cutoff = 1e-5, verbose = FALSE, assay = "RNA",
+                            integrate = FALSE) {
+  res <- NULL
+  if(!is.null(cell_annotation)) {
+    message("Dynamically annotating clusters.")
+    res <- annotate_clusters(seu = seu, subset_by = subset_by, assay = assay,
+      integrate = integrate, idents = "seurat_clusters", verbose = verbose,
+      p_adj_cutoff = p_adj_cutoff)
   } else {
-    if(!is.null(cell_annotation)) {
-      message("Dynamically annotating clusters.")
-      res <- annotate_clusters(seu = seu, subset_by = subset_by, assay = assay,
-        integrate = integrate, idents = "seurat_clusters", verbose = verbose,
-        p_adj_cutoff = p_adj_cutoff)
-    } else {
-    if(!is.null(cluster_annotation)){
-      message("Clusters annotation file provided. Renaming clusters.")
-      seu <- rename_clusters(seu = seu,
-                             new_clusters = cluster_annotation$name)
-      idents <- "cell_type"
-    } else {
-      warning("No data provided for cluster annotation.", immediate. = TRUE)
-      idents <- "seurat_clusters"
-    }
-    markers <- calculate_markers(seu = seu, verbose = verbose, assay = assay,
-                  integrate = integrate, idents = idents, subset_by = subset_by)
-    res <- list(seu = seu, markers = markers)
-    }
+  if(!is.null(cluster_annotation)){
+    message("Clusters annotation file provided. Renaming clusters.")
+    seu <- rename_clusters(seu = seu,
+                           new_clusters = cluster_annotation$name)
+    idents <- "cell_type"
+  } else {
+    warning("No data provided for cluster annotation.", immediate. = TRUE)
+    idents <- "seurat_clusters"
+  }
+  markers <- calculate_markers(seu = seu, verbose = verbose, assay = assay,
+                integrate = integrate, idents = idents, subset_by = subset_by)
+  res <- list(seu = seu, markers = markers)
   }
   return(res)
 }
@@ -1217,8 +1215,8 @@ annotate_SingleR <- function(seu = stop(paste0("Please provide a seurat object",
                              " to annotate")), SingleR_ref = NULL, ref_n = 25,
                              BPPARAM = NULL, ref_de_method = "wilcox",
                              ref_label = ref_label, aggr.ref = FALSE,
-                             fine.tune = TRUE, assay = "RNA",
-                             save_pdf = getwd()){
+                             fine.tune = TRUE, assay = "RNA", verbose = FALSE,
+                             save_pdf = getwd(), subset_by = NULL){
     counts_matrix <- Seurat::GetAssayData(seu, assay = assay)
     SingleR_annotation <- SingleR::SingleR(test = counts_matrix,
       ref = SingleR_ref, labels = SingleR_ref[[ref_label]],
