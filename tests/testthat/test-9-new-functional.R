@@ -70,12 +70,22 @@ test_that("main functional enrichment function works gsea", {
   all_genes <- unique(c(set_genes, universe))
   set.seed(123)
   mean_logFCs <- c(rnorm(length(set_genes), 5, 3), rnorm(length(all_genes)-length(set_genes), 0, 2))
- genes_tag <- c(rep("PREVALENT_DEG", length(set_genes)), rep("NOT_DEG", length(all_genes)-length(set_genes)))
- combined_FDR <- c(rep(0.05, length(set_genes)), rep(0.9, length(all_genes)-length(set_genes)))
+  genes_tag <- c(rep("PREVALENT_DEG", length(set_genes)), rep("NOT_DEG", length(all_genes)-length(set_genes)))
+  combined_FDR <- c(rep(0.05, length(set_genes)), rep(0.9, length(all_genes)-length(set_genes)))
   precomp_degh_out$DE_all_genes <- data.frame(row.names=all_genes, mean_logFCs=mean_logFCs, genes_tag=genes_tag, combined_FDR=combined_FDR)
 
-  set.seed(123)
+  geneList <- mean_logFCs
+  names(geneList) <- all_genes
+  geneList <- sort(geneList, decreasing=TRUE)
 
+  set.seed(123)
+  base_react <- ReactomePA::gsePathway(geneList,
+    organism = "mouse",
+                 pvalueCutoff = 0.1,
+                pAdjustMethod = "BH", 
+                verbose = FALSE)
+
+  set.seed(123)
   fh_out <- ExpHunterSuite::main_functional_hunter( #Perform enrichment analysis
     hunter_results = precomp_degh_out,
     model_organism = 'Mouse',
@@ -85,7 +95,7 @@ test_that("main functional enrichment function works gsea", {
     #func_annot_db = "gR",
     #GO_subont = "C",
     #analysis_type = "o", #g
-    enrich_dbs = c("MF", "Reactome"),
+    enrich_dbs = c("Reactome", "CC"),
     #enrich_methods = c("ora", "gsea", "topGO")
     enrich_methods = "GSEA",
     #remote = "",
@@ -97,8 +107,9 @@ test_that("main functional enrichment function works gsea", {
     output_files = "results",
     fc_colname = "mean_logFCs"
   )
-  testthat::expect_equal(nrow(fh_out$GSEA$Reactome), 24)
-  testthat::expect_equal(as.data.frame(fh_out$GSEA$Reactome)[["ID"]][1:2],  
-   c("R-MMU-5576891", "R-MMU-5578775"))
+
+
+
+ testthat::expect_identical(as.data.frame(fh_out$GSEA$Reactome)["ID"], as.data.frame(base_react)["ID"])
  
 })
