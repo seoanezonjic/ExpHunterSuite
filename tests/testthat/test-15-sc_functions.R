@@ -416,6 +416,21 @@ test_that("get_fc_vs_ncells works as intended", {
   expect_equal(output, expected)
 })
 
+test_that("get_fc_vs_ncells works with DEG tables containing different genes", {
+  test_DEG_list <- DEG_list
+  test_DEG_list[[2]] <- test_DEG_list[[2]][1:2, ]
+  test_DEG_list[[3]] <- test_DEG_list[[3]][3:4, ]
+  output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = test_DEG_list,
+                             min_avg_log2FC = 0.2, p_val_cutoff = 0.01,
+                             min_counts = 1)
+  expected_DEGs <- data.frame(IGLL5 = c(0.2, 0.0), VDAC3 = c(0.0, 0.2))
+  expected_ncells <- data.frame(IGLL5 = c(0, 2), VDAC3 = rep(2, 2))
+  rownames(expected_DEGs) <- c("g1", "g2")
+  rownames(expected_ncells) <- c("g1", "g2")
+  expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
+  expect_equal(output, expected)
+})
+
 test_that("get_fc_vs_ncells works with target list", {
   output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
                              min_avg_log2FC = Inf, p_val_cutoff = -Inf,
