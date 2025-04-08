@@ -623,7 +623,7 @@ score_comparison <- function(databases, all_pairs, sample_size, strategy){
 
 get_miRNA_ct <- function(strat_data, db_group, crossval = FALSE, test_sample = 0.25, bootstrap = 40){
     db_gs <- strat_data[,get(db_group)]
-    experiment_pairs <- strat_data[,sig_pairs]
+    experiment_pairs <- strat_data[,"sig_pairs"]
 
     if (sum(experiment_pairs) == 0) return(NULL)
 

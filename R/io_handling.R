@@ -65,7 +65,19 @@ write_df_list_as_tables <- function(df_list, prefix, root=getwd()) {
   }
 }
 
+#' Function to load the expression hunter folder
+#' Used by the functional_Hunter script
+#' @param path where the expression hunter results are
+#' @return object containing expression, DE and WGCNA data
 #' @importFrom utils tail
+#' @export
+#' @examples
+#' # Can only be run after running the write_expression_data function 
+#' # eg as part of the degenes_Hunter.R script
+#' # These should match the column names in the table of counts.
+#'\dontrun{
+#'hunter_results <- load_hunter_folder(input_hunter_folder)
+#'}
 load_hunter_folder <- function(path = NULL){
     packages_results <- list.dirs(path,recursive=FALSE)
     packages_results <- packages_results[grepl("Results_",packages_results)]
