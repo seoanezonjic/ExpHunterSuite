@@ -116,7 +116,11 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   sketch = FALSE, sketch_pct = 25, k_weight = 100, sketch_ncells = 5000,
   force_ncells = NA_integer_, sketch_method = "LeverageScore",
   doublet_path = getwd()){
-  #check_sc_input(metadata = seu@meta.data, DEG_target = DEG_target)
+  new_opt <- check_sc_input(integrate = integrate, sketch = sketch,
+                            SingleR_ref = SingleR_ref)
+  integrate <- new_opt$integrate
+  sketch <- new_opt$sketch
+  annotate <- TRUE
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                doublet_list = doublet_list)
   if(!reduce) {
@@ -153,6 +157,21 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                           hvgs = hvgs, verbose = verbose)
   }
   assay <- Seurat::DefaultAssay(seu)
+  if(!is.null(SingleR_ref)) {
+    SingleR_start <- Sys.time()
+    message("SingleR reference provided. Annotating cells.")
+    annotation <- annotate_SingleR(seu = seu, SingleR_ref = SingleR_ref,
+     BPPARAM = BPPARAM, ref_n = ref_n, ref_label = ref_label,
+     ref_de_method = ref_de_method, aggr.ref = aggr.ref, fine.tune = fine.tune,
+     save_pdf = file.path(output, "report"), verbose = verbose)
+    annotate <- FALSE
+    SingleR_end <- Sys.time()
+    if(verbose) {
+      message(paste0("SingleR annotation time :", SingleR_end-SingleR_start))
+    }
+    seu <- annotation$seu
+    markers <- annotation$markers
+  }
   message('Scaling data')
   scale_start <- Sys.time()
   seu <- Seurat::ScaleData(object = seu, verbose = verbose,
@@ -175,7 +194,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   seu <- Seurat::FindNeighbors(object = seu, dims = seq(1, ndims),
                                assay = assay, reduction = reduction,
                                verbose = verbose)
-  if(is.null(SingleR_ref) | !integrate) {
+  if(!integrate) {
     seu <- Seurat::FindClusters(seu, resolution = resolution, verbose = verbose)
     # Seurat starts counting clusters from 0, which is the source of many
     # headaches when working in R, which starts counting from 1. Therefore,
@@ -189,24 +208,25 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   }
   seu <- Seurat::RunUMAP(object = seu, dims = seq(ndims), reduction = reduction,
                          return.model = T, verbose = verbose)
-  if(!integrate) {
+  if(length(unique(seu$sample)) == 1) {
     processed_doublets <- process_doublets(seu = seu, qc = qc,
                                            doublet_path = doublet_path)
   }
   seu <- SeuratObject::JoinLayers(seu)
-  annot_start <- Sys.time()
-  annotation <- annotate_seurat(seu = seu, SingleR_ref = SingleR_ref,
-    cell_annotation = cell_annotation, ref_n = ref_n, ref_label = ref_label,
-    subset_by = subset_by, cluster_annotation = cluster_annotation,
-    p_adj_cutoff = p_adj_cutoff, BPPARAM = BPPARAM,
-    ref_de_method = ref_de_method, aggr.ref = aggr.ref, fine.tune = fine.tune,
-    assay = assay, integrate = integrate, verbose = verbose)
-  annot_end <- Sys.time()
-  if(verbose) {
-    message(paste0("Time to annotate: ", annot_end - annot_start))
+  if(annotate) {
+    annot_start <- Sys.time()
+    annotation <- annotate_seurat(seu = seu, cell_annotation = cell_annotation,
+      subset_by = subset_by, cluster_annotation = cluster_annotation,
+      p_adj_cutoff = p_adj_cutoff, BPPARAM = BPPARAM,
+      ref_de_method = ref_de_method, assay = assay, integrate = integrate,
+      verbose = verbose)
+    annot_end <- Sys.time()
+    if(verbose) {
+      message(paste0("Time to annotate: ", annot_end - annot_start))
+    }
+    seu <- annotation$seu
+    markers <- annotation$markers
   }
-  seu <- annotation$seu
-  markers <- annotation$markers
   if("sketch" %in% names(seu@assays)) {
     seu <- project_sketch(seu = seu, reduction = reduction, ndims = ndims)
   }
@@ -381,7 +401,7 @@ write_sc_report <- function(final_results, output = getwd(),
                  query_cluster_pct = final_results$query_data$query_cluster_pct,
                  markers = final_results$markers, use_canvas = use_canvas,
                  cell_annotation = cell_annotation,
-                 extra_columns = extra_columns,
+                 extra_columns = extra_columns, target = final_results$target,
                  integrate = final_results$integrate)
   plotter <- htmlreportR::htmlReport$new(title_doc = paste0("Single-Cell ",
                             opt$name, " report"), container = container,
@@ -396,19 +416,29 @@ write_sc_report <- function(final_results, output = getwd(),
 #' check_sc_input
 #' check input of main SC analysis function
 
-check_sc_input <- function(metadata, DEG_target){
-  colnames(metadata) <- tolower(colnames(metadata))
-  PASS <- rep(TRUE, length(DEG_target))
-  names(PASS) <- DEG_target
-  for(DEG_column in DEG_target) {
-    uniques <- length(unique(metadata[[DEG_column]]))
-    if(uniques != 2) {
-      PASS[DEG_column] <- FALSE
+check_sc_input <- function(metadata = NULL, DEG_target = NULL, integrate = NULL,
+                           sketch = NULL, SingleR_ref = NULL){
+  if(!is.null(DEG_target)) {
+    colnames(metadata) <- tolower(colnames(metadata))
+    PASS <- rep(TRUE, length(DEG_target))
+    names(PASS) <- DEG_target
+    for(DEG_column in DEG_target) {
+      uniques <- length(unique(metadata[[DEG_column]]))
+      if(uniques != 2) {
+        PASS[DEG_column] <- FALSE
+      }
+    }
+    if(any(!PASS)) {
+      stop(paste0("ERROR. Please check DEG_target have exactly two unique ",
+        "values. DEG_column(s) \"", paste(names(PASS[PASS==FALSE]),
+          collapse = "\", \""), "\" contain an invalid number."))
     }
   }
-  if(any(!PASS)) {
-    stop(paste0("ERROR. Please check DEG_target have exactly two unique ",
-      "values. DEG_column(s) \"", paste(names(PASS[PASS==FALSE]),
-        collapse = "\", \""), "\" contain an invalid number."))
+  if(!is.null(SingleR_ref)) {
+    message(paste0("SingleR reference provided. Disabling integrative analysis",
+                   " and sketching."))
+    integrate <- FALSE
+    sketch <- FALSE
   }
+  return(list(integrate = integrate, sketch = sketch))
 }
