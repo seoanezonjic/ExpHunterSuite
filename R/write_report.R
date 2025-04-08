@@ -78,6 +78,20 @@ write_expression_report <- function(exp_results,
     message(paste0("Report written in ", outf))
 }
 
+
+#' Function to create the expression hunter folder
+#' Used by the degenes_Hunter script
+#' @param final_results object containing expression results,
+#' as created by main_degenes_Hunter
+#' @param output_files Output path
+#' @return used for side effect of creating the folder and files
+#' @export
+#' @examples
+#' # Can only be run after running main_degenes_Hunter 
+#' # eg as part of the degenes_Hunter.R script
+#' \dontrun{
+#' write_expression_data(final_results, opt$output_files)
+#' }
 write_expression_data <- function(final_results, output_files){
 
   write.table(final_results[['raw_filter']], 
