@@ -85,16 +85,19 @@ rownames(seu_meta) <- colnames(seu)
 seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
 seu$RNA$data <- seu$RNA$counts
 DEG_list <- BiocParallel::bplapply(X = DEG_targets, FUN = main_sc_Hunter, BPPARAM = BPPARAM, seu = seu,
-                                      p_val_cutoff = opt$p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
-                                      min_cell_proportion = opt$min_cell_proportion, query = target_genes,
-                                      output_path = opt$output, min_counts = opt$min_counts, verbose = opt$verbose)
+                                   p_val_cutoff = opt$p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
+                                   min_cell_proportion = opt$min_cell_proportion, query = target_genes,
+                                   output_path = opt$output, min_counts = opt$min_counts, verbose = opt$verbose)
 names(DEG_list) <- unlist(strsplit(names(DEG_targets), "_target"))
-DEG_results <- list(seu = seu, DEG_list = DEG_list, opt = opt)
 
 message("--------------------------------------------")
-message("---------WRITING SC HUNTER REPORT-----------")
+message("---------WRITING SC HUNTER REPORTS----------")
 message("--------------------------------------------")
-
-write_sc_report(final_results = DEG_results, template_folder = template_folder,
-                output = file.path(opt$output, "report"), query = target_genes,
-                template = "sc_DEGs.txt", out_name = "DEG_report.html", opt = opt)
+for(target_name in names(DEG_targets)) {
+  DEG_name <- unlist(strsplit(target_name, "_target"))
+  message(paste0("Writing ", DEG_name, " report"))
+  DEG_results <- list(seu = seu, DEG_list = DEG_list[[DEG_name]], opt = opt, target = DEG_targets[[target_name]])
+  write_sc_report(final_results = DEG_results, query = target_genes, opt = opt,
+                  template_folder = template_folder, output = file.path(opt$output, "report"), 
+                  template = "sc_DEGs.txt", out_name = paste0(DEG_name, "_DEG_report.html"))
+}
