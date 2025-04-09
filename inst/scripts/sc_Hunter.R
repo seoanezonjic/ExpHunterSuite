@@ -96,7 +96,7 @@ message("--------------------------------------------")
 for(target_name in names(DEG_targets)) {
   DEG_name <- unlist(strsplit(target_name, "_target"))
   message(paste0("Writing ", DEG_name, " report"))
-  DEG_results <- list(seu = seu, DEG_list = DEG_list[[DEG_name]], opt = opt, target = DEG_targets[[target_name]])
+  DEG_results <- list(seu = seu, DEG_list = DEG_list[[DEG_name]], opt = opt, target = DEG_targets[[target_name]], target_name = DEG_name)
   write_sc_report(final_results = DEG_results, query = target_genes, opt = opt,
                   template_folder = template_folder, output = file.path(opt$output, "report"), 
                   template = "sc_DEGs.txt", out_name = paste0(DEG_name, "_DEG_report.html"))
