@@ -1,7 +1,7 @@
 
 <!--begin.rcode setup
     colGEX <- c("grey85", "#FEE5D9", "#FCBBA1", "#FC9272", "#FB6A4A", "#EF3B2C", "#CB181D", "#99000D")
-    comparison <- plotter$hash_vars$target
+    comparison <- plotter$hash_vars$target_name
     opt <- plotter$hash_vars$opt
     subset_by <- plotter$hash_vars$subset_by
     query <- plotter$hash_vars$query
@@ -99,13 +99,15 @@ end.rcode-->
 <!--begin.rcode control_table, echo = FALSE, warning=FALSE
     cat(plotter$create_title("First group of samples (to be referred to as control in the rest of the report)",
                               id = "control_table", hlevel = 3, indexable = FALSE))
-    knitr::kable(plotter$hash_vars$target, col.names="Sample Names:")
+    plotter$hash_vars$controls <- plotter$hash_vars$target$sample[plotter$hash_vars$target$treat == "Ctrl"]
+    cat(make_html_list(plotter$hash_vars$controls))
 end.rcode-->
 
 <!--begin.rcode treatment_table, echo = FALSE, warning=FALSE
     cat(plotter$create_title("Second group of samples (to be referred to as treatment in the rest of the report)",
                               id = "treatment_table", hlevel = 3, indexable = FALSE))
-    knitr::kable(plotter$hash_vars$index_treatmn_cols, col.names="Sample Names:")
+    plotter$hash_vars$treat <- plotter$hash_vars$target$sample[plotter$hash_vars$target$treat == "Treat"]
+    cat(make_html_list(plotter$hash_vars$treat))
 end.rcode-->
 
 <!--begin.rcode DEG_metrics, eval = length(DEG_list) > 0
