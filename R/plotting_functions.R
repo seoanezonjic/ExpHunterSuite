@@ -109,12 +109,14 @@ check_categories <- function(enrichplot_obj, min_categories = 1) {
   return(check)
 }
 
+#' @export
 get_clusters_count <- function(results_WGCNA){
   cl_count <- length(unique(
                     results_WGCNA[['gene_cluster_info']][['Cluster_ID']]))
   return(cl_count)
 }
 
+#' @export
 get_features_count <- function(results_WGCNA){
   trait_count <- length(colnames(
           results_WGCNA[['package_objects']][['module_trait_cor']]))
@@ -140,6 +142,7 @@ get_categories <- function(enrich_obj, showCategory = 30){
     return(unique(categories))
 }
 
+#' @export
 get_genes <- function(enrich_obj, showCategory = 30){
   genes <- get_plot_df(enrich_obj, showCategory)$Gene
   return(unique(genes))
@@ -222,6 +225,7 @@ calc_height <- function(enrich_obj,
   return(height_size)
 }
 
+#' @export
 set_default_width <- function(enrich_obj, 
   default = 12, 
   showCategory = 30, 
@@ -256,6 +260,7 @@ set_standard_size <- function(pp){
 
 #' @importFrom ggplot2 ggplot aes_string geom_tile theme_minimal theme 
 #' element_blank element_text scale_fill_gradient2 geom_text
+#' @export
 gg_heatmap <- function(data_table, 
   input = "", 
   traspose = FALSE, 
@@ -345,6 +350,7 @@ make_top_n_expression_table <- function(count_data, n=5) {
 #' @importFrom ggplot2 ggplot aes_string geom_point scale_shape_manual ylim 
 #' xlab ggtitle theme theme_classic element_blank
 #' @importFrom stats var
+#' @export
 ht2logFCPlot <- function(ht,
   var_filter = 0.001, 
   title = "Filtered logFC", 

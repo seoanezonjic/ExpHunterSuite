@@ -1291,6 +1291,7 @@ parse_results_for_report <- function(enrichments, simplify_results = FALSE){
 
 #' @importFrom ggridges geom_density_ridges
 #' @importFrom ggplot2 ggplot aes theme_classic
+#' @export
 enrich_density <- function(enrich_result, 
                            attributes, 
                            showCategory = 30) {

@@ -170,7 +170,7 @@ compute_mca <- function(mca_data,
 }
 
 
-
+#' @export
 get_cluster_string_assoc <- function(res.hcpc, string_factors){
 
 	all_factor_clusters <- data.frame()

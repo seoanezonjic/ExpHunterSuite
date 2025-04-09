@@ -56,14 +56,9 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 biocViews: GeneExpressionWorkflow
 Suggests: 
-    EnhancedVolcano,
-    GGally,
     biomaRt,
-    factoextra,
-    ggupset,
     yaml,
     optparse,
-    PerformanceAnalytics,
     naivebayes,
     reshape2,
     org.Hs.eg.db,
@@ -71,6 +66,11 @@ Suggests:
     testthat (>= 3.0.0),
 VignetteBuilder: knitr
 Imports: 
+    ggupset,
+    EnhancedVolcano,
+    GGally,
+    factoextra,
+    PerformanceAnalytics,
     DoubletFinder (>= 2.0.4),
     DropletUtils,
     ReactomePA (>= 1.46.0),

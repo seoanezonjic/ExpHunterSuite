@@ -74,7 +74,6 @@ write_df_list_as_tables <- function(df_list, prefix, root=getwd()) {
 #' @examples
 #' # Can only be run after running the write_expression_data function 
 #' # eg as part of the degenes_Hunter.R script
-#' # These should match the column names in the table of counts.
 #'\dontrun{
 #'hunter_results <- load_hunter_folder(input_hunter_folder)
 #'}

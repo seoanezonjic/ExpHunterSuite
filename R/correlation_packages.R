@@ -471,6 +471,7 @@ analysis_WGCNA <- function(data,
     )
 }
 
+#' @export
 corM2igraph <- function(corM, cor_abs_thr = 0.75){
   cor_df <- data.frame(row=rownames(corM)[row(corM)[upper.tri(corM)]], 
            col=colnames(corM)[col(corM)[upper.tri(corM)]], 
