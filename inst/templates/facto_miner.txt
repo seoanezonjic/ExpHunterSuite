@@ -221,9 +221,12 @@ if (!is.null(plotter$hash_vars$dim_data_merged)){
 		dim_data_quant_act$dimension <- gsub("Dim.", "PC", dim_data_quant_act$dimension)
 
 		dim_data_quant_act <- dim_data_quant_act |> 
-							 dplyr::group_by(dimension) |> 
-							 dplyr::top_n(10, wt = correlation) |> 
-							 dplyr::arrange(dimension, desc(correlation)) 
+                            dplyr::mutate(abs_correlation = abs(correlation)) |> 
+                            dplyr::group_by(dimension) |> 
+                            dplyr::top_n(10, wt = abs_correlation) |> 
+                            dplyr::arrange(dimension, desc(abs_correlation)) |> 
+                            dplyr::select(-abs_correlation) |> 
+                            dplyr::arrange(dimension, correlation)
 		dim_data_quant_act <- as.data.frame(dim_data_quant_act)[,c("factor", "dimension", "correlation", "p.value")]	
 	}
 	plotter$hash_vars[["dim_data_quant_act"]] <- dim_data_quant_act
