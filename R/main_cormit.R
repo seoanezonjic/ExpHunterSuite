@@ -46,8 +46,6 @@ corr_cutoffs<- eval(parse(text=paste('c(', gsub("'","", corr_cutoffs), ')')))
   
  #parse strategies and add default strategies
  strat_names <- c(
-    "DEGs_RNA_vs_miRNA_DEMs_opp",
-    "DEGs_RNA_vs_miRNA_DEMs_sim",
     "normalized_counts_RNA_vs_miRNA_normalized_counts", 
     "Eigengene_0_RNA_vs_miRNA_normalized_counts", 
     "normalized_counts_RNA_vs_miRNA_Eigengene_0", 
@@ -85,7 +83,13 @@ corr_cutoffs<- eval(parse(text=paste('c(', gsub("'","", corr_cutoffs), ')')))
  } 
 
  selected_targets <- load_selected_targets(selected_targets_file)
- 
+
+ pre_save_results <- FALSE
+ if (is.null(RNAseq) && !is.null(selected_targets)) {
+	strat_names <- c("selected_targets_RNA_vs_miRNA_DEMs")	
+ 	pre_save_results <- TRUE
+ }
+
  miRNAseq <- load_DEGH_information(miRNAseq_folder) 
  
  all_pairs <- prepare_all_pairs(RNAseq = RNAseq, miRNAseq = miRNAseq, 
@@ -114,6 +118,13 @@ multimir_stats <- get_multimir_stats(multimir)
 miRNA_cont_tables <- data.frame()
 cont_tables <- data.frame()
 all_pairs <- as.data.frame(miRNA_cor_results$all_pairs)
+
+if (pre_save_results) {
+	selected_pairs <- all_pairs[, c("RNAseq", "miRNAseq","selected_targets_RNA_vs_miRNA_DEMs_pval", "multimir")]
+	pairs_to_save <- selected_pairs$selected_targets_RNA_vs_miRNA_DEMs_pval == 0 & !is.na(selected_pairs$selected_targets_RNA_vs_miRNA_DEMs_pval) & selected_pairs$multimir
+	write.table(selected_pairs[pairs_to_save,c("miRNAseq", "RNAseq")], file = file.path(output_files, "selected_pairs.txt"), quote= F, sep = "\t", row.names = F)
+	stop("selected_targets_RNA_vs_miRNA_DEMs_pval results saved in selected_pairs.txt file. Controlled exit.")
+}
 message("Preparing data for stats computing")
  for (corr_cutoff in corr_cutoffs){
  #mkdir folder
