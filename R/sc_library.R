@@ -463,7 +463,7 @@ calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE, idents = N
                               integrate = FALSE, min.pct = 0.25,
                               logfc.threshold = 0.25, assay = "RNA") {
   test <- FALSE
-  if(!is.null(subset_by)) {
+  if(length(subset_by) == 1) {
     test <- length(subset_by) == 1 & integrate
     test <- test & length(unique(seu@meta.data[[subset_by]])) == 2
   }
@@ -610,7 +610,8 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
   subset_list <- vector(mode = "list", length = length(items))
   names(subset_list) <- items
   for(i in seq(length(items))) {
-    message(paste("Subsetting", by[1],  paste0(i, "/", length(items)), sep = " "))
+    message(paste("Subsetting", by[1],  paste0(i, "/", length(items)),
+            sep = " "))
     subset <- subset_seurat(seu, by[1], as.character(items[i]))
     subset_list[[as.character(items[i])]] <- subset
   }
@@ -742,6 +743,7 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
                              query = NULL) {
   res <- NULL
   return_output <- TRUE
+  genes_warn <- NULL
   if(length(DEG_list) < 1) {
     warning("Empty DEG_list provided.")
     return_output <- FALSE
@@ -749,7 +751,8 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
     if(!is.null(query)) {
       message("Starting analysis for target gene list. DEG cutoffs disabled.")
       if(all(!query %in% rownames(seu))) {
-        warning("None of the target genes are expressed in seurat object.")
+        genes_warn <- "None of the target genes are expressed in seurat object."
+        warning(genes_warn)
         return_output <- FALSE
       }
       min_avg_log2FC <- 0
@@ -771,7 +774,7 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
         gene_list <- .get_union_DEGenes(DEG_list = DEG_list)
       } else {
         gene_list <- query
-        if(any(!query %in% rownames(seu))) {
+        if(any(!query %in% rownames(seu)) & is.null(genes_warn)) {
           warning(paste0("Target gene(s) \"",
           paste(query[!query %in% rownames(seu)], collapse = "\", \""),
           "\" are not expressed in dataset."))
@@ -1183,8 +1186,7 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
   return(seu)
 }
 
-annotate_seurat <- function(seu = stop(paste0("Please provide a seurat object",
-                            " to annotate")), cell_annotation = NULL,
+annotate_seurat <- function(seu, cell_annotation = NULL,
                             subset_by = NULL, cluster_annotation = NULL,
                             p_adj_cutoff = 1e-5, verbose = FALSE, assay = "RNA",
                             integrate = FALSE) {
@@ -1211,18 +1213,16 @@ annotate_seurat <- function(seu = stop(paste0("Please provide a seurat object",
   return(res)
 }
 
-annotate_SingleR <- function(seu = stop(paste0("Please provide a seurat object",
-                             " to annotate")), SingleR_ref = NULL, ref_n = 25,
+annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
                              BPPARAM = NULL, ref_de_method = "wilcox",
                              ref_label = ref_label, aggr.ref = FALSE,
                              fine.tune = TRUE, assay = "RNA", verbose = FALSE,
                              save_pdf = getwd(), subset_by = NULL){
     counts_matrix <- Seurat::GetAssayData(seu, assay = assay)
     SingleR_annotation <- SingleR::SingleR(test = counts_matrix,
-      ref = SingleR_ref, labels = SingleR_ref[[ref_label]],
+      ref = SingleR_ref, labels = SingleR_ref[[ref_label]], de.n = ref_n,
       assay.type.test = "scale.data", de.method = ref_de_method,
-      de.n = ref_n, BPPARAM = BPPARAM, aggr.ref = aggr.ref,
-      fine.tune = fine.tune)
+      BPPARAM = BPPARAM, aggr.ref = aggr.ref, fine.tune = fine.tune)
     seu@meta.data$cell_type <- SingleR_annotation$labels
     pdf(file.path(save_pdf, "DeltaDistribution.pdf"), width = 20, height = 10)
     print(SingleR::plotScoreHeatmap(SingleR_annotation))
@@ -1231,29 +1231,29 @@ annotate_SingleR <- function(seu = stop(paste0("Please provide a seurat object",
     markers <- calculate_markers(seu = seu, subset_by = subset_by,
                                  integrate = integrate, verbose = verbose,
                                  idents = "cell_type")
+    names(markers)[names(markers) == "seurat_clusters"] <- "cell_type"
     return(list(seu = seu, markers = markers,
             SingleR_annotation = SingleR_annotation))
 }
 
-annotate_clusters <- function(seu = stop(paste0("Please provide a seurat ",
-                              "object to annotate")), subset_by = NULL,
+annotate_clusters <- function(seu, subset_by = NULL,
                               assay = "RNA", integrate = FALSE, verbose = FALSE,
                               idents = "seurat_clusters", p_adj_cutoff = 1e-5){
   message("Calculating cluster markers")
-      markers <- calculate_markers(seu = seu, subset_by = subset_by,
-                                   integrate = integrate, verbose = verbose,
-                                   idents = "seurat_clusters", assay = assay)
-      message("Annotating clusters")
-      annotated_clusters <- match_cell_types(markers_df = markers,
-                                             cell_annotation = cell_annotation,
-                                             p_adj_cutoff = p_adj_cutoff)
-      markers <- annotated_clusters$summary
-      seu <- rename_clusters(seu = seu,
-                             new_clusters = annotated_clusters$cell_types)
-      return(list(seu = seu, markers = markers))
+  markers <- calculate_markers(seu = seu, subset_by = subset_by,
+                               integrate = integrate, verbose = verbose,
+                               idents = "seurat_clusters", assay = assay)
+  message("Annotating clusters")
+  annotated_clusters <- match_cell_types(markers_df = markers,
+                                         cell_annotation = cell_annotation,
+                                         p_adj_cutoff = p_adj_cutoff)
+  markers <- annotated_clusters$summary
+  seu <- rename_clusters(seu = seu,
+                         new_clusters = annotated_clusters$cell_types)
+  return(list(seu = seu, markers = markers))
 }
 
-generate_sc_target <- function(DEG_target = stop("Missing target string")){
+generate_sc_target <- function(DEG_target){
   processed_target <- unlist(strsplit(DEG_target, ";"))
   processed_target <- unlist(lapply(processed_target, strsplit, split = ":"),
                        recursive = FALSE)
@@ -1296,7 +1296,7 @@ project_sketch <- function(seu, reduction, ndims){
   return(seu)
 }
 
-process_doublets <- function(seu = stop("Missing seurat object"),
+process_doublets <- function(seu = stop("Missing seurat object"), name = NULL,
                              qc = stop("Missing QC object"),
                              doublet_path = getwd()){
   doublets <- find_doublets(seu)
@@ -1334,4 +1334,12 @@ process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
     Seurat::DefaultAssay(seu) <- "RNA"
   }
   return(seu)
+}
+
+get_expression_metrics <- function(seu, sigfig) {
+  message("Extracting expression quality metrics")
+  sample_qc_pct <- get_qc_pct(seu, by = "sample")
+  message("Extracting query expression metrics. This might take a while.")
+  clusters_pct <- get_clusters_distribution(seu = seu, sigfig = sigfig)
+  return(list(sample_qc_pct = sample_qc_pct, clusters_pct = clusters_pct))
 }
