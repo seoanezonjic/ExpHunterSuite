@@ -10,11 +10,12 @@
     DEG_query_list <- plotter$hash_vars$DEG_query_list
     extra_columns <- plotter$hash_vars$extra_columns
     metadata <- plotter$hash_vars$seu@meta.data
-    get_cells_metadata <- function(heatmap) {
+
+    get_cells_metadata <- function(heatmap, metadata) {
         samples <- rownames(heatmap)
         sample_metadata <- unique(metadata[, c("sample", extra_columns)])
         rownames(sample_metadata) <- NULL
-        sample_metadata <- sample_metadata[match(samples, sample_metadata$sample), ]
+        sample_metadata <- sample_metadata[match(sample_metadata$sample, samples), , drop = FALSE]
     }
     
     Custom_DotPlot <- function(seu) {
@@ -74,6 +75,7 @@
         res <- res[, c("gene", "p_val", "p_val_adj", "avg_log2FC", "pct.1", "pct.2")]
         return(res)
     }
+
 end.rcode-->
 
 <h1><strong>SINGLE CELL RNA-SEQ ANNOTATION ANALYSIS</strong></h1>
@@ -87,7 +89,7 @@ end.rcode-->
     cat(plotter$create_title("Top genes expression heatmap", "sample QC", hlevel = 2, indexable = FALSE,
                               clickable = FALSE, t_id = "sample_qc_pct", clickable_text = ""))
     if(!is.null(extra_columns)) {
-        extra_metadata <- get_cells_metadata(plotter$hash_vars$sample_qc_pct)
+        extra_metadata <- get_cells_metadata(heatmap = plotter$hash_vars$sample_qc_pct, metadata = metadata)
         sample_heatmap_overlay <- as.list(extra_metadata[, extra_columns, drop = FALSE])
     } else {
         sample_heatmap_overlay <- NULL
@@ -204,6 +206,12 @@ end.rcode-->
     cat(plotter$create_title("Cluster composition of samples", "cluster distribution", hlevel = 2,
                               indexable = FALSE, clickable = FALSE, t_id = "cluster_distribution",
                               clickable_text = ""))
+    if(!is.null(extra_columns)) {
+        extra_metadata <- get_cells_metadata(heatmap = plotter$hash_vars$clusters_pct, metadata = metadata)
+        sample_heatmap_overlay <- as.list(extra_metadata[, extra_columns, drop = FALSE])
+    } else {
+        sample_heatmap_overlay <- NULL
+    }
     cat(plotter$prettify_div(plotter$heatmap(list(id = "clusters_pct", title = "Cell type percentage by sample",
                                              header = NULL, text = FALSE, row_names = NULL,
                                              transpose = TRUE, inject_smp_attr = sample_heatmap_overlay,
