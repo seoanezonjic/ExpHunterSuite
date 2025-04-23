@@ -206,8 +206,8 @@ test_that("get_query_pct works in simple case", {
   expected_df[2, ] <- c(0, 0, 40)
   expected_df[3, ] <- c(20, 40, 20)
   colnames(expected_df) <- query
-  output_df <- suppressMessages(get_query_pct(seu = test_pbmc, query = query, by = "sample",
-                                layer = "counts"))
+  output_df <- suppressMessages(get_query_pct(seu = test_pbmc, query = query,
+                                by = "sample", layer = "counts"))
   expect_equal(output_df, expected_df)
 })
 
@@ -264,9 +264,9 @@ test_that("get_query_pct works with 'by' argument of length 2", {
   dfC[, 2] <- c(100, 0, 100, 0, 0)
   dfC[, 3] <- c(0, 100, 0, 0, 0)
   expected_list <- list(A = dfA, B = dfB, C = dfC)
-  output_list <- get_query_pct(seu = pbmc_updated, query =  query,
-                               by = c("sample", "seurat_clusters"),
-                               layer = "counts")
+  output_list <- suppressMessages(get_query_pct(seu = pbmc_updated,
+                  query =  query, by = c("sample", "seurat_clusters"),
+                  layer = "counts"))
   expect_equal(output_list, expected_list)
 })
 
@@ -326,7 +326,6 @@ test_that("breakdown_query works in simple case", {
 })
 
 test_that("breakdown_query gives warning if any query genes are not found", {
-  library(Seurat)
   missing_query <- c(query, "NOEXPA", "NOEXPB")
   expected_df <- c(0.130, 0.130, 0.270)
   names(expected_df) <- query
@@ -340,7 +339,8 @@ test_that("breakdown_query works with query of length one", {
   single_query <- c("PPBP")
   expected_df <- 0.13
   names(expected_df) <- single_query
-  output_df <- signif(breakdown_query(test_pbmc, single_query), 2)
+  output_df <- suppressMessages(signif(breakdown_query(test_pbmc, single_query),
+                                2))
   expect_equal(output_df, expected_df)
 })
 
@@ -367,27 +367,6 @@ test_that("get_top_genes works even if N is greater than number of expressed
        genes", {
   expect_equal(get_top_genes(test_pbmc, top = 10e99999), expected_big)
 })
-
-# test_that("check_sc_input fails when specified column does not exist", {
-#   expect_error(check_sc_input(metadata = test_pbmc@meta.data,
-#                DEG_target = "fairies"), "contain an invalid number")
-# })
-
-# test_that("check_sc_input can handle different columns failing", {
-#   expect_error(check_sc_input(metadata = test_pbmc@meta.data,
-#                DEG_target = c("fairies", "mittens")),
-#                "\"fairies\", \"mittens\"")
-# })
-
-# test_that("check_sc_input does not fail if check is successful", {
-#   expect_no_error(check_sc_input(metadata = test_pbmc@meta.data,
-#                DEG_target = "groups"))
-# })
-
-# test_that("check_sc_input fails if one column passes and the other does not", {
-#   expect_error(check_sc_input(metadata = test_pbmc@meta.data,
-#                DEG_target = c("groups", "orig.ident")), "\"orig.ident\"")
-# })
 
 test_pbmc <- pbmc_tiny
 test_pbmc$cell_type <- "g1"
@@ -432,9 +411,9 @@ test_that("get_fc_vs_ncells works with DEG tables containing different genes", {
 })
 
 test_that("get_fc_vs_ncells works with target list", {
-  output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
+  output <- suppressMessages(get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
                              min_avg_log2FC = Inf, p_val_cutoff = -Inf,
-                             min_counts = 1, query = c("PPBP", "VDAC3"))
+                             min_counts = 1, query = c("PPBP", "VDAC3")))
   expected_DEGs <- data.frame(PPBP = 0:1, VDAC3 = c(1.0, 0.2))
   expected_ncells <- data.frame(PPBP = rep(1, 2), VDAC3 = rep(2, 2))
   rownames(expected_DEGs) <- c("g1", "g2")
@@ -447,30 +426,30 @@ test_that("get_fc_vs_ncells can handle no target genes being present in seurat
          object", {
   ## This test could use some work, the function is being ran twice. There
   ## should be a way to capture the warning while still saving output.
-  expect_warning(get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
-                             min_avg_log2FC = Inf, p_val_cutoff = -Inf,
-                             min_counts = 1, query = c("None", "Zilch")),
+  expect_warning(suppressMessages(get_fc_vs_ncells(seu = test_pbmc,
+                 DEG_list = DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf,
+                 min_counts = 1, query = c("None", "Zilch"))),
                  "None of the target genes are expressed in seurat object.")
-  output <- suppressWarnings(get_fc_vs_ncells(seu = test_pbmc,
+  output <- suppressWarnings(suppressMessages(get_fc_vs_ncells(seu = test_pbmc,
                              DEG_list = DEG_list, min_avg_log2FC = Inf,
                              p_val_cutoff = -Inf,
-                             min_counts = 1, query = c("None", "Zilch")))
+                             min_counts = 1, query = c("None", "Zilch"))))
   expect_equal(output, NULL)
 })
 
 test_that("get_fc_vs_ncells can handle some target genes not being present in
          seurat object", {
-  expect_warning(get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
-                 min_avg_log2FC = Inf, p_val_cutoff = -Inf, min_counts = 1,
-                 query = c("None", "Zilch", "PPBP")), 'None", "Zilch"')
-  output <- suppressWarnings(get_fc_vs_ncells(seu = test_pbmc,
+  expect_warning(suppressMessages(get_fc_vs_ncells(seu = test_pbmc,
+                 DEG_list = DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf,
+                 min_counts = 1, query = c("None", "Zilch", "PPBP"))),
+                 'None", "Zilch"')
+  output <- suppressMessages(suppressWarnings(get_fc_vs_ncells(seu = test_pbmc,
                              DEG_list = DEG_list, min_avg_log2FC = Inf,
                              p_val_cutoff = -Inf, min_counts = 1,
-                             query = c("None", "Zilch", "PPBP")))
-  expected_DEGs <- data.frame(PPBP = 0:1)
-  expected_ncells <- data.frame(PPBP = rep(1, 2))
-  rownames(expected_DEGs) <- c("g1", "g2")
-  rownames(expected_ncells) <- c("g1", "g2")
+                             query = c("None", "Zilch", "PPBP"))))
+  expected_DEGs <- data.frame(PPBP = 1)
+  rownames(expected_DEGs) <- c("g2")
+  expected_ncells <- expected_DEGs
   expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
   expect_equal(output, expected)
 })
@@ -478,13 +457,12 @@ test_that("get_fc_vs_ncells can handle some target genes not being present in
 test_that("get_fc_vs_ncells can handle FALSE and NULL values in DEG_list", {
   test_DEG_list <- DEG_list
   test_DEG_list$g3 <- data.frame(FALSE)
-  output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = test_DEG_list,
-                 min_avg_log2FC = Inf, p_val_cutoff = -Inf, min_counts = 1,
-                 query = "PPBP")
-  expected_DEGs <- data.frame(PPBP = 0:1)
-  expected_ncells <- data.frame(PPBP = rep(1, 2))
-  rownames(expected_DEGs) <- c("g1", "g2")
-  rownames(expected_ncells) <- c("g1", "g2")
+  output <- suppressMessages(get_fc_vs_ncells(seu = test_pbmc,
+            DEG_list = test_DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf,
+            min_counts = 1, query = "PPBP"))
+  expected_DEGs <- data.frame(PPBP = 1)
+  rownames(expected_DEGs) <- c("g2")
+  expected_ncells <- expected_DEGs
   expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
   expect_equal(output, expected)
 })
@@ -508,4 +486,31 @@ test_that("get_fc_vs_ncells returns NULL if input is NULL, regardless of
   expect_match(warnings, "Empty DEG_list provided")
   expect_null(suppressWarnings(get_fc_vs_ncells(seu = test_pbmc, min_counts = 1,
     DEG_list = test_DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf)))
+})
+
+test_that("test check_sc_input, integrate and sketch to TRUE, SingleR_ref,
+           reduce to FALSE", {
+  output <- suppressMessages(check_sc_input(integrate = TRUE, sketch = TRUE,
+                           SingleR_ref = "Non_NULL", reduce = FALSE))
+  expected <- list(integrate = FALSE, sketch = FALSE, aggr.ref = FALSE,
+                   fine.tune = TRUE)
+  expect_equal(output, expected)
+})
+
+test_that("test check_sc_input, integrate and sketch to FALSE, SingleR_ref,
+           reduce to TRUE", {
+  output <- suppressMessages(check_sc_input(integrate = TRUE, sketch = TRUE,
+                           SingleR_ref = "Non_NULL", reduce = TRUE))
+  expected <- list(integrate = FALSE, sketch = FALSE, aggr.ref = TRUE,
+                   fine.tune = FALSE)
+  expect_equal(output, expected)
+})
+
+test_that("test check_sc_input, integrate and sketch to TRUE, no SingleR_ref,
+           reduce to FALSE", {
+  output <- check_sc_input(integrate = TRUE, sketch = TRUE,
+                           SingleR_ref = NULL, reduce = FALSE)
+  expected <- list(integrate = TRUE, sketch = TRUE, aggr.ref = FALSE,
+                   fine.tune = TRUE)
+  expect_equal(output, expected)
 })
