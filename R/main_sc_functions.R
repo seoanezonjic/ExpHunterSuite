@@ -117,25 +117,18 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   force_ncells = NA_integer_, sketch_method = "LeverageScore",
   doublet_path = getwd()){
   new_opt <- check_sc_input(integrate = integrate, sketch = sketch,
-                            SingleR_ref = SingleR_ref)
-  integrate <- new_opt$integrate
-  sketch <- new_opt$sketch
+                            SingleR_ref = SingleR_ref, reduce = reduce)
   annotate <- TRUE
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                doublet_list = doublet_list)
   if(!reduce) {
     seu <- subset(qc, subset = qc == 'Pass')
-    aggr.ref <- FALSE
-    fine.tune <- TRUE
   } else {
     message(paste0("Reduce argument is set to TRUE. Skipping QC subsetting. ",
                    "Updating SingleR configuration"))
     seu <- qc
-    aggr.ref <- TRUE
-    fine.tune <- FALSE
-    k_weight <- 30
   }
-  if(integrate) {
+  if(new_opt$integrate) {
     message(paste0("Splitting seurat object by sample."))
     seu[["RNA"]] <- split(seu[["RNA"]], f = seu$sample)
   }
@@ -161,9 +154,9 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     SingleR_start <- Sys.time()
     message("SingleR reference provided. Annotating cells.")
     annotation <- annotate_SingleR(seu = seu, SingleR_ref = SingleR_ref,
-     BPPARAM = BPPARAM, ref_n = ref_n, ref_label = ref_label,
-     ref_de_method = ref_de_method, aggr.ref = aggr.ref, fine.tune = fine.tune,
-     save_pdf = file.path(output, "report"), verbose = verbose)
+     BPPARAM = BPPARAM, ref_n = ref_n, ref_label = ref_label, verbose = verbose,
+     ref_de_method = ref_de_method, aggr.ref = new_opt$aggr.ref,
+     fine.tune = new_opt$fine.tune, save_pdf = file.path(output, "report"))
     annotate <- FALSE
     SingleR_end <- Sys.time()
     if(verbose) {
@@ -183,7 +176,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   message('Reducing dimensionality')  
   seu <- Seurat::RunPCA(seu, assay = assay, npcs = ndims, verbose = verbose)
   reduction <- "pca"
-  if(integrate) {
+  if(new_opt$integrate) {
   	message('Integrating seurat object')
     seu <- Seurat::IntegrateLayers(object = seu, orig.reduction = "pca",
       new.reduction = integration_method, verbose = FALSE, dims = seq(1, ndims),
@@ -194,7 +187,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   seu <- Seurat::FindNeighbors(object = seu, dims = seq(1, ndims),
                                assay = assay, reduction = reduction,
                                verbose = verbose)
-  if(!integrate) {
+  if(!new_opt$integrate | is.null(SingleR_ref)) {
     seu <- Seurat::FindClusters(seu, resolution = resolution, verbose = verbose)
     # Seurat starts counting clusters from 0, which is the source of many
     # headaches when working in R, which starts counting from 1. Therefore,
@@ -209,7 +202,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   seu <- Seurat::RunUMAP(object = seu, dims = seq(ndims), reduction = reduction,
                          return.model = T, verbose = verbose)
   if(length(unique(seu$sample)) == 1) {
-    processed_doublets <- process_doublets(seu = seu, qc = qc,
+    processed_doublets <- process_doublets(seu = seu, qc = qc, name = name,
                                            doublet_path = doublet_path)
   }
   seu <- SeuratObject::JoinLayers(seu)
@@ -217,8 +210,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     annot_start <- Sys.time()
     annotation <- annotate_seurat(seu = seu, cell_annotation = cell_annotation,
       subset_by = subset_by, cluster_annotation = cluster_annotation,
-      p_adj_cutoff = p_adj_cutoff, BPPARAM = BPPARAM,
-      ref_de_method = ref_de_method, assay = assay, integrate = integrate,
+      p_adj_cutoff = p_adj_cutoff, assay = assay, integrate = new_opt$integrate,
       verbose = verbose)
     annot_end <- Sys.time()
     if(verbose) {
@@ -231,18 +223,15 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     seu <- project_sketch(seu = seu, reduction = reduction, ndims = ndims)
   }
   assay <- "RNA"
-  message("Extracting expression quality metrics")
-  sample_qc_pct <- get_qc_pct(seu, by = "sample")
-  message("Extracting query expression metrics. This might take a while.")
-  clusters_pct <- get_clusters_distribution(seu = seu, sigfig = sigfig)
+  expr_metrics <- get_expression_metrics(seu = seu, sigfig = sigfig)
   final_results <- list()
   final_results$qc <- qc
   final_results$seu <- seu
-  final_results$sample_qc_pct <- sample_qc_pct
-  final_results$clusters_pct <- clusters_pct
+  final_results$sample_qc_pct <- expr_metrics$sample_qc_pct
+  final_results$clusters_pct <- expr_metrics$clusters_pct
   final_results$markers <- markers
   final_results$SingleR_annotation <- annotation$SingleR_annotation
-  final_results$integrate <- integrate
+  final_results$integrate <- new_opt$integrate
   return(final_results)
 }
 
@@ -418,7 +407,14 @@ write_sc_report <- function(final_results, output = getwd(),
 #' check input of main SC analysis function
 
 check_sc_input <- function(metadata = NULL, DEG_target = NULL, integrate = NULL,
-                           sketch = NULL, SingleR_ref = NULL){
+                           sketch = NULL, SingleR_ref = NULL, reduce = NULL){
+  if(reduce) {
+    aggr.ref <- TRUE
+    fine.tune <- FALSE
+  } else {
+    aggr.ref <- FALSE
+    fine.tune <- TRUE
+  }
   if(!is.null(DEG_target)) {
     colnames(metadata) <- tolower(colnames(metadata))
     PASS <- rep(TRUE, length(DEG_target))
@@ -441,5 +437,6 @@ check_sc_input <- function(metadata = NULL, DEG_target = NULL, integrate = NULL,
     integrate <- FALSE
     sketch <- FALSE
   }
-  return(list(integrate = integrate, sketch = sketch))
+  return(list(integrate = integrate, sketch = sketch, aggr.ref = aggr.ref,
+              fine.tune = fine.tune))
 }
