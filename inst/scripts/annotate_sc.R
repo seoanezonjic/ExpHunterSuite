@@ -139,11 +139,12 @@ option_list <- list(
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
+options(future.globals.maxSize = 15e+09)
+options(Seurat.object.assay.version = 'v5')
+
 if(Sys.getenv("sketch") == "TRUE") {
     ## Script refuses to work without future in singularity mode
     # future::plan("multisession", workers = opt$cpu, gc = TRUE)
-    options(future.globals.maxSize = 1000e+09)
-    options(Seurat.object.assay.version = 'v5')
 }
 
 message(paste0("Analyzing ", opt$name))
@@ -187,9 +188,9 @@ if(opt$doublet_file != "") {
 }
 
 if(opt$integrate) {
-  out_suffix <- "integration_report.html"
+  out_suffix <- "annotation_report.html"
 } else {
-  out_suffix <- "sample_report.html"
+  out_suffix <- "sample_annotation_report.html"
 }
 
 if(opt$int_method == "") {
@@ -236,8 +237,8 @@ if(opt$samples_to_integrate == "") {
 }
 
 exp_design <- exp_design[exp_design$sample %in% samples, ]
-
-if(!opt$loadRDS) {
+final_counts_path <- file.path(opt$output, "counts/matrix.mtx.gz")
+if(!file.exists(final_counts_path)) {
   split_path <- strsplit(opt$SingleR_ref, "/")[[1]]
   if(split_path[length(split_path)] != "") {
     path_to_ref <- opt$SingleR_ref
@@ -248,8 +249,7 @@ if(!opt$loadRDS) {
     SingleR_ref <- HDF5Array::loadHDF5SummarizedExperiment(dir = path_to_ref, prefix = "")
     if(opt$ref_filter != "") {
       message("Filtering reference")
-      ref_filter <- readLines(opt$ref_filter)
-      expressions <- strsplit(ref_filter, ";")[[1]]
+      expressions <- strsplit(opt$ref_filter, ";")[[1]]
       col_data <- SummarizedExperiment::colData(SingleR_ref)
       filter <- vector(mode = "list", length = length(expressions))
       for(i in seq(expressions)) {
@@ -272,7 +272,7 @@ if(!opt$loadRDS) {
   if(opt$integrate) {
     if(opt$imported_counts == "") {
       seu <- merge_seurat(project_name = opt$name, exp_design = exp_design,
-                          suffix = opt$suffix, count_path = opt$input)  
+                          suffix = opt$suffix, count_path = opt$input)
     } else {
       seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(opt$imported_counts, gene.column = 1),
                                         project = opt$name, min.cells = 1, min.features = 1)
@@ -310,10 +310,20 @@ if(!opt$loadRDS) {
   }
 }
 
-if(opt$loadRDS) {
-  file <- file.path(opt$output, paste0(opt$name, ".final_results.rds"))
-  message(paste0("Loading processed object from ", file))
-  final_results <- readRDS(file)
+if(file.exists(final_counts_path)) {
+  message("Reconstructing Seurat object from directory ", opt$output)
+  seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(file.path(opt$output, "counts"), gene.column = 1),
+                                    project = opt$name, min.cells = 1, min.features = 1)
+  seu_meta <- read.table(file.path(opt$output, "counts/meta.tsv"), sep = "\t", header = TRUE)
+  rownames(seu_meta) <- colnames(seu)
+  seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
+  seu$RNA$data <- seu$RNA$counts
+  markers <- read.table(file.path(opt$output, "markers.tsv"), sep = "\t", header = TRUE)
+  embeddings <- read.table(file.path(opt$output, "embeddings", "cell_embeddings.tsv"), header = TRUE)
+  seu$umap <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'umap', assay = 'RNA')
+  expr_metrics <- get_expression_metrics(seu = seu, sigfig = 2)
+  final_results <- list(seu = seu, markers = markers, integrate = TRUE, clusters_pct = expr_metrics$clusters_pct,
+                        sample_qc_pct = expr_metrics$sample_qc_pct)
 } else {
   message("Analyzing seurat object")
   final_results <- main_annotate_sc(seu = seu, cluster_annotation = cluster_annotation, name = opt$name,
@@ -330,20 +340,27 @@ if(opt$loadRDS) {
                     k_weight = opt$k_weight)
 }
 
-message("--------------------------------------------")
-message("----------SAVING RESULTS TO DISK------------")
-message("--------------------------------------------")
 
-write_annot_output(final_results = final_results, opt = opt)
+if(!file.exists(final_counts_path) & opt$integrate) {
+  message("--------------------------------------------")
+  message("----------SAVING RESULTS TO DISK------------")
+  message("--------------------------------------------")
 
-message("--------------------------------------------")
-message("------------WRITING QC REPORT---------------")
-message("--------------------------------------------")
+  write_annot_output(final_results = final_results, opt = opt)
+}
 
-write_sc_report(final_results = final_results, template_folder = template_folder, source_folder = source_folder,
-                template = "sc_quality_control.txt", output = file.path(opt$output, "report"),
-                query = unlist(target_genes), out_name = "qc_report.html",
-                use_canvas = TRUE, opt = opt)
+if(file.exists(final_counts_path)) {
+  message("Processing reconstruction of seurat object. Not launching QC report.")
+} else {
+  message("--------------------------------------------")
+  message("------------WRITING QC REPORT---------------")
+  message("--------------------------------------------")
+
+  write_sc_report(final_results = final_results, template_folder = template_folder, source_folder = source_folder,
+                  template = "sc_quality_control.txt", output = file.path(opt$output, "report"),
+                  query = unlist(target_genes), out_name = "qc_report.html",
+                  use_canvas = TRUE, opt = opt)
+}
 
 message("--------------------------------------------")
 message("---------WRITING ANNOTATION REPORT----------")
