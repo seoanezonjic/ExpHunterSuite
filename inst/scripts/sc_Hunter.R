@@ -61,13 +61,6 @@ if(opt$targets_folder == "" | !file.exists(opt$targets_folder)) {
   names(DEG_targets) <- tools::file_path_sans_ext(basename(target_files))
 }
 
-if(opt$cpu > 1) {
-  BiocParallel::register(BiocParallel::MulticoreParam(opt$cpu))
-  BPPARAM <- BiocParallel::MulticoreParam(opt$cpu)
-} else {
-  BPPARAM <- BiocParallel::SerialParam()
-}
-
 if(opt$target_genes == ""){
   message("No target genes provided")
   target_genes <- NULL
@@ -84,10 +77,10 @@ seu_meta <- read.table(file.path(opt$input, "meta.tsv"), sep = "\t", header = TR
 rownames(seu_meta) <- colnames(seu)
 seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
 seu$RNA$data <- seu$RNA$counts
-DEG_list <- BiocParallel::bplapply(X = DEG_targets, FUN = main_sc_Hunter, BPPARAM = BPPARAM, seu = seu,
-                                   p_val_cutoff = opt$p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
-                                   min_cell_proportion = opt$min_cell_proportion, query = target_genes,
-                                   output_path = opt$output, min_counts = opt$min_counts, verbose = opt$verbose)
+DEG_list <- parallel_list(X = DEG_targets, FUN = main_sc_Hunter, workers = opt$cpu, seu = seu,
+                          p_val_cutoff = opt$p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
+                          min_cell_proportion = opt$min_cell_proportion, query = target_genes,
+                          output_path = opt$output, min_counts = opt$min_counts, verbose = opt$verbose)
 names(DEG_list) <- unlist(strsplit(names(DEG_targets), "_target"))
 
 message("--------------------------------------------")
