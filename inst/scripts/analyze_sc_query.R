@@ -68,7 +68,7 @@ seu$RNA$data <- seu$RNA$counts
 message("Loading embedding information from directory ", opt$input)
 embeddings <- read.table(file.path(opt$input, "embeddings", "cell_embeddings.tsv"), header = TRUE)
 seu$UMAP_full <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'UMAPfull_', assay = 'RNA')
-markers <- read.table(paste0(opt$input, "/markers.tsv"), header = TRUE)
+markers <- read.table(paste0(opt$input, "/markers.tsv"), sep = "\t", header = TRUE)
 query_data <- main_analyze_sc_query(seu = seu, query = target_genes, sigfig = opt$sigfig)
 
 query_results <- list(seu = seu, query_data = query_data)
