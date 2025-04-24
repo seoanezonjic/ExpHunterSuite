@@ -414,7 +414,7 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
     message("Calculating global DEGs")
     Seurat::Idents(seu) <- seu@meta.data[, tolower(cond)]
     global_markers <- Seurat::FindMarkers(seu, ident.1 = conds[1],
-                                ident.2 = conds[2], verbose = verbose)
+                       min.pct = min.pct, ident.2 = conds[2], verbose = verbose)
     global_markers$gene <- rownames(global_markers)
     nums <- sapply(global_markers, is.numeric)
     global_markers[nums] <- lapply(global_markers[nums], signif, 2)
@@ -1218,22 +1218,24 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
                              ref_label = ref_label, aggr.ref = FALSE,
                              fine.tune = TRUE, assay = "RNA", verbose = FALSE,
                              save_pdf = getwd(), subset_by = NULL){
-    counts_matrix <- Seurat::GetAssayData(seu, assay = assay)
-    SingleR_annotation <- SingleR::SingleR(test = counts_matrix,
-      ref = SingleR_ref, labels = SingleR_ref[[ref_label]], de.n = ref_n,
-      assay.type.test = "scale.data", de.method = ref_de_method,
-      BPPARAM = BPPARAM, aggr.ref = aggr.ref, fine.tune = fine.tune)
-    seu@meta.data$cell_type <- SingleR_annotation$labels
-    pdf(file.path(save_pdf, "DeltaDistribution.pdf"), width = 20, height = 10)
-    print(SingleR::plotScoreHeatmap(SingleR_annotation))
-    print(SingleR::plotDeltaDistribution(SingleR_annotation))
-    message("Calculating cell type markers")
-    markers <- calculate_markers(seu = seu, subset_by = subset_by,
-                                 integrate = integrate, verbose = verbose,
-                                 idents = "cell_type")
-    names(markers)[names(markers) == "seurat_clusters"] <- "cell_type"
-    return(list(seu = seu, markers = markers,
-            SingleR_annotation = SingleR_annotation))
+  SingleR_start <- Sys.time()
+  counts_matrix <- Seurat::GetAssayData(seu, assay = assay)
+  SingleR_annotation <- SingleR::SingleR(test = counts_matrix,
+    ref = SingleR_ref, labels = SingleR_ref[[ref_label]], de.n = ref_n,
+    assay.type.test = "scale.data", de.method = ref_de_method,
+    BPPARAM = BPPARAM, aggr.ref = aggr.ref, fine.tune = fine.tune)
+  message(paste0("SingleR annotation time: ", Sys.time() - SingleR_start))
+  seu@meta.data$cell_type <- SingleR_annotation$labels
+  pdf(file.path(save_pdf, "DeltaDistribution.pdf"), width = 20, height = 10)
+  print(SingleR::plotScoreHeatmap(SingleR_annotation))
+  print(SingleR::plotDeltaDistribution(SingleR_annotation))
+  message("Calculating cell type markers")
+  markers <- calculate_markers(seu = seu, subset_by = subset_by,
+                               integrate = integrate, verbose = verbose,
+                               idents = "cell_type")
+  names(markers)[names(markers) == "seurat_clusters"] <- "cell_type"
+  return(list(seu = seu, markers = markers,
+          SingleR_annotation = SingleR_annotation))
 }
 
 annotate_clusters <- function(seu, subset_by = NULL,

@@ -142,21 +142,19 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   message('Finding variable features')
   seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs, verbose = verbose,
                                       selection.method = "vst", assay = "RNA")
-  if(sketch) {
+  if(new_opt$sketch) {
     seu <- process_sketch(seu = seu, sketch_method = sketch_method,
                           sketch_pct = sketch_pct, force_ncells = force_ncells,
                           hvgs = hvgs, verbose = verbose)
   }
   assay <- Seurat::DefaultAssay(seu)
   if(!is.null(SingleR_ref)) {
-    SingleR_start <- Sys.time()
     message("SingleR reference provided. Annotating cells.")
     annotation <- annotate_SingleR(seu = seu, SingleR_ref = SingleR_ref,
      BPPARAM = BPPARAM, ref_n = ref_n, ref_label = ref_label, verbose = verbose,
      ref_de_method = ref_de_method, aggr.ref = new_opt$aggr.ref,
      fine.tune = new_opt$fine.tune, save_pdf = file.path(output, "report"))
     annotate <- FALSE
-    message(paste0("SingleR annotation time :", Sys.time() - SingleR_start))
     seu <- annotation$seu
     markers <- annotation$markers
   }
