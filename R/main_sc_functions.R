@@ -116,6 +116,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   sketch = FALSE, sketch_pct = 25, k_weight = 100, sketch_ncells = 5000,
   force_ncells = NA_integer_, sketch_method = "LeverageScore",
   doublet_path = getwd()){
+  main_start <- Sys.time()
   new_opt <- check_sc_input(integrate = integrate, sketch = sketch,
                             SingleR_ref = SingleR_ref, reduce = reduce)
   annotate <- TRUE
@@ -137,10 +138,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   seu <- Seurat::NormalizeData(object = seu, verbose = verbose,
   									           normalization.method = normalmethod,
                                scale.factor = scalefactor)
-  norm_end <- Sys.time()
-  if(verbose) {
-    message(paste0("Normalization time: ", norm_end-norm_start))
-  }
+  message(paste0("Normalization time: ", Sys.time() - norm_start))
   message('Finding variable features')
   seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs, verbose = verbose,
                                       selection.method = "vst", assay = "RNA")
@@ -158,10 +156,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
      ref_de_method = ref_de_method, aggr.ref = new_opt$aggr.ref,
      fine.tune = new_opt$fine.tune, save_pdf = file.path(output, "report"))
     annotate <- FALSE
-    SingleR_end <- Sys.time()
-    if(verbose) {
-      message(paste0("SingleR annotation time :", SingleR_end-SingleR_start))
-    }
+    message(paste0("SingleR annotation time :", Sys.time() - SingleR_start))
     seu <- annotation$seu
     markers <- annotation$markers
   }
@@ -169,10 +164,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   scale_start <- Sys.time()
   seu <- Seurat::ScaleData(object = seu, verbose = verbose,
                            features = rownames(seu))
-  scale_end <- Sys.time()
-  if(verbose) {
-    message(paste0("Scaling time: ", scale_end - scale_start))
-  }
+  message(paste0("Scaling time: ", Sys.time() - scale_start))
   message('Reducing dimensionality')  
   seu <- Seurat::RunPCA(seu, assay = assay, npcs = ndims, verbose = verbose)
   reduction <- "pca"
@@ -212,10 +204,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
       subset_by = subset_by, cluster_annotation = cluster_annotation,
       p_adj_cutoff = p_adj_cutoff, assay = assay, integrate = new_opt$integrate,
       verbose = verbose)
-    annot_end <- Sys.time()
-    if(verbose) {
-      message(paste0("Time to annotate: ", annot_end - annot_start))
-    }
+      message(paste0("Time to annotate: ", Sys.time() - annot_start))
     seu <- annotation$seu
     markers <- annotation$markers
   }
@@ -224,6 +213,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   }
   assay <- "RNA"
   expr_metrics <- get_expression_metrics(seu = seu, sigfig = sigfig)
+  message(paste0("Total processing time: ", Sys.time() - main_start))
   final_results <- list()
   final_results$qc <- qc
   final_results$seu <- seu
