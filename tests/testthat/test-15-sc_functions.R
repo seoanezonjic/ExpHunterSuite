@@ -325,6 +325,14 @@ test_that("breakdown_query works in simple case", {
   expect_equal(output_df, expected_df)
 })
 
+test_that("breakdown_query works with counts matrix", {
+  expected_df <- c(0.130, 0.130, 0.270)
+  names(expected_df) <- query
+  counts_matrix <- Seurat::GetAssayData(test_pbmc, layer = "data")
+  output_df <- signif(breakdown_query(counts_matrix, query), 2)
+  expect_equal(output_df, expected_df)
+})
+
 test_that("breakdown_query gives warning if any query genes are not found", {
   missing_query <- c(query, "NOEXPA", "NOEXPB")
   expected_df <- c(0.130, 0.130, 0.270)
