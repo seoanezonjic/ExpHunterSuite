@@ -127,7 +127,7 @@ end.rcode-->
     collapse_list <- vector(mode = "character", length = length(types))
     for(type in seq(types)) {
         plotter$hash_vars$type_markers <- plotter$hash_vars$markers[plotter$hash_vars$markers[slot] == types[type], ]
-        plotter$hash_vars$type_markers$seurat_clusters <- as.character(plotter$hash_vars$type_markers$seurat_clusters)
+        plotter$hash_vars$type_markers[, slot] <- as.character(plotter$hash_vars$type_markers[, slot])
         collapse_list[type] <- paste(paste0("<h2>Top markers for identity ", types[type]),
                                             plotter$prettify_div(plotter$table(list(id = "type_markers", header = NULL,
                                                     row_names = NULL, table_rownames = FALSE, styled = "dt",
@@ -149,7 +149,7 @@ end.rcode-->
 
 <!--begin.rcode Complete_PCA, eval = FALSE
     # This block is set to never run, as it only exists for technical purposes. If you see this and are interested in
-    # plotting the PCA, you can safely set it to TRUE.
+    # plotting the PCA, you can safely set it to TRUE (bear in mind that PCA data is not saved by default)
     cat(plotter$create_title("<b>PCA (DEBUG BLOCK)</b>", "dimreds", hlevel = 1, indexable = TRUE, clickable = FALSE,
                               t_id = "dimreds", clickable_text = ""))
     cat(plotter$create_title("PCA", "full_pca", hlevel = 2, indexable = TRUE, clickable = FALSE,
