@@ -305,6 +305,22 @@ test_that("get_sc_markers skips exclusive clusters in DEG analysis, alternate
                 ))
 })
 
+test_that("get_sc_markers properly applies min_pct filter", {
+  local_pbmc <- test_pbmc
+  clusters_to_remove <- local_pbmc@meta.data$seurat_clusters == "1"
+  local_pbmc@meta.data <- local_pbmc@meta.data[!clusters_to_remove,]
+  expected_warning <- paste0("Cluster 2 contains fewer than three cells for ",
+                "condition 'g2'")
+  suppressMessages(get_sc_markers(seu = local_pbmc,
+                 cond = "groups", DEG = TRUE, verbose = FALSE,
+                 subset_by = "cell_types", min.pct = 0.13))
+  expect_false(suppressWarnings(
+                suppressMessages(get_sc_markers(seu = test_pbmc,
+                cond = "groups", DEG = TRUE, verbose = FALSE,
+                subset_by = "cell_types")$markers[[2]][[1]])
+                ))
+})
+
 test_that("rename_clusters simply assigns names to clusters", {
   test_pbmc$seurat_clusters <- 1:15
   Seurat::Idents(test_pbmc) <- test_pbmc$seurat_clusters
