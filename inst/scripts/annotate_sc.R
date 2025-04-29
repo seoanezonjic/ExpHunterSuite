@@ -142,11 +142,6 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 options(future.globals.maxSize = 15e+09)
 options(Seurat.object.assay.version = 'v5')
 
-if(Sys.getenv("sketch") == "TRUE") {
-    ## Script refuses to work without future in singularity mode
-    # future::plan("multisession", workers = opt$cpu, gc = TRUE)
-}
-
 message(paste0("Analyzing ", opt$name))
 
 if(is.na(opt$force_ncells)) {
@@ -154,7 +149,7 @@ if(is.na(opt$force_ncells)) {
 } else {
   force_ncells <- opt$force_ncells
 }
-
+opt$cpu <- 1
 if(opt$cpu > 1) {
   BiocParallel::register(BiocParallel::MulticoreParam(opt$cpu))
   BPPARAM <- BiocParallel::MulticoreParam(opt$cpu)
@@ -162,81 +157,18 @@ if(opt$cpu > 1) {
   BPPARAM <- BiocParallel::SerialParam()
 }
 
+message("CPU provided to BiocParallel: ", opt$cpu)
+
+##########################################
+## LOADING INPUT FILES
+##########################################
+
+processed_opt <- process_sc_opt(opt)
+
 ##########################################
 ## MAIN
 ##########################################
-if(opt$cluster_annotation != "") {
-  cluster_annotation <- read.table(opt$cluster_annotation, sep = "\t", header = TRUE)
-} else {
-  cluster_annotation <- NULL
-}
-if(opt$cell_annotation != "") {
-  cell_annotation <- read.table(opt$cell_annotation, sep = "\t", header = TRUE)
-} else {
-  cell_annotation <- NULL
-}
 
-if(opt$doublet_file != "") {
-  if(file.exists(opt$doublet_file)) {
-    doublet_list <- read.table(opt$doublet_file)[[1]]
-  } else if(opt$doublet_file != ""){
-    stop(paste0("Doublet file does not exist. File supplied was \"",
-                opt$doublet_file, "\""))
-  }
-} else {
-  doublet_list <- NULL
-}
-
-if(opt$integrate) {
-  out_suffix <- "annotation_report.html"
-} else {
-  out_suffix <- "sample_annotation_report.html"
-}
-
-if(opt$int_method == "") {
-  int_method = "RPCA"
-} else {
-  int_method = opt$int_method
-}
-
-if(opt$target_genes == ""){
-  warning("No target genes provided")
-  target_genes <- NULL
-} else if(file.exists(opt$target_genes)) {
-  target_genes <- read_and_format_targets(opt$target_genes)
-} else {
-  target_genes <- list(Custom = strsplit(opt$target_genes, split = ";")[[1]])
-}
-
-exp_design <- read.table(opt$exp_design, sep = "\t", header = TRUE)
-subset_by <- NULL
-if(opt$integrate) {
-  if(opt$subset_by == "") {
-  message("No conditions specified for analysis. Data will not be subset.")
-  } else {
-    subset_by <- tolower(unlist(strsplit(opt$subset_by, ",")))
-    message(paste0("Selected ", length(subset_by), " subset condition(s): ", paste0(subset_by, collapse = ", ")))    
-  }
-} else {
-  message("Starting non-integrative analysis")
-}
-
-if(opt$extra_columns == "") {
-  extra_columns <- NULL
-} else {
-  extra_columns <- tolower(unlist(strsplit(opt$extra_columns, ",")))
-}
-
-# DEG_target <- generate_sc_target(DEG_target = opt$DEG_target)
-
-# Input reading and integration variables setup
-if(opt$samples_to_integrate == "") {
-  samples <- exp_design$sample
-} else {
-  samples <- read.table(opt$samples_to_integrate, sep = "\t", header = FALSE)[[1]]
-}
-
-exp_design <- exp_design[exp_design$sample %in% samples, ]
 final_counts_path <- file.path(opt$output, "counts/matrix.mtx.gz")
 if(!file.exists(final_counts_path)) {
   split_path <- strsplit(opt$SingleR_ref, "/")[[1]]
@@ -247,16 +179,25 @@ if(!file.exists(final_counts_path)) {
     }
     message("Loading provided SingleR reference")
     SingleR_ref <- HDF5Array::loadHDF5SummarizedExperiment(dir = path_to_ref, prefix = "")
+    message(paste0("Total cells in reference: ", ncol(SingleR_ref), "."))
     if(opt$ref_filter != "") {
       message("Filtering reference")
-      expressions <- strsplit(opt$ref_filter, ";")[[1]]
+      expressions <- strsplit(opt$ref_filter, "&|\\|")[[1]]
+      expressions <- gsub(" $", "", expressions)
+      expressions <- gsub("^ ", "", expressions)
       col_data <- SummarizedExperiment::colData(SingleR_ref)
+      if(grepl("&", opt$ref_filter)) {
+        operator <- "&"
+      } else {
+        operator <- "|"
+      }
       filter <- vector(mode = "list", length = length(expressions))
       for(i in seq(expressions)) {
         filter[[i]] <- parse_filter(object = "as.data.frame(col_data)",
                                     expression = expressions[i]) 
       }
-      filter <- Reduce("|", filter)
+      filter <- Reduce(operator, filter)
+      message(paste0("Selected ", sum(filter), " cells for reference subsetting."))
       SingleR_ref <- SingleR_ref[, filter]
     }
   } else {
@@ -271,7 +212,7 @@ if(!file.exists(final_counts_path)) {
   }
   if(opt$integrate) {
     if(opt$imported_counts == "") {
-      seu <- merge_seurat(project_name = opt$name, exp_design = exp_design,
+      seu <- merge_seurat(project_name = opt$name, exp_design = processed_opt$exp_design,
                           suffix = opt$suffix, count_path = opt$input)
     } else {
       seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(opt$imported_counts, gene.column = 1),
@@ -284,8 +225,9 @@ if(!file.exists(final_counts_path)) {
     input <- file.path(opt$input, ifelse(opt$filter, "filtered_feature_bc_matrix",
                                                    "raw_feature_bc_matrix"))
     seu <- read_sc_counts(name = opt$name, input = input, mincells = opt$mincells,
-                      minfeats = opt$minfeats, exp_design = exp_design)
+                      minfeats = opt$minfeats, exp_design = processed_opt$exp_design)
   }
+  message(paste0("Total cells in dataset: ", ncol(seu), "."))
   if(opt$filter_dataset != "") {
     message("Filtering input data")
     expressions <- strsplit(opt$filter_dataset, "&|\\|")[[1]]
@@ -302,6 +244,7 @@ if(!file.exists(final_counts_path)) {
                                   expression = expressions[i]) 
     }
     filter <- Reduce(operator, filter)
+    message(paste0("Selected ", sum(filter), " cells for input data subsetting."))
     seu <- seu[, filter]
   }
   if(opt$reduce) {
@@ -320,26 +263,24 @@ if(file.exists(final_counts_path)) {
   seu$RNA$data <- seu$RNA$counts
   markers <- read.table(file.path(opt$output, "markers.tsv"), sep = "\t", header = TRUE)
   embeddings <- read.table(file.path(opt$output, "embeddings", "cell_embeddings.tsv"), header = TRUE)
-  seu$umap <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'umap', assay = 'RNA')
+  seu$umap <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'umap_', assay = 'RNA')
   expr_metrics <- get_expression_metrics(seu = seu, sigfig = 2)
   final_results <- list(seu = seu, markers = markers, integrate = TRUE, clusters_pct = expr_metrics$clusters_pct,
                         sample_qc_pct = expr_metrics$sample_qc_pct)
 } else {
   message("Analyzing seurat object")
-  final_results <- main_annotate_sc(seu = seu, cluster_annotation = cluster_annotation, name = opt$name,
-                    ndims = opt$ndims, resolution = opt$resolution, subset_by = subset_by,
-                    cell_annotation = cell_annotation, minqcfeats = opt$minqcfeats, percentmt = opt$percentmt,
+  final_results <- main_annotate_sc(seu = seu, cluster_annotation = processed_opt$cluster_annotation, name = opt$name,
+                    ndims = opt$ndims, resolution = opt$resolution, subset_by = processed_opt$subset_by,
+                    cell_annotation = processed_opt$cell_annotation, minqcfeats = opt$minqcfeats, percentmt = opt$percentmt,
                     hvgs = opt$hvgs, scalefactor = opt$scalefactor, normalmethod = opt$normalmethod,
                     p_adj_cutoff = opt$p_adj_cutoff, verbose = opt$verbose, sigfig = 2,
-                    output = opt$output, integrate = opt$integrate, query = unlist(target_genes),
-                    reduce = opt$reduce, save_RDS = opt$saveRDS, SingleR_ref = SingleR_ref,
-                    ref_label = opt$ref_label, ref_de_method = ref_de_method, ref_n = ref_n,
-                    BPPARAM = BPPARAM, doublet_list = doublet_list, integration_method = int_method,
+                    output = opt$output, integrate = opt$integrate, query = processed_opt$target_genes,
+                    reduce = opt$reduce, SingleR_ref = SingleR_ref, ref_label = opt$ref_label, ref_de_method = ref_de_method, ref_n = ref_n,
+                    BPPARAM = BPPARAM, doublet_list = processed_opt$doublet_list, integration_method = processed_opt$int_method,
                     sketch = opt$sketch, sketch_ncells = opt$sketch_ncells, sketch_pct = opt$sketch_pct,
                     sketch_method = opt$sketch_method, force_ncells = force_ncells,
                     k_weight = opt$k_weight)
 }
-
 
 if(!file.exists(final_counts_path) & opt$integrate) {
   message("--------------------------------------------")

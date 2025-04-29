@@ -1345,3 +1345,44 @@ get_expression_metrics <- function(seu, sigfig) {
   clusters_pct <- get_clusters_distribution(seu = seu, sigfig = sigfig)
   return(list(sample_qc_pct = sample_qc_pct, clusters_pct = clusters_pct))
 }
+
+# SCRIPTING FUNCTIONS
+
+process_sc_opt <- function(opt = list()) {
+  cluster_annotation <- cell_annotation <- doublet_list <- target_genes <- NULL
+  out_suffix <- "sample_annotation_report.html"
+  int_method <- "RPCA"
+  target_genes <- subset_by <- extra_columns <- NULL
+  exp_design <- read.table(opt$exp_design, sep = "\t", header = TRUE)
+  samples <- exp_design$sample
+  if(file.exists(opt$cluster_annotation)) {
+    cluster_annotation <- read.table(opt$cluster_annotation, sep = "\t",
+                                     header = TRUE)
+  }
+  if(file.exists(opt$cell_annotation)) {
+    cell_annotation <- read.table(opt$cell_annotation, sep = "\t",
+                                  header = TRUE)
+  }
+  if(file.exists(opt$doublet_file) doublet_list <- read.table(opt$doublet_file)
+  if(opt$integrate) out_suffix <- "annotation_report.html"
+  if(opt$int_method != "") int_method <- opt$int_method
+  if(opt$target_genes != "") target_genes <- strsplit(opt$target_genes,
+                                                      split = ";")[[1]]
+  if(opt$integrate & opt$subset_by != "") {
+    subset_by <- tolower(unlist(strsplit(opt$subset_by, ",")))
+    message(paste0("Selected ", length(subset_by), " subset condition(s): ",
+      paste0(subset_by, collapse = ", ")))    
+  }
+  if(opt$extra_columns != "") {
+    extra_columns <- tolower(unlist(strsplit(opt$extra_columns, ",")))
+  }
+  if(opt$samples_to_integrate != "") {
+    samples <- read.table(opt$samples_to_integrate, sep = "\t", header = FALSE)
+    exp_design <- exp_design[exp_design$sample %in% samples[[1]], ]
+  }
+  new_opt <- list(cluster_annotation = cluster_annotation,
+                  cell_annotation = cell_annotation, out_suffix = out_suffix,
+                  doublet_list = doublet_list[[1]], int_method = int_method,
+                  target_genes = target_genes, exp_design = exp_design,
+                  subset_by = subset_by, extra_columns = extra_columns)
+}
