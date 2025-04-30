@@ -163,7 +163,10 @@ message("CPU provided to BiocParallel: ", opt$cpu)
 ## LOADING INPUT FILES
 ##########################################
 
-processed_opt <- process_sc_opt(opt)
+parsed_input <- process_sc_opt(opt)
+opt <- parsed_input$opt
+doublet_list <- parsed_input$doublet_list
+out_suffix <- parsed_input$out_suffix
 
 ##########################################
 ## MAIN
@@ -171,48 +174,14 @@ processed_opt <- process_sc_opt(opt)
 
 final_counts_path <- file.path(opt$output, "counts/matrix.mtx.gz")
 if(!file.exists(final_counts_path)) {
-  split_path <- strsplit(opt$SingleR_ref, "/")[[1]]
-  if(split_path[length(split_path)] != "") {
-    path_to_ref <- opt$SingleR_ref
-    if(opt$ref_version != "") {
-      path_to_ref <- paste(path_to_ref, opt$ref_version, sep = "_")
-    }
-    message("Loading provided SingleR reference")
-    SingleR_ref <- HDF5Array::loadHDF5SummarizedExperiment(dir = path_to_ref, prefix = "")
-    message(paste0("Total cells in reference: ", ncol(SingleR_ref), "."))
-    if(opt$ref_filter != "") {
-      message("Filtering reference")
-      expressions <- strsplit(opt$ref_filter, "&|\\|")[[1]]
-      expressions <- gsub(" $", "", expressions)
-      expressions <- gsub("^ ", "", expressions)
-      col_data <- SummarizedExperiment::colData(SingleR_ref)
-      if(grepl("&", opt$ref_filter)) {
-        operator <- "&"
-      } else {
-        operator <- "|"
-      }
-      filter <- vector(mode = "list", length = length(expressions))
-      for(i in seq(expressions)) {
-        filter[[i]] <- parse_filter(object = "as.data.frame(col_data)",
-                                    expression = expressions[i]) 
-      }
-      filter <- Reduce(operator, filter)
-      message(paste0("Selected ", sum(filter), " cells for reference subsetting."))
-      SingleR_ref <- SingleR_ref[, filter]
-    }
-  } else {
-    SingleR_ref <- NULL
-  }
-  if(opt$ref_de_method == "") {
-  ref_de_method <- NULL
-  ref_n <- NULL
-  } else {
-    ref_de_method <- opt$ref_de_method
-    ref_n <- opt$ref_n
-  }
+  # Input parser function
+  # Reference loader function
+  message("Loading provided SingleR reference")
+  SingleR_ref <- load_SingleR_ref(path = opt$SingleR_ref,
+                             filter = opt$ref_filter, version = opt$ref_version)
   if(opt$integrate) {
     if(opt$imported_counts == "") {
-      seu <- merge_seurat(project_name = opt$name, exp_design = processed_opt$exp_design,
+      seu <- merge_seurat(project_name = opt$name, exp_design = parsed_input$exp_design,
                           suffix = opt$suffix, count_path = opt$input)
     } else {
       seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(opt$imported_counts, gene.column = 1),
@@ -225,7 +194,7 @@ if(!file.exists(final_counts_path)) {
     input <- file.path(opt$input, ifelse(opt$filter, "filtered_feature_bc_matrix",
                                                    "raw_feature_bc_matrix"))
     seu <- read_sc_counts(name = opt$name, input = input, mincells = opt$mincells,
-                      minfeats = opt$minfeats, exp_design = processed_opt$exp_design)
+                      minfeats = opt$minfeats, exp_design = parsed_input$exp_design)
   }
   message(paste0("Total cells in dataset: ", ncol(seu), "."))
   if(opt$filter_dataset != "") {
@@ -251,6 +220,7 @@ if(!file.exists(final_counts_path)) {
     message('Downsampling seurat object')
     seu <- downsample_seurat(seu, cells = 500, features = 5000, keep = unlist(target_genes))
   }
+  # Function end
 }
 
 if(file.exists(final_counts_path)) {
@@ -269,14 +239,14 @@ if(file.exists(final_counts_path)) {
                         sample_qc_pct = expr_metrics$sample_qc_pct)
 } else {
   message("Analyzing seurat object")
-  final_results <- main_annotate_sc(seu = seu, cluster_annotation = processed_opt$cluster_annotation, name = opt$name,
-                    ndims = opt$ndims, resolution = opt$resolution, subset_by = processed_opt$subset_by,
-                    cell_annotation = processed_opt$cell_annotation, minqcfeats = opt$minqcfeats, percentmt = opt$percentmt,
+  final_results <- main_annotate_sc(seu = seu, cluster_annotation = opt$cluster_annotation, name = opt$name,
+                    ndims = opt$ndims, resolution = opt$resolution, subset_by = opt$subset_by,
+                    cell_annotation = opt$cell_annotation, minqcfeats = opt$minqcfeats, percentmt = opt$percentmt,
                     hvgs = opt$hvgs, scalefactor = opt$scalefactor, normalmethod = opt$normalmethod,
                     p_adj_cutoff = opt$p_adj_cutoff, verbose = opt$verbose, sigfig = 2,
-                    output = opt$output, integrate = opt$integrate, query = processed_opt$target_genes,
+                    output = opt$output, integrate = opt$integrate, query = opt$target_genes,
                     reduce = opt$reduce, SingleR_ref = SingleR_ref, ref_label = opt$ref_label, ref_de_method = ref_de_method, ref_n = ref_n,
-                    BPPARAM = BPPARAM, doublet_list = processed_opt$doublet_list, integration_method = processed_opt$int_method,
+                    BPPARAM = BPPARAM, doublet_list = parsed_input$doublet_list, integration_method = opt$int_method,
                     sketch = opt$sketch, sketch_ncells = opt$sketch_ncells, sketch_pct = opt$sketch_pct,
                     sketch_method = opt$sketch_method, force_ncells = force_ncells,
                     k_weight = opt$k_weight)
@@ -286,7 +256,6 @@ if(!file.exists(final_counts_path) & opt$integrate) {
   message("--------------------------------------------")
   message("----------SAVING RESULTS TO DISK------------")
   message("--------------------------------------------")
-
   write_annot_output(final_results = final_results, opt = opt)
 }
 
@@ -296,10 +265,8 @@ if(file.exists(final_counts_path)) {
   message("--------------------------------------------")
   message("------------WRITING QC REPORT---------------")
   message("--------------------------------------------")
-
   write_sc_report(final_results = final_results, template_folder = template_folder, source_folder = source_folder,
-                  template = "sc_quality_control.txt", output = file.path(opt$output, "report"),
-                  query = unlist(target_genes), out_name = "qc_report.html",
+                  template = "sc_quality_control.txt", output = file.path(opt$output, "report"), out_name = "qc_report.html",
                   use_canvas = TRUE, opt = opt)
 }
 
@@ -309,6 +276,4 @@ message("--------------------------------------------")
 
 write_sc_report(final_results = final_results, template_folder = template_folder,
                 output = file.path(opt$output, "report"), source_folder = source_folder,
-                query = unlist(target_genes), extra_columns = extra_columns,
-                subset_by = subset_by, cell_annotation = cell_annotation, template = "sc_annotation.txt",
-                out_name = out_suffix, opt = opt)
+                template = "sc_annotation.txt", out_name = out_suffix, opt = opt)
