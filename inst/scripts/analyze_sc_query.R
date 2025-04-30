@@ -59,16 +59,15 @@ if(opt$extra_columns == "") {
 }
 
 message("Reconstructing Seurat object from directory ", opt$input)
-seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(opt$input, gene.column = 1),
+seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(file.path(opt$input, "counts"), gene.column = 1),
                                   project = opt$name, min.cells = 1, min.features = 1)
 seu_meta <- read.table(file.path(opt$input, "counts", "meta.tsv"), sep = "\t", header = TRUE)
 rownames(seu_meta) <- colnames(seu)
 seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
 seu$RNA$data <- seu$RNA$counts
-message("Loading embedding information from directory ", opt$input)
 embeddings <- read.table(file.path(opt$input, "embeddings", "cell_embeddings.tsv"), header = TRUE)
 seu$UMAP_full <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'UMAPfull_', assay = 'RNA')
-markers <- read.table(paste0(opt$input, "/markers.tsv"), sep = "\t", header = TRUE)
+markers <- read.table(file.path(opt$input, "markers.tsv"), sep = "\t", header = TRUE)
 query_data <- main_analyze_sc_query(seu = seu, query = target_genes, sigfig = opt$sigfig)
 
 query_results <- list(seu = seu, query_data = query_data)
