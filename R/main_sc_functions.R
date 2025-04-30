@@ -336,12 +336,8 @@ write_annot_output <- function(final_results = stop("Missing results object"),
 #' @returns invisible(NULL)
 
 write_sc_report <- function(final_results, output = getwd(),
-                            template_folder, source_folder = NULL,
-                            query = NULL, subset_by = NULL, opt,
-                            cell_annotation = NULL, template = NULL,
-                            out_name = NULL, use_canvas = TRUE,
-                            extra_columns = NULL, DEG_p_val_cutoff = NA_real_,
-                            min_avg_log2FC = NA_real_){
+                            template_folder, source_folder = NULL, opt,
+                            template = NULL, use_canvas = TRUE){
   if(is.null(template_folder)) {
     stop("No template folder was provided.")
   }
@@ -362,12 +358,12 @@ write_sc_report <- function(final_results, output = getwd(),
   if(!file.exists(template)) {
     stop("Specified template does not exist in template folder.")
   }
-  out_file <- file.path(output, paste0(opt$name, "_", out_name))
+  out_file <- file.path(output, paste0(opt$name, "_", opt$out_suffix))
   tmp_folder <- file.path(output, paste0(opt$name, "_tmp_lib"))
   dir.create(tmp_folder)
   container <- list(opt = opt, seu = final_results$seu, qc = final_results$qc,
                  subset_by = subset_by, use_canvas = use_canvas,
-                 DEG_list = final_results$DEG_list, query = query,
+                 DEG_list = final_results$DEG_list, query = opt$target_genes,
                  p_val_cutoff = opt$DEG_p_val_cutoff,
                  min_avg_log2FC = opt$min_avg_log2FC,
                  marker_meta = final_results$marker_meta,
@@ -377,8 +373,9 @@ write_sc_report <- function(final_results, output = getwd(),
                  query_pct = final_results$query_data$query_pct,
                  query_cluster_pct = final_results$query_data$query_cluster_pct,
                  markers = final_results$markers, use_canvas = use_canvas,
-                 cell_annotation = cell_annotation,
-                 extra_columns = extra_columns, target = final_results$target,
+                 cell_annotation = opt$cell_annotation,
+                 extra_columns = opt$extra_columns,
+                 target = final_results$target,
                  target_name = final_results$target_name,
                  integrate = final_results$integrate)
   plotter <- htmlreportR::htmlReport$new(title_doc = paste0("Single-Cell ",
