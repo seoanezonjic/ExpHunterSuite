@@ -84,8 +84,6 @@ option_list <- list(
             help = "Number of neighbors to consider when weighting anchors. Used in integration."),
   optparse::make_option("--cluster_annotation", type = "character", default = "",
             help = "Clusters annotation file."),
-  optparse::make_option("--target_genes", type = "character", default = "",
-            help = "Path to target genes table, or comma-separated list of target genes."),
   optparse::make_option("--cpu", type = "integer", default = 1,
             help = "Provided CPUs."),
   optparse::make_option("--imported_counts", type = "character", default = "",
@@ -137,36 +135,27 @@ option_list <- list(
               "information in output and reports."))
 )
 
-opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+params <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
 options(future.globals.maxSize = 15e+09)
 options(Seurat.object.assay.version = 'v5')
 
-message(paste0("Analyzing ", opt$name))
+##########################################
+## LOADING INPUT FILES
+##########################################
 
-if(is.na(opt$force_ncells)) {
-  force_ncells <- NA_integer_
-} else {
-  force_ncells <- opt$force_ncells
-}
-opt$cpu <- 1
+updated_params <- process_sc_params(params, mode = "analysis")
+opt <- updated_params$opt
+doublet_list <- updated_params$doublet_list
+out_suffix <- updated_params$out_suffix
+
 if(opt$cpu > 1) {
   BiocParallel::register(BiocParallel::MulticoreParam(opt$cpu))
   BPPARAM <- BiocParallel::MulticoreParam(opt$cpu)
 } else {
   BPPARAM <- BiocParallel::SerialParam()
 }
-
 message("CPU provided to BiocParallel: ", opt$cpu)
-
-##########################################
-## LOADING INPUT FILES
-##########################################
-
-parsed_input <- process_sc_opt(opt)
-opt <- parsed_input$opt
-doublet_list <- parsed_input$doublet_list
-out_suffix <- parsed_input$out_suffix
 
 ##########################################
 ## MAIN
@@ -176,12 +165,13 @@ final_counts_path <- file.path(opt$output, "counts/matrix.mtx.gz")
 if(!file.exists(final_counts_path)) {
   # Input parser function
   # Reference loader function
-  message("Loading provided SingleR reference")
-  SingleR_ref <- load_SingleR_ref(path = opt$SingleR_ref,
-                             filter = opt$ref_filter, version = opt$ref_version)
+  SingleR_ref <- NULL
+  if(params$SingleR_ref != "") {
+    SingleR_ref <- load_SingleR_ref(path = params$SingleR_ref, version = params$ref_version, filter = params$ref_filter)
+  }
   if(opt$integrate) {
     if(opt$imported_counts == "") {
-      seu <- merge_seurat(project_name = opt$name, exp_design = parsed_input$exp_design,
+      seu <- merge_seurat(project_name = opt$name, exp_design = opt$exp_design,
                           suffix = opt$suffix, count_path = opt$input)
     } else {
       seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(opt$imported_counts, gene.column = 1),
@@ -194,7 +184,7 @@ if(!file.exists(final_counts_path)) {
     input <- file.path(opt$input, ifelse(opt$filter, "filtered_feature_bc_matrix",
                                                    "raw_feature_bc_matrix"))
     seu <- read_sc_counts(name = opt$name, input = input, mincells = opt$mincells,
-                      minfeats = opt$minfeats, exp_design = parsed_input$exp_design)
+                      minfeats = opt$minfeats, exp_design = opt$exp_design)
   }
   message(paste0("Total cells in dataset: ", ncol(seu), "."))
   if(opt$filter_dataset != "") {
@@ -218,7 +208,7 @@ if(!file.exists(final_counts_path)) {
   }
   if(opt$reduce) {
     message('Downsampling seurat object')
-    seu <- downsample_seurat(seu, cells = 500, features = 5000, keep = unlist(target_genes))
+    seu <- downsample_seurat(seu, cells = 500, features = 5000, keep = opt$target_genes)
   }
   # Function end
 }
@@ -244,11 +234,12 @@ if(file.exists(final_counts_path)) {
                     cell_annotation = opt$cell_annotation, minqcfeats = opt$minqcfeats, percentmt = opt$percentmt,
                     hvgs = opt$hvgs, scalefactor = opt$scalefactor, normalmethod = opt$normalmethod,
                     p_adj_cutoff = opt$p_adj_cutoff, verbose = opt$verbose, sigfig = 2,
-                    output = opt$output, integrate = opt$integrate, query = opt$target_genes,
-                    reduce = opt$reduce, SingleR_ref = SingleR_ref, ref_label = opt$ref_label, ref_de_method = ref_de_method, ref_n = ref_n,
-                    BPPARAM = BPPARAM, doublet_list = parsed_input$doublet_list, integration_method = opt$int_method,
+                    output = opt$output, integrate = opt$integrate,
+                    reduce = opt$reduce, SingleR_ref = SingleR_ref, ref_label = opt$ref_label,
+                    ref_de_method = opt$ref_de_method, ref_n = opt$ref_n,
+                    BPPARAM = BPPARAM, doublet_list = opt$doublet_list, integration_method = opt$int_method,
                     sketch = opt$sketch, sketch_ncells = opt$sketch_ncells, sketch_pct = opt$sketch_pct,
-                    sketch_method = opt$sketch_method, force_ncells = force_ncells,
+                    sketch_method = opt$sketch_method, force_ncells = opt$force_ncells,
                     k_weight = opt$k_weight)
 }
 
@@ -266,8 +257,8 @@ if(file.exists(final_counts_path)) {
   message("------------WRITING QC REPORT---------------")
   message("--------------------------------------------")
   write_sc_report(final_results = final_results, template_folder = template_folder, source_folder = source_folder,
-                  template = "sc_quality_control.txt", output = file.path(opt$output, "report"), out_name = "qc_report.html",
-                  use_canvas = TRUE, opt = opt)
+                  template = "sc_quality_control.txt", output = file.path(opt$output, "report"), out_suffix = "qc_report.html",
+                  use_canvas = TRUE, opt = opt, params = params)
 }
 
 message("--------------------------------------------")
@@ -276,4 +267,4 @@ message("--------------------------------------------")
 
 write_sc_report(final_results = final_results, template_folder = template_folder,
                 output = file.path(opt$output, "report"), source_folder = source_folder,
-                template = "sc_annotation.txt", out_name = out_suffix, opt = opt)
+                template = "sc_annotation.txt", out_suffix = out_suffix, opt = opt, params = params)
