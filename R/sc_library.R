@@ -1195,7 +1195,7 @@ annotate_seurat <- function(seu, cell_annotation = NULL,
     message("Dynamically annotating clusters.")
     res <- annotate_clusters(seu = seu, subset_by = subset_by, assay = assay,
       integrate = integrate, idents = "seurat_clusters", verbose = verbose,
-      p_adj_cutoff = p_adj_cutoff)
+      p_adj_cutoff = p_adj_cutoff, cell_annotation = cell_annotation)
   } else {
   if(!is.null(cluster_annotation)){
     message("Clusters annotation file provided. Renaming clusters.")
@@ -1238,7 +1238,7 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
           SingleR_annotation = SingleR_annotation))
 }
 
-annotate_clusters <- function(seu, subset_by = NULL,
+annotate_clusters <- function(seu, subset_by = NULL, cell_annotation,
                               assay = "RNA", integrate = FALSE, verbose = FALSE,
                               idents = "seurat_clusters", p_adj_cutoff = 1e-5){
   message("Calculating cluster markers")
@@ -1348,77 +1348,87 @@ get_expression_metrics <- function(seu, sigfig) {
 
 # SCRIPTING FUNCTIONS
 
-process_sc_opt <- function(opt = list()) {
+process_sc_params <- function(params = list(), mode = "annotation") {
+  if(mode != "DEG") params$DEG_target <- ""
+  if(mode != "annotation") {
+    params$cluster_annotation <- ""
+    params$cell_annotation <- ""
+    params$doublet_file <- ""
+    params$integrate <- FALSE
+    params$samples_to_integrate <- ""
+    params$ref_de_method <- ""
+    params$subset_by <- ""
+    params$exp_design <- ""
+  } else {
+    params$target_genes <- ""
+  }
+  message(paste0("Analyzing ", params$name))
   out_suffix <- "sample_annotation_report.html"
-  opt$int_method <- "RPCA"
-  exp_design <- read.table(opt$exp_design, sep = "\t", header = TRUE)
-  samples <- exp_design$sample
+  exp_design <- NULL
+  doublet_list <- NULL
+  if(file.exists(params$exp_design)) exp_design <- read.table(params$exp_design,
+                                                    sep = "\t", header = TRUE)
   SingleR_ref <- NULL
-  if(file.exists(opt$cluster_annotation)) {
-    opt$cluster_annotation <- read.table(opt$cluster_annotation, sep = "\t",
+  if(file.exists(params$cluster_annotation)) {
+    params$cluster_annotation <- read.table(params$cluster_annotation, sep = "\t",
                                          header = TRUE)
   }
-  if(file.exists(opt$cell_annotation)) {
-    opt$cell_annotation <- read.table(opt$cell_annotation, sep = "\t",
+  if(file.exists(params$cell_annotation)) {
+    params$cell_annotation <- read.table(params$cell_annotation, sep = "\t",
                                   header = TRUE)
   }
-  if(file.exists(opt$doublet_file)) doublet_list <- read.table(opt$doublet_file)
-  if(opt$integrate) opt$out_suffix <- "annotation_report.html"
-  if(opt$int_method != "") opt$int_method <- opt$int_method
-  if(opt$target_genes != "") opt$target_genes <- strsplit(opt$target_genes,
+  if(file.exists(params$doublet_file)) doublet_list <- read.table(params$doublet_file)
+  if(params$integrate) out_suffix <- "annotation_report.html"
+  if(params$target_genes != "") params$target_genes <- strsplit(params$target_genes,
                                                       split = ";")[[1]]
-  if(opt$integrate & opt$subset_by != "") {
-    opt$subset_by <- tolower(unlist(strsplit(opt$subset_by, ",")))
-    message(paste0("Selected ", length(opt$subset_by), " subset condition(s): ",
-      paste0(opt$subset_by, collapse = ", ")))
+  if(params$integrate & params$subset_by != "") {
+    params$subset_by <- tolower(unlist(strsplit(params$subset_by, ",")))
+    message(paste0("Selected ", length(params$subset_by), " subset condition(s): ",
+      paste0(params$subset_by, collapse = ", ")))
   }
-  if(opt$extra_columns != "") {
-    opt$extra_columns <- tolower(unlist(strsplit(opt$extra_columns, ",")))
+  if(params$extra_columns != "") {
+    params$extra_columns <- tolower(unlist(strsplit(params$extra_columns, ",")))
   }
-  if(opt$samples_to_integrate != "") {
-    samples <- read.table(opt$samples_to_integrate, sep = "\t", header = FALSE)
-    opt$exp_design <- exp_design[exp_design$sample %in% samples[[1]], ]
+  if(params$samples_to_integrate != "") {
+    samples <- read.table(params$samples_to_integrate, sep = "\t", header = FALSE)
+    params$exp_design <- exp_design[exp_design$sample %in% samples[[1]], ]
   }
-  if(opt$ref_de_method == "") {
-    opt$ref_de_method <- NULL
-    opt$ref_n <- NULL
+  if(params$ref_de_method == "") {
+    params$ref_de_method <- NULL
+    params$ref_n <- NULL
   }
-  updated_opt <- list(opt = opt, doublet_list = doublet_list,
+  updated_params <- list(opt = params, doublet_list = doublet_list,
                       out_suffix = out_suffix)
-  return(updated_opt)
+  return(updated_params)
 }
 
-load_SingleR_ref <- function(path, version, filter) {
-  split_path <- strsplit(opt$SingleR_ref, "/")[[1]]
-  if(split_path[length(split_path)] != "") {
-    opt$ref_path <- opt$SingleR_ref
-    if(opt$ref_version != "") {
-      opt$ref_path <- paste(opt$ref_path, opt$ref_version, sep = "_")
+load_SingleR_ref <- function(path, version = "", filter = "") {
+  SingleR_ref <- NULL
+  if(version != "") {
+    path <- paste(path, version, sep = "_")
+  }
+  message("Loading provided SingleR reference")
+  SingleR_ref <- HDF5Array::loadHDF5SummarizedExperiment(dir = path,prefix = "")
+  message(paste0("Total cells in reference: ", ncol(SingleR_ref), "."))
+  if(filter != "") {
+    message("Filtering reference")
+    expressions <- strsplit(filter, "&|\\|")[[1]]
+    expressions <- gsub(" $", "", expressions)
+    expressions <- gsub("^ ", "", expressions)
+    col_data <- SummarizedExperiment::colData(SingleR_ref)
+    if(grepl("&", filter)) {
+      operator <- "&"
+    } else {
+      operator <- "|"
     }
-    message("Loading provided SingleR reference")
-    SingleR_ref <- HDF5Array::loadHDF5SummarizedExperiment(dir = opt$ref_path,
-                                                           prefix = "")
-    message(paste0("Total cells in reference: ", ncol(SingleR_ref), "."))
-    if(opt$ref_filter != "") {
-      message("Filtering reference")
-      expressions <- strsplit(opt$ref_filter, "&|\\|")[[1]]
-      expressions <- gsub(" $", "", expressions)
-      expressions <- gsub("^ ", "", expressions)
-      col_data <- SummarizedExperiment::colData(SingleR_ref)
-      if(grepl("&", opt$ref_filter)) {
-        operator <- "&"
-      } else {
-        operator <- "|"
-      }
-      filter <- vector(mode = "list", length = length(expressions))
-      for(i in seq(expressions)) {
-        filter[[i]] <- parse_filter(object = "as.data.frame(col_data)",
-                                    expression = expressions[i]) 
-      }
-      filter <- Reduce(operator, filter)
-      message(paste0("Selected ", sum(filter), " cells for reference subsetting."))
-      SingleR_ref <- SingleR_ref[, filter]
+    filter <- vector(mode = "list", length = length(expressions))
+    for(i in seq(expressions)) {
+      filter[[i]] <- parse_filter(object = "as.data.frame(col_data)",
+                                  expression = expressions[i]) 
     }
+    filter <- Reduce(operator, filter)
+    message(paste0("Selected ", sum(filter)," cells for reference subsetting."))
+    SingleR_ref <- SingleR_ref[, filter]
   }
   return(SingleR_ref)
 }
