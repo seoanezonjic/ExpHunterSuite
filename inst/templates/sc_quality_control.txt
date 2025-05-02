@@ -123,11 +123,11 @@ end.rcode-->
 	}
 end.rcode-->
 
-<!--begin.rcode opt
-    cat(plotter$create_title("<b>EXECUTION PARAMETERS</b>", "opt", hlevel = 1, indexable = TRUE,
-        clickable = FALSE, t_id = "opt", clickable_text = ""))
-    opt_names <- names(plotter$hash_vars$opt)
-    opt_values <- paste(plotter$hash_vars$opt)
+<!--begin.rcode params
+    cat(plotter$create_title("<b>EXECUTION PARAMETERS</b>", "params", hlevel = 1, indexable = TRUE,
+        clickable = FALSE, t_id = "params", clickable_text = ""))
+    opt_names <- names(plotter$hash_vars$params)
+    opt_values <- paste(plotter$hash_vars$params)
     opt_vector <- paste(opt_names, opt_values, sep = ": ")
     cat(make_html_list(opt_vector))
 end.rcode-->
