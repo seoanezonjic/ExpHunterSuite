@@ -41,22 +41,9 @@ option_list <- list(
             help = "Comma-separated list of extra conditions to represent in certain plots.")
 )
 
-opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+params <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
-if(opt$target_genes == ""){
-  warning("No target genes provided")
-  target_genes <- NULL
-} else if(file.exists(opt$target_genes)) {
-  target_genes <- read_and_format_targets(opt$target_genes)
-} else {
-  target_genes <- strsplit(opt$target_genes, split = ";")[[1]]
-}
-
-if(opt$extra_columns == "") {
-  extra_columns <- NULL
-} else {
-  extra_columns <- tolower(unlist(strsplit(opt$extra_columns, ",")))
-}
+opt <- process_sc_params(params, mode = "query")$opt
 
 message("Reconstructing Seurat object from directory ", opt$input)
 seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(file.path(opt$input, "counts"), gene.column = 1),
@@ -68,7 +55,7 @@ seu$RNA$data <- seu$RNA$counts
 embeddings <- read.table(file.path(opt$input, "embeddings", "cell_embeddings.tsv"), header = TRUE)
 seu$UMAP_full <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'UMAPfull_', assay = 'RNA')
 markers <- read.table(file.path(opt$input, "markers.tsv"), sep = "\t", header = TRUE)
-query_data <- main_analyze_sc_query(seu = seu, query = target_genes, sigfig = opt$sigfig)
+query_data <- main_analyze_sc_query(seu = seu, query = opt$target_genes, sigfig = opt$sigfig)
 
 query_results <- list(seu = seu, query_data = query_data)
 
@@ -77,6 +64,5 @@ message("------WRITING QUERY EXPRESSION REPORT-------")
 message("--------------------------------------------")
 
 write_sc_report(final_results = query_results, template_folder = template_folder,
-                output = file.path(opt$output, "report"), query = unlist(target_genes),
-                extra_columns = extra_columns, template = "sc_query.txt",
-                out_name = "query_report.html", opt = opt)
+                output = file.path(opt$output, "report"), template = "sc_query.txt",
+                out_suffix = "query_report.html", opt = opt, params = params)
