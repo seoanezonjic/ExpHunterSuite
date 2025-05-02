@@ -320,7 +320,7 @@ write_annot_output <- function(final_results = stop("Missing results object"),
 #' @param final_results Output from main_sc_Hunter function
 #' @param output directory where report will be saved
 #' @param name experiment name, will be used to build output file name
-#' @param out_name suffix to add to output file name. Useful when rendering
+#' @param out_suffix suffix to add to output file name. Useful when rendering
 #' different templates with this function (as is the case in our workflow)
 #' @param template_folder directory where template is located
 #' @param template Template to render
@@ -330,13 +330,15 @@ write_annot_output <- function(final_results = stop("Missing results object"),
 #' be triggered in templates where this control parameter has been implemented.
 #' Setting it to FALSE can be useful for big datasets, as CanvasXpress might
 #' have trouble in certain plots
+#' @param opt Processed ptions list, will be consulted in report.
+#' @param param Input options list, will be included as execution parameters.'
 #'
 #' @keywords preprocessing, write, report
 #' 
 #' @returns invisible(NULL)
 
-write_sc_report <- function(final_results, output = getwd(),
-                            template_folder, source_folder = NULL, opt,
+write_sc_report <- function(final_results, output = getwd(), out_suffix = NULL,
+                            template_folder, source_folder = NULL, opt, params,
                             template = NULL, use_canvas = TRUE){
   if(is.null(template_folder)) {
     stop("No template folder was provided.")
@@ -358,11 +360,11 @@ write_sc_report <- function(final_results, output = getwd(),
   if(!file.exists(template)) {
     stop("Specified template does not exist in template folder.")
   }
-  out_file <- file.path(output, paste0(opt$name, "_", opt$out_suffix))
+  out_file <- file.path(output, paste0(opt$name, "_", out_suffix))
   tmp_folder <- file.path(output, paste0(opt$name, "_tmp_lib"))
   dir.create(tmp_folder)
-  container <- list(opt = opt, seu = final_results$seu, qc = final_results$qc,
-                 subset_by = subset_by, use_canvas = use_canvas,
+  container <- list(params = params, seu = final_results$seu, qc = final_results$qc,
+                 subset_by = opt$subset_by, use_canvas = use_canvas,
                  DEG_list = final_results$DEG_list, query = opt$target_genes,
                  p_val_cutoff = opt$DEG_p_val_cutoff,
                  min_avg_log2FC = opt$min_avg_log2FC,
