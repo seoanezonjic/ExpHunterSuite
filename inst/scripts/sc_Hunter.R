@@ -47,7 +47,9 @@ option_list <- list(
             help = "Provided CPUs.")
 )
 
-opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+params <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+
+opt <- process_sc_params(params, mode = "DEG")$opt
 
 if(opt$targets_folder == "" | !file.exists(opt$targets_folder)) {
   stop(paste0("Provided targets directory does not exist. Was ", opt$targets_folder))
@@ -61,15 +63,6 @@ if(opt$targets_folder == "" | !file.exists(opt$targets_folder)) {
   names(DEG_targets) <- tools::file_path_sans_ext(basename(target_files))
 }
 
-if(opt$target_genes == ""){
-  message("No target genes provided")
-  target_genes <- NULL
-} else if(file.exists(opt$target_genes)) {
-  target_genes <- read_and_format_targets(opt$target_genes)
-} else {
-  target_genes <- strsplit(opt$target_genes, split = ";")[[1]]
-}
-
 message("Reconstructing Seurat object from directory ", opt$input)
 seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(opt$input, gene.column = 1),
                                   project = opt$name, min.cells = 1, min.features = 1)
@@ -79,18 +72,19 @@ seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
 seu$RNA$data <- seu$RNA$counts
 DEG_list <- parallel_list(X = DEG_targets, FUN = main_sc_Hunter, workers = opt$cpu, seu = seu,
                           p_val_cutoff = opt$p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
-                          min_cell_proportion = opt$min_cell_proportion, query = target_genes,
+                          min_cell_proportion = opt$min_cell_proportion, query = opt$target_genes,
                           output_path = opt$output, min_counts = opt$min_counts, verbose = opt$verbose)
 names(DEG_list) <- unlist(strsplit(names(DEG_targets), "_target"))
 
 message("--------------------------------------------")
 message("---------WRITING SC HUNTER REPORTS----------")
 message("--------------------------------------------")
+
 for(target_name in names(DEG_targets)) {
   DEG_name <- unlist(strsplit(target_name, "_target"))
   message(paste0("Writing ", DEG_name, " report"))
   DEG_results <- list(seu = seu, DEG_list = DEG_list[[DEG_name]], opt = opt, target = DEG_targets[[target_name]], target_name = DEG_name)
-  write_sc_report(final_results = DEG_results, query = target_genes, opt = opt,
-                  template_folder = template_folder, output = file.path(opt$output, "report"), 
-                  template = "sc_DEGs.txt", out_suffix = paste0(DEG_name, "_DEG_report.html"))
+  write_sc_report(final_results = DEG_results, opt = opt, template_folder = template_folder,
+                  output = file.path(opt$output, "report"),  template = "sc_DEGs.txt",
+                  out_suffix = paste0(DEG_name, "_DEG_report.html"), params = params)
 }
