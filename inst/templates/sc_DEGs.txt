@@ -1,74 +1,14 @@
 
 <!--begin.rcode setup
+    saveRDS(plotter, "plotter.rds")
     colGEX <- c("grey85", "#FEE5D9", "#FCBBA1", "#FC9272", "#FB6A4A", "#EF3B2C", "#CB181D", "#99000D")
     comparison <- plotter$hash_vars$target_name
     opt <- plotter$hash_vars$opt
-    subset_by <- plotter$hash_vars$subset_by
     query <- plotter$hash_vars$query
-    markers <- plotter$hash_vars$markers
     DEG_list <- plotter$hash_vars$DEG_list
     comparison_meta <- DEG_list$DEGs$meta
-    saveRDS(plotter, "plotter.rds")
     DEG_metrics_list <- plotter$hash_vars$DEG_metrics_list
     DEG_query_list <- plotter$hash_vars$DEG_query_list
-    extra_columns <- plotter$hash_vars$extra_columns
-    metadata <- plotter$hash_vars$seu@meta.data
-    get_cells_metadata <- function(heatmap) {
-        samples <- rownames(heatmap)
-        sample_metadata <- unique(metadata[, c("sample", extra_columns)])
-        rownames(sample_metadata) <- NULL
-        sample_metadata <- sample_metadata[match(samples, sample_metadata$sample), ]
-    }
-    
-    Custom_DotPlot <- function(seu) {
-        if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
-            return("<p>Object contains none of the specified features</p>")
-        }
-        Seurat::Idents(seu) <- ifelse(is.null(seu@meta.data$cell_type), yes = seu@meta.data$seurat_clusters,
-                                      no = seu@meta.data$cell_type)
-        Seurat::Idents(seu) <- seu@meta.data$cell_type
-        scCustomize::DotPlot_scCustom(seu, unique(features), flip_axes = TRUE, 
-                                      colors_use = colGEX, x_lab_rotate = TRUE) +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
-    }
-
-    Custom_DimPlot <- function(seu) {
-        ident <- ifelse("cell_type" %in% colnames(seu@meta.data),
-                        yes = "cell_type", no = "cluster")
-        Seurat::Idents(seu) <- seu@meta.data[[ident]]
-        res <- Seurat::DimPlot(seu, reduction = reduction, label = label, repel = TRUE, split.by = split.by,
-                        group.by = group.by) 
-        if(label) {
-          res <- res + ggplot2::theme(legend.position="none")
-        }
-        return(res)
-    }
-
-    top_table <- function(df) {
-        top <- 10
-        if(nrow(df) < 10) {
-            top <- nrow(df)
-        }
-        res <- df[order(df$avg_log2FC, decreasing = TRUE), ][1:top, ]
-        return(res)
-    }
-
-    subset_table <- function(df) {
-        res <- df[df$gene == features, ]
-        return(res)
-    }
-
-    Top_vlnplot <- function(seu) {
-        scCustomize::Stacked_VlnPlot(seu, pt.size = 0, x_lab_rotate = 90,
-                                     features = sort(features))
-    }
-
-    Custom_ftplot <- function(seu) {
-        Seurat::Idents(seu) <- seu@meta.data$cell_type
-        scCustomize::FeaturePlot_scCustom(seu, reduction = "umap", pt.size = 0.1, num_columns = 1,
-                                          features = feature, na_cutoff = NA, label = TRUE) +
-        ggplot2::scale_color_gradientn(colors = colGEX) + ggplot2::coord_fixed()
-    }
 
     DEGs_volcano <- function(input_DEGs) {
         EnhancedVolcano::EnhancedVolcano(input_DEGs, lab = rownames(input_DEGs), title = level,
@@ -207,11 +147,11 @@ end.rcode-->
     }
 end.rcode-->
 
-<!--begin.rcode opt
-    cat(plotter$create_title("<b>EXECUTION PARAMETERS</b>", "opt", hlevel = 1, indexable = TRUE,
-        clickable = FALSE, t_id = "opt", clickable_text = ""))
-    opt_names <- names(plotter$hash_vars$opt)
-    opt_values <- paste(plotter$hash_vars$opt)
+<!--begin.rcode params
+    cat(plotter$create_title("<b>EXECUTION PARAMETERS</b>", "params", hlevel = 1, indexable = TRUE,
+        clickable = FALSE, t_id = "params", clickable_text = ""))
+    opt_names <- names(plotter$hash_vars$params)
+    opt_values <- paste(plotter$hash_vars$params)
     opt_vector <- paste(opt_names, opt_values, sep = ": ")
     cat(make_html_list(opt_vector))
 end.rcode-->
