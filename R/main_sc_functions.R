@@ -242,12 +242,12 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 #' @param output_path Path where output will be written.
 #' @export
 
-main_sc_Hunter <- function(DEG_target = stop("No DEG target supplied"),
-                           seu = stop("No seurat object supplied."),
-                           p_val_cutoff = 1e-3, min_avg_log2FC = 0.5,
-                           min_counts = 10, verbose = FALSE, query = NULL,
-                           min_cell_proportion = 1, output_path = getwd()) {
+main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
+                           min_avg_log2FC = 0.5, min_counts = 10, query = NULL,
+                           verbose = FALSE, min_cell_proportion = 0.01,
+                           output_path = getwd()) {
   message('Starting DEG analysis.')
+  DEG_query <- NULL
   seu <- seu[, which(seu$sample %in% DEG_target$sample)]
   seu$deg_group <- DEG_target$treat[match(seu$sample, DEG_target$sample)]
   subset_target <- ifelse("cell_type" %in% colnames(seu@meta.data),
@@ -256,10 +256,6 @@ main_sc_Hunter <- function(DEG_target = stop("No DEG target supplied"),
                          subset_by = subset_target, verbose = verbose,
                          values = "Ctrl,Treat", min.pct = min_cell_proportion)
   message("Extracting DEG cell metrics")
-  ## Here we need to control a list of FALSE data frames being returned
-  ## from get_sc_markers, it's a possible case if cluster-conditon
-  ## combinations do not allow a differential analysis for specified
-  ## condition.
   DEG_metrics <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
                   min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff,
                   min_counts = min_counts)
