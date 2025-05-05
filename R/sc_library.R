@@ -781,20 +781,21 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
         }
         query <- query[query %in% rownames(seu)]
       }
+      if(!any(query %in% unique(unlist(lapply(DEG_list, rownames))))) {
+        warning("None of specified target genes are differentially expressed ",
+                "in dataset.")
+        return_output <- FALSE
+      }
       if(return_output) {
         matrix_list <- .get_matrices(seu = seu, meta = meta, DEG_list = DEG_list,
                         genes = gene_list, min_avg_log2FC = min_avg_log2FC,
-                        p_val_cutoff = p_val_cutoff)
+                        p_val_cutoff = p_val_cutoff, query = query)
         DEG_df <- matrix_list$DEG_df
         if(any(!query %in% colnames(DEG_df))) {
           warning(paste0("Target gene(s) \"",
                   paste(query[!query %in% colnames(DEG_df)],
                   collapse = "\", \""), "\" are not differentially expressed in ",
                   "dataset."))
-        }
-        if(any(dim(DEG_df)) < 1) {
-          warning("None of specified target genes are differentially expressed.")
-          return_output <- FALSE
         }
       }
     }
@@ -806,29 +807,25 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
   return(res)
 }
 
-.get_matrices <- function(seu = stop("No seurat object provided"),
-                          meta = stop("No identities vector provided"),
-                          genes = stop("No gene list provided."),
-                          DEG_list = stop("No DEG_list provided"),
-                          min_avg_log2FC = 0.2, p_val_cutoff = 0.01) {
-  idents <- as.character(unique(meta))
-  matrices <- vector(mode = "list", length = length(idents))
-  names(matrices) <- idents
+.get_matrices <- function(seu, meta, genes, DEG_list, min_avg_log2FC = 0.2,
+                          p_val_cutoff = 0.01, query = NULL) {
+  matrices <- vector(mode = "list", length = length(DEG_list))
+  names(matrices) <- names(DEG_list)
   DEG_matrices <- matrices
-  for(ident in idents) {
+  for(ident in names(DEG_list)) {
     ident_seu <- seu[, meta == ident]
     matrix <- SeuratObject::GetAssayData(ident_seu, layer = "data")
     matrix <- matrix[rownames(matrix) %in% genes, , drop = FALSE]
     matrices[[ident]] <- matrix
     DEG_matrices[[ident]] <- .process_DEG_matrix(DEG_matrix = DEG_list[[ident]],
                    min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff,
-                   genes_list = genes, ident = ident)
+                   genes_list = genes, ident = ident, query = query)
   }
   DEG_df <- do.call(rbind, DEG_matrices)
   ## Have to remove zeroes again, not in process_DEG_matrix, because we want to
   ## remove genes set to zero in ALL idents, not ident by ident
   DEG_df <- DEG_df[, colSums(abs(DEG_df)) > 0, drop = FALSE]
-  DEG_df <- DEG_df[rowSums(abs(DEG_df)) > 0, , drop = FALSE ]
+  DEG_df <- DEG_df[rowSums(abs(DEG_df)) > 0, , drop = FALSE]
   return(list(DEG_df = DEG_df, matrices = matrices))
 }
 
@@ -855,10 +852,21 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
     
 
 .process_DEG_matrix <- function(DEG_matrix, min_avg_log2FC = 0.2, ident = NULL,
-                                p_val_cutoff = 0.01, genes_list = NULL) {
+                                p_val_cutoff = 0.01, genes_list = NULL,
+                                query = NULL) {
+  process_res <- TRUE
+  res <- NULL
   if(is.null(DEG_matrix) | FALSE %in% DEG_matrix) {
-    res <- NULL
-  } else {
+    process_res <- FALSE
+  }
+  if(!is.null(query)) {
+      if(!any(query %in% rownames(DEG_matrix))) {
+      message("Query genes are not differentially expressed in ident \"", ident,
+        "\".")
+      process_res <- FALSE
+    }
+  }
+  if(process_res) {
     DEG_matrix <- DEG_matrix[rownames(DEG_matrix) %in% genes_list, ,
                              drop = FALSE]
     DEG_matrix <- DEG_matrix[, c("avg_log2FC", "p_val_adj", "gene")]
@@ -1349,7 +1357,7 @@ get_expression_metrics <- function(seu, sigfig) {
 # SCRIPTING FUNCTIONS
 
 process_sc_params <- function(params = list(), mode = "annotation") {
-  if(mode != "DEG") params$DEG_target <- ""
+  out_suffix <- "sample_annotation_report.html"
   if(mode != "annotation") {
     params$cluster_annotation <- ""
     params$cell_annotation <- ""
@@ -1362,8 +1370,10 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   } else {
     params$target_genes <- ""
   }
+  if(mode == "DEG") {
+    params$extra_columns <- ""
+  }
   message(paste0("Analyzing ", params$name))
-  out_suffix <- "sample_annotation_report.html"
   exp_design <- NULL
   doublet_list <- NULL
   if(file.exists(params$exp_design)) exp_design <- read.table(params$exp_design,
