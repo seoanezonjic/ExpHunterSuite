@@ -9,6 +9,10 @@
     comparison_meta <- DEG_list$DEGs$meta
     DEG_metrics_list <- plotter$hash_vars$DEG_metrics_list
     DEG_query_list <- plotter$hash_vars$DEG_query_list
+    comparison_metrics <- DEG_list$DEG_metrics
+    plotter$hash_vars$comparison_FCs <- comparison_metrics$DEG_df
+    plotter$hash_vars$comparison_ncells <- comparison_metrics$ncell_df
+    comparison_DEGs <- DEG_list$DEGs
 
     DEGs_volcano <- function(input_DEGs) {
         EnhancedVolcano::EnhancedVolcano(input_DEGs, lab = rownames(input_DEGs), title = level,
@@ -53,12 +57,10 @@ end.rcode-->
 <!--begin.rcode DEG_metrics, eval = length(DEG_list) > 0
     cat(plotter$create_title("Differential expression metrics per cell", "DEG_metrics", hlevel = 2, indexable = TRUE,
                           clickable = FALSE, t_id = "DEG_metrics", clickable_text = ""))
-    comparison_metrics <- DEG_list$DEG_metrics
-    plotter$hash_vars$comparison_FCs <- comparison_metrics$DEG_df
-    plotter$hash_vars$comparison_ncells <- comparison_metrics$ncell_df
+    
     cat(plotter$create_title(paste0("DEG metrics for target ", comparison), paste0(comparison, "_DEG_metrics"), hlevel = 2,
                  indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEG_metrics"), clickable_text = ""))
-    if(any(dim(plotter$hash_vars$comparison_FCs) < 1)) {
+    if(any(dim(plotter$hash_vars$comparison_FCs) < 1) | is.null(plotter$hash_vars$comparison_FCs)) {
         cat(paste0("<p> No significant DEGs found for target ", comparison, ".</p>"))
     } else {
         DEG_legend <- paste0("<p>", comparison_meta$high, " (positive log2FC) vs ",
@@ -74,7 +76,6 @@ end.rcode-->
 <!--begin.rcode DEG_analysis, eval = length(DEG_list) > 0
     cat(plotter$create_title("Differentially expressed genes", "DEG", hlevel = 2, indexable = TRUE,
                               clickable = FALSE, t_id = "DEG", clickable_text = ""))
-    comparison_DEGs <- DEG_list$DEGs
     cat(plotter$create_title(paste0("DEG analysis: target ", comparison), paste0(comparison, "_DEGs"), hlevel = 2,
                          indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEGs"),
                          clickable_text = ""))
