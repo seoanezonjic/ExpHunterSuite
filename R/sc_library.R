@@ -1385,8 +1385,9 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   message(paste0("Analyzing ", params$name))
   exp_design <- NULL
   doublet_list <- NULL
-  if(file.exists(params$exp_design)) exp_design <- read.table(params$exp_design,
-                                                    sep = "\t", header = TRUE)
+  if(file.exists(params$exp_design)) {
+    params$exp_design <- read.table(params$exp_design, sep = "\t",
+                                    header = TRUE)
   SingleR_ref <- NULL
   if(file.exists(params$cluster_annotation)) {
     params$cluster_annotation <- read.table(params$cluster_annotation, sep = "\t",
