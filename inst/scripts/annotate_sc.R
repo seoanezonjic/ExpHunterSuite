@@ -62,8 +62,6 @@ option_list <- list(
               help = "Number of HVG to be selected."),
   optparse::make_option("--ndims", type = "integer", default = NULL,
               help = "Number of PC to be used for clustering / UMAP / tSNE"),
-  optparse::make_option("--dimheatmapcells", type = "integer", default = NULL,
-              help = "Heatmap plots the 'extreme' cells on both ends of the spectrum."),
   optparse::make_option("--resolution", type = "double", default = NULL,
               help = "Granularity of the clustering."),
   optparse::make_option(c("-d", "--exp_design"), type = "character", default = NULL,
@@ -137,6 +135,8 @@ option_list <- list(
 
 params <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
+saveRDS(params, "params.rds")
+
 options(future.globals.maxSize = 15e+09)
 options(Seurat.object.assay.version = 'v5')
 
@@ -144,7 +144,7 @@ options(Seurat.object.assay.version = 'v5')
 ## LOADING INPUT FILES
 ##########################################
 
-updated_params <- process_sc_params(params, mode = "analysis")
+updated_params <- process_sc_params(params, mode = "annotation")
 opt <- updated_params$opt
 doublet_list <- updated_params$doublet_list
 out_suffix <- updated_params$out_suffix
@@ -208,7 +208,7 @@ if(!file.exists(final_counts_path)) {
   }
   if(opt$reduce) {
     message('Downsampling seurat object')
-    seu <- downsample_seurat(seu, cells = 500, features = 5000, keep = opt$target_genes)
+    seu <- downsample_seurat(seu, cells = 500, features = 5000)
   }
   # Function end
 }
