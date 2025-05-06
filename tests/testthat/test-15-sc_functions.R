@@ -538,3 +538,62 @@ test_that("test check_sc_input, integrate and sketch to TRUE, no SingleR_ref,
                    fine.tune = TRUE)
   expect_equal(output, expected)
 })
+
+test_that("test process_sc_params, annotation mode", {
+  params <- list(name = "test", doublet_file = "", filter = TRUE, mincells = 1,
+                 minfeats = 1, minfeats = 1, minqcfeats = 1, percentmt = 5,
+                 normalmethod = "LogNormalize", scalefactor = 1e5, hvgs = 2e3,
+                 ndims = 10, resolution = 0.33, p_adj_cutoff = 1, verbose = FALSE,
+                 reduce = FALSE, samples_to_integrate = "", integrate = TRUE,
+                 int_method = "RPCA", filter_dataset = "", sketch = TRUE,
+                 sketch_pct = 0.25, sketch_method = "LeverageScore",
+                 force_ncells = "", extra_columns = "one,two", k_weight = 100,
+                 genome = "hg38", exp_design = "", subset_by = "", cpu = "2",
+                 input = "empty_dir", suffix = "suffix", imported_counts = "",
+                 cluster_annotation = "", cell_annotation = "",
+                 SingleR_ref = "SingleR_ref", ref_version = "1",
+                 ref_label = "cell_type", ref_de_method = "wilcox", ref_n = 15,
+                 ref_filter = "", target_genes = "gene1;gene2")
+  output <- suppressMessages(process_sc_params(params = params,
+                                               mode = "annotation"))
+  expected <- list(opt = params, doublet_list = NULL)
+  expected$opt$extra_columns <- c("one", "two")
+  expected$out_suffix <- "annotation_report.html"
+  expected$opt$target_genes <- ""
+  expect_equal(output, expected)
+})
+
+test_that("test process_sc_params, DEG mode", {
+  params <- list(name = "test", p_adj_cutoff = 1, verbose = FALSE,
+                 subset_by = "genotype,time", cpu = "2", min_avg_log2FC = 1,
+                 target_genes = "", mincells = 1)
+  output <- suppressMessages(process_sc_params(params = params, mode = "DEG"))
+  expected <- list(opt = params, doublet_list = NULL)
+  new_opt <- list(cell_annotation = "", cluster_annotation = "",
+             doublet_file = "", exp_design = "", extra_columns = "",
+             integrate = FALSE, samples_to_integrate = "")
+  expected$opt <- c(expected$opt, new_opt)
+  output$opt <- output$opt[order(names(output$opt))]
+  expected$opt <- expected$opt[order(names(expected$opt))]
+  expected$opt$subset_by <- c("genotype", "time")
+  expected$out_suffix <- "sample_annotation_report.html"
+  expect_equal(output, expected)
+})
+
+test_that("test process_sc_params, query mode", {
+  output <- suppressMessages(process_sc_params(params = params, mode = "query"))
+  params <- list(name = "test", p_adj_cutoff = 1, verbose = FALSE,
+               subset_by = "genotype,time", cpu = "2", min_avg_log2FC = 1,
+               target_genes = "", mincells = 1)
+  expected <- list(opt = params, doublet_list = NULL)
+  expected$opt$integrate <- FALSE
+  expected$opt$extra_columns <- ""
+  expected$out_suffix <- "sample_annotation_report.html"
+  expected$opt$target_genes <- c("gene1", "gene2")
+  expected$opt$ref_de_method <- NULL
+  expected$opt$ref_n <- NULL
+  expected$opt$ref_filter <- ""
+  output$opt <- output$opt[order(names(output$opt))]
+  expected$opt <- expected$opt[order(names(expected$opt))]
+  expect_equal(output, expected)
+})
