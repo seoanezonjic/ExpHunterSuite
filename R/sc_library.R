@@ -1036,7 +1036,6 @@ subset_seurat <- function(seu, column, value, expr = FALSE, layer = "data") {
 #' @inheritParams get_query_pct
 #' @param cells,features Lists or integers. An integer will trigger random
 #' downsampling by its respective variable.
-#' @param keep A vector of genes to keep when downsampling features.
 #' @return A downsampled seurat object.
 #' @examples
 #' data(pbmc_tiny)
@@ -1044,19 +1043,16 @@ subset_seurat <- function(seu, column, value, expr = FALSE, layer = "data") {
 #' print(downsample_seurat(seu = pbmc_tiny, cells = 2, features = 5))
 #' @export
 
-downsample_seurat <- function(seu, cells = 500, features = 5000, keep = "",
+downsample_seurat <- function(seu, cells = 500, nfeatures = 5000,
                               assay = "RNA", layer = "counts") {
   if(length(unique(seu$orig.ident)) > 1) {
     seu <- SeuratObject::JoinLayers(seu)
   }
   counts <- SeuratObject::GetAssayData(seu, assay = assay, layer = layer)
   if(is.numeric(features)) {
-    gene_list <- sample(rownames(counts), size = features, replace = F)
+    gene_list <- sample(rownames(counts), size = nfeatures, replace = F)
   } else {
     gene_list <- features
-  }
-  if(paste0(keep, collapse = "") != "") {
-    gene_list <- unique(c(gene_list), keep)
   }
   counts <- counts[gene_list, ]
   seu <- subset(seu, features = rownames(counts))
@@ -1356,6 +1352,20 @@ get_expression_metrics <- function(seu, sigfig) {
 
 # SCRIPTING FUNCTIONS
 
+#' process_sc_params
+#' processes parameter list and turns it into an option list usable by
+#' main sc functions.
+#' @param params A list of parameters to parse.
+#' @param mode A string. Scripting mode to use. Has special behaviours for
+#' "annotation" (the default) and "DEG". Set to NULL or any other value for
+#' query mode. For coherence, we set it to "query" in our query script.
+#' @returns A list containing parsed options.
+#' @examples
+#'  \dontrun{
+#'    process_sc_params(params = annot_params, mode = "annotation")
+#'  }
+#' @export
+
 process_sc_params <- function(params = list(), mode = "annotation") {
   out_suffix <- "sample_annotation_report.html"
   if(mode != "annotation") {
@@ -1365,7 +1375,6 @@ process_sc_params <- function(params = list(), mode = "annotation") {
     params$integrate <- FALSE
     params$samples_to_integrate <- ""
     params$ref_de_method <- ""
-    params$subset_by <- ""
     params$exp_design <- ""
   } else {
     params$target_genes <- ""
@@ -1391,7 +1400,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   if(params$integrate) out_suffix <- "annotation_report.html"
   if(params$target_genes != "") params$target_genes <- strsplit(params$target_genes,
                                                       split = ";")[[1]]
-  if(params$integrate & params$subset_by != "") {
+  if(params$subset_by != "") {
     params$subset_by <- tolower(unlist(strsplit(params$subset_by, ",")))
     message(paste0("Selected ", length(params$subset_by), " subset condition(s): ",
       paste0(params$subset_by, collapse = ", ")))
