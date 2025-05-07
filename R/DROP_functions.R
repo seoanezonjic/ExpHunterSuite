@@ -755,7 +755,8 @@ get_expressed_genes <- function(ods) {
 #' \dontrun{
 #' res <- add_gnomAD_AF(maeRes, genome_assembly = genome_assembly, populations = "AF")            
 #' }
-#'                                                                                                
+#' @importClassesFrom data.table data.table
+#' @importClassesFrom GenomicRanges GRanges                                                                                         
 #' @export
 setGeneric("add_gnomAD_AF",function(
     object,
