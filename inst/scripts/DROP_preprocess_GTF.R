@@ -11,10 +11,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   main_path_script <- dirname(full.fpath)
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
-  custom_libraries <- 'DROP_functions.R'
-  for (lib in custom_libraries){
-    source(file.path(root_path, 'R', lib))
-  }
+  devtools::load_all(root_path)
   template_folder <- file.path(root_path, 'inst', 'templates')
 } else {
   require('ExpHunterSuite')
