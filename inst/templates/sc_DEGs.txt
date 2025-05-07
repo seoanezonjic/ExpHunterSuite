@@ -1,6 +1,5 @@
 
 <!--begin.rcode setup
-    saveRDS(plotter, "plotter.rds")
     colGEX <- c("grey85", "#FEE5D9", "#FCBBA1", "#FC9272", "#FB6A4A", "#EF3B2C", "#CB181D", "#99000D")
     comparison <- plotter$hash_vars$target_name
     opt <- plotter$hash_vars$opt
@@ -23,7 +22,7 @@
 
     get_top_DEGs <- function(input_DEGs) {
         test <- input_DEGs$p_val_adj < opt$p_val_cutoff
-        test <- test & abs(input_DEGs$avg_log2FC > opt$min_avg_log2FC)
+        test <- test & abs(input_DEGs$avg_log2FC) > opt$min_avg_log2FC
         res <- input_DEGs[test, ]
         res <- res[, c("gene", "p_val", "p_val_adj", "avg_log2FC", "pct.1", "pct.2")]
         if(any(dim(res) < 1)) {
@@ -57,7 +56,8 @@ end.rcode-->
 <!--begin.rcode DEG_metrics, eval = length(DEG_list) > 0
     cat(plotter$create_title("Differential expression metrics per cell", "DEG_metrics", hlevel = 2, indexable = TRUE,
                           clickable = FALSE, t_id = "DEG_metrics", clickable_text = ""))
-    
+    cat(paste0("<p>A minimum feature count filter has been applied in this step, which means DEGs considered",
+               " for this plot follow stricter criteria. This was done in order to not overload the figure.</p>"))
     cat(plotter$create_title(paste0("DEG metrics for target ", comparison), paste0(comparison, "_DEG_metrics"), hlevel = 2,
                  indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEG_metrics"), clickable_text = ""))
     if(any(dim(plotter$hash_vars$comparison_FCs) < 1) | is.null(plotter$hash_vars$comparison_FCs)) {
