@@ -135,8 +135,6 @@ option_list <- list(
 
 params <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
-saveRDS(params, "params.rds")
-
 options(future.globals.maxSize = 15e+09)
 options(Seurat.object.assay.version = 'v5')
 
