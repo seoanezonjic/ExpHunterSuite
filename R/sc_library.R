@@ -1376,6 +1376,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
     params$samples_to_integrate <- ""
     params$ref_de_method <- ""
     params$exp_design <- ""
+    params$subset_by <- ""
   } else {
     params$target_genes <- ""
   }
