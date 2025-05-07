@@ -238,6 +238,7 @@ annotate_genomic_ranges <-function(intervals_df, genome){
  return(annotated_g_regs)
 }    
 
+#' @export
 split_str <- function(string, split = NULL) {
   if (is.null(split))
     stop("split character must be specifyed")
