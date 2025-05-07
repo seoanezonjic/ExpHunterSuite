@@ -1043,17 +1043,18 @@ subset_seurat <- function(seu, column, value, expr = FALSE, layer = "data") {
 #' print(downsample_seurat(seu = pbmc_tiny, cells = 2, features = 5))
 #' @export
 
-downsample_seurat <- function(seu, cells = 500, nfeatures = 5000,
-                              assay = "RNA", layer = "counts") {
+downsample_seurat <- function(seu, cells = 500, features = 5000,
+                              assay = "RNA", layer = "counts", keep = NULL) {
   if(length(unique(seu$orig.ident)) > 1) {
     seu <- SeuratObject::JoinLayers(seu)
   }
   counts <- SeuratObject::GetAssayData(seu, assay = assay, layer = layer)
   if(is.numeric(features)) {
-    gene_list <- sample(rownames(counts), size = nfeatures, replace = F)
+    gene_list <- sample(rownames(counts), size = features, replace = F)
   } else {
     gene_list <- features
   }
+  gene_list <- unique(c(gene_list, keep))
   counts <- counts[gene_list, ]
   seu <- subset(seu, features = rownames(counts))
   if(is.numeric(cells)) {
@@ -1412,8 +1413,10 @@ process_sc_params <- function(params = list(), mode = "annotation") {
     params$extra_columns <- tolower(unlist(strsplit(params$extra_columns, ",")))
   }
   if(params$samples_to_integrate != "") {
-    samples <- read.table(params$samples_to_integrate, sep = "\t", header = FALSE)
-    params$exp_design <- exp_design[exp_design$sample %in% samples[[1]], ]
+    samples <- read.table(params$samples_to_integrate, sep = "\t",
+                          header = FALSE)[[1]]
+    matches <- params$exp_design$sample %in% samples
+    params$exp_design <- params$exp_design[matches, ]
   }
   if(params$ref_de_method == "") {
     params$ref_de_method <- NULL
