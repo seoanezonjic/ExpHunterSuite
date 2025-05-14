@@ -31,9 +31,6 @@
 #'   * `TRUE`: Prints progress bars and messages to closely monitor progress.
 #'   * `FALSE` (the default): Print minimal progress messages.
 #' @param output A string. Path to output directory.
-#' @param save_RDS A boolean.
-#'   * `TRUE`: Save output as an rds file.
-#'   * `FALSE` (the default): Do not save output as an rds file.
 #' @param reduce A boolean.
 #'   * `TRUE`: Skip QC filtering. Intended for development and testing.
 #'   * `FALSE` (the default): QC filtering will be performed.
