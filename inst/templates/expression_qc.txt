@@ -1,6 +1,5 @@
 
 <!--begin.rcode setup_expression_qc
-
 	custom_PerformanceAnalytics <- function() {
 		PerformanceAnalytics::chart.Correlation(R = data_frame, histogram = TRUE,
 			pch = 19, log = "xy")
@@ -94,6 +93,15 @@ end.rcode-->
 	cat(plotter$prettify_div(plotter$static_plot_main("cor_filter", resizable = TRUE, custom_format = TRUE, plotting_function = custom_heatmap_cor, plot_type = "autoplot"), preset = "magic"))
 end.rcode-->
 
+<!--begin.rcode query_genes, eval = !is.null(plotter$hash_vars$opt$query_genes)
+	query_genes <- plotter$hash_vars$opt$query_genes
+	DESeq_subset <- plotter$hash_vars$all_data_normalized$DESeq2
+	DESeq_subset <- DESeq_subset[query_genes, , drop = FALSE]
+	plotter$hash_vars$DESeq_subset <- DESeq_subset
+	cat(plotter$create_title("DESeq2-normalized counts query genes subset", id = "query_genes", hlevel = 3, indexable = TRUE))
+	cat(plotter$prettify_div(plotter$table(list(id = "DESeq_subset", header = NULL, row_names = NULL, styled = "dt")), preset = "magic"))
+end.rcode-->
+
 <!--begin.rcode config_expression_PCA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE
 	plotter$hash_vars$pca_data <- plotter$hash_vars$PCA_res$all_genes$pca_data
 	plotter$hash_vars$dim_to_keep <- plotter$hash_vars$PCA_res$all_genes$dim_to_keep
@@ -140,7 +148,7 @@ end.rcode-->
 						     indexable = FALSE))
 	log2norm_counts <- log2(plotter$hash_vars$all_data_normalized[["default"]] + 1)
 	plotter$hash_vars$norm_long <- reshape2::melt(log2norm_counts, measure.vars=colnames(log2norm_counts))
-	cat(plotter$prettify_div(plotter$static_ggplot_main("raw_long", resizable = TRUE, header = NULL, row_names = NULL,
+	cat(plotter$prettify_div(plotter$static_ggplot_main("norm_long", resizable = TRUE, header = NULL, row_names = NULL,
 	        plotting_function = plot_cpm_density), preset = "magic"))
 end.rcode-->
 
