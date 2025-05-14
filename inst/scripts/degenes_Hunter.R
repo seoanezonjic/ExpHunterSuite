@@ -176,7 +176,9 @@ option_list <- list(
   optparse::make_option(c("-s", "--library_sizes"), type="character",
     default=NULL, help="Path to file containing library sizes. If missing,
       certain DROP QC plots will not be drawn, and sample ranks will be defined
-      by total counts.")
+      by total counts."),
+  optparse::make_option(c("-q", "--query_genes"), type="character",
+    default=NULL, help="Semicolon-separated genes of interest by which to subset results.")
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 ############################################################################
@@ -238,6 +240,9 @@ library_sizes <- opt$library_sizes
 if(! is.null(library_sizes)) {
   library_sizes <- read.table(library_sizes, header=TRUE)
 }
+if(!is.null(opt$query_genes)) {
+  opt$query_genes <- strsplit(opt$query_genes, ";")[[1]]
+}
 
 final_results <- main_degenes_Hunter(
   target = target,
@@ -273,7 +278,6 @@ final_results <- main_degenes_Hunter(
   multifactorial = opt$multifactorial,
   library_sizes = library_sizes
 )
-
 ############################################################################
 # WRITE OUTPUT
 ###########################################################################
