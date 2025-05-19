@@ -32,10 +32,18 @@ cell type, as calculated with Seurat.}
 \item{query}{A character vector. List of genes to analyze. Default
 NULL.}
 }
+\value{
+A list containing fc and ncells data frames.
+}
 \description{
 get_fc_vs_ncells
 takes a seurat object and a list of differentially expressed gene data
 frames, and converts them to two heatmaps with the same dimensions. The first
 contains the amount of cells of each type that express each gene, and the
 second the log2FC of said gene for every given cell type.
+}
+\examples{
+ \dontrun{
+   get_fc_vs_ncells(seu = pbmc_tiny, DEG_list = pbmc_DEGs, query = "IGLL5")
+ }
 }

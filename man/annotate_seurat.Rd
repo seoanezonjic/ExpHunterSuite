@@ -3,7 +3,8 @@
 \name{annotate_seurat}
 \alias{annotate_seurat}
 \title{annotate_seurat
-is a wrapper and dispatch for different annotation strategies for a seurat object.}
+is a wrapper and dispatch for different annotation strategies for a seurat
+object.}
 \usage{
 annotate_seurat(
   seu,
@@ -17,10 +18,17 @@ annotate_seurat(
 )
 }
 \arguments{
-\item{seu}{Non-annotated seu with markers}
+\item{seu}{Seurat object to analyze.}
+
+\item{cell_annotation}{Table of cell types and their associated markers}
 
 \item{subset_by}{Metadata column by which seurat object will be subset for
 marker calculation. Default NULL.}
+
+\item{cluster_annotation}{A data frame detailing new names for identified
+clusters. Requires prior clustering knowledge.}
+
+\item{p_adj_cutoff}{Minimum adjusted p-value of markers to consider.}
 
 \item{verbose}{A boolean. Will be passed to Seurat function calls.}
 
@@ -35,7 +43,8 @@ A seurat object with a new sketched assay.
 }
 \description{
 annotate_seurat
-is a wrapper and dispatch for different annotation strategies for a seurat object.
+is a wrapper and dispatch for different annotation strategies for a seurat
+object.
 }
 \examples{
  \dontrun{

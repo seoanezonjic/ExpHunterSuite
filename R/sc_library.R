@@ -740,6 +740,12 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
 #' @param min_counts An integer. Minimum gene counts to consider a gene as expressed.
 #' @param query A character vector. List of genes to analyze. Default
 #' NULL.
+#' @returns A list containing fc and ncells data frames.
+#' @examples
+#'  \dontrun{
+#'    get_fc_vs_ncells(seu = pbmc_tiny, DEG_list = pbmc_DEGs, query = "IGLL5")
+#'  }
+#' @export
 
 get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
                              p_val_cutoff = 0.01, min_counts = 1,
@@ -1198,10 +1204,13 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
 }
 
 #' annotate_seurat
-#' is a wrapper and dispatch for different annotation strategies for a seurat object.
+#' is a wrapper and dispatch for different annotation strategies for a seurat
+#' object.
 #' @inheritParams annotate_clusters
 #' @inheritParams rename_clusters
 #' @inheritParams calculate_markers
+#' @param cluster_annotation A data frame detailing new names for identified
+#' clusters. Requires prior clustering knowledge.
 #' @returns A seurat object with a new sketched assay.
 #' @examples
 #'  \dontrun{
@@ -1240,9 +1249,13 @@ annotate_seurat <- function(seu, cell_annotation = NULL,
 
 #' annotate_SingleR
 #' is a wrapper for SingleR annotation strategy, simplifies function call.
-#' @inheritParams SingleR::SingleR
 #' @inheritParams main_annotate_sc
+#' @inheritParams SingleR::trainSingleR
+#' @param fine.tune A boolean.
+#'   * `TRUE` (the default): Fine-tune statistical model built for transfer.
+#'   * `FALSE`: Do not perform fine-tuning..
 #' @param save_pdf Path where pdf files will be saved.
+#' @param assay Seurat object assay to use for annotation. Default "RNA".
 #' @returns A seurat object with a new sketched assay.
 #' @examples
 #'  \dontrun{
@@ -1278,6 +1291,18 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
           SingleR_annotation = SingleR_annotation))
 }
 
+#' annotate_clusters
+#' is a function which implements our cell type annotation algorithm.
+#' @inheritParams calculate_markers
+#' @inheritParams match_cell_types
+#' @returns Annotated seurat object.
+#' @examples
+#'  \dontrun{
+#'    annotate_clusters(seu = seu, subset_by = "genotype", cell_annotation =
+#'      cell_types)
+#'  }
+#' @export
+
 annotate_clusters <- function(seu, subset_by = NULL, cell_annotation,
                               assay = "RNA", integrate = FALSE, verbose = FALSE,
                               idents = "seurat_clusters", p_adj_cutoff = 1e-5){
@@ -1295,28 +1320,17 @@ annotate_clusters <- function(seu, subset_by = NULL, cell_annotation,
   return(list(seu = seu, markers = markers))
 }
 
-generate_sc_target <- function(DEG_target){
-  processed_target <- unlist(strsplit(DEG_target, ";"))
-  processed_target <- unlist(lapply(processed_target, strsplit, split = ":"),
-                       recursive = FALSE)
-  processed_target <- lapply(processed_target, function(vector) {
-    if(length(vector) < 2) {
-      processed_target <- c(vector, "all")
-    } else {
-      processed_target <- vector
-    }
-    return(processed_target)
-  })
-  DEG_names <- unlist(lapply(processed_target, `[[`, 1))
-  DEG_names <- strsplit(DEG_names, ">")
-  DEG_columns <- unlist(lapply(DEG_names, `[[`, 2))
-  DEG_names <- unlist(lapply(DEG_names, `[[`, 1))
-  DEG_values <- unlist(lapply(processed_target, `[[`, 2))
-  processed_target <- data.frame(column = tolower(DEG_columns),
-                                 values = DEG_values)
-  rownames(processed_target) <- DEG_names
-  return(processed_target)
-}
+#' project_sketch
+#' is a wrapper for the sketch projection steps.
+#' @param seu Seurat object whose sketch data to project.
+#' @inheritParams Seurat::ProjectIntegration
+#' @param ndims Dimensions to select in ProjectData.
+#' @returns Seurat object containing sketch projection in RNA assay.'
+#' @examples
+#'  \dontrun{
+#'    project_sketch(seu = seu, reduction = "umap", ndims = 10)
+#'  }
+#' @export
 
 project_sketch <- function(seu, reduction, ndims){
   refdata <- list(seurat_clusters = "seurat_clusters", cell_type = "cell_type")
@@ -1338,9 +1352,22 @@ project_sketch <- function(seu, reduction, ndims){
   return(seu)
 }
 
-process_doublets <- function(seu = stop("Missing seurat object"), name = NULL,
-                             qc = stop("Missing QC object"),
-                             doublet_path = getwd()){
+#' process_sketch
+#' simplifies doublet detection and tagging process, as well as removing
+#' doublets from seurat object.
+#' @param seu Seurat object to analyze.
+#' @param name Sample name.
+#' @param qc QC object to tag
+#' @param doublet_path Path where cell IDs identified as doublets will be
+#' written.
+#' @returns A list containing the updated seurat object and tagged qc object.
+#' @examples
+#'  \dontrun{
+#'    process_doublets(seu = sample_seu, name = "sample1", qc = qc)
+#'  }
+#' @export
+
+process_doublets <- function(seu, name = NULL, qc, doublet_path = getwd()){
   doublets <- find_doublets(seu)
   seu <- doublets$seu
   doublet_list <- doublets$barcodes
@@ -1366,6 +1393,8 @@ process_doublets <- function(seu = stop("Missing seurat object"), name = NULL,
 #'   * `TRUE`: Will print out execution time, in addition to passing its value
 #' to Seurat::FindVariableFeatures call..
 #'   * `FALSE` (the default): Function will be quiet.
+#' @param force_ncells an integer. Sketch function will be forced to select
+#' this many cells.
 #' @returns A seurat object with a new sketched assay.
 #' @examples
 #'  \dontrun{
@@ -1406,7 +1435,7 @@ process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
 #'  \dontrun{
 #'    get_expression_metrics(seu = seu, sigfig = 2)
 #'  }
-#'@export'
+#'@export
 
 get_expression_metrics <- function(seu, sigfig) {
   message("Extracting expression quality metrics")
@@ -1491,6 +1520,20 @@ process_sc_params <- function(params = list(), mode = "annotation") {
                       out_suffix = out_suffix)
   return(updated_params)
 }
+
+#' load_SingleR_ref
+#' reads a SingleR reference from specified path. It can handle multiple
+#' versions of the same reference, and also filter it by metadata.
+#' @param path Path to reference to load.
+#' @param version Version of reference to load.
+#' @param filter Filter to apply to reference.
+#' @returns Loaded and optionally filtered SingleR reference.
+#' @examples
+#'  \dontrun{
+#'    load_SingleR_Ref(path = "my_reference", version = "2018-03-24",
+#'                     filter = "Age <= 3 years | phenotype == patient")
+#'  }
+#' @export
 
 load_SingleR_ref <- function(path, version = "", filter = "") {
   SingleR_ref <- NULL

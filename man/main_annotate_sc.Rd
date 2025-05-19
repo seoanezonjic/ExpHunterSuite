@@ -130,8 +130,14 @@ tutorial.}
 \item{k_weight}{Number of neighbors to consider when weighting anchors. Used
 in integration.}
 
+\item{force_ncells}{an integer. Sketch function will be forced to select
+this many cells.}
+
 \item{sketch_method}{A string. Method to use in score calculation for
 sketching.}
+
+\item{doublet_path}{Path where cell IDs identified as doublets will be
+written.}
 }
 \value{
 invisible(final_results list. Contains multiple items:)

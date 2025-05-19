@@ -31,13 +31,22 @@ SingleR will not be used.}
 provide a more accurate annotation, but increase noise and computational
 time. Will not be used if ref_de_method is empty.}
 
-\item{BPPARAM}{A \linkS4class{BiocParallelParam} object specifying how parallelization should be performed in other steps,
-see \code{?\link[SingleR]{trainSingleR}} and \code{?\link[SingleR]{classifySingleR}} for more details.}
+\item{BPPARAM}{Parameters to pass to BiocParallel framework.}
 
 \item{ref_de_method}{Method to use for marker calculation in single-cell
 reference.}
 
 \item{ref_label}{Reference column to use in annotation.}
+
+\item{aggr.ref}{Logical scalar indicating whether references should be aggregated to pseudo-bulk samples for speed, see \code{\link[SingleR]{aggregateReference}}.}
+
+\item{fine.tune}{A boolean.
+\itemize{
+\item \code{TRUE} (the default): Fine-tune statistical model built for transfer.
+\item \code{FALSE}: Do not perform fine-tuning..
+}}
+
+\item{assay}{Seurat object assay to use for annotation. Default "RNA".}
 
 \item{verbose}{A boolean.
 \itemize{

@@ -25,6 +25,9 @@ sketching.}
 representative of the experiment. Default 12, as suggested by sketching
 tutorial.}
 
+\item{force_ncells}{an integer. Sketch function will be forced to select
+this many cells.}
+
 \item{hvgs}{An integer. Number of highly-variable features to select.
 default 2000.}
 
