@@ -20,9 +20,9 @@ get_top_genes(
 
 \item{top}{Top N genes to retrieve.}
 
-\item{assay}{Seurat object assay to break down}
+\item{assay}{Seurat object assay to break down.}
 
-\item{layer}{Layer of seurat object assay to break down}
+\item{layer}{Layer of seurat object assay to break down.}
 
 \item{sample_col}{Seurat object metadata column containing sample
 information. Default "sample", as per our workflow.}

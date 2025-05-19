@@ -25,7 +25,6 @@ main_annotate_sc(
   normalmethod = "LogNormalize",
   verbose = FALSE,
   output = getwd(),
-  save_RDS = FALSE,
   reduce = FALSE,
   ref_label = NULL,
   SingleR_ref = NULL,
@@ -37,7 +36,6 @@ main_annotate_sc(
   sketch = FALSE,
   sketch_pct = 25,
   k_weight = 100,
-  sketch_ncells = 5000,
   force_ncells = NA_integer_,
   sketch_method = "LeverageScore",
   doublet_path = getwd()
@@ -93,12 +91,6 @@ Default 10.}
 }}
 
 \item{output}{A string. Path to output directory.}
-
-\item{save_RDS}{A boolean.
-\itemize{
-\item \code{TRUE}: Save output as an rds file.
-\item \code{FALSE} (the default): Do not save output as an rds file.
-}}
 
 \item{reduce}{A boolean.
 \itemize{

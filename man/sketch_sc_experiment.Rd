@@ -16,7 +16,8 @@ sketch_sc_experiment(
 )
 }
 \arguments{
-\item{seu}{Seurat object to sketch.}
+\item{seu}{Seurat object to sketch.
+Default value of 5000, recommended by Seurat tutorials.}
 
 \item{assay}{A string. Name of assay to sketch. Default "RNA".}
 
@@ -30,10 +31,6 @@ tutorial.}
 
 \item{force.ncells}{An integer. Number of cells to forcibly use in sketch.
 NA by default.}
-
-\item{min.ncells}{An integer. If estimated cell number optimal value for
-sketching is smaller than this number, sketching will not be performed.
-Default value of 5000, recommended by Seurat tutorials.}
 }
 \value{
 A seurat object with a new sketched assay.

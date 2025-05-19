@@ -3,11 +3,43 @@
 \name{check_sc_input}
 \alias{check_sc_input}
 \title{check_sc_input
-check input of main SC analysis function}
+checks and pre-processes input of main SC analysis functions. Outdated, needs
+overhaul.}
 \usage{
-check_sc_input(metadata, DEG_target)
+check_sc_input(
+  metadata = NULL,
+  DEG_target = NULL,
+  integrate = NULL,
+  sketch = NULL,
+  SingleR_ref = NULL,
+  reduce = NULL
+)
+}
+\arguments{
+\item{metadata}{Seurat object metadata.}
+
+\item{DEG_target}{A data frame describing DEG analysis to perform.}
+
+\item{integrate}{A boolean, or NULL. Whether or not to perform integration.}
+
+\item{sketch}{A boolean, or NULL. Controls sketching of seurat object.}
+
+\item{SingleR_ref}{SingleR_reference to use. Default NULL.}
+
+\item{reduce}{A boolean, or NULL. Whether or not to reduce input for testing.}
+}
+\value{
+A markers data frame with a new column for cell type assigned to
+cluster.
 }
 \description{
 check_sc_input
-check input of main SC analysis function
+checks and pre-processes input of main SC analysis functions. Outdated, needs
+overhaul.
+}
+\examples{
+ \dontrun{
+   match_cell_types(markers_df = markers_df, p_adj_cutoff = 1e-5,
+                    cell_annotation = markers_celltypes_df)
+ }
 }

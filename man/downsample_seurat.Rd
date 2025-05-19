@@ -11,9 +11,9 @@ downsample_seurat(
   seu,
   cells = 500,
   features = 5000,
-  keep = "",
   assay = "RNA",
-  layer = "counts"
+  layer = "counts",
+  keep = NULL
 )
 }
 \arguments{
@@ -22,11 +22,11 @@ downsample_seurat(
 \item{cells, features}{Lists or integers. An integer will trigger random
 downsampling by its respective variable.}
 
-\item{keep}{A vector of genes to keep when downsampling features.}
+\item{assay}{Seurat object assay to break down.}
 
-\item{assay}{Seurat object assay to break down}
+\item{layer}{Layer of seurat object assay to break down.}
 
-\item{layer}{Layer of seurat object assay to break down}
+\item{keep}{A string vector. Features to keep when downsampling.}
 }
 \value{
 A downsampled seurat object.

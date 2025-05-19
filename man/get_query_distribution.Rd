@@ -15,11 +15,13 @@ get_query_distribution(
 )
 }
 \arguments{
-\item{seu}{Seurat object}
+\item{seu}{Seurat object.}
 
-\item{query}{Vector of query genes whose expression to analyse.}
+\item{query}{Vector of query genes whose expression to analyze.}
 
-\item{sigfig}{Significant figure cutoff}
+\item{sigfig}{Significant figure cutoff.}
+
+\item{layer}{Layer of seurat object assay to analyze.}
 
 \item{sample_col}{Name of column that specifies sample. Default "sample",
 as per our workflow.}

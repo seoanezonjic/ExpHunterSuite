@@ -9,11 +9,14 @@ the specified parameter.}
 breakdown_query(input, query, assay = "RNA", layer = "data")
 }
 \arguments{
-\item{query}{Vector of query genes whose expression to analyse.}
+\item{input}{Input object to breakdown. Can be a seurat object or a
+single-cell counts matrix.}
 
-\item{assay}{Seurat object assay to break down}
+\item{query}{Vector of query genes whose expression to analyze.}
 
-\item{layer}{Layer of seurat object assay to break down}
+\item{assay}{Seurat object assay to break down.}
+
+\item{layer}{Layer of seurat object assay to break down.}
 }
 \value{
 A data frame of the proportion of cells (between 0 and 1) that

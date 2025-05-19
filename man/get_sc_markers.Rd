@@ -18,7 +18,7 @@ get_sc_markers(
 )
 }
 \arguments{
-\item{seu}{Seurat object to analyse.}
+\item{seu}{Seurat object to analyze.}
 
 \item{cond}{A string. Condition by which to perform DEG analysis, or by which
 to group data to find conserved markers.}
@@ -41,6 +41,10 @@ as per usual workflow.}
 which to perform the comparison. Must specify two conditions. Default NULL,
 will use all values. If there are more than two, function will return an
 error.}
+
+\item{min.pct}{only test genes that are detected in a minimum fraction of
+min.pct cells in either of the two populations. Meant to speed up the function
+by not testing genes that are very infrequently expressed. Default is 0.01}
 }
 \value{
 A list containing one marker or DEG data frame per cluster, plus

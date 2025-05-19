@@ -7,23 +7,22 @@
 for integrative or non-integrative analysis.}
 \usage{
 main_sc_Hunter(
-  seu = stop("No seurat object supplied."),
-  DEG_target = stop("No DEG target supplied"),
+  DEG_target,
+  seu,
   p_val_cutoff = 0.001,
   min_avg_log2FC = 0.5,
   min_counts = 10,
-  verbose = FALSE,
   query = NULL,
-  min_cell_proportion = 1,
-  subset_by = NULL,
+  verbose = FALSE,
+  min_cell_proportion = 0.01,
   output_path = getwd()
 )
 }
 \arguments{
-\item{seu}{Seurat object to analyze.}
-
 \item{DEG_target}{A string vector. Categories by which DEG analysis will be
 performed}
+
+\item{seu}{Seurat object to analyze.}
 
 \item{p_val_cutoff}{Adjusted p-val cutoff for significant DEGs.
 Default 5e-3.}
@@ -32,6 +31,9 @@ Default 5e-3.}
 Default 0.5.}
 
 \item{min_counts}{Min counts to consider a gene is expressed in a cell.}
+
+\item{query}{A string vector. List of genes to focus on DEG analysis in
+addition to regular DEG analysis.}
 
 \item{verbose}{Print extra execution information.}
 

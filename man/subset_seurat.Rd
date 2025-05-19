@@ -16,6 +16,8 @@ subset_seurat(seu, column, value, expr = FALSE, layer = "data")
 \item{value}{Value to search within column.}
 
 \item{expr}{Directly subset expression matrix instead of seurat object.}
+
+\item{layer}{Seurat object layer to subset.}
 }
 \value{
 A subset of the seurat object, which itself is a seurat object or an

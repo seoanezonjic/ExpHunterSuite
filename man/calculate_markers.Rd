@@ -16,7 +16,7 @@ calculate_markers(
 )
 }
 \arguments{
-\item{seu}{Seurat object to analyse.}
+\item{seu}{Seurat object to analyze.}
 
 \item{subset_by}{Metadata column by which seurat object will be subset for
 marker calculation. Default NULL.}

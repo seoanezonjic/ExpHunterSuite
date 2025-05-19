@@ -56,7 +56,6 @@ maeRes <- DESeq4MAE(maeCounts)
 \dontrun{
 res <- add_gnomAD_AF(maeRes, genome_assembly = genome_assembly, populations = "AF")            
 }
-                                                                                               
 }
 \author{
 \href{https://github.com/gagneurlab/tMAE}{gagneurlab}

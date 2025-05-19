@@ -8,18 +8,13 @@ Write integration HTML report}
 write_sc_report(
   final_results,
   output = getwd(),
+  out_suffix = NULL,
   template_folder,
   source_folder = NULL,
-  query = NULL,
-  subset_by = NULL,
   opt,
-  cell_annotation = NULL,
+  params,
   template = NULL,
-  out_name = NULL,
-  use_canvas = TRUE,
-  extra_columns = NULL,
-  DEG_p_val_cutoff = NA_real_,
-  min_avg_log2FC = NA_real_
+  use_canvas = TRUE
 )
 }
 \arguments{
@@ -27,28 +22,23 @@ write_sc_report(
 
 \item{output}{directory where report will be saved}
 
+\item{out_suffix}{suffix to add to output file name. Useful when rendering
+different templates with this function (as is the case in our workflow)}
+
 \item{template_folder}{directory where template is located}
 
 \item{source_folder}{htmlreportR source folder}
 
-\item{query}{A string vector. List of genes to explore in dataset}
+\item{opt}{Processed ptions list, will be consulted in report.}
 
-\item{subset_by}{factors present in experiment design}
-
-\item{cell_annotation}{A data frame. Table of markers to use for cell type
-annotation.}
+\item{params}{Input options list, will be included as execution parameters.}
 
 \item{template}{Template to render}
-
-\item{out_name}{suffix to add to output file name. Useful when rendering
-different templates with this function (as is the case in our workflow)}
 
 \item{use_canvas}{Parameter to select whether or not CanvasXpress plots will
 be triggered in templates where this control parameter has been implemented.
 Setting it to FALSE can be useful for big datasets, as CanvasXpress might
 have trouble in certain plots}
-
-\item{name}{experiment name, will be used to build output file name}
 }
 \value{
 invisible(NULL)

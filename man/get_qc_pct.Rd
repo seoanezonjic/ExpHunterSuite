@@ -21,13 +21,13 @@ get_qc_pct(
 
 \item{top}{Top N genes to retrieve.}
 
-\item{assay}{Seurat object assay to break down}
+\item{assay}{Seurat object assay to break down.}
 
-\item{layer}{Layer of seurat object assay to break down}
+\item{layer}{Layer of seurat object assay to break down.}
 
 \item{by}{Factor (metadata column name) by which query will be broken down.}
 
-\item{sigfig}{Significant figure cutoff}
+\item{sigfig}{Significant figure cutoff.}
 
 \item{sample_col}{Seurat object metadata column containing sample
 information. Default "sample", as per our workflow.}
