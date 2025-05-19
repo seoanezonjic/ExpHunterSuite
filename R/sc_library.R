@@ -9,7 +9,7 @@
 #' @param minfeats min number of features for which a cell is recorded
 #' @param exp_design experiment design table
 #' 
-#' @return Seurat object
+#' @returns Seurat object
 #' @examples
 #'  \dontrun{
 #'    read_sc_counts(name = "experiment_name", mincells = 1, minfeats = 1,
@@ -40,7 +40,7 @@ read_sc_counts <- function(name, input, mincells = 1, minfeats = 1, exp_design){
 #'
 #' @keywords preprocessing, qc
 #' 
-#' @return Seurat object with tagged metadata
+#' @returns Seurat object with tagged metadata
 #' @examples
 #' data(pbmc_tiny)
 #' # Integrative experiment, previously loaded doublet list:
@@ -77,7 +77,7 @@ tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL){
 #'
 #' @inheritParams tag_qc
 #'
-#' @return Seurat object with tagged doublets
+#' @returns Seurat object with tagged doublets
 #' @examples
 #' data(pbmc_tiny)
 #' tag_doublets(seu = pbmc_tiny,
@@ -101,7 +101,7 @@ tag_doublets <- function(seu, doublet_list) {
 #' 
 #' @keywords preprocessing, subsetting, integration
 #' 
-#' @return Seurat object with the experimental conditions added as metadata
+#' @returns Seurat object with the experimental conditions added as metadata
 #' @examples
 #' data(pbmc_tiny)
 #' pbmc_tiny$sample <- "sampleA"
@@ -136,7 +136,7 @@ add_sc_design <- function(seu, name, exp_design){
 #' 
 #' @keywords preprocessing, merging, integration
 #' 
-#' @return Merged Seurat object
+#' @returns Merged Seurat object
 #' @examples
 #'  \dontrun{
 #'    merge_seurat(project_name = "experiment_name", exp_design = exp_design,
@@ -167,7 +167,7 @@ merge_seurat <- function(project_name, exp_design, count_path,
 #' @param seu Non-annotated seu with markers
 #' @param new_clusters Vector of names to assign to clusters.
 #'
-#' @return Annotated seu object
+#' @returns Annotated seu object
 #' @examples
 #' data(pbmc_tiny)
 #' pbmc_tiny$seurat_clusters <- 1
@@ -188,7 +188,7 @@ rename_clusters <- function(seu, new_clusters = NULL ) {
 #'
 #' @importFrom plyr rbind.fill
 #' @param markers_list A list containing marker gene data frames.
-#' @return A data frame. Column `cluster` contains element names of original
+#' @returns A data frame. Column `cluster` contains element names of original
 #' list (seurat clusters) and column `genes` contains, for each row, the top
 #' markers of that element from the original list separated by commas.
 #' @examples
@@ -224,7 +224,7 @@ collapse_markers <- function(markers_list) {
 #' @param markers_df Data frame of markers, clusters and p-values
 #' @param cell_annotation Table of cell types and their associated markers
 #' @param p_adj_cutoff Minimum adjusted p-value of markers to consider.
-#' @return A markers data frame with a new column for cell type assigned to
+#' @returns A markers data frame with a new column for cell type assigned to
 #' cluster.
 #' @examples
 #'  \dontrun{
@@ -337,7 +337,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' conserved markers from a seurat object.
 #'
 #' @importFrom Seurat Idents FindMarkers FindConservedMarkers
-#' @param seu Seurat object to analyse.
+#' @inheritParams Seurat::FindMarkers
+#' @param seu Seurat object to analyze.
 #' @param DEG A boolean.
 #'   * `TRUE`: Function will calculate differentally expressed genes.
 #'   * `FALSE` (the default): Function will calculate cluster markers.
@@ -352,7 +353,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' which to perform the comparison. Must specify two conditions. Default NULL,
 #' will use all values. If there are more than two, function will return an
 #' error.
-#' @return A list containing one marker or DEG data frame per cluster, plus
+#' @returns A list containing one marker or DEG data frame per cluster, plus
 #' an additional one for global DEGs if performing differential analysis.
 #' @examples
 #' data(pbmc_tiny)
@@ -450,7 +451,7 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 #' bother with subsetting if FALSE.
 #' @param assay A string. Assay whose markers will be calculated. Default "RNA",
 #' as per usual workflow.
-#' @return Marker or DEG data frame.
+#' @returns Marker or DEG data frame.
 #' @examples
 #'  \dontrun{
 #'    data(pbmc_tiny)
@@ -495,14 +496,15 @@ calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE, idents = N
 #'
 #' @importFrom Seurat GetAssayData
 #' @inheritParams get_query_distribution
-#' @return A list with the three query analysis objects.
+#' @param layer Seurat object layer to analyze.
+#' @returns A list with the three query analysis objects.
 #' @examples
 #' data(pbmc_tiny)
 #' pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
 #' analyze_sc_query(pbmc_tiny, c("PPBP", "CA2"), 2, sample_col = "orig.ident")
 #' @export
 
-analyze_sc_query <- function(seu, query, sigfig, sample_col = "sample",
+analyze_sc_query <- function(seu, query, sigfig = 2, sample_col = "sample",
   layer = "data") {
   if(all(!query %in% rownames(seu))) {
     warning("None of the query genes are expressed in the dataset",
@@ -536,7 +538,7 @@ analyze_sc_query <- function(seu, query, sigfig, sample_col = "sample",
 #' @inheritParams get_query_distribution
 #' @param seu Clustered seurat object.
 #' @param sigfig Significant figure cutoff
-#' @return A data frame with cell type distribution in each sample.
+#' @returns A data frame with cell type distribution in each sample.
 #' @examples
 #' data(pbmc_tiny)
 #' pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
@@ -557,12 +559,13 @@ get_clusters_distribution <- function(seu, sigfig = 3, sample_col = "sample") {
 #' across all samples of a Seurat object
 #'
 #' @importFrom stats aggregate
-#' @param seu Seurat object
-#' @param query Vector of query genes whose expression to analyse.
-#' @param sigfig Significant figure cutoff
+#' @param seu Seurat object.
+#' @param query Vector of query genes whose expression to analyze.
+#' @param sigfig Significant figure cutoff.
 #' @param sample_col Name of column that specifies sample. Default "sample",
 #' as per our workflow.
-#' @return A data frame with expression levels for query genes in each sample.
+#' @param layer Layer of seurat object assay to analyze.
+#' @returns A data frame with expression levels for query genes in each sample.
 #' @examples
 #' data(pbmc_tiny)
 #' get_query_distribution(pbmc_tiny, c("PPBP", "CA2"), 2, "orig.ident")
@@ -588,12 +591,12 @@ get_query_distribution <- function(seu, query, sigfig = 3, layer = "data",
 #' object which expresses genes specified in a list of queries.
 #'
 #' @param seu Seurat object to analyze.
-#' @param query Vector of query genes whose expression to analyse.
-#' @param sigfig Significant figure cutoff
+#' @param query Vector of query genes whose expression to analyze.
+#' @param sigfig Significant figure cutoff.
 #' @param by Factor (metadata column name) by which query will be broken down.
-#' @param assay Seurat object assay to break down
-#' @param layer Layer of seurat object assay to break down
-#' @return A data frame with percentage of cells expressing query genes in each
+#' @param assay Seurat object assay to break down.
+#' @param layer Layer of seurat object assay to break down.
+#' @returns A data frame with percentage of cells expressing query genes in each
 #'         sample.
 #' @examples
 #' data(pbmc_tiny)
@@ -669,7 +672,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
 #' @param sample_col Seurat object metadata column containing sample
 #' information. Default "sample", as per our workflow.
 #'
-#' @return A vector containing the union of the top N genes of each sample of
+#' @returns A vector containing the union of the top N genes of each sample of
 #' input Seurat object.
 #' @examples
 #' data(pbmc_tiny)
@@ -706,7 +709,7 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
 #' expressed in every sample in a seurat object.
 #' @inheritParams get_query_pct
 #' @inheritParams get_top_genes
-#' @return Gene expression matrix of union of top N expressed genes in all
+#' @returns Gene expression matrix of union of top N expressed genes in all
 #' samples.
 #' @examples
 #' data(pbmc_tiny)
@@ -916,7 +919,9 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
 #' breaks down the expression of a list of query genes by
 #' the specified parameter.
 #' @inheritParams get_query_pct
-#' @return A data frame of the proportion of cells (between 0 and 1) that
+#' @param input Input object to breakdown. Can be a seurat object or a
+#' single-cell counts matrix.
+#' @returns A data frame of the proportion of cells (between 0 and 1) that
 #' express each query gene.
 #' @examples
 #' data(pbmc_tiny)
@@ -961,7 +966,7 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data") {
 
 #' .has_exclusive_idents
 #' checks whether any condition-identity pairs in
-#' seurat object has less than three occurrences, which makes certain analyses
+#' seurat object has less than three occurrences, which makes certain analyzes
 #' impossible. Not exported
 #'
 #' @param seu Seurat object
@@ -969,7 +974,7 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data") {
 #' @param idents Identity class to which to set seurat object before calculating
 #' markers in case conserved mode cannot be triggered.
 #'
-#' @return A boolean. `TRUE` if it contains exclusive pairs, `FALSE` otherwise.
+#' @returns A boolean. `TRUE` if it contains exclusive pairs, `FALSE` otherwise.
 
 .has_exclusive_idents <- function(seu, cond, idents) {
   meta <- seu@meta.data[, c(cond, idents)]
@@ -1004,7 +1009,8 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data") {
 #' @param column Column with value by which to subset input.
 #' @param value Value to search within column.
 #' @param expr Directly subset expression matrix instead of seurat object.
-#' @return A subset of the seurat object, which itself is a seurat object or an
+#' @param layer Seurat object layer to subset.
+#' @returns A subset of the seurat object, which itself is a seurat object or an
 #' expression matrix if expr is set to TRUE.
 #' @examples
 #' data(pbmc_tiny)
@@ -1036,7 +1042,8 @@ subset_seurat <- function(seu, column, value, expr = FALSE, layer = "data") {
 #' @inheritParams get_query_pct
 #' @param cells,features Lists or integers. An integer will trigger random
 #' downsampling by its respective variable.
-#' @return A downsampled seurat object.
+#' @param keep A string vector. Features to keep when downsampling.
+#' @returns A downsampled seurat object.
 #' @examples
 #' data(pbmc_tiny)
 #' print(pbmc_tiny)
@@ -1070,7 +1077,7 @@ downsample_seurat <- function(seu, cells = 500, features = 5000,
 #' `read_and_format_targets` formats a marker-celltype table into a list
 #'
 #' @param file Path to target gene file
-#' @return A list with one element per cell type
+#' @returns A list with one element per cell type
 #' @examples
 #'  \dontrun{
 #'    read_and_format_markers("path/to/markers/table")
@@ -1091,7 +1098,7 @@ read_and_format_targets <- function(file) {
 #' 
 #' @param seu Seurat object / list of Seurat objects 
 #' @keywords preprocessing, report, metadata
-#' @return Dataframe with metadata
+#' @returns Dataframe with metadata
 #' @examples 
 #' data(pbmc_tiny)
 #' tiny_list <- list(pbmc_tiny1 = pbmc_tiny, pbmc_tiny2 = pbmc_tiny)
@@ -1113,7 +1120,7 @@ extract_metadata <- function(seu){
 #' calculation in package DoubletFinder
 #'
 #' @param seu Seurat object
-#' @return A list. Item "seu" contains seurat object with tagged doublets
+#' @returns A list. Item "seu" contains seurat object with tagged doublets
 #' in metadata slot. Item "barcodes" contains a vector of cell barcodes
 #' corresponding to barcodes.
 #' @examples
@@ -1138,8 +1145,6 @@ find_doublets <- function(seu) {
 #' determines optimal cell number to sketch seurat assay. If it is larger than
 #' specified minimum, it proceeds with sketching, else it is skipped.
 #' @param seu Seurat object to sketch.
-#' @param min.ncells An integer. If estimated cell number optimal value for
-#' sketching is smaller than this number, sketching will not be performed.
 #' Default value of 5000, recommended by Seurat tutorials.
 #' @param force.ncells An integer. Number of cells to forcibly use in sketch.
 #' NA by default.
@@ -1149,13 +1154,14 @@ find_doublets <- function(seu) {
 #' @param cell.pct A numeric. Percentage of total cells to consider
 #' representative of the experiment. Default 25, as suggested by sketching
 #' tutorial.
-#' @return A seurat object with a new sketched assay.
+#' @returns A seurat object with a new sketched assay.
 #' @examples
 #'  \dontrun{
 #'    sketched_experiment <- sketch_sc_experiment(seu = nonsketched_experiment,
 #'           assay = "RNA", method = "LeverageScore", sketched.assay = "sketch",
 #'           cell.pct = 50)
 #'  }
+#' @export
 
 sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
                         sketched.assay = "sketch", cell.pct = 25,
@@ -1191,6 +1197,20 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
   return(seu)
 }
 
+#' annotate_seurat
+#' is a wrapper and dispatch for different annotation strategies for a seurat object.
+#' @inheritParams annotate_clusters
+#' @inheritParams rename_clusters
+#' @inheritParams calculate_markers
+#' @returns A seurat object with a new sketched assay.
+#' @examples
+#'  \dontrun{
+#'    sketched_experiment <- sketch_sc_experiment(seu = nonsketched_experiment,
+#'           assay = "RNA", method = "LeverageScore", sketched.assay = "sketch",
+#'           cell.pct = 50)
+#'  }
+#' @export
+
 annotate_seurat <- function(seu, cell_annotation = NULL,
                             subset_by = NULL, cluster_annotation = NULL,
                             p_adj_cutoff = 1e-5, verbose = FALSE, assay = "RNA",
@@ -1217,6 +1237,21 @@ annotate_seurat <- function(seu, cell_annotation = NULL,
   }
   return(res)
 }
+
+#' annotate_SingleR
+#' is a wrapper for SingleR annotation strategy, simplifies function call.
+#' @inheritParams SingleR::SingleR
+#' @inheritParams main_annotate_sc
+#' @param save_pdf Path where pdf files will be saved.
+#' @returns A seurat object with a new sketched assay.
+#' @examples
+#'  \dontrun{
+#'    annotate_SingleR(seu = seu, SingleR_ref = SingleR_ref,
+#'    BPPARAM = BPPARAM, ref_n = ref_n, ref_label = ref_label,
+#'    verbose = verbose, ref_de_method = ref_de_method, aggr.ref = aggr.ref,
+#'    fine.tune = new_opt$fine.tune, save_pdf = file.path(output, "report"))
+#'  }
+#' @export
 
 annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
                              BPPARAM = NULL, ref_de_method = "wilcox",
@@ -1322,6 +1357,24 @@ process_doublets <- function(seu = stop("Missing seurat object"), name = NULL,
   return(list(seu = seu, qc = qc))
 }
 
+#' process_sketch
+#' is a wrapper for Seurat sketching step.
+#' @inheritParams sketch_sc_experiment
+#' @inheritParams Seurat::FindVariableFeatures
+#' @inheritParams main_annotate_sc
+#' @param verbose A boolean, also passed to Seurat::FindVariableFeatures call.
+#'   * `TRUE`: Will print out execution time, in addition to passing its value
+#' to Seurat::FindVariableFeatures call..
+#'   * `FALSE` (the default): Function will be quiet.
+#' @returns A seurat object with a new sketched assay.
+#' @examples
+#'  \dontrun{
+#'    process_sketch(seu = seu, sketch_method = sketch_method,
+#'                   sketch_pct = sketch_pct, force_ncells = force_ncells,
+#'                   hvgs = hvgs, verbose = verbose)
+#'  }
+#' @export
+
 process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
                            verbose = FALSE){
   message("Sketching sample data")
@@ -1343,10 +1396,22 @@ process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
   return(seu)
 }
 
+#' get_expression_metrics
+#' is a wrapper for the expression metrics extraction step of our pipeline.
+#' @inheritParams get_qc_pct
+#' @inheritParams get_clusters_distribution
+#' @returns A list containing expression quality metrics and cluster
+#' distribution metrics.'
+#' @examples
+#'  \dontrun{
+#'    get_expression_metrics(seu = seu, sigfig = 2)
+#'  }
+#'@export'
+
 get_expression_metrics <- function(seu, sigfig) {
   message("Extracting expression quality metrics")
-  sample_qc_pct <- get_qc_pct(seu, by = "sample")
-  message("Extracting query expression metrics. This might take a while.")
+  sample_qc_pct <- get_qc_pct(seu = seu, by = "sample")
+  message("Extracting clusters distribution. This might take a while.")
   clusters_pct <- get_clusters_distribution(seu = seu, sigfig = sigfig)
   return(list(sample_qc_pct = sample_qc_pct, clusters_pct = clusters_pct))
 }

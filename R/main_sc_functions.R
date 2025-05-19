@@ -3,6 +3,8 @@
 #' is the main seurat analysis function, which can be used for integrative or
 #' non-integrative analysis.
 #'
+#' @inheritParams process_sketch
+#' @inheritParams process_doublets
 #' @param seu A seurat object.
 #' @param name Project name. Default NULL (no project name)
 #' @param minqcfeats An integer. Minimum features to consider a cell valid
@@ -58,6 +60,7 @@
 #' sketching.
 #' @param k_weight Number of neighbors to consider when weighting anchors. Used
 #' in integration.
+
 #' @export
 #' @examples
 #'  \dontrun{
@@ -107,10 +110,10 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   resolution = 0.5, p_adj_cutoff = 5e-3, name = NULL, integrate = FALSE,
   cluster_annotation = NULL, cell_annotation = NULL, scalefactor = 10000,
   hvgs = 2000, subset_by = NULL, ndims = 10, normalmethod = "LogNormalize",
-  verbose = FALSE, output = getwd(), save_RDS = FALSE, reduce = FALSE,
+  verbose = FALSE, output = getwd(), reduce = FALSE,
   ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL, ref_n = NULL,
   BPPARAM = NULL, doublet_list = NULL, integration_method = "Harmony",
-  sketch = FALSE, sketch_pct = 25, k_weight = 100, sketch_ncells = 5000,
+  sketch = FALSE, sketch_pct = 25, k_weight = 100,
   force_ncells = NA_integer_, sketch_method = "LeverageScore",
   doublet_path = getwd()){
   main_start <- Sys.time()
@@ -236,6 +239,8 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 #' not a percentage but a value from 0 to 1.
 #' @param min_counts Min counts to consider a gene is expressed in a cell.
 #' @param verbose Print extra execution information.
+#' @param query A string vector. List of genes to focus on DEG analysis in
+#' addition to regular DEG analysis.
 #' @param output_path Path where output will be written.
 #' @export
 
@@ -263,8 +268,28 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
   return(list(DEGs = DEGs, DEG_metrics = DEG_metrics, DEG_query = DEG_query))
 }
 
-main_analyze_sc_query <- function(seu, query, sigfig, output_path) {
-  query_data <- analyze_sc_query(seu = seu, query = query, sigfig = sigfig)
+#' analyze_sc_query
+#' is a wrapper for the three query analysis steps:
+#' `get_query_distribution`, `get_query_pct` by samples and `get_query_pct` by
+#' samples and cell types.
+#'
+#' @importFrom Seurat GetAssayData
+#' @inheritParams analyze_sc_query
+#' @param layer Seurat object layer to analyze.
+#' @returns A list with the three query analysis objects.
+#' @examples
+#' \dontrun{
+#'    data(pbmc_tiny)
+#'    pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
+#'    main_analyze_sc_query(pbmc_tiny, c("PPBP", "CA2"), 2,
+#'    sample_col = "orig.ident", layer = "counts")
+#' }
+#' @export
+
+main_analyze_sc_query <- function(seu, query, sigfig = 2, layer = "counts",
+                                  sample_col = "sample") {
+  query_data <- analyze_sc_query(seu = seu, query = query, sigfig = sigfig,
+                                 layer = layer, sample_col = sample_col)
   query_results <- list()
   query_results$query_exp <- query_data$query_exp
   query_results$query_pct <- query_data$query_pct
@@ -309,22 +334,19 @@ write_annot_output <- function(final_results = stop("Missing results object"),
 #' write_sc_report
 #' Write integration HTML report
 #'
-#' @inheritParams main_annotate_sc
 #' @param final_results Output from main_sc_Hunter function
 #' @param output directory where report will be saved
-#' @param name experiment name, will be used to build output file name
 #' @param out_suffix suffix to add to output file name. Useful when rendering
 #' different templates with this function (as is the case in our workflow)
 #' @param template_folder directory where template is located
 #' @param template Template to render
 #' @param source_folder htmlreportR source folder
-#' @param subset_by factors present in experiment design
 #' @param use_canvas Parameter to select whether or not CanvasXpress plots will
 #' be triggered in templates where this control parameter has been implemented.
 #' Setting it to FALSE can be useful for big datasets, as CanvasXpress might
 #' have trouble in certain plots
 #' @param opt Processed ptions list, will be consulted in report.
-#' @param param Input options list, will be included as execution parameters.'
+#' @param params Input options list, will be included as execution parameters.
 #'
 #' @keywords preprocessing, write, report
 #' 
@@ -384,7 +406,23 @@ write_sc_report <- function(final_results, output = getwd(), out_suffix = NULL,
 }
 
 #' check_sc_input
-#' check input of main SC analysis function
+#' checks and pre-processes input of main SC analysis functions. Outdated, needs
+#' overhaul.
+#'
+#' @param metadata Seurat object metadata. 
+#' @param DEG_target A data frame describing DEG analysis to perform.
+#' @param integrate A boolean, or NULL. Whether or not to perform integration.
+#' @param sketch A boolean, or NULL. Controls sketching of seurat object.
+#' @param SingleR_ref SingleR_reference to use. Default NULL.
+#' @param reduce A boolean, or NULL. Whether or not to reduce input for testing.
+#' @returns A markers data frame with a new column for cell type assigned to
+#' cluster.
+#' @examples
+#'  \dontrun{
+#'    match_cell_types(markers_df = markers_df, p_adj_cutoff = 1e-5,
+#'                     cell_annotation = markers_celltypes_df)
+#'  }
+#' @export
 
 check_sc_input <- function(metadata = NULL, DEG_target = NULL, integrate = NULL,
                            sketch = NULL, SingleR_ref = NULL, reduce = NULL){
