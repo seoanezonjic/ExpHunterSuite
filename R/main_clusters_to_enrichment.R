@@ -1,4 +1,6 @@
-#' Perform enrichment analysis on multiple lists of genes
+#' main_clusters_to_enrichment
+#' perform enrichment analysis on multiple lists of genes
+#' @inheritParams multienricher_ora
 #' @param input_file input file path. File must contain 1 cluster per line clusterA ..tab.. gene1,gene2
 #' @param gene_attribute_file file to map genes to attributes e.g. fold change
 #' @param org_db org_db object

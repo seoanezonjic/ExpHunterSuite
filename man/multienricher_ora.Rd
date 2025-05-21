@@ -2,7 +2,8 @@
 % Please edit documentation in R/functional_analysis_library.R
 \name{multienricher_ora}
 \alias{multienricher_ora}
-\title{Perform ORA enrichment analysis of a list of genes}
+\title{multienricher_ora
+performs ORA enrichment analysis of a list of genes}
 \usage{
 multienricher_ora(
   all_funsys = NULL,
@@ -54,5 +55,6 @@ multienricher_ora(
 \item{...}{other arguments passed to the enrichment function}
 }
 \description{
-Perform ORA enrichment analysis of a list of genes
+multienricher_ora
+performs ORA enrichment analysis of a list of genes
 }

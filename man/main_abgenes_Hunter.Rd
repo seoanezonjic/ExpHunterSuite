@@ -2,7 +2,7 @@
 % Please edit documentation in R/main_abgenes_Hunter.R
 \name{main_abgenes_Hunter}
 \alias{main_abgenes_Hunter}
-\title{Main Aberrant Expression function}
+\title{main_abgenes_Hunter}
 \usage{
 main_abgenes_Hunter(
   sample_annotation = NULL,
@@ -67,4 +67,16 @@ Aberrant expression object containing all analysis results.
 }
 \description{
 \code{main_abgenes_Hunter} runs DROP OUTRIDER analysis.
+}
+\examples{
+ \dontrun{
+		main_abgenes_Hunter(sample_annotation = sample_annotation,
+		 anno_database = anno_database, count_ranges = count_ranges,
+      gene_mapping_file = gene_mapping_file, count_files = count_files,
+     dataset = dataset, cpu = cpu, fpkm_cutoff = fpkm_cutoff,
+	 implementation = implementation, p_adj_cutoff = p_adj_cutoff,
+	 max_dim_proportion = max_tested_dimension_proportion, top_N = top_N,
+      z_score_cutoff = z_score_cutoff, hpo_file = hpo_file,
+	 stats_path = stats_path)
+ }
 }

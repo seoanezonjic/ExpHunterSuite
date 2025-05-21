@@ -2,8 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{read_sc_counts}
 \alias{read_sc_counts}
-\title{read_sc_counts
-creates a seurat object from cellranger counts}
+\title{read_sc_counts}
 \usage{
 read_sc_counts(name, input, mincells = 1, minfeats = 1, exp_design)
 }
@@ -22,8 +21,7 @@ read_sc_counts(name, input, mincells = 1, minfeats = 1, exp_design)
 Seurat object
 }
 \description{
-read_sc_counts
-creates a seurat object from cellranger counts
+\code{read_sc_counts} creates a seurat object from cellranger counts
 }
 \examples{
  \dontrun{

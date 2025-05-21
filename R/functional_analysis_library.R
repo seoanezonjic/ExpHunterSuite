@@ -552,8 +552,8 @@ enrichKEGG_user_data <- function (
     return(res)
 }
 
-
-#' Perform ORA enrichment analysis of a list of genes
+#' multienricher_ora
+#' performs ORA enrichment analysis of a list of genes
 #' @param all_funsys vector of funsys to use (e.g. MF, Reatcome)
 #' @param genes_list vector of genes or list of vectors, to be enriched
 #' @param universe background of genes to use as universe

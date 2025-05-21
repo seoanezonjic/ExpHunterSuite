@@ -1,4 +1,4 @@
-#' Main Aberrant Expression function
+#' main_abgenes_Hunter
 #'
 #' `main_abgenes_Hunter` runs DROP OUTRIDER analysis.
 #' @param sample_annotation Path to sample annotation table. See documentation.
@@ -25,12 +25,12 @@
 #' this file).
 #' @param top_N Top N genes by adjusted p-value to select for OUTRIDER
 #' overview. Default 10.
-#' @return Aberrant expression object containing all analysis results.
+#' @returns Aberrant expression object containing all analysis results.
 #' @importFrom data.table fread
 #' @importFrom utils write.table
 #' @importFrom SummarizedExperiment SummarizedExperiment colData rowData
 #' rowRanges mcols
-#' plotCountCorHeatmap plotCountGeneSampleHeatmap
+#' @importFrom OUTRIDER plotCountCorHeatmap plotCountGeneSampleHeatmap
 #' @importFrom AnnotationDbi loadDb
 #' @importFrom S4Vectors endoapply
 #' @importFrom ggplot2 labs scale_color_brewer aes geom_boxplot theme_bw
@@ -38,6 +38,17 @@
 #' theme element_rect
 #' @importFrom cowplot theme_cowplot background_grid plot_grid
 #' @importFrom MatrixGenerics rowQuantiles
+#' @examples
+#'  \dontrun{
+#' 		main_abgenes_Hunter(sample_annotation = sample_annotation,
+#' 		 anno_database = anno_database, count_ranges = count_ranges,
+#'       gene_mapping_file = gene_mapping_file, count_files = count_files,
+#'	     dataset = dataset, cpu = cpu, fpkm_cutoff = fpkm_cutoff,
+#'		 implementation = implementation, p_adj_cutoff = p_adj_cutoff,
+#'		 max_dim_proportion = max_tested_dimension_proportion, top_N = top_N,
+#'       z_score_cutoff = z_score_cutoff, hpo_file = hpo_file,
+#'		 stats_path = stats_path)
+#'  }
 #' @export
 
 main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
@@ -97,6 +108,33 @@ main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
 write_abgenes_results <- function(final_results, output_dir) {
 	return("WIP")
 }
+
+#' write_abgenes_report
+#'
+#' `write_abgenes_report` writes main_abgenes_Hunter report in html format.
+#'
+#' @importClassesFrom htmlreportR htmlReport
+#' @param final_results main_abgenes_Hunter results object.
+#' @param output_dir Directory where report will be written. Default: working
+#' directory.
+#' @param template_folder,source_folder paths to htmlreportR templates and
+#' source folders, respectively. Default: NULL.
+#' @param p_adj_cutoff An integer. Adjusted p-value cutoff to consider a gene
+#' aberrantly expressed.
+#' @returns None.
+#' @examples
+#'  \dontrun{
+#' 		main_abgenes_Hunter(sample_annotation = sample_annotation,
+#' 		 anno_database = anno_database, count_ranges = count_ranges,
+#'       gene_mapping_file = gene_mapping_file, count_files = count_files,
+#'	     dataset = dataset, cpu = cpu, fpkm_cutoff = fpkm_cutoff,
+#'		 implementation = implementation, p_adj_cutoff = p_adj_cutoff,
+#'		 max_dim_proportion = max_tested_dimension_proportion, top_N = top_N,
+#'       z_score_cutoff = z_score_cutoff, hpo_file = hpo_file,
+#'		 stats_path = stats_path)
+#'  }
+#' @export
+
 
 write_abgenes_report <- function(final_results, output_dir = getwd(),
 							 template_folder = NULL, source_folder = NULL,

@@ -2,7 +2,8 @@
 % Please edit documentation in R/main_clusters_to_enrichment.R
 \name{main_clusters_to_enrichment}
 \alias{main_clusters_to_enrichment}
-\title{Perform enrichment analysis on multiple lists of genes}
+\title{main_clusters_to_enrichment
+perform enrichment analysis on multiple lists of genes}
 \usage{
 main_clusters_to_enrichment(
   input_file = NULL,
@@ -53,7 +54,10 @@ main_clusters_to_enrichment(
 \item{kegg_data_file}{if KEGG included in enrich_dbs path needs}
 
 \item{universe}{background of genes to use as universe}
+
+\item{readable}{Whether output should include gene symbols}
 }
 \description{
-Perform enrichment analysis on multiple lists of genes
+main_clusters_to_enrichment
+perform enrichment analysis on multiple lists of genes
 }

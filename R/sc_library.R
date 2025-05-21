@@ -1,6 +1,7 @@
 
 #' read_sc_counts
-#' creates a seurat object from cellranger counts
+#'
+#' `read_sc_counts` creates a seurat object from cellranger counts
 #'
 #' @importFrom Seurat Read10X CreateSeuratObject
 #' @param name sample name
@@ -28,7 +29,8 @@ read_sc_counts <- function(name, input, mincells = 1, minfeats = 1, exp_design){
 }
 
 #' tag_qc
-#' tags cell IDs not passing QC filters
+#'
+#' `tag_qc` tags cell IDs not passing QC filters
 #'
 #' @importFrom Seurat PercentageFeatureSet
 #' @param seu Seurat object to tag
@@ -72,8 +74,10 @@ tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL){
   return(seu)
 }
 
-# tag_doublets
-#' tags barcodes in a seurat object that appear in a vector of doublets
+#' tag_doublets
+#'
+#' `tag_doublets` tags barcodes in a seurat object that appear in a vector of
+#' doublets
 #'
 #' @inheritParams tag_qc
 #'
@@ -93,7 +97,8 @@ tag_doublets <- function(seu, doublet_list) {
 }
 
 #' add_sc_design
-#' adds experimental condition to single-sample Seurat metadata
+#'
+#' `add_sc_design` adds experimental condition to single-sample Seurat metadata
 #'
 #' @param seu Seurat object
 #' @param name Sample name
@@ -123,7 +128,8 @@ add_sc_design <- function(seu, name, exp_design){
 ##########################################################################
 
 #' merge_seurat
-#' loads single-cell count matrices and creates a merged
+#'
+#' `merge_seurat` loads single-cell count matrices and creates a merged
 #' seurat object.
 #'
 #' @importFrom Seurat Read10X CreateSeuratObject
@@ -150,8 +156,8 @@ merge_seurat <- function(project_name, exp_design, count_path,
   seu.list <- sapply(exp_design$sample, function(sample) {
     sample_path <- grep(sample, full_paths, value = TRUE)
     d10x <- Seurat::Read10X(sample_path)
-    seu <- Seurat::CreateSeuratObject(counts = d10x, project = sample, min.cells = 1,
-                              min.features = 1)
+    seu <- Seurat::CreateSeuratObject(counts = d10x, project = sample,
+                    min.cells = 1, min.features = 1)
     seu <- add_sc_design(seu = seu, name = sample, exp_design = exp_design)
     })
   merged_seu <- merge(seu.list[[1]], y = seu.list[-1],
@@ -161,8 +167,9 @@ merge_seurat <- function(project_name, exp_design, count_path,
 }
 
 #' rename_clusters
-#' renames seurat clusters according to dictionary, and stores result in new
-#' cell_type metadata column.
+#'
+#' `rename_clusters` renames seurat clusters according to dictionary, and stores
+#' result in new cell_type metadata column.
 #' @importFrom Seurat RenameIdents Idents
 #' @param seu Non-annotated seu with markers
 #' @param new_clusters Vector of names to assign to clusters.
@@ -183,7 +190,8 @@ rename_clusters <- function(seu, new_clusters = NULL ) {
 }
 
 #' collapse_markers
-#' takes list of marker gene data frames and collapses it
+#'
+#' `collapse_markers` takes list of marker gene data frames and collapses it
 #' into a cluster-markers data frame.
 #'
 #' @importFrom plyr rbind.fill
@@ -217,7 +225,8 @@ collapse_markers <- function(markers_list) {
 }
 
 #' match_cell_types
-#' takes a cluster-marker gene data frame and a cell type
+#'
+#' `match_cell_types` takes a cluster-marker gene data frame and a cell type
 #' marker file. It then looks for matches between the two and assigns a cell
 #' type to each cluster of the data frame.
 #'
@@ -325,7 +334,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
       stats_table[matches, ]$cell_type <- dupe_cluster
     }
   }
-  sum_columns <- c("gene", "p_val_adj", "avg_log2FC", "seurat_clusters", "cell_type")
+  sum_columns <- c("gene", "p_val_adj", "avg_log2FC", "seurat_clusters",
+                   "cell_type")
   res <- list(stats_table = stats_table,
               cell_types = unique(stats_table$cell_type),
               summary = stats_table[, sum_columns])
@@ -333,7 +343,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 }
 
 #' get_sc_markers
-#' performs differential expression analysis on OR selects
+#'
+#' `get_sc_markers` performs differential expression analysis on OR selects
 #' conserved markers from a seurat object.
 #'
 #' @importFrom Seurat Idents FindMarkers FindConservedMarkers
@@ -437,7 +448,8 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 
 #' calculate_markers
 #'
-#' is a wrapper that dynamically decides the best strategy to find marker genes
+#' `calculate_markers` is a wrapper that dynamically decides the best strategy
+#' to find marker genes
 #' in a seurat dataset
 #' @importFrom Seurat Idents FindAllMarkers
 #' @inheritParams get_sc_markers
@@ -460,8 +472,8 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 #'  }
 #' @export
 
-calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE, idents = NULL,
-                              integrate = FALSE, min.pct = 0.25,
+calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE,
+                              idents = NULL, integrate = FALSE, min.pct = 0.25,
                               logfc.threshold = 0.25, assay = "RNA") {
   test <- FALSE
   if(length(subset_by) == 1) {
@@ -490,7 +502,8 @@ calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE, idents = N
 }
 
 #' analyze_sc_query
-#' is a wrapper for the three query analysis steps:
+#'
+#' `analyze_sc_query` is a wrapper for the three query analysis steps:
 #' `get_query_distribution`, `get_query_pct` by samples and `get_query_pct` by
 #' samples and cell types.
 #'
@@ -531,9 +544,10 @@ analyze_sc_query <- function(seu, query, sigfig = 2, sample_col = "sample",
 
 
 #' get_clusters_distribution
-#' calculates the percentage of cells that make up each cluster for each
-#' different sample in a seurat object. If clusters are annotated, it will
-#' show cell types instead of cluster number.
+#'
+#' `get_clusters_distribution` calculates the percentage of cells that make up
+#' each cluster for each different sample in a seurat object. If clusters are
+#' annotated, it will show cell types instead of cluster number.
 #'
 #' @inheritParams get_query_distribution
 #' @param seu Clustered seurat object.
@@ -555,7 +569,8 @@ get_clusters_distribution <- function(seu, sigfig = 3, sample_col = "sample") {
 }
 
 #' get_query_distribution
-#' builds a table of query genes expression levels
+#'
+#' `get_query_distribution` builds a table of query genes expression levels
 #' across all samples of a Seurat object
 #'
 #' @importFrom stats aggregate
@@ -576,7 +591,8 @@ get_query_distribution <- function(seu, query, sigfig = 3, layer = "data",
   genes <- SeuratObject::FetchData(seu, query, layer = layer)
   genes <- cbind(seu@meta.data[sample_col], genes)
   colnames(genes)[1] <- "sample"
-  gene_distribution <- stats::aggregate(genes[, -1], list(genes$sample), FUN = sum)
+  gene_distribution <- stats::aggregate(genes[, -1], list(genes$sample),
+                                        FUN = sum)
   gene_distribution[, -1] <- signif(gene_distribution[, -1], sigfig)
   rownames(gene_distribution) <- gene_distribution[, 1]
   gene_distribution <- gene_distribution[, -1, drop = FALSE]
@@ -587,7 +603,8 @@ get_query_distribution <- function(seu, query, sigfig = 3, layer = "data",
 }
 
 #' get_query_pct
-#' gets the percentage of cells in each sample of a seurat
+#'
+#' `get_query_pct` gets the percentage of cells in each sample of a seurat
 #' object which expresses genes specified in a list of queries.
 #'
 #' @param seu Seurat object to analyze.
@@ -661,7 +678,8 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
 }
 
 #' get_top_genes
-#' extracts the top N genes expressed in the highest percentage
+#'
+#' `get_top_genes` extracts the top N genes expressed in the highest percentage
 #' of cells for each sample in a seurat object, and returns a vector with the
 #' union of these genes.
 #'
@@ -705,7 +723,8 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
 }
 
 #' get_qc_pct
-#' creates a gene expression matrix of the union of the top N genes
+#'
+#' `get_qc_pct` creates a gene expression matrix of the union of the top N genes
 #' expressed in every sample in a seurat object.
 #' @inheritParams get_query_pct
 #' @inheritParams get_top_genes
@@ -727,10 +746,11 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
 }
 
 #' get_fc_vs_ncells
-#' takes a seurat object and a list of differentially expressed gene data
-#' frames, and converts them to two heatmaps with the same dimensions. The first
-#' contains the amount of cells of each type that express each gene, and the
-#' second the log2FC of said gene for every given cell type.
+#'
+#' `get_fc_vs_ncells` takes a seurat object and a list of differentially
+#' expressed gene data frames, and converts them to two heatmaps with the same
+#' dimensions. The first contains the amount of cells of each type that express
+#' each gene, and the second the log2FC of said gene for every given cell type.
 #'
 #' @param seu Input seurat object.
 #' @param DEG_list A data frame. Table of differentially expressed genes per
@@ -747,9 +767,8 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
 #'  }
 #' @export
 
-get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
-                             p_val_cutoff = 0.01, min_counts = 1,
-                             query = NULL) {
+get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
+                            p_val_cutoff = 0.01, min_counts = 1) {
   res <- NULL
   return_output <- TRUE
   genes_warn <- NULL
@@ -922,7 +941,8 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2,
 }
 
 #' breakdown_query
-#' breaks down the expression of a list of query genes by
+#'
+#' `breakdown_query` breaks down the expression of a list of query genes by
 #' the specified parameter.
 #' @inheritParams get_query_pct
 #' @param input Input object to breakdown. Can be a seurat object or a
@@ -971,7 +991,8 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data") {
 }
 
 #' .has_exclusive_idents
-#' checks whether any condition-identity pairs in
+#'
+#' `.has_exclusive_idents` checks whether any condition-identity pairs in
 #' seurat object has less than three occurrences, which makes certain analyzes
 #' impossible. Not exported
 #'
@@ -1007,7 +1028,8 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data") {
 }
 
 #' subset_seurat
-#' subsets a seurat object by a specified value of provided
+#'
+#' `subset_seurat` subsets a seurat object by a specified value of provided
 #' column.
 #'
 #' @importFrom Seurat FetchData GetAssayData
@@ -1041,6 +1063,7 @@ subset_seurat <- function(seu, column, value, expr = FALSE, layer = "data") {
 }
 
 #' downsample_seurat
+#'
 #' `downsample_seurat` takes a seurat object as input, and downsamples it to
 #' specified number of cells and features. You can also input specific lists
 #' if you know which cells and/or features you want to retrieve.
@@ -1080,6 +1103,7 @@ downsample_seurat <- function(seu, cells = 500, features = 5000,
 }
 
 #' read_and_format_targets
+#'
 #' `read_and_format_targets` formats a marker-celltype table into a list
 #'
 #' @param file Path to target gene file
@@ -1100,7 +1124,8 @@ read_and_format_targets <- function(file) {
 }
 
 #' extract_metadata
-#' Extract metadata dataframe from Seurat objects
+#'
+#' `extract_metadata` extracts metadata dataframe from Seurat objects
 #' 
 #' @param seu Seurat object / list of Seurat objects 
 #' @keywords preprocessing, report, metadata
@@ -1122,7 +1147,8 @@ extract_metadata <- function(seu){
 }
 
 #' find_doublets
-#' is a wrapper for the recommended steps for doublet
+#'
+#' `find_doublets` is a wrapper for the recommended steps for doublet
 #' calculation in package DoubletFinder
 #'
 #' @param seu Seurat object
@@ -1148,8 +1174,10 @@ find_doublets <- function(seu) {
 }
 
 #' sketch_sc_experiment
-#' determines optimal cell number to sketch seurat assay. If it is larger than
-#' specified minimum, it proceeds with sketching, else it is skipped.
+#'
+#' `sketch_sc_experiment` determines optimal cell number to sketch seurat assay.
+#' If it is larger than specified minimum, it proceeds with sketching, else it 
+#' is skipped.
 #' @param seu Seurat object to sketch.
 #' Default value of 5000, recommended by Seurat tutorials.
 #' @param force.ncells An integer. Number of cells to forcibly use in sketch.
@@ -1204,8 +1232,9 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
 }
 
 #' annotate_seurat
-#' is a wrapper and dispatch for different annotation strategies for a seurat
-#' object.
+#'
+#' `annotate_seurat` is a wrapper and dispatch for different annotation
+#' strategies for a seurat object.
 #' @inheritParams annotate_clusters
 #' @inheritParams rename_clusters
 #' @inheritParams calculate_markers
@@ -1248,7 +1277,9 @@ annotate_seurat <- function(seu, cell_annotation = NULL,
 }
 
 #' annotate_SingleR
-#' is a wrapper for SingleR annotation strategy, simplifies function call.
+#'
+#' `annotate_SingleR` is a wrapper for SingleR annotation strategy,
+#' simplifies function call.
 #' @inheritParams main_annotate_sc
 #' @inheritParams SingleR::trainSingleR
 #' @param fine.tune A boolean.
@@ -1292,7 +1323,9 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
 }
 
 #' annotate_clusters
-#' is a function which implements our cell type annotation algorithm.
+#'
+#' `annotate_clusters` is a function which implements our cell type annotation
+#' algorithm.
 #' @inheritParams calculate_markers
 #' @inheritParams match_cell_types
 #' @returns Annotated seurat object.
@@ -1321,7 +1354,8 @@ annotate_clusters <- function(seu, subset_by = NULL, cell_annotation,
 }
 
 #' project_sketch
-#' is a wrapper for the sketch projection steps.
+#'
+#' `project_sketch` is a wrapper for the sketch projection steps.
 #' @param seu Seurat object whose sketch data to project.
 #' @inheritParams Seurat::ProjectIntegration
 #' @param ndims Dimensions to select in ProjectData.
@@ -1353,8 +1387,9 @@ project_sketch <- function(seu, reduction, ndims){
 }
 
 #' process_sketch
-#' simplifies doublet detection and tagging process, as well as removing
-#' doublets from seurat object.
+#'
+#' `process_sketch` simplifies doublet detection and tagging process, as well
+#' as removes doublets from seurat object.
 #' @param seu Seurat object to analyze.
 #' @param name Sample name.
 #' @param qc QC object to tag
@@ -1385,7 +1420,8 @@ process_doublets <- function(seu, name = NULL, qc, doublet_path = getwd()){
 }
 
 #' process_sketch
-#' is a wrapper for Seurat sketching step.
+#'
+#' `process_sketch` is a wrapper for Seurat sketching step.
 #' @inheritParams sketch_sc_experiment
 #' @inheritParams Seurat::FindVariableFeatures
 #' @inheritParams main_annotate_sc
@@ -1426,7 +1462,9 @@ process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
 }
 
 #' get_expression_metrics
-#' is a wrapper for the expression metrics extraction step of our pipeline.
+#'
+#' `get_expression_metrics` is a wrapper for the expression metrics extraction
+#' step of our pipeline.
 #' @inheritParams get_qc_pct
 #' @inheritParams get_clusters_distribution
 #' @returns A list containing expression quality metrics and cluster
@@ -1448,8 +1486,9 @@ get_expression_metrics <- function(seu, sigfig) {
 # SCRIPTING FUNCTIONS
 
 #' process_sc_params
-#' processes parameter list and turns it into an option list usable by
-#' main sc functions.
+#'
+#' `process_sc_params` processes parameter list and turns it into an option list
+#' usable by main sc functions.
 #' @param params A list of parameters to parse.
 #' @param mode A string. Scripting mode to use. Has special behaviours for
 #' "annotation" (the default) and "DEG". Set to NULL or any other value for
@@ -1522,8 +1561,10 @@ process_sc_params <- function(params = list(), mode = "annotation") {
 }
 
 #' load_SingleR_ref
-#' reads a SingleR reference from specified path. It can handle multiple
-#' versions of the same reference, and also filter it by metadata.
+#'
+#' `load_SingleR_ref` reads a SingleR reference from specified path. It can
+#' handle multiple versions of the same reference, and also filter it by
+#' metadata.
 #' @param path Path to reference to load.
 #' @param version Version of reference to load.
 #' @param filter Filter to apply to reference.

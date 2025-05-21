@@ -2,8 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{tag_qc}
 \alias{tag_qc}
-\title{tag_qc
-tags cell IDs not passing QC filters}
+\title{tag_qc}
 \usage{
 tag_qc(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL)
 }
@@ -22,8 +21,7 @@ which a cell is selected. Default 5}
 Seurat object with tagged metadata
 }
 \description{
-tag_qc
-tags cell IDs not passing QC filters
+\code{tag_qc} tags cell IDs not passing QC filters
 }
 \examples{
 data(pbmc_tiny)
