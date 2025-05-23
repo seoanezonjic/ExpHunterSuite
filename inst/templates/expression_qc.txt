@@ -99,7 +99,7 @@ end.rcode-->
 	DESeq_subset <- DESeq_subset[query_genes, , drop = FALSE]
 	plotter$hash_vars$DESeq_subset <- DESeq_subset
 	cat(plotter$create_title("DESeq2-normalized counts query genes subset", id = "query_genes", hlevel = 3, indexable = TRUE))
-	cat(plotter$prettify_div(plotter$table(list(id = "DESeq_subset", header = NULL, row_names = NULL, styled = "dt")), preset = "magic"))
+	cat(plotter$prettify_div(plotter$table(list(id = "DESeq_subset", header = NULL, row_names = NULL, styled = "dt", rownames_col = "gene")), preset = "magic"))
 end.rcode-->
 
 <!--begin.rcode config_expression_PCA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE
