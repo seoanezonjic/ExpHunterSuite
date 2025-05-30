@@ -75,10 +75,10 @@
 #'                   ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL,
 #'                   ref_n = NULL, BPPARAM = NULL, doublet_list = NULL,
 #'                   integration_method = "Harmony", sketch_pct = 12,
-#'                   sketch_ncells = 5000, DEG_p_val_cutoff = 5e-3,
+#'                   DEG_p_val_cutoff = 5e-3,
 #'                   min_avg_log2FC = 0.5, k_weight = 90)
 #'  }
-#' @returns invisible(final_results list. Contains multiple items:)
+#' @returns invisible(final_results list. Contains multiple items:
 #' * qc: seurat object prior to filtering and analysis.
 #' * seu: processed seurat object.
 #' * sample_qc_pct: Gene expression matrix of union of top N expressed genes in
@@ -104,7 +104,7 @@
 #' been provided for integrative analysis, and they will contain two objects,
 #' each only containing samples corresponding to one of the two possible values
 #' in the second experimental condition. That allows isolating the effect
-#' of each experimental condition to be analyzed and compared separately.
+#' of each experimental condition to be analyzed and compared separately.)
 
 main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   resolution = 0.5, p_adj_cutoff = 5e-3, name = NULL, integrate = FALSE,
