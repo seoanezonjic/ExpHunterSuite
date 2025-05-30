@@ -2,10 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{downsample_seurat}
 \alias{downsample_seurat}
-\title{downsample_seurat
-\code{downsample_seurat} takes a seurat object as input, and downsamples it to
-specified number of cells and features. You can also input specific lists
-if you know which cells and/or features you want to retrieve.}
+\title{downsample_seurat}
 \usage{
 downsample_seurat(
   seu,
@@ -32,7 +29,6 @@ downsampling by its respective variable.}
 A downsampled seurat object.
 }
 \description{
-downsample_seurat
 \code{downsample_seurat} takes a seurat object as input, and downsamples it to
 specified number of cells and features. You can also input specific lists
 if you know which cells and/or features you want to retrieve.

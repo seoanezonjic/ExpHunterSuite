@@ -2,9 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{get_qc_pct}
 \alias{get_qc_pct}
-\title{get_qc_pct
-creates a gene expression matrix of the union of the top N genes
-expressed in every sample in a seurat object.}
+\title{get_qc_pct}
 \usage{
 get_qc_pct(
   seu,
@@ -37,8 +35,7 @@ Gene expression matrix of union of top N expressed genes in all
 samples.
 }
 \description{
-get_qc_pct
-creates a gene expression matrix of the union of the top N genes
+\code{get_qc_pct} creates a gene expression matrix of the union of the top N genes
 expressed in every sample in a seurat object.
 }
 \examples{

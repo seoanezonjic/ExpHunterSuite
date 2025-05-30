@@ -2,8 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{extract_metadata}
 \alias{extract_metadata}
-\title{extract_metadata
-Extract metadata dataframe from Seurat objects}
+\title{extract_metadata}
 \usage{
 extract_metadata(seu)
 }
@@ -14,8 +13,7 @@ extract_metadata(seu)
 Dataframe with metadata
 }
 \description{
-extract_metadata
-Extract metadata dataframe from Seurat objects
+\code{extract_metadata} extracts metadata dataframe from Seurat objects
 }
 \examples{
 data(pbmc_tiny)

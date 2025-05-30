@@ -2,9 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{breakdown_query}
 \alias{breakdown_query}
-\title{breakdown_query
-breaks down the expression of a list of query genes by
-the specified parameter.}
+\title{breakdown_query}
 \usage{
 breakdown_query(input, query, assay = "RNA", layer = "data")
 }
@@ -23,8 +21,7 @@ A data frame of the proportion of cells (between 0 and 1) that
 express each query gene.
 }
 \description{
-breakdown_query
-breaks down the expression of a list of query genes by
+\code{breakdown_query} breaks down the expression of a list of query genes by
 the specified parameter.
 }
 \examples{

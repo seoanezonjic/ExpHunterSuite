@@ -2,9 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{sketch_sc_experiment}
 \alias{sketch_sc_experiment}
-\title{sketch_sc_experiment
-determines optimal cell number to sketch seurat assay. If it is larger than
-specified minimum, it proceeds with sketching, else it is skipped.}
+\title{sketch_sc_experiment}
 \usage{
 sketch_sc_experiment(
   seu,
@@ -36,9 +34,9 @@ NA by default.}
 A seurat object with a new sketched assay.
 }
 \description{
-sketch_sc_experiment
-determines optimal cell number to sketch seurat assay. If it is larger than
-specified minimum, it proceeds with sketching, else it is skipped.
+\code{sketch_sc_experiment} determines optimal cell number to sketch seurat assay.
+If it is larger than specified minimum, it proceeds with sketching, else it
+is skipped.
 }
 \examples{
  \dontrun{

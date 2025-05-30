@@ -2,9 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{load_SingleR_ref}
 \alias{load_SingleR_ref}
-\title{load_SingleR_ref
-reads a SingleR reference from specified path. It can handle multiple
-versions of the same reference, and also filter it by metadata.}
+\title{load_SingleR_ref}
 \usage{
 load_SingleR_ref(path, version = "", filter = "")
 }
@@ -19,9 +17,9 @@ load_SingleR_ref(path, version = "", filter = "")
 Loaded and optionally filtered SingleR reference.
 }
 \description{
-load_SingleR_ref
-reads a SingleR reference from specified path. It can handle multiple
-versions of the same reference, and also filter it by metadata.
+\code{load_SingleR_ref} reads a SingleR reference from specified path. It can
+handle multiple versions of the same reference, and also filter it by
+metadata.
 }
 \examples{
  \dontrun{

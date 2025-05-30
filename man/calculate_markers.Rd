@@ -38,7 +38,8 @@ as per usual workflow.}
 Marker or DEG data frame.
 }
 \description{
-is a wrapper that dynamically decides the best strategy to find marker genes
+\code{calculate_markers} is a wrapper that dynamically decides the best strategy
+to find marker genes
 in a seurat dataset
 }
 \examples{

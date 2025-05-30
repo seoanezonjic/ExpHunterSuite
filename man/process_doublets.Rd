@@ -2,9 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{process_doublets}
 \alias{process_doublets}
-\title{process_sketch
-simplifies doublet detection and tagging process, as well as removing
-doublets from seurat object.}
+\title{process_sketch}
 \usage{
 process_doublets(seu, name = NULL, qc, doublet_path = getwd())
 }
@@ -22,9 +20,8 @@ written.}
 A list containing the updated seurat object and tagged qc object.
 }
 \description{
-process_sketch
-simplifies doublet detection and tagging process, as well as removing
-doublets from seurat object.
+\code{process_sketch} simplifies doublet detection and tagging process, as well
+as removes doublets from seurat object.
 }
 \examples{
  \dontrun{

@@ -2,8 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{annotate_clusters}
 \alias{annotate_clusters}
-\title{annotate_clusters
-is a function which implements our cell type annotation algorithm.}
+\title{annotate_clusters}
 \usage{
 annotate_clusters(
   seu,
@@ -41,8 +40,8 @@ markers in case conserved mode cannot be triggered.}
 Annotated seurat object.
 }
 \description{
-annotate_clusters
-is a function which implements our cell type annotation algorithm.
+\code{annotate_clusters} is a function which implements our cell type annotation
+algorithm.
 }
 \examples{
  \dontrun{

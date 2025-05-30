@@ -2,8 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{process_sketch}
 \alias{process_sketch}
-\title{process_sketch
-is a wrapper for Seurat sketching step.}
+\title{process_sketch}
 \usage{
 process_sketch(
   seu,
@@ -42,8 +41,7 @@ to Seurat::FindVariableFeatures call..
 A seurat object with a new sketched assay.
 }
 \description{
-process_sketch
-is a wrapper for Seurat sketching step.
+\code{process_sketch} is a wrapper for Seurat sketching step.
 }
 \examples{
  \dontrun{

@@ -2,19 +2,15 @@
 % Please edit documentation in R/sc_library.R
 \name{get_fc_vs_ncells}
 \alias{get_fc_vs_ncells}
-\title{get_fc_vs_ncells
-takes a seurat object and a list of differentially expressed gene data
-frames, and converts them to two heatmaps with the same dimensions. The first
-contains the amount of cells of each type that express each gene, and the
-second the log2FC of said gene for every given cell type.}
+\title{get_fc_vs_ncells}
 \usage{
 get_fc_vs_ncells(
   seu,
   DEG_list,
   min_avg_log2FC = 0.2,
+  query = NULL,
   p_val_cutoff = 0.01,
-  min_counts = 1,
-  query = NULL
+  min_counts = 1
 )
 }
 \arguments{
@@ -25,22 +21,21 @@ cell type, as calculated with Seurat.}
 
 \item{min_avg_log2FC}{A numeric. Minimum absolute log2FC cutoff.}
 
+\item{query}{A character vector. List of genes to analyze. Default
+NULL.}
+
 \item{p_val_cutoff}{A numeric. Max adjusted p value cutoff.}
 
 \item{min_counts}{An integer. Minimum gene counts to consider a gene as expressed.}
-
-\item{query}{A character vector. List of genes to analyze. Default
-NULL.}
 }
 \value{
 A list containing fc and ncells data frames.
 }
 \description{
-get_fc_vs_ncells
-takes a seurat object and a list of differentially expressed gene data
-frames, and converts them to two heatmaps with the same dimensions. The first
-contains the amount of cells of each type that express each gene, and the
-second the log2FC of said gene for every given cell type.
+\code{get_fc_vs_ncells} takes a seurat object and a list of differentially
+expressed gene data frames, and converts them to two heatmaps with the same
+dimensions. The first contains the amount of cells of each type that express
+each gene, and the second the log2FC of said gene for every given cell type.
 }
 \examples{
  \dontrun{

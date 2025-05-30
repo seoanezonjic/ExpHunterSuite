@@ -2,9 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{collapse_markers}
 \alias{collapse_markers}
-\title{collapse_markers
-takes list of marker gene data frames and collapses it
-into a cluster-markers data frame.}
+\title{collapse_markers}
 \usage{
 collapse_markers(markers_list)
 }
@@ -17,8 +15,7 @@ list (seurat clusters) and column \code{genes} contains, for each row, the top
 markers of that element from the original list separated by commas.
 }
 \description{
-collapse_markers
-takes list of marker gene data frames and collapses it
+\code{collapse_markers} takes list of marker gene data frames and collapses it
 into a cluster-markers data frame.
 }
 \examples{

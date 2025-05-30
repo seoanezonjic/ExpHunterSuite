@@ -2,10 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{analyze_sc_query}
 \alias{analyze_sc_query}
-\title{analyze_sc_query
-is a wrapper for the three query analysis steps:
-\code{get_query_distribution}, \code{get_query_pct} by samples and \code{get_query_pct} by
-samples and cell types.}
+\title{analyze_sc_query}
 \usage{
 analyze_sc_query(seu, query, sigfig = 2, sample_col = "sample", layer = "data")
 }
@@ -25,8 +22,7 @@ as per our workflow.}
 A list with the three query analysis objects.
 }
 \description{
-analyze_sc_query
-is a wrapper for the three query analysis steps:
+\code{analyze_sc_query} is a wrapper for the three query analysis steps:
 \code{get_query_distribution}, \code{get_query_pct} by samples and \code{get_query_pct} by
 samples and cell types.
 }

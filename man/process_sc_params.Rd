@@ -2,9 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{process_sc_params}
 \alias{process_sc_params}
-\title{process_sc_params
-processes parameter list and turns it into an option list usable by
-main sc functions.}
+\title{process_sc_params}
 \usage{
 process_sc_params(params = list(), mode = "annotation")
 }
@@ -19,9 +17,8 @@ query mode. For coherence, we set it to "query" in our query script.}
 A list containing parsed options.
 }
 \description{
-process_sc_params
-processes parameter list and turns it into an option list usable by
-main sc functions.
+\code{process_sc_params} processes parameter list and turns it into an option list
+usable by main sc functions.
 }
 \examples{
  \dontrun{

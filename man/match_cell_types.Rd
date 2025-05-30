@@ -2,10 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{match_cell_types}
 \alias{match_cell_types}
-\title{match_cell_types
-takes a cluster-marker gene data frame and a cell type
-marker file. It then looks for matches between the two and assigns a cell
-type to each cluster of the data frame.}
+\title{match_cell_types}
 \usage{
 match_cell_types(markers_df, cell_annotation, p_adj_cutoff = 1e-05)
 }
@@ -21,8 +18,7 @@ A markers data frame with a new column for cell type assigned to
 cluster.
 }
 \description{
-match_cell_types
-takes a cluster-marker gene data frame and a cell type
+\code{match_cell_types} takes a cluster-marker gene data frame and a cell type
 marker file. It then looks for matches between the two and assigns a cell
 type to each cluster of the data frame.
 }

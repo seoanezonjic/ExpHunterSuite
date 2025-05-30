@@ -2,9 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{merge_seurat}
 \alias{merge_seurat}
-\title{merge_seurat
-loads single-cell count matrices and creates a merged
-seurat object.}
+\title{merge_seurat}
 \usage{
 merge_seurat(project_name, exp_design, count_path, suffix = "")
 }
@@ -22,8 +20,7 @@ globbing.}
 Merged Seurat object
 }
 \description{
-merge_seurat
-loads single-cell count matrices and creates a merged
+\code{merge_seurat} loads single-cell count matrices and creates a merged
 seurat object.
 }
 \examples{

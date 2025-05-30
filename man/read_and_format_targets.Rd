@@ -2,8 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{read_and_format_targets}
 \alias{read_and_format_targets}
-\title{read_and_format_targets
-\code{read_and_format_targets} formats a marker-celltype table into a list}
+\title{read_and_format_targets}
 \usage{
 read_and_format_targets(file)
 }
@@ -14,7 +13,6 @@ read_and_format_targets(file)
 A list with one element per cell type
 }
 \description{
-read_and_format_targets
 \code{read_and_format_targets} formats a marker-celltype table into a list
 }
 \examples{

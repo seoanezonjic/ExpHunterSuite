@@ -2,8 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{add_sc_design}
 \alias{add_sc_design}
-\title{add_sc_design
-adds experimental condition to single-sample Seurat metadata}
+\title{add_sc_design}
 \usage{
 add_sc_design(seu, name, exp_design)
 }
@@ -18,8 +17,7 @@ add_sc_design(seu, name, exp_design)
 Seurat object with the experimental conditions added as metadata
 }
 \description{
-add_sc_design
-adds experimental condition to single-sample Seurat metadata
+\code{add_sc_design} adds experimental condition to single-sample Seurat metadata
 }
 \examples{
 data(pbmc_tiny)

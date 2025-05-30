@@ -2,9 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{annotate_seurat}
 \alias{annotate_seurat}
-\title{annotate_seurat
-is a wrapper and dispatch for different annotation strategies for a seurat
-object.}
+\title{annotate_seurat}
 \usage{
 annotate_seurat(
   seu,
@@ -42,9 +40,8 @@ bother with subsetting if FALSE.}
 A seurat object with a new sketched assay.
 }
 \description{
-annotate_seurat
-is a wrapper and dispatch for different annotation strategies for a seurat
-object.
+\code{annotate_seurat} is a wrapper and dispatch for different annotation
+strategies for a seurat object.
 }
 \examples{
  \dontrun{

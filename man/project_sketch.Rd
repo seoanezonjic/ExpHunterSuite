@@ -2,8 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{project_sketch}
 \alias{project_sketch}
-\title{project_sketch
-is a wrapper for the sketch projection steps.}
+\title{project_sketch}
 \usage{
 project_sketch(seu, reduction, ndims)
 }
@@ -19,8 +18,7 @@ in the sketched object (default is 'integrated_dr')}
 Seurat object containing sketch projection in RNA assay.'
 }
 \description{
-project_sketch
-is a wrapper for the sketch projection steps.
+\code{project_sketch} is a wrapper for the sketch projection steps.
 }
 \examples{
  \dontrun{

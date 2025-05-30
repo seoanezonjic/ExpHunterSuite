@@ -2,9 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{rename_clusters}
 \alias{rename_clusters}
-\title{rename_clusters
-renames seurat clusters according to dictionary, and stores result in new
-cell_type metadata column.}
+\title{rename_clusters}
 \usage{
 rename_clusters(seu, new_clusters = NULL)
 }
@@ -17,9 +15,8 @@ rename_clusters(seu, new_clusters = NULL)
 Annotated seu object
 }
 \description{
-rename_clusters
-renames seurat clusters according to dictionary, and stores result in new
-cell_type metadata column.
+\code{rename_clusters} renames seurat clusters according to dictionary, and stores
+result in new cell_type metadata column.
 }
 \examples{
 data(pbmc_tiny)

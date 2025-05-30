@@ -2,10 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{get_top_genes}
 \alias{get_top_genes}
-\title{get_top_genes
-extracts the top N genes expressed in the highest percentage
-of cells for each sample in a seurat object, and returns a vector with the
-union of these genes.}
+\title{get_top_genes}
 \usage{
 get_top_genes(
   seu,
@@ -32,8 +29,7 @@ A vector containing the union of the top N genes of each sample of
 input Seurat object.
 }
 \description{
-get_top_genes
-extracts the top N genes expressed in the highest percentage
+\code{get_top_genes} extracts the top N genes expressed in the highest percentage
 of cells for each sample in a seurat object, and returns a vector with the
 union of these genes.
 }

@@ -2,9 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{get_query_pct}
 \alias{get_query_pct}
-\title{get_query_pct
-gets the percentage of cells in each sample of a seurat
-object which expresses genes specified in a list of queries.}
+\title{get_query_pct}
 \usage{
 get_query_pct(seu, query, by, sigfig = 2, assay = "RNA", layer = "data")
 }
@@ -26,8 +24,7 @@ A data frame with percentage of cells expressing query genes in each
 sample.
 }
 \description{
-get_query_pct
-gets the percentage of cells in each sample of a seurat
+\code{get_query_pct} gets the percentage of cells in each sample of a seurat
 object which expresses genes specified in a list of queries.
 }
 \examples{

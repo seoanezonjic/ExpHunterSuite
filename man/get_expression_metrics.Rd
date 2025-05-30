@@ -2,8 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{get_expression_metrics}
 \alias{get_expression_metrics}
-\title{get_expression_metrics
-is a wrapper for the expression metrics extraction step of our pipeline.}
+\title{get_expression_metrics}
 \usage{
 get_expression_metrics(seu, sigfig)
 }
@@ -17,8 +16,8 @@ A list containing expression quality metrics and cluster
 distribution metrics.'
 }
 \description{
-get_expression_metrics
-is a wrapper for the expression metrics extraction step of our pipeline.
+\code{get_expression_metrics} is a wrapper for the expression metrics extraction
+step of our pipeline.
 }
 \examples{
  \dontrun{

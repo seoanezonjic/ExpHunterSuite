@@ -2,9 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{get_query_distribution}
 \alias{get_query_distribution}
-\title{get_query_distribution
-builds a table of query genes expression levels
-across all samples of a Seurat object}
+\title{get_query_distribution}
 \usage{
 get_query_distribution(
   seu,
@@ -30,8 +28,7 @@ as per our workflow.}
 A data frame with expression levels for query genes in each sample.
 }
 \description{
-get_query_distribution
-builds a table of query genes expression levels
+\code{get_query_distribution} builds a table of query genes expression levels
 across all samples of a Seurat object
 }
 \examples{

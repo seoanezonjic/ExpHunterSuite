@@ -2,9 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{find_doublets}
 \alias{find_doublets}
-\title{find_doublets
-is a wrapper for the recommended steps for doublet
-calculation in package DoubletFinder}
+\title{find_doublets}
 \usage{
 find_doublets(seu)
 }
@@ -17,8 +15,7 @@ in metadata slot. Item "barcodes" contains a vector of cell barcodes
 corresponding to barcodes.
 }
 \description{
-find_doublets
-is a wrapper for the recommended steps for doublet
+\code{find_doublets} is a wrapper for the recommended steps for doublet
 calculation in package DoubletFinder
 }
 \examples{

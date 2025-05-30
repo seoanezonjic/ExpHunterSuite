@@ -2,10 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{.has_exclusive_idents}
 \alias{.has_exclusive_idents}
-\title{.has_exclusive_idents
-checks whether any condition-identity pairs in
-seurat object has less than three occurrences, which makes certain analyzes
-impossible. Not exported}
+\title{.has_exclusive_idents}
 \usage{
 .has_exclusive_idents(seu, cond, idents)
 }
@@ -21,8 +18,7 @@ markers in case conserved mode cannot be triggered.}
 A boolean. \code{TRUE} if it contains exclusive pairs, \code{FALSE} otherwise.
 }
 \description{
-.has_exclusive_idents
-checks whether any condition-identity pairs in
+\code{.has_exclusive_idents} checks whether any condition-identity pairs in
 seurat object has less than three occurrences, which makes certain analyzes
 impossible. Not exported
 }

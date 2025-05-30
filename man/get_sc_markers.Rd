@@ -2,9 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{get_sc_markers}
 \alias{get_sc_markers}
-\title{get_sc_markers
-performs differential expression analysis on OR selects
-conserved markers from a seurat object.}
+\title{get_sc_markers}
 \usage{
 get_sc_markers(
   seu,
@@ -51,8 +49,7 @@ A list containing one marker or DEG data frame per cluster, plus
 an additional one for global DEGs if performing differential analysis.
 }
 \description{
-get_sc_markers
-performs differential expression analysis on OR selects
+\code{get_sc_markers} performs differential expression analysis on OR selects
 conserved markers from a seurat object.
 }
 \examples{

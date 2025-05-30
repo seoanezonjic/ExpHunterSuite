@@ -2,10 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{get_clusters_distribution}
 \alias{get_clusters_distribution}
-\title{get_clusters_distribution
-calculates the percentage of cells that make up each cluster for each
-different sample in a seurat object. If clusters are annotated, it will
-show cell types instead of cluster number.}
+\title{get_clusters_distribution}
 \usage{
 get_clusters_distribution(seu, sigfig = 3, sample_col = "sample")
 }
@@ -21,10 +18,9 @@ as per our workflow.}
 A data frame with cell type distribution in each sample.
 }
 \description{
-get_clusters_distribution
-calculates the percentage of cells that make up each cluster for each
-different sample in a seurat object. If clusters are annotated, it will
-show cell types instead of cluster number.
+\code{get_clusters_distribution} calculates the percentage of cells that make up
+each cluster for each different sample in a seurat object. If clusters are
+annotated, it will show cell types instead of cluster number.
 }
 \examples{
 data(pbmc_tiny)

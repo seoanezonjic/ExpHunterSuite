@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{tag_doublets}
 \alias{tag_doublets}
-\title{tags barcodes in a seurat object that appear in a vector of doublets}
+\title{tag_doublets}
 \usage{
 tag_doublets(seu, doublet_list)
 }
@@ -15,7 +15,8 @@ tag_doublets(seu, doublet_list)
 Seurat object with tagged doublets
 }
 \description{
-tags barcodes in a seurat object that appear in a vector of doublets
+\code{tag_doublets} tags barcodes in a seurat object that appear in a vector of
+doublets
 }
 \examples{
 data(pbmc_tiny)

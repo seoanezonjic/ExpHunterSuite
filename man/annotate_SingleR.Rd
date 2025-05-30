@@ -2,8 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{annotate_SingleR}
 \alias{annotate_SingleR}
-\title{annotate_SingleR
-is a wrapper for SingleR annotation strategy, simplifies function call.}
+\title{annotate_SingleR}
 \usage{
 annotate_SingleR(
   seu,
@@ -63,8 +62,8 @@ analysis.}
 A seurat object with a new sketched assay.
 }
 \description{
-annotate_SingleR
-is a wrapper for SingleR annotation strategy, simplifies function call.
+\code{annotate_SingleR} is a wrapper for SingleR annotation strategy,
+simplifies function call.
 }
 \examples{
  \dontrun{
