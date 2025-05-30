@@ -1524,7 +1524,6 @@ process_sc_params <- function(params = list(), mode = "annotation") {
     params$exp_design <- read.table(params$exp_design, sep = "\t",
                                     header = TRUE)
   }
-  SingleR_ref <- NULL
   if(file.exists(params$cluster_annotation)) {
     params$cluster_annotation <- read.table(params$cluster_annotation, sep = "\t",
                                          header = TRUE)
@@ -1538,12 +1537,12 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   if(params$target_genes != "") params$target_genes <- strsplit(params$target_genes,
                                                       split = ";")[[1]]
   if(params$subset_by != "") {
-    params$subset_by <- tolower(unlist(strsplit(params$subset_by, ",")))
+    params$subset_by <- tolower(unlist(strsplit(params$subset_by, ";")))
     message(paste0("Selected ", length(params$subset_by), " subset condition(s): ",
       paste0(params$subset_by, collapse = ", ")))
   }
   if(params$extra_columns != "") {
-    params$extra_columns <- tolower(unlist(strsplit(params$extra_columns, ",")))
+    params$extra_columns <- tolower(unlist(strsplit(params$extra_columns, ";")))
   }
   if(params$samples_to_integrate != "") {
     samples <- read.table(params$samples_to_integrate, sep = "\t",
@@ -1554,6 +1553,16 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   if(params$ref_de_method == "") {
     params$ref_de_method <- NULL
     params$ref_n <- NULL
+  }
+  if(file.exists(params$ref_filter)) {
+    params$ref_filter <- readLines(params$ref_filter)
+  } else {
+    params$ref_filter <- NULL
+  }
+  if(file.exists(params$filter_dataset)) {
+    params$filter_dataset <- readLines(params$filter_dataset)
+  } else {
+    params$filter_dataset <- NULL
   }
   updated_params <- list(opt = params, doublet_list = doublet_list,
                       out_suffix = out_suffix)
@@ -1584,7 +1593,7 @@ load_SingleR_ref <- function(path, version = "", filter = "") {
   message("Loading provided SingleR reference")
   SingleR_ref <- HDF5Array::loadHDF5SummarizedExperiment(dir = path,prefix = "")
   message(paste0("Total cells in reference: ", ncol(SingleR_ref), "."))
-  if(filter != "") {
+  if(!is.null(filter)) {
     message("Filtering reference")
     expressions <- strsplit(filter, "&|\\|")[[1]]
     expressions <- gsub(" $", "", expressions)
