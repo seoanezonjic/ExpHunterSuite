@@ -14,22 +14,12 @@
 	  meta <- metadata[, c("orig.ident", feature, "filter")]
 	  colnames(seu)[2] <- "values"
 	  ggplot() + 
-	    geom_point(seu,
-	               mapping = aes(orig.ident, values, fill = orig.ident),
-	               shape = 21,
-	               colour = "white",
-	               size = 2,
-	               stroke = 0.5,
-	               position = "jitter",
-	               alpha = 0.3) +
-	    geom_violin(seu,
-	                mapping = aes(orig.ident, values, fill = orig.ident),
-	                width = 0.5,
-	                color = "black") +
-	    xlab(NULL) +
-	    ylab(feature) +
-	    labs(fill = NULL) +
-	    theme_bw()
+      geom_point(seu, mapping = aes(orig.ident, values, fill = orig.ident),
+                 shape = 21, colour = "white", size = 2, stroke = 0.5,
+                 position = "jitter", alpha = 0.3) +
+      geom_violin(seu, mapping = aes(orig.ident, values, fill = orig.ident),
+                  width = 0.5, color = "black") + xlab(NULL) + ylab(feature) +
+      labs(fill = NULL) + theme_bw()
 	}
 
 	custom_ft_scatter <- function(seu) {
@@ -40,18 +30,20 @@
 
 	custom_ft_plot <- function(seu) {
 		top <- head(Seurat::VariableFeatures(seu, 10))
-		plot <- Seurat::VariableFeaturePlot(seu, selection.method = "vst",
-			assay = "RNA") +
-				ggplot2::theme(legend.position="top")
-		labeled_plot <- Seurat::LabelPoints(plot = plot, points = top,
-											repel = TRUE, xnudge = 0, ynudge = 0) + 
-    					ggplot2::theme(legend.position="none")
-    	return(labeled_plot)
+		plot <- Seurat::VariableFeaturePlot(seu, selection.method = "vst", assay = "RNA") +
+		ggplot2::theme(legend.position = "top")
+		labeled_plot <- Seurat::LabelPoints(plot = plot, points = top, repel = TRUE, xnudge = 0, ynudge = 0) +
+		ggplot2::theme(legend.position = "none")
+		return(labeled_plot)
 	}
+
 	aggregate_data <- function(data) {
 		res <- data.frame(table(data$qc))
+		colnames(res) <- c("Filter", "Ncells")
+		res$Filter <- as.character(res$Filter)
 		return(res)
 	}
+
 	metrics <- c("ncount_rna", "nfeature_rna", "percent.mt", "percent.rb")
 	plotter$hash_vars$meta <- get_metadata(plotter$hash_vars$qc)
 	plotter$hash_vars$aggr_meta <- aggregate_data(plotter$hash_vars$meta)
@@ -88,7 +80,7 @@ end.rcode-->
 		if(use_canvas){
 			plot <- plotter$boxplot(list(id = "meta", title = metric, header = NULL, row_names = NULL, text = "dynamic",
 										 format = "long", smp_attr = attr_cols, func = subset_metadata,
-										 group = "qc", config = list(graphOrientation = "vertical")))
+										 group = "qc", config = list(graphOrientation = "vertical", xAxisTitle = "Ncells")))
 		} else {
 			plot <- plotter$static_plot_main("meta", custom_format = TRUE,
 	                             plotting_function = plot_vln)
@@ -96,9 +88,9 @@ end.rcode-->
 			cat(plotter$prettify_div(plot, preset = "magic"))
 	}
 	cat(plotter$prettify_div(plotter$barplot(list(id = "aggr_meta", title = "Nº of cells", header = NULL, row_names = NULL,
-												  text = 1, text = FALSE, transpose = TRUE, fields = 2:1, smp_attr = 1,
-												  config = list(colorBy = "Var1", graphOrientation = "vertical",
-												  	showLegend = TRUE, smpLabelImage = TRUE))), preset = "magic"))
+												  text = FALSE, text = FALSE, transpose = TRUE, smp_attr = 1,
+												  colorBy = "Filter", config = list(graphOrientation = "vertical", showLegend = TRUE,
+												  smpLabelImage = TRUE, xAxisTitle = "Ncells"))), preset = "magic"))
 end.rcode-->
 
 <!--begin.rcode var_ft, eval = !plotter$hash_vars$integrate
