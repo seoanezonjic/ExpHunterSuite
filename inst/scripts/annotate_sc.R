@@ -158,14 +158,13 @@ message("CPU provided to BiocParallel: ", opt$cpu)
 ##########################################
 ## MAIN
 ##########################################
-
 final_counts_path <- file.path(opt$output, "counts/matrix.mtx.gz")
 if(!file.exists(final_counts_path)) {
   # Input parser function
   # Reference loader function
   SingleR_ref <- NULL
-  if(params$SingleR_ref != "") {
-    SingleR_ref <- load_SingleR_ref(path = params$SingleR_ref, version = params$ref_version, filter = params$ref_filter)
+  if(opt$SingleR_ref != "/" & file.exists(opt$SingleR_ref)) {
+    SingleR_ref <- load_SingleR_ref(path = opt$SingleR_ref, version = opt$ref_version, filter = opt$ref_filter)
   }
   if(opt$integrate) {
     if(opt$imported_counts == "") {
@@ -185,7 +184,7 @@ if(!file.exists(final_counts_path)) {
                       minfeats = opt$minfeats, exp_design = opt$exp_design)
   }
   message(paste0("Total cells in dataset: ", ncol(seu), "."))
-  if(opt$filter_dataset != "") {
+  if(!is.null(opt$filter_dataset)) {
     message("Filtering input data")
     expressions <- strsplit(opt$filter_dataset, "&|\\|")[[1]]
     expressions <- gsub(" $", "", expressions)
@@ -236,7 +235,7 @@ if(file.exists(final_counts_path)) {
                     reduce = opt$reduce, SingleR_ref = SingleR_ref, ref_label = opt$ref_label,
                     ref_de_method = opt$ref_de_method, ref_n = opt$ref_n,
                     BPPARAM = BPPARAM, doublet_list = opt$doublet_list, integration_method = opt$int_method,
-                    sketch = opt$sketch, sketch_ncells = opt$sketch_ncells, sketch_pct = opt$sketch_pct,
+                    sketch = opt$sketch, sketch_pct = opt$sketch_pct,
                     sketch_method = opt$sketch_method, force_ncells = opt$force_ncells,
                     k_weight = opt$k_weight)
 }
