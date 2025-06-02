@@ -193,7 +193,10 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                          return.model = T, verbose = verbose)
   if(length(unique(seu$sample)) == 1) {
     processed_doublets <- process_doublets(seu = seu, qc = qc, name = name,
-                                           doublet_path = doublet_path)
+                            doublet_path = doublet_path, assay = assay,
+                            nfeatures = hvgs, includePCs = seq(1, ndims))
+    qc <- processed_doublets$qc
+    seu <- processed_doublets$seu
   }
   seu <- SeuratObject::JoinLayers(seu)
   if(annotate) {
@@ -347,12 +350,15 @@ write_annot_output <- function(final_results = stop("Missing results object"),
 #' have trouble in certain plots
 #' @param opt Processed ptions list, will be consulted in report.
 #' @param params Input options list, will be included as execution parameters.
+#' @param analysis Analysis type. Will only be used to build report name inside
+#' html document.
 #'
 #' @keywords preprocessing, write, report
 #' 
 #' @returns invisible(NULL)
 
-write_sc_report <- function(final_results, output = getwd(), out_suffix = NULL,
+write_sc_report <- function(final_results, analysis = "Single-Cell",
+                            output = getwd(), out_suffix = NULL,
                             template_folder, source_folder = NULL, opt, params,
                             template = NULL, use_canvas = TRUE){
   if(is.null(template_folder)) {
@@ -395,8 +401,8 @@ write_sc_report <- function(final_results, output = getwd(), out_suffix = NULL,
                  target = final_results$target,
                  target_name = final_results$target_name,
                  integrate = final_results$integrate)
-  plotter <- htmlreportR::htmlReport$new(title_doc = paste0("Single-Cell ",
-                            opt$name, " report"), container = container,
+  plotter <- htmlreportR::htmlReport$new(title_doc = paste0(opt$name, analysis,
+                            " report"), container = container,
                             tmp_folder = tmp_folder, src = source_folder,
                             compress_obj = FALSE)
   plotter$build(template)

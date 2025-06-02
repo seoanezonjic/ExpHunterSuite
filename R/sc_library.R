@@ -1167,9 +1167,32 @@ find_doublets <- function(seu) {
   seu <- DoubletFinder::doubletFinder(seu, pN = 0.25, pK = 0.09, nExp = nExp,
                                       PCs = 1:10)
   doublet_col <- grep('DF.classifications*', colnames(seu@meta.data))
+  colnames(seu@meta.data)[doublet_col] <- "doublet_class"
   doublets <- seu@meta.data[seu@meta.data[, doublet_col] == "Doublet", ]
   doublet_barcodes <- rownames(doublets)
   seu <- subset(seu, cells = doublet_barcodes, invert = TRUE)
+  res <- list(seu = seu, barcodes = doublet_barcodes)
+  return(res)
+}
+
+# run_scDblFinder
+#'
+#' `run_scDblFinder` is a wrapper for the scDblFinder pipeline
+#'
+#' @param seu Input seyrat object.
+#' @inheritParams scDblFinder::scDblFinder
+#' @returns A list. Item "seu" contains seurat object with tagged doublets
+#' in metadata slot. Item "barcodes" contains a vector of cell barcodes
+#' corresponding to barcodes.
+
+run_scDblFinder <- function(seu, assay, includePCs, nfeatures) {
+  sce <- Seurat::as.SingleCellExperiment(seu, assay = assay)
+  sce <- scDblFinder::scDblFinder(sce, clusters = FALSE, nfeatures = nfeatures,
+                                  includePCs = includePCs, BPPARAM = BPPARAM)
+  is.doublet <- colData(sce)$scDblFinder.class == "doublet"
+  doublet_barcodes <- colnames(sce)[is.doublet]
+  order <- match(colnames(sce), colnames(seu))
+  seu$doublet_class <- colData(sce)$scDblFinder.class[order]
   res <- list(seu = seu, barcodes = doublet_barcodes)
   return(res)
 }
@@ -1396,6 +1419,7 @@ project_sketch <- function(seu, reduction, ndims){
 #' @param qc QC object to tag
 #' @param doublet_path Path where cell IDs identified as doublets will be
 #' written.
+#' @inheritParams run_scDblFinder
 #' @returns A list containing the updated seurat object and tagged qc object.
 #' @examples
 #'  \dontrun{
@@ -1403,8 +1427,16 @@ project_sketch <- function(seu, reduction, ndims){
 #'  }
 #' @export
 
-process_doublets <- function(seu, name = NULL, qc, doublet_path = getwd()){
-  doublets <- find_doublets(seu)
+process_doublets <- function(seu, name = NULL, qc, doublet_path = getwd(),
+                             method = "scDblFinder", assay = "data",
+                             nfeatures = 1352, includePCs = 19){
+  if(method == "DoubletFinder") {
+    doublets <- find_doublets(seu)
+  }
+  if(method == "scDblFinder") {
+    doublets <- run_scDblFinder(seu = seu, assay = assay, nfeatures = nfeatures,
+                                includePCs = includePCs)
+  }
   seu <- doublets$seu
   doublet_list <- doublets$barcodes
   message("Removing doublets from Seurat object")
