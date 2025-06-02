@@ -288,9 +288,11 @@ name_all_columns <- function(data_frame) {
 #' @param expression Expression to parse as filter.
 #' @return filtered object
 #' @examples
-#' data_frame <- head(mtcars)
-#' filter <- parse_filter(object = "data_frame", expression = "mpg > 20")
-#' data_frame[filter, ]
+#' \dontrun{
+#'      data_frame <- head(mtcars)
+#'      filter <- parse_filter(object = "data_frame", expression = "mpg > 20")
+#'      data_frame[filter, ]
+#'   }
 #' @export
 
 parse_filter <- function(object, expression) {
