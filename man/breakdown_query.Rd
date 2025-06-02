@@ -26,5 +26,5 @@ the specified parameter.
 }
 \examples{
 data(pbmc_tiny)
-breakdown_query(seu = pbmc_tiny, query = c("PPBP", "CA2"))
+breakdown_query(input = pbmc_tiny, query = c("PPBP", "CA2"))
 }

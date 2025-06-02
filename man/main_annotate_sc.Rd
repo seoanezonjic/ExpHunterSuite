@@ -140,7 +140,7 @@ sketching.}
 written.}
 }
 \value{
-invisible(final_results list. Contains multiple items:)
+invisible(final_results list. Contains multiple items:
 \itemize{
 \item qc: seurat object prior to filtering and analysis.
 \item seu: processed seurat object.
@@ -175,7 +175,7 @@ subset_seu and subset_DEGs only trigger if two conditions have
 been provided for integrative analysis, and they will contain two objects,
 each only containing samples corresponding to one of the two possible values
 in the second experimental condition. That allows isolating the effect
-of each experimental condition to be analyzed and compared separately.
+of each experimental condition to be analyzed and compared separately.)
 }
 \examples{
  \dontrun{
@@ -190,7 +190,7 @@ of each experimental condition to be analyzed and compared separately.
                   ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL,
                   ref_n = NULL, BPPARAM = NULL, doublet_list = NULL,
                   integration_method = "Harmony", sketch_pct = 12,
-                  sketch_ncells = 5000, DEG_p_val_cutoff = 5e-3,
+                  DEG_p_val_cutoff = 5e-3,
                   min_avg_log2FC = 0.5, k_weight = 90)
  }
 }

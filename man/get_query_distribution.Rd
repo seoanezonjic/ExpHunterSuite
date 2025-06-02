@@ -33,5 +33,6 @@ across all samples of a Seurat object
 }
 \examples{
 data(pbmc_tiny)
-get_query_distribution(pbmc_tiny, c("PPBP", "CA2"), 2, "orig.ident")
+get_query_distribution(seu = pbmc_tiny, query = c("PPBP", "CA2"), sigfig = 2,
+layer = "data", sample_col = "orig.ident")
 }
