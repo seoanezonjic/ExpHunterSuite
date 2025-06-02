@@ -4,7 +4,13 @@
 \alias{process_doublets}
 \title{process_sketch}
 \usage{
-process_doublets(seu, name = NULL, qc, doublet_path = getwd())
+process_doublets(
+  seu,
+  name = NULL,
+  qc,
+  doublet_path = getwd(),
+  method = "scDblFinder"
+)
 }
 \arguments{
 \item{seu}{Seurat object to analyze.}

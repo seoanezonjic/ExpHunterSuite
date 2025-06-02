@@ -18,7 +18,9 @@ filtered object
 parses an object and a string into an expression that filters the object.
 }
 \examples{
-data_frame <- head(mtcars)
-filter <- parse_filter(object = "data_frame", expression = "mpg > 20")
-data_frame[filter, ]
+\dontrun{
+     data_frame <- head(mtcars)
+     filter <- parse_filter(object = "data_frame", expression = "mpg > 20")
+     data_frame[filter, ]
+  }
 }
