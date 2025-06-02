@@ -583,7 +583,8 @@ get_clusters_distribution <- function(seu, sigfig = 3, sample_col = "sample") {
 #' @returns A data frame with expression levels for query genes in each sample.
 #' @examples
 #' data(pbmc_tiny)
-#' get_query_distribution(pbmc_tiny, c("PPBP", "CA2"), 2, "orig.ident")
+#' get_query_distribution(seu = pbmc_tiny, query = c("PPBP", "CA2"), sigfig = 2,
+#' layer = "data", sample_col = "orig.ident")
 #' @export
 
 get_query_distribution <- function(seu, query, sigfig = 3, layer = "data",
@@ -951,7 +952,7 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
 #' express each query gene.
 #' @examples
 #' data(pbmc_tiny)
-#' breakdown_query(seu = pbmc_tiny, query = c("PPBP", "CA2"))
+#' breakdown_query(input = pbmc_tiny, query = c("PPBP", "CA2"))
 #' @export
 
 breakdown_query <- function(input, query, assay = "RNA", layer = "data") {
