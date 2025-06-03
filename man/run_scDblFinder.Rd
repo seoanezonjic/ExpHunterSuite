@@ -24,3 +24,8 @@ corresponding to barcodes.
 \description{
 \code{run_scDblFinder} is a wrapper for the scDblFinder pipeline
 }
+\examples{
+\dontrun{
+   run_scDblFinder(seu, "counts", 10, 2000)
+}
+}

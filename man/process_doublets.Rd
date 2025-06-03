@@ -9,7 +9,10 @@ process_doublets(
   name = NULL,
   qc,
   doublet_path = getwd(),
-  method = "scDblFinder"
+  method = "scDblFinder",
+  assay = "data",
+  nfeatures = 1352,
+  includePCs = 19
 )
 }
 \arguments{
@@ -21,6 +24,13 @@ process_doublets(
 
 \item{doublet_path}{Path where cell IDs identified as doublets will be
 written.}
+
+\item{nfeatures}{The number of top features to use. Alternatively, a 
+character vectors of feature names (e.g. highly-variable genes) to use.}
+
+\item{includePCs}{The index of principal components to include in the
+predictors (e.g. `includePCs=1:2`), or the number of top components to use
+(e.g. `includePCs=10`, equivalent to 1:10).}
 }
 \value{
 A list containing the updated seurat object and tagged qc object.

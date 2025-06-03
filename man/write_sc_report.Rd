@@ -7,6 +7,7 @@ Write integration HTML report}
 \usage{
 write_sc_report(
   final_results,
+  analysis = "Single-Cell",
   output = getwd(),
   out_suffix = NULL,
   template_folder,
@@ -19,6 +20,9 @@ write_sc_report(
 }
 \arguments{
 \item{final_results}{Output from main_sc_Hunter function}
+
+\item{analysis}{Analysis type. Will only be used to build report name inside
+html document.}
 
 \item{output}{directory where report will be saved}
 
