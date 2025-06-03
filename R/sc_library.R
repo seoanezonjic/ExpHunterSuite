@@ -1184,6 +1184,11 @@ find_doublets <- function(seu) {
 #' @returns A list. Item "seu" contains seurat object with tagged doublets
 #' in metadata slot. Item "barcodes" contains a vector of cell barcodes
 #' corresponding to barcodes.
+#' @examples
+#' \dontrun{
+#'    run_scDblFinder(seu, "counts", 10, 2000)
+#' }
+#' @export
 
 run_scDblFinder <- function(seu, assay, includePCs, nfeatures) {
   sce <- Seurat::as.SingleCellExperiment(seu, assay = assay)
