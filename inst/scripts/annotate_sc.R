@@ -154,7 +154,7 @@ message("CPU provided to BiocParallel: ", opt$cpu)
 ## MAIN
 ##########################################
 final_counts_path <- file.path(opt$output, "counts/matrix.mtx.gz")
-if(!file.exists(final_counts_path)) {
+if(!file.exists(final_counts_path) | !opt$integrate) {
   # Input parser function
   # Reference loader function
   SingleR_ref <- NULL
@@ -205,7 +205,7 @@ if(!file.exists(final_counts_path)) {
   # Function end
 }
 
-if(file.exists(final_counts_path)) {
+if(file.exists(final_counts_path) & opt$integrate) {
   message("Reconstructing Seurat object from directory ", opt$output)
   seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(file.path(opt$output, "counts"), gene.column = 1),
                                     project = opt$name, min.cells = 1, min.features = 1)
@@ -242,7 +242,7 @@ if(!file.exists(final_counts_path) & opt$integrate) {
   write_annot_output(final_results = final_results, opt = opt)
 }
 
-if(file.exists(final_counts_path)) {
+if(file.exists(final_counts_path) & opt$integrate) {
   message("Processing reconstruction of seurat object. Not launching QC report.")
 } else {
   message("--------------------------------------------")
