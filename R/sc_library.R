@@ -473,7 +473,7 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 #' @export
 
 calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE,
-                              idents = NULL, integrate = FALSE, min.pct = 0.25,
+                              idents = NULL, integrate = FALSE, min.pct = 0.01,
                               logfc.threshold = 0.25, assay = "RNA") {
   test <- FALSE
   if(length(subset_by) == 1) {
@@ -1371,7 +1371,17 @@ annotate_clusters <- function(seu, subset_by = NULL, cell_annotation,
   message("Calculating cluster markers")
   markers <- calculate_markers(seu = seu, subset_by = subset_by,
                                integrate = integrate, verbose = verbose,
-                               idents = "seurat_clusters", assay = assay)
+                               idents = idents, assay = assay)
+  marker_clusters <- unique(as.numeric(markers$seurat_clusters))
+  seu_clusters <- unique(as.numeric(seu$seurat_clusters))
+  missing <- which(!seu_clusters %in% marker_clusters)
+  if(length(missing) > 0) {
+    empty_row <- data.frame(matrix(0, ncol = ncol(markers)))
+    colnames(empty_row) <- colnames(markers)
+    empty_row$gene <- "None"
+    empty_row$seurat_clusters <- seu_clusters[missing]
+    empty_row$cell_type <- "Unknown"
+  }
   message("Annotating clusters")
   annotated_clusters <- match_cell_types(markers_df = markers,
                                          cell_annotation = cell_annotation,
