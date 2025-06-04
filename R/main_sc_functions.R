@@ -177,7 +177,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   seu <- Seurat::FindNeighbors(object = seu, dims = seq(1, ndims),
                                assay = assay, reduction = reduction,
                                verbose = verbose)
-  if(!new_opt$integrate | is.null(SingleR_ref)) {
+  if(is.null(SingleR_ref)) {
     seu <- Seurat::FindClusters(seu, resolution = resolution, verbose = verbose)
     # Seurat starts counting clusters from 0, which is the source of many
     # headaches when working in R, which starts counting from 1. Therefore,
@@ -186,8 +186,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     seu@meta.data$seurat_clusters <- as.numeric(seu@meta.data$seurat_clusters)
     Seurat::Idents(seu) <- seu@meta.data$seurat_clusters
   } else {
-    message(paste0("Annotation by clusters not active and multiple samples",
-                   " detected. Skipping clustering"))
+    message(paste0("Annotation by clusters not active, skipping clustering."))
   }
   seu <- Seurat::RunUMAP(object = seu, dims = seq(ndims), reduction = reduction,
                          return.model = T, verbose = verbose)
