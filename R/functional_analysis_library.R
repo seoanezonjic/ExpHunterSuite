@@ -276,19 +276,30 @@ translate_gmt <- function(gmt, gene_keytype, org_db){
 #' @param nodeSize related to the creation of the GOdata object
 #' @param workers for parallelization
 #' @param task_size for parallelization
+#' @param p_value_cutoff p_value_cutoff
+#' @param scoreOrder A string. Way that scores will be ordered.
+#' Default: "increasing".
+#' @param clean_parentals A boolean. Whether or not to clean parentals.
+#' Default: FALSE.
+#' @returns Enrichment results.
 #' @export
+#' @examples
+#'  \dontrun{
+#'    multienricher_topGO(all_funsys, genes_list, universe=NULL, task_size=1,
+#'                organism_info, gene_id="entrez", p_value_cutoff = 0.05,
+#'                algorithm = "classic", statistic = "fisher", nodeSize = 5,
+#'                workers=1, scoreOrder = "increasing", clean_parentals = FALSE)
+#'  }
 #' @importClassesFrom topGO topGOdata
 #' @importFrom topGO annFUN
 multienricher_topGO <- function(all_funsys, genes_list, universe=NULL, 
-  organism_info, gene_id="entrez", p_value_cutoff = 0.05, algorithm = "classic", statistic = "fisher", 
-  nodeSize = 5, task_size=1, workers=1, scoreOrder = "increasing", clean_parentals = FALSE) {
-
-
+  organism_info, gene_id="entrez", p_value_cutoff = 0.05, algorithm = "classic",
+  statistic = "fisher", nodeSize = 5, task_size=1, workers=1,
+  scoreOrder = "increasing", clean_parentals = FALSE) {
   #checking input format
   if (!is.list(genes_list)) 
     genes_list <- list(genes_list)
   
-
   if (!any(all_funsys %in% c("CC","BP","MF"))) {
     message("None GO subontology has been selected")
     return(NULL)
@@ -1288,10 +1299,22 @@ parse_results_for_report <- function(enrichments, simplify_results = FALSE){
 }
 
 
-
+# enrich_density
+#'
+#' `enrich_density` draws a density plot for enrichment results.
+#'
 #' @importFrom ggridges geom_density_ridges
 #' @importFrom ggplot2 ggplot aes theme_classic
+#' @param enrich_result Enrichment result object.
+#' @param attributes Enrichment attributes to retrieve from enrich_result.
+#' @param showCategory showCategory. Default 30.
+#' @returns Density plot of enrichment.
+#' @examples
+#' \dontrun{
+#'    enrich_density(enrich_result, attrbutes = attribute_list)
+#' }
 #' @export
+
 enrich_density <- function(enrich_result, 
                            attributes, 
                            showCategory = 30) {

@@ -10,7 +10,7 @@ calculate_markers(
   verbose = FALSE,
   idents = NULL,
   integrate = FALSE,
-  min.pct = 0.25,
+  min.pct = 0.01,
   logfc.threshold = 0.25,
   assay = "RNA"
 )

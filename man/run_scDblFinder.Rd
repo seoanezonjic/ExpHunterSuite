@@ -4,10 +4,19 @@
 \alias{run_scDblFinder}
 \title{\code{run_scDblFinder} is a wrapper for the scDblFinder pipeline}
 \usage{
-run_scDblFinder(seu, assay, includePCs, nfeatures)
+run_scDblFinder(
+  seu,
+  assay = "counts",
+  includePCs = 10,
+  nfeatures = 2000,
+  BPPARAM = NULL
+)
 }
 \arguments{
-\item{seu}{Input seyrat object.}
+\item{seu}{Input seurat object.}
+
+\item{assay}{A string. Seurat assay to process. Default "counts"
+(recommended).}
 
 \item{includePCs}{The index of principal components to include in the
 predictors (e.g. `includePCs=1:2`), or the number of top components to use
@@ -15,6 +24,9 @@ predictors (e.g. `includePCs=1:2`), or the number of top components to use
 
 \item{nfeatures}{The number of top features to use. Alternatively, a 
 character vectors of feature names (e.g. highly-variable genes) to use.}
+
+\item{BPPARAM}{Used for multithreading when splitting by samples (i.e. when
+`samples!=NULL`); otherwise passed to eventual PCA and K/SNN calculations.}
 }
 \value{
 A list. Item "seu" contains seurat object with tagged doublets

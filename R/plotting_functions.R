@@ -109,14 +109,38 @@ check_categories <- function(enrichplot_obj, min_categories = 1) {
   return(check)
 }
 
+#' get_clusters_count
+#'
+#' `get_clusters_count` Extracts the length of unique clusters in a WGCNA
+#' results object.
+#'
+#' @param results_WGCNA WGCNA results object.
+#' @returns An integer. Number of unique cluster IDs in object.
+#' @examples
+#'  \dontrun{
+#'    get_clusters_count(results_WGCNA)
+#'  }
 #' @export
+
 get_clusters_count <- function(results_WGCNA){
   cl_count <- length(unique(
                     results_WGCNA[['gene_cluster_info']][['Cluster_ID']]))
   return(cl_count)
 }
 
+#' get_features_count
+#'
+#' `get_features_count` Extracts the number of traits presents in a WGCNA
+#' results object.
+#'
+#' @param results_WGCNA WGCNA results object.
+#' @returns An integer. Number of traits in object.
+#' @examples
+#'  \dontrun{
+#'    get_features_count(results_WGCNA)
+#'  }
 #' @export
+
 get_features_count <- function(results_WGCNA){
   trait_count <- length(colnames(
           results_WGCNA[['package_objects']][['module_trait_cor']]))
@@ -142,7 +166,19 @@ get_categories <- function(enrich_obj, showCategory = 30){
     return(unique(categories))
 }
 
+#' get_genes
+#'
+#' `get_genes` Extracts the vector of unique genes from an enrichment object.
+#'
+#' @param enrich_obj Enrichment object.
+#' @param showCategory showCategory.
+#' @returns An integer. Number of traits in object.
+#' @examples
+#'  \dontrun{
+#'    get_genes(enrich_obj, showCategory = 30)
+#'  }
 #' @export
+
 get_genes <- function(enrich_obj, showCategory = 30){
   genes <- get_plot_df(enrich_obj, showCategory)$Gene
   return(unique(genes))
@@ -225,7 +261,24 @@ calc_height <- function(enrich_obj,
   return(height_size)
 }
 
+#' set_default_width
+#'
+#' `set_default_width` Calculates optimal default with for plot object.
+#'
+#' @param enrich_obj Enrichment object.
+#' @param default Default width, will be modified by new calculations (and NOT
+#' simply replaced). Default 12.
+#' @param showCategory showCategory. Default 30.
+#' @param threshold threshold. Default 30.
+#' @param character_size An integer. Size of characters in plot. Default 0.04.
+#' @returns Optimal width.
+#' @examples
+#'  \dontrun{
+#'    set_default_width(enrich_obj, default = 12, showCategory = 30,
+#'                      threshold = 30, character_size = 0.04)
+#'  }
 #' @export
+
 set_default_width <- function(enrich_obj, 
   default = 12, 
   showCategory = 30, 
@@ -258,58 +311,72 @@ set_standard_size <- function(pp){
   return(pp)
 }
 
+#' gg_heatmap
+#'
+#' `gg_heatmap` Builds a ggplot2 heatmap from a data table.
+#'
 #' @importFrom ggplot2 ggplot aes_string geom_tile theme_minimal theme 
 #' element_blank element_text scale_fill_gradient2 geom_text
+#' @param data_table Input data table.
+#' @param input Input string. Only used if it is equal to "matrix", in which
+#' case it will convert input data to a data frame.
+#' @param x_axis,y_axis Names of X and Y axes.
+#' @param transpose A boolean.
+#'   * `TRUE`: Data will be transposed.
+#'   * `FALSE` (the default): Data will NOT be transposed.
+#' @param text_plot Label to add to plot.
+#' @param labs A boolean.
+#'   * `TRUE` (the default): Data will be transposed.
+#'   * `FALSE`: Data will NOT be transposed.
+#' @inheritParams ggplot2::aes_
+#' @inheritParams ggplot2::element_text
+#' @inheritParams ggplot2::scale_fill_gradient2
+#' @inheritParams ggplot2::geom_text
+#' @returns A ggplot2 heatmap.
+#' @examples
+#'  \dontrun{
+#'    gg_heatmap(matrix, input = "matrix")
+#'  }
 #' @export
-gg_heatmap <- function(data_table, 
-  input = "", 
-  traspose = FALSE, 
-  y_axis= "y_axis",
-  x_axis = "x_axis", 
-  fill = "Freq",
-  text_plot = NULL,
-  labs = TRUE,
-  x_angle = 25,
-  text_size = 2.5,
-  text_colour = "black",
-#  dendro = NULL,
-  col = c("#0000D5","#FFFFFF","#D50000"),
-  na_col = "grey50"){
+gg_heatmap <- function(data_table, input = "", transpose = FALSE,
+                y_axis= "y_axis", x_axis = "x_axis", fill = "Freq",
+                text_plot = NULL, labs = TRUE, x_angle = 25, text_size = 2.5,
+                text_colour = "black", col = c("#0000D5","#FFFFFF","#D50000"),
+                na_col = "grey50"){
+  if(transpose){
+    data_table <- t(data_table)
+  }
+  if(input == "matrix"){
+    data_table <- as.data.frame(as.table(as.matrix(data_table)))
+    colnames(data_table) <- c(y_axis, x_axis, fill)
+  }
 
-    if(traspose){
-      data_table <- t(data_table)
-    }
-    if(input == "matrix"){
-      data_table <- as.data.frame(as.table(as.matrix(data_table)))
-      colnames(data_table) <- c(y_axis, x_axis, fill)
-    }
-
-    pp <- ggplot2::ggplot(data_table, ggplot2::aes_(x = as.name(x_axis), 
-          y = as.name(y_axis), fill = as.name(fill))) +
-    ggplot2::geom_tile(show.legend = TRUE) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(panel.grid.major = ggplot2::element_blank())+
-    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = x_angle, 
-        face = "bold", hjust = 1),
-      axis.text.y = ggplot2::element_text(face = "bold")) +
-    ggplot2::scale_fill_gradient2(
-      low = col[1],
-      high = col[3],
-      mid= col[2],
-      na.value = na_col,
-      guide = "colourbar",
-      aesthetics = "fill"
-    )
-    if(!labs){
-      pp <- pp + ggplot2::theme(
-        axis.title.x = ggplot2::element_blank(),
-        axis.title.y = ggplot2::element_blank())
-    }
-    if(!is.null(text_plot)){
-      pp <- pp + ggplot2::geom_text(ggplot2::aes_(label=as.name(text_plot)), 
-        colour = text_colour, size = text_size) 
-    }
-    return(pp)
+  pp <- ggplot2::ggplot(data_table, ggplot2::aes_(x = as.name(x_axis), 
+        y = as.name(y_axis), fill = as.name(fill))) +
+  ggplot2::geom_tile(show.legend = TRUE) +
+  ggplot2::theme_minimal() +
+  ggplot2::theme(panel.grid.major = ggplot2::element_blank())+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = x_angle, 
+      face = "bold", hjust = 1),
+    axis.text.y = ggplot2::element_text(face = "bold")) +
+  ggplot2::scale_fill_gradient2(
+    low = col[1],
+    high = col[3],
+    mid= col[2],
+    na.value = na_col,
+    guide = "colourbar",
+    aesthetics = "fill"
+  )
+  if(!labs){
+    pp <- pp + ggplot2::theme(
+      axis.title.x = ggplot2::element_blank(),
+      axis.title.y = ggplot2::element_blank())
+  }
+  if(!is.null(text_plot)){
+    pp <- pp + ggplot2::geom_text(ggplot2::aes_(label=as.name(text_plot)), 
+      colour = text_colour, size = text_size) 
+  }
+  return(pp)
 }
 
 #' @importFrom ggplot2 ggplot_gtable ggplot_build

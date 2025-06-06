@@ -18,7 +18,15 @@ write_merged_cluster_report(
 )
 }
 \arguments{
+\item{enrichments_ORA}{ORA enrichment resunts.}
+
+\item{results_path}{Path where report will be written.}
+
 \item{template_folder}{(OPTIONAL) RMD templates folder}
+
+\item{sample_classes}{Sample classes.}
+
+\item{DEGH_results}{DEGenes Hunter results object.}
 
 \item{showCategories}{number of categories in the figures (per cluster)}
 
@@ -28,6 +36,9 @@ and functional (f). Default = "fc"}
 \item{func_results}{functional results}
 
 \item{source_folder}{htmlreportR source folder to load js and css libraries}
+}
+\value{
+invisible(NULL)
 }
 \description{
 Write clustering report for functional Hunter

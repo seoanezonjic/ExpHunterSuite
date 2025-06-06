@@ -120,7 +120,10 @@ write_abgenes_results <- function(final_results, output_dir) {
 #' @param template_folder,source_folder paths to htmlreportR templates and
 #' source folders, respectively. Default: NULL.
 #' @param p_adj_cutoff An integer. Adjusted p-value cutoff to consider a gene
-#' aberrantly expressed.
+#' aberrantly expressed. Default 0.05.
+#' @param z_score_cutoff An integer. Z-score value threshold to tag genes and
+#' samples as aberrant. Default 3.'
+#' @param top_N Top N values to represent in summary tables. Default: 10.
 #' @returns None.
 #' @examples
 #'  \dontrun{

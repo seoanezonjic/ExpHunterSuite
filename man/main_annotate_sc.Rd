@@ -136,8 +136,8 @@ this many cells.}
 \item{sketch_method}{A string. Method to use in score calculation for
 sketching.}
 
-\item{doublet_path}{Path where cell IDs identified as doublets will be
-written.}
+\item{doublet_path}{A string. Path where cell IDs identified as doublets
+will be written.}
 }
 \value{
 invisible(final_results list. Contains multiple items:

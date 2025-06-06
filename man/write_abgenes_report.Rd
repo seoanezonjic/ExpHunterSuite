@@ -24,7 +24,12 @@ directory.}
 source folders, respectively. Default: NULL.}
 
 \item{p_adj_cutoff}{An integer. Adjusted p-value cutoff to consider a gene
-aberrantly expressed.}
+aberrantly expressed. Default 0.05.}
+
+\item{z_score_cutoff}{An integer. Z-score value threshold to tag genes and
+samples as aberrant. Default 3.'}
+
+\item{top_N}{Top N values to represent in summary tables. Default: 10.}
 }
 \value{
 None.

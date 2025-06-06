@@ -358,6 +358,11 @@ write_summarize_heatmaps <- function(summarized_ORA, output_path) {
 #' Write clustering report for functional Hunter
 #' This function will usually be called by write_functional_report.
 #' @inheritParams write_functional_report
+#' @param enrichments_ORA ORA enrichment resunts.
+#' @param results_path Path where report will be written.
+#' @param sample_classes Sample classes.
+#' @param DEGH_results DEGenes Hunter results object.
+#' @returns invisible(NULL)
 write_merged_cluster_report <- function(enrichments_ORA, results_path,
     template_folder, sample_classes=NULL, DEGH_results=NULL, showCategories,
     group_results, func_results = NULL, source_folder = NULL) {

@@ -170,9 +170,21 @@ compute_mca <- function(mca_data,
 }
 
 
+#' get_cluster_string_assoc
+#'
+#' `get_cluster_string_assoc` calculates the association between a cluster
+#' and string factors.
+#'
+#' @param res.hcpc hcpc results object.
+#' @param string_factors string factors.
+#' @returns A data frame containing the association between each string factor
+#' and every cluster.
+#' @examples
+#'  \dontrun{
+#'    get_cluster_string_assoc(res.hcpc, string_factors)
+#'  }
 #' @export
 get_cluster_string_assoc <- function(res.hcpc, string_factors){
-
 	all_factor_clusters <- data.frame()
 	for (add_factor in string_factors) {
 		clusters_ct <- ct_from_qual(res.hcpc$data.clust[,c("clust", add_factor)])

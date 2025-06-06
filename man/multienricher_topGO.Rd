@@ -31,6 +31,8 @@ multienricher_topGO(
 
 \item{gene_id}{what identifier do the genes use - must be entrez for}
 
+\item{p_value_cutoff}{p_value_cutoff}
+
 \item{algorithm}{alrgorithm for decting enriched functions - see topGO docs}
 
 \item{statistic}{method for detecting enriched functions}
@@ -40,7 +42,24 @@ multienricher_topGO(
 \item{task_size}{for parallelization}
 
 \item{workers}{for parallelization}
+
+\item{scoreOrder}{A string. Way that scores will be ordered.
+Default: "increasing".}
+
+\item{clean_parentals}{A boolean. Whether or not to clean parentals.
+Default: FALSE.}
+}
+\value{
+Enrichment results.
 }
 \description{
 Perform topGO enrichment analysis of a list of genes
+}
+\examples{
+ \dontrun{
+   multienricher_topGO(all_funsys, genes_list, universe=NULL, task_size=1,
+               organism_info, gene_id="entrez", p_value_cutoff = 0.05,
+               algorithm = "classic", statistic = "fisher", nodeSize = 5,
+               workers=1, scoreOrder = "increasing", clean_parentals = FALSE)
+ }
 }

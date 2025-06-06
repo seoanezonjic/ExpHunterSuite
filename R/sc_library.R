@@ -1179,18 +1179,21 @@ find_doublets <- function(seu) {
 #'
 #' `run_scDblFinder` is a wrapper for the scDblFinder pipeline
 #'
-#' @param seu Input seyrat object.
+#' @param seu Input seurat object.
 #' @inheritParams scDblFinder::scDblFinder
 #' @returns A list. Item "seu" contains seurat object with tagged doublets
 #' in metadata slot. Item "barcodes" contains a vector of cell barcodes
 #' corresponding to barcodes.
+#' @param assay A string. Seurat assay to process. Default "counts"
+#' (recommended).
 #' @examples
 #' \dontrun{
 #'    run_scDblFinder(seu, "counts", 10, 2000)
 #' }
 #' @export
 
-run_scDblFinder <- function(seu, assay, includePCs, nfeatures) {
+run_scDblFinder <- function(seu, assay = "counts", includePCs = 10,
+                            nfeatures = 2000, BPPARAM = NULL) {
   sce <- Seurat::as.SingleCellExperiment(seu, assay = assay)
   sce <- scDblFinder::scDblFinder(sce, clusters = FALSE, nfeatures = nfeatures,
                                   includePCs = includePCs, BPPARAM = BPPARAM)
@@ -1425,15 +1428,19 @@ project_sketch <- function(seu, reduction, ndims){
   return(seu)
 }
 
-#' process_sketch
+#' process_doublets
 #'
-#' `process_sketch` simplifies doublet detection and tagging process, as well
+#' `process_doublets` simplifies doublet detection and tagging process, as well
 #' as removes doublets from seurat object.
 #' @param seu Seurat object to analyze.
 #' @param name Sample name.
-#' @param qc QC object to tag
-#' @param doublet_path Path where cell IDs identified as doublets will be
-#' written.
+#' @param qc QC object to tag.
+#' @param doublet_path A string. Path where cell IDs identified as doublets
+#' will be written.
+#' @param method A string specifying which doublet processing Library to use.
+#' Values: "scDblFinder" (the default) or "DoubletFinder"
+#' @param assay A string. Seurat assay to process. Default "counts"
+#' (recommended).
 #' @inheritParams run_scDblFinder
 #' @returns A list containing the updated seurat object and tagged qc object.
 #' @examples
@@ -1443,14 +1450,15 @@ project_sketch <- function(seu, reduction, ndims){
 #' @export
 
 process_doublets <- function(seu, name = NULL, qc, doublet_path = getwd(),
-                             method = "scDblFinder", assay = "data",
-                             nfeatures = 1352, includePCs = 19){
+                             method = "scDblFinder", assay = "counts",
+                             nfeatures = 1352, includePCs = 19,
+                             BPPARAM = NULL){
   if(method == "DoubletFinder") {
     doublets <- find_doublets(seu)
   }
   if(method == "scDblFinder") {
     doublets <- run_scDblFinder(seu = seu, assay = assay, nfeatures = nfeatures,
-                                includePCs = includePCs)
+                                includePCs = includePCs, BPPARAM = BPPARAM)
   }
   seu <- doublets$seu
   doublet_list <- doublets$barcodes

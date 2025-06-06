@@ -471,6 +471,17 @@ analysis_WGCNA <- function(data,
     )
 }
 
+#' corM2igraph
+#'
+#' `corM2igraph` Creates an igraph out of a correlation matrix.
+#'
+#' @param corM correlation matrix.
+#' @param cor_abs_thr Correlation threshold (absolute value)
+#' @returns An Igraph.'
+#' @examples
+#'  \dontrun{
+#'      corM2igraph(matrix, 0.75)
+#'  }
 #' @export
 corM2igraph <- function(corM, cor_abs_thr = 0.75){
   cor_df <- data.frame(row=rownames(corM)[row(corM)[upper.tri(corM)]], 
