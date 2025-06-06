@@ -8,7 +8,7 @@
     DEG_list <- plotter$hash_vars$DEG_list
     DEG_metrics_list <- plotter$hash_vars$DEG_metrics_list
     DEG_query_list <- plotter$hash_vars$DEG_query_list
-    if(plotter$hash_vars$extra_columns == "") {
+    if(all(plotter$hash_vars$extra_columns == "")) {
         extra_columns <- NULL
     } else {
         extra_columns <- plotter$hash_vars$extra_columns
