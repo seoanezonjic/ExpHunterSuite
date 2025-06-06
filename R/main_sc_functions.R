@@ -193,7 +193,8 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   if(length(unique(seu$sample)) == 1) {
     processed_doublets <- process_doublets(seu = seu, qc = qc, name = name,
                             doublet_path = doublet_path, assay = assay,
-                            nfeatures = hvgs, includePCs = seq(1, ndims))
+                            nfeatures = hvgs, includePCs = seq(1, ndims),
+                            BPPARAM = BPPARAM)
     qc <- processed_doublets$qc
     seu <- processed_doublets$seu
   }
