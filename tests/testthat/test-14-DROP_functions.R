@@ -1,7 +1,7 @@
 test_that("preprocess_gtf works as intended", {
   gtf <- system.file("extData/testdata", "gencode.v45.toy.annotation.gtf",
                      package = "ExpHunterSuite")
-  txdb <- suppressMessages(GenomicFeatures::makeTxDbFromGFF(gtf))
+  txdb <- suppressMessages(txdbmaker::makeTxDbFromGFF(gtf))
   GenomeInfoDb::keepStandardChromosomes(txdb)
   count_ranges <- GenomicFeatures::exonsBy(txdb, by = "gene")
   gene_name_mapping <- .map_genes(gtf)
