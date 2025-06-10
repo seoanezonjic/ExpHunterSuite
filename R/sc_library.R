@@ -810,7 +810,8 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
         }
         query <- query[query %in% rownames(seu)]
       }
-      if(!any(query %in% unique(unlist(lapply(DEG_list, rownames))))) {
+      if(!is.null(query) & !any(query %in% unique(unlist(lapply(DEG_list,
+          rownames)))) & return_output) {
         warning("None of specified target genes are differentially expressed ",
                 "in dataset.")
         return_output <- FALSE
@@ -1565,6 +1566,8 @@ process_sc_params <- function(params = list(), mode = "annotation") {
     params$integrate <- FALSE
     params$samples_to_integrate <- ""
     params$ref_de_method <- ""
+    params$ref_filter <- ""
+    params$filter_dataset <- ""
     params$exp_design <- ""
     params$subset_by <- ""
   } else {
