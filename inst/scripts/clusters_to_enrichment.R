@@ -133,7 +133,7 @@ if (!is.null(opt$custom)) {
 }
 
 if("KEGG" %in% all_funsys) {
-  kegg_data_file <- get_kegg_db_path(opt$kegg_data_file, current_organism_info=current_organism_info, root_path))
+  kegg_data_file <- get_kegg_db_path(opt$kegg_data_file, current_organism_info=current_organism_info, root_path)
   if(! file.exists(kegg_data_file)) stop(paste("KEGG file:", kegg_data_file, "not found.
     You can download with the download_KEGG_file.R Script"))
 }
