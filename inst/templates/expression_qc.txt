@@ -115,7 +115,7 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode expression_pca
-	child <- knitr::knit_expand(file.path(plotter$template_folder, "facto_miner.txt"))
+	child <- knitr::knit_expand(file.path(plotter$hash_vars$template_folder, "facto_miner.txt"))
 	cat(knitr::knit_child(text = child, quiet = TRUE), sep = "\n")
 end.rcode-->
 
