@@ -122,8 +122,16 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   annotate <- TRUE
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                doublet_list = doublet_list)
+  if(length(unique(seu$sample)) == 1) {
+    processed_doublets <- process_doublets(seu = seu, qc = qc, name = name,
+                            doublet_path = doublet_path, assay = assay,
+                            nfeatures = hvgs, includePCs = seq(1, ndims),
+                            BPPARAM = BPPARAM)
+    qc <- processed_doublets$qc
+    seu <- processed_doublets$seu
+  }
   if(!reduce) {
-    seu <- subset(qc, subset = qc == 'Pass')
+    seu <- subset(qc, subset = qc == 'Pass' & doublet_class != "doublet")
   } else {
     message(paste0("Reduce argument is set to TRUE. Skipping QC subsetting. ",
                    "Updating SingleR configuration"))
@@ -190,14 +198,6 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   }
   seu <- Seurat::RunUMAP(object = seu, dims = seq(ndims), reduction = reduction,
                          return.model = T, verbose = verbose)
-  if(length(unique(seu$sample)) == 1) {
-    processed_doublets <- process_doublets(seu = seu, qc = qc, name = name,
-                            doublet_path = doublet_path, assay = assay,
-                            nfeatures = hvgs, includePCs = seq(1, ndims),
-                            BPPARAM = BPPARAM)
-    qc <- processed_doublets$qc
-    seu <- processed_doublets$seu
-  }
   seu <- SeuratObject::JoinLayers(seu)
   if(annotate) {
     annot_start <- Sys.time()
