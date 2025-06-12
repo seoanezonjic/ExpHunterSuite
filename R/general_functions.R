@@ -238,10 +238,18 @@ annotate_genomic_ranges <-function(intervals_df, genome){
  return(annotated_g_regs)
 }    
 
+#' split_str
+#'
+#' `split_str` is a wrapper for a specific use case of base R strsplit function.
+#' @param string String to split.
+#' @param split Expression by which to split string.
+#' @returns Split string.
+#' @examples
+#' split_str(string = "one,two", split = ",")
 #' @export
 split_str <- function(string, split = NULL) {
   if (is.null(split))
-    stop("split character must be specifyed")
+    stop("split character must be specified")
   if (is.null(string)) return(NULL)  
   if (nchar(string) <= 1) return(NULL)  
 
@@ -283,7 +291,7 @@ name_all_columns <- function(data_frame) {
 
 #' parse_filter
 #'
-#' parses an object and a string into an expression that filters the object.
+#' `parse_filter` parses an object and a string into an expression that filters the object.
 #' @param object Object to filter.
 #' @param expression Expression to parse as filter.
 #' @return filtered object
