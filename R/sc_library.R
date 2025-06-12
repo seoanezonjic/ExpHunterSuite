@@ -44,13 +44,14 @@ read_sc_counts <- function(name, input, mincells = 1, minfeats = 1, exp_design){
 #' 
 #' @returns Seurat object with tagged metadata
 #' @examples
-#' data(pbmc_tiny)
-#' # Integrative experiment, previously loaded doublet list:
-#' tag_qc(seu = pbmc_tiny, minqcfeats = 500, percentmt = 5,
-#'        doublet_list = c("ATGCCAGAACGACT", "CATGGCCTGTGCAT"))
-#' # Per-sample experiment, no prior doublet knowledge
-#' tag_qc(seu = pbmc_tiny, minqcfeats = 500, percentmt = 5,
-#'        doublet_list = NULL)
+#' \dontrun{
+#'   # Integrative experiment, previously loaded doublet list:
+#'   tag_qc(seu = pbmc_tiny, minqcfeats = 500, percentmt = 5,
+#'          doublet_list = c("ATGCCAGAACGACT", "CATGGCCTGTGCAT"))
+#'   # Per-sample experiment, no prior doublet knowledge
+#'   tag_qc(seu = pbmc_tiny, minqcfeats = 500, percentmt = 5,
+#'          doublet_list = NULL) 
+#' }
 #' @export
 
 tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL){
