@@ -328,6 +328,10 @@ set_standard_size <- function(pp){
 #' @param labs A boolean.
 #'   * `TRUE` (the default): Data will be transposed.
 #'   * `FALSE`: Data will NOT be transposed.
+#' @param x_angle Angle by which x axis labels will be rotated.
+#' @param text_size,text_colour Font size and colour for text in plot
+#' @param col Color pallete to use when plotting.
+#' @param na_col Color for NA values.
 #' @inheritParams ggplot2::aes_
 #' @inheritParams ggplot2::element_text
 #' @inheritParams ggplot2::scale_fill_gradient2
