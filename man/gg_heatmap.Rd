@@ -43,6 +43,14 @@ case it will convert input data to a data frame.}
 \item \code{TRUE} (the default): Data will be transposed.
 \item \code{FALSE}: Data will NOT be transposed.
 }}
+
+\item{x_angle}{Angle by which x axis labels will be rotated.}
+
+\item{text_size, text_colour}{Font size and colour for text in plot}
+
+\item{col}{Color pallete to use when plotting.}
+
+\item{na_col}{Color for NA values.}
 }
 \value{
 A ggplot2 heatmap.

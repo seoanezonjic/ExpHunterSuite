@@ -23,7 +23,7 @@ count ranges, and gene_mapping files, which it writes to provided directory.
 gtf <- system.file("extData/testdata", "gencode.v45.toy.annotation.gtf",
                     package = "ExpHunterSuite")
 processed <- preprocess_gtf(gtf)
-head(processed$txdb)
+processed$txdb
 head(processed$count_ranges)
 head(processed$gene_name_mapping)
 }

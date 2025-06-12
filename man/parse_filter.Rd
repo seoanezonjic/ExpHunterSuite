@@ -15,7 +15,7 @@ parse_filter(object, expression)
 filtered object
 }
 \description{
-parses an object and a string into an expression that filters the object.
+\code{parse_filter} parses an object and a string into an expression that filters the object.
 }
 \examples{
 \dontrun{
