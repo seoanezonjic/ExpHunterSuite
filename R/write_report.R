@@ -33,7 +33,7 @@ write_expression_report <- function(exp_results,
     }
     template <- file.path(template_folder, "main_report.txt")
     tmp_folder <- file.path(output_files, "tmp_lib")
-    container <- list(opt = opt,
+    container <- list(opt = opt, template_folder = template_folder,
     final_main_params = exp_results[['final_main_params']],
     DEG_pack_columns = exp_results[['DEG_pack_columns']],
     all_counts_for_plotting = exp_results[['all_counts_for_plotting']],
@@ -512,11 +512,13 @@ write_clusters_to_enrichment <- function(output_path="results",
 #' @importFrom rmarkdown render
 #' @export
 #' @examples
+#' /dontrun{
 #' # Load func and DE results
 #' data(degh_output)
 #' func_results <- list() 
 #' func_results <- main_functional_hunter(degh_output, "Mouse")
 #' write_functional_report(degh_output, func_results)
+#'}
 write_functional_report <- function(hunter_results, func_results, cores = 2,
                                     output_files = getwd(),
                                     organisms_table = NULL,
