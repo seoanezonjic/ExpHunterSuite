@@ -14,9 +14,9 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   main_path_script <- dirname(full.fpath)
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
-  if(Sys.getenv("sketch") == "TRUE") {
-    devtools::load_all(Sys.getenv("HTMLREPORT_PATH"))
+  if(Sys.getenv("integrate") == "TRUE" & Sys.getenv("sketch") == "TRUE") {
     custom_libraries <- c('sc_library.R', 'main_sc_functions.R', 'general_functions.R')
+    devtools::load_all(Sys.getenv("HTMLREPORT_PATH"))
     source_folder <- file.path(find.package("htmlreportR"), "inst")
     for (lib in custom_libraries){
       source(file.path(root_path, 'R', lib))
