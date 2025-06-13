@@ -134,5 +134,7 @@ Imports:
     SingleR (>= 2.6.0),
     corto (>= 1.2.4),
     methods,
-    BiocManager (>= 1.30.25)
+    BiocManager (>= 1.30.25),
+    HDF5Array (>= 1.32.1),
+    scDblFinder (>= 1.18.0)
 Config/testthat/edition: 3
