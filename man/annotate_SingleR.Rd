@@ -8,6 +8,7 @@ annotate_SingleR(
   seu,
   SingleR_ref = NULL,
   ref_n = 25,
+  integrate = "TRUE",
   BPPARAM = NULL,
   ref_de_method = "wilcox",
   ref_label = ref_label,
@@ -29,6 +30,12 @@ SingleR will not be used.}
 \item{ref_n}{Top N reference markers to consider in annotation. Higher values
 provide a more accurate annotation, but increase noise and computational
 time. Will not be used if ref_de_method is empty.}
+
+\item{integrate}{A boolean.
+\itemize{
+\item \code{TRUE}: Integrate seurat object using the \code{harmony} package.
+\item \code{FALSE} (the default): Do not perform integration.
+}}
 
 \item{BPPARAM}{Parameters to pass to BiocParallel framework.}
 

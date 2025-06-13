@@ -37,24 +37,29 @@ add_gnomAD_AF(
 It can also be any full string of a MafDb provided by
 \code{\link[GenomicScores]{availableGScores}}.}
 
-\item{max_af_cutoff}{cutoff for a variant to be considered rare. Default 0.001}
+\item{max_af_cutoff}{cutoff for a variant to be considered rare. Default
+0.001}
 
 \item{populations}{The populations to be annotatated.}
 
-\item{...}{Used for backwards compatibility (gene_assembly -> genome_assembly)}
+\item{...}{Used for backwards compatibility (gene_assembly ->
+genome_assembly)}
 }
 \value{
-a data.frame containing original data as well as the minor allele frequencies
+a data.frame containing original data as well as the minor allele
+frequencies
 }
 \description{
 appending the minor allele frequency to GRanges using gnomAD
 }
 \examples{
-file <- system.file("extData", "allelic_counts_HG00187.csv", package = "ExpHunterSuite", mustWork = TRUE)
+file <- system.file("extData", "allelic_counts_HG00187.csv",
+package = "ExpHunterSuite", mustWork = TRUE)
 maeCounts <- data.table::fread(file)                                                                       
 maeRes <- DESeq4MAE(maeCounts)                                                                 
 \dontrun{
-res <- add_gnomAD_AF(maeRes, genome_assembly = genome_assembly, populations = "AF")            
+res <- add_gnomAD_AF(maeRes, genome_assembly = genome_assembly,
+populations = "AF")            
 }
 }
 \author{

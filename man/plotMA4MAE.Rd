@@ -13,7 +13,8 @@ plotMA4MAE(
 )
 }
 \arguments{
-\item{data}{A data.frame containing the results table from \code{DESeq4MAE} function}
+\item{data}{A data.frame containing the results table from \code{DESeq4MAE}
+function.}
 
 \item{title}{The plot's title}
 
@@ -22,16 +23,17 @@ plotMA4MAE(
 \item{allelicRatioCutoff}{The minimum allelic ratio ALT/(ALT+REF) to be
 considered signficant}
 
-\item{rare_column}{The name of the column that indicates if a variant is rare or not.
+\item{rare_column}{The name of the column that indicates if a variant is rare
+or not.
 Default is \code{null} which means it won't be plotted.}
 }
 \value{
 A ggplot object containing the MA plot.
 }
 \description{
-Creates an MA plot, ie, Fold Change (ALT/REF) vs Coverage colored
-by significance (from p adjusted and allelic ratio) or significance and
-minor allele frequency (if rare_column is provided).
+Creates an MA plot, ie, Fold Change (ALT/REF) vs Coverage
+colored by significance (from p adjusted and allelic ratio) or significance
+and minor allele frequency (if rare_column is provided).
 }
 \examples{
 file <- system.file("extData", "allelic_counts_HG00187.csv",

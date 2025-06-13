@@ -4,22 +4,7 @@
 \alias{read_sc_counts}
 \title{read_sc_counts}
 \usage{
-read_sc_counts(
-  name,
-  input,
-  mincells = 1,
-  minfeats = 1,
-  exp_design,
-  lower = 100,
-  niters = 10000,
-  test.ambient = FALSE,
-  ignore = NULL,
-  alpha = NULL,
-  round = TRUE,
-  by.rank = NULL,
-  known.empty = NULL,
-  BPPARAM = SerialParam
-)
+read_sc_counts(name, input, mincells = 1, minfeats = 1, exp_design)
 }
 \arguments{
 \item{name}{sample name}

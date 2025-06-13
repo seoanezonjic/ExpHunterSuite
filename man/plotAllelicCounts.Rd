@@ -13,7 +13,8 @@ plotAllelicCounts(
 )
 }
 \arguments{
-\item{data}{A data.frame containing the counts or results table from \code{DESeq4MAE} function}
+\item{data}{A data.frame containing the counts or results table from
+\code{DESeq4MAE} function.}
 
 \item{title}{The plot's title}
 
@@ -22,7 +23,8 @@ plotAllelicCounts(
 \item{allelicRatioCutoff}{The minimum allelic ratio ALT/(ALT+REF) to be
 considered signficant}
 
-\item{rare_column}{The name of the column that indicates if a variant is rare or not.
+\item{rare_column}{The name of the column that indicates if a variant is
+rare or not.
 Default is \code{null} which means it won't be plotted.}
 }
 \value{

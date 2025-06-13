@@ -13,16 +13,20 @@ DESeq4MAE(data, minCoverage = 10, disp = 0.05, independentFiltering = FALSE)
 
 \item{disp}{Gene dispersion for the NB test. Default is 0.05.}
 
-\item{independentFiltering}{Parameter that affects the multiple testing. Default is FALSE.}
+\item{independentFiltering}{Parameter that affects the multiple testing.
+Default is FALSE.}
 }
 \value{
-Mono-allelic results table containing original counts plus p-value, p-adjusted and freqALT columns.
+Mono-allelic results table containing original counts plus p-value,
+p-adjusted and freqALT columns.
 }
 \description{
-Uses a negative binomial test to determine if a variant is mono-allelically expressed.
+Uses a negative binomial test to determine if a variant is
+mono-allelically expressed.
 }
 \examples{
-file <- system.file("extData", "allelic_counts_HG00187.csv", package = "ExpHunterSuite", mustWork = TRUE)
+file <- system.file("extData", "allelic_counts_HG00187.csv",
+package = "ExpHunterSuite", mustWork = TRUE)
 maeCounts <- data.table::fread(file)
 DESeq4MAE(maeCounts)
 }
