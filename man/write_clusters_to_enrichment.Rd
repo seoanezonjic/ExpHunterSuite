@@ -74,3 +74,8 @@ void
 Write Main clusters to enrichment output
 This function allows you to report the Functional analysis.
 }
+\examples{
+\dontrun{
+   write_clusters_to_enrichment(enrichments_ORA = ORA_results)
+}
+}

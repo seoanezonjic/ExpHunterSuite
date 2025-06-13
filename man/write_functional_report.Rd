@@ -66,7 +66,7 @@ Write Main DEgenes Hunter functional report
 This function allows you to report the Functional analysis.
 }
 \examples{
-/dontrun{
+\dontrun{
 # Load func and DE results
 data(degh_output)
 func_results <- list() 

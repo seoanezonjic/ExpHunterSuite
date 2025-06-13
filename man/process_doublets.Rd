@@ -7,7 +7,6 @@
 process_doublets(
   seu,
   name = NULL,
-  qc,
   doublet_path = getwd(),
   method = "scDblFinder",
   assay = "counts",
@@ -20,8 +19,6 @@ process_doublets(
 \item{seu}{Seurat object to analyze.}
 
 \item{name}{Sample name.}
-
-\item{qc}{QC object to tag.}
 
 \item{doublet_path}{A string. Path where cell IDs identified as doublets
 will be written.}

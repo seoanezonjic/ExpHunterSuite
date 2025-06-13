@@ -31,7 +31,9 @@ void
 This function allows you to report the DEG analysis.
 }
 \examples{
-# Load DE analysis results
-degh_output <- list() # data(degh_output)
-write_expression_report(degh_output)
+\dontrun{
+     # Load DE analysis results
+     degh_output <- list() # data(degh_output)
+     write_expression_report(degh_output)
+}
 }

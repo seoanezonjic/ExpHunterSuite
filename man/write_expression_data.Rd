@@ -24,6 +24,6 @@ Used by the degenes_Hunter script
 # Can only be run after running main_degenes_Hunter 
 # eg as part of the degenes_Hunter.R script
 \dontrun{
-write_expression_data(final_results, opt$output_files)
+     write_expression_data(final_results, opt$output_files)
 }
 }

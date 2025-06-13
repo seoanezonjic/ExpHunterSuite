@@ -29,6 +29,8 @@ This function writes a report of coRmiT results.
 }
 \examples{
 # Load DE analysis results
-degh_output <- list() # data(degh_output)
-write_global_cormit(degh_output)
+\dontrun{
+     degh_output <- list() # data(degh_output)
+     write_global_cormit(degh_output)
+}
 }
