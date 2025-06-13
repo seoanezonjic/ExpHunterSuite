@@ -762,7 +762,8 @@ get_expressed_genes <- function(ods) {
 #' populations = "AF")            
 #' }
 #' @importClassesFrom data.table data.table
-#' @importClassesFrom GenomicRanges GRanges                                                                                         
+#' @importClassesFrom GenomicRanges GRanges 
+#' @importFrom GenomicScores gscores                                                                                        
 #' @export
 setGeneric("add_gnomAD_AF",function(
     object,
@@ -802,7 +803,7 @@ score_data <- function(gr,
   }
   
   # Add score of all, African, American, East Asian and Non-Finnish European
-  gr_scores <- gscores(mafdb, gr, pop = populations)
+  gr_scores <- GenomicScores::gscores(mafdb, gr, pop = populations)
   return(gr_scores)
 }
 
@@ -1029,11 +1030,11 @@ deseq_for_allele_specific_expression <- function(data, minCoverage=10,
                                         disp=0.05, independentFiltering=FALSE){
   totalCount <- . <- altCount <- refCount <- hgncid <- pos <- NULL
     # Obtain a data.table from input
-    if(any(class(data) == 'data.frame')){
+    if(methods::is(data, "data.frame")){
         dt <- data.table::as.data.table(data)
         dt[, c('lowMAPQDepth', 'lowBaseQDepth', 'rawDepth', 'otherBases',
                'improperPairs') := NULL]
-    } else if(class(data) == 'GRanges'){
+    } else if(methods::is(data, "GRanges"){
         dt <- allelic_granges_to_dt(data)
     }
     dt <- dt[totalCount >= minCoverage]
