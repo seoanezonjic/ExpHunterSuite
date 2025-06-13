@@ -1316,6 +1316,7 @@ annotate_seurat <- function(seu, cell_annotation = NULL,
 #' simplifies function call.
 #' @inheritParams main_annotate_sc
 #' @inheritParams SingleR::trainSingleR
+#' @inheritParams calculate_markers
 #' @param fine.tune A boolean.
 #'   * `TRUE` (the default): Fine-tune statistical model built for transfer.
 #'   * `FALSE`: Do not perform fine-tuning..
@@ -1332,6 +1333,7 @@ annotate_seurat <- function(seu, cell_annotation = NULL,
 #' @export
 
 annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
+                             integrate = "TRUE",
                              BPPARAM = NULL, ref_de_method = "wilcox",
                              ref_label = ref_label, aggr.ref = FALSE,
                              fine.tune = TRUE, assay = "RNA", verbose = FALSE,
@@ -1436,7 +1438,6 @@ project_sketch <- function(seu, reduction, ndims){
 #' as removes doublets from seurat object.
 #' @param seu Seurat object to analyze.
 #' @param name Sample name.
-#' @param qc QC object to tag.
 #' @param doublet_path A string. Path where cell IDs identified as doublets
 #' will be written.
 #' @param method A string specifying which doublet processing Library to use.
@@ -1451,7 +1452,7 @@ project_sketch <- function(seu, reduction, ndims){
 #'  }
 #' @export
 
-process_doublets <- function(seu, name = NULL, qc, doublet_path = getwd(),
+process_doublets <- function(seu, name = NULL, doublet_path = getwd(),
                              method = "scDblFinder", assay = "counts",
                              nfeatures = 1352, includePCs = 19,
                              BPPARAM = NULL){
@@ -1473,8 +1474,8 @@ process_doublets <- function(seu, name = NULL, qc, doublet_path = getwd(),
   sample_doublet_list <- paste(name, doublet_list, sep = "_")
   writeLines(sample_doublet_list, file_conn)
   close(file_conn)
-  qc <- tag_doublets(seu = qc, doublet_list = doublet_list)
-  return(list(seu = seu, qc = qc))
+  qc <- tag_doublets(seu = seu, doublet_list = doublet_list)
+  return(qc)
 }
 
 #' process_sketch
