@@ -58,7 +58,7 @@ if(opt$targets_folder == "" | !file.exists(opt$targets_folder)) {
   DEG_targets <- vector(mode = "list", length = length(target_files))
   names(DEG_targets) <- target_files
   for(target_file in target_files) {
-    DEG_targets[[target_file]] <- read.table(target_file, header = TRUE)
+    DEG_targets[[target_file]] <- read.table(target_file, sep = "\t", header = TRUE)
   }
   names(DEG_targets) <- tools::file_path_sans_ext(basename(target_files))
 }
