@@ -262,6 +262,7 @@ get_aberrants <- function(df, z_score_cutoff, p_adj_cutoff) {
 #' "p_padjust" (calculated from "padjust" column), "type", "zScore" and
 #' "altRatio" columns, if they existed in the input data frame.
 #' @import data.table
+#' @importFrom methods is
 #' @export
 
 format_aberrants <- function(input_table) {
@@ -272,7 +273,7 @@ format_aberrants <- function(input_table) {
   }
   names <- c("sampleID", "geneID", "padjust", "type", "zScore", "altRatio")
   matches <- colnames(input_table) %in% names
-  if("data.table" %in% class(input_table)){
+  if(methods::is(input_table, "data.table")){
     res <- input_table[, matches, with = FALSE]
   } else {
     res <- input_table[, matches]
@@ -744,16 +745,21 @@ get_expressed_genes <- function(ods) {
 #' @param genome_assembly one of "hg19", "hs37d5", "hg38", "GRCh38"
 #'                It can also be any full string of a MafDb provided by
 #'                \code{\link[GenomicScores]{availableGScores}}.
-#' @param max_af_cutoff cutoff for a variant to be considered rare. Default 0.001
+#' @param max_af_cutoff cutoff for a variant to be considered rare. Default
+#' 0.001
 #' @param populations The populations to be annotatated.
-#' @param ... Used for backwards compatibility (gene_assembly -> genome_assembly)
-#' @return a data.frame containing original data as well as the minor allele frequencies
+#' @param ... Used for backwards compatibility (gene_assembly ->
+#' genome_assembly)
+#' @return a data.frame containing original data as well as the minor allele
+#' frequencies
 #' @examples
-#' file <- system.file("extData", "allelic_counts_HG00187.csv", package = "ExpHunterSuite", mustWork = TRUE)
+#' file <- system.file("extData", "allelic_counts_HG00187.csv",
+#' package = "ExpHunterSuite", mustWork = TRUE)
 #' maeCounts <- data.table::fread(file)                                                                       
 #' maeRes <- DESeq4MAE(maeCounts)                                                                 
 #' \dontrun{
-#' res <- add_gnomAD_AF(maeRes, genome_assembly = genome_assembly, populations = "AF")            
+#' res <- add_gnomAD_AF(maeRes, genome_assembly = genome_assembly,
+#' populations = "AF")            
 #' }
 #' @importClassesFrom data.table data.table
 #' @importClassesFrom GenomicRanges GRanges                                                                                         
@@ -773,7 +779,8 @@ score_data <- function(gr,
     populations = c('AF', 'AF_afr', 'AF_amr', 'AF_eas', 'AF_nfe', 'AF_popmax'),
     ...){
   if("gene_assembly" %in% names(list(...))){
-    warning("'gene_assembly' is deprecated. Please use 'genome_assembly' instead.")
+    warning(paste0("'gene_assembly' is deprecated. Please use 'genome_assembly',
+      instead."))
     genome_assembly <- list(...)[['gene_assembly']]
   }
   
@@ -785,7 +792,8 @@ score_data <- function(gr,
       hs37d5 = "MafDb.gnomAD.r2.1.hs37d5",
       hg38   = "MafDb.gnomAD.r2.1.GRCh38",
       GRCh38 = "MafDb.gnomAD.r2.1.GRCh38",
-      stop("Please provide a supported genome assembly version. Not: ", genome_assembly)
+      stop("Please provide a supported genome assembly version. Not: ",
+            genome_assembly)
     ))
   }
     
@@ -802,7 +810,8 @@ score_data <- function(gr,
 # Helper method for installilng the named MafDb package
 .get_mafdb <- function(pkg_name){
   if(!requireNamespace(pkg_name, quietly=TRUE)){
-    warning("The given MafDb is not installed: '", pkg_name, "'. We will do it now!")
+    warning(paste0("The given MafDb is not installed: '", pkg_name, "'. We ",
+            "will do it now!"))
     if(!requireNamespace("BiocManager", quietly=TRUE)){
       utils::install.packages("BiocManager")
     }
@@ -827,7 +836,8 @@ function(
                 ranges = IRanges::IRanges(start=object$position, width=1), 
                 strand = '*')
   # score the gr
-  gr_scores <- score_data(gr,genome_assembly=genome_assembly,populations = populations, max_af_cutoff = max_af_cutoff,...)
+  gr_scores <- score_data(gr,genome_assembly=genome_assembly,
+                  populations = populations, max_af_cutoff = max_af_cutoff, ...)
   
   # merge the population scores with the original object
   scores <- data.table::as.data.table(gr_scores)[,..populations]
@@ -864,16 +874,18 @@ function(
 
 #' plotMA4MAE
 #'
-#' @description Creates an MA plot, ie, Fold Change (ALT/REF) vs Coverage colored 
-#'    by significance (from p adjusted and allelic ratio) or significance and 
-#'    minor allele frequency (if rare_column is provided).
+#' @description Creates an MA plot, ie, Fold Change (ALT/REF) vs Coverage
+#' colored by significance (from p adjusted and allelic ratio) or significance
+#' and minor allele frequency (if rare_column is provided).
 #' @author Vicente Yepez
-#' @param data A data.frame containing the results table from \code{DESeq4MAE} function
+#' @param data A data.frame containing the results table from \code{DESeq4MAE}
+#' function.
 #' @param title The plot's title
 #' @param padjCutoff The significance level
 #' @param allelicRatioCutoff The minimum allelic ratio ALT/(ALT+REF) to be 
 #'    considered signficant
-#' @param rare_column The name of the column that indicates if a variant is rare or not.
+#' @param rare_column The name of the column that indicates if a variant is rare
+#' or not.
 #'    Default is \code{null} which means it won't be plotted.
 #' @return A ggplot object containing the MA plot.
 #' @export
@@ -886,7 +898,8 @@ function(
 
 plotMA4MAE <- function(data, title = NULL, padjCutoff = 0.05, 
                    allelicRatioCutoff = .8, rare_column = NULL){
-  FC <- altCount <- refCount <- Significant <- padj <- altRatio <- totalCount <- NULL
+  FC <- altCount <- refCount <- Significant <- padj <- altRatio <- NULL
+  totalCount <- NULL
   stopifnot(c('altCount', 'refCount', 'altRatio', 'padj') %in% colnames(data))
   
   data <- data.table::as.data.table(data)
@@ -896,7 +909,8 @@ plotMA4MAE <- function(data, title = NULL, padjCutoff = 0.05,
   
   # Make the sketch of the plot
   g <- ggplot2::ggplot(data, ggplot2::aes(totalCount, FC)) + 
-    ggplot2::theme_bw(base_size = 14) + ggplot2::scale_y_log10() + ggplot2::scale_x_log10() +
+    ggplot2::theme_bw(base_size = 14) + ggplot2::scale_y_log10() +
+    ggplot2::scale_x_log10() +
     ggplot2::labs(x = 'RNA Coverage per heterozygous SNV', 
          y = 'Fold change of allelic counts\n(ALT+1)/(REF+1)', title = title)
   
@@ -904,10 +918,13 @@ plotMA4MAE <- function(data, title = NULL, padjCutoff = 0.05,
   if(!is.null(rare_column)){
     stopifnot(rare_column %in% colnames(data))
     data[, class := 'NS']
-    data[Significant == T & get(rare_column) == T, class := 'Significant\n& Rare']
-    data[Significant == T & get(rare_column) == F, class := 'Significant']
+    data[Significant == T & get(rare_column) == T,
+         class := 'Significant\n& Rare']
+    data[Significant == T & get(rare_column) == F,
+         class := 'Significant']
     g <- g + ggplot2::geom_point(ggplot2::aes(col = class), size = .9) +
-      ggplot2::scale_color_manual(values = c('gray61', 'chocolate1', 'firebrick')) +
+      ggplot2::scale_color_manual(values = c('gray61', 'chocolate1',
+                                  'firebrick')) +
       ggplot2::theme(legend.title = ggplot2::element_blank())
   } else{
     g <- g + ggplot2::geom_point(ggplot2::aes(col = Significant), size = .9) +
@@ -924,12 +941,14 @@ plotMA4MAE <- function(data, title = NULL, padjCutoff = 0.05,
 #'    vs counts of the reference on the log10 scale. If significant and minor
 #'    allele frequency columns present, dots will be highlighted accordingly.
 #' @author Vicente Yepez
-#' @param data A data.frame containing the counts or results table from \code{DESeq4MAE} function
+#' @param data A data.frame containing the counts or results table from
+#' \code{DESeq4MAE} function.
 #' @param title The plot's title
 #' @param padjCutoff The significance level
 #' @param allelicRatioCutoff The minimum allelic ratio ALT/(ALT+REF) to be 
 #'    considered signficant
-#' @param rare_column The name of the column that indicates if a variant is rare or not.
+#' @param rare_column The name of the column that indicates if a variant is
+#' rare or not.
 #'    Default is \code{null} which means it won't be plotted.
 #' @return A ggplot object containing the MA plot.
 #' @export
@@ -949,7 +968,8 @@ plotAllelicCounts <- function(data, title = NULL, padjCutoff = 0.05,
   
   # Make the sketch of the plot
   g <- ggplot2::ggplot(data, ggplot2::aes(refCount, altCount)) + 
-    ggplot2::theme_bw(base_size = 14) + ggplot2::scale_y_log10() + ggplot2::scale_x_log10() +
+    ggplot2::theme_bw(base_size = 14) + ggplot2::scale_y_log10() +
+    ggplot2::scale_x_log10() +
     ggplot2::labs(x = 'REF count + 1', y = 'ALT count + 1', title = title) + 
     ggplot2::geom_abline(slope = 1, intercept = 0)
   
@@ -963,10 +983,12 @@ plotAllelicCounts <- function(data, title = NULL, padjCutoff = 0.05,
   if(!is.null(rare_column)){
     stopifnot(rare_column %in% colnames(data))
     data[, class := 'NS']
-    data[Significant == T & get(rare_column) == T, class := 'Significant\n& Rare']
+    data[Significant == T & get(rare_column) == T,
+         class := 'Significant\n& Rare']
     data[Significant == T & get(rare_column) == F, class := 'Significant']
     g <- g + ggplot2::geom_point(ggplot2::aes(col = class), size = .9) +
-      ggplot2::scale_color_manual(values = c('gray61', 'chocolate1', 'firebrick')) +
+      ggplot2::scale_color_manual(values = c('gray61', 'chocolate1',
+                                             'firebrick')) +
       ggplot2::theme(legend.title = ggplot2::element_blank())
   } else{
     g <- g + ggplot2::geom_point(ggplot2::aes(col = Significant), size = .9) +
@@ -996,48 +1018,46 @@ allelic_granges_to_dt <- function(data){
     data$pos <- GenomicRanges::start(data)
     data$ALT <- as.character(unlist(data$ALT))
     dt <- data.table::as.data.table(data)
-    dt[, c("start", "end", "width", "strand", "QUAL", "FILTER", "GQ", "A", "C", "G", "T", "seqnames") := NULL]
+    dt[, c("start", "end", "width", "strand", "QUAL", "FILTER", "GQ", "A", "C",
+           "G", "T", "seqnames") := NULL]
     return(dt)
 }
 
 
 # Performs the Negative Binomial Wald Test
 deseq_for_allele_specific_expression <- function(data, minCoverage=10,
-                                                     disp=0.05, independentFiltering=FALSE){
+                                        disp=0.05, independentFiltering=FALSE){
   totalCount <- . <- altCount <- refCount <- hgncid <- pos <- NULL
-    # Obtain a data.table from imput
+    # Obtain a data.table from input
     if(any(class(data) == 'data.frame')){
         dt <- data.table::as.data.table(data)
-        dt[, c('lowMAPQDepth', 'lowBaseQDepth', 'rawDepth', 'otherBases', 'improperPairs') := NULL]
+        dt[, c('lowMAPQDepth', 'lowBaseQDepth', 'rawDepth', 'otherBases',
+               'improperPairs') := NULL]
     } else if(class(data) == 'GRanges'){
         dt <- allelic_granges_to_dt(data)
     }
-    
     dt <- dt[totalCount >= minCoverage]
-    
     # create deseq object
     dds <- DESeq2::DESeqDataSetFromMatrix(
         as.matrix(dt[, .(altCount, refCount)]),
         S4Vectors::DataFrame(condition=factor(c("altAllele", "refAllele"))),
         design = ~ condition
     )
-    
     if(!is.null(data$hgncid))
-        rownames(dds) <- data[, paste0(hgncid, "_", pos)]  # Doesn't always have the gene name
-    
+        rownames(dds) <- data[, paste0(hgncid, "_", pos)]
+    # Doesn't always havethe gene name
     # mcols(rowRanges(dds)) <- dt
-    
     # estimate the size factors and pseudo dispersion
     dds <- BiocGenerics::estimateSizeFactors(dds)
-    # dds <- estimateDispersions(dds) # impossible to determine now with only 1 sample and 2 conditions
-    
+    # dds <- estimateDispersions(dds)
+    # impossible to determine now with only 1 sample and 2 conditions
     # set dispersion by hand
     DESeq2::dispersions(dds) <- disp
     
     # run wald test
     dds <- DESeq2::nbinomWaldTest(dds)
-    res <- DESeq2::results(dds, contrast = c("condition", "altAllele", "refAllele"), 
-                   independentFiltering = independentFiltering)
+    res <- DESeq2::results(dds, contrast = c("condition", "altAllele",
+      "refAllele"),  independentFiltering = independentFiltering)
     return(list(dt = dt, res = res))
 }
 
@@ -1048,7 +1068,8 @@ get_allele_specific_deseq_results <- function(dds_res){
     # get needed info
     dt <- dds_res$dt
     # add pvalue and padj
-    dt[, c("pvalue","padj", "log2FC") := list(dds_res$res$pvalue, dds_res$res$padj, dds_res$res$log2FoldChange)]
+    dt[, c("pvalue","padj", "log2FC") := list(dds_res$res$pvalue,
+         dds_res$res$padj, dds_res$res$log2FoldChange)]
     # add ratio the alternative allele
     dt[, altRatio := altCount / (altCount + refCount)]
     return(dt)
@@ -1056,25 +1077,27 @@ get_allele_specific_deseq_results <- function(dds_res){
 
 #' Run deseq test for MAE
 #'
-#' @description Uses a negative binomial test to determine if a variant is mono-allelically expressed.
+#' @description Uses a negative binomial test to determine if a variant is
+#' mono-allelically expressed.
 #' @author Vicente Yepez, Christian Mertes
 #' @param data A data.frame containing allelic counts.
 #' @param minCoverage minimum total allelic count. Default is 10.
 #' @param disp Gene dispersion for the NB test. Default is 0.05.
-#' @param independentFiltering Parameter that affects the multiple testing. Default is FALSE.
-#' @return Mono-allelic results table containing original counts plus p-value, p-adjusted and freqALT columns.
+#' @param independentFiltering Parameter that affects the multiple testing.
+#' Default is FALSE.
+#' @return Mono-allelic results table containing original counts plus p-value,
+#' p-adjusted and freqALT columns.
 #' @export
 #' @examples
-#' file <- system.file("extData", "allelic_counts_HG00187.csv", package = "ExpHunterSuite", mustWork = TRUE)
+#' file <- system.file("extData", "allelic_counts_HG00187.csv",
+#' package = "ExpHunterSuite", mustWork = TRUE)
 #' maeCounts <- data.table::fread(file)
 #' DESeq4MAE(maeCounts)
-DESeq4MAE <- function(data, minCoverage = 10, disp = .05, independentFiltering = FALSE){
-    
-    pt <- deseq_for_allele_specific_expression(data, minCoverage=minCoverage, disp=disp, 
-                                                   independentFiltering=independentFiltering)
-    
+DESeq4MAE <- function(data, minCoverage = 10, disp = .05,
+                      independentFiltering = FALSE){
+    pt <- deseq_for_allele_specific_expression(data, minCoverage=minCoverage,
+                        disp=disp, independentFiltering=independentFiltering)
     res <- get_allele_specific_deseq_results(pt)
-    
     return(res)
 }
 
