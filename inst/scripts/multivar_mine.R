@@ -121,6 +121,6 @@ if (!is.null(pca_res$mfa)) {
 
 
 names(pca_res$act_groups) <- ifelse(act_des["type",] == "n", "mca","pca")
-render_multivar_report(multivar_res = pca_res, output_files = opt$output_files, 
+render_multivar_report(multivar_res = pca_res, output_files = opt$output_files, opt = opt,
                     template_folder = template_folder,  string_factors = string_factors, numeric_factors = numeric_factors)
 

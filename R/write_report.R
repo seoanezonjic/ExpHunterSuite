@@ -266,7 +266,7 @@ write_global_cormit <- function(cormit_res,
         g_ranges <- read.table(opt$genomic_ranges, header = FALSE)
         g_ranges <- g_ranges[,c(1,2,3,4,6)]
         colnames(g_ranges) <- c("chromosome", "start","end","miRNA","strand")
-        annotated <- annotate_genomic_ranges(g_ranges, genome_ref)
+        annotated <- annotate_genomic_ranges(g_ranges, opt$genome_ref)
         annotated <- annotated[!grepl("MIR",annotated$annot.symbol),]
         miRNA_annot <- aggregate(annot.symbol ~ miRNA, annotated, unique)
         miRNA_annot$annot.symbol <- unlist(lapply(miRNA_annot$annot.symbol,
@@ -807,7 +807,8 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
 }
 
 
-render_multivar_report <- function(multivar_res, output_files,template_folder, string_factors = NULL, numeric_factors = NULL) {
+render_multivar_report <- function(multivar_res, output_files, template_folder, string_factors = NULL, numeric_factors = NULL,
+                                   opt) {
   source_folder <- find.package("htmlreportR")
   if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' )
     source_folder <- file.path(source_folder, "inst")
