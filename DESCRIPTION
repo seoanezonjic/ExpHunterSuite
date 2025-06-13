@@ -67,7 +67,6 @@ Suggests:
     testthat (>= 3.0.0),
 VignetteBuilder: knitr
 Imports: 
-    ggupset (>= 0.4.0),
     EnhancedVolcano (>= 1.22.0),
     GGally (>= 2.2.1),
     factoextra (>= 1.0.7),
