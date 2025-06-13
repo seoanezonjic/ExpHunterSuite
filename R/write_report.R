@@ -92,7 +92,7 @@ write_expression_report <- function(exp_results,
 #' # Can only be run after running main_degenes_Hunter 
 #' # eg as part of the degenes_Hunter.R script
 #' \dontrun{
-#' write_expression_data(final_results, opt$output_files)
+#'      write_expression_data(final_results, opt$output_files)
 #' }
 write_expression_data <- function(final_results, output_files){
 
@@ -189,8 +189,10 @@ merge_dim_table_metrics <- function(merged_dim_table){
 #' @importFrom rmarkdown render
 #' @examples
 #' # Load DE analysis results
-#' degh_output <- list() # data(degh_output)
-#' write_global_cormit(degh_output)
+#' \dontrun{
+#'      degh_output <- list() # data(degh_output)
+#'      write_global_cormit(degh_output)
+#' }
 
 write_global_cormit <- function(cormit_res, 
     output_files=getwd(),
@@ -422,6 +424,10 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
 #' @importFrom enrichplot emapplot
 #' @importFrom enrichplot dotplot
 #' @importFrom ggplot2 ggsave
+#' @examples
+#' \dontrun{
+#'    write_clusters_to_enrichment(enrichments_ORA = ORA_results)
+#'}
 #' @export
 write_clusters_to_enrichment <- function(output_path="results",
       output_file="results", mode="PR", enrichments_ORA=NULL, task_size = 1,
@@ -514,7 +520,7 @@ write_clusters_to_enrichment <- function(output_path="results",
 #' @importFrom rmarkdown render
 #' @export
 #' @examples
-#' /dontrun{
+#' \dontrun{
 #' # Load func and DE results
 #' data(degh_output)
 #' func_results <- list() 
