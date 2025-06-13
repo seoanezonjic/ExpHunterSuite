@@ -1183,6 +1183,7 @@ find_doublets <- function(seu) {
 #'
 #' @param seu Input seurat object.
 #' @inheritParams scDblFinder::scDblFinder
+#' @importFrom scDblFinder scDblFinder
 #' @returns A list. Item "seu" contains seurat object with tagged doublets
 #' in metadata slot. Item "barcodes" contains a vector of cell barcodes
 #' corresponding to barcodes.
@@ -1635,6 +1636,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
 #' `load_SingleR_ref` reads a SingleR reference from specified path. It can
 #' handle multiple versions of the same reference, and also filter it by
 #' metadata.
+#' @importFrom HDF5Array loadHDF5SummarizedExperiment
 #' @param path Path to reference to load.
 #' @param version Version of reference to load.
 #' @param filter Filter to apply to reference.
