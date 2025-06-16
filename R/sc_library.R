@@ -1149,34 +1149,6 @@ extract_metadata <- function(seu){
   return(seu)
 }
 
-#' find_doublets
-#'
-#' `find_doublets` is a wrapper for the recommended steps for doublet
-#' calculation in package DoubletFinder
-#'
-#' @param seu Seurat object
-#' @returns A list. Item "seu" contains seurat object with tagged doublets
-#' in metadata slot. Item "barcodes" contains a vector of cell barcodes
-#' corresponding to barcodes.
-#' @examples
-#'  \dontrun{
-#'    find_doublets(seu = pbmc_tiny)
-#'  }
-#' @export
-
-find_doublets <- function(seu) {
-  nExp <- round(ncol(seu) * 0.04)  # Expect 4% doublets BUT WHY???
-  seu <- DoubletFinder::doubletFinder(seu, pN = 0.25, pK = 0.09, nExp = nExp,
-                                      PCs = 1:10)
-  doublet_col <- grep('DF.classifications*', colnames(seu@meta.data))
-  colnames(seu@meta.data)[doublet_col] <- "doublet_class"
-  doublets <- seu@meta.data[seu@meta.data[, doublet_col] == "Doublet", ]
-  doublet_barcodes <- rownames(doublets)
-  seu <- subset(seu, cells = doublet_barcodes, invert = TRUE)
-  res <- list(seu = seu, barcodes = doublet_barcodes)
-  return(res)
-}
-
 # run_scDblFinder
 #'
 #' `run_scDblFinder` is a wrapper for the scDblFinder pipeline
@@ -1457,9 +1429,6 @@ process_doublets <- function(seu, name = NULL, doublet_path = getwd(),
                              method = "scDblFinder", assay = "counts",
                              nfeatures = 1352, includePCs = 19,
                              BPPARAM = NULL){
-  if(method == "DoubletFinder") {
-    doublets <- find_doublets(seu)
-  }
   if(method == "scDblFinder") {
     doublets <- run_scDblFinder(seu = seu, assay = assay, nfeatures = nfeatures,
                                 includePCs = includePCs, BPPARAM = BPPARAM)
