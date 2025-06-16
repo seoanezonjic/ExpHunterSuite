@@ -811,12 +811,7 @@ score_data <- function(gr,
 # Helper method for installilng the named MafDb package
 .get_mafdb <- function(pkg_name){
   if(!requireNamespace(pkg_name, quietly=TRUE)){
-    warning(paste0("The given MafDb is not installed: '", pkg_name, "'. We ",
-            "will do it now!"))
-    if(!requireNamespace("BiocManager", quietly=TRUE)){
-      utils::install.packages("BiocManager")
-    }
-    BiocManager::install(pkg_name, ask=FALSE)
+    stop(paste0("The given MafDb is not installed: '", pkg_name))
   }
   
   mafdb <- utils::getFromNamespace(pkg_name, pkg_name)
