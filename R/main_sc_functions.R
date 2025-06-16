@@ -122,7 +122,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   annotate <- TRUE
   qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                doublet_list = doublet_list)
-  if(length(unique(seu$sample)) == 1) {
+  if(length(unique(qc$sample)) == 1) {
     qc <- process_doublets(seu = qc, name = name, doublet_path = doublet_path,
                            assay = "RNA", nfeatures = hvgs, BPPARAM = BPPARAM,
                            includePCs = seq(1, ndims))
