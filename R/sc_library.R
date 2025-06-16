@@ -1616,9 +1616,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
     params$ref_de_method <- NULL
     params$ref_n <- NULL
   }
-  if(file.exists(params$ref_filter)) {
-    params$ref_filter <- readLines(params$ref_filter)
-  } else {
+  if(params$ref_filter == "") {
     params$ref_filter <- NULL
   }
   if(file.exists(params$filter_dataset)) {
@@ -1669,8 +1667,8 @@ load_SingleR_ref <- function(path, version = "", filter = "") {
     }
     filter <- vector(mode = "list", length = length(expressions))
     for(i in seq(expressions)) {
-      filter[[i]] <- parse_filter(object = "as.data.frame(col_data)",
-                                  expression = expressions[i]) 
+      filter[[i]] <- eval(parse_filter(object = "as.data.frame(col_data)",
+                                  expression = expressions[i]))
     }
     filter <- Reduce(operator, filter)
     message(paste0("Selected ", sum(filter)," cells for reference subsetting."))

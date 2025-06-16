@@ -296,11 +296,9 @@ name_all_columns <- function(data_frame) {
 #' @param expression Expression to parse as filter.
 #' @return filtered object
 #' @examples
-#' \dontrun{
-#'      data_frame <- head(mtcars)
-#'      filter <- parse_filter(object = "data_frame", expression = "mpg > 20")
-#'      data_frame[filter, ]
-#'   }
+#' data_frame <- head(mtcars)
+#' filter <- eval(parse_filter(object = "data_frame", expression = "mpg > 20"))
+#' data_frame[filter, ]
 #' @export
 
 parse_filter <- function(object, expression) {
@@ -310,5 +308,5 @@ parse_filter <- function(object, expression) {
   value <- split_expression[3]
   subset_expr <- parse(text = paste0(object, '["', column, '"] ',
                        operator, ' ', value))
-  return(eval(subset_expr))
+  return(subset_expr)
 }
