@@ -235,14 +235,14 @@ write_pca_enrichments <- function(pca_enrichments, output_path) {
 #' @examples
 #' # Use a @functional_hunter or @multienricher result object to 
 #' # create real files
-#' write_enrich_files(list(),"./")
+#' write_enrich_files(list(), "./inst/enrich_example")
 write_enrich_files <- function(func_results, output_path=getwd()) {
     if(!dir.exists(output_path)) dir.create(output_path)
     final_params <- func_results$final_main_params[! names(func_results$final_main_params) %in%
         c("hunter_results", "organisms_table", "annot_table", "custom")]
     write_table_ehs(data.frame(A = names(final_params), 
                                B = sapply(final_params, paste, collapse=" ")), 
-                       file = file.path(output_path,"functional_opt.txt"))
+                       file = file.path(output_path, "functional_opt.txt"))
     write_pca_enrichments(func_results$PCA_enrichments, output_path)
     if("ORA" %in% names(func_results)) {
         write_enrich_tables(func_results$ORA, "ORA", output_path)
