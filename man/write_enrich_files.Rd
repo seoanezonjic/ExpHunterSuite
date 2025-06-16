@@ -20,6 +20,7 @@ Write enrichment files related to functional_hunter results list
 \examples{
 # Use a @functional_hunter or @multienricher result object to 
 # create real files
-write_enrich_files(list(),"./")
+write_enrich_files(list(), "./inst/enrich_example")
+unlink("./inst/enrich_example/functional_opt.txt")
 }
 \keyword{export}
