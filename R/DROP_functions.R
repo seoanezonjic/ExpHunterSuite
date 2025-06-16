@@ -1034,7 +1034,7 @@ deseq_for_allele_specific_expression <- function(data, minCoverage=10,
         dt <- data.table::as.data.table(data)
         dt[, c('lowMAPQDepth', 'lowBaseQDepth', 'rawDepth', 'otherBases',
                'improperPairs') := NULL]
-    } else if(methods::is(data, "GRanges"){
+    } else if(methods::is(data, "GRanges")){
         dt <- allelic_granges_to_dt(data)
     }
     dt <- dt[totalCount >= minCoverage]
