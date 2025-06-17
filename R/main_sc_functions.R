@@ -353,11 +353,12 @@ write_annot_output <- function(final_results = stop("Missing results object"),
 #' @keywords preprocessing, write, report
 #' 
 #' @returns invisible(NULL)
+#' @export
 
 write_sc_report <- function(final_results, analysis = "Single-Cell",
                             output = getwd(), out_suffix = NULL,
-                            template_folder, source_folder = NULL, opt, params,
-                            template = NULL, use_canvas = TRUE){
+                            template_folder, source_folder = NULL, opt,
+                            params = NULL, template = NULL, use_canvas = TRUE){
   if(is.null(template_folder)) {
     stop("No template folder was provided.")
   }
@@ -386,6 +387,7 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
                  DEG_list = final_results$DEG_list, query = opt$target_genes,
                  p_val_cutoff = opt$DEG_p_val_cutoff, opt = opt,
                  min_avg_log2FC = opt$min_avg_log2FC,
+                 tables = final_results$tables,
                  marker_meta = final_results$marker_meta,
                  sample_qc_pct = final_results$sample_qc_pct,
                  clusters_pct = final_results$clusters_pct,
