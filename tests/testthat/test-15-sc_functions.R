@@ -92,6 +92,21 @@ test_that("match_cell_types, cluster with no significant markers", {
   expect_equal(output_df, expected_df)
 })
 
+test_that("match_cell_types where one cluster has no markers", {
+  test_markers_df <- markers_df[-3, ]
+  genes <- toupper(letters[1:3])
+  cell_annotation <- data.frame(markers = toupper(letters[1:3]),
+                                type = c("type1", "type2", "type3"))
+  expected_df <- data.frame(samples = c(1, 2, 4), seurat_clusters = c(1, 2, 4),
+                            gene = c("A", "B", "D"), p_val_adj = 1e-05,
+                            avg_log2FC = 1, cell_type = c("1. type1",
+                            "2. type2", "4. Unknown"))
+  output_df <- match_cell_types(markers = test_markers_df,
+                                cell_annotation = cell_annotation)$stats_table
+  rownames(output_df) <- NULL
+  expect_equal(output_df, expected_df)
+})
+
 test_that("collapse_markers base use case", {
   markers_1 <- data.frame(a_avg_log2FC = rep(1, 3), b_avg_log2FC = rep (-1, 3))
   markers_2 <- data.frame(a_avg_log2FC = rep(-2, 3), b_avg_log2FC = rep (2, 3))
