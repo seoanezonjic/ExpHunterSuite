@@ -1,0 +1,24 @@
+
+<!--begin.rcode setup
+	opt <- plotter$hash_vars$opt
+	saveRDS(plotter, "plotter.rds")
+end.rcode-->
+
+<!--begin.rcode intro
+cat(plotter$create_title(paste0("<b>Showcasing reference ", opt$reference, ", version ", opt$version, "</b>"),
+						 "ref_and_version", hlevel = 1, indexable = FALSE, clickable = FALSE))
+end.rcode-->
+
+<!--begin.rcode tables
+for(table in names(plotter$hash_vars$tables)) {
+	plotter$hash_vars$table <- plotter$hash_vars$tables[[table]]
+	title_id <- paste0("metadata_", table)
+	clickable_id <- paste0("clickable_", table)
+	cat(plotter$create_title(paste0("<b>Metadata field \"", table, "\"</b>"), clickable_text = NULL,
+						 id = title_id, t_id = clickable_id, hlevel = 2, indexable = FALSE, clickable = TRUE))
+	code <- plotter$prettify_div(plotter$table(list(id = "table", header = NULL, row_names = NULL,
+						table_rownames = FALSE, styled = "dt", text = "dynamic")), preset = "magic")
+	cat(plotter$create_collapsable_container(id = clickable_id, html_code = code))
+}
+end.rcode-->
+
