@@ -31,21 +31,22 @@ RoxygenNote: 7.3.2
 biocViews: GeneExpressionWorkflow
 URL: https://github.com/seoanezonjic/ExpHunterSuite
 BugReports: https://github.com/seoanezonjic/ExpHunterSuite/issues
-Suggests: 
-    multiMiR,
-    biomaRt,
-    yaml,
-    optparse,
-    naivebayes,
-    reshape2,
-    org.Hs.eg.db,
-    org.Mm.eg.db,
-    testthat (>= 3.0.0),
+VignetteBuilder: knitr
+Suggests:
+    multiMiR (>= 1.26.0),
+    biomaRt (>= 2.60.1),
+    yaml (>= 2.3.10),
+    optparse (>= 1.7.5),
+    naivebayes (>= 1.0.0),
+    reshape2 (>= 1.4.4),
+    org.Hs.eg.db (>= 3.19.1),
+    org.Mm.eg.db (>= 3.19.1),
+    testthat (>= 3.2.3),
     factoextra (>= 1.0.7),
     EnhancedVolcano (>= 1.22.0),
     GGally (>= 2.2.1),
-    PerformanceAnalytics (>= 2.0.8)
-VignetteBuilder: knitr
+    PerformanceAnalytics (>= 2.0.8),
+    scRNAseq (>= 2.18.0)
 Imports:
     GenomicScores (>= 2.16.0),
     DoubletFinder (>= 2.0.4),
