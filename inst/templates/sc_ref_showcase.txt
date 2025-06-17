@@ -1,7 +1,6 @@
 
 <!--begin.rcode setup
 	opt <- plotter$hash_vars$opt
-	saveRDS(plotter, "plotter.rds")
 end.rcode-->
 
 <!--begin.rcode intro
