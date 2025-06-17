@@ -13,7 +13,7 @@ write_sc_report(
   template_folder,
   source_folder = NULL,
   opt,
-  params,
+  params = NULL,
   template = NULL,
   use_canvas = TRUE
 )
