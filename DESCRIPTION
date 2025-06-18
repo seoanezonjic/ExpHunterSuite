@@ -49,7 +49,6 @@ Suggests:
     scRNAseq (>= 2.18.0)
 Imports:
     GenomicScores (>= 2.16.0),
-    DoubletFinder (>= 2.0.4),
     DropletUtils (>= 1.24.0),
     ReactomePA (>= 1.48.0),
     limma (>= 3.60.4),
