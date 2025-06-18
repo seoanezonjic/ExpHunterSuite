@@ -776,11 +776,12 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
 #'            sample_col = "orig.ident", by = "seurat_clusters", sigfig = 2)
 #' @export
 
-get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts", by,
+get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
                        sigfig = 2, sample_col = "sample") {
   top_genes <- get_top_genes(seu = seu, top = top, assay = assay, layer = layer,
                              sample_col = sample_col)
-  res <- get_query_pct(seu = seu, query = top_genes, by = by, sigfig = sigfig)
+  res <- get_query_pct(seu = seu, query = top_genes, by = sample_col,
+                       sigfig = sigfig)
   return(res)
 }
 
@@ -1538,16 +1539,17 @@ process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
 #' @returns A list containing expression quality metrics and cluster
 #' distribution metrics.'
 #' @examples
-#'  \dontrun{
-#'    get_expression_metrics(seu = seu, sigfig = 2)
-#'  }
-#'@export
+#' data(pbmc_tiny)
+#' pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
+#' get_expression_metrics(seu = pbmc_tiny, sigfig = 2, sample_col = "groups")
+#' @export
 
-get_expression_metrics <- function(seu, sigfig) {
+get_expression_metrics <- function(seu, sigfig, sample_col = "sample") {
   message("Extracting expression quality metrics")
-  sample_qc_pct <- get_qc_pct(seu = seu, by = "sample")
+  sample_qc_pct <- get_qc_pct(seu = seu, sample_col = sample_col)
   message("Extracting clusters distribution. This might take a while.")
-  clusters_pct <- get_clusters_distribution(seu = seu, sigfig = sigfig)
+  clusters_pct <- get_clusters_distribution(seu = seu, sigfig = sigfig,
+                                            sample_col = sample_col)
   return(list(sample_qc_pct = sample_qc_pct, clusters_pct = clusters_pct))
 }
 
@@ -1601,7 +1603,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   }
   if(params$integrate) out_suffix <- "annotation_report.html"
   if(params$target_genes != "") {
-    params$target_genes <- strsplit(params$target_genes, split = ";")[[1]
+    params$target_genes <- strsplit(params$target_genes, split = ";")[[1]]
   }
   if(params$subset_by != "") {
     params$subset_by <- tolower(unlist(strsplit(params$subset_by, ";")))
@@ -1628,9 +1630,8 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   } else {
     params$filter_dataset <- NULL
   }
-  updated_params <- list(opt = params, doublet_list = doublet_list,
-                      out_suffix = out_suffix)
-  return(updated_params)
+  return(list(opt = params, doublet_list = doublet_list,
+              out_suffix = out_suffix))
 }
 
 #' load_SingleR_ref
