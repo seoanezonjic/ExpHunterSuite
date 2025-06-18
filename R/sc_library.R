@@ -225,31 +225,7 @@ collapse_markers <- function(markers_list) {
   return(merged_df)
 }
 
-#' match_cell_types
-#'
-#' `match_cell_types` takes a cluster-marker gene data frame and a cell type
-#' marker file. It then looks for matches between the two and assigns a cell
-#' type to each cluster of the data frame.
-#'
-#' @param markers_df Data frame of markers, clusters and p-values
-#' @param cell_annotation Table of cell types and their associated markers
-#' @param p_adj_cutoff Minimum adjusted p-value of markers to consider.
-#' @returns A markers data frame with a new column for cell type assigned to
-#' cluster.
-#' @examples
-#'  \dontrun{
-#'    match_cell_types(markers_df = markers_df, p_adj_cutoff = 1e-5,
-#'                     cell_annotation = markers_celltypes_df)
-#'  }
-#' @export
-
-match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
-  canon_types <- unique(cell_annotation$type)
-  if(any(markers_df$seurat_clusters == 0)) {
-    markers_df$seurat_clusters <- markers_df$seurat_clusters + 1
-  }
-  clusters <- unique(markers_df$seurat_clusters)
-  subset_list <- vector(mode = "list", length = length(clusters))
+.process_pcols <- function(markers_df) {
   pcols <- grep("p_val_adj", colnames(markers_df))
   if(any(is.na(markers_df[, pcols]))) {
     warning("WARNING: NAs detected in marker p-values. Coercing to 1.",
@@ -271,6 +247,10 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   } else {
     colnames(markers_df)[pcols] <- "p_val_adj"
   }
+  return(markers_df)
+}
+
+.process_fcols <- function(markers_df) {
   fcols <- grep("log2FC", colnames(markers_df))
   if(any(is.na(markers_df[, fcols]))) {
     warning("WARNING: NAs detected in marker log2FC. Coercing to 0.",
@@ -283,40 +263,69 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   } else {
     colnames(markers_df)[fcols] <- "avg_log2FC"
   }
-  for(cluster in unique(markers_df$seurat_clusters)) {
-    subset <- markers_df[markers_df$seurat_clusters == cluster &
-                         markers_df$p_val_adj <= p_adj_cutoff, ]
-    if(nrow(subset) < 1) {
-      warning(paste("WARNING: cluster", cluster, "contains no significant",
-                     "markers", sep = " "), immediate. = TRUE)
-      subset <- markers_df[markers_df$seurat_clusters == cluster, ][1,]
-      subset$gene <- "None"
-      subset$avg_log2FC <- 1
-      subset$p_val_adj <- 1
-      subset$seurat_clusters <- cluster
-      subset$cell_type <- paste0(cluster, ". Unknown")
-    } else {
-      subset <- subset[order(subset$p_val_adj), ]
-      max_log2FC <- max(subset$avg_log2FC)
-      scores <- vector(mode = "numeric", length = length(canon_types))
-      names(scores) <- canon_types
-      for(type in canon_types) {
-        type_markers <- cell_annotation[cell_annotation$type == type, ]$marker
-        found_markers <- which(subset$gene %in% type_markers)
-        scores[[type]] <- sum(subset$avg_log2FC[found_markers] / max_log2FC)
-      }
-      if(max(unlist(scores)) == 0 || is.na(max(unlist(scores)))) {
-        cluster_match <- "Unknown"
-      } else {
-        cluster_match <- names(scores[which(scores == max(scores))])
-        cluster_match <- paste0(cluster_match, collapse = " / ")
-      }
-      subset$cell_type <- paste0(subset$seurat_clusters, ". ", cluster_match)
-    }
-    subset_list[[as.numeric(cluster)]] <- subset
+  return(markers_df)
+}
+
+.prep_markers_for_annotation <- function(markers_df) {
+  markers_df <- .process_pcols(markers_df)
+  markers_df <- .process_fcols(markers_df)
+  return(markers_df)
+}
+
+.annotate_empty_cluster <- function(markers_df, cluster) {
+  warning(paste("WARNING: cluster", cluster, "contains no significant",
+                       "markers", sep = " "), immediate. = TRUE)
+  subset <- markers_df[markers_df$seurat_clusters == cluster, ][1,]
+  subset$gene <- "None"
+  subset$avg_log2FC <- 1
+  subset$p_val_adj <- 1
+  subset$seurat_clusters <- cluster
+  subset$cell_type <- paste0(cluster, ". Unknown")
+  return(subset)
+}
+
+.annotate_regular_cluster <- function(subset, canon_types, cell_annotation){
+  subset <- subset[order(subset$p_val_adj), ]
+  max_log2FC <- max(subset$avg_log2FC)
+  scores <- vector(mode = "numeric", length = length(canon_types))
+  names(scores) <- canon_types
+  for(type in canon_types) {
+    type_markers <- cell_annotation[cell_annotation$type == type, ]$marker
+    found_markers <- which(subset$gene %in% type_markers)
+    scores[[type]] <- sum(subset$avg_log2FC[found_markers] / max_log2FC)
   }
+  if(max(unlist(scores)) == 0 || is.na(max(unlist(scores)))) {
+    cluster_match <- "Unknown"
+  } else {
+    cluster_match <- names(scores[which(scores == max(scores))])
+    cluster_match <- paste0(cluster_match, collapse = " / ")
+  }
+  subset$cell_type <- paste0(subset$seurat_clusters, ". ", cluster_match)
+  return(subset)
+}
+
+.add_cell_types <- function(markers_df, canon_types, p_adj_cutoff,
+                            cell_annotation) {
+  canon_types <- unique(cell_annotation$type)
+  clusters <- unique(markers_df$seurat_clusters)
+  subset_list <- vector(mode = "list", length = length(clusters))
+  for(cluster in unique(markers_df$seurat_clusters)) {
+      subset <- markers_df[markers_df$seurat_clusters == cluster &
+                           markers_df$p_val_adj <= p_adj_cutoff, ]
+      if(nrow(subset) < 1) {
+        subset <- .annotate_empty_cluster(markers_df = markers_df,
+                                        cluster = cluster)
+      } else {
+        subset <- .annotate_regular_cluster(cell_annotation = cell_annotation,
+                                     subset = subset, canon_types = canon_types)
+      }
+      subset_list[[as.numeric(cluster)]] <- subset
+    }
   stats_table <- do.call(rbind, subset_list)
-  stats_table <- stats_table[order(stats_table$seurat_clusters), ]
+  return(stats_table[order(stats_table$seurat_clusters), ])
+}
+
+.format_anno_res <- function(stats_table) {
   columns <- colnames(stats_table)
   anno_types <- strsplit(stats_table$cell_type, "\\. ")
   anno_types <- sapply(anno_types, `[`, 2)
@@ -337,9 +346,37 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   }
   sum_columns <- c("gene", "p_val_adj", "avg_log2FC", "seurat_clusters",
                    "cell_type")
-  res <- list(stats_table = stats_table,
-              cell_types = unique(stats_table$cell_type),
-              summary = stats_table[, sum_columns])
+  return(list(stats_table = stats_table, summary = stats_table[, sum_columns],
+              cell_types = unique(stats_table$cell_type)))
+}
+
+#' match_cell_types
+#'
+#' `match_cell_types` takes a cluster-marker gene data frame and a cell type
+#' marker file. It then looks for matches between the two and assigns a cell
+#' type to each cluster of the data frame.
+#'
+#' @param markers_df Data frame of markers, clusters and p-values
+#' @param cell_annotation Table of cell types and their associated markers
+#' @param p_adj_cutoff Minimum adjusted p-value of markers to consider.
+#' @returns A markers data frame with a new column for cell type assigned to
+#' cluster.
+#' @examples
+#'  \dontrun{
+#'    match_cell_types(markers_df = markers_df, p_adj_cutoff = 1e-5,
+#'                     cell_annotation = markers_celltypes_df)
+#'  }
+#' @export
+
+match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
+  if(any(markers_df$seurat_clusters == 0)) {
+    markers_df$seurat_clusters <- markers_df$seurat_clusters + 1
+  }
+  markers_df <- .prep_markers_for_annotation(markers_df = markers_df)
+  stats_table <- .add_cell_types(cell_annotation = cell_annotation,
+                            markers_df = markers_df, canon_types = canon_types,
+                            p_adj_cutoff = p_adj_cutoff)
+  res <- .format_anno_res(stats_table = stats_table)
   return(res)
 }
 
