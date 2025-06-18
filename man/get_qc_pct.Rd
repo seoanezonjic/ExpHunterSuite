@@ -9,7 +9,6 @@ get_qc_pct(
   top = 20,
   assay = "RNA",
   layer = "counts",
-  by,
   sigfig = 2,
   sample_col = "sample"
 )
@@ -22,8 +21,6 @@ get_qc_pct(
 \item{assay}{Seurat object assay to break down.}
 
 \item{layer}{Layer of seurat object assay to break down.}
-
-\item{by}{Factor (metadata column name) by which query will be broken down.}
 
 \item{sigfig}{Significant figure cutoff.}
 

@@ -4,12 +4,15 @@
 \alias{get_expression_metrics}
 \title{get_expression_metrics}
 \usage{
-get_expression_metrics(seu, sigfig)
+get_expression_metrics(seu, sigfig, sample_col = "sample")
 }
 \arguments{
 \item{seu}{Seurat object to analyze.}
 
 \item{sigfig}{Significant figure cutoff.}
+
+\item{sample_col}{Seurat object metadata column containing sample
+information. Default "sample", as per our workflow.}
 }
 \value{
 A list containing expression quality metrics and cluster
@@ -20,7 +23,7 @@ distribution metrics.'
 step of our pipeline.
 }
 \examples{
- \dontrun{
-   get_expression_metrics(seu = seu, sigfig = 2)
- }
+data(pbmc_tiny)
+pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
+get_expression_metrics(seu = pbmc_tiny, sigfig = 2, sample_col = "groups")
 }
