@@ -831,7 +831,8 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
       meta <- seu$seurat_clusters
     }
     DEG_list$global <- NULL
-    empty_DEGs <- unlist(lapply(DEG_list, function(x) return(isFALSE(unlist(x)))))
+    empty_DEGs <- unlist(lapply(DEG_list,
+                                function(x) return(isFALSE(unlist(x))))) 
     DEG_list[empty_DEGs] <- NULL
     if(length(DEG_list) < 1) {
       warning("No per-identity DEG analysis present in DEG list.")
@@ -855,15 +856,15 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
         return_output <- FALSE
       }
       if(return_output) {
-        matrix_list <- .get_matrices(seu = seu, meta = meta, DEG_list = DEG_list,
-                        genes = gene_list, min_avg_log2FC = min_avg_log2FC,
+        matrix_list <- .get_matrices(seu = seu, meta = meta, genes = gene_list,
+                        DEG_list = DEG_list, min_avg_log2FC = min_avg_log2FC,
                         p_val_cutoff = p_val_cutoff, query = query)
         DEG_df <- matrix_list$DEG_df
         if(any(!query %in% colnames(DEG_df))) {
           warning(paste0("Target gene(s) \"",
                   paste(query[!query %in% colnames(DEG_df)],
-                  collapse = "\", \""), "\" are not differentially expressed in ",
-                  "dataset."))
+                  collapse = "\", \""), "\" are not differentially expressed ",
+                  "in dataset."))
         }
       }
     }
@@ -972,7 +973,8 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
 .process_matrix_list <- function(matrix_list, processing_function = NULL,
                                  min_counts = 1) {
   if(!is.null(processing_function)) {
-    matrix_list <- lapply(matrix_list, processing_function, min_counts = min_counts)
+    matrix_list <- lapply(matrix_list, processing_function,
+                          min_counts = min_counts)
   }
   res <- lapply(matrix_list, Matrix::rowSums)
   res <- do.call(rbind, res)
@@ -1519,8 +1521,8 @@ process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
   }
   if("sketch" %in% names(seu@assays)) {
     Seurat::DefaultAssay(seu) <- "sketch"
-    seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs,
-                   verbose = verbose, selection.method = "vst", assay = "sketch")
+    seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs, assay = "sketch",
+                   verbose = verbose, selection.method = "vst")
   } else {
     Seurat::DefaultAssay(seu) <- "RNA"
   }
@@ -1569,16 +1571,11 @@ get_expression_metrics <- function(seu, sigfig) {
 process_sc_params <- function(params = list(), mode = "annotation") {
   out_suffix <- "sample_annotation_report.html"
   if(mode != "annotation") {
-    params$cluster_annotation <- ""
-    params$cell_annotation <- ""
-    params$doublet_file <- ""
+    params$cluster_annotation <- params$cell_annotation <- ""
+    params$doublet_file <- params$samples_to_integrate <- params$subset_by <- ""
     params$integrate <- FALSE
-    params$samples_to_integrate <- ""
-    params$ref_de_method <- ""
-    params$ref_filter <- ""
-    params$filter_dataset <- ""
+    params$ref_de_method <- params$ref_filter <- params$filter_dataset <- ""
     params$exp_design <- ""
-    params$subset_by <- ""
   } else {
     params$target_genes <- ""
   }
@@ -1586,28 +1583,30 @@ process_sc_params <- function(params = list(), mode = "annotation") {
     params$extra_columns <- ""
   }
   message(paste0("Analyzing ", params$name))
-  exp_design <- NULL
-  doublet_list <- NULL
+  exp_design <- doublet_list <- NULL
   if(file.exists(params$exp_design)) {
     params$exp_design <- read.table(params$exp_design, sep = "\t",
                                     header = TRUE)
   }
   if(file.exists(params$cluster_annotation)) {
-    params$cluster_annotation <- read.table(params$cluster_annotation, sep = "\t",
-                                         header = TRUE)
+    params$cluster_annotation <- read.table(params$cluster_annotation,
+                                            sep = "\t", header = TRUE)
   }
   if(file.exists(params$cell_annotation)) {
     params$cell_annotation <- read.table(params$cell_annotation, sep = "\t",
-                                  header = TRUE)
+                                         header = TRUE)
   }
-  if(file.exists(params$doublet_file)) doublet_list <- read.table(params$doublet_file)
+  if(file.exists(params$doublet_file)) {
+    doublet_list <- read.table(params$doublet_file)
+  }
   if(params$integrate) out_suffix <- "annotation_report.html"
-  if(params$target_genes != "") params$target_genes <- strsplit(params$target_genes,
-                                                      split = ";")[[1]]
+  if(params$target_genes != "") {
+    params$target_genes <- strsplit(params$target_genes, split = ";")[[1]
+  }
   if(params$subset_by != "") {
     params$subset_by <- tolower(unlist(strsplit(params$subset_by, ";")))
-    message(paste0("Selected ", length(params$subset_by), " subset condition(s): ",
-      paste0(params$subset_by, collapse = ", ")))
+    message(paste0("Selected ", length(params$subset_by),
+      " subset condition(s): ", paste0(params$subset_by, collapse = ", ")))
   }
   if(params$extra_columns != "") {
     params$extra_columns <- tolower(unlist(strsplit(params$extra_columns, ";")))
@@ -1619,8 +1618,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
     params$exp_design <- params$exp_design[matches, ]
   }
   if(params$ref_de_method == "") {
-    params$ref_de_method <- NULL
-    params$ref_n <- NULL
+    params$ref_de_method <- params$ref_n <- NULL
   }
   if(params$ref_filter == "") {
     params$ref_filter <- NULL
