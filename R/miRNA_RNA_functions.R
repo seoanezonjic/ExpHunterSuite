@@ -631,7 +631,7 @@ get_miRNA_ct <- function(strat_data, db_group, crossval = FALSE, test_sample = 0
         strat_group_ct <- data.frame()
         seed <- 1234
         for (bt_it in seq(1, bootstrap)){
-                set.seed(seed + bt_it)
+                # set.seed(seed + bt_it) # Only required for paper figure
                 db_gs_trues <- which(db_gs)
                 db_gs_to_falsify <- sample(db_gs_trues, ceiling(test_sample*length(db_gs_trues)))
 

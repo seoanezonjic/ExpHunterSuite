@@ -914,9 +914,9 @@ plotMA4MAE <- function(data, title = NULL, padjCutoff = 0.05,
   if(!is.null(rare_column)){
     stopifnot(rare_column %in% colnames(data))
     data[, class := 'NS']
-    data[Significant == T & get(rare_column) == T,
+    data[Significant == TRUE & get(rare_column) == TRUE,
          class := 'Significant\n& Rare']
-    data[Significant == T & get(rare_column) == F,
+    data[Significant == TRUE & get(rare_column) == FALSE,
          class := 'Significant']
     g <- g + ggplot2::geom_point(ggplot2::aes(col = class), size = .9) +
       ggplot2::scale_color_manual(values = c('gray61', 'chocolate1',
@@ -979,9 +979,9 @@ plotAllelicCounts <- function(data, title = NULL, padjCutoff = 0.05,
   if(!is.null(rare_column)){
     stopifnot(rare_column %in% colnames(data))
     data[, class := 'NS']
-    data[Significant == T & get(rare_column) == T,
+    data[Significant == TRUE & get(rare_column) == TRUE,
          class := 'Significant\n& Rare']
-    data[Significant == T & get(rare_column) == F, class := 'Significant']
+    data[Significant == TRUE & get(rare_column) == FALSE, class := 'Significant']
     g <- g + ggplot2::geom_point(ggplot2::aes(col = class), size = .9) +
       ggplot2::scale_color_manual(values = c('gray61', 'chocolate1',
                                              'firebrick')) +
