@@ -235,8 +235,9 @@ write_pca_enrichments <- function(pca_enrichments, output_path) {
 #' @examples
 #' # Use a @functional_hunter or @multienricher result object to 
 #' # create real files
-#' write_enrich_files(list(), "./inst/enrich_example")
-#' unlink("./inst/enrich_example/functional_opt.txt")
+#' \dontrun{
+#'  write_enrich_files(list(), "./")
+#' }
 write_enrich_files <- function(func_results, output_path=getwd()) {
     if(!dir.exists(output_path)) dir.create(output_path)
     final_params <- func_results$final_main_params[! names(func_results$final_main_params) %in%
