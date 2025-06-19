@@ -194,7 +194,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     message(paste0("Annotation by clusters not active, skipping clustering."))
   }
   seu <- Seurat::RunUMAP(object = seu, dims = seq(ndims), reduction = reduction,
-                         return.model = T, verbose = verbose)
+                         return.model = TRUE, verbose = verbose)
   seu <- SeuratObject::JoinLayers(seu)
   if(annotate) {
     annot_start <- Sys.time()
