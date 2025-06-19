@@ -422,6 +422,31 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   return(sub_markers)
 }
 
+.get_global_DEGs <- function(seu, cond, conds, min.pct = 0.1, verbose = FALSE){
+  Seurat::Idents(seu) <- seu@meta.data[, tolower(cond)]
+  global_DEGs <- Seurat::FindMarkers(seu, ident.1 = conds[1],
+                     min.pct = min.pct, ident.2 = conds[2], verbose = verbose)
+  global_DEGs$gene <- rownames(global_DEGs)
+  nums <- sapply(global_DEGs, is.numeric)
+  global_DEGs[nums] <- lapply(global_DEGs[nums], signif, 2)
+  return(global_DEGs)
+}
+
+.extract_conditions <- function(metadata, cond, values) {
+  if(is.null(values)) {
+    conds <- unique(metadata[[cond]])
+  } else if (values == "all") {
+    conds <- unique(metadata[[cond]])
+  } else {
+    conds <- c(unlist(strsplit(values, ",")))
+  }
+  if(length(conds) != 2) {
+    stop(paste0("ERROR: get_sc_markers only works with condition with two ",
+                 "values. Provided condition has ", length(conds)))
+  }
+  return(conds)
+}
+
 #' get_sc_markers
 #'
 #' `get_sc_markers` performs differential expression analysis on OR selects
@@ -455,19 +480,9 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' @export
 
 get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
-                           verbose = FALSE, assay = "RNA", values = NULL,
-                           min.pct = 0.1) {
-  if(is.null(values)) {
-    conds <- unique(seu@meta.data[[cond]])
-  } else if (values == "all") {
-    conds <- unique(seu@meta.data[[cond]])
-  } else {
-    conds <- c(unlist(strsplit(values, ",")))
-  }
-  if(length(conds) != 2) {
-    stop(paste0("ERROR: get_sc_markers only works with condition with two ",
-                 "values. Provided condition has ", length(conds)))
-  }
+                verbose = FALSE, assay = "RNA", values = NULL, min.pct = 0.1) {
+  conds <- .extract_conditions(metadata = seu@meta.data, cond = cond,
+                               values = values)
   marker_meta <- list(high = paste0(cond, ": ", conds[1]),
                       low = paste0(cond, ": ", conds[2]))
   sub_markers <- .get_subset_markers(seu = seu, subset_by = subset_by,
@@ -475,13 +490,8 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
     assay = assay)
   if(DEG) {
     message("Calculating global DEGs")
-    Seurat::Idents(seu) <- seu@meta.data[, tolower(cond)]
-    global_markers <- Seurat::FindMarkers(seu, ident.1 = conds[1],
-                       min.pct = min.pct, ident.2 = conds[2], verbose = verbose)
-    global_markers$gene <- rownames(global_markers)
-    nums <- sapply(global_markers, is.numeric)
-    global_markers[nums] <- lapply(global_markers[nums], signif, 2)
-    sub_markers[["global"]] <- global_markers
+    sub_markers[["global"]] <- .get_global_DEGs(seu = seu, cond = cond,
+                           conds = conds, min.pct = min.pct, verbose = verbose)
   }
   if(all(c("cell_type", "seurat_clusters") %in% colnames(seu@meta.data))) {
     metadata <- unique(seu@meta.data[, c("seurat_clusters", "cell_type")])
