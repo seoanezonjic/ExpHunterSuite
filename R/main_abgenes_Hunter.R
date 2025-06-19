@@ -40,73 +40,73 @@
 #' @importFrom MatrixGenerics rowQuantiles
 #' @examples
 #'  \dontrun{
-#' 		main_abgenes_Hunter(sample_annotation = sample_annotation,
-#' 		 anno_database = anno_database, count_ranges = count_ranges,
+#'      main_abgenes_Hunter(sample_annotation = sample_annotation,
+#'       anno_database = anno_database, count_ranges = count_ranges,
 #'       gene_mapping_file = gene_mapping_file, count_files = count_files,
-#'	     dataset = dataset, cpu = cpu, fpkm_cutoff = fpkm_cutoff,
-#'		 implementation = implementation, p_adj_cutoff = p_adj_cutoff,
-#'		 max_dim_proportion = max_tested_dimension_proportion, top_N = top_N,
+#'       dataset = dataset, cpu = cpu, fpkm_cutoff = fpkm_cutoff,
+#'       implementation = implementation, p_adj_cutoff = p_adj_cutoff,
+#'       max_dim_proportion = max_tested_dimension_proportion, top_N = top_N,
 #'       z_score_cutoff = z_score_cutoff, hpo_file = hpo_file,
-#'		 stats_path = stats_path)
+#'       stats_path = stats_path)
 #'  }
 #' @export
 
 main_abgenes_Hunter <- function(sample_annotation = NULL, anno_database = NULL,
-								count_ranges = NULL, gene_mapping_file = NULL,
-								count_files = NULL, dataset = NULL, cpu = 1,
-								fpkm_cutoff = 1, implementation = "autoencoder",
-								max_dim_proportion = 3, p_adj_cutoff = 0.05,
-								z_score_cutoff = 0.2, hpo_file = NULL,
-								stats_path = NULL, top_N = 10) {
-  	sample_anno <- data.table::fread(sample_annotation,
-  									colClasses = c(RNA_ID = 'character',
-  												   DNA_ID = 'character'))
-  	has_external <- any(sample_anno$EXTERNAL == "external")
-  	txdb <- AnnotationDbi::loadDb(anno_database)
-  	counts <- merge_counts(cpu = cpu, sample_anno = sample_anno,
-  						   count_files = count_files,
-  						   count_ranges = count_ranges)
-	ods_unfitted <- filter_counts(counts = counts, txdb = txdb,
-								  fpkm_cutoff = fpkm_cutoff)
-	ods <- run_outrider(ods_unfitted = ods_unfitted,
-						implementation = implementation,
-						max_dim_proportion = max_dim_proportion)
-	outrider_results <- get_ods_results(ods = ods, p_adj_cutoff = p_adj_cutoff,
-										z_score_cutoff = z_score_cutoff,
-										gene_mapping_file = gene_mapping_file,
-										sample_anno = sample_anno)
-	bcv_dt <- get_bcv(ods)
-	merged_bam_stats <- merge_bam_stats(ods = ods, stats_path = stats_path)
-	formatted <- format_for_report(outrider_results$all,
-								   z_score_cutoff, p_adj_cutoff)
-	raw_sample_cors <- get_counts_correlation(ods, FALSE)
+                                count_ranges = NULL, gene_mapping_file = NULL,
+                                count_files = NULL, dataset = NULL, cpu = 1,
+                                fpkm_cutoff = 1, implementation = "autoencoder",
+                                max_dim_proportion = 3, p_adj_cutoff = 0.05,
+                                z_score_cutoff = 0.2, hpo_file = NULL,
+                                stats_path = NULL, top_N = 10) {
+    sample_anno <- data.table::fread(sample_annotation,
+                                    colClasses = c(RNA_ID = 'character',
+                                                   DNA_ID = 'character'))
+    has_external <- any(sample_anno$EXTERNAL == "external")
+    txdb <- AnnotationDbi::loadDb(anno_database)
+    counts <- merge_counts(cpu = cpu, sample_anno = sample_anno,
+                           count_files = count_files,
+                           count_ranges = count_ranges)
+    ods_unfitted <- filter_counts(counts = counts, txdb = txdb,
+                                  fpkm_cutoff = fpkm_cutoff)
+    ods <- run_outrider(ods_unfitted = ods_unfitted,
+                        implementation = implementation,
+                        max_dim_proportion = max_dim_proportion)
+    outrider_results <- get_ods_results(ods = ods, p_adj_cutoff = p_adj_cutoff,
+                                        z_score_cutoff = z_score_cutoff,
+                                        gene_mapping_file = gene_mapping_file,
+                                        sample_anno = sample_anno)
+    bcv_dt <- get_bcv(ods)
+    merged_bam_stats <- merge_bam_stats(ods = ods, stats_path = stats_path)
+    formatted <- format_for_report(outrider_results$all,
+                                   z_score_cutoff, p_adj_cutoff)
+    raw_sample_cors <- get_counts_correlation(ods, FALSE)
     norm_sample_cors <- get_counts_correlation(ods, TRUE)
     raw_gene_cors <- get_gene_sample_correlations(ods, FALSE)
     norm_gene_cors <- get_gene_sample_correlations(ods, TRUE)
     filter_df <- filter_matrix(cnts_mtx = merged_bam_stats$counts_matrix,
-    					 cnts_mtx_local = merged_bam_stats$local_counts_matrix,
-    					 has_external = has_external, ods = ods)
+                         cnts_mtx_local = merged_bam_stats$local_counts_matrix,
+                         has_external = has_external, ods = ods)
     expressed_genes <- get_expressed_genes(ods)
-	final_results <- list()
-	final_results$counts <- counts
-	final_results$ods_unfitted <- ods_unfitted
-	final_results$ods <- ods
-	final_results$outrider_res_all <- outrider_results$all
-	final_results$outrider_res_table <- outrider_results$table
-	final_results$coverage_df <- merged_bam_stats$coverage_df
-	final_results$formatted <- formatted
-	final_results$bcv_dt <- bcv_dt
-	final_results$raw_sample_cors <- raw_sample_cors
-	final_results$norm_sample_cors <- norm_sample_cors
-	final_results$raw_gene_cors <- raw_gene_cors
-	final_results$norm_gene_cors <- norm_gene_cors
-	final_results$filter_df <- filter_df
-	final_results$expressed_genes <- expressed_genes
-	return(final_results)
+    final_results <- list()
+    final_results$counts <- counts
+    final_results$ods_unfitted <- ods_unfitted
+    final_results$ods <- ods
+    final_results$outrider_res_all <- outrider_results$all
+    final_results$outrider_res_table <- outrider_results$table
+    final_results$coverage_df <- merged_bam_stats$coverage_df
+    final_results$formatted <- formatted
+    final_results$bcv_dt <- bcv_dt
+    final_results$raw_sample_cors <- raw_sample_cors
+    final_results$norm_sample_cors <- norm_sample_cors
+    final_results$raw_gene_cors <- raw_gene_cors
+    final_results$norm_gene_cors <- norm_gene_cors
+    final_results$filter_df <- filter_df
+    final_results$expressed_genes <- expressed_genes
+    return(final_results)
 }
 
 write_abgenes_results <- function(final_results, output_dir) {
-	return("WIP")
+    return("WIP")
 }
 
 #' write_abgenes_report
@@ -127,64 +127,64 @@ write_abgenes_results <- function(final_results, output_dir) {
 #' @returns None.
 #' @examples
 #'  \dontrun{
-#' 		main_abgenes_Hunter(sample_annotation = sample_annotation,
-#' 		 anno_database = anno_database, count_ranges = count_ranges,
+#'      main_abgenes_Hunter(sample_annotation = sample_annotation,
+#'       anno_database = anno_database, count_ranges = count_ranges,
 #'       gene_mapping_file = gene_mapping_file, count_files = count_files,
-#'	     dataset = dataset, cpu = cpu, fpkm_cutoff = fpkm_cutoff,
-#'		 implementation = implementation, p_adj_cutoff = p_adj_cutoff,
-#'		 max_dim_proportion = max_tested_dimension_proportion, top_N = top_N,
+#'       dataset = dataset, cpu = cpu, fpkm_cutoff = fpkm_cutoff,
+#'       implementation = implementation, p_adj_cutoff = p_adj_cutoff,
+#'       max_dim_proportion = max_tested_dimension_proportion, top_N = top_N,
 #'       z_score_cutoff = z_score_cutoff, hpo_file = hpo_file,
-#'		 stats_path = stats_path)
+#'       stats_path = stats_path)
 #'  }
 #' @export
 
 
 write_abgenes_report <- function(final_results, output_dir = getwd(),
-							 template_folder = NULL, source_folder = NULL,
-							 p_adj_cutoff = 0.05, z_score_cutoff = 3,
-							 top_N = 10){
-	if(is.null(template_folder)) {
-		stop("No template folder was provided.")
-	}
-	if(is.null(source_folder)) {
-		source_folder <- find.package("htmlreportR")
-	}
-	if(!file.exists(source_folder)) {
-		stop(paste0("Source folder not found. Was ", source_folder))
-	}
-	if(any(is.null(final_results))) {
-		stop("ERROR: final_results object contains NULL fields. Analysis
-			 is not complete.")
-	}
-	template <- file.path(template_folder, "abgenes_template.txt")
-	tmp_folder <- "tmp_lib"
-	out_file <- paste0(output_dir, "/abgenes_report.html")
-	container <- list(counts = final_results$counts, ods = final_results$ods,
-					  ods_unfitted = final_results$ods_unfitted,
-					  outrider_res_all = final_results$outrider_res_all,
-					  outrider_res_table = final_results$outrider_res_table,
-					  coverage_df = final_results$coverage_df,
-					  counts_matrix = final_results$counts_matrix,
-					  local_counts_matrix = final_results$local_counts_matrix,
-					  formatted = final_results$formatted,
-					  bcv_dt = final_results$bcv_dt,
-					  p_adj_cutoff = p_adj_cutoff,
-					  z_score_cutoff = z_score_cutoff,
-					  top_N = top_N,
-					  raw_sample_cors = final_results$raw_sample_cors,
-					  norm_sample_cors = final_results$norm_sample_cors,
-					  raw_gene_cors = final_results$raw_gene_cors,
-					  norm_gene_cors = final_results$norm_gene_cors,
-					  filter_df = final_results$filter_df,
-					  expressed_genes = final_results$expressed_genes)
-	plotter <- htmlreportR::htmlReport$new(title_doc = "Aberrant Expression
-														 report", 
-					      	  			   container = container,
-	                      	  			   tmp_folder = tmp_folder,
-	                      	  			   src = source_folder,
-	                      	  			   compress_obj = TRUE,
-	                      	  			   type_index = "menu")
-	plotter$build(template)
-	plotter$write_report(out_file)
-	message(paste0("Report written in ", out_file))
+                             template_folder = NULL, source_folder = NULL,
+                             p_adj_cutoff = 0.05, z_score_cutoff = 3,
+                             top_N = 10){
+    if(is.null(template_folder)) {
+        stop("No template folder was provided.")
+    }
+    if(is.null(source_folder)) {
+        source_folder <- find.package("htmlreportR")
+    }
+    if(!file.exists(source_folder)) {
+        stop("Source folder not found. Was ", source_folder)
+    }
+    if(any(is.null(final_results))) {
+        stop("ERROR: final_results object contains NULL fields. Analysis
+             is not complete.")
+    }
+    template <- file.path(template_folder, "abgenes_template.txt")
+    tmp_folder <- "tmp_lib"
+    out_file <- paste0(output_dir, "/abgenes_report.html")
+    container <- list(counts = final_results$counts, ods = final_results$ods,
+                      ods_unfitted = final_results$ods_unfitted,
+                      outrider_res_all = final_results$outrider_res_all,
+                      outrider_res_table = final_results$outrider_res_table,
+                      coverage_df = final_results$coverage_df,
+                      counts_matrix = final_results$counts_matrix,
+                      local_counts_matrix = final_results$local_counts_matrix,
+                      formatted = final_results$formatted,
+                      bcv_dt = final_results$bcv_dt,
+                      p_adj_cutoff = p_adj_cutoff,
+                      z_score_cutoff = z_score_cutoff,
+                      top_N = top_N,
+                      raw_sample_cors = final_results$raw_sample_cors,
+                      norm_sample_cors = final_results$norm_sample_cors,
+                      raw_gene_cors = final_results$raw_gene_cors,
+                      norm_gene_cors = final_results$norm_gene_cors,
+                      filter_df = final_results$filter_df,
+                      expressed_genes = final_results$expressed_genes)
+    plotter <- htmlreportR::htmlReport$new(title_doc = "Aberrant Expression
+                                                         report", 
+                                           container = container,
+                                           tmp_folder = tmp_folder,
+                                           src = source_folder,
+                                           compress_obj = TRUE,
+                                           type_index = "menu")
+    plotter$build(template)
+    plotter$write_report(out_file)
+    message(paste0("Report written in ", out_file))
 }

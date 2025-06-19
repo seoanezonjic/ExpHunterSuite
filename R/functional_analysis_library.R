@@ -157,11 +157,9 @@ check_id_valid_orgdb <- function(gene_id,
 
   if(! gene_id %in% possible_ids) {
     if(outcome_action=="stop") {
-      stop(paste(c("gene id must be one of the following:", possible_ids), 
-                                                              collapse=" "))
+      stop("gene id must be one of the following:", toString(possible_ids))
     } else if(outcome_action=="warn") {
-      warning(paste(c("gene id must be one of the following:", possible_ids), 
-                                                                collapse=" "))
+      warning("gene id must be one of the following:", toString(possible_ids))
       return(FALSE)
     }
   }
@@ -234,8 +232,7 @@ just_output_ids=FALSE){
   
   possible_ids <- AnnotationDbi::columns(org_db)
   if(! input_id %in% possible_ids) 
-    stop(paste(c("gene keytype must be one of the following:", possible_ids),
-                                                               collapse=" "))
+    stop("gene keytype must be one of the following:", toString(possible_ids))
     ids <- tryCatch(
       ids <- AnnotationDbi::select(org_db, keys=ids, column=output_id, 
                                   keytype=input_id),

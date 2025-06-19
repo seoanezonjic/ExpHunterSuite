@@ -177,25 +177,25 @@ mae_res[, MAE_ALT := MAE == TRUE & altRatio >= allelicRatioCutoff]
 # Save full mae_results zipped
 mae_res[, altRatio := round(altRatio, 3)]
 data.table::fwrite(mae_res, paste('MAE_results', opt$genome_version, opt$dataset, "all.tsv.gz", sep="_"), sep = '\t', 
-       row.names = F, quote = F, compress = 'gzip')
+       row.names = FALSE, quote = FALSE, compress = 'gzip')
 
 # Save significant mae_results
 data.table::fwrite(mae_res[MAE_ALT == TRUE], paste('MAE_results', opt$genome_version, opt$dataset, "alt.tsv", sep="_"), 
-       sep = '\t', row.names = F, quote = F)
+       sep = '\t', row.names = FALSE, quote = FALSE)
 
 # Save significant mae_results
 data.table::fwrite(mae_res[MAE_ALT == TRUE & rare == TRUE], paste('MAE_results', opt$genome_version, opt$dataset, 'alt_rare.tsv', sep="_"), 
-       sep = '\t', row.names = F, quote = F)
+       sep = '\t', row.names = FALSE, quote = FALSE)
 
 
 # Add columns for plot
 mae_res[, N := .N, by = ID]
 plot_mae_res <- mae_res[,.(N = .N,
-             N_MAE = sum(MAE==T),
-             N_MAE_REF=sum(MAE==T & MAE_ALT == F),
-             N_MAE_ALT=sum(MAE_ALT == T),
-             N_MAE_REF_RARE = sum(MAE ==T & MAE_ALT==F & rare == T),
-             N_MAE_ALT_RARE = sum(MAE_ALT ==T & rare ==T)
+             N_MAE = sum(MAE==TRUE),
+             N_MAE_REF=sum(MAE==TRUE & MAE_ALT == FALSE),
+             N_MAE_ALT=sum(MAE_ALT == TRUE),
+             N_MAE_REF_RARE = sum(MAE ==TRUE & MAE_ALT==FALSE & rare == TRUE),
+             N_MAE_ALT_RARE = sum(MAE_ALT ==TRUE & rare ==TRUE)
 			 ),by = ID]
 
 
@@ -233,9 +233,9 @@ ggplot2::ggplot(unique(mae_res[,cohort_freq,by =.(gene_name, contig, position)])
   ggplot2::xlim(0,NA) + ggplot2::xlab("Variant frequency in cohort") + ggplot2::ylab("Variants")
 
 #' Median of each category
-DT::datatable(melt_dt[, .(median = stats::median(value, na.rm = T)), by = variable])
+DT::datatable(melt_dt[, .(median = stats::median(value, na.rm = TRUE)), by = variable])
 data.table::fwrite(melt_dt, paste0(opt$dataset, '_medians.tsv'), sep = '\t', 
-       row.names = F, quote = F)
+       row.names = FALSE, quote = FALSE)
 
 
 # round numbers
@@ -471,9 +471,9 @@ unexpected_matches <- unexpected_matches[is.na(ANNOTATED_MATCH) & value > identi
 unexpected_matches$ANNOTATED_MATCH <- NULL
 
 data.table::fwrite(false_matches, paste0(opt$dataset,'_false_matches.tsv'), sep = '\t', 
-       row.names = F, quote = F)
+       row.names = FALSE, quote = FALSE)
 data.table::fwrite(unexpected_matches, paste0(opt$dataset,'_unexpected_matches.tsv'), sep = '\t', 
-       row.names = F, quote = F)
+       row.names = FALSE, quote = FALSE)
 
 get_aberrants <- function(df) {
 	if(is.null(df)) {

@@ -183,8 +183,8 @@ if(grepl("g", opt$analysis_type)) enrich_methods <- c(enrich_methods, "GSEA")
 kegg_data_file <- opt$kegg_data_file
 if("KEGG" %in% enrich_dbs) {
     kegg_data_file <- get_kegg_db_path(opt$kegg_data_file, current_organism_info=current_organism_info, root_path)
-    if(! file.exists(kegg_data_file)) stop(paste("KEGG file:", kegg_data_file, "not found. 
-        You can download with the download_KEGG_file.R Script"))
+    if(! file.exists(kegg_data_file)) stop("KEGG file:", kegg_data_file, "not found. 
+        You can download with the download_KEGG_file.R Script")
 }
 
 clusters_flag <- grepl("c", opt$report_modes) || grepl("i", opt$report_modes)

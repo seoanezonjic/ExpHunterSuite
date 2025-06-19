@@ -77,8 +77,8 @@ main_functional_hunter <- function(
     # Check organism selected and obtain the organisms table
     if (any(is.null(model_organism), 
             !model_organism %in% rownames(organisms_table))) {
-        stop(paste0('Model organism does not appear in organism table. 
-            Currently available organisms are:', rownames(organisms_table)))
+        stop('Model organism does not appear in organism table. 
+         Currently available organisms are:', toString(rownames(organisms_table)))
     } else {
         current_organism_info <- subset(organisms_table, 
                 rownames(organisms_table) %in% model_organism)  

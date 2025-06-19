@@ -653,7 +653,7 @@ get_gene_sample_correlations <- function(ods, normalized = TRUE, nGenes = 500,
 
 .extract_coverage_info <- function(bam_coverage, ods) {
   read_count <- count_rank <- counted_frac <- record_count <- frac_rank <- sf_rank <- NULL
-  cnts_mtx <- OUTRIDER::counts(ods, normalized = F)
+  cnts_mtx <- OUTRIDER::counts(ods, normalized = FALSE)
   local_columns <- SummarizedExperiment::colData(ods)$EXTERNAL == "no"
   cnts_mtx_local <- cnts_mtx[, local_columns]
   rownames(bam_coverage) <- bam_coverage$sampleID
@@ -811,7 +811,7 @@ score_data <- function(gr,
 # Helper method for installilng the named MafDb package
 .get_mafdb <- function(pkg_name){
   if(!requireNamespace(pkg_name, quietly=TRUE)){
-    stop(paste0("The given MafDb is not installed: '", pkg_name))
+    stop("The given MafDb is not installed: '", pkg_name)
   }
   
   mafdb <- utils::getFromNamespace(pkg_name, pkg_name)

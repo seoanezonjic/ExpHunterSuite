@@ -144,9 +144,9 @@ write_general_pca <- function(pca_data, output_files, tag = ""){
   hcpc_table$samples <- rownames(hcpc_table)
   write.table(hcpc_table, file = file.path(output_files, paste0(tag, "hcpc.txt")),sep = "\t", quote = FALSE, row.names=FALSE)
   if (!is.null(pca_data$pca_data$var$cor)){
-    write.table(pca_data$pca_data$var$cor, file = file.path(output_files, paste0(tag, "pca_vars.txt")), quote = F, sep = "\t")
+    write.table(pca_data$pca_data$var$cor, file = file.path(output_files, paste0(tag, "pca_vars.txt")), quote = FALSE, sep = "\t")
   } else {
-    write.table(pca_data$pca_data$var$eta2, file = file.path(output_files, paste0(tag, "pca_vars.txt")), quote = F, sep = "\t")
+    write.table(pca_data$pca_data$var$eta2, file = file.path(output_files, paste0(tag, "pca_vars.txt")), quote = FALSE, sep = "\t")
   }
 
 }
