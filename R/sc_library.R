@@ -118,8 +118,8 @@ tag_doublets <- function(seu, doublet_list) {
 
 add_sc_design <- function(seu, name, exp_design){
   if(length(unique(seu@meta.data$orig.ident)) > 1) {
-    stop(paste0("Seurat object contains more than one sample. ",
-                "Please use Seurat::AddMetaData"))
+    stop("Seurat object contains more than one sample. Please use ",
+         "Seurat::AddMetaData")
   }
   exp_design <- as.list(exp_design[exp_design$sample == name,])
   seu <- Seurat::AddMetaData(object = seu, metadata = exp_design)
@@ -405,7 +405,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   sub_markers <- vector(mode = "list", length = length(sub_values))
   names(sub_markers) <- as.character(sub_values)
   for (i in seq(length(sub_values))) {
-    message(paste0("Analysing cluster ", i, "/", length(sub_values)))
+    message("Analyzing cluster ", i, "/", length(sub_values))
     if(DEG) {
       markers <- .get_subset_DEGs(seu = seu, subset_by = subset_by, cond = cond,
                     sub_value = sub_values[i], conds = conds, min.pct = min.pct,
@@ -441,8 +441,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
     conds <- c(unlist(strsplit(values, ",")))
   }
   if(length(conds) != 2) {
-    stop(paste0("ERROR: get_sc_markers only works with condition with two ",
-                 "values. Provided condition has ", length(conds)))
+    stop("get_sc_markers only works with condition with two values. Provided",
+         " condition has ", length(conds))
   }
   return(conds)
 }
@@ -692,23 +692,20 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
   subset_list <- vector(mode = "list", length = length(items))
   names(subset_list) <- items
   for(i in seq(length(items))) {
-    message(paste("Subsetting", by[1],  paste0(i, "/", length(items)),
-            sep = " "))
+    message("Subsetting", by[1],  paste0(i, "/", length(items)))
     subset <- subset_seurat(seu, by[1], as.character(items[i]))
     subset_list[[as.character(items[i])]] <- subset
   }
   if(length(by) == 2){
     pct_list <- vector(mode = "list", length = length(subset_list))
     for(element in seq(subset_list)) {
-      message(paste("Subdividing", by[1], paste0(element, "/", length(items)),
-              sep = " "))
+      message("Subdividing", by[1], paste0(element, "/", length(items)))
       sec_items <- unique(subset_list[[element]]@meta.data[[by[2]]])
       new_subset <- vector(mode = "list", length = length(sec_items))
       names(new_subset) <- sec_items
       for(j in seq(length(sec_items))) {
         sublist_name <- as.character(sec_items[j])
-        message(paste("Re-subsetting by", by[2],
-                       paste0(j, "/", length(sec_items)), sep = " "))
+        message("Re-subsetting by", by[2], paste0(j, "/", length(sec_items)))
         # Expr set to TRUE because double subset can result in only selecting
         # cells that have not been selected by sketch, which breaks seurat
         # object subsetting.
@@ -763,8 +760,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
 get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
                           sample_col = "sample") {
   if(top < 1) {
-    stop(paste0("Invalid \"top\" argument. Must be greater than 1, was ",
-                 top))
+    stop("Invalid \"top\" argument. Must be greater than 1, was ", top)
   }
   samples <- as.character(unique(seu[[sample_col, drop = TRUE]]))
   top_samples <- vector(mode = "list", length = length(samples))
@@ -1279,12 +1275,11 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
   } else {
     input_cells <- ncol(seu)
     if(input_cells < 60000) {
-      message(paste0("Fewer than thirty thousand cells detected in experiment.",
-                     " Skipping sketch."))
+      message("Fewer than sixty thousand cells in experiment. Skipping sketch.")
     } else {
       ncells <- ceiling(mean(table(seu$sample)) * cell.pct / 100)
       if(ncells < 5000) {
-        warning("WARNING: Fewer than 5000 cells selected for sketching.")
+        warning("Fewer than five thousahd cells selected for sketching.")
       }
       if(ncells * length(unique(seu$sample)) < 30000) {
         message("Fewer than thirty thousand cells selected. Disabling sketch.")
@@ -1380,7 +1375,7 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
     ref = SingleR_ref, labels = SingleR_ref[[ref_label]], de.n = ref_n,
     assay.type.test = "scale.data", de.method = ref_de_method,
     BPPARAM = BPPARAM, aggr.ref = aggr.ref, fine.tune = fine.tune)
-  message(paste0("SingleR annotation time: ", Sys.time() - SingleR_start))
+  message("SingleR annotation time: ", Sys.time() - SingleR_start)
   seu@meta.data$cell_type <- SingleR_annotation$labels
   pdf(file.path(save_pdf, "DeltaDistribution.pdf"), width = 20, height = 10)
   print(SingleR::plotScoreHeatmap(SingleR_annotation))
@@ -1541,7 +1536,7 @@ process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
     force.ncells = force_ncells)
   sketch_end <- Sys.time()
   if(verbose) {
-    message(paste0("Sketching time: ", sketch_end-sketch_start))
+    message("Sketching time: ", sketch_end-sketch_start)
   }
   if("sketch" %in% names(seu@assays)) {
     Seurat::DefaultAssay(seu) <- "sketch"
@@ -1607,7 +1602,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   if(mode == "DEG") {
     params$extra_columns <- ""
   }
-  message(paste0("Analyzing ", params$name))
+  message("Analyzing ", params$name)
   exp_design <- doublet_list <- NULL
   if(file.exists(params$exp_design)) {
     params$exp_design <- read.table(params$exp_design, sep = "\t",
@@ -1630,8 +1625,8 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   }
   if(params$subset_by != "") {
     params$subset_by <- tolower(unlist(strsplit(params$subset_by, ";")))
-    message(paste0("Selected ", length(params$subset_by),
-      " subset condition(s): ", paste0(params$subset_by, collapse = ", ")))
+    message("Selected ", length(params$subset_by), " subset condition(s): ",
+            paste0(params$subset_by, collapse = ", "))
   }
   if(params$extra_columns != "") {
     params$extra_columns <- tolower(unlist(strsplit(params$extra_columns, ";")))
@@ -1681,7 +1676,7 @@ load_SingleR_ref <- function(path, version = "", filter = "") {
   }
   message("Loading provided SingleR reference")
   SingleR_ref <- HDF5Array::loadHDF5SummarizedExperiment(dir = path,prefix = "")
-  message(paste0("Total cells in reference: ", ncol(SingleR_ref), "."))
+  message("Total cells in reference: ", ncol(SingleR_ref), ".")
   if(!is.null(filter)) {
     message("Filtering reference")
     expressions <- strsplit(filter, "&|\\|")[[1]]
@@ -1699,7 +1694,7 @@ load_SingleR_ref <- function(path, version = "", filter = "") {
                                   expression = expressions[i]))
     }
     filter <- Reduce(operator, filter)
-    message(paste0("Selected ", sum(filter)," cells for reference subsetting."))
+    message("Selected ", sum(filter)," cells for reference subsetting.")
     SingleR_ref <- SingleR_ref[, filter]
   }
   return(SingleR_ref)

@@ -130,12 +130,10 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   if(!reduce) {
     seu <- subset(qc, subset = qc == 'Pass')
   } else {
-    message(paste0("Reduce argument is set to TRUE. Skipping QC subsetting. ",
-                   "Updating SingleR configuration"))
     seu <- qc
   }
   if(new_opt$integrate) {
-    message(paste0("Splitting seurat object by sample."))
+    message("Splitting seurat object by sample.")
     seu[["RNA"]] <- split(seu[["RNA"]], f = seu$sample)
   }
   message('Normalizing data')
@@ -143,7 +141,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   seu <- Seurat::NormalizeData(object = seu, verbose = verbose,
   									           normalization.method = normalmethod,
                                scale.factor = scalefactor)
-  message(paste0("Normalization time: ", Sys.time() - norm_start))
+  message("Normalization time: ", Sys.time() - norm_start)
   message('Finding variable features')
   seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs, verbose = verbose,
                                       selection.method = "vst", assay = "RNA")
@@ -167,7 +165,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   scale_start <- Sys.time()
   seu <- Seurat::ScaleData(object = seu, verbose = verbose,
                            features = rownames(seu))
-  message(paste0("Scaling time: ", Sys.time() - scale_start))
+  message("Scaling time: ", Sys.time() - scale_start)
   message('Reducing dimensionality')  
   seu <- Seurat::RunPCA(seu, assay = assay, npcs = ndims, verbose = verbose)
   reduction <- "pca"
@@ -191,7 +189,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     seu@meta.data$seurat_clusters <- as.numeric(seu@meta.data$seurat_clusters)
     Seurat::Idents(seu) <- seu@meta.data$seurat_clusters
   } else {
-    message(paste0("Annotation by clusters not active, skipping clustering."))
+    message("Annotation by clusters not active, skipping clustering.")
   }
   seu <- Seurat::RunUMAP(object = seu, dims = seq(ndims), reduction = reduction,
                          return.model = TRUE, verbose = verbose)
@@ -202,7 +200,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
       subset_by = subset_by, cluster_annotation = cluster_annotation,
       p_adj_cutoff = p_adj_cutoff, assay = assay, integrate = new_opt$integrate,
       verbose = verbose)
-      message(paste0("Time to annotate: ", Sys.time() - annot_start))
+      message("Time to annotate: ", Sys.time() - annot_start)
     seu <- annotation$seu
     markers <- annotation$markers
   }
@@ -211,7 +209,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   }
   assay <- "RNA"
   expr_metrics <- get_expression_metrics(seu = seu, sigfig = sigfig)
-  message(paste0("Total processing time: ", Sys.time() - main_start))
+  message("Total processing time: ", Sys.time() - main_start)
   final_results <- list()
   final_results$qc <- qc
   final_results$seu <- seu
@@ -327,7 +325,7 @@ write_annot_output <- function(final_results = stop("Missing results object"),
               file = file.path(opt$output, "embeddings", "cell_embeddings.tsv"))
   write.table(final_results$markers, sep = "\t", quote = FALSE, row.names = TRUE,
               file = file.path(opt$output, "markers.tsv"))
-  message(paste0("Counts matrix saved to ", file.path(opt$output, "counts")))
+  message("Counts matrix saved to ", file.path(opt$output, "counts"))
   return(invisible(NULL))
 }
 
@@ -366,7 +364,7 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
     source_folder <- find.package("htmlreportR")
   }
   if(!file.exists(source_folder)) {
-    stop(paste0("Source folder not found. Was ", source_folder, " ."))
+    stop("Source folder not found. Was ", source_folder, " .")
   }
   if(any(is.null(final_results))) {
     stop("ERROR: final results object contains NULL fields. Analysis
@@ -406,7 +404,7 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
                             compress_obj = FALSE)
   plotter$build(template)
   plotter$write_report(out_file)
-  message(paste0("Report written in ", out_file))
+  message("Report written in ", out_file)
   return(invisible(NULL))
 }
 
@@ -449,14 +447,14 @@ check_sc_input <- function(metadata = NULL, DEG_target = NULL, integrate = NULL,
       }
     }
     if(any(!PASS)) {
-      stop(paste0("ERROR. Please check DEG_target have exactly two unique ",
+      stop("ERROR. Please check DEG_target have exactly two unique ",
         "values. DEG_column(s) \"", paste(names(PASS[PASS==FALSE]),
-          collapse = "\", \""), "\" contain an invalid number."))
+          collapse = "\", \""), "\" contain an invalid number.")
     }
   }
   if(!is.null(SingleR_ref)) {
-    message(paste0("SingleR reference provided. Disabling integrative analysis",
-                   " and sketching."))
+    message("SingleR reference provided. Disabling integrative analysis and ",
+            "sketching.")
     integrate <- FALSE
     sketch <- FALSE
   }
