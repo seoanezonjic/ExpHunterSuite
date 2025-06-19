@@ -139,8 +139,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   message('Normalizing data')
   norm_start <- Sys.time()
   seu <- Seurat::NormalizeData(object = seu, verbose = verbose,
-  									           normalization.method = normalmethod,
-                               scale.factor = scalefactor)
+    normalization.method = normalmethod, scale.factor = scalefactor)
   message("Normalization time: ", Sys.time() - norm_start)
   message('Finding variable features')
   seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs, verbose = verbose,
@@ -170,7 +169,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
   seu <- Seurat::RunPCA(seu, assay = assay, npcs = ndims, verbose = verbose)
   reduction <- "pca"
   if(new_opt$integrate) {
-  	message('Integrating seurat object')
+    message('Integrating seurat object')
     seu <- Seurat::IntegrateLayers(object = seu, orig.reduction = "pca",
       new.reduction = integration_method, verbose = FALSE, dims = seq(1, ndims),
       method = paste0(integration_method, "Integration"), assay = assay,
@@ -380,24 +379,19 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
   out_file <- file.path(output, paste0(opt$name, "_", out_suffix))
   tmp_folder <- file.path(output, paste0(opt$name, "_tmp_lib"))
   dir.create(tmp_folder)
-  container <- list(params = params, seu = final_results$seu, qc = final_results$qc,
-                 subset_by = opt$subset_by, use_canvas = use_canvas,
-                 DEG_list = final_results$DEG_list, query = opt$target_genes,
-                 p_val_cutoff = opt$DEG_p_val_cutoff, opt = opt,
-                 min_avg_log2FC = opt$min_avg_log2FC,
-                 tables = final_results$tables,
-                 marker_meta = final_results$marker_meta,
-                 sample_qc_pct = final_results$sample_qc_pct,
-                 clusters_pct = final_results$clusters_pct,
-                 query_exp = final_results$query_data$query_exp,
-                 query_pct = final_results$query_data$query_pct,
-                 query_cluster_pct = final_results$query_data$query_cluster_pct,
-                 markers = final_results$markers, use_canvas = use_canvas,
-                 cell_annotation = opt$cell_annotation,
-                 extra_columns = opt$extra_columns,
-                 target = final_results$target,
-                 target_name = final_results$target_name,
-                 integrate = final_results$integrate)
+  container <- list(params = params, seu = final_results$seu,
+    qc = final_results$qc, subset_by = opt$subset_by, use_canvas = use_canvas,
+    DEG_list = final_results$DEG_list, query = opt$target_genes, opt = opt,
+    p_val_cutoff = opt$DEG_p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
+    tables = final_results$tables, marker_meta = final_results$marker_meta,
+    sample_qc_pct = final_results$sample_qc_pct, target = final_results$target,
+    clusters_pct = final_results$clusters_pct, markers = final_results$markers,
+    query_exp = final_results$query_data$query_exp,
+    query_pct = final_results$query_data$query_pct,
+    query_cluster_pct = final_results$query_data$query_cluster_pct,
+    cell_annotation = opt$cell_annotation, extra_columns = opt$extra_columns,
+    target_name = final_results$target_name,
+    integrate = final_results$integrate)
   plotter <- htmlreportR::htmlReport$new(title_doc = paste0(opt$name, analysis,
                             " report"), container = container,
                             tmp_folder = tmp_folder, src = source_folder,
