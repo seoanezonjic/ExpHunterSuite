@@ -114,8 +114,8 @@ main_degenes_Hunter <- function(
                                          index_treatmn_cols))
     # Check if there are enough replicates for specified method
     if((replicatesC < 2) | (replicatesT < 2)) 
-       stop(paste0('At least two replicates per class (i.e. treatment and',
-                   ' control) are required\n'))
+       stop('At least two replicates per class (i.e. treatment and',
+                   ' control) are required')
 
     
     numeric_factors <- split_str(numeric_factors, ",")

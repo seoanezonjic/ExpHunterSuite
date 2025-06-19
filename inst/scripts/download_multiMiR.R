@@ -90,7 +90,7 @@ while(length(remaining_mirnas) > 0){
     
     if(opt$cache_mode){
         writeLines(remaining_mirnas, con = remaining_miRNAs_file)
-        stop(paste("Program stopped in a controlled way. Launch it again."))
+        stop("Program stopped in a controlled way. Launch it again.")
     }
 }
 

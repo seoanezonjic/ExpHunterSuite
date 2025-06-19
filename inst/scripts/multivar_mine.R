@@ -59,7 +59,7 @@ if(!file.exists(opt$output_files))
   dir.create(opt$output_files, recursive = TRUE)
 
 input_files <- split_str(opt$input_files, ",")
-input_tables <- lapply(input_files, read.table, header = T,sep = "\t", check.names = F, row.names = 1)
+input_tables <- lapply(input_files, read.table, header = TRUE, sep = "\t", check.names = FALSE, row.names = 1)
 names(input_tables) <- gsub("\\..*", "", basename(input_files))
 
 act_des <- parse_multivar_input(opt$act_des)
@@ -78,7 +78,7 @@ if (!is.null(opt$supp_desc)){
   supp_tables <- process_supp_files_ind(input_tables, supp_desc)
   numeric_factors <- unlist(lapply(supp_tables[["supp_num_files"]], colnames))
   string_factors <- unlist(lapply(supp_tables[["supp_str_files"]], colnames))
-  merged_supp_tables <- merge_all_df(unlist(supp_tables, recursive = F))
+  merged_supp_tables <- merge_all_df(unlist(supp_tables, recursive = FALSE))
   merged_supp_tables$sample <- rownames(merged_supp_tables)
 }
 

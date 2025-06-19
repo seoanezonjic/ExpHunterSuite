@@ -200,8 +200,8 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
                   length(fails)))
     if(length(fails) > 0 ){
       message(tail(attr(res[[fails[1]]], "traceback")))
-      stop(paste('Parallel execution has failed at item', fails[1],
-                 'and a total of', length(fails) , 'items have failed.'))
+      stop('Parallel execution has failed at item', fails[1],
+                 'and a total of', length(fails) , 'items have failed.')
     } else {
       unlink(main_log_path, recursive = TRUE)
     }

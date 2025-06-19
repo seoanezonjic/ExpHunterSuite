@@ -86,8 +86,8 @@ corr_cutoffs<- eval(parse(text=paste('c(', gsub("'","", corr_cutoffs), ')')))
 
  pre_save_results <- FALSE
  if (is.null(RNAseq) && !is.null(selected_targets)) {
-	strat_names <- c("selected_targets_RNA_vs_miRNA_DEMs")	
- 	pre_save_results <- TRUE
+    strat_names <- c("selected_targets_RNA_vs_miRNA_DEMs")  
+    pre_save_results <- TRUE
  }
 
  miRNAseq <- load_DEGH_information(miRNAseq_folder) 
@@ -120,10 +120,10 @@ cont_tables <- data.frame()
 all_pairs <- as.data.frame(miRNA_cor_results$all_pairs)
 
 if (pre_save_results) {
-	selected_pairs <- all_pairs[, c("RNAseq", "miRNAseq","selected_targets_RNA_vs_miRNA_DEMs_pval", "multimir")]
-	pairs_to_save <- selected_pairs$selected_targets_RNA_vs_miRNA_DEMs_pval == 0 & !is.na(selected_pairs$selected_targets_RNA_vs_miRNA_DEMs_pval) & selected_pairs$multimir
-	write.table(selected_pairs[pairs_to_save,c("miRNAseq", "RNAseq")], file = file.path(output_files, "selected_pairs.txt"), quote= F, sep = "\t", row.names = F)
-	stop("selected_targets_RNA_vs_miRNA_DEMs_pval results saved in selected_pairs.txt file. Controlled exit.")
+    selected_pairs <- all_pairs[, c("RNAseq", "miRNAseq","selected_targets_RNA_vs_miRNA_DEMs_pval", "multimir")]
+    pairs_to_save <- selected_pairs$selected_targets_RNA_vs_miRNA_DEMs_pval == 0 & !is.na(selected_pairs$selected_targets_RNA_vs_miRNA_DEMs_pval) & selected_pairs$multimir
+    write.table(selected_pairs[pairs_to_save,c("miRNAseq", "RNAseq")], file = file.path(output_files, "selected_pairs.txt"), quote= FALSE, sep = "\t", row.names = FALSE)
+    stop("selected_targets_RNA_vs_miRNA_DEMs_pval results saved in selected_pairs.txt file. Controlled exit.")
 }
 message("Preparing data for stats computing")
  for (corr_cutoff in corr_cutoffs){
@@ -166,8 +166,8 @@ message("Preparing data for stats computing")
 
 
  if(nrow(miRNA_cont_tables) == 0 || nrow(integrated_OR) == 0){
-    stop(paste0("ERROR: Any miRNA has significant overlapping with databases at any ",
-                "given strategy/correlation threshold. Please try to modify parametres,"))
+    stop("ERROR: Any miRNA has significant overlapping with databases at any ",
+        "given strategy/correlation threshold. Please try to modify parametres,")
  }
 
  miRNA_cor_results$miRNA_cont_tables <-  miRNA_cont_tables                                

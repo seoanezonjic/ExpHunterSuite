@@ -391,7 +391,7 @@ if(opt$genome_UCSC == "hg38") {
 } else if(opt$genome_UCSC == "hg19") {
   GRCh <- 37
 } else {
-  stop(paste0("Invalid genome version. Please select hg38 or hg19. Selected ", opt$genome_UCSC))
+  stop("Invalid genome version. Please select hg38 or hg19. Selected ", opt$genome_UCSC)
 }
 
 for(type in c("jaccard")){

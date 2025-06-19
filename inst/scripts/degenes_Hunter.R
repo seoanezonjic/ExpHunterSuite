@@ -196,21 +196,21 @@ write.table(cbind(opt), file=file.path(opt$output_files,
 if (is.null(opt$external_DEA_file)) {
   # Check inputs not allowed values
   if (is.null(opt$input_file)){
-    stop(cat(paste0("No file with RNA-seq counts is provided.",
-      "\nPlease use -i to submit file")))
+    stop("No file with RNA-seq counts is provided.",
+      "\nPlease use -i to submit file")
   }
 # Check either C and T columns or target file.
   if( (is.null(opt$Treatment_columns) | is.null(opt$Control_columns)) & 
        is.null(opt$target_file)) {
-    stop(cat(paste0("You must include either the names of the control and",
-      " treatment columns or a target file with a treat column.")))
+    stop("You must include either the names of the control and",
+      " treatment columns or a target file with a treat column.")
   }
   # In the case of -C/-T AND -t target - give a warning
   if( (!is.null(opt$Treatment_columns) | !is.null(opt$Control_columns)) &
        !is.null(opt$target_file)) {
-    warning(paste0("You have included at least one -C/-T option as well as a",
+    warning("You have included at least one -C/-T option as well as a",
       " -t option for a target file. The target file will take precedence for",
-      " assigning samples labels as treatment or control."))
+      " assigning samples labels as treatment or control.")
   }
 }
 
