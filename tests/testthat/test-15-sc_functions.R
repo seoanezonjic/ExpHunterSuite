@@ -433,7 +433,6 @@ test_that("breakdown_query works with query of length one", {
   expect_equal(output_df, expected_df)
 })
 
-
 test_pbmc <- pbmc_tiny
 test_pbmc@meta.data$sample <- c(rep("A", 5), rep("B", 5), rep("C", 5))
 test_pbmc@meta.data$seurat_clusters <- rep(0:4, 3)
