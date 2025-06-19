@@ -293,6 +293,56 @@ test_pbmc@meta.data$seurat_clusters[3:5] <- 1
 test_pbmc@meta.data$seurat_clusters[15] <- 1
 test_pbmc@meta.data$cell_types <- test_pbmc@meta.data$seurat_clusters
 
+test_that("get_sc_markers works as intended, DEG TRUE", {
+  markers_test_pbmc <- test_pbmc
+  markers_test_pbmc$seurat_clusters[11:15] <- 1
+  output <- suppressMessages(get_sc_markers(seu = markers_test_pbmc,
+                                   cond = "groups", DEG = TRUE, verbose = FALSE,
+                                   subset_by = "seurat_clusters"))$markers
+  markers_0 <- data.frame(p_val = 0.27, avg_log2FC = -7.6, pct.1 = 0, pct.2 = 0.5,
+                          p_val_adj = 1, gene = "VDAC3")
+  rownames(markers_0) <- "VDAC3"
+  markers_1 <- data.frame(p_val = c(0.30, 0.33, 0.70, 1),
+           avg_log2FC = c(7.1, -9.9, 1.9, -3.5), pct.1 = c(0.33, 0, 0.33, 0.33),
+           pct.2 = c(0, 0.4, 0.2, 0.2), p_val_adj = 1,
+           gene = c("GNLY", "IGLL5", "PPBP", "VDAC3"))
+  rownames(markers_1) <- c("GNLY", "IGLL5", "PPBP", "VDAC3")
+  markers_global <- data.frame(p_val = c(0.27, 0.28, 0.41, 0.77),
+    avg_log2FC = c(-10, 6.9, -3.9, 1.7), pct.1 = c(0, rep(0.17, 3)),
+    pct.2 = c(0.22, 0, 0.33, 0.11), p_val_adj = 1,
+    gene = c("IGLL5", "GNLY", "VDAC3", "PPBP"))
+  rownames(markers_global) <- c("IGLL5", "GNLY", "VDAC3", "PPBP")
+  expected <- list(`0` = markers_0, `1` = markers_1, global = markers_global)
+  testthat::expect_equal(output, expected)
+})
+
+test_that("get_sc_markers works as intended, DEG FALSE", {
+  markers_test_pbmc <- pbmc_tiny
+  markers_test_pbmc$seurat_clusters <- 0
+  markers_test_pbmc$seurat_clusters[c(3:5, 6:8)] <- 1
+  Seurat::Idents(markers_test_pbmc) <- markers_test_pbmc$seurat_clusters
+  output <- suppressMessages(get_sc_markers(seu = markers_test_pbmc,
+                 cond = "groups", DEG = FALSE, min.pct = 0,
+                 verbose = TRUE, subset_by = "seurat_clusters"))$markers
+  markers_0 <- data.frame(g1_p_val = c(0.56, 0.85), g1_avg_log2FC = c(5.3, 2.9),
+                          g1_pct.1 = c(0.25, 0.50), g1_pct.2 = c(0, 0.33),
+                          g1_p_val_adj = 1, g2_p_val = 0.3,
+                          g2_avg_log2FC = -c(7.6, 7.1), g2_pct.1 = 0,
+                          g2_pct.2 = 0.33, g2_p_val_adj = 1,
+                          max_pval = c(0.56, 0.85), minimump_p_val = 0.51,
+                          seurat_clusters = "0")
+  markers_1 <- data.frame(g1_p_val = c(0.56, 0.85),g1_avg_log2FC = -c(5.3, 2.9),
+                          g1_pct.1 = c(0, 0.33), g1_pct.2 = c(0.25, 0.50),
+                          g1_p_val_adj = 1, g2_p_val = 0.3,
+                          g2_avg_log2FC = c(7.6, 7.1), g2_pct.1 = 0.33,
+                          g2_pct.2 = 0, g2_p_val_adj = 1,
+                          max_pval = c(0.56, 0.85), minimump_p_val = 0.51,
+                          seurat_clusters = "1")
+  rownames(markers_0) <- rownames(markers_1) <- c("PPBP", "VDAC3")
+  expected <- list(`0` = markers_0, `1` = markers_1)
+  testthat::expect_equal(output, expected)
+})
+
 test_that("get_sc_markers skips exclusive clusters in DEG analysis", {
   expected_warning <- paste0("Cluster 2 contains fewer than three cells for ",
                 "condition 'g2'")
