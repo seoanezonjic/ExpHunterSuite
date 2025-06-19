@@ -938,24 +938,38 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
   ncell_df <- ncell_df[row_intersection, col_intersection, drop = FALSE]
   return(list(DEG_df = DEG_df, ncell_df = ncell_df))
 }
-    
 
-.process_DEG_matrix <- function(DEG_matrix, min_avg_log2FC = 0.2, ident = NULL,
-                                p_val_cutoff = 0.01, genes_list = NULL,
-                                query = NULL) {
+.check_DEG_matrix <- function(matrix, ident, query = NULL) {
   process_res <- TRUE
-  res <- NULL
-  if(is.null(DEG_matrix) | FALSE %in% DEG_matrix) {
-    process_res <- FALSE
+  if(is.null(matrix) | FALSE %in% matrix) {
+      process_res <- FALSE
   }
   if(!is.null(query)) {
-      if(!any(query %in% rownames(DEG_matrix))) {
+      if(!any(query %in% rownames(matrix))) {
       message("Query genes are not differentially expressed in ident \"", ident,
         "\".")
       process_res <- FALSE
     }
   }
-  if(process_res) {
+  return(process_res)
+}
+
+.process_missing_genes <- function(DEG_matrix, missing, ident, genes_list) {
+  missing_df <- data.frame(matrix(data = 0, ncol = ncol(DEG_matrix),
+                           nrow = length(missing)))
+  colnames(missing_df) <- colnames(DEG_matrix)
+  missing_df$gene <- genes_list[missing]
+  missing_df$ident <- ident
+  DEG_matrix <- rbind(DEG_matrix, missing_df)
+  return(DEG_matrix)
+}    
+
+.process_DEG_matrix <- function(DEG_matrix, min_avg_log2FC = 0.2, ident = NULL,
+                                p_val_cutoff = 0.01, genes_list = NULL,
+                                query = NULL) {
+  res <- NULL
+  run <- .check_DEG_matrix(matrix = DEG_matrix, query = query, ident = ident)
+  if(run) {
     DEG_matrix <- DEG_matrix[rownames(DEG_matrix) %in% genes_list, ,
                              drop = FALSE]
     DEG_matrix <- DEG_matrix[, c("avg_log2FC", "p_val_adj", "gene")]
@@ -966,12 +980,8 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
     if(!is.null(genes_list)) {
       missing <- which(!genes_list %in% DEG_matrix$gene)
       if(length(missing) > 0) {
-      missing_df <- data.frame(matrix(data = 0, ncol = ncol(DEG_matrix),
-                                      nrow = length(missing)))
-      colnames(missing_df) <- colnames(DEG_matrix)
-      missing_df$gene <- genes_list[missing]
-      missing_df$ident <- ident
-      DEG_matrix <- rbind(DEG_matrix, missing_df)
+      DEG_matrix <- .process_missing_genes(DEG_matrix = DEG_matrix,
+                    genes_list = genes_list, missing = missing, ident = ident)
       }
     }
     DEG_matrix$p_val_adj <- NULL
@@ -1596,6 +1606,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
     params$integrate <- FALSE
     params$ref_de_method <- params$ref_filter <- params$filter_dataset <- ""
     params$exp_design <- ""
+    params$ref_version <- ""
   } else {
     params$target_genes <- ""
   }
@@ -1643,6 +1654,9 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   if(params$ref_filter == "") {
     params$ref_filter <- NULL
   }
+  if(params$ref_version == "") {
+    params$ref_version <- NULL
+  }
   if(file.exists(params$filter_dataset)) {
     params$filter_dataset <- readLines(params$filter_dataset)
   } else {
@@ -1669,9 +1683,9 @@ process_sc_params <- function(params = list(), mode = "annotation") {
 #'  }
 #' @export
 
-load_SingleR_ref <- function(path, version = "", filter = "") {
+load_SingleR_ref <- function(path, version = NULL, filter = "") {
   SingleR_ref <- NULL
-  if(version != "") {
+  if(!is.null(version)) {
     path <- paste(path, version, sep = "_")
   }
   message("Loading provided SingleR reference")
