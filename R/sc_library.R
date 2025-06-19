@@ -380,6 +380,48 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   return(res)
 }
 
+.get_subset_DEGs <- function(seu, subset_by, cond, sub_value, conds,
+                             min.pct, clust_num, verbose = FALSE) {
+  subset_seu <- subset_seurat(seu, subset_by, sub_value)
+  meta <- as.character(subset_seu@meta.data[[cond]])
+  ncells <- c(sum(meta==conds[1]), sum(meta==conds[2]))
+  if(any(ncells < 3)) {
+    warning(paste0('Cluster ', clust_num, ' contains fewer than three cells for',
+      ' condition \'', conds[which(ncells < 3)], '\'. Skipping DEG ',
+      'analysis\n', collapse = ""), immediate. = TRUE)
+    markers <- data.frame(FALSE)
+  } else {
+    Seurat::Idents(subset_seu) <- cond  
+    markers <- Seurat::FindMarkers(subset_seu, ident.1 = conds[1],
+                  ident.2 = conds[2], verbose = verbose, min.pct = min.pct)
+    markers$gene <- rownames(markers)
+  }
+  return(markers)
+}
+
+.get_subset_markers <- function(seu, subset_by, cond, conds, DEG, verbose,
+                                min.pct, assay) {
+  sub_values <- as.character(sort(unique(seu@meta.data[[subset_by]])))
+  sub_markers <- vector(mode = "list", length = length(sub_values))
+  names(sub_markers) <- as.character(sub_values)
+  for (i in seq(length(sub_values))) {
+    message(paste0("Analysing cluster ", i, "/", length(sub_values)))
+    if(DEG) {
+      markers <- .get_subset_DEGs(seu = seu, subset_by = subset_by, cond = cond,
+                    sub_value = sub_values[i], conds = conds, min.pct = min.pct,
+                    clust_num = i, verbose = verbose)
+    } else {
+      markers <- Seurat::FindConservedMarkers(seu, ident.1 = sub_values[i],
+                          grouping.var = cond, verbose = verbose, assay = assay)
+      markers[[subset_by]] <- sub_values[i]
+    }
+    nums <- sapply(markers, is.numeric)
+    markers[nums] <- lapply(markers[nums], signif, 2)
+    sub_markers[[as.character(sub_values[i])]] <- markers
+  }
+  return(sub_markers)
+}
+
 #' get_sc_markers
 #'
 #' `get_sc_markers` performs differential expression analysis on OR selects
@@ -428,38 +470,9 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
   }
   marker_meta <- list(high = paste0(cond, ": ", conds[1]),
                       low = paste0(cond, ": ", conds[2]))
-  sub_values <- as.character(sort(unique(seu@meta.data[[subset_by]])))
-  sub_markers <- vector(mode = "list", length = length(sub_values))
-  names(sub_markers) <- as.character(sub_values)
-  for (i in seq(length(sub_values))) {
-    message(paste0("Analysing cluster ", i, "/", length(sub_values)))
-    if(DEG) {
-      subset_seu <- subset_seurat(seu, subset_by, sub_values[i])
-      meta <- as.character(subset_seu@meta.data[[cond]])
-      ncells <- c(sum(meta==conds[1]), sum(meta==conds[2]))
-      if(any(ncells < 3)) {
-        warning(paste0('Cluster ', i, ' contains fewer than three cells for',
-                        ' condition \'', conds[which(ncells < 3)],
-                        '\'. Skipping DEG analysis\n', collapse = ""),
-                immediate. = TRUE)
-        markers <- data.frame(FALSE)
-      } else {
-        Seurat::Idents(subset_seu) <- cond  
-        markers <- Seurat::FindMarkers(subset_seu, ident.1 = conds[1],
-                                       ident.2 = conds[2], verbose = verbose,
-                                       min.pct = min.pct)
-        markers$gene <- rownames(markers)
-      }
-    } else {
-      markers <- Seurat::FindConservedMarkers(seu, ident.1 = sub_values[i],
-                                              grouping.var = cond,
-                                              verbose = verbose, assay = assay)
-      markers[[subset_by]] <- sub_values[i]
-    }
-    nums <- sapply(markers, is.numeric)
-    markers[nums] <- lapply(markers[nums], signif, 2)
-    sub_markers[[as.character(sub_values[i])]] <- markers
-  }
+  sub_markers <- .get_subset_markers(seu = seu, subset_by = subset_by,
+    conds = conds, cond = cond, DEG = DEG, verbose = verbose, min.pct = min.pct,
+    assay = assay)
   if(DEG) {
     message("Calculating global DEGs")
     Seurat::Idents(seu) <- seu@meta.data[, tolower(cond)]
@@ -1129,7 +1142,7 @@ downsample_seurat <- function(seu, cells = 500, features = 5000,
   }
   counts <- SeuratObject::GetAssayData(seu, assay = assay, layer = layer)
   if(is.numeric(features)) {
-    gene_list <- sample(rownames(counts), size = features, replace = F)
+    gene_list <- sample(rownames(counts), size = features, replace = FALSE)
   } else {
     gene_list <- features
   }
@@ -1137,7 +1150,7 @@ downsample_seurat <- function(seu, cells = 500, features = 5000,
   counts <- counts[gene_list, ]
   seu <- subset(seu, features = rownames(counts))
   if(is.numeric(cells)) {
-    cell_list <- sample(colnames(seu), size = cells, replace = F)
+    cell_list <- sample(colnames(seu), size = cells, replace = FALSE)
   } else {
     cell_list <- cells
   }
@@ -1435,7 +1448,7 @@ project_sketch <- function(seu, reduction, ndims){
   seu <- Seurat::ProjectData(object = seu, sketched.assay = "sketch",
     assay = "RNA", dims = seq(1, ndims), refdata = refdata,
     full.reduction = paste0(reduction, ".full"),
-    sketched.reduction = paste0(reduction, ".full")) ## WHY 30 dims???
+    sketched.reduction = paste0(reduction, ".full"))
   seu <- Seurat::RunUMAP(seu, reduction = paste0(reduction, ".full"),
     dims = seq(1, ndims), reduction.name = "umap.full",
     reduction.key = "UMAP_full_")
