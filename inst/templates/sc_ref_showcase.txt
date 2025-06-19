@@ -16,7 +16,7 @@ for(table in names(plotter$hash_vars$tables)) {
 	cat(plotter$create_title(paste0("<b>Metadata field \"", table, "\"</b>"), clickable_text = NULL,
 						 id = title_id, t_id = clickable_id, hlevel = 2, indexable = FALSE, clickable = TRUE))
 	code <- plotter$prettify_div(plotter$table(list(id = "table", header = NULL, row_names = NULL,
-						table_rownames = FALSE, styled = "dt", text = "dynamic")), preset = "magic")
+						table_rownames = FALSE, styled = "dt", text = TRUE)), preset = "magic")
 	cat(plotter$create_collapsable_container(id = clickable_id, html_code = code))
 }
 end.rcode-->
