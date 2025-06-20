@@ -1,5 +1,6 @@
 #! /usr/bin/env Rscript
 
+
 if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   # Obtain this script directory
   full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile), 
@@ -50,16 +51,12 @@ option_list <- list(
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 opt$name <- basename(opt$reference)
+output <- file.path(opt$output, basename(opt$reference))
+if(opt$version != "") {
+  output <- paste(output, opt$version, sep = "_")
+}
 
-if(opt$only_showcase) {
-  message("Loading SingleR ref for showcase report")
-  ref <- load_SingleR_ref(path = opt$reference, version = opt$ref_version, filter = NULL)
-} else {
-  output <- file.path(opt$output, basename(opt$reference))
-  if(opt$version != "") {
-    output <- paste(output, opt$version, sep = "_")
-  }
-
+if(!opt$only_showcase) {
   if(is.null(opt$reference)) {
     stop('No reference provided. Please see get_SingleR_ref.R --help')
   }
@@ -134,19 +131,27 @@ if(opt$only_showcase) {
   if(opt$database == "celldex") {
     ref <- celldex::fetchReference(opt$reference, opt$version)
   }
-
-  HDF5Array::saveHDF5SummarizedExperiment(x = ref, dir = output, verbose = opt$verbose,
-                      replace = opt$replace)
-
+  HDF5Array::saveHDF5SummarizedExperiment(x = ref, dir = output, verbose = opt$verbose, replace = opt$replace)
   message(paste0("Reference saved successfully in ", output))
+} else {
+  message("Loading SingleR ref for showcase report")
+  ref <- load_SingleR_ref(path = output, version = opt$ref_version, filter = NULL)
 }
 
 message("Preparing report showcasing selected reference")
 
 tables <- lapply(ref@colData, col_to_table, col_names = c("Type", "Frequency"))
 names(tables) <- colnames(ref@colData)
-tables <- list(tables = tables)
 
-write_sc_report(final_results = tables, template_folder = template_folder,
-                output = getwd(), template = "sc_ref_showcase.txt",
-                out_suffix = "ref_showcase.html", opt = opt)
+sce <- as(ref, "SingleCellExperiment")
+sce@assays@data$counts <- as(sce@assays@data$counts, "dgCMatrix")
+sce@assays@data$logcounts <- as(sce@assays@data$logcounts, "dgCMatrix")
+seu <- Seurat::as.Seurat(sce)
+seu <- Seurat::NormalizeData(object = seu, verbose = FALSE, normalization.method = "LogNormalize", scale.factor = 1e6)
+seu <- Seurat::FindVariableFeatures(seu, nfeatures = 2000, verbose = FALSE, selection.method = "vst", assay = "originalexp")
+seu <- Seurat::ScaleData(object = seu, verbose = FALSE, features = rownames(seu))
+seu <- Seurat::FindNeighbors(object = seu, dims = seq(10), assay = "originalexp", reduction = "PCA", verbose = FALSE)
+seu <- Seurat::RunUMAP(object = seu, dims = seq(10), verbose = FALSE, reduction = "PCA", return.model = TRUE)
+
+write_sc_report(final_results = list(tables = tables, seu = seu), template_folder = template_folder, output = getwd(),
+                template = "sc_ref_showcase.txt", out_suffix = "ref_showcase.html", opt = opt)
