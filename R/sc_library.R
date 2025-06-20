@@ -692,7 +692,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
   subset_list <- vector(mode = "list", length = length(items))
   names(subset_list) <- items
   for(i in seq(length(items))) {
-    message("Subsetting", by[1],  paste0(i, "/", length(items)))
+    message(paste("Subsetting", by[1],  paste0(i, "/", length(items))))
     subset <- subset_seurat(seu, by[1], as.character(items[i]))
     subset_list[[as.character(items[i])]] <- subset
   }
