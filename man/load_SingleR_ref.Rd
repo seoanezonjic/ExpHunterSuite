@@ -4,7 +4,7 @@
 \alias{load_SingleR_ref}
 \title{load_SingleR_ref}
 \usage{
-load_SingleR_ref(path, version = "", filter = "")
+load_SingleR_ref(path, version = NULL, filter = "")
 }
 \arguments{
 \item{path}{Path to reference to load.}

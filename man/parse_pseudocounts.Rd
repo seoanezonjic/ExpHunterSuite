@@ -21,10 +21,10 @@ main_parse_pseudocounts
 Functions that loads pseudommappers results and complite it into a table of counts
 }
 \examples{
-\dontrun{
-	parse_pseudocounts(input_folder = "Path_to_folder",
-						mapper = "salmon",
-						annotation_file = "path_to_gtf")	
+ \dontrun{
+     parse_pseudocounts(input_folder = "Path_to_folder",
+                         mapper = "salmon",
+                         annotation_file = "path_to_gtf")    
  }
 }
 \keyword{method}
