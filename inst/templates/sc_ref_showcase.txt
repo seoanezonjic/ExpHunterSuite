@@ -1,6 +1,18 @@
 
 <!--begin.rcode setup
 	opt <- plotter$hash_vars$opt
+	Custom_DimPlot <- function(seu) {
+        ident <- opt$ref_label
+        res <- Seurat::DimPlot(seu, reduction = reduction, label = label, repel = TRUE, split.by = split.by,
+                        group.by = group.by) 
+        if(label) {
+          res <- res + ggplot2::theme(legend.position="none")
+        }
+        return(res)
+    }
+    reduction <- ifelse("umap.full" %in% names(plotter$hash_vars$seu@reductions), yes = "umap.full", no = "umap")
+    label <- TRUE
+    group.by <- split.by <- NULL
 end.rcode-->
 
 <!--begin.rcode intro
@@ -9,6 +21,7 @@ cat(plotter$create_title(paste0("<b>Showcasing reference ", opt$reference, ", ve
 end.rcode-->
 
 <!--begin.rcode tables
+cat(plotter$create_title(paste0("<b>Metadata summary</b>"), "met_sum", hlevel = 2, indexable = TRUE, clickable = FALSE))
 for(table in names(plotter$hash_vars$tables)) {
 	plotter$hash_vars$table <- plotter$hash_vars$tables[[table]]
 	title_id <- paste0("metadata_", table)
@@ -19,5 +32,10 @@ for(table in names(plotter$hash_vars$tables)) {
 						table_rownames = FALSE, styled = "dt", text = TRUE)), preset = "magic")
 	cat(plotter$create_collapsable_container(id = clickable_id, html_code = code))
 }
+end.rcode-->
+
+<!--begin.rcode umap
+cat(plotter$create_title(paste0("<b>Reference UMAP projection</b>"), "umap", hlevel = 2, indexable = TRUE, clickable = FALSE))
+cat(plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE, plotting_function = Custom_DimPlot), preset = "magic"))
 end.rcode-->
 
