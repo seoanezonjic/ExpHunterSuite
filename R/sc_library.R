@@ -804,6 +804,42 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
   return(res)
 }
 
+.process_query <- function(DEG_list, query, return_output, genes_warn) {
+    if(is.null(query)) {
+      gene_list <- .get_union_DEGenes(DEG_list = DEG_list)
+    } else {
+      gene_list <- query
+      if(any(!query %in% rownames(seu)) & is.null(genes_warn)) {
+        warning(paste0("Target gene(s) \"",
+        paste(query[!query %in% rownames(seu)], collapse = "\", \""),
+        "\" are not expressed in dataset."))
+      }
+      query <- query[query %in% rownames(seu)]
+    }
+    if(!is.null(query) & !any(query %in% unique(unlist(lapply(DEG_list,
+        rownames)))) & return_output) {
+      warning("None of specified target genes are differentially expressed ",
+              "in dataset.")
+      return_output <- FALSE
+    }
+    return(list(query = query, gene_list = gene_list,
+                return_output = return_output))
+}
+
+.get_fc <- function(seu, meta, genes, DEG_list, min_avg_log2FC, p_val_cutoff,
+                    query) {
+  matrix_list <- .get_matrices(seu = seu, meta = meta, genes = genes,
+                        DEG_list = DEG_list, min_avg_log2FC = min_avg_log2FC,
+                        p_val_cutoff = p_val_cutoff, query = query)
+  DEG_df <- matrix_list$DEG_df
+  if(any(!query %in% colnames(DEG_df))) {
+    warning("Target gene(s) \"", paste(query[!query %in% colnames(DEG_df)],
+            collapse = "\", \""), "\" are not differentially expressed in ",
+            "dataset.", immediate. = TRUE)
+  }
+  return(list(matrix_list = matrix_list, DEG_df = DEG_df))
+}
+
 #' get_fc_vs_ncells
 #'
 #' `get_fc_vs_ncells` takes a seurat object and a list of differentially
@@ -858,40 +894,21 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
       warning("No per-identity DEG analysis present in DEG list.")
       return_output <- FALSE
     } else {
-      if(is.null(query)) {
-        gene_list <- .get_union_DEGenes(DEG_list = DEG_list)
-      } else {
-        gene_list <- query
-        if(any(!query %in% rownames(seu)) & is.null(genes_warn)) {
-          warning(paste0("Target gene(s) \"",
-          paste(query[!query %in% rownames(seu)], collapse = "\", \""),
-          "\" are not expressed in dataset."))
-        }
-        query <- query[query %in% rownames(seu)]
-      }
-      if(!is.null(query) & !any(query %in% unique(unlist(lapply(DEG_list,
-          rownames)))) & return_output) {
-        warning("None of specified target genes are differentially expressed ",
-                "in dataset.")
-        return_output <- FALSE
-      }
+      processed_query <- .process_query(DEG_list = DEG_list, query = query,
+                        return_output = return_output, genes_warn = genes_warn)
+      query <- processed_query$query
+      gene_list <- processed_query$gene_list
+      return_output <- processed_query$return_output
       if(return_output) {
-        matrix_list <- .get_matrices(seu = seu, meta = meta, genes = gene_list,
-                        DEG_list = DEG_list, min_avg_log2FC = min_avg_log2FC,
-                        p_val_cutoff = p_val_cutoff, query = query)
-        DEG_df <- matrix_list$DEG_df
-        if(any(!query %in% colnames(DEG_df))) {
-          warning(paste0("Target gene(s) \"",
-                  paste(query[!query %in% colnames(DEG_df)],
-                  collapse = "\", \""), "\" are not differentially expressed ",
-                  "in dataset."))
-        }
+        fc_res <- .get_fc(seu = seu, meta = meta, genes = gene_list, query = query,
+          DEG_list = DEG_list, min_avg_log2FC = min_avg_log2FC,
+          p_val_cutoff = p_val_cutoff)
       }
     }
   }
   if(return_output) {
-    res <- .add_ncell_df(DEG_df = DEG_df, matrices = matrix_list$matrices,
-                         min_counts = min_counts)
+    res <- .add_ncell_df(DEG_df = fc_res$DEG_df, min_counts = min_counts,
+                         matrices = fc_res$matrix_list$matrices)
   }
   return(res)
 }
