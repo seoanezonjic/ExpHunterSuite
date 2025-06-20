@@ -804,7 +804,7 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
   return(res)
 }
 
-.process_query <- function(DEG_list, query, return_output, genes_warn) {
+.process_query <- function(seu, DEG_list, query, return_output, genes_warn) {
     if(is.null(query)) {
       gene_list <- .get_union_DEGenes(DEG_list = DEG_list)
     } else {
@@ -818,8 +818,8 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
     }
     if(!is.null(query) & !any(query %in% unique(unlist(lapply(DEG_list,
         rownames)))) & return_output) {
-      warning("None of specified target genes are differentially expressed ",
-              "in dataset.")
+      if(is.null(genes_warn)) warning("None of specified target genes are ",
+        "differentially expressed in dataset.")
       return_output <- FALSE
     }
     return(list(query = query, gene_list = gene_list,
@@ -838,6 +838,22 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
             "dataset.", immediate. = TRUE)
   }
   return(list(matrix_list = matrix_list, DEG_df = DEG_df))
+}
+
+.check_query_for_fc <- function(query, seu, p_val_cutoff, min_avg_log2FC,
+                                genes_warn = NULL) {
+  if(!is.null(query)) {
+    message("Starting analysis for target gene list. DEG cutoffs disabled.")
+    if(all(!query %in% rownames(seu))) {
+      genes_warn <- "None of the target genes are expressed in seurat object."
+      warning(genes_warn)
+      return_output <- FALSE
+    }
+    min_avg_log2FC <- 0
+    p_val_cutoff <- 1
+  }
+  return(list(genes_warn = genes_warn, min_avg_log2FC = min_avg_log2FC,
+              p_val_cutoff = p_val_cutoff))
 }
 
 #' get_fc_vs_ncells
@@ -864,23 +880,16 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
 
 get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
                             p_val_cutoff = 0.01, min_counts = 1) {
+  genes_warn <- NULL
   res <- NULL
   return_output <- TRUE
-  genes_warn <- NULL
   if(length(DEG_list) < 1) {
     warning("Empty DEG_list provided.")
     return_output <- FALSE
   } else {
-    if(!is.null(query)) {
-      message("Starting analysis for target gene list. DEG cutoffs disabled.")
-      if(all(!query %in% rownames(seu))) {
-        genes_warn <- "None of the target genes are expressed in seurat object."
-        warning(genes_warn)
-        return_output <- FALSE
-      }
-      min_avg_log2FC <- 0
-      p_val_cutoff <- 1
-    }
+    check <- .check_query_for_fc(query = query, seu = seu,
+                  min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff)
+    genes_warn <- check$genes_warn
     if("cell_type" %in% colnames(seu@meta.data)) {
       meta <- seu$cell_type
     } else {
@@ -894,15 +903,13 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
       warning("No per-identity DEG analysis present in DEG list.")
       return_output <- FALSE
     } else {
-      processed_query <- .process_query(DEG_list = DEG_list, query = query,
-                        return_output = return_output, genes_warn = genes_warn)
-      query <- processed_query$query
-      gene_list <- processed_query$gene_list
+      processed_query <- .process_query(seu = seu, DEG_list = DEG_list,
+        query = query, return_output = return_output, genes_warn = genes_warn)
       return_output <- processed_query$return_output
       if(return_output) {
-        fc_res <- .get_fc(seu = seu, meta = meta, genes = gene_list, query = query,
-          DEG_list = DEG_list, min_avg_log2FC = min_avg_log2FC,
-          p_val_cutoff = p_val_cutoff)
+        fc_res <- .get_fc(seu = seu, meta = meta, p_val_cutoff = check$p_val_cutoff,
+          genes = processed_query$gene_list, query = processed_query$query,
+          DEG_list = DEG_list, min_avg_log2FC = check$min_avg_log2FC)
       }
     }
   }
