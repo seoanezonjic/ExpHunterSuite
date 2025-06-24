@@ -34,11 +34,12 @@ read_sc_counts <- function(name, input, mincells = 1, minfeats = 1, exp_design){
 #'
 #' @importFrom Seurat PercentageFeatureSet
 #' @param seu Seurat object to tag
-#' @param minqcfeats Min number of features for which a cell is selected.
+#' @param minqcfeats An integer. Minimum features to consider a cell valid.
 #' Default 500
-#' @param percentmt Max percentage of reads mapped to mitochondrial genes for
-#' which a cell is selected. Default 5
-#' @param doublet_list Vector of barcodes to be marked as doublet. Default NULL
+#' @param percentmt A float. Maximum MT percentage to consider a cell valid.
+#' Default 5
+#' @param doublet_list Vector of barcodes to be marked as doublet. Default NULL.
+#' @param FDR '
 #'
 #' @keywords preprocessing, qc
 #' 
@@ -792,7 +793,7 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
 #' data(pbmc_tiny)
 #' pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
 #' get_qc_pct(seu = pbmc_tiny, top = 5, assay = "RNA", layer = "counts",
-#'            sample_col = "orig.ident", by = "seurat_clusters", sigfig = 2)
+#'            sample_col = "orig.ident", sigfig = 2)
 #' @export
 
 get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
@@ -1388,6 +1389,7 @@ annotate_seurat <- function(seu, cell_annotation = NULL,
 #' @inheritParams main_annotate_sc
 #' @inheritParams SingleR::trainSingleR
 #' @inheritParams calculate_markers
+#' @importFrom BiocParallel Serialparam
 #' @param fine.tune A boolean.
 #'   * `TRUE` (the default): Fine-tune statistical model built for transfer.
 #'   * `FALSE`: Do not perform fine-tuning..
@@ -1405,7 +1407,7 @@ annotate_seurat <- function(seu, cell_annotation = NULL,
 
 annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
                              integrate = "TRUE",
-                             BPPARAM = NULL, ref_de_method = "wilcox",
+                             BPPARAM = SerialParam(), ref_de_method = "wilcox",
                              ref_label = ref_label, aggr.ref = FALSE,
                              fine.tune = TRUE, assay = "RNA", verbose = FALSE,
                              save_pdf = getwd(), subset_by = NULL){
