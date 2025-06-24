@@ -30,12 +30,12 @@ main_annotate_sc(
   SingleR_ref = NULL,
   ref_de_method = NULL,
   ref_n = NULL,
-  BPPARAM = NULL,
+  BPPARAM = SerialParam(),
   doublet_list = NULL,
+  k_weight = 100,
   integration_method = "Harmony",
   sketch = FALSE,
   sketch_pct = 25,
-  k_weight = 100,
   force_ncells = NA_integer_,
   sketch_method = "LeverageScore",
   doublet_path = getwd()
@@ -44,9 +44,11 @@ main_annotate_sc(
 \arguments{
 \item{seu}{A seurat object.}
 
-\item{minqcfeats}{An integer. Minimum features to consider a cell valid}
+\item{minqcfeats}{An integer. Minimum features to consider a cell valid.
+Default 500}
 
-\item{percentmt}{A float. Maximun MT percentage to consider a cell valid}
+\item{percentmt}{A float. Maximum MT percentage to consider a cell valid.
+Default 5}
 
 \item{query}{A string vector. List of genes to explore in dataset}
 
@@ -114,8 +116,11 @@ time. Will not be used if ref_de_method is empty.}
 \item{BPPARAM}{Parameters to pass to BiocParallel framework.}
 
 \item{doublet_list}{A vector containing barcodes to be marked as doublets.
-NULL by default. Per-sample analysis finds this vector
-for every sample, integrative mode requires this vector.}
+NULL by default. Per-sample analysis finds this vector for every sample,
+integrative mode requires this vector.}
+
+\item{k_weight}{Number of neighbors to consider when weighting anchors. Used
+in integration.}
 
 \item{integration_method}{A string. Method to use in integration. "Harmony"
 (the default), "RPCA", "CCA", "FastMNN" or "scVI".}
@@ -126,9 +131,6 @@ for every sample, integrative mode requires this vector.}
 \item{sketch_pct}{A numeric. Percentage of total cells to consider
 representative of the experiment. Default 12, as suggested by sketching
 tutorial.}
-
-\item{k_weight}{Number of neighbors to consider when weighting anchors. Used
-in integration.}
 
 \item{force_ncells}{an integer. Sketch function will be forced to select
 this many cells.}

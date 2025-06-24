@@ -39,5 +39,5 @@ expressed in every sample in a seurat object.
 data(pbmc_tiny)
 pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
 get_qc_pct(seu = pbmc_tiny, top = 5, assay = "RNA", layer = "counts",
-           sample_col = "orig.ident", by = "seurat_clusters", sigfig = 2)
+           sample_col = "orig.ident", sigfig = 2)
 }

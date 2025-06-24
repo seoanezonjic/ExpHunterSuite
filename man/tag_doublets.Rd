@@ -9,7 +9,7 @@ tag_doublets(seu, doublet_list)
 \arguments{
 \item{seu}{Seurat object to tag}
 
-\item{doublet_list}{Vector of barcodes to be marked as doublet. Default NULL}
+\item{doublet_list}{Vector of barcodes to be marked as doublet. Default NULL.}
 }
 \value{
 Seurat object with tagged doublets

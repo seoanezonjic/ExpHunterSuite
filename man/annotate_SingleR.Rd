@@ -9,7 +9,7 @@ annotate_SingleR(
   SingleR_ref = NULL,
   ref_n = 25,
   integrate = "TRUE",
-  BPPARAM = NULL,
+  BPPARAM = SerialParam(),
   ref_de_method = "wilcox",
   ref_label = ref_label,
   aggr.ref = FALSE,

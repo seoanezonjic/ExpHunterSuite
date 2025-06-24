@@ -9,13 +9,13 @@ tag_qc(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL)
 \arguments{
 \item{seu}{Seurat object to tag}
 
-\item{minqcfeats}{Min number of features for which a cell is selected.
+\item{minqcfeats}{An integer. Minimum features to consider a cell valid.
 Default 500}
 
-\item{percentmt}{Max percentage of reads mapped to mitochondrial genes for
-which a cell is selected. Default 5}
+\item{percentmt}{A float. Maximum MT percentage to consider a cell valid.
+Default 5}
 
-\item{doublet_list}{Vector of barcodes to be marked as doublet. Default NULL}
+\item{doublet_list}{Vector of barcodes to be marked as doublet. Default NULL.}
 }
 \value{
 Seurat object with tagged metadata
