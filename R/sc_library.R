@@ -39,7 +39,6 @@ read_sc_counts <- function(name, input, mincells = 1, minfeats = 1, exp_design){
 #' @param percentmt A float. Maximum MT percentage to consider a cell valid.
 #' Default 5
 #' @param doublet_list Vector of barcodes to be marked as doublet. Default NULL.
-#' @param FDR '
 #'
 #' @keywords preprocessing, qc
 #' 
