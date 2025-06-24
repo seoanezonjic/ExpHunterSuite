@@ -1389,7 +1389,7 @@ annotate_seurat <- function(seu, cell_annotation = NULL,
 #' @inheritParams main_annotate_sc
 #' @inheritParams SingleR::trainSingleR
 #' @inheritParams calculate_markers
-#' @importFrom BiocParallel Serialparam
+#' @importFrom BiocParallel SerialParam
 #' @param fine.tune A boolean.
 #'   * `TRUE` (the default): Fine-tune statistical model built for transfer.
 #'   * `FALSE`: Do not perform fine-tuning..
