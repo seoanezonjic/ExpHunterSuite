@@ -5,10 +5,9 @@
 #'
 #' @inheritParams process_sketch
 #' @inheritParams process_doublets
+#' @inheritParams tag_qc
 #' @param seu A seurat object.
 #' @param name Project name. Default NULL (no project name)
-#' @param minqcfeats An integer. Minimum features to consider a cell valid
-#' @param percentmt A float. Maximun MT percentage to consider a cell valid
 #' @param query A string vector. List of genes to explore in dataset
 #' @param sigfig An integer. Significant figures to output
 #' @param resolution An integer. Controls clustering granularity. Default 0.5
@@ -46,8 +45,8 @@
 #' provide a more accurate annotation, but increase noise and computational 
 #' time. Will not be used if ref_de_method is empty.
 #' @param doublet_list A vector containing barcodes to be marked as doublets.
-#' NULL by default. Per-sample analysis finds this vector
-#' for every sample, integrative mode requires this vector.
+#' NULL by default. Per-sample analysis finds this vector for every sample,
+#' integrative mode requires this vector.
 #' @param BPPARAM Parameters to pass to BiocParallel framework.
 #' @param integration_method A string. Method to use in integration. "Harmony"
 #' (the default), "RPCA", "CCA", "FastMNN" or "scVI".
@@ -112,8 +111,8 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     hvgs = 2000, subset_by = NULL, ndims = 10, normalmethod = "LogNormalize",
     verbose = FALSE, output = getwd(), reduce = FALSE,
     ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL, ref_n = NULL,
-    BPPARAM = NULL, doublet_list = NULL, integration_method = "Harmony",
-    sketch = FALSE, sketch_pct = 25, k_weight = 100,
+    BPPARAM = SerialParam(), doublet_list = NULL, k_weight = 100,
+    integration_method = "Harmony", sketch = FALSE, sketch_pct = 25, 
     force_ncells = NA_integer_, sketch_method = "LeverageScore",
     doublet_path = getwd()){
     main_start <- Sys.time()
@@ -121,7 +120,10 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                               SingleR_ref = SingleR_ref, reduce = reduce)
     annotate <- TRUE
     qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
-                 doublet_list = doublet_list)
+                 doublet_list = doublet_list, BPPARAM = BPPARAM,
+                 lower = lower, niters = 10000, test.ambient = FALSE,
+                 ignore = NULL, alpha = NULL, round = TRUE, by.rank = NULL,
+                 known.empty = NULL)
     if(length(unique(qc$sample)) == 1) {
       qc <- process_doublets(seu = qc, name = name, doublet_path = doublet_path,
                              assay = "RNA", nfeatures = hvgs, BPPARAM = BPPARAM,
@@ -325,8 +327,10 @@ write_annot_output <- function(final_results = stop("Missing results object"),
     write.table(reduction@cell.embeddings, sep = "\t", quote = FALSE,
             row.names = TRUE, file = file.path(opt$output, "embeddings",
             "cell_embeddings.tsv"))
-    write.table(final_results$markers, sep = "\t", quote = FALSE,
-        row.names = TRUE, file = file.path(opt$output, "markers.tsv"))
+    if(!is.null(final_results$markers)) {
+      write.table(final_results$markers, sep = "\t", quote = FALSE,
+                  row.names = TRUE, file = file.path(opt$output, "markers.tsv"))
+    }
     message("Counts matrix saved to ", file.path(opt$output, "counts"))
     return(invisible(NULL))
 }
