@@ -3,6 +3,7 @@
 	opt <- plotter$hash_vars$opt
 	Custom_DimPlot <- function(seu) {
         ident <- opt$ref_label
+        Seurat::Idents(seu) <- ident
         res <- Seurat::DimPlot(seu, reduction = reduction, label = label, repel = TRUE, split.by = split.by,
                         group.by = group.by) 
         if(label) {
