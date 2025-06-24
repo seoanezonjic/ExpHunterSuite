@@ -6,6 +6,7 @@
 #' @inheritParams process_sketch
 #' @inheritParams process_doublets
 #' @inheritParams tag_qc
+#' @importFrom BiocParallel SerialParam
 #' @param seu A seurat object.
 #' @param name Project name. Default NULL (no project name)
 #' @param query A string vector. List of genes to explore in dataset
