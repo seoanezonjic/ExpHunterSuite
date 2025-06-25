@@ -126,35 +126,6 @@ debug_point <- function(file, message = "Debug point",envir = NULL){
     on.exit()
 }
 
-#' @importFrom ggplot2 ggplot aes_string geom_bar theme element_text
-#' @importFrom grDevices pdf dev.off
-#' @importFrom utils write.table
-save_times <- function(time_control, 
-                       output="times_control.txt", 
-                       plot_name = "time_control.pdf"){
- spent_times <- list()
-    invisible(lapply(seq(2,length(time_control)), function(time_control_i){
-      spent_times[[names(time_control)[time_control_i]]] <<- as.numeric(
-                                      unlist(time_control[time_control_i]) - 
-                                      unlist(time_control[time_control_i - 1]))
-    }))
-    spent_times_df <- do.call(rbind.data.frame, spent_times)
-    colnames(spent_times_df) <- c("time")
-    spent_times_df$control <- names(spent_times)
-    pp <- ggplot2::ggplot(spent_times_df, ggplot2::aes_string(x = "control", 
-                                                              y = "time")) +
-          ggplot2::geom_bar(stat = "identity") +
-          ggplot2::theme(axis.text.x=ggplot2::element_text(angle = 25, 
-                                                           hjust=1))
-    grDevices::pdf(file.path(dirname(output), plot_name))    
-      plot(pp)
-    grDevices::dev.off()
-    utils::write.table(spent_times_df, 
-                       file=output, 
-                       quote=FALSE, 
-                       row.names=FALSE, 
-                       sep="\t")
-}
 
 #' Parallelize function execution in list with multiple elements
 #' @param X R list

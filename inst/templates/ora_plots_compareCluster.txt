@@ -8,6 +8,11 @@
 	enrich_dotplot <- function(input_obj) {
 		enrichplot::dotplot(input_obj, showCategory= plotter$hash_vars$showCategories)
 	}
+	clusters_heatplot <- function(compare_cluster_obj){
+        pp <- ggplot2::ggplot(compare_cluster_obj, ggplot2::aes_string(x = "Cluster", 
+        y = "Description", fill = "p.adjust")) + 
+        ggplot2::geom_tile() 
+    }
 	custom_heatplot <- function(input_obj) {
 		clusters_heatplot(input_obj@compareClusterResult)
 	}
@@ -20,6 +25,12 @@
 												 group_category = group_category, nCluster = nCluster, nWords = nWords, repel = TRUE,
 												 layout.params = list(layout = "nicely"))
 	}
+	clnetplot <- function(compareCluster, ...) {
+        mod_enrich_obj <- compareCluster
+        mod_enrich_obj@compareClusterResult$geneID <- as.character(mod_enrich_obj@compareClusterResult$Cluster)
+        clnet_plot <- enrichplot::cnetplot(mod_enrich_obj, ...) 
+        return(clnet_plot)
+    }
 	custom_clnetplot <- function(input_obj) {
 		clnetplot(input_obj, showCategory = plotter$hash_vars$showCategories)
 	}

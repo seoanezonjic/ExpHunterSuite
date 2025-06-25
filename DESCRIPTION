@@ -46,7 +46,10 @@ Suggests:
     EnhancedVolcano (>= 1.22.0),
     GGally (>= 2.2.1),
     PerformanceAnalytics (>= 2.0.8),
-    scRNAseq (>= 2.18.0)
+    scRNAseq (>= 2.18.0),
+    DT (>= 0.33),
+    ggrepel (>= 0.9.6),
+    knitr (>= 1.49)
 Imports:
     GenomicScores (>= 2.16.0),
     DropletUtils (>= 1.24.0),
@@ -56,7 +59,6 @@ Imports:
     NOISeq (>= 2.48.0),
     topGO (>= 2.56.0),
     diffcoexp (>= 1.24.0),
-    DT (>= 0.33),
     ggplot2 (>= 3.5.1),
     stringr (>= 1.5.1),
     WGCNA (>= 1.73),
@@ -69,7 +71,6 @@ Imports:
     DESeq2 (>= 1.44.0),
     ROCR (>= 1.0.11),
     data.table (>= 1.16.4),
-    knitr (>= 1.49),
     magrittr (>= 2.0.3),
     SummarizedExperiment (>= 1.34.0),
     miRBaseVersions.db (>= 1.1.0),
@@ -87,7 +88,6 @@ Imports:
     fastcluster (>= 1.2.6),
     DOSE (>= 3.30.5),
     heatmaply (>= 1.5.0),
-    ggrepel (>= 0.9.6),
     clusterProfiler (>= 4.12.6),
     GenomicRanges (>= 1.56.1),
     IRanges (>= 2.38.1),

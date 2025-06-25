@@ -10,11 +10,10 @@ get_clusters_count(results_WGCNA)
 \item{results_WGCNA}{WGCNA results object.}
 }
 \value{
-An integer. Number of unique cluster IDs in object.
+number of clusters in a WGCNA object
 }
 \description{
-\code{get_clusters_count} Extracts the length of unique clusters in a WGCNA
-results object.
+\code{get_clusters_count} count how many clusters are found in a WGCNA object
 }
 \examples{
  \dontrun{

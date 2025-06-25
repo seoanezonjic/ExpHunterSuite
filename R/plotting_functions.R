@@ -1,97 +1,19 @@
 ###############################################################################
 ############### Plot functions
 ###############################################################################
-#' @importFrom knitr knit knit_expand
-#' @importFrom stats runif
-resize <- function(g, fig_height=5, fig_width=12) {
-  g_deparsed <- paste0(deparse(function() {g}), collapse = '')
-  sub_chunk <- paste0("\n```{r sub_chunk_", floor(stats::runif(1) * 10000), 
-    ", fig.height=", fig_height, ", fig.width=", fig_width, 
-    ", echo=FALSE}", "\n(", g_deparsed, ")()\n```\n\n\n")
-  cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk), quiet = TRUE))
-}
 
-#' @importFrom ggplot2 fortify
-#' @importFrom DT datatable
-plot_enrResult_DT <- function(ER){
-  toshow <- ggplot2::fortify(ER)[,!colnames(ER@compareClusterResult) %in% 
-                                c("pvalue","qvalue")]
-  toshow$Cluster <- gsub("[\n,\t,\r]{0,1}\\(.*\\)","",toshow$Cluster)
-  DT::datatable(toshow, filter = 'top', rownames = FALSE, 
-                      extensions = c('Buttons','ColReorder'),
-                      options = list(
-                        colReorder = TRUE,
-                        dom = 'lftBip',
-                          buttons = c('copy', 'csv', 'excel')
-  ))
-}
-
-
-#' @importFrom stats runif
-rechunk <- function(code, counter = NULL,chunk_options = "") {
-
-   if (chunk_options != ""){
-    chunk_options <- paste0(", ", chunk_options)
-   } 
-   if (!is.null(counter)){
-    counter <- counter + 1
-   } else {
-    counter <- floor(stats::runif(1) * 10000)
-   }
-  if (!is.character(code)){
-   code_deparsed <- paste0(deparse(function() {code}), collapse = '')
-   code_deparsed <- paste0("(", code_deparsed, ")()")
-  } else {
-    code_deparsed <- code
-  }
-   sub_chunk <- paste0("\n```{r sub_chunk_", counter, chunk_options, 
-   "}", "\n", code_deparsed, "\n```\n\n\n")
-
-   cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk), quiet = TRUE))
-   return(counter)
-}
-
-
-
-#' @importFrom knitr knit knit_expand
-#' @importFrom stats runif
-plot_in_div <- function(g, fig_height=7, fig_width=12, 
-## height and width in inches
-  cex = 1, #size multiplier
-  max_size = 50, # max size for plots in inches
-  min_size = 10, 
-  counter = NULL) {
-  cat('\n<div class="plot_real_size">\n')
-  fig_height <- fig_height * cex
-  fig_width <- fig_width * cex
-
-  if(fig_height > max_size){
-    fig_height <- max_size
-    }else if(fig_height < min_size){
-    fig_height <- min_size
-  }
-  if(fig_width > max_size){
-    fig_width <- max_size
-    }else if(fig_width < min_size){
-    fig_width <- min_size  
-  }
-  g_deparsed <- paste0(deparse(function() {g}), collapse = '')
-  # set.seed(Sys.time())
-  if (!is.null(counter)){
-    chunk_name <- paste0("sub_chunk_", counter)
-    counter <- counter + 1
-  } else {
-    chunk_name <- paste0("sub_chunk_", floor(stats::runif(1) * 10000))
-  }
-  sub_chunk <- paste0("\n```{r ", chunk_name, ", fig.height=", 
-    fig_height, ", fig.width=", fig_width, ", echo=FALSE}", 
-    "\n(", g_deparsed, ")()\n```\n\n\n") 
-    # sub_chunk_", floor(runif(1) * 1000000), "
-  cat(knitr::knit(text = knitr::knit_expand(text = sub_chunk), quiet = TRUE))
-  cat('\n</div>\n')
-  return(counter)
-}
- 
+#' get_plot_df
+#'
+#' `get_plot_df` Gets geneSets as df from enrichment object
+#'
+#' @param enrich_obj WGCNA results object.
+#' @param showCategory Number of categories to show
+#' @returns geneSets data.frame for printing in reports
+#' @examples
+#'  \dontrun{
+#'    get_plot_df(enrich_MF)
+#'  }
+#' @export
 get_plot_df <- function(enrich_obj, showCategory = 30) {
   extract_geneSets <- get_unexported_function("enrichplot", "extract_geneSets")
   list2df <- get_unexported_function("enrichplot", "list2df")
@@ -101,27 +23,18 @@ get_plot_df <- function(enrich_obj, showCategory = 30) {
   return(geneSets)
 }
 
-check_categories <- function(enrichplot_obj, min_categories = 1) {
-  aux <- enrichplot_obj@result
-  categories_count <- length(aux$Description[aux$p.adjust <= 
-                                            enrichplot_obj@pvalueCutoff])  
-  check <- categories_count > min_categories 
-  return(check)
-}
 
 #' get_clusters_count
 #'
-#' `get_clusters_count` Extracts the length of unique clusters in a WGCNA
-#' results object.
+#' `get_clusters_count` count how many clusters are found in a WGCNA object
 #'
 #' @param results_WGCNA WGCNA results object.
-#' @returns An integer. Number of unique cluster IDs in object.
+#' @returns number of clusters in a WGCNA object
 #' @examples
 #'  \dontrun{
 #'    get_clusters_count(results_WGCNA)
 #'  }
 #' @export
-
 get_clusters_count <- function(results_WGCNA){
   cl_count <- length(unique(
                     results_WGCNA[['gene_cluster_info']][['Cluster_ID']]))
@@ -140,7 +53,6 @@ get_clusters_count <- function(results_WGCNA){
 #'    get_features_count(results_WGCNA)
 #'  }
 #' @export
-
 get_features_count <- function(results_WGCNA){
   trait_count <- length(colnames(
           results_WGCNA[['package_objects']][['module_trait_cor']]))
@@ -184,82 +96,6 @@ get_genes <- function(enrich_obj, showCategory = 30){
   return(unique(genes))
 }
 
-force_max_genes_enrobj <- function(enrich_obj, maxGenes = 200, showCategory = 30) {
-  plot_df <- get_plot_df(enrich_obj, showCategory)
-  for(i in seq_len(nrow(plot_df))) {
-    sub_df <- plot_df[1:i,]
-    unique_genes <- unique(sub_df$Gene)
-    if(length(unique_genes) == maxGenes) {
-      cat_ids <- plot_df[1:i, "categoryID"]
-      return(enrich_obj[enrich_obj$Description %in% cat_ids, asis=TRUE])
-    }
-  }
-}
-
-calc_width_clusters <- function(elements, multiplier = 0.3){
- width <- elements * multiplier
- return(width)
-}
-
-calc_height_clusters <- function(elements, multiplier = 0.3){
-  height <- elements * multiplier
-  return(height)
-}
-
-calc_width <- function(enrich_obj, 
-  showCategory = 30, 
-  category_character_size = 0.035, 
-  character_width = 3, 
-  legend_size = 1){
-  enrich_obj_class <- class(enrich_obj)[1]
-  if(enrich_obj_class %in% c("enrichResult", "gseaResult")){
-    longer_x_element <- length(get_genes(enrich_obj, showCategory))
-  }else if(enrich_obj_class == "compareClusterResult"){
-      longer_x_element <- length(get_clusters(enrich_obj))
-    }else{
-      warning("Not valid enrich object")
-  }
-
-  width_size <- (legend_size + (category_character_size * 
-    max(nchar(as.character(get_categories(enrich_obj, showCategory))))) + 
-    (character_width * longer_x_element))
-
-  if(width_size > 100){
-    width_size <- 50
-  }
-  return(width_size)
-}
-
-calc_height <- function(enrich_obj, 
-  showCategory = NA, 
-  min_size = 7, 
-  gene_character_size = 3, 
-  category_name_size = 0.1){
-  enrich_obj_class <- class(enrich_obj)[1]
-  if(enrich_obj_class  %in% c("enrichResult", "gseaResult")){
-    plot_area_elements <- max(nchar(as.character(get_genes(enrich_obj, 
-      showCategory = showCategory))))
-  }else if(enrich_obj_class == "compareClusterResult"){
-      plot_area_elements <- 2
-    }else{
-      warning("Not valid enrich object")
-  }
-  if(!is.na(showCategory)){
-    categories <- showCategory
-  } else {
-    categories <- length(get_categories(enrich_obj))
-
-  }
-    height_size <- (gene_character_size* plot_area_elements) + 
-        (category_name_size * categories)
-  if(height_size < min_size){
-    height_size <- min_size
-  } else if(height_size > 100){
-    height_size <- 50
-  }
-
-  return(height_size)
-}
 
 #' set_default_width
 #'
@@ -293,23 +129,9 @@ set_default_width <- function(enrich_obj,
     }
     return(default_width)
 }
-# Prepare resize function
-
-#' @importFrom ggplot2 ggplot aes_string geom_tile
-clusters_heatplot <- function(compare_cluster_obj){
-  pp <- ggplot2::ggplot(compare_cluster_obj, ggplot2::aes_string(x = "Cluster", 
-        y = "Description", fill = "p.adjust")) + 
-  ggplot2::geom_tile() 
-}
 
 
-#' @importFrom ggplot2 theme_light theme element_text element_blank
-set_standard_size <- function(pp){
-  pp <- pp + ggplot2::theme_light() + 
-        ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10, 
-          face = 'bold'), axis.title = ggplot2::element_blank()) 
-  return(pp)
-}
+
 
 #' gg_heatmap
 #'
@@ -383,28 +205,6 @@ gg_heatmap <- function(data_table, input = "", transpose = FALSE,
   return(pp)
 }
 
-#' @importFrom ggplot2 ggplot_gtable ggplot_build
-extract_legend <- function(a.gplot){ 
-# https://stackoverflow.com/questions/13649473/(...)
-# (...)add-a-common-legend-for-combined-ggplots  
-  tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(a.gplot))
-  leg <- which(unlist(lapply(tmp$grobs, function(x) x$name) == "guide-box"))
-  legend <- tmp$grobs[[leg]]
-  return(legend)
-}
-
-
-make_top_n_expression_table <- function(count_data, n=5) {
-  top_n_index <- order(rowSums(count_data), decreasing=TRUE)[1:n]
-  sample_totals <- colSums(count_data)
-  top_n_count <- count_data[top_n_index, ]
-  top_n_perc <- apply(top_n_count, 1, function(x) { 
-    round(x / sample_totals * 100, 3)
-  })
-  knitr::kable(t(top_n_perc))
-}
-
-
 
 #' Function to generate scatter plot for each gene in a hunter table
 #' and show logFC per package
@@ -462,78 +262,4 @@ ht2logFCPlot <- function(ht,
 }
 
 
-#' @importFrom ggplot2 aes_string aes ggplot geom_point scale_colour_gradientn guide_colorbar guides
-#' @importFrom ggrepel geom_text_repel 
-plot_odds_ratio <- function(cont_tables, OR_col = "Odds_ratio", pval_col = "Pvalue", y_col = "strategy", text_col = "TP") {
-  cont_tables <- as.data.frame(cont_tables)
-  idx <- order(cont_tables[,OR_col], decreasing = TRUE)
-  cont_tables[,y_col] <- factor(cont_tables[,y_col],
-                            levels=rev(unique(cont_tables[,y_col][idx])))
- 
 
-  OR <- ggplot2::ggplot(cont_tables, ggplot2::aes_string(x = OR_col, y = y_col)) +
-  ggplot2::geom_point(ggplot2::aes_string(color = pval_col, size = "TP")) + 
-  ggrepel::geom_text_repel(ggplot2::aes(label = as.character(cont_tables[,text_col]))) +
-  ggplot2::scale_colour_gradientn(
-    colours = c("red", "white", "blue"),
-    values = c(0, 0.05, 1),
-    name = pval_col, 
-    guide=ggplot2::guide_colorbar(reverse=TRUE))+
-  ggplot2::guides(size = FALSE)
-  return(OR)
-}
-
-get_pie_clusters <- function(enrich_DF, enrichplot){
-  showed_categories <- enrichplot$data$name
-  all_categories <- enrich_DF@compareClusterResult$Description
-  plotted_clusters <- enrich_DF@compareClusterResult[all_categories %in% showed_categories,"Cluster"]
-  return(unique(plotted_clusters))
-}
-
-#' @importFrom enrichplot cnetplot
-clnetplot <- function(compareCluster, ...) {
-  mod_enrich_obj <- compareCluster
-  mod_enrich_obj@compareClusterResult$geneID <- as.character(mod_enrich_obj@compareClusterResult$Cluster)
-  clnet_plot <- enrichplot::cnetplot(mod_enrich_obj, ...) 
-  return(clnet_plot)
-}
-
-
-
-parse_dim_table <- function(dimension, dim_data, tag = "##"){
-  pca_dim_data <- dim_data[[dimension]]
-
-  cat(paste0(tag, " Valiable and factors inpection for ", gsub("Dim.", "dimension ", dimension), "\n"))
-  quanti_data <- pca_dim_data$quanti
-  cat(paste0(tag,"# **Quantitative** Variables and Dimension Relationship\n"))
-  cat("This table shows the relationship between the dimension and the numerical variables. 
-    It includes the Correlation coefficient as a association metric and P value as significance mentric. \n")
-  quanti_table <- DT::datatable(quanti_data, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
-    options = list(paging = TRUE,
-                   colReorder = TRUE,
-                   dom = 'lftBip',
-                   buttons = c('copy', 'csv', 'excel')))
-  invisible(rechunk(quanti_table, chunk_options = "echo=FALSE, results = 'asis', warning = FALSE, message = FALSE"))
-
-  cat(paste0(tag,"# **Qualitative** Variables and Dimension Relationship\n"))
-  cat("This table shows the relationship between the dimension and the categorical variables. 
-       It includes the P value as significance mentric and R2 as a association metric.
-       R2 represents the proportion (in ranges from 0 to 1) of the total variability in the categorical variable that is accounted for by the PCA dimension.
-       A higher R2 value indicates a better fit or a stronger association between the variable and the dimension. \n")
-   quali_table <- DT::datatable(pca_dim_data$quali, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
-    options = list(paging = TRUE,
-                   colReorder = TRUE,
-                   dom = 'lftBip',
-                   buttons = c('copy', 'csv', 'excel')))
-  invisible(rechunk(quali_table, chunk_options = "echo=FALSE, results = 'asis', warning = FALSE, message = FALSE"))
-
-  cat(paste0(tag,"# **Qualitative** Factors and Dimension Relationship\n"))
-   quali_factors_table <- DT::datatable(pca_dim_data$category, filter = 'top', rownames = TRUE, extensions = c('Buttons','ColReorder'),
-    options = list(paging = TRUE,
-                   colReorder = TRUE,
-                   dom = 'lftBip',
-                   buttons = c('copy', 'csv', 'excel')))
-  invisible(rechunk(quali_factors_table, chunk_options = "echo=FALSE, results = 'asis', warning = FALSE, message = FALSE"))
-
-
-}
