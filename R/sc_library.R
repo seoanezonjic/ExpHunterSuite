@@ -1419,8 +1419,6 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
   message("SingleR annotation time: ", Sys.time() - SingleR_start)
   seu@meta.data$cell_type <- SingleR_annotation$labels
   pdf(file.path(save_pdf, "DeltaDistribution.pdf"), width = 20, height = 10)
-  print(SingleR::plotScoreHeatmap(SingleR_annotation))
-  print(SingleR::plotDeltaDistribution(SingleR_annotation))
   message("Calculating cell type markers")
   markers <- calculate_markers(seu = seu, subset_by = subset_by,
                                integrate = integrate, verbose = verbose,
