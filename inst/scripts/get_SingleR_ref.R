@@ -51,9 +51,9 @@ option_list <- list(
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 opt$name <- basename(opt$reference)
-output <- file.path(opt$output, basename(opt$reference))
+opt$output <- file.path(opt$output, basename(opt$reference))
 if(opt$version != "") {
-  output <- paste(output, opt$version, sep = "_")
+  opt$output <- paste(output, opt$version, sep = "_")
 }
 
 if(!opt$only_showcase) {
@@ -76,7 +76,7 @@ if(!opt$only_showcase) {
       data.table::setDTthreads(threads = opt$CPU)
       expr_matrices <- vector(mode = "list", length = length(expr_files))
       for(file in seq(expr_files)) {
-        message(paste0("Loading expression file ", file, " of ", length(expr_files)))
+        message("Loading expression file ", file, " of ", length(expr_files))
         expr_matrix <- as.matrix(data.table::fread(expr_files[file], verbose = TRUE))
         message("File loaded. Processing and converting to sparse matrix.")
         row_names <- expr_matrix[, 1]
@@ -131,27 +131,42 @@ if(!opt$only_showcase) {
   if(opt$database == "celldex") {
     ref <- celldex::fetchReference(opt$reference, opt$version)
   }
-  HDF5Array::saveHDF5SummarizedExperiment(x = ref, dir = output, verbose = opt$verbose, replace = opt$replace)
-  message(paste0("Reference saved successfully in ", output))
+  HDF5Array::saveHDF5SummarizedExperiment(x = ref, dir = opt$output, verbose = opt$verbose, replace = opt$replace)
+  message(paste0("Reference saved successfully in ", opt$output))
+  message("Converting reference to seurat object to calculate UMAP")
+  sce <- as(ref, "SingleCellExperiment")
+  sce@assays@data$counts <- as(sce@assays@data$counts, "dgCMatrix")
+  sce@assays@data$logcounts <- as(sce@assays@data$logcounts, "dgCMatrix")
+  seu <- Seurat::as.Seurat(sce)
+  seu <- Seurat::NormalizeData(object = seu, verbose = FALSE, normalization.method = "LogNormalize", scale.factor = 1e6)
+  seu <- Seurat::FindVariableFeatures(seu, nfeatures = 2000, verbose = FALSE, selection.method = "vst", assay = "originalexp")
+  seu <- Seurat::ScaleData(object = seu, verbose = FALSE, features = rownames(seu))
+  seu <- Seurat::FindNeighbors(object = seu, dims = seq(10), assay = "originalexp", reduction = "PCA", verbose = FALSE)
+  seu <- Seurat::RunUMAP(object = seu, dims = seq(10), verbose = FALSE, reduction = "PCA", return.model = TRUE)
+  message("Saving results to disk")
+  dir.create(file.path(opt$output, "counts"))
+  dir.create(file.path(opt$output, "embeddings"))
+  write_annot_output(final_results = list(seu = seu), opt = opt, assay = "originalexp")
 } else {
   message("Loading SingleR ref for showcase report")
-  ref <- load_SingleR_ref(path = output, version = opt$ref_version, filter = NULL)
+  seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(file.path(opt$output, "counts"), gene.column = 1),
+                                  project = opt$name, min.cells = 1, min.features = 1)
+  seu_meta <- read.table(file.path(opt$output, "counts/meta.tsv"), sep = "\t", header = TRUE)
+  rownames(seu_meta) <- colnames(seu)
+  seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
+  seu$RNA$data <- seu$RNA$counts
+  markers <- read.table(file.path(opt$output, "markers.tsv"), sep = "\t", header = TRUE)
+  embeddings <- read.table(file.path(opt$output, "embeddings", "cell_embeddings.tsv"), header = TRUE)
+  seu$umap <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'umap_', assay = 'RNA')
 }
 
 message("Preparing report showcasing selected reference")
 
-tables <- lapply(ref@colData, col_to_table, col_names = c("Type", "Frequency"))
-names(tables) <- colnames(ref@colData)
-
-sce <- as(ref, "SingleCellExperiment")
-sce@assays@data$counts <- as(sce@assays@data$counts, "dgCMatrix")
-sce@assays@data$logcounts <- as(sce@assays@data$logcounts, "dgCMatrix")
-seu <- Seurat::as.Seurat(sce)
-seu <- Seurat::NormalizeData(object = seu, verbose = FALSE, normalization.method = "LogNormalize", scale.factor = 1e6)
-seu <- Seurat::FindVariableFeatures(seu, nfeatures = 2000, verbose = FALSE, selection.method = "vst", assay = "originalexp")
-seu <- Seurat::ScaleData(object = seu, verbose = FALSE, features = rownames(seu))
-seu <- Seurat::FindNeighbors(object = seu, dims = seq(10), assay = "originalexp", reduction = "PCA", verbose = FALSE)
-seu <- Seurat::RunUMAP(object = seu, dims = seq(10), verbose = FALSE, reduction = "PCA", return.model = TRUE)
+meta <- seu@meta.data
+fields_to_remove <- grepl("orig.ident|nCount|nFeature|sizeFactor", names(meta))
+meta <- meta[, !fields_to_remove]
+tables <- lapply(meta, col_to_table, col_names = c("Type", "Frequency"))
+names(tables) <- colnames(meta)
 
 write_sc_report(final_results = list(tables = tables, seu = seu), template_folder = template_folder, output = getwd(),
                 template = "sc_ref_showcase.txt", out_suffix = "ref_showcase.html", opt = opt)

@@ -1392,7 +1392,6 @@ annotate_seurat <- function(seu, cell_annotation = NULL,
 #' @param fine.tune A boolean.
 #'   * `TRUE` (the default): Fine-tune statistical model built for transfer.
 #'   * `FALSE`: Do not perform fine-tuning..
-#' @param save_pdf Path where pdf files will be saved.
 #' @param assay Seurat object assay to use for annotation. Default "RNA".
 #' @returns A seurat object with a new sketched assay.
 #' @examples
@@ -1400,7 +1399,7 @@ annotate_seurat <- function(seu, cell_annotation = NULL,
 #'    annotate_SingleR(seu = seu, SingleR_ref = SingleR_ref,
 #'    BPPARAM = BPPARAM, ref_n = ref_n, ref_label = ref_label,
 #'    verbose = verbose, ref_de_method = ref_de_method, aggr.ref = aggr.ref,
-#'    fine.tune = new_opt$fine.tune, save_pdf = file.path(output, "report"))
+#'    fine.tune = new_opt$fine.tune)
 #'  }
 #' @export
 
@@ -1409,7 +1408,7 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
                              BPPARAM = SerialParam(), ref_de_method = "wilcox",
                              ref_label = ref_label, aggr.ref = FALSE,
                              fine.tune = TRUE, assay = "RNA", verbose = FALSE,
-                             save_pdf = getwd(), subset_by = NULL){
+                             subset_by = NULL){
   SingleR_start <- Sys.time()
   counts_matrix <- Seurat::GetAssayData(seu, assay = assay)
   SingleR_annotation <- SingleR::SingleR(test = counts_matrix,
@@ -1418,7 +1417,6 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
     BPPARAM = BPPARAM, aggr.ref = aggr.ref, fine.tune = fine.tune)
   message("SingleR annotation time: ", Sys.time() - SingleR_start)
   seu@meta.data$cell_type <- SingleR_annotation$labels
-  pdf(file.path(save_pdf, "DeltaDistribution.pdf"), width = 20, height = 10)
   message("Calculating cell type markers")
   markers <- calculate_markers(seu = seu, subset_by = subset_by,
                                integrate = integrate, verbose = verbose,
