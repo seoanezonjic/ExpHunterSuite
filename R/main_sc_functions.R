@@ -374,7 +374,11 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
       stop("Source folder not found. Was ", source_folder, " .")
     }
     if(any(is.null(final_results))) {
-      stop("ERROR: final results object contains NULL fields. Analysis
+      # This check is stupid @me. If a list element is set to NULL, the element
+      # will simply not exist. It would be best to check for an element
+      # that should ALWAYS be there. Other specific checks should go in
+      # reporting templates.
+      stop("Final results object contains NULL fields. Analysis
          is not complete.")
     }
     if(is.null(template)) {

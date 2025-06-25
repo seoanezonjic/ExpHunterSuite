@@ -228,7 +228,7 @@ collapse_markers <- function(markers_list) {
 .process_pcols <- function(markers_df) {
   pcols <- grep("p_val_adj", colnames(markers_df))
   if(any(is.na(markers_df[, pcols]))) {
-    warning("WARNING: NAs detected in marker p-values. Coercing to 1.",
+    warning("NAs detected in marker p-values. Coercing to 1.",
             immediate. = TRUE)
     markers_df[, pcols][is.na(markers_df[, pcols])] <- 1
   }
@@ -253,7 +253,7 @@ collapse_markers <- function(markers_list) {
 .process_fcols <- function(markers_df) {
   fcols <- grep("log2FC", colnames(markers_df))
   if(any(is.na(markers_df[, fcols]))) {
-    warning("WARNING: NAs detected in marker log2FC. Coercing to 0.",
+    warning("NAs detected in marker log2FC. Coercing to 0.",
             immediate. = TRUE)
     markers_df[, fcols][is.na(markers_df[, fcols])] <- 0
   }
@@ -273,8 +273,8 @@ collapse_markers <- function(markers_list) {
 }
 
 .annotate_empty_cluster <- function(markers_df, cluster) {
-  warning(paste("WARNING: cluster", cluster, "contains no significant",
-                       "markers", sep = " "), immediate. = TRUE)
+  warning("Cluster ", cluster, " contains no significant markers"),
+          immediate. = TRUE)
   subset <- markers_df[markers_df$seurat_clusters == cluster, ][1,]
   subset$gene <- "None"
   subset$avg_log2FC <- 1
@@ -386,9 +386,9 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   meta <- as.character(subset_seu@meta.data[[cond]])
   ncells <- c(sum(meta==conds[1]), sum(meta==conds[2]))
   if(any(ncells < 3)) {
-    warning(paste0('Cluster ', clust_num, ' contains fewer than three cells for',
-      ' condition \'', conds[which(ncells < 3)], '\'. Skipping DEG ',
-      'analysis\n', collapse = ""), immediate. = TRUE)
+    warning('Cluster ', clust_num, ' contains fewer than three cells for',
+            ' condition \'', conds[which(ncells < 3)], '\'. Skipping DEG ',
+            'analysis.'), immediate. = TRUE)
     markers <- data.frame(FALSE)
   } else {
     Seurat::Idents(subset_seu) <- cond  
@@ -692,7 +692,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
   subset_list <- vector(mode = "list", length = length(items))
   names(subset_list) <- items
   for(i in seq(length(items))) {
-    message(paste("Subsetting", by[1],  paste0(i, "/", length(items))))
+    message("Subsetting ", by[1], " ", i, "/", length(items), ".")
     subset <- subset_seurat(seu, by[1], as.character(items[i]))
     subset_list[[as.character(items[i])]] <- subset
   }
@@ -810,9 +810,8 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
     } else {
       gene_list <- query
       if(any(!query %in% rownames(seu)) & is.null(genes_warn)) {
-        warning(paste0("Target gene(s) \"",
-        paste(query[!query %in% rownames(seu)], collapse = "\", \""),
-        "\" are not expressed in dataset."))
+        miss <- paste(query[!query %in% rownames(seu)], collapse = "\", \"")
+        warning("Target gene(s) \"", miss, "\" are not expressed in dataset.")
       }
       query <- query[query %in% rownames(seu)]
     }
@@ -1076,8 +1075,8 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data") {
   }
   missing <- !query %in% rownames(genes)
   if(any(missing)) {
-    warning(paste0("Query gene(s) ", paste0(query[missing], collapse = ", "),
-                   " not present in seurat object."), immediate. = TRUE)
+    warning("Query gene(s) ", paste0(query[missing], collapse = ", "),
+            " not present in seurat object.", immediate. = TRUE)
     query <- query[!missing]
   }
   if(!is.vector(genes)) {
