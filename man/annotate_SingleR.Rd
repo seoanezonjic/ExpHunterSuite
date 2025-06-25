@@ -16,7 +16,6 @@ annotate_SingleR(
   fine.tune = TRUE,
   assay = "RNA",
   verbose = FALSE,
-  save_pdf = getwd(),
   subset_by = NULL
 )
 }
@@ -60,8 +59,6 @@ reference.}
 \item \code{FALSE} (the default): Print minimal progress messages.
 }}
 
-\item{save_pdf}{Path where pdf files will be saved.}
-
 \item{subset_by}{A string vector. Categories to consider in integrative
 analysis.}
 }
@@ -77,6 +74,6 @@ simplifies function call.
    annotate_SingleR(seu = seu, SingleR_ref = SingleR_ref,
    BPPARAM = BPPARAM, ref_n = ref_n, ref_label = ref_label,
    verbose = verbose, ref_de_method = ref_de_method, aggr.ref = aggr.ref,
-   fine.tune = new_opt$fine.tune, save_pdf = file.path(output, "report"))
+   fine.tune = new_opt$fine.tune)
  }
 }
