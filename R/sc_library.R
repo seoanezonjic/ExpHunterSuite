@@ -384,8 +384,9 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   meta <- as.character(subset_seu@meta.data[[cond]])
   ncells <- c(sum(meta==conds[1]), sum(meta==conds[2]))
   if(any(ncells < 3)) {
+    lowcell_conds <- paste(conds[which(ncells < 3)])
     warning('Cluster ', clust_num, ' contains fewer than three cells for',
-            ' condition \'', conds[which(ncells < 3)], '\'. Skipping DEG ',
+            ' condition(s) \'', lowcell_conds, '\'. Skipping DEG ',
             'analysis.', immediate. = TRUE)
     markers <- data.frame(FALSE)
   } else {
@@ -855,17 +856,18 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
 
 .run_fc_vs_ncells <- function(seu, DEG_list, query, return_output, genes_warn,
                               meta, check, res = NULL, min_counts) {
-    processed_query <- .process_query(seu = seu, DEG_list = DEG_list,
-          query = query, return_output = return_output, genes_warn = genes_warn)
-    return_output <- processed_query$return_output
-    if(return_output) {
-      fc_res <- .get_fc(seu = seu, meta = meta, query = processed_query$query,
-        p_val_cutoff = check$p_val_cutoff, genes = processed_query$gene_list,
-        DEG_list = DEG_list, min_avg_log2FC = check$min_avg_log2FC)
-      res <- .add_ncell_df(DEG_df = fc_res$DEG_df, min_counts = min_counts,
-                       matrices = fc_res$matrix_list$matrices)
-    }
-    return(res)
+  res <- NULL
+  processed_query <- .process_query(seu = seu, DEG_list = DEG_list,
+        query = query, return_output = return_output, genes_warn = genes_warn)
+  return_output <- processed_query$return_output
+  if(return_output) {
+    fc_res <- .get_fc(seu = seu, meta = meta, query = processed_query$query,
+      p_val_cutoff = check$p_val_cutoff, genes = processed_query$gene_list,
+      DEG_list = DEG_list, min_avg_log2FC = check$min_avg_log2FC)
+    res <- .add_ncell_df(DEG_df = fc_res$DEG_df, min_counts = min_counts,
+                     matrices = fc_res$matrix_list$matrices)
+  }
+  return(res)
 }
 
 #' get_fc_vs_ncells
