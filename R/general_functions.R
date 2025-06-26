@@ -64,7 +64,7 @@ unite_DEG_pack_results <- function(exp_results,
     is.na(all_DE_df[DEG_pack_columns[i]])] <- FALSE
     # Check: if no DE genes for package, give warning
     if(sum(all_DE_df[, DEG_pack_columns[i]]) == 0) 
-      warning(paste("No significant", DEG_pack_columns[i], "found"))
+      warning("No significant", DEG_pack_columns[i], "found")
   }
   # Get DEG_counts
   all_DE_df["DEG_counts"] <- rowSums(all_DE_df[DEG_pack_columns], na.rm = TRUE)
@@ -148,7 +148,7 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
       timestamp <- as.integer(Sys.time())
       log_path <- file.path(main_log_path, as.character(timestamp))
       if(file.exists(log_path)){
-        timestamp = timestamp + 1
+        timestamp <- timestamp + 1
         log_path <- file.path(main_log_path, as.character(timestamp))
       }
       log <- TRUE
@@ -158,17 +158,16 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
       workers, tasks = ceiling(length(X)/task_size), stop.on.error = TRUE,
       log = log, threshold = "INFO", logdir = log_path
     )
-    message(paste('items:', length(X), 'task_size:', task_size))
-    print(param)    
+    message('items:', length(X), 'task_size:', task_size)
     res <- BiocParallel::bptry(
       BiocParallel::bplapply(X, FUNC, BPPARAM = param, ...)
     )
     exec_status <- BiocParallel::bpok(res)
     fails <- which( exec_status == FALSE)
-    message(paste('exec_status => exec items:', 
+    message('exec_status => exec items:', 
                   length(exec_status), 
                   'fails:', 
-                  length(fails)))
+                  length(fails))
     if(length(fails) > 0 ){
       message(tail(attr(res[[fails[1]]], "traceback")))
       stop('Parallel execution has failed at item', fails[1],

@@ -79,7 +79,7 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE,
         WGCNA_input_control <- WGCNA_input[, index_control_cols]
         WGCNA_treatment_path <- file.path(path, "Treatment_only_data")
         dir.create(WGCNA_treatment_path)
-        cat('Performing WGCNA correlation analysis for treated samples\n')
+        message('Performing WGCNA correlation analysis for treated samples')
         results[['WGCNA_treatment']] <- analysis_WGCNA(
                        data=WGCNA_input_treatment,
                        path=WGCNA_treatment_path,
@@ -102,7 +102,7 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE,
         WGCNA_control_path <- file.path(path, "Control_only_data")
         dir.create(WGCNA_control_path)
 
-        cat('Performing WGCNA correlation analysis for control samples\n')
+        message('Performing WGCNA correlation analysis for control samples\n')
         results[['WGCNA_control']] <- analysis_WGCNA(data=WGCNA_input_control,
                        path=WGCNA_control_path,
                        target_numeric_factors=target_numeric_factors,
@@ -122,7 +122,7 @@ perform_WGCNA_combinations <- function(WGCNA_all=FALSE,
     }
         
 
-    cat('Performing WGCNA correlation analysis for all samples\n')
+    message('Performing WGCNA correlation analysis for all samples\n')
     results[['WGCNA_all']] <- analysis_WGCNA(data=WGCNA_input,
                     path=path,
                     target_numeric_factors=target_numeric_factors,
@@ -213,8 +213,8 @@ analysis_WGCNA <- function(data,
     }
 
     if(is.na(min_pow_ind)) {
-        warning(paste0("Could not obtain a valid power (beta) value for WGCNA",
-            " so the default of 30 will be used - proceed with caution"))
+        warning("Could not obtain a valid power (beta) value for WGCNA",
+            " so the default of 30 will be used - proceed with caution")
         # assumes 30 will be the largest testable power
         min_pow_ind <- length(sft_mfs_r2) 
     }
@@ -223,8 +223,8 @@ analysis_WGCNA <- function(data,
 
     grDevices::pdf(file.path(path, "thresholding.pdf"))
         grDevices::dev.control(displaylist="enable")
-        graphics::par(mfrow = c(1,2));
-        cex1 = 0.9;
+        graphics::par(mfrow = c(1,2))
+        cex1 <- 0.9
     # Scale-free topology fit index as function of the soft-thresholding power
         plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
              xlab="Soft Threshold (power)",
@@ -287,7 +287,7 @@ analysis_WGCNA <- function(data,
                             corType = corType)
     cor<-stats::cor
 
-    moduleColors = WGCNA::labels2colors(net$colors)
+    moduleColors <- WGCNA::labels2colors(net$colors)
 
     # Plot the dendrogram and the module colors underneath
     grDevices::pdf(file.path(path, 'wcgnaModules.pdf'))
@@ -303,7 +303,7 @@ analysis_WGCNA <- function(data,
     gene_module_cor <- as.data.frame(WGCNA::cor(data, MEs, use = "p"));
     gene_module_cor_p <- as.data.frame(WGCNA::corPvalueStudent(
                                         as.matrix(gene_module_cor), nSamples));
-    colnames(gene_module_cor_p) = colnames(gene_module_cor) <- gsub("ME", 
+    colnames(gene_module_cor_p) <- colnames(gene_module_cor) <- gsub("ME", 
                                       "Cluster_", colnames(gene_module_cor_p) )
 
     utils::write.table(gene_module_cor, 
@@ -359,12 +359,12 @@ analysis_WGCNA <- function(data,
     ME_numeric <- as.numeric(gsub("ME", "", colnames(MEs)))
     colnames(MEs_colors) <- paste0("ME", WGCNA::labels2colors(ME_numeric))
 
-    moduleTraitCor = WGCNA::cor(MEs_colors, trait, use = "p")
-    moduleTraitPvalue = WGCNA::corPvalueStudent(moduleTraitCor, nSamples)
+    moduleTraitCor <- WGCNA::cor(MEs_colors, trait, use = "p")
+    moduleTraitPvalue <- WGCNA::corPvalueStudent(moduleTraitCor, nSamples)
  
-    textMatrix =  paste(signif(moduleTraitCor, 2), "\n(",
+    textMatrix <-  paste(signif(moduleTraitCor, 2), "\n(",
                         signif(moduleTraitPvalue, 1), ")", sep = "")
-    dim(textMatrix) = dim(moduleTraitCor)
+    dim(textMatrix) <- dim(moduleTraitCor)
     colnames(moduleTraitCor) <- names(trait)
     rownames(moduleTraitCor) <- names(MEs)
     moduleTraitCor_df <- as.data.frame(as.table(moduleTraitCor))
@@ -399,7 +399,7 @@ analysis_WGCNA <- function(data,
     gene_module_cor <- as.data.frame(WGCNA::cor(data, MEs, use = "p"))
     gene_module_cor_p <- as.data.frame(WGCNA::corPvalueStudent(
                                         as.matrix(gene_module_cor), nSamples))
-    colnames(gene_module_cor_p) = colnames(gene_module_cor) <- gsub("ME", 
+    colnames(gene_module_cor_p) <- colnames(gene_module_cor) <- gsub("ME", 
                                        "Cluster_", colnames(gene_module_cor_p))
     # Genes per trait
     gene_trait_cor <- as.data.frame(WGCNA::cor(data, trait, use = "p"));
@@ -407,9 +407,9 @@ analysis_WGCNA <- function(data,
                                           as.matrix(gene_trait_cor), nSamples))
     # Module per trait 
     # (also produced above for the plot - should give smae results.)
-    module_trait_cor = WGCNA::cor(MEs, trait, use = "p")
+    module_trait_cor <- WGCNA::cor(MEs, trait, use = "p")
     module_trait_cor_p <- WGCNA::corPvalueStudent(module_trait_cor, nSamples)
-    row.names(module_trait_cor) = row.names(module_trait_cor_p) <- gsub("ME", 
+    row.names(module_trait_cor) <- row.names(module_trait_cor_p) <- gsub("ME", 
                                      "Cluster_", row.names(module_trait_cor_p))
 
     utils::write.table(trait, 

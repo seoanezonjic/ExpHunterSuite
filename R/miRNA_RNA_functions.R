@@ -163,12 +163,12 @@ eval_method = "aggregated"
  if (is.null(RNAseq)) {
     if(!is.null(selected_targets)){
         strat_names <- c("selected_targets_RNA_vs_miRNA_DEMs")
-        message(paste0("RNAseq folder has been not set, only ",
- "selected_targets_RNA_vs_miRNA_DEMs strategy will be performed"))
+        message("RNAseq folder has been not set, only ",
+ "selected_targets_RNA_vs_miRNA_DEMs strategy will be performed")
     } else {
         strat_names <- c("all_posible_targets_RNA_vs_miRNA_DEMs")
-        message(paste0("RNAseq folder has been not set, only ",
-        " strategy will be performed"))
+        message("RNAseq folder has been not set, only ",
+        " strategy will be performed")
         selected_targets <- unique(all_pairs$RNAseq)
     }
 } 
@@ -200,7 +200,7 @@ eval_method = "aggregated"
 
  ####PERFORM STRATEGIES
  for(strategy in strat_names){ 
-   message(paste0("\n", strategy, " strategy is been performed"))
+   message(strategy, " strategy is been performed")
     message("Computing stats by group")
     strategy_data <- perform_correlations(strategy = strategy, 
                     RNAseq = RNAseq, miRNAseq = miRNAseq, 
@@ -757,6 +757,7 @@ translate_ensembl){
 
 #' @importFrom miRBaseVersions.db miRBaseVersions.db
 #' @importFrom AnnotationDbi select
+#' @export
 translate_miRNA_ids <- function(miRNA_IDs, miRBaseVersion = "VW-MIMAT-22.0") {
     miRNA_tr_table <- AnnotationDbi::select(
                             miRBaseVersions.db::miRBaseVersions.db, 

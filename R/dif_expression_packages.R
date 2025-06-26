@@ -31,7 +31,7 @@ perform_expression_analysis <- function(modules,
     if(grepl("D",modules)){
       if(replicatesC >= 2 & replicatesT >= 2) {
         # Verbose
-        cat('Gene expression analysis is performed with DESeq2.\n')
+        message('Gene expression analysis is performed with DESeq2.\n')
         # Calculate results
         results <- analysis_DESeq2(data   = raw_filter,
                                    p_val_cutoff = p_val_cutoff,
@@ -64,7 +64,7 @@ perform_expression_analysis <- function(modules,
     if(grepl("E", modules)){ 
       if(replicatesC >= 2 & replicatesT >= 2) {
         # Verbose point
-        cat('Gene expression analysis is performed with edgeR.\n')
+        message('Gene expression analysis is performed with edgeR.\n')
         # Calculate results
         results <- analysis_edgeR(data   = raw_filter,
                                   target = target,
@@ -96,7 +96,7 @@ perform_expression_analysis <- function(modules,
     if(grepl("L", modules)){ 
       if(replicatesC >= 3 & replicatesT >= 3) {
         # Verbose
-        cat('Gene expression analysis is performed with limma.\n')
+        message('Gene expression analysis is performed with limma.\n')
 
         # Calculate results
         results <- analysis_limma(data   = raw_filter,
@@ -129,8 +129,8 @@ perform_expression_analysis <- function(modules,
         if(replicatesC >= 3 & replicatesT >= 3) {
 
         # Verbose
-        cat(paste0("Gene expression analysis is performed with NOISeqBIO",
-                   " function within NOISeq.\n"))
+        message("Gene expression analysis is performed with NOISeqBIO",
+                   " function within NOISeq.")
         # Calculate results
         results <- analysis_NOISeq(data    = raw_filter, 
                                    target = target)
@@ -158,7 +158,7 @@ perform_expression_analysis <- function(modules,
     ################## CASE F: External DEG file
     #####
     if(grepl("F",modules)){
-      cat('External DEA data to be processed \n')
+      message('External DEA data to be processed')
       # Calculate results
       results <- analysis_external_DEA(raw_filter, external_DEA_data)
       # Store results
@@ -332,7 +332,7 @@ analysis_limma <- function(data, target, model_formula_text, multifactorial){
 analysis_NOISeq <- function(data, target){
     group <- as.character(target$treat)
     # Experimental design
-    myfactors = data.frame(Tissue = rev(group), TissueRun = rev(group))
+    myfactors <- data.frame(Tissue = rev(group), TissueRun = rev(group))
     # Calculation of differential expression
     mydata <- NOISeq::readData(data, myfactors) # Building NOISeq Object (eset)
 

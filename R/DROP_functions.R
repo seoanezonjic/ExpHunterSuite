@@ -121,7 +121,6 @@ preprocess_gtf <- function(gtf) {
 #' @importFrom SummarizedExperiment assay
 
 .get_file_counts <- function(file) {
-  print(file)
     if(grepl('rds$', file))
       counts <- SummarizedExperiment::assay(readRDS(file))
     else {
@@ -358,7 +357,7 @@ merge_counts <- function(cpu, sample_anno, count_files, count_ranges) {
   count_files <- strsplit(count_files, " ")[[1]]
   local_counts_list <- BiocParallel::bplapply(count_files, .get_file_counts)
   merged_assays <- do.call(cbind, local_counts_list)
-  message(paste("read", length(count_files), 'files'))
+  message("read", length(count_files), 'files')
   external_anno <- sample_anno[sample_anno$EXTERNAL=="external", ]
   if(nrow(external_anno) > 0) {
     external <- .parse_externals(sample_anno, merged_assays)
@@ -397,7 +396,7 @@ filter_counts <- function(counts, txdb, fpkm_cutoff) {
                           fpkm_cutoff=fpkm_cutoff, addExpressedGenes=TRUE)
 
   # add column for genes with at least 1 gene
-  row_data$counted1sample = rowSums(SummarizedExperiment::assay(ods)) > 0
+  row_data$counted1sample <- rowSums(SummarizedExperiment::assay(ods)) > 0
 
   col_data$isExternal <- col_data$EXTERNAL=="external"
   return(ods)
@@ -535,11 +534,11 @@ format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
 
 .split_string_by_char <- function(string, char, index) {
   if (!char %in% strsplit(string, "")[[1]]) {
-    warning("WARNING: Attempted to split string by character not present")
+    warning("Attempted to split string by character not present")
   }
   split <- strsplit(x = string, split = char, fixed = TRUE)[[1]]
   if(index > length(split) || index < 1) {
-    warning("WARNING: Attempted to split string by out-of-bounds index.")
+    warning("Attempted to split string by out-of-bounds index.")
   }
   return(split[index])
 }
@@ -780,8 +779,8 @@ score_data <- function(gr,
     populations = c('AF', 'AF_afr', 'AF_amr', 'AF_eas', 'AF_nfe', 'AF_popmax'),
     ...){
   if("gene_assembly" %in% names(list(...))){
-    warning(paste0("'gene_assembly' is deprecated. Please use 'genome_assembly',
-      instead."))
+    warning("'gene_assembly' is deprecated. Please use 'genome_assembly',
+      instead.")
     genome_assembly <- list(...)[['gene_assembly']]
   }
   
@@ -1004,8 +1003,8 @@ allelic_granges_to_dt <- function(data){
     goodCov <- data$coverage > 0
     data <- data[goodGT & goodCov]
     
-    data$nucl_piles = NULL
-    data$qual_piles = NULL
+    data$nucl_piles <- NULL
+    data$qual_piles <- NULL
     
     # get alt and ref counts
     data$chr <- GenomeInfoDb::seqnames(data)

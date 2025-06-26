@@ -189,7 +189,7 @@ main_degenes_Hunter <- function(
 
     combinations_WGCNA <- NULL
     if(grepl("W", modules)) { # CASE W: WGCNA
-      cat('Correlation analysis is performed with WGCNA\n')
+      message('Correlation analysis is performed with WGCNA\n')
       path <- file.path(output_files, "Results_WGCNA")
       dir.create(path)
       all_data_normalized <- exp_results[['all_data_normalized']]
@@ -198,8 +198,8 @@ main_degenes_Hunter <- function(
       } else if(WGCNA_norm_method== "none") {
         WGCNA_input <- raw_filter
       } else {
-        warning(paste0("To run WGCNA, you must also run the method chosen for",
-          " normalization in the --modules flag, or specify none"))
+        warning("To run WGCNA, you must also run the method chosen for",
+          " normalization in the --modules flag, or specify none")
       }
 
       combinations_WGCNA <- perform_WGCNA_combinations(WGCNA_all, WGCNA_input, 
@@ -216,7 +216,7 @@ main_degenes_Hunter <- function(
     }
 
     if(grepl("X", modules)) { # CASE X: diffcoexp
-      cat('Correlation analysis is performed with diffcoexp\n')
+      message('Correlation analysis is performed with diffcoexp\n')
       path <- file.path(output_files, "Results_diffcoexp")
       check_and_create_dir(path)
 
@@ -347,28 +347,28 @@ check_input_main_degenes_Hunter <- function(raw,
       raw <- round(raw)
     }
     if (minlibraries < 1){
-      stop(cat(paste0("Minimum library number to check minimum read counts",
-        " cannot be less than 1.\nIf you want to avoid filtering, set",
-        " --reads to 0.")))
+      stop("Minimum library number to check minimum read counts",
+        " cannot be less than 1.", "\n", "If you want to avoid filtering, set",
+        " --reads to 0.")
     }
 
     if (reads == 0){
-      cat(paste0("Minimum reads option is set to zero. ",
-        "Raw count table will not be filtered."))
+      message("Minimum reads option is set to zero. ",
+        "Raw count table will not be filtered.")
     }
 
     if (!is.null(external_DEA_data)) {
       message("External DEA dataframe given.")
       if(is.null(target)){
-        warning(paste0("External DEA dataframe given but no target",
-          " - creating a dummy one"))
+        warning("External DEA dataframe given but no target",
+          " - creating a dummy one")
         target <- data.frame(samples=c("case_dummy_1", "case_dummy_2", 
                                        "control_dummy_1", "control_dummy2"), 
                              treat=c("Treat","Treat", "Ctrl", "Ctrl"))
       }
       if(is.null(raw)) {
-        warning(paste0("External DEA dataframe given but no count data",
-          " - creating a dummy one"))
+        warning("External DEA dataframe given but no count data",
+          " - creating a dummy one")
         raw <- as.data.frame(matrix(sample(1:100, nrow(external_DEA_data)*nrow(target),replace=TRUE), 
                                     nrow=nrow(external_DEA_data), 
                                     ncol=nrow(target), 
@@ -379,12 +379,12 @@ check_input_main_degenes_Hunter <- function(raw,
     }
 
     if (model_variables != "" & grepl("N", modules) & nchar(modules) == 1) {
-      stop(cat(paste0("You cannot run an experimental design that uses the",
-        " model_variables option with NOISeq only.")))
+      stop("You cannot run an experimental design that uses the",
+        " model_variables option with NOISeq only.")
     }
     if (model_variables != "" & grepl("N", modules) & nchar(modules) > 1) {
-      warning(paste0("NOISeq will not be run as you have an experimental",
-        " design that uses the model_variables option."))
+      warning("NOISeq will not be run as you have an experimental",
+        " design that uses the model_variables option.")
       modules <- gsub("N", "", modules)
     }
     if(model_variables != "" & multifactorial != ""){
@@ -403,16 +403,16 @@ check_input_main_degenes_Hunter <- function(raw,
           active_modules <- active_modules - sum(grepl("[LN]", user_modules))
     if(minpack_common > active_modules){
       minpack_common <- active_modules
-      warning(paste0("The number of active modules is lower than the thresold",
+      warning("The number of active modules is lower than the thresold",
         " for tag PREVALENT DEG. The thresold is set to the",
-        " number of active modules."))
+        " number of active modules.")
     }
 
 
     # If no -t check there is no -v value
     if( is.null(target) & model_variables != "") {
-      stop(cat(paste0("You should not include a -v value if you do not",
-        " have a target table file.")))
+      stop("You should not include a -v value if you do not",
+        " have a target table file.")
     }
 
     # If factors are specified but WGCNA not selected, throw a warning.
@@ -503,7 +503,7 @@ prepare_model_text <- function(model_variables,
     } else {
       model_formula_text <- "~ treat"
     }
-    cat("Model for gene expression analysis is:", model_formula_text, "\n")
+    message("Model for gene expression analysis is:", model_formula_text, "\n")
     return(model_formula_text)
 }
 
@@ -589,7 +589,7 @@ get_gene_stats <- function(cpm_table, reads)
     exp_genes_df <- exp_genes_df[order(exp_genes_df$expressed_genes),]
     exp_genes_df$count_rank <- seq(1,nrow(exp_genes_df))
     cutoff_passed_matrix <- cutoff_passed_matrix[, exp_genes_df$sample_ID]
-    union_vec = inters_vec <- cutoff_passed_matrix[,1]
+    union_vec <- inters_vec <- cutoff_passed_matrix[,1]
     for (sample in 1:ncol(cutoff_passed_matrix))
     {
         union_vec <- union_vec | cutoff_passed_matrix[,sample]

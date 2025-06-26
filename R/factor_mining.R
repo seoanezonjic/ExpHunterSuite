@@ -38,8 +38,8 @@ merge_dim_tables <- function(dim_data_simp){
 
 #' @importFrom FactoInvestigate dimRestrict eigenRef
 get_PCA_dimensions <- function(pca_obj, min_dimensions = 2, time = "10s") {
-    ref = FactoInvestigate::eigenRef(pca_obj, time = time, parallel=FALSE) # to avoid use parallel computation that greedy takes all cpu cores
-    rand = c(ref$inertia[1], diff(ref$inertia)) * 100
+    ref <- FactoInvestigate::eigenRef(pca_obj, time = time, parallel=FALSE) # to avoid use parallel computation that greedy takes all cpu cores
+    rand <- c(ref$inertia[1], diff(ref$inertia)) * 100
     keep_dimensions <- FactoInvestigate::dimRestrict(pca_obj, rand = rand)
     if(keep_dimensions < min_dimensions){
       keep_dimensions <- min_dimensions

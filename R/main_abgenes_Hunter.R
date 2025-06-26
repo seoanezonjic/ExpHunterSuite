@@ -153,7 +153,7 @@ write_abgenes_report <- function(final_results, output_dir = getwd(),
         stop("Source folder not found. Was ", source_folder)
     }
     if(any(is.null(final_results))) {
-        stop("ERROR: final_results object contains NULL fields. Analysis
+        stop("Final_results object contains NULL fields. Analysis
              is not complete.")
     }
     template <- file.path(template_folder, "abgenes_template.txt")
@@ -186,5 +186,5 @@ write_abgenes_report <- function(final_results, output_dir = getwd(),
                                            type_index = "menu")
     plotter$build(template)
     plotter$write_report(out_file)
-    message(paste0("Report written in ", out_file))
+    message("Report written in ", out_file)
 }
