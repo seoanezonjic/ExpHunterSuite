@@ -749,7 +749,7 @@ get_expressed_genes <- function(ods) {
 #' @param populations The populations to be annotatated.
 #' @param ... Used for backwards compatibility (gene_assembly ->
 #' genome_assembly)
-#' @return a data.frame containing original data as well as the minor allele
+#' @returns a data.frame containing original data as well as the minor allele
 #' frequencies
 #' @examples
 #' file <- system.file("extData", "allelic_counts_HG00187.csv",
@@ -885,11 +885,13 @@ function(
 #' @return A ggplot object containing the MA plot.
 #' @export
 #' @examples
-#' file <- system.file("extData", "allelic_counts_HG00187.csv",
-#'     package = "ExpHunterSuite", mustWork = TRUE)
-#' maeCounts <- data.table::fread(file)
-#' res <- DESeq4MAE(maeCounts)
-#' plotMA4MAE(res)
+#' \dontrun{
+#'    file <- system.file("extData", "allelic_counts_HG00187.csv",
+#'        package = "ExpHunterSuite", mustWork = TRUE)
+#'    maeCounts <- data.table::fread(file)
+#'    res <- DESeq4MAE(maeCounts)
+#'    plotMA4MAE(res)
+#' }
 
 plotMA4MAE <- function(data, title = NULL, padjCutoff = 0.05, 
                    allelicRatioCutoff = .8, rare_column = NULL){
