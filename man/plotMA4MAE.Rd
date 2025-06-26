@@ -36,11 +36,13 @@ colored by significance (from p adjusted and allelic ratio) or significance
 and minor allele frequency (if rare_column is provided).
 }
 \examples{
-file <- system.file("extData", "allelic_counts_HG00187.csv",
-    package = "ExpHunterSuite", mustWork = TRUE)
-maeCounts <- data.table::fread(file)
-res <- DESeq4MAE(maeCounts)
-plotMA4MAE(res)
+\dontrun{
+   file <- system.file("extData", "allelic_counts_HG00187.csv",
+       package = "ExpHunterSuite", mustWork = TRUE)
+   maeCounts <- data.table::fread(file)
+   res <- DESeq4MAE(maeCounts)
+   plotMA4MAE(res)
+}
 }
 \author{
 Vicente Yepez
