@@ -345,7 +345,7 @@ test_that("get_sc_markers works as intended, DEG FALSE", {
 
 test_that("get_sc_markers skips exclusive clusters in DEG analysis", {
   expected_warning <- paste0("Cluster 2 contains fewer than three cells for ",
-                "condition 'g2'")
+                "condition 'g2'. Skipping DEG analysis.")
   expect_warning(suppressMessages(get_sc_markers(seu = test_pbmc,
                  cond = "groups", DEG = TRUE, verbose = FALSE,
                  subset_by = "seurat_clusters")), expected_warning)
@@ -359,7 +359,7 @@ test_that("get_sc_markers skips exclusive clusters in DEG analysis", {
 test_that("get_sc_markers skips exclusive clusters in DEG analysis, alternate
            idents", {
   expected_warning <- paste0("Cluster 2 contains fewer than three cells for ",
-                "condition 'g2'")
+                "condition 'g2'. Skipping DEG analysis.")
   expect_warning(suppressMessages(get_sc_markers(seu = test_pbmc,
                  cond = "groups", DEG = TRUE, verbose = FALSE,
                  subset_by = "cell_types")), expected_warning)
