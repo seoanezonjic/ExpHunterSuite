@@ -128,7 +128,7 @@ if (pre_save_results) {
 message("Preparing data for stats computing")
  for (corr_cutoff in corr_cutoffs){
  #mkdir folder
-  message(paste0("Computing ", corr_cutoff, " threshold"))
+  message("Computing ", corr_cutoff, " threshold")
    for (strategy in strat_names){
        
         contingency_tables <- prepare_for_stats(all_pairs, strategy, corr_cutoff, p_val_cutoff, corr_type = corr_type)
@@ -166,7 +166,7 @@ message("Preparing data for stats computing")
 
 
  if(nrow(miRNA_cont_tables) == 0 || nrow(integrated_OR) == 0){
-    stop("ERROR: Any miRNA has significant overlapping with databases at any ",
+    stop("No miRNA has significant overlapping with databases at any ",
         "given strategy/correlation threshold. Please try to modify parametres,")
  }
 

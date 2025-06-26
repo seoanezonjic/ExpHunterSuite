@@ -205,7 +205,7 @@ get_stats_from_cm <- function(cm){
 #' @param default to return if value is not available
 #' @return value required or default if it is not available
 extract_from_cm <- function(cm,real,pred,default = 0){
-  value = tryCatch(
+  value <- tryCatch(
     {
       return(cm[real,pred])
     },

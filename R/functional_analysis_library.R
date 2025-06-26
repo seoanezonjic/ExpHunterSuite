@@ -328,12 +328,12 @@ multi_topGOTest <- function(funsys, genes_list, nodeSize = 5, org_db,
   genes_list <- lapply(genes_list, function(l_genes){
     if(is.numeric(l_genes)) { 
       if(!statistic %in%  c("ks", "t"))
-        stop("ERROR: numeric scores can be only computed using 'ks' and 't' statistic")
+        stop("Numeric scores can be only computed using 'ks' and 't' statistic")
       
       return(l_genes)      
     } else {
       if (statistic %in% c("ks", "t"))
-        stop("ERROR: 'ks' and 't' can be only computed using numeric scores") 
+        stop("'ks' and 't' can be only computed using numeric scores") 
       l_genes <- factor(as.integer(universe %in% l_genes))
       names(l_genes) <- universe
       return(l_genes)
@@ -827,11 +827,10 @@ clusterize_terms <- function(all_enrichments, threshold = 0.7,
     for (ancestor in names(GO_ancestor)){
       GO_ancestor[[ancestor]] <- c(GO_ancestor[[ancestor]], ancestor)
     }
-#    print("time calc_all_paths")
-#     print(system.time(
+
     paths <- calc_all_paths(ids = unique(names(GO_parents)), 
       GO_parents = GO_parents)
-#    ))
+
     levels <- unlist(lapply(paths, function(id){min(lengths(id))}))
 
     enrichments_cl <- all_enrichments[[funsys]]
@@ -840,7 +839,7 @@ clusterize_terms <- function(all_enrichments, threshold = 0.7,
     term_sim[is.na(term_sim)] <- 0
     term_dis <- stats::as.dist(1 - term_sim)
     term_clust <- fastcluster::hclust(term_dis, method = "average")
-    threshold = 1 - threshold
+    threshold <- 1 - threshold
     clust_term <- stats::cutree(term_clust, h = threshold)
 
     cluster_names <- lapply(clust_term, function(cluster) {
@@ -975,31 +974,6 @@ calc_path <- function(ids, GO_parents, env){
       }
     }
   }
-}
-
-vectdist <- function(vectA, vectB){
-  # VectA and B must have same length. Exception not handled
-  return(sqrt(sum((vectA - vectB)^2)))
-}
-
-toDistances <- function(vectors_matrix, rows = TRUE){
-  if(!rows){
-    vectors_matrix = t(vectors_matrix)
-  }
-  # Calc similitudes of rows
-  numItems = nrow(vectors_matrix)
-  Mdist = matrix(Inf,nrow = numItems, ncol = numItems)
-  invisible(lapply(seq(numItems), function(i){
-    if(i != numItems){
-      invisible(lapply(seq(i+1, numItems), function(j){
-        v = vectdist(vectors_matrix[i,],vectors_matrix[j,])
-        Mdist[i,j] <<- v
-        Mdist[j,i] <<- v
-      }))
-    }
-    Mdist[i,i] <<- 0
-  }))
-  return(Mdist)
 }
 
 #' @importFrom GO.db GOBPANCESTOR GOMFANCESTOR GOCCANCESTOR
@@ -1201,31 +1175,6 @@ calc_path <- function(ids, GO_parents, env){
       }
     }
   }
-}
-
-vectdist <- function(vectA, vectB){
-  # VectA and B must have same length. Exception not handled
-  return(sqrt(sum((vectA - vectB)^2)))
-}
-
-toDistances <- function(vectors_matrix, rows = TRUE){
-  if(!rows){
-    vectors_matrix = t(vectors_matrix)
-  }
-  # Calc similitudes of rows
-  numItems = nrow(vectors_matrix)
-  Mdist = matrix(Inf,nrow = numItems, ncol = numItems)
-  invisible(lapply(seq(numItems), function(i){
-    if(i != numItems){
-      invisible(lapply(seq(i+1, numItems), function(j){
-        v = vectdist(vectors_matrix[i,],vectors_matrix[j,])
-        Mdist[i,j] <<- v
-        Mdist[j,i] <<- v
-      }))
-    }
-    Mdist[i,i] <<- 0
-  }))
-  return(Mdist)
 }
 
 #' @importFrom GO.db GOBPANCESTOR GOMFANCESTOR GOCCANCESTOR

@@ -27,7 +27,7 @@ target_generation <- function(from_file=NULL,
                                     check.names = FALSE)
       # Check there is a column named treat
       if(! "treat" %in% colnames(target)) {
-        stop(cat("No column named treat in the target file.\nPlease resubmit"))
+        stop("No column named treat in the target file.\nPlease resubmit")
       }
     } else {
       index_control_cols <- unlist(strsplit(ctrl_samples, ",")) 

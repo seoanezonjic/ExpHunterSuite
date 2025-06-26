@@ -64,20 +64,17 @@ STC <- function(Ngene = 1000,
         DEG.foldchange <- rep(DEG.foldchange,Ngene)
     }
     # Prepare foldchange
-    experiments <- matrix(0,ncol = replicates * 2, nrow = Ngene)
-    invisible(lapply(seq_along(DEGs),function(i){
-        # Check
-        if(DEGs[i] == 0){
-            experiments[i,] <<- rep(1.0,ncol(experiments))
-            return()
-        } 
-        # Generate foldchange
-        experiments[i,] <<- c(rep(1.0,replicates),
-                         DEGs[i] * stats::runif(replicates,
-                             min = DEG.foldchange[i] - 0.2, 
-                             max = DEG.foldchange[i] + 0.2))
-    }))    
-    # Generate
+    experiments <- matrix(0, ncol = replicates * 2, nrow = Ngene)
+    for (i in seq_along(DEGs)) {
+        if (DEGs[i] == 0) {
+            experiments[i, ] <- rep(1.0, ncol(experiments))
+        } else {
+            fold_changes <- runif(replicates,
+                          min = DEG.foldchange[i] - 0.2,
+                          max = DEG.foldchange[i] + 0.2)
+            experiments[i, ] <- c(rep(1.0, replicates), DEGs[i] * fold_changes)
+        }
+    }
     experiments <- apply(experiments, 2, function(x, pp = population) {
         stats::rnbinom(n = Ngene, 
             mu = (abs(x)^(x/abs(x)))*pp$mean, size = 1/pp$disp)

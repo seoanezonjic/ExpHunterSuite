@@ -77,7 +77,7 @@ write_expression_report <- function(exp_results,
                                             type_index = "contents_list")
     plotter$build(template)
     plotter$write_report(outf)
-    message(paste0("Report written in ", outf))
+    message("Report written in ", outf)
 }
 
 
@@ -261,7 +261,7 @@ write_global_cormit <- function(cormit_res,
                                             type_index = "contents_list")
     plotter$build(template)
     plotter$write_report(outf)
-    message(paste0("Report written in ", outf))
+    message("Report written in ", outf)
     if (!is.null(opt$genomic_ranges)){
         g_ranges <- read.table(opt$genomic_ranges, header = FALSE)
         g_ranges <- g_ranges[,c(1,2,3,4,6)]
@@ -393,7 +393,7 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
                                  compress_obj = TRUE)
         plotter$build(template)
         plotter$write_report(outf_cls)
-        message(paste0("Report written in ", outf_cls))
+        message("Report written in ", outf_cls)
     }
 }
 
@@ -602,7 +602,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
                                                 type_index = "contents_list")
         plotter$build(template)
         plotter$write_report(outf)
-        message(paste0("Report written in ", outf))
+        message("Report written in ", outf)
     }
     if(!any(grepl("WGCNA", names(func_results))) && grepl("c|i", report)) {
         message("Cluster reports chosen but no cluster results available. 
@@ -620,10 +620,10 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
                                       filter_cluster_enrichment,
                                       filter_list = corr_cl)
         } else {
-            warning(paste0(c("There are not clusters with higher absolute ",
+            warning("There are not clusters with higher absolute ",
                              "correlation with treat/control hinger than ",
                              corr_threshold, ". Modify corr_threshold option. ",
-                             "Reporting enrichments of all clusters...")))
+                             "Reporting enrichments of all clusters...")
         }
     }
     if(grepl("c", report)){
@@ -696,7 +696,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
             plotter$hash_vars$cl_flags_ora <- cl_flags_ora
             plotter$build(template)
             plotter$write_report(outf_cls_i)
-            message(paste0("Report written in ", outf_cls_i))
+            message("Report written in ", outf_cls_i)
         #}) 
         }, workers=cores, task_size=task_size)
         unlink(list.files(results_path, pattern="_temp_cl_rep$", 
@@ -799,7 +799,7 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
                                             type_index = "contents_list")
     plotter$build(template)
     plotter$write_report(outfile)
-    message(paste0("Report written in ", outfile))
+    message("Report written in ", outfile)
   }, workers=workers, task_size=task_size)
   # temp files not deleted properly in parallel 
   unlink(list.files(output_path, pattern="_temp$", full.names=TRUE), 
