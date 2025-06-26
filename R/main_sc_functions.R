@@ -245,9 +245,17 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 #' DEG results.
 #' @export
 #' @examples
-#'
-#'
-#'
+#' data(pbmc_tiny)
+#' seu <- pbmc_tiny
+#' seu$sample <- "a"
+#' seu$sample[8:15] <- "b"
+#' seu$seurat_clusters <- c("0", "1")
+#' DEG_target <- data.frame(sample = seu$sample,
+#'                          treat = c(rep("Ctrl", 7), rep("Treat", 8)))
+#' DEG_results <- main_sc_Hunter(DEG_target = DEG_target, seu = seu,
+#'                         p_val_cutoff = 1, min_avg_log2FC = 0, min_counts = 0,
+#'                         min_cell_proportion = 0)
+#' print(DEG_results)
 
 main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
                            min_avg_log2FC = 0.5, min_counts = 10, query = NULL,
