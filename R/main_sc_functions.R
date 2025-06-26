@@ -121,10 +121,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                               SingleR_ref = SingleR_ref, reduce = reduce)
     annotate <- TRUE
     qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
-                 doublet_list = doublet_list, BPPARAM = BPPARAM,
-                 lower = lower, niters = 10000, test.ambient = FALSE,
-                 ignore = NULL, alpha = NULL, round = TRUE, by.rank = NULL,
-                 known.empty = NULL)
+                 doublet_list = doublet_list)
     if(length(unique(qc$sample)) == 1) {
       qc <- process_doublets(seu = qc, name = name, doublet_path = doublet_path,
                              assay = "RNA", nfeatures = hvgs, BPPARAM = BPPARAM,
@@ -157,10 +154,9 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     if(!is.null(SingleR_ref)) {
       message("SingleR reference provided. Annotating cells.")
       annotation <- annotate_SingleR(seu = seu, SingleR_ref = SingleR_ref,
-       BPPARAM = BPPARAM, ref_n = ref_n, ref_label = ref_label,
-       verbose = verbose, ref_de_method = ref_de_method,
-       aggr.ref = new_opt$aggr.ref, fine.tune = new_opt$fine.tune,
-       save_pdf = file.path(output, "report"))
+                    BPPARAM = BPPARAM, ref_n = ref_n, ref_label = ref_label,
+                    verbose = verbose, ref_de_method = ref_de_method,
+                    aggr.ref = new_opt$aggr.ref, fine.tune = new_opt$fine.tune)
       annotate <- FALSE
       seu <- annotation$seu
       markers <- annotation$markers
@@ -245,7 +241,13 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
 #' @param query A string vector. List of genes to focus on DEG analysis in
 #' addition to regular DEG analysis.
 #' @param output_path Path where output will be written.
+#' @returns A list containing DEG results, metrics and a query subset of
+#' DEG results.
 #' @export
+#' @examples
+#'
+#'
+#'
 
 main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
                            min_avg_log2FC = 0.5, min_counts = 10, query = NULL,
