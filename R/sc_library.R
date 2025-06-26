@@ -386,7 +386,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   if(any(ncells < 3)) {
     lowcell_conds <- paste(conds[which(ncells < 3)])
     warning('Cluster ', clust_num, ' contains fewer than three cells for',
-            ' condition(s) \'', lowcell_conds, '\'. Skipping DEG ',
+            ' condition \'', lowcell_conds, '\'. Skipping DEG ',
             'analysis.', immediate. = TRUE)
     markers <- data.frame(FALSE)
   } else {
