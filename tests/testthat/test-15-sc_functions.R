@@ -86,7 +86,7 @@ test_that("match_cell_types, cluster with no significant markers", {
   expected_df$cell_type <- c("1. Unknown (a)", "2. type3",
                              "3. type2", "4. Unknown (b)")
   expect_warning(match_cell_types(test_markers_df, cell_annotation),
-                 "WARNING: cluster 4 contains no significant markers")
+                 "Cluster 4 contains no significant markers")
   output_df <- suppressWarnings(match_cell_types(test_markers_df,
                               cell_annotation))$stats_table
   expect_equal(output_df, expected_df)
