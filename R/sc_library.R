@@ -68,7 +68,7 @@ tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL){
      message("Doublet list provided. Marking barcodes")
      seu <- tag_doublets(seu, doublet_list)
   }
-  seu@meta.data$qc[seu@meta.data$qc == ""] = "Pass"
+  seu@meta.data$qc[seu@meta.data$qc == ""] <- "Pass"
   commas <- grep("^,", seu@meta.data$qc)
   seu@meta.data$qc[commas] <- sub(",", "", seu@meta.data$qc[commas])
   colnames(seu@meta.data) <- tolower(colnames(seu@meta.data))
@@ -273,7 +273,7 @@ collapse_markers <- function(markers_list) {
 }
 
 .annotate_empty_cluster <- function(markers_df, cluster) {
-  warning("Cluster ", cluster, " contains no significant markers"),
+  warning("Cluster ", cluster, " contains no significant markers",
           immediate. = TRUE)
   subset <- markers_df[markers_df$seurat_clusters == cluster, ][1,]
   subset$gene <- "None"
@@ -304,8 +304,7 @@ collapse_markers <- function(markers_list) {
   return(subset)
 }
 
-.add_cell_types <- function(markers_df, canon_types, p_adj_cutoff,
-                            cell_annotation) {
+.add_cell_types <- function(markers_df, p_adj_cutoff, cell_annotation) {
   canon_types <- unique(cell_annotation$type)
   clusters <- unique(markers_df$seurat_clusters)
   subset_list <- vector(mode = "list", length = length(clusters))
@@ -314,10 +313,10 @@ collapse_markers <- function(markers_list) {
                            markers_df$p_val_adj <= p_adj_cutoff, ]
       if(nrow(subset) < 1) {
         subset <- .annotate_empty_cluster(markers_df = markers_df,
-                                        cluster = cluster)
+                                          cluster = cluster)
       } else {
         subset <- .annotate_regular_cluster(cell_annotation = cell_annotation,
-                                     subset = subset, canon_types = canon_types)
+                                    subset = subset, canon_types = canon_types)
       }
       subset_list[[as.numeric(cluster)]] <- subset
     }
@@ -374,8 +373,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   }
   markers_df <- .prep_markers_for_annotation(markers_df = markers_df)
   stats_table <- .add_cell_types(cell_annotation = cell_annotation,
-                            markers_df = markers_df, canon_types = canon_types,
-                            p_adj_cutoff = p_adj_cutoff)
+                          markers_df = markers_df, p_adj_cutoff = p_adj_cutoff)
   res <- .format_anno_res(stats_table = stats_table)
   return(res)
 }
@@ -388,7 +386,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   if(any(ncells < 3)) {
     warning('Cluster ', clust_num, ' contains fewer than three cells for',
             ' condition \'', conds[which(ncells < 3)], '\'. Skipping DEG ',
-            'analysis.'), immediate. = TRUE)
+            'analysis.', immediate. = TRUE)
     markers <- data.frame(FALSE)
   } else {
     Seurat::Idents(subset_seu) <- cond  
