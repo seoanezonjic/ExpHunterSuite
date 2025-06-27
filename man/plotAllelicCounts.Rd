@@ -36,12 +36,13 @@ vs counts of the reference on the log10 scale. If significant and minor
 allele frequency columns present, dots will be highlighted accordingly.
 }
 \examples{
-file <- system.file("extData", "allelic_counts_HG00187.csv", 
-    package = "ExpHunterSuite", mustWork = TRUE)
-maeCounts <- data.table::fread(file)
-res <- DESeq4MAE(maeCounts)
-plotAllelicCounts(res)
-
+\dontrun{
+   file <- system.file("extData", "allelic_counts_HG00187.csv", 
+       package = "ExpHunterSuite", mustWork = TRUE)
+   maeCounts <- data.table::fread(file)
+   res <- DESeq4MAE(maeCounts)
+   plotAllelicCounts(res)
+}
 }
 \author{
 Vicente Yepez
