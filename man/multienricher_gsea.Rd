@@ -41,6 +41,9 @@ multienricher_gsea(
 
 \item{...}{other arguments passed to the enrichment function}
 }
+\value{
+Enrichment results as a list
+}
 \description{
 Perform gsea enrichment analysis of a list of genes
 }

@@ -16,6 +16,9 @@ parse_pseudocounts(input_folder, mapper, output_type, annotation_file)
 
 \item{annotation_file}{gtf or gff path, requested for parsin salmon results}
 }
+\value{
+Table of pseudocounts - samples x transcripts
+}
 \description{
 main_parse_pseudocounts
 Functions that loads pseudommappers results and complite it into a table of counts

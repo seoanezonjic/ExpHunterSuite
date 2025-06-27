@@ -54,6 +54,9 @@ multienricher_ora(
 
 \item{...}{other arguments passed to the enrichment function}
 }
+\value{
+Enrichment results as a list
+}
 \description{
 multienricher_ora
 performs ORA enrichment analysis of a list of genes

@@ -4,6 +4,7 @@
 #' @param mapper string pseudomapping program
 #' @param output_type string indicate i fthe output must be 'G' genes, 'T' transcripts or both
 #' @param annotation_file gtf or gff path, requested for parsin salmon results
+#' @returns Table of pseudocounts - samples x transcripts
 #' @examples
 #'  \dontrun{
 #'      parse_pseudocounts(input_folder = "Path_to_folder",

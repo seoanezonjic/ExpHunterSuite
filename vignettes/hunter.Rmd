@@ -21,6 +21,8 @@ vignette: >
 
  **Package version**: `r packageVersion("ExpHunterSuite")`
 
+ **Session Info**: `sessionInfo()`
+
 # Introduction
 
 ExpHunterSuite implements a comprehensive protocol for the analysis of 
@@ -770,3 +772,7 @@ E). Execution parallelized using 6 cores (-c
     6).*
 
     functional_Hunter.R -f G -G B -A o -P 0.1 -m Human -i ctrl_vs_mut -t E -c 6 -o functional_enrichment
+
+```{r session-info}
+sessionInfo()
+```

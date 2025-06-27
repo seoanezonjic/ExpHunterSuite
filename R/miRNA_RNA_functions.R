@@ -755,8 +755,18 @@ translate_ensembl){
     gene_id_translation= gene_id_translation))
 }
 
+#' translate_miRNA_ids
+#'
+#' `translate_miRNA_ids` get miRNA names from accession numbers
+#'
 #' @importFrom miRBaseVersions.db miRBaseVersions.db
 #' @importFrom AnnotationDbi select
+#' @param miRNA_IDs Accession number IDs
+#' @param miRBaseVersion Version of miRBase to use
+#' @returns the miRNA names translate from the accession number IDs
+#' @examples
+#' miRNA_IDs <- c("MIMAT0000158")
+#' translate_miRNA_ids(miRNA_IDs)
 #' @export
 translate_miRNA_ids <- function(miRNA_IDs, miRBaseVersion = "VW-MIMAT-22.0") {
     miRNA_tr_table <- AnnotationDbi::select(

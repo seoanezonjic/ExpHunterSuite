@@ -414,6 +414,7 @@ get_default_geneSel <-function(statistic){
 #' @param kegg_file must be provided if kegg annotation required
 #' @param custom_sets custom set object (processed by load_and_parse_gmt)
 #' @param ... other arguments passed to the enrichment function
+#' @returns Enrichment results as a list
 multienricher_gsea <- function(all_funsys=NULL, genes_list, organism_info, 
   org_db = NULL, task_size=1, workers=1, pvalueCutoff = 0.05, 
   pAdjustMethod = "BH", kegg_file=NULL, custom_sets=NULL, ...){
@@ -578,6 +579,7 @@ enrichKEGG_user_data <- function (
 #' @param return_all Whether to remove list items with no enrichment
 #' @param ... other arguments passed to the enrichment function
 #' @importFrom DOSE setReadable
+#' @returns Enrichment results as a list
 #' @export
 multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL, 
   organism_info, org_db = NULL, task_size=1, workers=1, pvalueCutoff = 0.05, 
@@ -714,7 +716,7 @@ trycatch_pairwise_termsim <- function(enr){
     enr <-enrichplot::pairwise_termsim(enr)
   },
     error = function(cond){
-    message("ERROR ADDING TERM SIMILARITY TO ENRICHMENT OBJECT")
+    message("PROBLEM ADDING TERM SIMILARITY TO ENRICHMENT OBJECT")
     message(cond)
     message("ATTEMPTING TO FIX BY REMOVING DUPLICATED ID DESCRIPTIONS")
     ccr <- enr@compareClusterResult
@@ -998,7 +1000,7 @@ clean_parentals_in_matrix <- function(enrichment_mx, subont){
   return(enrichment_mx)
 }
 
-
+#' @importFrom utils head
 filter_top_categories <- function(enrichments_ORA_merged, top_c = 50){
   # save(enrichments_ORA_merged, file="enrichments_ORA_merged.RData")
   if(! is.null(top_c)) {

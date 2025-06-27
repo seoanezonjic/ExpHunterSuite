@@ -11,6 +11,9 @@ download_latest_kegg_db(current_organism_info, file)
 
 \item{file}{where to save the file}
 }
+\value{
+The latest KEGG db
+}
 \description{
 download kegg db for a given organism
 }

@@ -57,6 +57,9 @@ main_clusters_to_enrichment(
 
 \item{readable}{Whether output should include gene symbols}
 }
+\value{
+functional result object (multienricher return) plus gene attributes
+}
 \description{
 main_clusters_to_enrichment
 perform enrichment analysis on multiple lists of genes
