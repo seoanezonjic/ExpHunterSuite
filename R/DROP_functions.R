@@ -950,12 +950,13 @@ plotMA4MAE <- function(data, title = NULL, padjCutoff = 0.05,
 #' @return A ggplot object containing the MA plot.
 #' @export
 #' @examples
-#' file <- system.file("extData", "allelic_counts_HG00187.csv", 
-#'     package = "ExpHunterSuite", mustWork = TRUE)
-#' maeCounts <- data.table::fread(file)
-#' res <- DESeq4MAE(maeCounts)
-#' plotAllelicCounts(res)
-#' 
+#' \dontrun{
+#'    file <- system.file("extData", "allelic_counts_HG00187.csv", 
+#'        package = "ExpHunterSuite", mustWork = TRUE)
+#'    maeCounts <- data.table::fread(file)
+#'    res <- DESeq4MAE(maeCounts)
+#'    plotAllelicCounts(res)
+#' }
 plotAllelicCounts <- function(data, title = NULL, padjCutoff = 0.05, 
                        allelicRatioCutoff = .8, rare_column = NULL){
   refCount <- altCount <- Significant <- padj <- altRatio <- NULL
