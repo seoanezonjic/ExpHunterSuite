@@ -342,6 +342,10 @@ write_annot_output <- function(final_results = stop("Missing results object"),
       write.table(final_results$markers, sep = "\t", quote = FALSE,
                   row.names = TRUE, file = file.path(opt$output, "markers.tsv"))
     }
+    if(!is.null(final_results$SingleR_annotation)) {
+      data.table::fwrite(final_results$SingleR_annotation, quote = FALSE,
+        file = file.path(opt$output, "SingleR_annotation.tsv"), sep = "\t")
+    }
     message("Counts matrix saved to ", file.path(opt$output, "counts"))
     return(invisible(NULL))
 }
@@ -409,6 +413,7 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
     sample_qc_pct = final_results$sample_qc_pct, target = final_results$target,
     clusters_pct = final_results$clusters_pct, markers = final_results$markers,
     query_exp = final_results$query_data$query_exp,
+    SingleR_annotation = final_results$SingleR_annotation,
     query_pct = final_results$query_data$query_pct,
     query_cluster_pct = final_results$query_data$query_cluster_pct,
     cell_annotation = opt$cell_annotation, extra_columns = opt$extra_columns,
@@ -463,9 +468,9 @@ check_sc_input <- function(metadata = NULL, DEG_target = NULL, integrate = NULL,
         }
       }
       if(any(!PASS)) {
-        stop("ERROR. Please check DEG_target have exactly two unique ",
-          "values. DEG_column(s) \"", paste(names(PASS[PASS==FALSE]),
-            collapse = "\", \""), "\" contain an invalid number.")
+        not_pass <- paste(names(PASS[PASS==FALSE]), collapse = "\", \"")
+        stop("Please check DEG_target has exactly two unique ",
+          "values. DEG_column(s) \"", not_pass, "\" contain an invalid number.")
       }
     }
     if(!is.null(SingleR_ref)) {

@@ -698,13 +698,15 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
   if(length(by) == 2){
     pct_list <- vector(mode = "list", length = length(subset_list))
     for(element in seq(subset_list)) {
-      message("Subdividing", by[1], paste0(element, "/", length(items)))
+      subdivision <- paste0(element, "/", length(items))
+      message("Subdividing", by[1], " ", subdivision)
       sec_items <- unique(subset_list[[element]]@meta.data[[by[2]]])
       new_subset <- vector(mode = "list", length = length(sec_items))
       names(new_subset) <- sec_items
       for(j in seq(length(sec_items))) {
         sublist_name <- as.character(sec_items[j])
-        message("Re-subsetting by", by[2], paste0(j, "/", length(sec_items)))
+        resubset <- paste0(j, "/", length(sec_items))
+        message("Re-subsetting by", by[2], " ", resubset)
         # Expr set to TRUE because double subset can result in only selecting
         # cells that have not been selected by sketch, which breaks seurat
         # object subsetting.
@@ -831,9 +833,9 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
                         p_val_cutoff = p_val_cutoff, query = query)
   DEG_df <- matrix_list$DEG_df
   if(any(!query %in% colnames(DEG_df))) {
-    warning("Target gene(s) \"", paste(query[!query %in% colnames(DEG_df)],
-            collapse = "\", \""), "\" are not differentially expressed in ",
-            "dataset.", immediate. = TRUE)
+    miss_DEG <- paste(query[!query %in% colnames(DEG_df)], collapse = "\", \"")
+    warning("Target gene(s) \"", miss_DEG, "\" are not differentially ",
+            "expressed in dataset.", immediate. = TRUE)
   }
   return(list(matrix_list = matrix_list, DEG_df = DEG_df))
 }
@@ -1075,8 +1077,8 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data") {
   }
   missing <- !query %in% rownames(genes)
   if(any(missing)) {
-    warning("Query gene(s) ", paste0(query[missing], collapse = ", "),
-            " not present in seurat object.", immediate. = TRUE)
+    miss <- paste0(query[missing], collapse = ", ")
+    warning("Query gene(s) ", miss, " not present in seurat object.")
     query <- query[!missing]
   }
   if(!is.vector(genes)) {
@@ -1117,9 +1119,9 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data") {
   }
   if(any(sum_matches < 3)) {
     mismatch <- pairs[which(sum_matches < 3), ]
+    mis_msg <- paste(apply(mismatch, 1, paste, collapse = "-"), collapse = ", ")
     warning('One or more identities contain fewer than three cells for one or ',
-            'more categories. Affected pair(s): ',
-            paste(apply(mismatch, 1, paste, collapse = "-"), collapse = ", "),
+            'more categories. Affected pair(s): ', mis_msg,
             ". \nDefaulting to general marker analysis.")
     res <- TRUE
   }else{
@@ -1662,8 +1664,9 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   }
   if(params$subset_by != "") {
     params$subset_by <- tolower(unlist(strsplit(params$subset_by, ";")))
+    selected_conds <- paste0(params$subset_by, collapse = ", ")
     message("Selected ", length(params$subset_by), " subset condition(s): ",
-            paste0(params$subset_by, collapse = ", "))
+            selected_conds)
   }
   if(params$extra_columns != "") {
     params$extra_columns <- tolower(unlist(strsplit(params$extra_columns, ";")))
