@@ -256,7 +256,6 @@ if(file.exists(final_counts_path) & opt$integrate) {
 message("--------------------------------------------")
 message("---------WRITING ANNOTATION REPORT----------")
 message("--------------------------------------------")
-
 write_sc_report(final_results = final_results, template_folder = template_folder,
                 output = file.path(opt$output, "report"), source_folder = source_folder,
                 template = "sc_annotation.txt", out_suffix = out_suffix, opt = opt, params = params)
