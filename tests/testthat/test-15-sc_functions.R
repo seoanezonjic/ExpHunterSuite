@@ -345,7 +345,7 @@ test_that("get_sc_markers works as intended, DEG FALSE", {
 
 test_that("get_sc_markers skips exclusive clusters in DEG analysis", {
   expected_warning <- paste0("Cluster 2 contains fewer than three cells for ",
-                "condition 'g2'. Skipping DEG analysis.")
+                "condition(s) 'g2'. Skipping DEG analysis.")
   expect_warning(suppressMessages(get_sc_markers(seu = test_pbmc,
                  cond = "groups", DEG = TRUE, verbose = FALSE,
                  subset_by = "seurat_clusters")), expected_warning)
@@ -359,7 +359,7 @@ test_that("get_sc_markers skips exclusive clusters in DEG analysis", {
 test_that("get_sc_markers skips exclusive clusters in DEG analysis, alternate
            idents", {
   expected_warning <- paste0("Cluster 2 contains fewer than three cells for ",
-                "condition 'g2'. Skipping DEG analysis.")
+                "condition(s) 'g2'. Skipping DEG analysis.")
   expect_warning(suppressMessages(get_sc_markers(seu = test_pbmc,
                  cond = "groups", DEG = TRUE, verbose = FALSE,
                  subset_by = "cell_types")), expected_warning)
@@ -375,7 +375,7 @@ test_that("get_sc_markers properly applies min_pct filter", {
   clusters_to_remove <- local_pbmc@meta.data$seurat_clusters == "1"
   local_pbmc@meta.data <- local_pbmc@meta.data[!clusters_to_remove,]
   expected_warning <- paste0("Cluster 2 contains fewer than three cells for ",
-                "condition 'g2'")
+                "condition(s) 'g2'")
   suppressMessages(get_sc_markers(seu = local_pbmc,
                  cond = "groups", DEG = TRUE, verbose = FALSE,
                  subset_by = "cell_types", min.pct = 0.13))
@@ -670,5 +670,28 @@ test_that("test process_sc_params, query mode", {
   expected$opt$ref_filter <- NULL
   output$opt <- output$opt[order(names(output$opt))]
   expected$opt <- expected$opt[order(names(expected$opt))]
+  expect_equal(output, expected)
+})
+
+test_that("test .add_target_info, simple case", {
+  DEG_target <- data.frame(sample = c("A", "B"), treat = c("Ctrl", "Treat"))
+  test_pbmc <- pbmc_tiny
+  test_pbmc$sample <- c(rep("A", 7), rep("B", 8))
+  expected <- c(rep("Ctrl", 7), rep("Treat", 8))
+  names(expected) <- colnames(test_pbmc)
+  output <- .add_target_info(seu = test_pbmc, DEG_target = DEG_target)$deg_group
+  expect_equal(output, expected)
+})
+
+test_that("test .add_target_info, complex case", {
+  DEG_target <- data.frame(sample = c("A", "B"), treat = c("Treat", "Ctrl"))
+  test_pbmc <- pbmc_tiny
+  test_pbmc$sample <- c("A", "B", "B", "A", "A", "B", "A", "B", "A", "B", "B",
+                        "B", "A", "B", "A")
+  expected <- c("Treat", "Ctrl", "Ctrl", "Treat", "Treat", "Ctrl", "Treat",
+                "Ctrl", "Treat", "Ctrl", "Ctrl", "Ctrl", "Treat", "Ctrl",
+                "Treat")
+  names(expected) <- colnames(test_pbmc)
+  output <- .add_target_info(seu = test_pbmc, DEG_target = DEG_target)$deg_group
   expect_equal(output, expected)
 })
