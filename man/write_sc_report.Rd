@@ -11,6 +11,7 @@ write_sc_report(
   output = getwd(),
   out_suffix = NULL,
   template_folder,
+  files_css = file.path(template_folder, "styles.css"),
   source_folder = NULL,
   opt,
   params = NULL,
@@ -30,6 +31,9 @@ html document.}
 different templates with this function (as is the case in our workflow)}
 
 \item{template_folder}{directory where template is located}
+
+\item{files_css}{Path to css file to inject. By default it injects styles.css
+found in ExpHunterSuite's templates directory.}
 
 \item{source_folder}{htmlreportR source folder}
 
