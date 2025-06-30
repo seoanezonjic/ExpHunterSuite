@@ -384,9 +384,9 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   meta <- as.character(subset_seu@meta.data[[cond]])
   ncells <- c(sum(meta==conds[1]), sum(meta==conds[2]))
   if(any(ncells < 3)) {
-    lowcell_conds <- paste(conds[which(ncells < 3)])
+    lowcell_conds <- paste(conds[which(ncells < 3)], collapse = ", ")
     warning('Cluster ', clust_num, ' contains fewer than three cells for',
-            ' condition \'', lowcell_conds, '\'. Skipping DEG ',
+            ' condition(s) \'', lowcell_conds, '\'. Skipping DEG ',
             'analysis.', immediate. = TRUE)
     markers <- data.frame(FALSE)
   } else {
@@ -1741,4 +1741,10 @@ load_SingleR_ref <- function(path, version = NULL, filter = "") {
     SingleR_ref <- SingleR_ref[, filter]
   }
   return(SingleR_ref)
+}
+
+.add_target_info <- function(seu, DEG_target) {
+  seu <- seu[, which(seu$sample %in% DEG_target$sample)]
+  seu$deg_group <- DEG_target$treat[match(seu$sample, DEG_target$sample)]
+  return(seu)
 }

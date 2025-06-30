@@ -166,7 +166,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     seu <- Seurat::ScaleData(object = seu, verbose = verbose,
                              features = rownames(seu))
     message("Scaling time: ", Sys.time() - scale_start)
-    message('Reducing dimensionality')  
+    message('Reducing dimensionality')
     seu <- Seurat::RunPCA(seu, assay = assay, npcs = ndims, verbose = verbose)
     reduction <- "pca"
     if(new_opt$integrate) {
@@ -263,8 +263,7 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
                            output_path = getwd()) {
   message('Starting DEG analysis.')
   DEG_query <- NULL
-  seu <- seu[, which(seu$sample %in% DEG_target$sample)]
-  seu$deg_group <- DEG_target$treat[match(seu$sample, DEG_target$sample)]
+  seu <- .add_target_info(seu = seu, DEG_target = DEG_target)
   subset_target <- ifelse("cell_type" %in% colnames(seu@meta.data),
                            yes = "cell_type", no = "seurat_clusters")
   DEGs <- get_sc_markers(seu = seu, cond = "deg_group", DEG = TRUE,
@@ -368,6 +367,8 @@ write_annot_output <- function(final_results = stop("Missing results object"),
 #' @param params Input options list, will be included as execution parameters.
 #' @param analysis Analysis type. Will only be used to build report name inside
 #' html document.
+#' @param files_css Path to css file to inject. By default it injects styles.css
+#' found in ExpHunterSuite's templates directory.
 #'
 #' @keywords preprocessing, write, report
 #' 
@@ -375,9 +376,10 @@ write_annot_output <- function(final_results = stop("Missing results object"),
 #' @export
 
 write_sc_report <- function(final_results, analysis = "Single-Cell",
-                            output = getwd(), out_suffix = NULL,
-                            template_folder, source_folder = NULL, opt,
-                            params = NULL, template = NULL, use_canvas = TRUE){
+                output = getwd(), out_suffix = NULL, template_folder,
+                files_css = file.path(template_folder, "styles.css"),
+                source_folder = NULL, opt, params = NULL, template = NULL,
+                use_canvas = TRUE){
     if(is.null(template_folder)) {
       stop("No template folder was provided.")
     }
@@ -422,7 +424,7 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
     plotter <- htmlreportR::htmlReport$new(title_doc = paste0(opt$name,
                             analysis, " report"), container = container,
                             tmp_folder = tmp_folder, src = source_folder,
-                            compress_obj = FALSE)
+                            compress_obj = FALSE, files_css = files_css)
     plotter$build(template)
     plotter$write_report(out_file)
     message("Report written in ", out_file)
