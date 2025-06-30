@@ -80,6 +80,14 @@
         return(res)
     }
 
+    custom_plotScoreHeatmap <- function() {
+        return(SingleR::plotScoreHeatmap(data_frame))
+    }
+
+    custom_plotDeltaDistribution <- function() {
+        return(SingleR::plotDeltaDistribution(data_frame))
+    }
+
 end.rcode-->
 
 <h1><strong>SINGLE CELL RNA-SEQ ANNOTATION ANALYSIS</strong></h1>
@@ -149,6 +157,14 @@ end.rcode-->
                         "not match cell type markers.</p>")
     cat(plotter$create_collapsable_container(id = "top_markers",
                                              html_code = paste(paragraph, top_markers_html,  sep = "\n")))
+end.rcode-->
+
+<!--begin.rcode SingleR_annotation, eval = !is.null(plotter$hash_vars$SingleR_annotation)
+    cat(plotter$create_title("SingleR annotation metrics", "singler_annot", hlevel = 2, indexable = TRUE, clickable = FALSE))
+    cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotScoreHeatmap, text = "dynamic", custom_format = TRUE,
+                                 plot_type = "autoplot"))
+    cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotScoreHeatmap, text = "dynamic", custom_format = TRUE,
+                                 plot_type = "autoplot"))
 end.rcode-->
 
 <!--begin.rcode Complete_PCA, eval = FALSE
