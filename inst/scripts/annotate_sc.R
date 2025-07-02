@@ -125,7 +125,9 @@ option_list <- list(
             help = "Score calculation method to select cells in sketch."),
   optparse::make_option("--genome", type = "character", default = "Unspecified",
             help = paste0("Genome version. Optional, included as extra ",
-              "information in output and reports."))
+              "information in output and reports.")),
+  optparse::make_option("--min_cells_per_sample", type = "character", default = 500,
+            help = "Min cells per sample. Cells with fewer than this amount of cells will be discarded.")
 )
 
 params <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
@@ -191,8 +193,7 @@ if(!file.exists(final_counts_path) | !opt$integrate) {
     }
     filter <- vector(mode = "list", length = length(expressions))
     for(i in seq(expressions)) {
-      filter[[i]] <- parse_filter(object = "seu@meta.data",
-                                  expression = expressions[i]) 
+      filter[[i]] <- eval(parse_filter(object = "seu@meta.data", expression = expressions[i]))
     }
     filter <- Reduce(operator, filter)
     message(paste0("Selected ", sum(filter), " cells for input data subsetting."))
@@ -232,7 +233,7 @@ if(file.exists(final_counts_path) & opt$integrate) {
                     BPPARAM = BPPARAM, doublet_list = opt$doublet_list, integration_method = opt$int_method,
                     sketch = opt$sketch, sketch_pct = opt$sketch_pct,
                     sketch_method = opt$sketch_method, force_ncells = opt$force_ncells,
-                    k_weight = opt$k_weight)
+                    k_weight = opt$k_weight, min_cells_per_sample = opt$min_cells_per_sample)
 }
 
 if(!file.exists(final_counts_path) & opt$integrate) {
