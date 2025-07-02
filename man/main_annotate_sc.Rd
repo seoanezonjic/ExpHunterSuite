@@ -26,6 +26,7 @@ main_annotate_sc(
   verbose = FALSE,
   output = getwd(),
   reduce = FALSE,
+  min_cells_per_sample = 500,
   ref_label = NULL,
   SingleR_ref = NULL,
   ref_de_method = NULL,
@@ -99,6 +100,9 @@ Default 10.}
 \item \code{TRUE}: Skip QC filtering. Intended for development and testing.
 \item \code{FALSE} (the default): QC filtering will be performed.
 }}
+
+\item{min_cells_per_sample}{An integer. Samples with fewer than this value of
+cells will be tagged as low_cell.'}
 
 \item{ref_label}{Reference column to use in annotation.}
 
@@ -192,7 +196,7 @@ of each experimental condition to be analyzed and compared separately.)
                   ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL,
                   ref_n = NULL, BPPARAM = NULL, doublet_list = NULL,
                   integration_method = "Harmony", sketch_pct = 12,
-                  DEG_p_val_cutoff = 5e-3,
+                  DEG_p_val_cutoff = 5e-3, min_cells_per_sample = 500,
                   min_avg_log2FC = 0.5, k_weight = 90)
  }
 }

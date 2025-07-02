@@ -4,7 +4,13 @@
 \alias{tag_qc}
 \title{tag_qc}
 \usage{
-tag_qc(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL)
+tag_qc(
+  seu,
+  minqcfeats = 500,
+  percentmt = 5,
+  doublet_list = NULL,
+  min_cells_per_sample = 500
+)
 }
 \arguments{
 \item{seu}{Seurat object to tag}
@@ -16,6 +22,9 @@ Default 500}
 Default 5}
 
 \item{doublet_list}{Vector of barcodes to be marked as doublet. Default NULL.}
+
+\item{min_cells_per_sample}{An integer. Samples with fewer than this value of
+cells will be tagged as low_cell.'}
 }
 \value{
 Seurat object with tagged metadata
@@ -24,14 +33,15 @@ Seurat object with tagged metadata
 \code{tag_qc} tags cell IDs not passing QC filters
 }
 \examples{
-\dontrun{
-  # Integrative experiment, previously loaded doublet list:
-  tag_qc(seu = pbmc_tiny, minqcfeats = 500, percentmt = 5,
-         doublet_list = c("ATGCCAGAACGACT", "CATGGCCTGTGCAT"))
-  # Per-sample experiment, no prior doublet knowledge
-  tag_qc(seu = pbmc_tiny, minqcfeats = 500, percentmt = 5,
-         doublet_list = NULL) 
-}
+seu <- pbmc_tiny
+seu$sample <- c("a", "b", "c")
+seu$sample[1] <- "c"
+# Integrative experiment, previously loaded doublet list:
+head(tag_qc(seu = seu, minqcfeats = 500, percentmt = 5,
+            doublet_list = c("ATGCCAGAACGACT", "CATGGCCTGTGCAT")))
+# Per-sample experiment, no prior doublet knowledge
+head(tag_qc(seu = seu, minqcfeats = 1, percentmt = 5, doublet_list = NULL,
+            min_cells_per_sample = 5)) 
 }
 \keyword{preprocessing,}
 \keyword{qc}
