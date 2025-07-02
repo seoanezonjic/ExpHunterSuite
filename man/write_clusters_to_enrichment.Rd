@@ -24,7 +24,8 @@ write_clusters_to_enrichment(
   gene_attribute_name = NULL,
   clean_parentals = FALSE,
   source_folder = NULL,
-  template_folder = file.path(find.package("ExpHunterSuite"), "templates")
+  template_folder = file.path(find.package("ExpHunterSuite"), "templates"),
+  files_css = file.path(template_folder, "styles.css")
 )
 }
 \arguments{
@@ -66,6 +67,9 @@ write_clusters_to_enrichment(
 \item{source_folder}{htmlreportR source folder to load js and css libraries}
 
 \item{template_folder}{(OPTIONAL) RMD templates folder}
+
+\item{files_css}{Path to css file to inject. By default it injects styles.css
+found in ExpHunterSuite's templates directory.}
 }
 \value{
 void

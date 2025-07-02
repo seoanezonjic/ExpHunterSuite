@@ -8,7 +8,8 @@ write_global_cormit(
   cormit_res,
   output_files = getwd(),
   template_folder = NULL,
-  source_folder = NULL
+  source_folder = NULL,
+  files_css = file.path(template_folder, "styles.css")
 )
 }
 \arguments{
@@ -20,6 +21,9 @@ write_global_cormit(
 
 \item{source_folder}{Folder where js and css templates to load in htmlreportR
 object are located.}
+
+\item{files_css}{Path to css file to inject. By default it injects styles.css
+found in ExpHunterSuite's templates directory.}
 }
 \value{
 void

@@ -14,7 +14,8 @@ write_merged_cluster_report(
   showCategories,
   group_results,
   func_results = NULL,
-  source_folder = NULL
+  source_folder = NULL,
+  files_css = file.path(template_folder, "styles.css")
 )
 }
 \arguments{
@@ -36,6 +37,9 @@ and functional (f). Default = "fc"}
 \item{func_results}{functional results}
 
 \item{source_folder}{htmlreportR source folder to load js and css libraries}
+
+\item{files_css}{Path to css file to inject. By default it injects styles.css
+found in ExpHunterSuite's templates directory.}
 }
 \value{
 invisible(NULL)

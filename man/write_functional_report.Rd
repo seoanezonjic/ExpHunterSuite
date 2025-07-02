@@ -20,7 +20,8 @@ write_functional_report(
   corr_threshold = 0.8,
   pvalcutoff = 0.05,
   template_folder = NULL,
-  max_genes = 200
+  max_genes = 200,
+  files_css = file.path(template_folder, "styles.css")
 )
 }
 \arguments{
@@ -57,6 +58,9 @@ R value}
 \item{template_folder}{(OPTIONAL) RMD templates folder}
 
 \item{max_genes}{maximum number of genes to plot in cnet plot}
+
+\item{files_css}{Path to css file to inject. By default it injects styles.css
+found in ExpHunterSuite's templates directory.}
 }
 \value{
 void
