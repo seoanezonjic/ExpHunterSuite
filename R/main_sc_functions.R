@@ -75,7 +75,7 @@
 #'                   ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL,
 #'                   ref_n = NULL, BPPARAM = NULL, doublet_list = NULL,
 #'                   integration_method = "Harmony", sketch_pct = 12,
-#'                   DEG_p_val_cutoff = 5e-3,
+#'                   DEG_p_val_cutoff = 5e-3, min_cells_per_sample = 500,
 #'                   min_avg_log2FC = 0.5, k_weight = 90)
 #'  }
 #' @returns invisible(final_results list. Contains multiple items:
@@ -110,7 +110,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     resolution = 0.5, p_adj_cutoff = 5e-3, name = NULL, integrate = FALSE,
     cluster_annotation = NULL, cell_annotation = NULL, scalefactor = 10000,
     hvgs = 2000, subset_by = NULL, ndims = 10, normalmethod = "LogNormalize",
-    verbose = FALSE, output = getwd(), reduce = FALSE,
+    verbose = FALSE, output = getwd(), reduce = FALSE, min_cells_per_sample=500,
     ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL, ref_n = NULL,
     BPPARAM = SerialParam(), doublet_list = NULL, k_weight = 100,
     integration_method = "Harmony", sketch = FALSE, sketch_pct = 25, 
@@ -121,7 +121,8 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                               SingleR_ref = SingleR_ref, reduce = reduce)
     annotate <- TRUE
     qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
-                 doublet_list = doublet_list)
+                doublet_list = doublet_list,
+                min_cells_per_sample = min_cells_per_sample)
     if(length(unique(qc$sample)) == 1) {
       qc <- process_doublets(seu = qc, name = name, doublet_path = doublet_path,
                              assay = "RNA", nfeatures = hvgs, BPPARAM = BPPARAM,

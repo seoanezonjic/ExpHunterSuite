@@ -39,39 +39,44 @@ read_sc_counts <- function(name, input, mincells = 1, minfeats = 1, exp_design){
 #' @param percentmt A float. Maximum MT percentage to consider a cell valid.
 #' Default 5
 #' @param doublet_list Vector of barcodes to be marked as doublet. Default NULL.
+#' @param min_cells_per_sample An integer. Samples with fewer than this value of
+#' cells will be tagged as low_cell.'
 #'
 #' @keywords preprocessing, qc
 #' 
 #' @returns Seurat object with tagged metadata
 #' @examples
-#' \dontrun{
-#'   # Integrative experiment, previously loaded doublet list:
-#'   tag_qc(seu = pbmc_tiny, minqcfeats = 500, percentmt = 5,
-#'          doublet_list = c("ATGCCAGAACGACT", "CATGGCCTGTGCAT"))
-#'   # Per-sample experiment, no prior doublet knowledge
-#'   tag_qc(seu = pbmc_tiny, minqcfeats = 500, percentmt = 5,
-#'          doublet_list = NULL) 
-#' }
+#' seu <- pbmc_tiny
+#' seu$sample <- c("a", "b", "c")
+#' seu$sample[1] <- "c"
+#' # Integrative experiment, previously loaded doublet list:
+#' head(tag_qc(seu = seu, minqcfeats = 500, percentmt = 5,
+#'             doublet_list = c("ATGCCAGAACGACT", "CATGGCCTGTGCAT")))
+#' # Per-sample experiment, no prior doublet knowledge
+#' head(tag_qc(seu = seu, minqcfeats = 1, percentmt = 5, doublet_list = NULL,
+#'             min_cells_per_sample = 5)) 
 #' @export
 
-tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL){
-  seu@meta.data$percent.mt <- Seurat::PercentageFeatureSet(seu,
-                                                        pattern = "(?i)^MT-")
-  seu@meta.data$percent.rb <- Seurat::PercentageFeatureSet(seu,
-                                                        pattern = "(?i)^RP[SL]")
-  seu@meta.data$qc <- vector(mode = "character", length = nrow(seu@meta.data))
-  seu@meta.data$qc[seu@meta.data$nFeature_RNA < minqcfeats] <- "Low_nFeature"
-  high_mt <- seu@meta.data$percent.mt > percentmt
-  seu@meta.data$qc[high_mt] <- paste(seu@meta.data$qc[high_mt], "High_MT",
-                                     sep = ",")
+tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL,
+                   min_cells_per_sample = 500){
+  colnames(seu@meta.data) <- tolower(colnames(seu@meta.data))
+  seu$percent.mt <- Seurat::PercentageFeatureSet(seu, pattern = "(?i)^MT-")
+  seu$percent.rb <- Seurat::PercentageFeatureSet(seu, pattern = "(?i)^RP[SL]")
+  seu$qc <- ""
+  seu$qc[seu$nfeature_rna < minqcfeats] <- "Low_nFeature"
+  high_mt <- which(seu$percent.mt > percentmt)
+  seu$qc[high_mt] <- paste(seu$qc[high_mt], "High_MT", sep = ",")
+  n_cells <- table(seu$sample)
+  low_cell <- names(n_cells)[n_cells < min_cells_per_sample]
+  low_cell <- seu$sample %in% low_cell
+  seu$qc[low_cell] <- paste(seu$qc[low_cell], "low_cell", sep = ",")
   if(!is.null(doublet_list)) {
      message("Doublet list provided. Marking barcodes")
      seu <- tag_doublets(seu, doublet_list)
   }
-  seu@meta.data$qc[seu@meta.data$qc == ""] <- "Pass"
-  commas <- grep("^,", seu@meta.data$qc)
-  seu@meta.data$qc[commas] <- sub(",", "", seu@meta.data$qc[commas])
-  colnames(seu@meta.data) <- tolower(colnames(seu@meta.data))
+  seu$qc[seu$qc == ""] <- "Pass"
+  commas <- grep("^,", seu$qc)
+  seu$qc[commas] <- sub(",", "", seu$qc[commas])
   return(seu)
 }
 
@@ -1686,9 +1691,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   if(params$ref_version == "") {
     params$ref_version <- NULL
   }
-  if(file.exists(params$filter_dataset)) {
-    params$filter_dataset <- readLines(params$filter_dataset)
-  } else {
+  if(params$filter_dataset == "") {
     params$filter_dataset <- NULL
   }
   return(list(opt = params, doublet_list = doublet_list,
