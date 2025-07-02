@@ -7,6 +7,8 @@
 #' @param opt option list
 #' @param source_folder Folder where js and css templates to load in htmlreportR
 #' object are located.
+#' @param files_css Path to css file to inject. By default it injects styles.css
+#' found in ExpHunterSuite's templates directory.
 #' @return void
 #' @export
 #' @importFrom rmarkdown render
@@ -16,11 +18,9 @@
 #'      degh_output <- list() # data(degh_output)
 #'      write_expression_report(degh_output)
 #' }
-write_expression_report <- function(exp_results, 
-    output_files = getwd(),
-    template_folder = NULL, 
-    opt = NULL,
-    source_folder = NULL){
+write_expression_report <- function(exp_results, output_files = getwd(),
+    template_folder = NULL, opt = NULL, source_folder = NULL,
+    files_css = file.path(template_folder, "styles.css")){
     if (is.null(template_folder))
       template_folder <- file.path(find.package('ExpHunterSuite'), 'templates')
     
@@ -69,12 +69,9 @@ write_expression_report <- function(exp_results,
     WGCNA_results = exp_results[["WGCNA_results"]])
     
     outf <- file.path(normalizePath(output_files), "DEG_report.html")
-    plotter <- htmlreportR::htmlReport$new(title_doc = "DEG_report", 
-                                            container = container,
-                                            tmp_folder = tmp_folder,
-                                            src = source_folder,
-                                            compress_obj = TRUE,
-                                            type_index = "contents_list")
+    plotter <- htmlreportR::htmlReport$new(title_doc = "DEG_report",
+        container = container, files_css = files_css, tmp_folder = tmp_folder,
+        src = source_folder, compress_obj = TRUE, type_index = "contents_list")
     plotter$build(template)
     plotter$write_report(outf)
     message("Report written in ", outf)
@@ -184,6 +181,8 @@ merge_dim_table_metrics <- function(merged_dim_table){
 #' @param template_folder htmlreportR templates folder
 #' @param source_folder Folder where js and css templates to load in htmlreportR
 #' object are located.
+#' @param files_css Path to css file to inject. By default it injects styles.css
+#' found in ExpHunterSuite's templates directory.
 #' @return void
 #' @export
 #' @importFrom rmarkdown render
@@ -194,10 +193,9 @@ merge_dim_table_metrics <- function(merged_dim_table){
 #'      write_global_cormit(degh_output)
 #' }
 
-write_global_cormit <- function(cormit_res, 
-    output_files=getwd(),
-    template_folder = NULL,
-    source_folder = NULL){
+write_global_cormit <- function(cormit_res, output_files=getwd(),
+    template_folder = NULL, source_folder = NULL,
+    files_css = file.path(template_folder, "styles.css")){
     integrated_pairs <- as.data.frame(cormit_res$integrated_pairs)
     miRNA_cont_tables <- as.data.frame(cormit_res$miRNA_cont_tables)
     mirna_names <- cormit_res$mirna_names
@@ -254,11 +252,9 @@ write_global_cormit <- function(cormit_res,
                       output_pairs = opt$output_pairs)
     outf <- file.path(normalizePath(opt$output_files), "coRmiT_report.html")
     plotter <- htmlreportR::htmlReport$new(title_doc = "coRmiT report", 
-                                            container = container,
-                                            tmp_folder = tmp_folder,
-                                            src = source_folder,
-                                            compress_obj = TRUE,
-                                            type_index = "contents_list")
+        container = container, tmp_folder = tmp_folder, src = source_folder,
+        compress_obj = TRUE, type_index = "contents_list",
+        files_css = files_css)
     plotter$build(template)
     plotter$write_report(outf)
     message("Report written in ", outf)
@@ -366,10 +362,13 @@ write_summarize_heatmaps <- function(summarized_ORA, output_path) {
 #' @param results_path Path where report will be written.
 #' @param sample_classes Sample classes.
 #' @param DEGH_results DEGenes Hunter results object.
+#' @param files_css Path to css file to inject. By default it injects styles.css
+#' found in ExpHunterSuite's templates directory.
 #' @returns invisible(NULL)
 write_merged_cluster_report <- function(enrichments_ORA, results_path,
     template_folder, sample_classes=NULL, DEGH_results=NULL, showCategories,
-    group_results, func_results = NULL, source_folder = NULL) {
+    group_results, func_results = NULL, source_folder = NULL,
+    files_css = file.path(template_folder, "styles.css")) {
     message("\tRendering full cluster reports")
     if(is.null(enrichments_ORA)) {
         message("No WGCNA ORA results, not printing cluster report")
@@ -388,9 +387,8 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
             func_results = func_results, enrichments_ORA = enrichments_ORA,
             group_results = group_results, showCategories = showCategories)
         plotter <- htmlreportR::htmlReport$new(container = container,
-                                 title_doc = "clusters functional report",
-                                 tmp_folder = tmp_folder, src = source_folder,
-                                 compress_obj = TRUE)
+            title_doc = "clusters functional report", tmp_folder = tmp_folder,
+            src = source_folder, compress_obj = TRUE, files_css = files_css)
         plotter$build(template)
         plotter$write_report(outf_cls)
         message("Report written in ", outf_cls)
@@ -420,6 +418,8 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
 #' @param simplify Activate for process ClusterProfiler results with simplify function
 #' @param clean_parentals Activate to reduce significant terms in GO by removin the parentals
 #' @param source_folder htmlreportR source folder to load js and css libraries
+#' @param files_css Path to css file to inject. By default it injects styles.css
+#' found in ExpHunterSuite's templates directory.
 #' @return void
 #' @importFrom enrichplot emapplot
 #' @importFrom enrichplot dotplot
@@ -435,7 +435,8 @@ write_clusters_to_enrichment <- function(output_path="results",
       n_category = 30, sim_thr = 0.7, pvalcutoff = 0.1, gene_attributes=NULL,
       max_genes = 200, summary_common_name = "ancestor", simplify = FALSE,
       gene_attribute_name=NULL, clean_parentals = FALSE, source_folder = NULL,
-      template_folder = file.path(find.package('ExpHunterSuite'), 'templates')){
+      template_folder = file.path(find.package('ExpHunterSuite'), 'templates'),
+      files_css = file.path(template_folder, "styles.css")){
       enrichments_ORA_merged <- process_cp_list(enrichments_ORA,
                 simplify_results = simplify, clean_parentals = clean_parentals)
       if(!is.null(top_categories)) {
@@ -451,7 +452,7 @@ write_clusters_to_enrichment <- function(output_path="results",
           write_func_cluster_report(enrichments_for_reports, output_path,
             gene_attributes, workers = workers, task_size = task_size,
             template_folder = template_folder, source_folder = source_folder,
-            gene_attribute_name = gene_attribute_name)
+            gene_attribute_name = gene_attribute_name, files_css = files_css)
       }
       if (grepl("P", mode)) {
         for (funsys in names(enrichments_ORA_merged)){
@@ -516,6 +517,8 @@ write_clusters_to_enrichment <- function(output_path="results",
 #' R value  
 #' @param pvalcutoff maximum module eigengene-trait vector correlation P value
 #' @param source_folder htmlreportR source folder to load js and css libraries
+#' @param files_css Path to css file to inject. By default it injects styles.css
+#' found in ExpHunterSuite's templates directory.
 #' @return void
 #' @importFrom rmarkdown render
 #' @export
@@ -528,13 +531,11 @@ write_clusters_to_enrichment <- function(output_path="results",
 #' write_functional_report(degh_output, func_results)
 #'}
 write_functional_report <- function(hunter_results, func_results, cores = 2,
-                                    output_files = getwd(),
-                                    organisms_table = NULL,
-                                    fc_colname = "mean_logFCs", task_size = 1, 
-                                    report = "fc", source_folder = NULL,
-                                    group_results = FALSE, showCategories = 30,
-                                    corr_threshold = 0.8, pvalcutoff = 0.05,
-                                    template_folder = NULL, max_genes = 200) {
+    output_files = getwd(), organisms_table = NULL, fc_colname = "mean_logFCs",
+    task_size = 1, report = "fc", source_folder = NULL, group_results = FALSE,
+    showCategories = 30, corr_threshold = 0.8, pvalcutoff = 0.05,
+    template_folder = NULL, max_genes = 200,
+    files_css = file.path(template_folder, "styles.css")) {
     if(is.null(template_folder)){
       template_folder <- file.path(find.package('ExpHunterSuite'), 'templates')
     }
@@ -595,11 +596,9 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
         template <- file.path(template_folder, "functional_report.txt")
         outf <- file.path(results_path, "functional_report.html")
         plotter <- htmlreportR::htmlReport$new(title_doc = "functional report",
-                                                container = container,
-                                                tmp_folder = tmp_folder,
-                                                src = source_folder,
-                                                compress_obj = TRUE,
-                                                type_index = "contents_list")
+                    container = container, tmp_folder = tmp_folder,
+                    src = source_folder, compress_obj = TRUE,
+                    type_index = "contents_list", files_css = files_css)
         plotter$build(template)
         plotter$write_report(outf)
         message("Report written in ", outf)
@@ -688,11 +687,9 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
             container$DEGH_results <- DEGH_subset
             container$cl <- cl
             plotter <- htmlreportR::htmlReport$new(title_doc = "functional report",
-                                                container = container,
-                                                tmp_folder = temp_path_cl,
-                                                src = source_folder,
-                                                compress_obj = TRUE,
-                                                type_index = "contents_list")
+                        container = container, tmp_folder = temp_path_cl,
+                        src = source_folder, compress_obj = TRUE,
+                        type_index = "contents_list", files_css = files_css)
             plotter$hash_vars$cl_flags_ora <- cl_flags_ora
             plotter$build(template)
             plotter$write_report(outf_cls_i)
@@ -772,7 +769,8 @@ parse_strat_text <- function(strategies){
 
 write_func_cluster_report <- function(enrichments_for_reports, output_path, 
   gene_attributes, workers, task_size, template_folder, max_genes = 200,
-  gene_attribute_name="fold change", source_folder = NULL){
+  gene_attribute_name="fold change", source_folder = NULL,
+  files_css = file.path(template_folder, "styles.css")){
   clean_tmpfiles_mod <- function() {
     message("Calling clean_tmpfiles_mod()")
   }
@@ -792,11 +790,9 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
     message("\tRendering regular report")
     template <- file.path(template_folder, "clusters_to_enrichment.txt")
     plotter <- htmlreportR::htmlReport$new(title_doc = "func cluster",
-                                            container = container,
-                                            tmp_folder = temp_path_cl,
-                                            src = source_folder,
-                                            compress_obj = TRUE,
-                                            type_index = "contents_list")
+        container = container, tmp_folder = temp_path_cl, src = source_folder,
+        compress_obj = TRUE, type_index = "contents_list",
+        files_css = files_css)
     plotter$build(template)
     plotter$write_report(outfile)
     message("Report written in ", outfile)
@@ -807,19 +803,18 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
 }
 
 
-render_multivar_report <- function(multivar_res, output_files, template_folder, string_factors = NULL, numeric_factors = NULL,
-                                   opt) {
-  source_folder <- find.package("htmlreportR")
-  if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' )
+render_multivar_report <- function(multivar_res, output_files, template_folder,
+    string_factors = NULL, numeric_factors = NULL, opt,
+    files_css = file.path(template_folder, "styles.css")) {
+    source_folder <- find.package("htmlreportR")
+    if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' )
     source_folder <- file.path(source_folder, "inst")
 
-  plotter <- htmlreportR::htmlReport$new(title_doc = "PCA report", 
-                          container = multivar_res, 
-                          tmp_folder = file.path(normalizePath(output_files), "tmp"),
-                          src = source_folder,
-                          compress_obj = FALSE,
-                          type_index = "menu")
-  
-  plotter$build(file.path(template_folder, 'multivar_main.txt'))
-  plotter$write_report(file.path(opt$output_files, "PCA_report.html"))
+    plotter <- htmlreportR::htmlReport$new(title_doc = "PCA report", 
+                container = multivar_res, src = source_folder,
+                tmp_folder = file.path(normalizePath(output_files), "tmp"),
+                compress_obj = FALSE, type_index = "menu",
+                files_css = files_css)
+    plotter$build(file.path(template_folder, 'multivar_main.txt'))
+    plotter$write_report(file.path(opt$output_files, "PCA_report.html"))
 }
