@@ -237,7 +237,8 @@ if(file.exists(final_counts_path) & opt$integrate) {
                     BPPARAM = BPPARAM, doublet_list = opt$doublet_list, integration_method = opt$int_method,
                     sketch = opt$sketch, sketch_pct = opt$sketch_pct,
                     sketch_method = opt$sketch_method, force_ncells = opt$force_ncells,
-                    k_weight = opt$k_weight, min_cells_per_sample = opt$min_cells_per_sample)
+                    k_weight = opt$k_weight, min_cells_per_sample = opt$min_cells_per_sample,
+                    min_cell_proportion = opt$min_cell_proportion, log2fc_threshold = opt$log2fc_threshold)
 }
 
 if(!file.exists(final_counts_path) & opt$integrate) {
