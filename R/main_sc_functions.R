@@ -6,6 +6,8 @@
 #' @inheritParams process_sketch
 #' @inheritParams process_doublets
 #' @inheritParams tag_qc
+#' @inheritParams calculate_markers
+#' @inheritParams main_sc_Hunter
 #' @importFrom BiocParallel SerialParam
 #' @param seu A seurat object.
 #' @param name Project name. Default NULL (no project name)
@@ -200,8 +202,9 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
       annot_start <- Sys.time()
       annotation <- annotate_seurat(seu = seu, cell_annotation = cell_annotation,
         subset_by = subset_by, cluster_annotation = cluster_annotation,
-        p_adj_cutoff = p_adj_cutoff, assay = assay,
-        integrate = new_opt$integrate, verbose = verbose)
+        p_adj_cutoff = p_adj_cutoff, assay = assay, verbose = verbose,
+        min.pct = min.pct, logfc.threshold = logfc.threshold, 
+        integrate = new_opt$integrate)
         message("Time to annotate: ", Sys.time() - annot_start)
       seu <- annotation$seu
       markers <- annotation$markers
