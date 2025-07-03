@@ -127,7 +127,11 @@ option_list <- list(
             help = paste0("Genome version. Optional, included as extra ",
               "information in output and reports.")),
   optparse::make_option("--min_cells_per_sample", type = "character", default = 500,
-            help = "Min cells per sample. Cells with fewer than this amount of cells will be discarded.")
+            help = "Min cells per sample. Cells with fewer than this amount of cells will be discarded."),
+  optparse::make_option("--min_cell_proportion", type = "numeric", default = 0.1,
+            help = "Min percentage of cells expressing gene to consider it a marker."),
+  optparse::make_option("--log2fc_threshold", type = "numeric", default = 0.25,
+            help = "Min log-X-fold difference between groups to consider a gene as a marker.")
 )
 
 params <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
