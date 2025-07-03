@@ -59,9 +59,9 @@ read_sc_counts <- function(name, input, mincells = 1, minfeats = 1, exp_design){
 
 tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL,
                    min_cells_per_sample = 500){
-  colnames(seu@meta.data) <- tolower(colnames(seu@meta.data))
   seu$percent.mt <- Seurat::PercentageFeatureSet(seu, pattern = "(?i)^MT-")
   seu$percent.rb <- Seurat::PercentageFeatureSet(seu, pattern = "(?i)^RP[SL]")
+  colnames(seu@meta.data) <- tolower(colnames(seu@meta.data))
   seu$qc <- ""
   seu$qc[seu$nfeature_rna < minqcfeats] <- "Low_nFeature"
   high_mt <- which(seu$percent.mt > percentmt)
@@ -384,7 +384,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 }
 
 .get_subset_DEGs <- function(seu, subset_by, cond, sub_value, conds,
-                             min.pct, clust_num, verbose = FALSE) {
+        log2fc.threshold, min.pct, clust_num, verbose = FALSE) {
   subset_seu <- subset_seurat(seu, subset_by, sub_value)
   meta <- as.character(subset_seu@meta.data[[cond]])
   ncells <- c(sum(meta==conds[1]), sum(meta==conds[2]))
@@ -397,14 +397,15 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   } else {
     Seurat::Idents(subset_seu) <- cond  
     markers <- Seurat::FindMarkers(subset_seu, ident.1 = conds[1],
-                  ident.2 = conds[2], verbose = verbose, min.pct = min.pct)
+        log2fc.threshold = log2fc.threshold, ident.2 = conds[2],
+        verbose = verbose, min.pct = min.pct)
     markers$gene <- rownames(markers)
   }
   return(markers)
 }
 
 .get_subset_markers <- function(seu, subset_by, cond, conds, DEG, verbose,
-                                min.pct, assay) {
+                                min.pct, assay, log2fc.threshold) {
   sub_values <- as.character(sort(unique(seu@meta.data[[subset_by]])))
   sub_markers <- vector(mode = "list", length = length(sub_values))
   names(sub_markers) <- as.character(sub_values)
@@ -413,7 +414,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
     if(DEG) {
       markers <- .get_subset_DEGs(seu = seu, subset_by = subset_by, cond = cond,
                     sub_value = sub_values[i], conds = conds, min.pct = min.pct,
-                    clust_num = i, verbose = verbose)
+                    clust_num = i, verbose = verbose,
+                    log2fc.threshold = log2fc.threshold)
     } else {
       markers <- Seurat::FindConservedMarkers(seu, ident.1 = sub_values[i],
                           grouping.var = cond, verbose = verbose, assay = assay)
@@ -426,10 +428,12 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   return(sub_markers)
 }
 
-.get_global_DEGs <- function(seu, cond, conds, min.pct = 0.1, verbose = FALSE){
+.get_global_DEGs <- function(seu, cond, conds, min.pct = 0.1, verbose = FALSE,
+                             log2fc.threshold = 0.25){
   Seurat::Idents(seu) <- seu@meta.data[, tolower(cond)]
   global_DEGs <- Seurat::FindMarkers(seu, ident.1 = conds[1],
-                     min.pct = min.pct, ident.2 = conds[2], verbose = verbose)
+        log2fc.threshold = log2fc.threshold, min.pct = min.pct,
+        ident.2 = conds[2], verbose = verbose)
   global_DEGs$gene <- rownames(global_DEGs)
   nums <- sapply(global_DEGs, is.numeric)
   global_DEGs[nums] <- lapply(global_DEGs[nums], signif, 2)
@@ -484,18 +488,20 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' @export
 
 get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
-                verbose = FALSE, assay = "RNA", values = NULL, min.pct = 0.1) {
+      log2fc.threshold = 0.25, verbose = FALSE, assay = "RNA", values = NULL,
+      min.pct = 0.1) {
   conds <- .extract_conditions(metadata = seu@meta.data, cond = cond,
                                values = values)
   marker_meta <- list(high = paste0(cond, ": ", conds[1]),
                       low = paste0(cond, ": ", conds[2]))
   sub_markers <- .get_subset_markers(seu = seu, subset_by = subset_by,
     conds = conds, cond = cond, DEG = DEG, verbose = verbose, min.pct = min.pct,
-    assay = assay)
+    assay = assay, log2fc.threshold = log2fc.threshold)
   if(DEG) {
     message("Calculating global DEGs")
     sub_markers[["global"]] <- .get_global_DEGs(seu = seu, cond = cond,
-                           conds = conds, min.pct = min.pct, verbose = verbose)
+        log2fc.threshold = log2fc.threshold, conds = conds, min.pct = min.pct,
+        verbose = verbose)
   }
   if(all(c("cell_type", "seurat_clusters") %in% colnames(seu@meta.data))) {
     metadata <- unique(seu@meta.data[, c("seurat_clusters", "cell_type")])
@@ -518,10 +524,10 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 #' in a seurat dataset
 #' @importFrom Seurat Idents FindAllMarkers
 #' @inheritParams get_sc_markers
+#' @inheritParams Seurat::FindAllMarkers
 #' @param verbose A boolean. Will be passed to Seurat function calls.
 #' @param idents Identity class to which to set seurat object before calculating
 #' markers in case conserved mode cannot be triggered.
-#' @param min.pct,logfc.threshold See ?Seurat::FindAllMarkers
 #' @param subset_by Metadata column by which seurat object will be subset for
 #' marker calculation. Default NULL.
 #' @param integrate Whether or not integrative analysis is active. Does not
@@ -539,7 +545,7 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 
 calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE,
                               idents = NULL, integrate = FALSE, min.pct = 0.01,
-                              logfc.threshold = 0.25, assay = "RNA") {
+                              logfc.threshold = 0.1, assay = "RNA") {
   test <- FALSE
   if(length(subset_by) == 1) {
     test <- length(subset_by) == 1 & integrate
@@ -1360,10 +1366,10 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
 #'  }
 #' @export
 
-annotate_seurat <- function(seu, cell_annotation = NULL,
+annotate_seurat <- function(seu, cell_annotation = NULL, logfc.threshold = 0.1,
                             subset_by = NULL, cluster_annotation = NULL,
                             p_adj_cutoff = 1e-5, verbose = FALSE, assay = "RNA",
-                            integrate = FALSE) {
+                            integrate = FALSE, min.pct = 0.1) {
   res <- NULL
   if(!is.null(cell_annotation)) {
     message("Dynamically annotating clusters.")
@@ -1380,7 +1386,7 @@ annotate_seurat <- function(seu, cell_annotation = NULL,
     warning("No data provided for cluster annotation.", immediate. = TRUE)
     idents <- "seurat_clusters"
   }
-  markers <- calculate_markers(seu = seu, verbose = verbose, assay = assay,
+  markers <- calculate_markers(seu = annot_seu, verbose = verbose, assay = assay,
                 integrate = integrate, idents = idents, subset_by = subset_by)
   res <- list(seu = seu, markers = markers)
   }
