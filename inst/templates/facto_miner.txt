@@ -285,18 +285,16 @@ end.rcode-->
 <!--begin.rcode {{called_from}}_overview
 ###################################################################################################################
 #######################################    OVERVIEW  ##############################################################
-cat(plotter$create_title("<b>Overview</b>", "overview", 
+cat(plotter$create_title("<b>Dimensionality reduction</b>", "overview", 
 			hlevel = plotter$hash_vars$last_title + 1, indexable = TRUE, clickable = FALSE, t_id = "overview", clickable_text =""))
-cat("This section encompases a general overview of the dimensionality reduction analysis applied.")
+cat("<p>This section encompasses a general overview of the dimensionality reduction analysis applied.</p>")
 end.rcode-->
 
 <!--begin.rcode {{called_from}}_inertia_plot, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 4 
-	cat(plotter$create_title("<b>Inertia</b>", "inertia_plot", 
+	cat(plotter$create_title("<b>Inertia plot: % of total variance by PC</b>", "inertia_plot", 
 			hlevel = plotter$hash_vars$last_title + 2))
-	cat("Graphical representation of Principal Components (PCs). The bars represent the percentage of total variance that summarize each PC. <br>
-The line measures the percentage of total variance accumulated in PCs. The color distinguishes between significant or no significant PCs. <br>
-Only significant PCs will be considered in the following plots.<br>")
-
+	cat("<p>Graphical representation of Principal Components (PCs). Line represents accumulated explained variance.
+		Only significant PCs will be considered in the following plots.</p>")
 	cat(plotter$static_ggplot_main(id = "inertia", header = NULL, row_names = NULL,resizable = TRUE, plotting_function = inertia_plot))
 
 end.rcode-->
@@ -306,8 +304,7 @@ end.rcode-->
 	
 	cat(plotter$create_title("<b>Sample coordinates</b>", "main_pc", 
 		hlevel = plotter$hash_vars$last_title + 2))
-	cat("This plot represents the coordinates of the samples on the two first Principal Components (Dim1 and Dim2).
-		The percentage of explained variance is given between brackets.")
+	cat("This plot represents the coordinates of the samples on the two first Principal Components (Dim1 and Dim2) along with percentage of explained variance.")
 
 	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca))
 
