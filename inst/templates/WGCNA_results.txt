@@ -78,12 +78,12 @@ end.rcode-->
 <p>WGCNA was run to look for modules (clusters) of coexpressed genes. These modules were then compared with the sample factors to look for correlation. 
 If no sample factors were specified, this comparison was performed with treatment/control labels.
 
-The following graphic shows the power value chosen for building clusters. The power is chosen by looking at the characteristics of the network produced.</p>
+The following graphic shows the power value chosen to build clusters. The power depends on several properties of the produced network.</p>
 
 <!--begin.rcode WGCNA_conditional_block_plot_power_choice
 	cat(plotter$prettify_div(plotter$static_plot_main("results_WGCNA", resizable = TRUE, custom_format = TRUE,
 		plotting_function = custom_replayPlot, plot_type = "autoplot"), preset = "magic"))
-	cat("In total there were ", max(unique(plotter$hash_vars$results_WGCNA$gene_cluster_info$Cluster_ID)) , "clusters. 
+	cat(max(unique(plotter$hash_vars$results_WGCNA$gene_cluster_info$Cluster_ID)) , " clusters identified. 
 	The following plot shows the number of genes per cluster:")
 end.rcode-->
 
@@ -144,13 +144,13 @@ end.rcode-->
 		plotting_function = custom_gg_heatmap), preset = "magic"))
 
 	cat(plotter$create_title("WGCNA Eigen values clustering", id = "WGCNA_eigen", hlevel = 3))
-	cat("<p>WGCNA dendogram showing distances between these eigengenes along with the factors. Distances has been calculated using <strong>signed</strong> correlation so more near elements, more positive correlation between elements.</p>")
+	cat("<p>WGCNA dendogram showing distances between these eigengenes along with the factors. Distance is inversely proportional to <strong>positive</strong> correlation.</p>")
 	plotter$hash_vars$trait_and_module <- plotter$hash_vars$results_WGCNA[['plot_objects']][['trait_and_module']]
 	cat(plotter$prettify_div(plotter$static_plot_main("trait_and_module", resizable = TRUE, custom_format = TRUE,
 		plotting_function = custom_trait_and_module, plot_type = "autoplot"), preset = "magic"))
 	cat(plotter$create_title("Eigen values clustering (Absolute correlation)", id = "eigen_corr", hlevel = 3))
 
-	cat("<p>WGCNA-like dendogram showing distances between these eigengenes along with the factors. Distances has been calculated using <strong>absolute</strong> correlation so more near elements, more absolute correlation between elements.</p>")
+	cat("<p>WGCNA-like dendogram showing distances between these eigengenes along with the factors. Distance is inversely proportional to <strong>absolute</strong> correlation.</p>")
 	corME <- cor(plotter$hash_vars$results_WGCNA[['plot_objects']][['trait_and_module']], use="p")
 	disME_abs <- as.dist(1-abs(corME))
 	plotter$hash_vars$clust_abs = fastcluster::hclust(disME_abs, method = "average")
