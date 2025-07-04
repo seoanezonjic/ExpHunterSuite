@@ -223,13 +223,28 @@ get_translation_tables_orgdb <- function(
               input_to_symbol = input_to_symbol))
 }
 
+#' Translates between gene IDs via orgdb
+#' @param ids set of IDs to be translated
+#' @param input_id keytype of input ids
+#' @param output_id keytype of id to return
+#' @param org_db org_db to use to obtain translation
+#' @param just_output_ids return only a vector of the output ids 
+#' (if FALSE, returns df including input and output ids)
+#' @return data.frame with input and output ids, or just vector of
+#' output ids if just_output_ids set to TRUE
+#' @export
+#' @examples
+#' translate_ids_orgdb(ids = c("ENSG00000197283", "ENSG00000141510"),
+#'                     input_id = "ENSEMBL",
+#'                     output_id = "ENTREZID",
+#'                     org_db = org.Hs.eg.db::org.Hs.eg.db
+#' )
 translate_ids_orgdb <- function(
 ids, 
 input_id, 
 output_id="ENTREZID", 
 org_db=org_db, 
 just_output_ids=FALSE){
-  
   possible_ids <- AnnotationDbi::columns(org_db)
   if(! input_id %in% possible_ids) 
     stop("gene keytype must be one of the following:", toString(possible_ids))
