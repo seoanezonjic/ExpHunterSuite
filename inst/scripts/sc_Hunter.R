@@ -33,6 +33,8 @@ option_list <- list(
             help = "Avg log2fc cutoff for significant DEGs."),
   optparse::make_option("--min_cell_proportion", type = "numeric", default = 0.1,
             help = "Min percentage of cells expressing DEG in each group."),
+  optparse::make_option("--log2fc_threshold", type = "numeric", default = 0.25,
+            help = "Min log-X-fold difference between groups to consider a gene as DE.")
   optparse::make_option("--min_counts", type = "numeric", default = 10,
             help = "Min counts to consider a gene is expressed in a cell."),
   optparse::make_option(c("-o", "--output"), type = "character", default = NULL,
@@ -72,7 +74,8 @@ seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
 seu$RNA$data <- seu$RNA$counts
 DEG_list <- parallel_list(X = DEG_targets, FUN = main_sc_Hunter, workers = opt$cpu, seu = seu,
                           p_val_cutoff = opt$p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
-                          min_cell_proportion = opt$min_cell_proportion, query = opt$target_genes,
+                          min_cell_proportion = opt$min_cell_proportion, log2FC.threshold = opt$log2fc_threshold,
+                          query = opt$target_genes,
                           output_path = opt$output, min_counts = opt$min_counts, verbose = opt$verbose)
 names(DEG_list) <- unlist(strsplit(names(DEG_targets), "_target"))
 
