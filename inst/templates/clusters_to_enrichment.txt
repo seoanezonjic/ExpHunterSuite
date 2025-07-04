@@ -1,37 +1,5 @@
----
-title: "ExpHunterSuite: Clusters Functional Report"
-author: "SysBioLab"
-output:
-  html_document:
-    toc: true
-    toc_float: true
-    df_print: paged
-    fig_width: 12
----
-
-<style type='text/css'>
-    body .main-container { 
-        max-width: 90%;
-    
-    }
-
-    .plot_real_size {
-      overflow: scroll;
-      max-height: 600px;
-    }
-
-    .plot_real_size img{
-      max-width: none;
-      max-height: none;
-    }
-
-    embed {
-   
-  }   
-</style>
 
 <h1> <strong>Functional Report</strong></h1>
-
 
 <!--begin.rcode main_init, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis' 
 if (!is.null(opt$description)){
