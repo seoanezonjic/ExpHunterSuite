@@ -51,6 +51,22 @@
 
 end.rcode-->
 
+<!--begin.rcode input_details_title
+	cat(plotter$create_title("Details of input data", id = "main_dea_title", hlevel = 2,
+							  indexable = TRUE))
+end.rcode-->F
+<!--begin.rcode control_table, echo = FALSE, warning=FALSE
+	cat(plotter$create_title("First group of samples (to be referred to as control in the rest of the report)",
+							  id = "control_table", hlevel = 3, indexable = FALSE))
+	knitr::kable(plotter$hash_vars$index_control_cols, col.names="Sample Names:")
+end.rcode-->
+
+<!--begin.rcode treatment_table, echo = FALSE, warning=FALSE
+	cat(plotter$create_title("Second group of samples (to be referred to as treatment in the rest of the report)",
+							  id = "treatment_table", hlevel = 3, indexable = FALSE))
+	knitr::kable(plotter$hash_vars$index_treatmn_cols, col.names="Sample Names:")
+end.rcode-->
+
 <!--begin.rcode expression_qc_title
 	cat(plotter$create_title("Data quality control (QC)", id = "main_qc_title", hlevel = 2, indexable = TRUE))
 	cat(plotter$create_title("Correlation between samples", id = "corr_title", hlevel = 3, indexable = FALSE))
@@ -59,12 +75,12 @@ end.rcode-->
 <p>Here we show scatterplots comparing expression levels for all genes between the different samples, for i) all controls, ii) all treatment samples and iii) for all samples together.
 These plots will only be produced when the total number of samples to compare within a group is less than or equal to 10.</p>
 
-<!--begin.rcode corr_plot_control, echo = FALSE, fig.height=12, fig.width=12, eval=length(plotter$hash_vars$index_control_cols) <= 10, results='asis', warning = FALSE
+<!--begin.rcode corr_plot_control, echo = FALSE, eval=length(plotter$hash_vars$index_control_cols) <= 10, results='asis', warning = FALSE
   	cat(plotter$create_title("Correlation between control samples", id = "main_title", hlevel = 4,
                             indexable = FALSE))
   	cat("<p>Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.</p>")
 	plotter$hash_vars$raw_control <- plotter$hash_vars$raw_filter[plotter$hash_vars$index_control_cols]
-	cat(plotter$prettify_div(plotter$static_plot_main("raw_control", resizable = TRUE, custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"), preset = "magic"))
+	cat(plotter$static_plot_main("raw_control", resizable = TRUE, custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
 end.rcode-->
 
 <!--begin.rcode corr_plot_treatment, echo = FALSE, fig.height=12, fig.width=12, eval=length(plotter$hash_vars$index_treatmn_cols) <= 10, results='asis', warning = FALSE
@@ -72,7 +88,7 @@ end.rcode-->
                          	 indexable = FALSE))
 	cat("<p>Replicates within the same group tend to have Pearson correlation coefficients >= 0.96. Lower values may indicate problems with the samples.</p>")
 	plotter$hash_vars$raw_treatment <- plotter$hash_vars$raw_filter[plotter$hash_vars$index_treatmn_cols]
-	cat(plotter$prettify_div(plotter$static_plot_main("raw_treatment", resizable = TRUE, custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"), preset = "magic"))
+	cat(plotter$static_plot_main("raw_treatment", resizable = TRUE, custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
 end.rcode-->
 
 <!--begin.rcode corr_plot_all , echo = FALSE, fig.height=12, fig.width=12, eval=length(plotter$hash_vars$index_control_cols) + length(plotter$hash_vars$index_treatmn_cols) <= 10, results='asis', warning = FALSE
@@ -81,7 +97,7 @@ end.rcode-->
 	cat("<p>Correlation coefficients tend to be slightly higher between replicates from the same group than between
 		replicates from different groups. If this is not the case, it may indicate mislabelling or other
 		potential issues.</p>")
-	cat(plotter$prettify_div(plotter$static_plot_main("raw_filter", resizable = TRUE, custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"), preset = "magic"))
+	cat(plotter$static_plot_main("raw_filter", resizable = TRUE, custom_format = TRUE, plotting_function = custom_PerformanceAnalytics, plot_type = "autoplot"))
 end.rcode-->
 
 <!--begin.rcode heatmap_corr, eval=!"externalDEA" %in% names(plotter$hash_vars$all_counts_for_plotting), echo = FALSE, fig.height=12, fig.width=12
@@ -90,7 +106,7 @@ end.rcode-->
 	cat("<p><strong>BROWN: higher correlation; YELLOW: lower correlation</strong></p>")
 	col <- colorRampPalette(c("#FFFFCC", "#FD8D3C", "#800026"))(20)
 	plotter$hash_vars$cor_filter <- cor(plotter$hash_vars$raw_filter)
-	cat(plotter$prettify_div(plotter$static_plot_main("cor_filter", resizable = TRUE, custom_format = TRUE, plotting_function = custom_heatmap_cor, plot_type = "autoplot"), preset = "magic"))
+	cat(plotter$static_plot_main("cor_filter", resizable = TRUE, custom_format = TRUE, plotting_function = custom_heatmap_cor, plot_type = "autoplot"))
 end.rcode-->
 
 <!--begin.rcode query_genes, eval = !is.null(plotter$hash_vars$opt$query_genes)
@@ -99,7 +115,7 @@ end.rcode-->
 	DESeq_subset <- DESeq_subset[query_genes, , drop = FALSE]
 	plotter$hash_vars$DESeq_subset <- DESeq_subset
 	cat(plotter$create_title("DESeq2-normalized counts query genes subset", id = "query_genes", hlevel = 3, indexable = TRUE))
-	cat(plotter$prettify_div(plotter$table(list(id = "DESeq_subset", header = NULL, row_names = NULL, styled = "dt", rownames_col = "gene")), preset = "magic"))
+	cat(plotter$table(list(id = "DESeq_subset", header = NULL, row_names = NULL, styled = "dt", rownames_col = "gene")))
 end.rcode-->
 
 <!--begin.rcode config_expression_PCA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE
@@ -130,8 +146,8 @@ end.rcode-->
 	log2cpm <- log2(cpm_no_zeros + 1)
 	plotter$hash_vars$cpm_long <- reshape2::melt(log2cpm, measure.vars=colnames(log2cpm))
 	colnames(plotter$hash_vars$cpm_long)[2] <- "variable"
-	cat(plotter$prettify_div(plotter$static_ggplot_main("cpm_long", resizable = TRUE, header = NULL, row_names = NULL,
-           plotting_function = plot_cpm_density), preset = "magic"))
+	cat(plotter$static_ggplot_main("cpm_long", resizable = TRUE, header = NULL, row_names = NULL,
+           plotting_function = plot_cpm_density))
 end.rcode-->
 
 <!--begin.rcode density_distribution_raw, echo = FALSE, warning=FALSE
@@ -139,8 +155,8 @@ end.rcode-->
 						     indexable = FALSE))
 	log2raw_counts <- log2(plotter$hash_vars$raw_filter + 1)
 	plotter$hash_vars$raw_long <- reshape2::melt(log2raw_counts, measure.vars=colnames(log2raw_counts))
-	cat(plotter$prettify_div(plotter$static_ggplot_main("raw_long", resizable = TRUE, header = NULL, row_names = NULL,
-	        plotting_function = plot_cpm_density), preset = "magic"))
+	cat(plotter$static_ggplot_main("raw_long", resizable = TRUE, header = NULL, row_names = NULL,
+	        plotting_function = plot_cpm_density))
 end.rcode-->
 
 <!--begin.rcode density_distribution_norm, echo = FALSE, warning=FALSE
@@ -148,8 +164,8 @@ end.rcode-->
 						     indexable = FALSE))
 	log2norm_counts <- log2(plotter$hash_vars$all_data_normalized[["default"]] + 1)
 	plotter$hash_vars$norm_long <- reshape2::melt(log2norm_counts, measure.vars=colnames(log2norm_counts))
-	cat(plotter$prettify_div(plotter$static_ggplot_main("norm_long", resizable = TRUE, header = NULL, row_names = NULL,
-	        plotting_function = plot_cpm_density), preset = "magic"))
+	cat(plotter$static_ggplot_main("norm_long", resizable = TRUE, header = NULL, row_names = NULL,
+	        plotting_function = plot_cpm_density))
 end.rcode-->
 
 <!--begin.rcode coverage_plot_head, echo = FALSE, warning = FALSE, results='asis'
@@ -183,9 +199,9 @@ end.rcode-->
 	}
     cat(plotter$prettify_div(plotter$scatter2D(list(id = "coverage_df", text = "dynamic", header = NULL,
     						 row_names = TRUE, xAxis = "sample_rank", title = head, x_label = xtitle,
-    						 y_label = ytitle, fields = count_fields, text = FALSE)), preset = "magic"))
-    cat(plotter$prettify_div(paste0("<p> Sample rank: the position a sample holds after sorting by total ",
-    						 tolower(ytitle), ".</p>"), preset = "magic"))
+    						 y_label = ytitle, fields = count_fields, text = FALSE)), preset = "magic", justify = "left"))
+    cat(paste0("<p> Sample rank: the position a sample holds after sorting by total ",
+    						 tolower(ytitle), "</p>"))
 end.rcode-->
 
 <!--begin.rcode coverage_plot_frac, eval = !is.null(plotter$hash_vars$coverage_df$counted_frac), echo = FALSE, warning = FALSE
@@ -193,7 +209,7 @@ end.rcode-->
 						     indexable = TRUE))
     cat(plotter$prettify_div(plotter$scatter2D(list(id = "coverage_df", text = "dynamic", header = NULL,
     						 row_names = TRUE, xAxis = "sample_rank", title = head, x_label = xtitle,
-    						 y_label = "% counts read", text = FALSE, fields = c(1, 3, 4))), preset = "magic"))
+    						 y_label = "% counts read", text = FALSE, fields = c(1, 3, 4))), preset = "magic", justify = "left"))
 end.rcode-->
 
 <!--begin.rcode coverage_plot_frac_text, eval = !is.null(plotter$hash_vars$coverage_df$counted_frac),  echo = FALSE, warning = FALSE, results='asis'
@@ -204,21 +220,20 @@ end.rcode-->
     cat(plotter$create_title("Statistics of expressed genes", hlevel = 3, id = "mean_plot_title",
    							 indexable = TRUE))
 	cat(plotter$prettify_div(plotter$line(list(id = "exp_genes_df", title = "Statistics of expressed genes",
-											   config = list(graphOrientation = 'vertical'), header = NULL,
-											   row_names = NULL, text = FALSE, smp_attr = 3,
-											   fields = c(2, 4:5), xlabel = "Nº of genes")),
-											   preset = "magic"))
+							   config = list(graphOrientation = 'vertical'), header = NULL,
+							   row_names = NULL, text = FALSE, smp_attr = 3,
+							   fields = c(2, 4:5), xlabel = "Nº of genes")), preset = "magic", justify = "left"))
 end.rcode-->
 
 <p>Samples are ranked by total expressed genes. Union of expressed genes represents the cumulative total expressed genes (sum of
-all genes expressed in any sample up to current sample, expected to increase with sample rank). Intersection of expressed genes
-represents the cumulative intersection of expressed genes (sum of genes expressed in every sample up to current sample, expected
-to decrease with sample rank)</p>
+	all genes expressed in any sample up to current sample, expected to increase with sample rank). Intersection of expressed genes
+	represents the cumulative intersection of expressed genes (sum of genes expressed in every sample up to current sample, expected
+	to decrease with sample rank)</p>
 
 <!--begin.rcode mean_counts_plot, echo = FALSE, warning = FALSE
    cat(plotter$create_title("Mean count distribution by filter", hlevel = 4, id = "mean_plot_title",
    							 indexable = FALSE))
-   cat(plotter$prettify_div(plotter$static_ggplot_main("mean_counts_df", resizable = TRUE, header = NULL, row_names = NULL,
+   cat(plotter$static_ggplot_main("mean_counts_df", resizable = TRUE, header = NULL, row_names = NULL,
                                   plotting_function = function(ggplot_obj) { 
    ggplot_obj + ggplot2::aes(x = counts, col = filter) +
    ggplot2::geom_density(ggplot2::aes(y=..count..)) +
@@ -229,7 +244,7 @@ to decrease with sample rank)</p>
 				     cowplot::theme_cowplot() +
 				     ggplot2::theme(legend.position = "top", legend.justification="center",
 				           			legend.background = ggplot2::element_rect(color = NA))
-   }), preset = "magic"))
+   }))
 
    cat("<p>This plot represents the mean counts distribution per gene, classified by filters</p>")
    cat(plotter$create_title("Gene counts variance distribution", id = "counts_distr_title", hlevel = 3,
@@ -241,13 +256,13 @@ end.rcode-->
 
 plotter$hash_vars$gene_count_var <- data.frame(variance = plotter$hash_vars$var_filter[["variance_dis"]])
 
-cat(plotter$prettify_div(plotter$static_ggplot_main("gene_count_var", resizable = TRUE, header = NULL, row_names = NULL,
+cat(plotter$static_ggplot_main("gene_count_var", resizable = TRUE, header = NULL, row_names = NULL,
 								 plotting_function = function(ggplot_obj) {
 								 	ggplot_obj + ggplot2::aes(x = variance) +
 								 	ggplot2::geom_density() +
 								 	ggplot2::geom_vline(xintercept = plotter$hash_vars$var_filter[["thr"]],
 								 	linetype = "dashed", color = "grey")
-								 	}), preset = "magic"))
+								 	}))
 end.rcode-->
 
 <!--begin.rcode all_norm_head, echo=FALSE, results='asis'
@@ -266,8 +281,8 @@ end.rcode-->
 	deseq_normalized_data <- plotter$hash_vars$all_data_normalized[['default']]
 	if (nrow(plotter$hash_vars$all_data_normalized[['default']]) <= 50000) { 
 		plotter$hash_vars$deseq_normalized_data_mtx <- log10(data.matrix(deseq_normalized_data) + 1)
-		cat(plotter$prettify_div(plotter$static_plot_main("deseq_normalized_data_mtx", resizable = TRUE, custom_format = TRUE,
-								 plotting_function = custom_heatmap_deseq, plot_type = "autoplot"), preset = "magic"))
+		cat(plotter$static_plot_main("deseq_normalized_data_mtx", resizable = TRUE, custom_format = TRUE,
+								 plotting_function = custom_heatmap_deseq, plot_type = "autoplot"))
 	} else {
 		cat("<p>This plot cannot be generated because more than 50 000 genes have passed the filters, which can cause memory problems.</p>")
 	}
@@ -276,5 +291,5 @@ end.rcode-->
 <!--begin.rcode top_n_expression, results='asis', echo=FALSE, warning=FALSE, message=FALSE
 	cat(plotter$create_title("Percentages of reads per sample mapping to the most highly expressed genes",
 							 id = "pct_map", hlevel = 3, indexable = TRUE))
-	cat(plotter$table(list(id = "raw_filter", header = NULL, row_names = NULL, styled = "dt", func = make_top_n_expression_table)))
+	cat(plotter$table(list(id = "raw_filter", header = NULL, row_names = NULL, styled = "dt", func = make_top_n_expression_table, transpose = TRUE)))
 end.rcode-->

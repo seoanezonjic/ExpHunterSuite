@@ -100,22 +100,6 @@
 	
 end.rcode-->
 
-<!--begin.rcode dea_results_title
-	cat(plotter$create_title("Details of input data", id = "main_dea_title", hlevel = 2,
-							  indexable = TRUE))
-end.rcode-->F
-<!--begin.rcode control_table, echo = FALSE, warning=FALSE
-	cat(plotter$create_title("First group of samples (to be referred to as control in the rest of the report)",
-							  id = "control_table", hlevel = 3, indexable = FALSE))
-	knitr::kable(plotter$hash_vars$index_control_cols, col.names="Sample Names:")
-end.rcode-->
-
-<!--begin.rcode treatment_table, echo = FALSE, warning=FALSE
-	cat(plotter$create_title("Second group of samples (to be referred to as treatment in the rest of the report)",
-							  id = "treatment_table", hlevel = 3, indexable = FALSE))
-	knitr::kable(plotter$hash_vars$index_treatmn_cols, col.names="Sample Names:")
-end.rcode-->
-
 <!--begin.rcode plots_configuration_and_legend, echo = FALSE, warning=FALSE
 	# this counter is defined for plotting graphs with plot_in_div function. If not defined as a number, plots can be mixed.
 	# htmlreportR makes this obsolete. I'm not touching it until we're finished, just to be safe.
@@ -321,7 +305,6 @@ end.rcode-->
 
 <!--begin.rcode edgeR_conditional_block, eval='edgeR' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'
 	cat(plotter$create_title("edgeR MA plot", id = "edgeR_MA", hlevel = 3, indexable = FALSE))
-	cat("<p>This is the MA plot from package edgeR</p>")
 	plotter$hash_vars$full_edgeR <- plotter$hash_vars$all_counts_for_plotting[['edgeR']]
 	# Only way to make it accessible in autoplot
 	p_val_cutoff <<- plotter$hash_vars$opt$p_val_cutoff
@@ -329,8 +312,8 @@ end.rcode-->
 		plotting_function = plot_edgeR_MA, custom_format = TRUE, plot_type = "autoplot"),
 	    preset = "magic"))
 	cat("Differential gene expression data can be visualized as MA-plots (log ratio versus abundance) where each dot represents a gene. The differentially expressed genes are colored red and the non-differentially expressed ones are colored black.
-		 A table containing the edgeR DEGs is provided in Results\\_edgeR/DEgenes\\_edgeR.txt
-		 A table containing the edgeR normalized counts is provided in Results\\_edgeR/Normalized\\_counts\\_edgeR.txt")
+		 A table containing the edgeR DEGs is provided in Results_edgeR/DEgenes_edgeR.txt
+		 A table containing the edgeR normalized counts is provided in Results_edgeR/Normalized_counts_edgeR.txt")
 end.rcode-->
 
 <!--begin.rcode limma_conditional_block, eval='limma' %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'
@@ -354,7 +337,7 @@ end.rcode-->
 	cat(plotter$prettify_div(plotter$static_plot_main("package_objects", header = NULL, row_names = NULL,
 		resizable = TRUE, plotting_function = NOISeq_plot, custom_format = TRUE, plot_type = "autoplot"),
 		preset = "magic"))
-	cat("<p>NOISeq DEgs table can be found in Results_NOISEQ/Degenes_NOISeq.txt.</p>")
+	cat("<p>NOISeq DEGs table can be found in Results_NOISEQ/Degenes_NOISeq.txt.</p>")
 	cat("<p>NOISeq normalized counts can be found in Results_NOISeq/Normalized_counts_NOISeq.txt</p>")
 end.rcode-->
 
@@ -365,7 +348,7 @@ end.rcode-->
 		for DE analysis. The data shown here do not necessarily reflect biological impact.</p>")
 	cat(plotter$create_title("P-value distributions", id = "p_distr",
 		hlevel = 3, indexable = FALSE))
-	cat("<p>Distributions of p-values, unadjusted and adjusted for multiple testing (FDR)</p>")
+	cat("<p>Distributions of p-values, before and after multiple testing correction (FDR).</p>")
 	df <- plotter$hash_vars$DE_all_genes[plotter$hash_vars$DE_all_genes$genes_tag != "FILTERED_OUT", ]
 	df$gene_names <- row.names(df)
 	plotter$hash_vars$df <- df
