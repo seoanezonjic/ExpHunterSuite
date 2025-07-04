@@ -117,7 +117,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     BPPARAM = SerialParam(), doublet_list = NULL, k_weight = 100,
     integration_method = "Harmony", sketch = FALSE, sketch_pct = 25, 
     force_ncells = NA_integer_, sketch_method = "LeverageScore",
-    doublet_path = getwd()){
+    doublet_path = getwd(), min_cell_proportion = 0.1, log2fc_threshold = 0.25){
     main_start <- Sys.time()
     new_opt <- check_sc_input(integrate = integrate, sketch = sketch,
                               SingleR_ref = SingleR_ref, reduce = reduce)
