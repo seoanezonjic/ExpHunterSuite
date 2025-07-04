@@ -54,7 +54,7 @@ end.rcode-->
 <!--begin.rcode input_details_title
 	cat(plotter$create_title("Details of input data", id = "main_dea_title", hlevel = 2,
 							  indexable = TRUE))
-end.rcode-->F
+end.rcode-->
 <!--begin.rcode control_table, echo = FALSE, warning=FALSE
 	cat(plotter$create_title("First group of samples (to be referred to as control in the rest of the report)",
 							  id = "control_table", hlevel = 3, indexable = FALSE))
