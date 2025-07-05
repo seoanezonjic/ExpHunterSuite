@@ -1,8 +1,5 @@
 #! /usr/bin/env Rscript
 
-#' @author refactor by Fernando Moreno Jabato. 
-#' Original authors Isabel Gonzalez Gayte
-
 ################################################################################
 ############################### DEgenes Hunter #################################
 ################################################################################
@@ -282,5 +279,4 @@ final_results <- main_degenes_Hunter(
 # WRITE OUTPUT
 ###########################################################################
   write_expression_data(final_results, opt$output_files)
-
   write_expression_report(final_results, opt$output_files, template_folder, opt)
