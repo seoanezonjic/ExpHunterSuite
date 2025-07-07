@@ -33,6 +33,7 @@ Seurat object with tagged metadata
 \code{tag_qc} tags cell IDs not passing QC filters
 }
 \examples{
+data(pbmc_tiny)
 seu <- pbmc_tiny
 seu$sample <- c("a", "b", "c")
 seu$sample[1] <- "c"

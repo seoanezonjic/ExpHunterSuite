@@ -56,7 +56,6 @@ strategies for a seurat object.
 }
 \examples{
 data(pbmc_tiny)
-bkp <- pbmc_tiny
 pbmc_tiny$seurat_clusters <- c(1, 2)
 clust_anno <- data.frame(seurat_clusters = seq(2), name = c("T Cells", "B Cells"))
 anno_tiny <- annotate_seurat(seu = pbmc_tiny, cluster_annotation = clust_anno)
