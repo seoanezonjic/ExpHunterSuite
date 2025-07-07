@@ -46,6 +46,7 @@ read_sc_counts <- function(name, input, mincells = 1, minfeats = 1, exp_design){
 #' 
 #' @returns Seurat object with tagged metadata
 #' @examples
+#' data(pbmc_tiny)
 #' seu <- pbmc_tiny
 #' seu$sample <- c("a", "b", "c")
 #' seu$sample[1] <- "c"
