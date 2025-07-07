@@ -13,12 +13,14 @@ end.rcode-->
 <!--begin.rcode child=file.path(template_folder, "WGCNA_results.txt"), eval = grepl("W", plotter$hash_vars$opt$modules)
 end.rcode--> 
 
-# <!--begin.rcode child=file.path(template_folder,"diffcoexp_results.txt"), eval = grepl("X", plotter$hash_vars$opt$modules)
-## These last two modules have not been used in years, literally. They might break.
-# end.rcode--> 
+<!--begin.rcode child=file.path(template_folder,"diffcoexp_results.txt"), eval = FALSE
+eval = grepl("X", plotter$hash_vars$opt$modules)
+# These last two modules have not been used in years, literally. They might break.
+end.rcode--> 
  
-# <!--begin.rcode child=file.path(template_folder,"PCIT_results.txt"), eval = grepl("P", plotter$hash_vars$opt$modules)
-# end.rcode--> 
+<!--begin.rcode child=file.path(template_folder,"PCIT_results.txt"), eval = FALSE
+eval = grepl("P", plotter$hash_vars$opt$modules)
+end.rcode--> 
 
 <!--begin.rcode opt_vals, echo = FALSE, warning = FALSE
   cat(plotter$create_title("Values of options used to run DEGenesHunter", id = "Hunter_opt", hlevel = 3, indexable = FALSE))

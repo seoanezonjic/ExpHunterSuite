@@ -181,7 +181,7 @@ end.rcode-->
     cat("<p>If there are no genes showing sufficient variance in estimated logFC accross methods, no plot will be produced and a warning message will be given.</p>")
     var_filter <- var_thr
     cat(plotter$static_plot_main(id = "DE_all_genes", header = NULL, row_names = NULL,
-    						 plotting_function = custom_ht2logFCPlot))
+    						 plotting_function = custom_ht2logFCPlot, resizable = TRUE))
 end.rcode-->
 
 <!--begin.rcode FDR_bench
@@ -262,7 +262,7 @@ end.rcode-->
     cat(plotter$prettify_div(plotter$scatter2D(list(id = "size_vs_rank", header = NULL, title = "DESeq2 size factor vs. sample rank",
     	row_names = NULL, x_label = xtitle, y_label = "Effective library size (DESeq2 normalization factor)",
     	text = FALSE)), preset = "magic"))
-    cat("<p>The effective library size is the factor used by DESeq2 normalization algorithm for each sample. The effective library size must be dependent of raw library size.</p>")
+    cat("<p>The effective library size is the factor used by DESeq2 normalization algorithm for each sample. The effective library size must be dependent of raw library size. If it is not, something has gone wrong.</p>")
 end.rcode-->
 
 <!--begin.rcode DESeq2_ELS, eval="DESeq2" %in% names(plotter$hash_vars$all_counts_for_plotting), echo=FALSE, results='asis'
@@ -334,7 +334,7 @@ end.rcode-->
 	q_value <<- 1 - plotter$hash_vars$opt$p_val_cutoff # Differential expression threshold for creating plot
 	cat(plotter$static_plot_main("package_objects", header = NULL, row_names = NULL,
 		resizable = TRUE, plotting_function = NOISeq_plot, custom_format = TRUE, plot_type = "autoplot"))
-	cat("<p>NOISeq DEGs table can be found in Results_NOISEQ/Degenes_NOISeq.txt.</p>")
+	cat("<p>NOISeq DEGs table can be found in Results_NOISeq/Degenes_NOISeq.txt.</p>")
 	cat("<p>NOISeq normalized counts can be found in Results_NOISeq/Normalized_counts_NOISeq.txt</p>")
 end.rcode-->
 

@@ -55,7 +55,7 @@ This section describes the general statistics about coRmiT execution.
 <h3> <strong>multiMiR stats</strong></h3>
 <h4> MultiMiR version summary</h4>
 <!--begin.rcode multimir_stats, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE
-  knitr::kable(plotter$hash_vars$multimir_stats, row.names = FALSE)
+  cat(plotter$table(list(id = "multimir_stats", header = NULL, row_names = NULL, styled = "dt", transpose = FALSE, text = "dynamic", table_rownames = FALSE)))
 end.rcode-->
 <h4> Expression data in MultiMiR summary </h4>
 
@@ -66,8 +66,8 @@ end.rcode-->
  expressed_multimir <- plotter$hash_vars$integrated_pairs[,c("RNAseq","miRNAseq", databases)]
  expressed_multimir[,pred_db] <- !is.na(expressed_multimir[,pred_db])
  colnames(expressed_multimir)[match(c("RNAseq","miRNAseq"), colnames(expressed_multimir))] <- c("target_ensembl", "mature_mirna_acc")
- exp_multimir_stats <- get_multimir_stats(expressed_multimir)
- knitr::kable(exp_multimir_stats, row.names = FALSE)
+ plotter$hash_vars$exp_multimir_stats <- get_multimir_stats(expressed_multimir)
+ cat(plotter$table(list(id = "exp_multimir_stats", header = NULL, row_names = NULL, styled = "dt", transpose = FALSE, text = "dynamic", table_rownames = FALSE)))
 end.rcode-->
 <h3> <strong>Executed strategies</strong></h3>
 
@@ -82,9 +82,10 @@ strat_n <- unique(all_cor_dist_fil[,c("strategy", "strategy_old")])
 
 strat_n$strategy_old <- gsub("_", " ", strat_n$strategy_old)
 colnames(strat_n) <- c("Strategy name", "Description")
-knitr::kable(strat_n, row.names = FALSE)
+plotter$hash_vars$strat_n <- strat_n
+cat(plotter$table(list(id = "strat_n", header = NULL, row_names = NULL, styled = "dt", transpose = FALSE, text = "dynamic", table_rownames = FALSE)))
 
-cat(paste(paste(unique(plotter$hash_vars$cont_tables$corr_cutoff), collapse =", "), "correlation thresholds have been applied to each strategies."))
+cat(paste(paste(unique(plotter$hash_vars$cont_tables$corr_cutoff), collapse =", "), "correlation thresholds have been applied to each strategy."))
 
 end.rcode-->
 
@@ -105,8 +106,8 @@ draw_quantiles <- c(0.1, 0.05)
 ylim <- c(-1, 1)
 plot_p_val <- FALSE
 
-cat(plotter$prettify_div(plotter$static_ggplot_main(id = "all_cor_dist_fil", text = "dynamic", header = NULL, row_names = NULL, resizable = TRUE,
-                                                    plotting_function = plot_cor_dist), preset = "magic"))
+cat(plotter$static_ggplot_main(id = "all_cor_dist_fil", text = "dynamic", header = NULL, row_names = NULL, resizable = TRUE,
+                                                    plotting_function = plot_cor_dist))
 
 end.rcode-->
 
@@ -119,8 +120,8 @@ The dashed line represents a threshold of 0.05
   draw_quantiles <- NULL
   ylim <- c(-0.01, 1)
   plot_p_val <- TRUE
-  cat(plotter$prettify_div(plotter$static_ggplot_main(id = "all_cor_dist_fil", text = "dynamic", header = NULL, row_names = NULL, resizable = TRUE,
-                         plotting_function = plot_cor_dist), preset = "magic"))
+  cat(plotter$static_ggplot_main(id = "all_cor_dist_fil", text = "dynamic", header = NULL, row_names = NULL, resizable = TRUE,
+                         plotting_function = plot_cor_dist))
 end.rcode-->
 
 <h3> <strong>Overall Odds Ratio</strong></h3>
@@ -140,8 +141,8 @@ Y axis represent Overall Odds Ratio and X represent the correlation thresholds.
 
   plotter$hash_vars$cont_tables_pred <- plotter$hash_vars$cont_tables[plotter$hash_vars$cont_tables$db_group == "multimir",]
 
-  cat(plotter$prettify_div(plotter$static_ggplot_main(id = "cont_tables_pred", text = "dynamic", header = NULL, row_names = NULL, resizable = TRUE,
-                           plotting_function = plot_cont_tables), preset = "magic"))
+  cat(plotter$static_ggplot_main(id = "cont_tables_pred", text = "dynamic", header = NULL, row_names = NULL, resizable = TRUE,
+                           plotting_function = plot_cont_tables))
 end.rcode-->
 
 
@@ -169,7 +170,8 @@ This section describes the optimal pairs for each miRNA were selected through th
                                 check.names = FALSE)
   overall_summary <- as.data.frame(t(overall_summary))
   colnames(overall_summary) <- "Count"
-  knitr::kable(overall_summary)
+  plotter$hash_vars$overall_summary <- overall_summary
+  cat(plotter$table(list(id = "overall_summary", header = NULL, row_names = NULL, styled = "dt", transpose = FALSE, text = "dynamic", rownames_col = "Category")))
 end.rcode-->
 
 <h3> <strong>Selected strategy for miRNAs</strong></h3>
@@ -186,8 +188,8 @@ miRNA_cont_tables_mult$strategy <- set_strats_readable(miRNA_cont_tables_mult$st
   best_strats_mult$strat_pairs <- as.character(best_strats_mult$TP+ best_strats_mult$FP)
   plotter$hash_vars$best_strats_mult <- best_strats_mult
 
-  cat(plotter$prettify_div(plotter$static_ggplot_main(id = "best_strats_mult", text = "dynamic", header = NULL, row_names = NULL, resizable = TRUE,
-                           plotting_function = plot_strats_mult), preset = "magic"))
+  cat(plotter$static_ggplot_main(id = "best_strats_mult", text = "dynamic", header = NULL, row_names = NULL, resizable = TRUE,
+                           plotting_function = plot_strats_mult))
 end.rcode-->
 
 
@@ -196,10 +198,10 @@ end.rcode-->
 This table shows different statistics about optimal strategy for each miRNA.
 
 <!--begin.rcode best_strat_mult, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE
-
-best_strats_to_print <- best_strats_mult[,c("miRNA","strategy","TP", "Odds_ratio", "corr_cutoff", "p.adjust")]
-colnames(best_strats_to_print) <- c("miRNA","Strategy","Pairs in DBs", "Specific Odds Ratio", "Correlation cutoff", "Fisher's exact test FDR")
-knitr::kable(best_strats_to_print)
+  best_strats_to_print <- best_strats_mult[,c("miRNA","strategy","TP", "Odds_ratio", "corr_cutoff", "p.adjust")]
+  colnames(best_strats_to_print) <- c("miRNA","Strategy","Pairs in DBs", "Specific Odds Ratio", "Correlation cutoff", "Fisher's exact test FDR")
+  plotter$hash_vars$best_strats_to_print <- best_strats_to_print
+  cat(plotter$table(list(id = "best_strats_to_print", header = NULL, row_names = NULL, styled = "dt", transpose = FALSE, text = "dynamic", table_rownames = FALSE)))
 end.rcode-->
 
 <h3> <strong>Strategy summary based on multimir pairs</strong></h3>
@@ -209,7 +211,7 @@ miRNA_count is the number of miRNA for which the strategy was the optimal.
 median_OR represent the median of the Specific Odds Ratio distribution of all miRNA for which the strategy was the optimal.
 
 <!--begin.rcode strat_summary, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE
-library(dplyr) #remove
-strat_sum <- best_strats_mult %>% group_by(strategy) %>% summarise(miRNA_count = length(miRNA), median_OR = median(Odds_ratio))
-knitr::kable(strat_sum)
+  library(dplyr) #remove
+  plotter$hash_vars$strat_sum <- best_strats_mult %>% group_by(strategy) %>% summarise(miRNA_count = length(miRNA), median_OR = median(Odds_ratio))
+  cat(plotter$table(list(id = "strat_sum", header = NULL, row_names = NULL, styled = "dt", transpose = FALSE, text = "dynamic", table_rownames = FALSE)))
 end.rcode-->

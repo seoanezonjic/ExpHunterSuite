@@ -81,8 +81,8 @@ If no sample factors were specified, this comparison was performed with treatmen
 The following graphic shows the power value chosen to build clusters. The power depends on several properties of the produced network.</p>
 
 <!--begin.rcode WGCNA_conditional_block_plot_power_choice
-	cat(plotter$prettify_div(plotter$static_plot_main("results_WGCNA", resizable = TRUE, custom_format = TRUE,
-		plotting_function = custom_replayPlot, plot_type = "autoplot"), preset = "magic"))
+	cat(plotter$static_plot_main("results_WGCNA", resizable = TRUE, custom_format = TRUE,
+		plotting_function = custom_replayPlot, plot_type = "autoplot"))
 	cat(max(unique(plotter$hash_vars$results_WGCNA$gene_cluster_info$Cluster_ID)) , " clusters identified. 
 	The following plot shows the number of genes per cluster:")
 end.rcode-->
@@ -92,8 +92,8 @@ end.rcode-->
 	col_clusters_barplot <- plotter$hash_vars$results_WGCNA[['plot_objects']][['sorted_colours']]
 	names(col_clusters_barplot) <- names(plotter$hash_vars$genes_per_cluster)
 	plotter$hash_vars$genes_per_cluster <- as.data.frame(plotter$hash_vars$genes_per_cluster)
-	cat(plotter$prettify_div(plotter$static_ggplot_main("genes_per_cluster", resizable = TRUE,
-		plotting_function = clust_member_ggplot), preset = "magic"))
+	cat(plotter$static_ggplot_main("genes_per_cluster", resizable = TRUE,
+		plotting_function = clust_member_ggplot))
 end.rcode-->
 
 <!--begin.rcode WGCNA_dist_cluster_membership
@@ -113,15 +113,15 @@ end.rcode-->
 	mm_dist$Cluster_ID <- factor(mm_dist$Cluster_ID, levels = as.character(sort(unique(as.numeric(mm_dist$Cluster_ID)))))
 	# mm_dist<- mm_dist[order(as.numeric(mm_dist$Cluster_ID)),]
 	plotter$hash_vars$mm_dist <- mm_dist
-	cat(plotter$prettify_div(plotter$static_ggplot_main("mm_dist", resizable = TRUE,
-		plotting_function = mm_dist_ggplot), preset = "magic"))
+	cat(plotter$static_ggplot_main("mm_dist", resizable = TRUE,
+		plotting_function = mm_dist_ggplot))
 end.rcode-->
 
 <!--begin.rcode WGCNA_conditional_block_plot_factors, eval=grepl("W", plotter$hash_vars$opt$modules), echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=15, results = 'asis'
 	cat(plotter$create_title("Cluster assignment vs lower module membership (MM)", id = "cl_vs_mm", hlevel = 3))
 	cat("<p>This plot shows, for each gene, the cluster ID ascertained by WGCNA, vs. the cluster whose eigen gene has the highest correlation (module membership/MM).</p>")
-	cat(plotter$prettify_div(plotter$static_plot_main("results_WGCNA", resizable = TRUE, custom_format = TRUE,
-		plotting_function = custom_cluster_vs_MM, plot_type = "autoplot"), preset = "magic"))
+	cat(plotter$static_plot_main("results_WGCNA", resizable = TRUE, custom_format = TRUE,
+		plotting_function = custom_cluster_vs_MM, plot_type = "autoplot"))
 	plotter$hash_vars$cluster_count <- get_clusters_count(plotter$hash_vars$results_WGCNA)
 	plotter$hash_vars$features_count <- get_features_count(plotter$hash_vars$results_WGCNA)
 	plotter$hash_vars$trait_vs_module <- plotter$hash_vars$results_WGCNA[['plot_objects']][['trait_vs_module']]
@@ -140,22 +140,22 @@ end.rcode-->
   	text_colour <- "black"
   	col <- c("#0000D5","#FFFFFF","#D50000")
   	na_col <- "grey50"
-	cat(plotter$prettify_div(plotter$static_ggplot_main("trait_vs_module", resizable = TRUE,	
-		plotting_function = custom_gg_heatmap), preset = "magic"))
+	cat(plotter$static_ggplot_main("trait_vs_module", resizable = TRUE,	
+		plotting_function = custom_gg_heatmap))
 
 	cat(plotter$create_title("WGCNA Eigen values clustering", id = "WGCNA_eigen", hlevel = 3))
 	cat("<p>WGCNA dendogram showing distances between these eigengenes along with the factors. Distance is inversely proportional to <strong>positive</strong> correlation.</p>")
 	plotter$hash_vars$trait_and_module <- plotter$hash_vars$results_WGCNA[['plot_objects']][['trait_and_module']]
-	cat(plotter$prettify_div(plotter$static_plot_main("trait_and_module", resizable = TRUE, custom_format = TRUE,
-		plotting_function = custom_trait_and_module, plot_type = "autoplot"), preset = "magic"))
+	cat(plotter$static_plot_main("trait_and_module", resizable = TRUE, custom_format = TRUE,
+		plotting_function = custom_trait_and_module, plot_type = "autoplot"))
 	cat(plotter$create_title("Eigen values clustering (Absolute correlation)", id = "eigen_corr", hlevel = 3))
 
 	cat("<p>WGCNA-like dendogram showing distances between these eigengenes along with the factors. Distance is inversely proportional to <strong>absolute</strong> correlation.</p>")
 	corME <- cor(plotter$hash_vars$results_WGCNA[['plot_objects']][['trait_and_module']], use="p")
 	disME_abs <- as.dist(1-abs(corME))
 	plotter$hash_vars$clust_abs = fastcluster::hclust(disME_abs, method = "average")
-	cat(plotter$prettify_div(plotter$static_plot_main("clust_abs", resizable = TRUE, custom_format = TRUE,
-		plotting_function = custom_abs_clust, plot_type = "autoplot"), preset = "magic"))
+	cat(plotter$static_plot_main("clust_abs", resizable = TRUE, custom_format = TRUE,
+		plotting_function = custom_abs_clust, plot_type = "autoplot"))
 	corME2 <- corME
 	rownames(corME2) <- gsub("^ME", "", rownames(corME2))
 	colnames(corME2) <- gsub("^ME", "", colnames(corME2))
@@ -169,8 +169,8 @@ end.rcode-->
 		cat("<p>This plot shows modules (black) and factors (green) as nodes. Correlations coefficients over 0.8 (red) and under -0.8 (blue) are represented as edges</p>")
 		"%>%" <- magrittr::"%>%"
 		options(ggrepel.max.overlaps = Inf)
-		cat(plotter$prettify_div(plotter$static_plot_main("mod_net", resizable = TRUE, custom_format = TRUE,
-			plotting_function = custom_mod_net, plot_type = "plot"), preset = "magic"))
+		cat(plotter$static_plot_main("mod_net", resizable = TRUE, custom_format = TRUE,
+			plotting_function = custom_mod_net, plot_type = "plot"))
 		options(ggrepel.max.overlaps = 10)
 
 	} else {
@@ -191,6 +191,6 @@ end.rcode-->
   	text_colour <- "black"
   	col <- c("#0000D5","#FFFFFF","#D50000")
   	na_col <- "grey50"
-	cat(plotter$prettify_div(plotter$static_ggplot_main("correlation_df", resizable = TRUE,	
-		plotting_function = custom_gg_heatmap, func = format_for_gg_heatmap), preset = "magic"))
+	cat(plotter$static_ggplot_main("correlation_df", resizable = TRUE,	
+		plotting_function = custom_gg_heatmap, func = format_for_gg_heatmap))
 end.rcode-->

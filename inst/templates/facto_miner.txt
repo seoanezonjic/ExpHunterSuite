@@ -430,7 +430,10 @@ end.rcode-->
 			hlevel = plotter$hash_vars$last_title + 2))
 
 	cat("This plot represent the asociation between the qualitative variables and PCs. The association value is the R2 value. 
-		The flags represent the significance measured with an analysis of variance where *: 0.01 < P < 0.05; ** 0.001 < P < 0.1; *** P < 0.001.<br>")
+		The flags represent the significance measured with an analysis of variance where :
+		* 0.01 < P < 0.05
+		** 0.001 < P < 0.1
+		*** P < 0.001 <br>")
 	if (nrow(plotter$hash_vars$dim_data_qual) >0 ) {
 		cat(plotter$static_plot_main(id = "dim_data_qual",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_qual_heat))
 	} else {
