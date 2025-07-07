@@ -11,7 +11,7 @@ calculate_markers(
   idents = NULL,
   integrate = FALSE,
   min.pct = 0.01,
-  logfc.threshold = 0.25,
+  logfc.threshold = 0.1,
   assay = "RNA"
 )
 }
@@ -29,7 +29,14 @@ markers in case conserved mode cannot be triggered.}
 \item{integrate}{Whether or not integrative analysis is active. Does not
 bother with subsetting if FALSE.}
 
-\item{min.pct, logfc.threshold}{See ?Seurat::FindAllMarkers}
+\item{min.pct}{only test genes that are detected in a minimum fraction of
+min.pct cells in either of the two populations. Meant to speed up the function
+by not testing genes that are very infrequently expressed. Default is 0.01}
+
+\item{logfc.threshold}{Limit testing to genes which show, on average, at least
+X-fold difference (log-scale) between the two groups of cells. Default is 0.1
+Increasing logfc.threshold speeds up the function, but can miss weaker signals.
+If the \code{slot} parameter is "scale.data" no filtering is performed.}
 
 \item{assay}{A string. Assay whose markers will be calculated. Default "RNA",
 as per usual workflow.}

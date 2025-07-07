@@ -9,6 +9,7 @@ get_sc_markers(
   cond = NULL,
   subset_by,
   DEG = FALSE,
+  logfc.threshold = 0.25,
   verbose = FALSE,
   assay = "RNA",
   values = NULL,
@@ -29,6 +30,11 @@ marker calculation.}
 \item \code{TRUE}: Function will calculate differentally expressed genes.
 \item \code{FALSE} (the default): Function will calculate cluster markers.
 }}
+
+\item{logfc.threshold}{Limit testing to genes which show, on average, at least
+X-fold difference (log-scale) between the two groups of cells. Default is 0.1
+Increasing logfc.threshold speeds up the function, but can miss weaker signals.
+If the \code{slot} parameter is "scale.data" no filtering is performed.}
 
 \item{verbose}{A boolean. Will be passed to Seurat function calls.}
 

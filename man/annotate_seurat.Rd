@@ -7,18 +7,25 @@
 annotate_seurat(
   seu,
   cell_annotation = NULL,
+  logfc.threshold = 0.1,
   subset_by = NULL,
   cluster_annotation = NULL,
   p_adj_cutoff = 1e-05,
   verbose = FALSE,
   assay = "RNA",
-  integrate = FALSE
+  integrate = FALSE,
+  min.pct = 0.1
 )
 }
 \arguments{
 \item{seu}{Seurat object to analyze.}
 
 \item{cell_annotation}{Table of cell types and their associated markers}
+
+\item{logfc.threshold}{Limit testing to genes which show, on average, at least
+X-fold difference (log-scale) between the two groups of cells. Default is 0.1
+Increasing logfc.threshold speeds up the function, but can miss weaker signals.
+If the \code{slot} parameter is "scale.data" no filtering is performed.}
 
 \item{subset_by}{Metadata column by which seurat object will be subset for
 marker calculation. Default NULL.}
@@ -35,6 +42,10 @@ as per usual workflow.}
 
 \item{integrate}{Whether or not integrative analysis is active. Does not
 bother with subsetting if FALSE.}
+
+\item{min.pct}{only test genes that are detected in a minimum fraction of
+min.pct cells in either of the two populations. Meant to speed up the function
+by not testing genes that are very infrequently expressed. Default is 0.01}
 }
 \value{
 A seurat object with a new sketched assay.
@@ -44,9 +55,9 @@ A seurat object with a new sketched assay.
 strategies for a seurat object.
 }
 \examples{
- \dontrun{
-   sketched_experiment <- sketch_sc_experiment(seu = nonsketched_experiment,
-          assay = "RNA", method = "LeverageScore", sketched.assay = "sketch",
-          cell.pct = 50)
- }
+data(pbmc_tiny)
+bkp <- pbmc_tiny
+pbmc_tiny$seurat_clusters <- c(1, 2)
+clust_anno <- data.frame(seurat_clusters = seq(2), name = c("T Cells", "B Cells"))
+anno_tiny <- annotate_seurat(seu = pbmc_tiny, cluster_annotation = clust_anno)
 }

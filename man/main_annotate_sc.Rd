@@ -39,7 +39,9 @@ main_annotate_sc(
   sketch_pct = 25,
   force_ncells = NA_integer_,
   sketch_method = "LeverageScore",
-  doublet_path = getwd()
+  doublet_path = getwd(),
+  min_cell_proportion = 0.1,
+  logfc.threshold = 0.25
 )
 }
 \arguments{
@@ -144,6 +146,15 @@ sketching.}
 
 \item{doublet_path}{A string. Path where cell IDs identified as doublets
 will be written.}
+
+\item{min_cell_proportion}{Minimum threshold of percentage of cells
+expressing DEG. Despite Seurat::FindMarkers being called "min.pct", it is
+not a percentage but a value from 0 to 1.}
+
+\item{logfc.threshold}{Limit testing to genes which show, on average, at least
+X-fold difference (log-scale) between the two groups of cells. Default is 0.1
+Increasing logfc.threshold speeds up the function, but can miss weaker signals.
+If the \code{slot} parameter is "scale.data" no filtering is performed.}
 }
 \value{
 invisible(final_results list. Contains multiple items:
