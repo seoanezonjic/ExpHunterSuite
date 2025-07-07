@@ -1,3 +1,45 @@
+#' Main coRmiT Function
+#'
+#' This function allows you to detect mirna-target pairs
+#' @param RNAseq_folder Output expression hunter folder for mRNAs
+#' @param miRNAseq_folder Output expression hunter folder for miRNAs
+#' @param output_files Output folder
+#' @param strat_names Strategies to employ to find miRNA-target pairs
+#' @param sample_proportion Score distribution sample proportion
+#' @param organism Reference organism to use. hsa for human, mmu mouse
+#' @param multimir_db Indicate .RData file with parsed multiMiR data
+#' @param p_val_cutoff Correlation P value threshold
+#' @param corr_cutoffs Correlation thresholds to test for
+#' @param permutations Permutations of random tests
+#' @param MM_cutoff Genes with lower module membership than this remove
+#' @param report Name of the html file
+#' @param translation_file Two columns file with miRNA translations
+#' Same IDs as input in first column, miRBase ID in second e.g. MIMAT000000
+#' @param databases prediction databases included from multiMiR for GS
+#' @param translate_ensembl Translate mRNA Ensembl ID to ENTREZ & GENESYMBOL
+#' @param filter_db_theshold Minimun prediction databases to support a pair
+#' @param database_to_filter Predicted databases that must support a pair on
+#' @param mc_cores cores to use for parallelization
+#' @param tag_filter filter type for RNAseq and miRNAseq
+#' @param corr_type Find pairs with correlation lower or higher than corr cutoff
+#' @param corr_coef Correlation method: pearson, spearman, kendall, bicor
+#' @param f_p_val Fisher P value threshold for overlap with multiMiR
+#' @param selected_targets_file One column file indicating external selected targets
+#' @param eval_method Apply odds ratio etc. to all pairs (aggregated) 
+#' or miRNA by miRNA (specific)
+#' @param template_folder where to find templates for the report
+#' @param organism_table_path table with data for organism used
+#' @param compare_pred_scores Compute predition scores comparison
+#' @param add_databases_files Use additional target DBs (gene <tab> miRNA)
+#' @return folder with miRNA-target pairs, report and other details.
+#' @importFrom utils read.table 
+#' @export
+#' @examples
+#' \dontrun{
+#'  coRmiT(RNAseq_folder = "mirna_path", miRNAseq_folder="mirna_path",
+#'    strat_names = c("EE","Eh","Ed"), --organism = "hsa",
+#'    corr_cutoffs = "-0.95,-0.9")
+#' }
 #' @importFrom utils read.table 
 #' @importFrom rmarkdown render
 coRmiT <- function(
