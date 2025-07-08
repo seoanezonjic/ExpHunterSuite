@@ -43,19 +43,19 @@ end.rcode-->
 	cat(paste0("<h2> <strong>", funsys, " Over Representation Analysis</strong></h2>"), "",
 		"<p>The ORA method takes a group of significative DEGs (only DEGs, upregulated DEGs or downregulated DEGs) and performs a hypergeometric test for each term of the selected functional category.</p>")
 
-	cat(plotter$prettify_div(plotter$table(list(id = "enrich_df", header = NULL, row_names = NULL, styled = "dt", table_rownames = FALSE,
-																				 text = "dynamic")), preset = "magic"))
+	cat(plotter$table(list(id = "enrich_df", header = NULL, row_names = NULL, styled = "dt", table_rownames = FALSE,
+																				 text = "dynamic")))
 
 	cat("<p><strong>Dotplot</strong></p>",
 	        "<p>The most highly signficant categories in descending in categories of gene ratio, defined as the proportion of significant genes that are found in the functional category.
 	         The x-axis represents the gene ratio and the dot size the number of genes associated with the functional category.</p>")
-	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", resizable = TRUE, custom_format = TRUE,
-			plotting_function = enrich_dotplot, plot_type = "plot"), preset = "magic"))
+	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
+			plotting_function = enrich_dotplot, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
 
 	cat("<p><strong>Heatplot</strong></p>", 
 		  "<p>Significant genes (x-axis) and the functional categories in which they appear.</p>" )
-	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", resizable = TRUE, custom_format = TRUE,
-			  plotting_function = custom_heatplot, plot_type = "plot"), preset = "magic"))
+	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
+			  plotting_function = custom_heatplot, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
 
 	cat("<p><strong>Gene-Concept Network</strong></p>", 
 		  "<p>The network connects the top functional categories (brown nodes) to their associated genes (grey or colored nodes).
@@ -64,8 +64,8 @@ end.rcode-->
 	if (nrow(as.data.frame(plotter$hash_vars$enrich_obj)) > 2) {
 		## @AEM UNTESTED, THIS CONDITION WILL ONLY BE MET IN LARGER TESTS, ONCE THAT'S DONE I'LL REMOVE THIS COMMENT.
 		## IF YOU SEE THIS YOU ARE WELCOME TO YELL AT ME, EVEN MORE SO IF THIS BLOCK BREAKS
-			cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", resizable = TRUE, custom_format = TRUE,
-				plotting_function = enrich_cnet, plot_type = "plot"), preset = "magic"))
+			cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
+				plotting_function = enrich_cnet, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
 	} else {
 		cat("<p>This graph can not be plotted because fewer than two functional categories were enriched</p>")
 	}
@@ -86,8 +86,8 @@ end.rcode-->
 			node_label <- "category"
 			group_category <- FALSE
 		}
-		emap_res <- plotter$prettify_div(plotter$static_plot_main("enrich_obj", resizable = TRUE, custom_format = TRUE,
-			  plotting_function = enrich_emap, plot_type = "plot"), preset = "magic")
+		emap_res <- plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
+			  plotting_function = enrich_emap, plot_type = "plot"), inject_string = "class=\"plot_real_size\")")
 	} else {
 		emap_res <- "<p>This graph cannot be plotted because fewer than two functional categories were enriched</p>"
 	}
@@ -98,8 +98,8 @@ end.rcode-->
 		cat("<strong>Cluster concept network plot</strong>", 
 		  "The top functional categories (nodes), connected if they are shared among clusters. Edge thickness represents the number of shared genes.
 			  Nodes size represents the number of clusters sharing the functional category. Pies proportion represent the proportion of clusters with that enriched category.")
-		cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", resizable = TRUE, custom_format = TRUE,
-			  plotting_function = custom_clnetplot, plot_type = "plot"), preset = "magic"))
+		cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
+			  plotting_function = custom_clnetplot, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
 	} else {
 		cat("<p>This graph cannot be plotted because fewer than two functional categories were enriched</p>")
 	}

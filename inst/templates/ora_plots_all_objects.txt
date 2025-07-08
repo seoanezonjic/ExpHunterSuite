@@ -49,53 +49,53 @@ cat("<h2> <strong>{{funsys}} - Over Representation Analysis</strong></h2>",
 cat("<strong>Barplot</strong>", 
 	  "<p>The most highly signficant categories in ascending order, according to adjusted p-value. 
 	  The x-axis represents the number of significant genes found within the functional category.</p>")
-cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", resizable = TRUE, custom_format = TRUE,
-		plotting_function = enrich_barplot, plot_type = "plot"), inject_string = ))
+cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE, plotting_function = enrich_barplot, plot_type = "plot"),
+	inject_string = "class=\"plot_real_size\")"))
 cat("<strong>Dotplot</strong>",
     "<p>The most highly signficant categories in descending in categories of gene ratio, defined as the proportion of significant genes that are found in the functional category.
      The x-axis represents the gene ratio and the dot size the number of genes associated with the functional category.</p>")
-cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", resizable = TRUE, custom_format = TRUE,
-		plotting_function = enrich_dotplot, plot_type = "plot"), preset = "magic"))
+cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
+		plotting_function = enrich_dotplot, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
 if(!is.null(plotter$hash_vars$attr_vector)){
 	cat("<p><strong>Distributions of ", plotter$hash_vars$gene_attribute_name, "</p></strong>", 
 	  "<p>This plot shows the distribution of gene ", plotter$hash_vars$gene_attribute_name," that enriched the top enriched functional term/pathways.
 	   The X axis repressent the distribution values. The color of the distribution repressents the FDR of the enrichment.
 	   The vertical lines represents the first, second and third quartiles.</p>")
-	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", resizable = TRUE, custom_format = TRUE,
-		  plotting_function = custom_enrich_density, plot_type = "plot"), preset = "magic"))
+	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
+		  plotting_function = custom_enrich_density, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
 }
 cat("<p><strong>Gene-Concept Network</strong></p>", 
 	  "<p>The network connects the top functional categories (brown nodes) to their associated genes (grey or colored nodes).
  	   The size of the functional category nodes shows the number of connected genes.</p>")
 if(length(get_genes(plotter$hash_vars$enrich_obj)) <= max_genes){
-	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", resizable = TRUE, custom_format = TRUE,
-			plotting_function = enrich_cnet, plot_type = "plot"), preset = "magic"))
+	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
+			plotting_function = enrich_cnet, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
 }else{
 	cat("<p>More than", max_genes, "genes were found among the enriched genes. Only the first", max_genes, "genes belonging to the most significant categories are shown plotted.</p>")
 	plotter$hash_vars$enrich_obj_maxed <- force_max_genes_enrobj(plotter$hash_vars$enrich_obj, maxGenes=max_genes, showCategory=n_category)
-	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj_maxed", resizable = TRUE, custom_format = TRUE,
-		  plotting_function = enrich_cnet, plot_type = "plot"), preset = "magic"))
+	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj_maxed", custom_format = TRUE,
+		  plotting_function = enrich_cnet, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
 }
 cat("<strong>Enrich Map plot</strong>", 
     "<p>The top functional categories (nodes), connected if they share genes. Edge thickness represents the number of shared genes.
 	   Nodes size represents the number of significant genes within the category.</p>")
 
 if(nrow(as.data.frame(plotter$hash_vars$enrich_obj)) > 2) {
-	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", resizable = TRUE, custom_format = TRUE,
-		  plotting_function = enrich_emap, plot_type = "plot"), preset = "magic"))
+	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
+		  plotting_function = enrich_emap, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
 } else {
 	cat("<p>This graph cannot be plotted because fewer than two functional categories were enriched</p>")
 }
 cat("<strong>Heatplot</strong>", 
 	  "<p>Significant genes (x-axis) and the functional categories in which they appear.</p>")
-cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", resizable = TRUE, custom_format = TRUE,
-		  plotting_function = enrich_heatplot, plot_type = "plot"), preset = "magic"))
+cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
+		  plotting_function = enrich_heatplot, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
 cat("<p><strong>Upsetplot</strong></p>\n\n", 
-	  "<p>Genes are clustered according to shared enriched categories. 
-	  The y-axis shows the number of genes belonging to the different clusters (top) and categories to which they belong (bottom).</p>")
+	 "<p>Genes are clustered according to shared enriched categories.
+	 The y-axis shows the number of genes belonging to the different clusters (top) and categories to which they belong (bottom).</p>")
 if (nrow(as.data.frame(plotter$hash_vars$enrich_obj) > 1)){ # Needs, at least, two categories
-	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", resizable = TRUE, custom_format = TRUE,
-		  plotting_function = enrich_upsetplot, plot_type = "plot"), preset = "magic"))
+	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
+		  plotting_function = enrich_upsetplot, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
 }else{
 	cat("<p>Genes has been enriched in less than 2 categories, so Upsetplot cannot be printed</p>")
 }
