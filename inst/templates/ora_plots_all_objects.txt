@@ -2,6 +2,9 @@
 <!--begin.rcode "{{funsys}}_setup"
 	max_genes <- plotter$hash_vars$max_genes
 	n_category <- 30
+	cats_in_enrich_obj <- nrow(plotter$hash_vars$enrich_obj)
+	cats_in_enrich_obj <- min(n_category, cats_in_enrich_obj)
+	bar_dot_plot_height <- ceiling(cats_in_enrich_obj / 2.5) + 1
 	default_width <- set_default_width(enrich_obj = plotter$hash_vars$enrich_obj, showCategory=n_category)
 	enrich_barplot <- function(input_obj) {
 		enrichplot:::barplot.enrichResult(input_obj, showCategory = n_category)
@@ -49,13 +52,13 @@ cat("<h2> <strong>{{funsys}} - Over Representation Analysis</strong></h2>",
 cat("<strong>Barplot</strong>", 
 	  "<p>The most highly signficant categories in ascending order, according to adjusted p-value. 
 	  The x-axis represents the number of significant genes found within the functional category.</p>")
-cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE, plotting_function = enrich_barplot, plot_type = "plot"),
+cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE, plotting_function = enrich_barplot, plot_type = "plot", height = bar_dot_plot_height),
 	inject_string = "class=\"plot_real_size\")"))
 cat("<strong>Dotplot</strong>",
     "<p>The most highly signficant categories in descending in categories of gene ratio, defined as the proportion of significant genes that are found in the functional category.
      The x-axis represents the gene ratio and the dot size the number of genes associated with the functional category.</p>")
 cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
-		plotting_function = enrich_dotplot, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
+		plotting_function = enrich_dotplot, plot_type = "plot", height = bar_dot_plot_height), inject_string = "class=\"plot_real_size\")"))
 if(!is.null(plotter$hash_vars$attr_vector)){
 	cat("<p><strong>Distributions of ", plotter$hash_vars$gene_attribute_name, "</p></strong>", 
 	  "<p>This plot shows the distribution of gene ", plotter$hash_vars$gene_attribute_name," that enriched the top enriched functional term/pathways.
@@ -89,7 +92,7 @@ if(nrow(as.data.frame(plotter$hash_vars$enrich_obj)) > 2) {
 cat("<strong>Heatplot</strong>", 
 	  "<p>Significant genes (x-axis) and the functional categories in which they appear.</p>")
 cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
-		  plotting_function = enrich_heatplot, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
+		  plotting_function = enrich_heatplot, plot_type = "plot", height = bar_dot_plot_height), inject_string = "class=\"plot_real_size\")"))
 cat("<p><strong>Upsetplot</strong></p>\n\n", 
 	 "<p>Genes are clustered according to shared enriched categories.
 	 The y-axis shows the number of genes belonging to the different clusters (top) and categories to which they belong (bottom).</p>")
