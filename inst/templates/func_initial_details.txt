@@ -16,16 +16,14 @@ The functional categories can be:</p>
 
 <ul>
 <li> KEGG pathways</li>
-<li> GO:</li>
-
-</ul>
-	+ Biological Process
-	+ Molecular Function
-	+ Cellular Component
-<ul>
+<li> GO: </li>
+	<ul>
+		<li> Biological Process </li>
+		<li> Molecular Function </li>
+		<li> Cellular Component </li>
+	</ul>
 <li> Reactome pathways</li>
 <li> Custom nomenclature</li>
-
 </ul>
 
 <p>All the functional categories are computed with ClusterProfiler and GO categories are computed also with TopGo.</p>
