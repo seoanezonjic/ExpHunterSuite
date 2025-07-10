@@ -31,8 +31,6 @@ option_list <- list(
     help = "SingleR reference to use."),
   optparse::make_option(c("-v", "--version"), type = "character",
     help = "Celldex version of reference."),
-  optparse::make_option(c("-o", "--output"), type = "character",
-    help = "Output directory."),
   optparse::make_option("--replace", type = "logical", default = FALSE, action = "store_true",
   	help = "Replace existing directory"),
   optparse::make_option("--verbose", type = "logical", default = TRUE, action = "store_true",
@@ -50,18 +48,15 @@ option_list <- list(
 )  
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+
 opt$name <- basename(opt$reference)
-opt$output <- file.path(opt$output, basename(opt$reference))
 if(opt$version != "") {
-  opt$output <- paste(output, opt$version, sep = "_")
+  opt$reference <- paste(opt$reference, opt$version, sep = "_")
 }
 
 if(!opt$only_showcase) {
   if(is.null(opt$reference)) {
     stop('No reference provided. Please see get_SingleR_ref.R --help')
-  }
-  if(is.null(opt$output)) {
-    stop('No output path provided. Please see get_SingleR_ref.R --help')
   }
   if(file.exists(opt$database)) {
     message("Generating reference from specified database")
@@ -86,7 +81,7 @@ if(!opt$only_showcase) {
         sparse_matrix <- Matrix::Matrix(expr_matrix, sparse = TRUE)
         sparse_matrix <- sparse_matrix[, Matrix::colSums(sparse_matrix) > 0]
         expr_matrices[[file]] <- sparse_matrix
-        message(paste0("File ", file, " converted"))
+        message("File ", file, " converted")
       }
       read_sparse_matrix <- do.call(cbind, expr_matrices)
     } else {
@@ -96,7 +91,7 @@ if(!opt$only_showcase) {
     if(length(tenX_dirs) > 0) {
       tenX_matrices <- vector(mode = "list", length = length(tenX_dirs))
       for(tenX_dir in seq(tenX_dirs)) {
-        message(paste0("Loading 10X directory ", tenX_dir, " of ", length(tenX_dirs)))
+        message("Loading 10X directory ", tenX_dir, " of ", length(tenX_dirs))
         tenX_matrix <- Seurat::Read10X(tenX_dirs[tenX_dir], gene.column = 1)
         tenX_matrices[[tenX_dir]] <- tenX_matrix
       }
@@ -121,52 +116,64 @@ if(!opt$only_showcase) {
     metadata <- metadata[, -1]
     ref <- SummarizedExperiment::SummarizedExperiment(assays=list(counts = final_sparse_matrix), colData = metadata)
     ref <- scater::logNormCounts(ref)
+    ref_seu <- CreateSeuratObject(counts = final_sparse_matrix, meta.data = metadata)
+    ref_seu <- SeuratObject::RenameAssays(object = ref_seu, assay.name = "RNA", new.assay.name = "originalexp", verbose = opt$verbose)
   }
   if(opt$database == "scRNAseq") {
     ref <- scRNAseq::fetchDataset(opt$reference, opt$version)
     # Removing unlabelled cells or cells without a clear label.
     ref <- ref[, !is.na(ref[[opt$ref_label]]) & ref[[opt$ref_label]]!="unclear"] 
     ref <- scater::logNormCounts(ref)
+    ref@assays@data$counts <- as(ref@assays@data$counts, "dgCMatrix")
+    ref@assays@data$logcounts <- as(ref@assays@data$logcounts, "dgCMatrix")
+    ref_seu <- Seurat::as.Seurat(ref)
   }
   if(opt$database == "celldex") {
     ref <- celldex::fetchReference(opt$reference, opt$version)
+    ref@assays@data$counts <- as(ref@assays@data$counts, "dgCMatrix")
+    ref@assays@data$logcounts <- as(ref@assays@data$logcounts, "dgCMatrix")
+    ref_seu <- Seurat::as.Seurat(ref)
   }
-  HDF5Array::saveHDF5SummarizedExperiment(x = ref, dir = opt$output, verbose = opt$verbose, replace = opt$replace)
-  message(paste0("Reference saved successfully in ", opt$output))
+  HDF5Array::saveHDF5SummarizedExperiment(x = ref, dir = opt$reference, verbose = opt$verbose, replace = opt$replace)
+  save.image('ref_testing_again.RData')
+  message("Reference saved successfully in ", opt$reference)
   message("Converting reference to seurat object to calculate UMAP")
-  sce <- as(ref, "SingleCellExperiment")
-  sce@assays@data$counts <- as(sce@assays@data$counts, "dgCMatrix")
-  sce@assays@data$logcounts <- as(sce@assays@data$logcounts, "dgCMatrix")
-  seu <- Seurat::as.Seurat(sce)
-  seu <- Seurat::NormalizeData(object = seu, verbose = FALSE, normalization.method = "LogNormalize", scale.factor = 1e6)
-  seu <- Seurat::FindVariableFeatures(seu, nfeatures = 2000, verbose = FALSE, selection.method = "vst", assay = "originalexp")
-  seu <- Seurat::ScaleData(object = seu, verbose = FALSE, features = rownames(seu))
-  seu <- Seurat::FindNeighbors(object = seu, dims = seq(10), assay = "originalexp", reduction = "PCA", verbose = FALSE)
-  seu <- Seurat::RunUMAP(object = seu, dims = seq(10), verbose = FALSE, reduction = "PCA", return.model = TRUE)
-  message("Saving results to disk")
-  dir.create(file.path(opt$output, "counts"))
+  ref_seu <- Seurat::NormalizeData(object = ref_seu, verbose = opt$verbose,
+                                   normalization.method = "RC", scale.factor = 1e6)
+  ref_seu <- Seurat::FindVariableFeatures(ref_seu, nfeatures = 2000, verbose = opt$verbose,
+                                          selection.method = "vst", assay = "originalexp")
+  ref_seu <- Seurat::ScaleData(object = ref_seu, verbose = opt$verbose, features = rownames(ref_seu))
+  ref_seu <- Seurat::RunPCA(ref_seu, assay = "originalexp", npcs = 10, verbose = opt$verbose)
+  ref_seu <- Seurat::FindNeighbors(object = ref_seu, dims = seq(10), assay = "originalexp",
+                                   reduction = "pca", verbose = opt$verbose)
+  ref_seu <- Seurat::FindClusters(ref_seu, resolution = 0.33, verbose = opt$verbose)
+  ref_seu <- Seurat::RunUMAP(object = ref_seu, dims = seq(10), verbose = opt$verbose,
+                           reduction = "pca", return.model = TRUE)
+  dir.create(file.path(opt$reference, "counts"))
+  dir.create(file.path(opt$reference, "embeddings"))
+  message("Saving showcase-ready reference to disk")
+  opt$output <- opt$reference
   dir.create(file.path(opt$output, "embeddings"))
-  write_annot_output(final_results = list(seu = seu), opt = opt, assay = "originalexp")
+  write_annot_output(final_results = list(seu = ref_seu), opt = opt, assay = "originalexp")
 } else {
   message("Loading SingleR ref for showcase report")
-  seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(file.path(opt$output, "counts"), gene.column = 1),
+  ref_seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(file.path(opt$reference, "counts"), gene.column = 1),
                                   project = opt$name, min.cells = 1, min.features = 1)
-  seu_meta <- read.table(file.path(opt$output, "counts/meta.tsv"), sep = "\t", header = TRUE)
-  rownames(seu_meta) <- colnames(seu)
-  seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
-  seu$RNA$data <- seu$RNA$counts
-  markers <- read.table(file.path(opt$output, "markers.tsv"), sep = "\t", header = TRUE)
-  embeddings <- read.table(file.path(opt$output, "embeddings", "cell_embeddings.tsv"), header = TRUE)
-  seu$umap <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'umap_', assay = 'RNA')
+  seu_meta <- read.table(file.path(opt$reference, "counts/meta.tsv"), sep = "\t", header = TRUE)
+  rownames(seu_meta) <- colnames(ref_seu)
+  ref_seu <- Seurat::AddMetaData(ref_seu, seu_meta, row.names("Cell_ID"))
+  ref_seu$RNA$data <- ref_seu$RNA$counts
+  embeddings <- read.table(file.path(opt$reference, "embeddings", "cell_embeddings.tsv"), header = TRUE)
+  ref_seu$umap <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'umap_', assay = 'RNA')
 }
 
 message("Preparing report showcasing selected reference")
 
-meta <- seu@meta.data
+meta <- ref_seu@meta.data
 fields_to_remove <- grepl("orig.ident|nCount|nFeature|sizeFactor", names(meta))
 meta <- meta[, !fields_to_remove]
 tables <- lapply(meta, col_to_table, col_names = c("Type", "Frequency"))
 names(tables) <- colnames(meta)
 
-write_sc_report(final_results = list(tables = tables, seu = seu), template_folder = template_folder, output = getwd(),
+write_sc_report(final_results = list(tables = tables, seu = ref_seu), template_folder = template_folder, output = getwd(),
                 template = "sc_ref_showcase.txt", out_suffix = "ref_showcase.html", opt = opt)
