@@ -26,3 +26,9 @@ invisible(NULL)
 write_annot_output
 writes final counts matrix and annotated metadata of a seurat experiment.
 }
+\examples{
+\dontrun{
+   write_annot_output(final_results = test_results, opt = params,
+                      assay = "RNA", layer = "data")
+}
+}
