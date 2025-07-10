@@ -238,7 +238,7 @@ if(file.exists(final_counts_path) & opt$integrate) {
                     sketch = opt$sketch, sketch_pct = opt$sketch_pct,
                     sketch_method = opt$sketch_method, force_ncells = opt$force_ncells,
                     k_weight = opt$k_weight, min_cells_per_sample = opt$min_cells_per_sample,
-                    min_cell_proportion = opt$min_cell_proportion, log2fc_threshold = opt$log2fc_threshold)
+                    min_cell_proportion = opt$min_cell_proportion, logfc.threshold = opt$log2fc_threshold)
 }
 
 if(!file.exists(final_counts_path) & opt$integrate) {
