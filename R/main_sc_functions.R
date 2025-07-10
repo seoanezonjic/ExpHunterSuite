@@ -180,7 +180,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
         "Integration"), scale.layer = "scale.data", k.weight = k_weight)
       reduction <- integration_method
     }
-    seu <- Seurat::FindNeighbors(object = seu, dims = seq(1, ndims),
+    seu <- Seurat::FindNeighbors(object = seu, dims = seq(ndims),
                                  assay = assay, reduction = reduction,
                                  verbose = verbose)
     if(is.null(SingleR_ref)) {
