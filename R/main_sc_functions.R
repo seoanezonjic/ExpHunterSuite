@@ -70,10 +70,10 @@
 #'                   query = "TREM2", sigfig = 2, resolution = 0.5,
 #'                   p_adj_cutoff = 5e-3, name = "project_name",
 #'                   integrate = TRUE, cluster_annotation = NULL,
-#'                   cell_annotation = cell_types, DEG_target = "genotype",
+#'                   cell_annotation = cell_types,
 #'                   scalefactor = 10000, hvgs = 2000, subset_by = "genotype",
 #'                   normalmethod = "LogNormalize", ndims = 10, verbose = FALSE,
-#'                   output = getwd(), save_RDS = FALSE, reduce = FALSE,
+#'                   output = getwd(), reduce = FALSE,
 #'                   ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL,
 #'                   ref_n = NULL, BPPARAM = NULL, doublet_list = NULL,
 #'                   integration_method = "Harmony", sketch_pct = 12,
@@ -116,7 +116,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL, ref_n = NULL,
     BPPARAM = SerialParam(), doublet_list = NULL, k_weight = 100,
     integration_method = "Harmony", sketch = FALSE, sketch_pct = 25, 
-    force_ncells = NA_integer_, sketch_method = "LeverageScore",
+    force_ncells = NA_integer_, sketch_method = "LeverageScore", min.pct = 0.1,
     doublet_path = getwd(), min_cell_proportion = 0.1, logfc.threshold = 0.25){
     main_start <- Sys.time()
     new_opt <- check_sc_input(integrate = integrate, sketch = sketch,
@@ -320,6 +320,11 @@ main_analyze_sc_query <- function(seu, query, sigfig = 2, layer = "counts",
 #' @param assay,layer Assay and layer from where counts will be retrieved.
 #' @param opt Options used in script call.
 #' @export
+#' @examples
+#' \dontrun{
+#'    write_annot_output(final_results = test_results, opt = params,
+#'                       assay = "RNA", layer = "data")
+#' }
 #' @returns invisible(NULL)
 
 write_annot_output <- function(final_results = stop("Missing results object"),
