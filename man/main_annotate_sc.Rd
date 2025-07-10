@@ -39,6 +39,7 @@ main_annotate_sc(
   sketch_pct = 25,
   force_ncells = NA_integer_,
   sketch_method = "LeverageScore",
+  min.pct = 0.1,
   doublet_path = getwd(),
   min_cell_proportion = 0.1,
   logfc.threshold = 0.25
@@ -143,6 +144,10 @@ this many cells.}
 
 \item{sketch_method}{A string. Method to use in score calculation for
 sketching.}
+
+\item{min.pct}{only test genes that are detected in a minimum fraction of
+min.pct cells in either of the two populations. Meant to speed up the function
+by not testing genes that are very infrequently expressed. Default is 0.01}
 
 \item{doublet_path}{A string. Path where cell IDs identified as doublets
 will be written.}
