@@ -228,11 +228,14 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode config_DEA_PCA, echo = FALSE, results = "asis", warning = TRUE, message = TRUE, eval = !is.null(plotter$hash_vars$PCA_res$DEGs)
-	pca_data <- plotter$hash_vars$PCA_res$DEGs$pca_data
-	dim_to_keep <- plotter$hash_vars$PCA_res$DEGs$dim_to_keep
-	dim_data <- plotter$hash_vars$PCA_res$DEGs$dim_data
-	dim_data_merged <- plotter$hash_vars$PCA_res$DEGs$dim_data_merged
-	res.hcpc <- plotter$hash_vars$PCA_res$DEGs$res.hcpc
+	plotter$hash_vars$pca_data <- plotter$hash_vars$PCA_res$DEGs$pca_data
+	plotter$hash_vars$dim_to_keep <- plotter$hash_vars$PCA_res$DEGs$dim_to_keep
+	plotter$hash_vars$dim_data <- plotter$hash_vars$PCA_res$DEGs$dim_data
+	plotter$hash_vars$dim_data_merged <- plotter$hash_vars$PCA_res$DEGs$dim_data_merged
+	plotter$hash_vars$res.hcpc <- plotter$hash_vars$PCA_res$DEGs$res.hcpc
+	plotter$hash_vars$last_title <- 3
+	plotter$hash_vars$multivar_type <- "pca"
+	plotter$hash_vars$main_cat <- "treat"
 	called_from <- "dea_results"
 end.rcode-->
 
