@@ -32,7 +32,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   template_folder <- file.path(root_path, 'templates')
 }
 
-# Prepare command line input 
+Prepare command line input 
 option_list <- list(
   optparse::make_option(c("-i", "--input_file"), type="character", default=NULL,
     help="Input file with read counts"),
