@@ -134,8 +134,8 @@ end.rcode-->
 	# Plot genes barplot
 	cat(plotter$prettify_div(plotter$barplot(list(id = "barplot_df", title = "DEG selection",
 											 row_names = TRUE, header = NULL, text = FALSE, fields = 2:1,
-											 transpose = FALSE, config = list('xAxisTitle' = 'Number of genes',
-											 smpLabelImage = TRUE))),
+											 transpose = FALSE, width = "1192px", config = list('xAxisTitle' = 'Number of genes',
+											 smpLabelImage = TRUE, showDataValues = TRUE, smpTextRotate = 90))),
 							 preset = "magic", justify = "left"))
 end.rcode-->
 
@@ -199,7 +199,7 @@ end.rcode-->
 	} else {
 		cat(plotter$prettify_div(plotter$boxplot(list(id = "df_melted_FDR", header = NULL, text = FALSE, fields = c(1, 3:4),
 			format = "long", row_names = FALSE, transpose = TRUE, smp_attr = c(1, 4), group = "package_name",
-			showBoxplotOriginalData = TRUE, config = list(graphOrientation = "vertical"))), preset = "magic", justify = "left"))
+			showBoxplotOriginalData = TRUE, config = list(graphOrientation = "vertical", jitter = TRUE))), preset = "magic", justify = "left"))
 	}
 end.rcode-->
 
@@ -264,7 +264,7 @@ end.rcode-->
     }
     cat(plotter$prettify_div(plotter$scatter2D(list(id = "size_vs_rank", header = NULL, title = "DESeq2 size factor vs. sample rank",
     	row_names = NULL, x_label = xtitle, y_label = "Effective library size (DESeq2 normalization factor)",
-    	text = FALSE)), preset = "magic"))
+    	text = FALSE)), preset = "magic", justify = "left"))
     cat("<p>The effective library size is the factor used by DESeq2 normalization algorithm for each sample. The effective library size must be dependent of raw library size. If it is not, something has gone wrong.</p>")
 end.rcode-->
 
