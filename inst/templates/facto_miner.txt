@@ -465,7 +465,8 @@ end.rcode-->
 	cat("This table summarizes the top 10 active qualitative variables associated with PCs.<br>")
 	
 	if (nrow(plotter$hash_vars$dim_data_qual_act) > 0 ) {
-		cat(plotter$table(list(id = "dim_data_qual_act", header = NULL, row_names = NULL, styled = "dt", text ="dynamic", table_rownames = F)))	
+		cat(plotter$prettify_div(plotter$table(list(id = "dim_data_qual_act", header = NULL, row_names = NULL, styled = "dt",
+								 text ="dynamic", table_rownames = F)), preset = "magic", justify = "left"))
 	} else {
 		cat("None of the categories was significantly associated with any PC")
 	}
@@ -553,7 +554,8 @@ end.rcode-->
 	cat("This table summarizes the top 10 active quantitative variables associated with PCs.<br>")
 	
 	if (nrow(plotter$hash_vars$dim_data_quant_act) > 0 ) {
-		cat(plotter$table(list(id = "dim_data_quant_act", header = NULL, row_names = NULL, styled = "dt", text ="dynamic", table_rownames = F)))	
+		cat(plotter$prettify_div(plotter$table(list(id = "dim_data_quant_act", header = NULL, row_names = NULL,
+			styled = "dt", text ="dynamic", table_rownames = FALSE)), preset = "magic", justify = "left"))	
 	} else {
 		cat("None of the factors was significantly associated with any PC")
 	}
