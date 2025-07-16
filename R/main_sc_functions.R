@@ -8,6 +8,7 @@
 #' @inheritParams tag_qc
 #' @inheritParams calculate_markers
 #' @inheritParams main_sc_Hunter
+#' @inheritParams annotate_SingleR
 #' @importFrom BiocParallel SerialParam
 #' @param seu A seurat object.
 #' @param name Project name. Default NULL (no project name)
@@ -117,10 +118,12 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     BPPARAM = SerialParam(), doublet_list = NULL, k_weight = 100,
     integration_method = "Harmony", sketch = FALSE, sketch_pct = 25, 
     force_ncells = NA_integer_, sketch_method = "LeverageScore", min.pct = 0.1,
-    doublet_path = getwd(), min_cell_proportion = 0.1, logfc.threshold = 0.25){
+    doublet_path = getwd(), min_cell_proportion = 0.1, logfc.threshold = 0.25,
+    aggr.ref = FALSE, fine.tune = TRUE){
     main_start <- Sys.time()
     new_opt <- check_sc_input(integrate = integrate, sketch = sketch,
-                              SingleR_ref = SingleR_ref, reduce = reduce)
+                              SingleR_ref = SingleR_ref, reduce = reduce,
+                              aggr.ref = aggr.ref, fine.tune = fine.tune)
     annotate <- TRUE
     qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
                 doublet_list = doublet_list,
@@ -444,6 +447,7 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
 #' checks and pre-processes input of main SC analysis functions. Outdated, needs
 #' overhaul.
 #'
+#' @inheritParams SingleR::SingleR
 #' @param metadata Seurat object metadata. 
 #' @param DEG_target A data frame describing DEG analysis to perform.
 #' @param integrate A boolean, or NULL. Whether or not to perform integration.
@@ -454,19 +458,17 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
 #' cluster.
 #' @examples
 #'  \dontrun{
-#'    match_cell_types(markers_df = markers_df, p_adj_cutoff = 1e-5,
-#'                     cell_annotation = markers_celltypes_df)
+#'  ### THIS EXAMPLE NEEDS TO BE FIXED
+#'    check_sc_input()
 #'  }
 #' @export
 
 check_sc_input <- function(metadata = NULL, DEG_target = NULL, integrate = NULL,
-                           sketch = NULL, SingleR_ref = NULL, reduce = NULL){
+                           sketch = NULL, SingleR_ref = NULL, reduce = NULL,
+                           fine.tune, aggr.ref){
     if(reduce) {
       aggr.ref <- TRUE
       fine.tune <- FALSE
-    } else {
-      aggr.ref <- FALSE
-      fine.tune <- TRUE
     }
     if(!is.null(DEG_target)) {
       colnames(metadata) <- tolower(colnames(metadata))
