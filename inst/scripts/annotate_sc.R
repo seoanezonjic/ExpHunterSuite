@@ -107,6 +107,10 @@ option_list <- list(
             help = "Top N reference markers to consider in annotation. Higher values provide a more
                     accurate annotation, but increase noise and computational time. Will not be used
                     if ref_de_method is empty."),
+  optparse::make_option("--fine_tune", type = "logical", default = FALSE, action = "store_true",
+            help = "Trigger SingleR fine tuning."),
+  optparse::make_option("--aggr_ref", type = "logical", default = FALSE, action = "store_true",
+            help = "Trigger SingleR reference aggregation."),
   optparse::make_option("--integrate", type = "logical", default = FALSE, action = "store_true",
             help = paste0("Activate integrative analysis. If FALSE (the default), script will assume ",
                     "only one sample.")),
@@ -236,7 +240,8 @@ if(file.exists(final_counts_path) & opt$integrate) {
                     ref_de_method = opt$ref_de_method, ref_n = opt$ref_n,
                     BPPARAM = BPPARAM, doublet_list = opt$doublet_list, integration_method = opt$int_method,
                     sketch = opt$sketch, sketch_pct = opt$sketch_pct,
-                    sketch_method = opt$sketch_method, force_ncells = opt$force_ncells,
+                    sketch_method = opt$sketch_method, force_ncells = opt$force_ncells, fine.tune=opt$fine_tune,
+                    aggr.ref=opt$aggr_ref,
                     k_weight = opt$k_weight, min_cells_per_sample = opt$min_cells_per_sample,
                     min_cell_proportion = opt$min_cell_proportion, logfc.threshold = opt$log2fc_threshold)
 }
