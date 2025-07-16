@@ -14,18 +14,13 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   main_path_script <- dirname(full.fpath)
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
-  custom_libraries <- list.files(file.path(root_path, "R"), full.names = TRUE)
+  devtools::load_all(root_path)
   template_folder <- file.path(root_path, 'inst/templates')
-
-  invisible(sapply(custom_libraries, source)) 
 }else{
   require('ExpHunterSuite')
   root_path <- find.package('ExpHunterSuite')
   template_folder <- file.path(root_path, 'templates')
 }
-
-
-
 
 option_list <- list(
   optparse::make_option(c("-i", "--input_files"), type="character", default=NULL,
@@ -65,7 +60,6 @@ names(input_tables) <- gsub("\\..*", "", basename(input_files))
 act_des <- parse_multivar_input(opt$act_des)
 colnames(act_des) <- act_des[1,]
 
-
 numeric_factors <- NULL
 string_factors <- NULL
 merged_supp_tables <- NULL
@@ -76,12 +70,15 @@ if (!is.null(opt$supp_samples))
 if (!is.null(opt$supp_desc)){
   supp_desc <- parse_multivar_input(opt$supp_desc)
   supp_tables <- process_supp_files_ind(input_tables, supp_desc)
+  qual_supp_tables <- input_tables[[names(supp_tables$supp_str_files)]]
+  qual_supp_tables <- data.frame(lapply(qual_supp_tables, as.factor),
+                                 row.names = rownames(qual_supp_tables))
+  input_tables[[names(supp_tables$supp_str_files)]] <- qual_supp_tables
   numeric_factors <- unlist(lapply(supp_tables[["supp_num_files"]], colnames))
   string_factors <- unlist(lapply(supp_tables[["supp_str_files"]], colnames))
   merged_supp_tables <- merge_all_df(unlist(supp_tables, recursive = FALSE))
   merged_supp_tables$sample <- rownames(merged_supp_tables)
 }
-
 
 pca_res <- lapply(act_des, perform_individual_analysis,
                           all_files = input_tables, 
@@ -91,15 +88,14 @@ pca_res <- lapply(act_des, perform_individual_analysis,
                           hcpc_consol = opt$hcpc_consol,
                           n_clusters = opt$n_clusters)
 
-
 pca_res$ind_analysis <- names(pca_res)
+save.image("multivar_testing.RData")
 
 if(length(act_des) > 1) {
   pca_res$mfa <- compute_mfa(act_des,supp_desc,input_tables, 
                           hcpc_consol = opt$hcpc_consol,
                           n_clusters = opt$n_clusters)
 }
-
 
 pca_output <- file.path(opt$output_files, "PCA_results")
 pca_res$target <- merged_supp_tables
@@ -119,8 +115,6 @@ if (!is.null(pca_res$mfa)) {
   write_general_pca(mfa_res, pca_output, tag = "mfa_")
 }
 
-
 names(pca_res$act_groups) <- ifelse(act_des["type",] == "n", "mca","pca")
 render_multivar_report(multivar_res = pca_res, output_files = opt$output_files, opt = opt,
                     template_folder = template_folder,  string_factors = string_factors, numeric_factors = numeric_factors)
-
