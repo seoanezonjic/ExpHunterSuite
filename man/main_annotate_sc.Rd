@@ -42,7 +42,9 @@ main_annotate_sc(
   min.pct = 0.1,
   doublet_path = getwd(),
   min_cell_proportion = 0.1,
-  logfc.threshold = 0.25
+  logfc.threshold = 0.25,
+  aggr.ref = FALSE,
+  fine.tune = TRUE
 )
 }
 \arguments{
@@ -160,6 +162,14 @@ not a percentage but a value from 0 to 1.}
 X-fold difference (log-scale) between the two groups of cells. Default is 0.1
 Increasing logfc.threshold speeds up the function, but can miss weaker signals.
 If the \code{slot} parameter is "scale.data" no filtering is performed.}
+
+\item{aggr.ref}{Logical scalar indicating whether references should be aggregated to pseudo-bulk samples for speed, see \code{\link[SingleR]{aggregateReference}}.}
+
+\item{fine.tune}{A boolean.
+\itemize{
+\item \code{TRUE} (the default): Fine-tune statistical model built for transfer.
+\item \code{FALSE}: Do not perform fine-tuning..
+}}
 }
 \value{
 invisible(final_results list. Contains multiple items:

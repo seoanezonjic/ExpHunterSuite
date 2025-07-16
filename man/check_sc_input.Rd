@@ -12,7 +12,9 @@ check_sc_input(
   integrate = NULL,
   sketch = NULL,
   SingleR_ref = NULL,
-  reduce = NULL
+  reduce = NULL,
+  fine.tune,
+  aggr.ref
 )
 }
 \arguments{
@@ -27,6 +29,14 @@ check_sc_input(
 \item{SingleR_ref}{SingleR_reference to use. Default NULL.}
 
 \item{reduce}{A boolean, or NULL. Whether or not to reduce input for testing.}
+
+\item{fine.tune}{A boolean.
+\itemize{
+\item \code{TRUE} (the default): Fine-tune statistical model built for transfer.
+\item \code{FALSE}: Do not perform fine-tuning..
+}}
+
+\item{aggr.ref}{Logical scalar indicating whether references should be aggregated to pseudo-bulk samples for speed, see \code{\link[SingleR]{aggregateReference}}.}
 }
 \value{
 A markers data frame with a new column for cell type assigned to
@@ -39,7 +49,7 @@ overhaul.
 }
 \examples{
  \dontrun{
-   match_cell_types(markers_df = markers_df, p_adj_cutoff = 1e-5,
-                    cell_annotation = markers_celltypes_df)
+ ### THIS EXAMPLE NEEDS TO BE FIXED
+   check_sc_input()
  }
 }
