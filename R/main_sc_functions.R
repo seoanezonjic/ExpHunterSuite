@@ -447,7 +447,7 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
 #' checks and pre-processes input of main SC analysis functions. Outdated, needs
 #' overhaul.
 #'
-#' @inheritParams SingleR::SingleR
+#' @inheritParams annotate_SingleR
 #' @param metadata Seurat object metadata. 
 #' @param DEG_target A data frame describing DEG analysis to perform.
 #' @param integrate A boolean, or NULL. Whether or not to perform integration.
