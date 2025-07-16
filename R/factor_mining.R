@@ -272,9 +272,10 @@ merge_all_df <- function(data_list) {
 }
 
 parse_multivar_input <- function(tagged_str) {
-  tagged_files <- split_str(tagged_str, ",")
-  tagged_files <- as.data.frame(sapply(tagged_files, function(x) split_str(x, ":")))
+  tagged_files <- unlist(strsplit(tagged_str, ","))
+  tagged_files <- data.frame(strsplit(tagged_files, ":"))
   rownames(tagged_files) <- c("name", "type")
+  colnames(tagged_files) <- tagged_files["name", ]
   tagged_files["name",] <- gsub("\\..*", "", tagged_files["name",])
   return(tagged_files)
 }
@@ -298,8 +299,10 @@ compute_mfa <- function(act_des,
                         hcpc_consol = TRUE,
                         n_clusters = -1){
  
-  groups <- unlist(c(act_des[1,], supp_desc[1,]))
-  data_types <- unlist(c(act_des[2,], supp_desc[2,]))
+  groups <- unlist(c(act_des[1, , drop = FALSE],
+                     supp_desc[1, , drop = FALSE]))
+  data_types <- unlist(c(act_des[2, , drop = FALSE],
+                     supp_desc[2, , drop = FALSE]))
   group_lengths <- sapply(all_files[groups], ncol)
   merged_df <- merge_all_df(all_files[groups])
   n_act <- length(act_des[1,])
