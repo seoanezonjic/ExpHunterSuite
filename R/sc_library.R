@@ -1430,7 +1430,7 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
     assay.type.test = "scale.data", de.method = ref_de_method,
     BPPARAM = BPPARAM, aggr.ref = aggr.ref, fine.tune = fine.tune)
   message("SingleR annotation time: ", Sys.time() - SingleR_start)
-  seu@meta.data$cell_type <- SingleR_annotation$labels
+  seu@meta.data$cell_type <- SingleR_annotation$pruned.labels
   message("Calculating cell type markers")
   markers <- calculate_markers(seu = seu, subset_by = subset_by,
                                integrate = integrate, verbose = verbose,
