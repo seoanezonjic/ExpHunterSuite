@@ -322,6 +322,8 @@ main_analyze_sc_query <- function(seu, query, sigfig = 2, layer = "counts",
 #' @param final_results final_results object output from main_annotate_sc
 #' @param assay,layer Assay and layer from where counts will be retrieved.
 #' @param opt Options used in script call.
+#' @importFrom data.table fwrite as.data.table
+#' @importFrom DropletUtils write10xCounts
 #' @export
 #' @examples
 #' \dontrun{
@@ -354,10 +356,11 @@ write_annot_output <- function(final_results = stop("Missing results object"),
                   row.names = TRUE, file = file.path(opt$output, "markers.tsv"))
     }
     if(!is.null(final_results$SingleR_annotation)) {
-      data.table::fwrite(final_results$SingleR_annotation, quote = FALSE,
+      SingleR_dt <- data.table::as.data.table(final_results$SingleR_annotation)
+      data.table::fwrite(SingleR_dt, quote = FALSE,
         file = file.path(opt$output, "SingleR_annotation.tsv"), sep = "\t")
     }
-    message("Counts matrix saved to ", file.path(opt$output, "counts"))
+    message("Results saved to ", opt$output)
     return(invisible(NULL))
 }
 
