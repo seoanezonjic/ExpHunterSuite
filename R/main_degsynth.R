@@ -130,3 +130,59 @@ degsynth <- function(
     }
 }
 
+#' generate_synth_DEGs
+#'
+#' `generate_synth_DEGs` Is a wrapper for the `generateSyntheticData` function
+#' from package `compcodeR`.
+#'
+#' @inheritParams compcodeR::generateSyntheticData
+#' @importFrom compcodeR generateSyntheticData
+#' @returns A list. Element `all` contains the entire results object. Element
+#' `counts_matrix` contains just the counts matrix. Element `DEGs` contains
+#' a data frame detailing which genes are differentially expressed in dataset.
+#' @examples
+#'  \dontrun{
+#'    get_plot_df(enrich_MF)
+#'  }
+#' @export
+
+generate_synth_DEGs <- function( dataset, n.vars, samples.per.cond, n.diffexp,
+    repl.id = 1, seqdepth = 1e+07, minfact = 0.7, maxfact = 1.4,
+    relmeans = "auto", dispersions = "auto", fraction.upregulated = 1,
+    between.group.diffdisp = FALSE, filter.threshold.total = 1,
+    filter.threshold.mediancpm = 0, raction.non.overdispersed = 0,
+    random.outlier.high.prob = 0, random.outlier.low.prob = 0,
+    single.outlier.high.prob = 0, single.outlier.low.prob = 0,
+    effect.size = 1.5, output.file = NULL, tree = NULL,
+    prop.var.tree = 1, model.process = c("BM", "OU"),
+    selection.strength = 0, id.condition = NULL,
+    id.species = as.factor(rep(1, 2 * samples.per.cond)),
+    check.id.species = TRUE, lengths.relmeans = NULL,
+    lengths.dispersions = NULL, lengths.phylo = TRUE) {
+    res <- compcodeR::generateSyntheticData(dataset = dataset,
+        n.vars = n.vars, samples.per.cond = samples.per.cond,
+        n.diffexp = n.diffexp, repl.id = repl.id, seqdepth = seqdepth,
+        minfact = minfact, maxfact = maxfact, relmeans = relmeans,
+        dispersions = dispersions, effect.size = effect.size, tree = tree,
+        fraction.upregulated = fraction.upregulated, 
+        between.group.diffdisp = between.group.diffdisp, 
+        filter.threshold.total = filter.threshold.total,
+        filter.threshold.mediancpm = filter.threshold.mediancpm,
+        fraction.non.overdispersed = fraction.non.overdispersed,
+        random.outlier.high.prob = random.outlier.high.prob,
+        random.outlier.low.prob = random.outlier.low.prob,
+        single.outlier.high.prob = single.outlier.high.prob,
+        single.outlier.low.prob = single.outlier.low.prob,
+        check.id.species = check.id.species,
+        prop.var.tree = prop.var.tree, lengths.relmeans = lengths.relmeans,
+        model.process = model.process, id.species = id.species,
+        selection.strength = selection.strength,
+        id.condition = id.condition, lengths.phylo = lengths.phylo,
+        lengths.dispersions = lengths.dispersions)
+    if(is.null(output.file)) {
+        return(list(all = res, counts_matrix = res@count.matrix,
+               DEGs = res@variable.annotations["differential.expression"]))
+    }
+    
+}
+
