@@ -112,5 +112,6 @@ Imports:
     methods,
     BiocManager (>= 1.30.25),
     HDF5Array (>= 1.32.1),
-    scDblFinder (>= 1.18.0)
+    scDblFinder (>= 1.18.0),
+    compcodeR (>= 1.40.0)
 Config/testthat/edition: 3
