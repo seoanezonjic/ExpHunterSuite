@@ -70,10 +70,11 @@ if (!is.null(opt$supp_samples))
 if (!is.null(opt$supp_desc)){
   supp_desc <- parse_multivar_input(opt$supp_desc)
   supp_tables <- process_supp_files_ind(input_tables, supp_desc)
-  qual_supp_tables <- input_tables[[names(supp_tables$supp_str_files)]]
-  qual_supp_tables <- data.frame(lapply(qual_supp_tables, as.factor),
-                                 row.names = rownames(qual_supp_tables))
-  input_tables[[names(supp_tables$supp_str_files)]] <- qual_supp_tables
+  qual_supp_tables <- input_tables[names(supp_tables$supp_str_files)]
+  for(table in names(qual_supp_tables)) {
+    input_tables[[table]] <- data.frame(lapply(qual_supp_tables[[table]],
+                    as.factor), row.names = rownames(qual_supp_tables[[table]]))
+  }
   numeric_factors <- unlist(lapply(supp_tables[["supp_num_files"]], colnames))
   string_factors <- unlist(lapply(supp_tables[["supp_str_files"]], colnames))
   merged_supp_tables <- merge_all_df(unlist(supp_tables, recursive = FALSE))
@@ -89,7 +90,6 @@ pca_res <- lapply(act_des, perform_individual_analysis,
                           n_clusters = opt$n_clusters)
 
 pca_res$ind_analysis <- names(pca_res)
-save.image("multivar_testing.RData")
 
 if(length(act_des) > 1) {
   pca_res$mfa <- compute_mfa(act_des,supp_desc,input_tables, 
