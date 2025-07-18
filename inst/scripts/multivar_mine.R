@@ -30,12 +30,12 @@ option_list <- list(
     help="Output path. Default=%default"),
   optparse::make_option(c("-A", "--act_des"), type="character", 
     default=NULL,
-    help="Indicate wich files are ACTIVE using a comma seppatared string. 
+    help="Indicate which files are ACTIVE using a comma seppatared string. 
     The file name and the type of data must be sepparated by ':'. 
     The data types are 'c' (quantitative), 's' (quantitative that must be scaled) and 'n' (qualitative) Example: 'file1.txt:n,file2.txt:s,file3.txt:c'"),
   optparse::make_option(c("-S", "--supp_desc"), type="character", 
     default=NULL,
-    help="Indicate wich files are SUPPLEMENTARY using a comma seppatared string. 
+    help="Indicate which files are SUPPLEMENTARY using a comma seppatared string. 
     The file name and the type of data must be sepparated by ':'. 
       The data types are 'c' (quantitative) and 'n' (qualitative) Example: 'file1.txt:n,file2.txt:n,file3.txt:c'"),
   optparse::make_option(c("-s", "--supp_samples"), type="character", 
@@ -46,9 +46,13 @@ option_list <- list(
     help="Deactivate HCPC consolidation through k-means."),
   optparse::make_option(c("-n", "--n_clusters"), type="integer",
     default=-1,
-    help="Number of HCPC clusters.")
+    help="Number of HCPC clusters."),
+  optparse::make_option(c("--seed"), type="character",
+    default=NULL, help="Seed to define in degenes_Hunter.R script. Will affect PCA results. Leave empty (\"\") to use a random seed, else provide an integer.")
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
+
+if(!is.null(opt$seed)) set.seed(opt$seed)
 
 if(!file.exists(opt$output_files))
   dir.create(opt$output_files, recursive = TRUE)
