@@ -310,7 +310,7 @@ compute_mfa <- function(act_des,
   supp_groups_i <-NULL 
   if (!is.null(supp_desc))
     supp_groups_i <- seq(n_act + 1, length(groups))
- 
+    
   std_mfa <- FactoMineR::MFA(merged_df,
                              group = group_lengths, 
                              type = data_types, 
