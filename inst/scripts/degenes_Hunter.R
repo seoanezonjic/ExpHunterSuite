@@ -175,7 +175,9 @@ option_list <- list(
       certain DROP QC plots will not be drawn, and sample ranks will be defined
       by total counts."),
   optparse::make_option(c("-q", "--query_genes"), type="character",
-    default=NULL, help="Semicolon-separated genes of interest by which to subset results.")
+    default=NULL, help="Semicolon-separated genes of interest by which to subset results."),
+  optparse::make_option(c("--seed"), type="character",
+    default=NULL, help="Seed to define in degenes_Hunter.R script. Will affect PCA results. Leave empty (\"\") to use a random seed, else provide an integer.")
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 ############################################################################
@@ -184,6 +186,10 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 dir.create(opt$output_files)
 write.table(cbind(opt), file=file.path(opt$output_files, 
   "opt_input_values.txt"), sep="\t", col.names =FALSE, quote = FALSE)
+
+message("seed is ", opt$seed)
+
+if(!is.null(opt$seed)) set.seed(opt$seed)
 
 #############################################################################
 #CHECKINGS
