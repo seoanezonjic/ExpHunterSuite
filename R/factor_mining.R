@@ -37,8 +37,11 @@ merge_dim_tables <- function(dim_data_simp){
 }
 
 #' @importFrom FactoInvestigate dimRestrict eigenRef
-get_PCA_dimensions <- function(pca_obj, min_dimensions = 2, time = "10s") {
-    ref <- FactoInvestigate::eigenRef(pca_obj, time = time, parallel=FALSE) # to avoid use parallel computation that greedy takes all cpu cores
+get_PCA_dimensions <- function(pca_obj, min_dimensions = 2, time = "10000L",
+                               parallel = FALSE) {
+  # to avoid use parallel computation that greedy takes all cpu cores
+    ref <- FactoInvestigate::eigenRef(pca_obj, time = time,
+                                      parallel = parallel)
     rand <- c(ref$inertia[1], diff(ref$inertia)) * 100
     keep_dimensions <- FactoInvestigate::dimRestrict(pca_obj, rand = rand)
     if(keep_dimensions < min_dimensions){
@@ -58,7 +61,7 @@ compute_pca <- function(pca_data,
             min_dimensions = 2,
             scale.unit = TRUE,
             hcpc_consol = TRUE,
-            n_clusters = -1) {
+            n_clusters = -1, time = "10000L", parallel = FALSE) {
 
   if (transpose) 
     pca_data <- as.data.frame(t(pca_data))
@@ -81,7 +84,8 @@ compute_pca <- function(pca_data,
 
   std_pca <- FactoMineR::PCA(raw_pca_data, scale.unit=TRUE, 
                   graph = FALSE)                                                     
-  dim_to_keep <- get_PCA_dimensions(std_pca, min_dimensions = min_dimensions)
+  dim_to_keep <- get_PCA_dimensions(std_pca, min_dimensions = min_dimensions,
+                                    time = time, parallel = parallel)
 
   
   if (!is.null(add_samples)) {
@@ -118,7 +122,7 @@ compute_mca <- function(mca_data,
             add_samples = NULL,
             min_dimensions = 2,
             hcpc_consol = TRUE,
-            n_clusters = -1) {
+            n_clusters = -1, time = "10000L", parallel = FALSE) {
 
   if (transpose) 
     mca_data <- as.data.frame(t(mca_data))
@@ -142,7 +146,8 @@ compute_mca <- function(mca_data,
   
   std_mca <- FactoMineR::MCA(raw_mca_data,  graph = FALSE)                                                     
 
-  dim_to_keep <- get_PCA_dimensions(std_mca, min_dimensions = min_dimensions)
+  dim_to_keep <- get_PCA_dimensions(std_mca, min_dimensions = min_dimensions,
+                                    time = time, parallel = parallel)
 
   
   add_samples_idx <- NULL
@@ -297,7 +302,7 @@ compute_mfa <- function(act_des,
                         all_files,
                         min_dimensions = 2,
                         hcpc_consol = TRUE,
-                        n_clusters = -1){
+                        n_clusters = -1, time = "10000L", parallel = FALSE){
  
   groups <- unlist(c(act_des[1, , drop = FALSE],
                      supp_desc[1, , drop = FALSE]))
@@ -318,7 +323,8 @@ compute_mfa <- function(act_des,
                              graph =FALSE, 
                              num.group.sup = supp_groups_i)
   dim_to_keep <- get_PCA_dimensions(std_mfa$global.pca, 
-                                    min_dimensions = min_dimensions)
+                                    min_dimensions = min_dimensions,
+                                    time = time, parallel = parallel)
 
   res.mfa <- FactoMineR::MFA(merged_df, 
                              ncp = dim_to_keep,
@@ -348,7 +354,7 @@ perform_individual_analysis <- function(
   add_samples = NULL, 
   min_dimensions = 2,
   hcpc_consol = TRUE,
-  n_clusters = -1
+  n_clusters = -1, time = "10000L", parallel = FALSE
   ){
  
   input_file <- all_files[[table_data[1]]]
@@ -363,7 +369,8 @@ perform_individual_analysis <- function(
                              target = target,
                              scale.unit = table_data[2] == "s",
                              hcpc_consol = hcpc_consol,
-                             n_clusters = n_clusters)
+                             n_clusters = n_clusters, time = time,
+                             parallel = parallel)
 
   } else if (analysis_type == "mca") {
 
@@ -374,7 +381,8 @@ perform_individual_analysis <- function(
                              add_samples = add_samples,
                              target = target,
                              hcpc_consol = hcpc_consol,
-                             n_clusters = n_clusters)
+                             n_clusters = n_clusters, time = time,
+                             parallel = parallel)
   }
 
     return(pca_res)
