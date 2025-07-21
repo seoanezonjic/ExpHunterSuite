@@ -226,8 +226,14 @@ if(file.exists(final_counts_path) & opt$integrate) {
   embeddings <- read.table(file.path(opt$output, "embeddings", "cell_embeddings.tsv"), header = TRUE)
   seu$umap <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'umap_', assay = 'RNA')
   expr_metrics <- get_expression_metrics(seu = seu, sigfig = 2)
+  SingleR_annotation_file <- file.path(opt$output, "SingleR_annotation..tsv")
+  if(file.exists(SingleR_annotation_file)) {
+    SingleR_annotation <- read.table(SingleR_annotation_file, sep = "\t", header = TRUE)
+  } else {
+    SingleR_annotation <- NULL
+  }
   final_results <- list(seu = seu, markers = markers, integrate = TRUE, clusters_pct = expr_metrics$clusters_pct,
-                        sample_qc_pct = expr_metrics$sample_qc_pct)
+                        sample_qc_pct = expr_metrics$sample_qc_pct, SingleR_annotation = SingleR_annotation)
 } else {
   message("Analyzing seurat object")
   final_results <- main_annotate_sc(seu = seu, cluster_annotation = opt$cluster_annotation, name = opt$name,
@@ -246,22 +252,21 @@ if(file.exists(final_counts_path) & opt$integrate) {
                     min_cell_proportion = opt$min_cell_proportion, logfc.threshold = opt$log2fc_threshold)
 }
 
-if(!file.exists(final_counts_path) & opt$integrate) {
-  message("--------------------------------------------")
-  message("----------SAVING RESULTS TO DISK------------")
-  message("--------------------------------------------")
-  write_annot_output(final_results = final_results, opt = opt)
-}
-
-if(file.exists(final_counts_path) & opt$integrate) {
-  message("Processing reconstruction of seurat object. Not launching QC report.")
-} else {
-  message("--------------------------------------------")
-  message("------------WRITING QC REPORT---------------")
-  message("--------------------------------------------")
-  write_sc_report(final_results = final_results, template_folder = template_folder, source_folder = source_folder,
-                  template = "sc_quality_control.txt", output = file.path(opt$output, "report"), out_suffix = "qc_report.html",
-                  use_canvas = TRUE, opt = opt, params = params)
+if(opt$integrate) {
+  if(file.exists(final_counts_path)) {
+      message("Processing reconstruction of seurat object. Not launching QC report.")
+    } else {
+      message("--------------------------------------------")
+      message("----------SAVING RESULTS TO DISK------------")
+      message("--------------------------------------------")
+      write_annot_output(final_results = final_results, opt = opt)
+      message("--------------------------------------------")
+      message("------------WRITING QC REPORT---------------")
+      message("--------------------------------------------")
+      write_sc_report(final_results = final_results, template_folder = template_folder, source_folder = source_folder,
+                      template = "sc_quality_control.txt", output = file.path(opt$output, "report"), out_suffix = "qc_report.html",
+                      use_canvas = TRUE, opt = opt, params = params)
+    }
 }
 
 message("--------------------------------------------")
