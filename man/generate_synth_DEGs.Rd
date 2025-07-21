@@ -25,7 +25,6 @@ generate_synth_DEGs(
   single.outlier.high.prob = 0,
   single.outlier.low.prob = 0,
   effect.size = 1.5,
-  output.file = NULL,
   tree = NULL,
   prop.var.tree = 1,
   model.process = c("BM", "OU"),
@@ -35,7 +34,8 @@ generate_synth_DEGs(
   check.id.species = TRUE,
   lengths.relmeans = NULL,
   lengths.dispersions = NULL,
-  lengths.phylo = TRUE
+  lengths.phylo = TRUE,
+  output_dir = NULL
 )
 }
 \arguments{
@@ -77,8 +77,6 @@ generate_synth_DEGs(
 
 \item{effect.size}{The strength of the differential expression, i.e., the effect size, between the two conditions. If this is a single number, the effect sizes will be obtained by simulating numbers from an exponential distribution (with rate 1) and adding the results to the \code{effect.size}. For genes that are upregulated in the second condition, the mean in the first condition is multiplied by the effect size. For genes that are downregulated in the second condition, the mean in the first condition is divided by the effect size. It is also possible to provide a vector of effect sizes (one for each gene), which will be used as provided. In this case, the \code{fraction.upregulated} and \code{n.diffexp} arguments will be ignored and the values will be derived from the \code{effect.size} vector.}
 
-\item{output.file}{If not \code{NULL}, the path to the file where the data object should be saved. The extension should be \code{.rds}, if not it will be changed.}
-
 \item{tree}{a dated phylogenetic tree of class \code{\link[ape]{phylo}} with `samples.per.cond * 2` species.}
 
 \item{prop.var.tree}{the proportion of the common variance explained by the tree for each gene. It can be a scalar, in which case the same parameter is used for all genes. Otherwise it needs to be a vector with length \code{n.vars}. Default to 1.}
@@ -98,6 +96,8 @@ generate_synth_DEGs(
 \item{lengths.dispersions}{An optional vector of dispersions to use in the simulation of data from the Negative Binomial distribution. Should be of length n.vars. Default to \code{NULL}: the lengths are not taken into account for the simulation. If set to \code{"auto"}, the dispersion length values are sampled from values estimated from the Stern & Crandall (2018) data set.}
 
 \item{lengths.phylo}{If TRUE, the lengths are simulated according to a phylogenetic Poisson Log-Normal model on the tree, with a BM process. If FALSE, they are simulated according to an iid negative binomial distribution. In both cases, \code{lengths.relmeans} and \code{lengths.dispersions} are used. Default to TRUE if a tree is provided.}
+
+\item{output_dir}{Directory where counts matrix and DEG table will be saved.}
 }
 \value{
 A list. Element \code{all} contains the entire results object. Element
@@ -109,13 +109,5 @@ a data frame detailing which genes are differentially expressed in dataset.
 from package \code{compcodeR}.
 }
 \examples{
-B_625_625 <- generate_synth_DEGs(dataset = "B_625_625", n.vars = 12500, 
-                                 samples.per.cond = 5, n.diffexp = 1250, 
-                                 repl.id = 1, seqdepth = 1e7, 
-                                 fraction.upregulated = 0.5, 
-                                 between.group.diffdisp = FALSE, 
-                                 filter.threshold.total = 1, 
-                                 filter.threshold.mediancpm = 0, 
-                                 fraction.non.overdispersed = 0)
 B_625_625
 }
