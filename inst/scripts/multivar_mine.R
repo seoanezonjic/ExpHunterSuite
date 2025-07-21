@@ -48,7 +48,11 @@ option_list <- list(
     default=-1,
     help="Number of HCPC clusters."),
   optparse::make_option(c("--seed"), type="character",
-    default=NULL, help="Seed to define in degenes_Hunter.R script. Will affect PCA results. Leave empty (\"\") to use a random seed, else provide an integer.")
+    default=NULL, help="Seed to define in degenes_Hunter.R script. Will affect PCA results. Leave empty (\"\") to use a random seed, else provide an integer."),
+  optparse::make_option(c("--parallel"), type="boolean", action = "store_true",
+    default=FALSE, help="Activate parallelization. WARNING: factomineR greedily takes all available cores, regardless of limitations. Use only in exclusive nodes."),
+  optparse::make_option(c("--time"), type="character",
+    default="10000L", help="A string indicating the loop condition. If it ends with s, it is interpreted as time. If it ends with L, it is interpreted as number of datasets.")
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
@@ -91,14 +95,16 @@ pca_res <- lapply(act_des, perform_individual_analysis,
                           string_factors = string_factors, 
                           target = merged_supp_tables,
                           hcpc_consol = opt$hcpc_consol,
-                          n_clusters = opt$n_clusters)
+                          n_clusters = opt$n_clusters, time = opt$time,
+                          parallel = opt$parallel)
 
 pca_res$ind_analysis <- names(pca_res)
 
 if(length(act_des) > 1) {
   pca_res$mfa <- compute_mfa(act_des,supp_desc,input_tables, 
                           hcpc_consol = opt$hcpc_consol,
-                          n_clusters = opt$n_clusters)
+                          n_clusters = opt$n_clusters, time = opt$time,
+                          parallel = opt$parallel)
 }
 
 pca_output <- file.path(opt$output_files, "PCA_results")
