@@ -113,9 +113,6 @@ degsynth <- function(
     prediction_vector <- cbind(rownames(prediction_vector),prediction_vector)
     colnames(prediction_vector) <- c("Gene","Prediction")
 
-
-
-
     #############################################
     ### EXPORT OR RETURN
     #############################################
@@ -137,35 +134,37 @@ degsynth <- function(
 #'
 #' @inheritParams compcodeR::generateSyntheticData
 #' @importFrom compcodeR generateSyntheticData
+#' @importFrom utils write.table
+#' @param output_dir Directory where counts matrix and DEG table will be saved.
 #' @returns A list. Element `all` contains the entire results object. Element
 #' `counts_matrix` contains just the counts matrix. Element `DEGs` contains
 #' a data frame detailing which genes are differentially expressed in dataset.
 #' @examples
-#' B_625_625 <- generate_synth_DEGs(dataset = "B_625_625", n.vars = 12500, 
-#'                                  samples.per.cond = 5, n.diffexp = 1250, 
-#'                                  repl.id = 1, seqdepth = 1e7, 
-#'                                  fraction.upregulated = 0.5, 
-#'                                  between.group.diffdisp = FALSE, 
-#'                                  filter.threshold.total = 1, 
-#'                                  filter.threshold.mediancpm = 0, 
-#'                                  fraction.non.overdispersed = 0)
+# B_625_625 <- generate_synth_DEGs(dataset = "B_625_625", n.vars = 12500, 
+#                                  samples.per.cond = 5, n.diffexp = 1250, 
+#                                  repl.id = 1, seqdepth = 1e7, 
+#                                  fraction.upregulated = 0.5, 
+#                                  between.group.diffdisp = FALSE, 
+#                                  filter.threshold.total = 1, 
+#                                  filter.threshold.mediancpm = 0, 
+#                                  fraction.non.overdispersed = 0)
 #' B_625_625
 #' @export
 
-generate_synth_DEGs <- function( dataset, n.vars, samples.per.cond, n.diffexp,
+generate_synth_DEGs <- function(dataset, n.vars, samples.per.cond, n.diffexp,
     repl.id = 1, seqdepth = 1e+07, minfact = 0.7, maxfact = 1.4,
     relmeans = "auto", dispersions = "auto", fraction.upregulated = 1,
     between.group.diffdisp = FALSE, filter.threshold.total = 1,
     filter.threshold.mediancpm = 0, fraction.non.overdispersed = 0,
     random.outlier.high.prob = 0, random.outlier.low.prob = 0,
     single.outlier.high.prob = 0, single.outlier.low.prob = 0,
-    effect.size = 1.5, output.file = NULL, tree = NULL,
+    effect.size = 1.5, out_dir = NULL, tree = NULL,
     prop.var.tree = 1, model.process = c("BM", "OU"),
     selection.strength = 0, id.condition = NULL,
     id.species = as.factor(rep(1, 2 * samples.per.cond)),
     check.id.species = TRUE, lengths.relmeans = NULL,
-    lengths.dispersions = NULL, lengths.phylo = TRUE) {
-    res <- compcodeR::generateSyntheticData(dataset = dataset,
+    lengths.dispersions = NULL, lengths.phylo = TRUE, output_dir = NULL) {
+    synth_data <- compcodeR::generateSyntheticData(dataset = dataset,
         n.vars = n.vars, samples.per.cond = samples.per.cond,
         n.diffexp = n.diffexp, repl.id = repl.id, seqdepth = seqdepth,
         minfact = minfact, maxfact = maxfact, relmeans = relmeans,
@@ -185,10 +184,27 @@ generate_synth_DEGs <- function( dataset, n.vars, samples.per.cond, n.diffexp,
         selection.strength = selection.strength,
         id.condition = id.condition, lengths.phylo = lengths.phylo,
         lengths.dispersions = lengths.dispersions)
-    if(is.null(output.file)) {
-        return(list(all = res, counts_matrix = res@count.matrix,
-               DEGs = res@variable.annotations["differential.expression"]))
+    counts_matrix <- synth_data@count.matrix
+    counts_matrix <- cbind(data.frame(gene = rownames(counts_matrix)),
+                           counts_matrix)
+    exp_design <- synth_data@sample.annotations["condition"]
+    exp_design <- cbind(data.frame(sample = rownames(exp_design), exp_design))
+    rownames(exp_design) <- NULL
+    rownames(counts_matrix) <- NULL
+    DEGs <- synth_data@variable.annotations["differential.expression"]
+    DEGs <- cbind(data.frame(gene = rownames(DEGs), DEGs))
+    rownames(DEGs) <- NULL
+    res <- list(all = synth_data, counts_matrix = counts_matrix, DEGs = DEGs,
+                exp_design = exp_design)
+    if(!is.null(output_dir)) {
+        utils::write.table(res$counts_matrix, file.path(output_dir,
+            "synth_counts.tsv"), quote = FALSE, row.names = FALSE, sep = "\t")
+        utils::write.table(res$DEGs, file.path(output_dir,
+            "synth_DEGs.tsv"), quote = FALSE, row.names = FALSE, sep = "\t")
+        utils::write.table(res$exp_design, file.path(output_dir,
+            "synth_exp_design.tsv"), quote = FALSE, row.names = FALSE, sep = "\t")
+    } else {
+        return(res)
     }
-    
 }
 
