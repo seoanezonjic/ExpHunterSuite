@@ -139,7 +139,8 @@ compute_mca <- function(mca_data,
       mca_data <- merge_factors(mca_data, target, string_factors)
     }
     raw_mca_data <- mca_data[!rownames(mca_data) %in% add_samples,
-               ! colnames(mca_data) %in% c(numeric_factors, string_factors)]
+               ! colnames(mca_data) %in% c(numeric_factors, string_factors),
+               drop = FALSE]
   } else {
     raw_mca_data <- mca_data
   } 
