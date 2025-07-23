@@ -26,9 +26,11 @@
         if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
             return("<p>Object contains none of the specified features</p>")
         }
-        Seurat::Idents(seu) <- ifelse(is.null(seu@meta.data$cell_type), yes = seu@meta.data$seurat_clusters,
-                                      no = seu@meta.data$cell_type)
-        Seurat::Idents(seu) <- seu@meta.data$cell_type
+        if(is.null(seu@meta.data$cell_type)) {
+            Seurat::Idents(seu) <- seu@meta.data$seurat_clusters
+        } else {
+            Seurat::Idents(seu) <- seu@meta.data$cell_type
+        }
         scCustomize::DotPlot_scCustom(seu, unique(features), flip_axes = TRUE, 
                                       colors_use = colGEX, x_lab_rotate = TRUE) +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
@@ -80,12 +82,16 @@
         return(res)
     }
 
-    custom_plotScoreHeatmap <- function() {
-        return(SingleR::plotScoreHeatmap(data_frame))
+    custom_plotScoreHeatmap <- function(input_SingleR) {
+        SingleR::plotScoreHeatmap(results = input_SingleR, show.pruned = TRUE)
     }
 
-    custom_plotDeltaDistribution <- function() {
-        return(SingleR::plotDeltaDistribution(data_frame))
+    custom_plotDeltaDistribution <- function(input_SingleR) {
+        SingleR::plotDeltaDistribution(results = input_SingleR)
+    }
+
+    custom_plotScoreDistribution <- function(input_SingleR) {
+        SingleR::plotScoreDistribution(results = input_SingleR)
     }
 
 end.rcode-->
@@ -162,9 +168,9 @@ end.rcode-->
 <!--begin.rcode SingleR_annotation, eval = !is.null(plotter$hash_vars$SingleR_annotation)
     cat(plotter$create_title("SingleR annotation metrics", "singler_annot", hlevel = 2, indexable = TRUE, clickable = FALSE))
     cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotScoreHeatmap, text = "dynamic", custom_format = TRUE,
-                                 plot_type = "autoplot"))
-    cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotScoreHeatmap, text = "dynamic", custom_format = TRUE,
-                                 plot_type = "autoplot"))
+                             plot_type = "print"))
+    cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotScoreDistribution, text = "dynamic", custom_format = TRUE))
+    cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotDeltaDistribution, text = "dynamic", custom_format = TRUE))
 end.rcode-->
 
 <!--begin.rcode Complete_PCA, eval = FALSE
