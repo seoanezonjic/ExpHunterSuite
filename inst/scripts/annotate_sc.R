@@ -215,7 +215,7 @@ if(!file.exists(final_counts_path) | !opt$integrate) {
 }
 
 if(file.exists(final_counts_path) & opt$integrate) {
-  message("Reconstructing Seurat object from directory ", opt$output)
+  message("Reconstructing Seurat object from directory ", opt$output, ". Not launching QC report.")
   seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(file.path(opt$output, "counts"), gene.column = 1),
                                     project = opt$name, min.cells = 1, min.features = 1)
   seu_meta <- read.table(file.path(opt$output, "counts/meta.tsv"), sep = "\t", header = TRUE)
@@ -226,9 +226,13 @@ if(file.exists(final_counts_path) & opt$integrate) {
   embeddings <- read.table(file.path(opt$output, "embeddings", "cell_embeddings.tsv"), header = TRUE)
   seu$umap <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'umap_', assay = 'RNA')
   expr_metrics <- get_expression_metrics(seu = seu, sigfig = 2)
-  SingleR_annotation_file <- file.path(opt$output, "SingleR_annotation..tsv")
+  # SingleR_annotation_file <- file.path(opt$output, "SingleR_annotation.tsv")
+  SingleR_annotation_file <- file.path(opt$output, "SingleR_annotation.rds")
   if(file.exists(SingleR_annotation_file)) {
-    SingleR_annotation <- read.table(SingleR_annotation_file, sep = "\t", header = TRUE)
+    # SingleR_annotation <- read.table(SingleR_annotation_file, sep = "\t", header = TRUE)
+    # Temporary while we figure out how to load the table properly (it fails
+    # because it's missing certain attributes)
+    SingleR_annotation <- readRDS(SingleR_annotation_file)
   } else {
     SingleR_annotation <- NULL
   }
@@ -247,15 +251,10 @@ if(file.exists(final_counts_path) & opt$integrate) {
                     BPPARAM = BPPARAM, doublet_list = opt$doublet_list, integration_method = opt$int_method,
                     sketch = opt$sketch, sketch_pct = opt$sketch_pct,
                     sketch_method = opt$sketch_method, force_ncells = opt$force_ncells, fine.tune=opt$fine_tune,
-                    aggr.ref=opt$aggr_ref,
+                    aggr.ref = opt$aggr_ref,
                     k_weight = opt$k_weight, min_cells_per_sample = opt$min_cells_per_sample,
                     min_cell_proportion = opt$min_cell_proportion, logfc.threshold = opt$log2fc_threshold)
-}
-
-if(opt$integrate) {
-  if(file.exists(final_counts_path)) {
-      message("Processing reconstruction of seurat object. Not launching QC report.")
-    } else {
+  if(opt$integrate) {
       message("--------------------------------------------")
       message("----------SAVING RESULTS TO DISK------------")
       message("--------------------------------------------")
@@ -266,7 +265,7 @@ if(opt$integrate) {
       write_sc_report(final_results = final_results, template_folder = template_folder, source_folder = source_folder,
                       template = "sc_quality_control.txt", output = file.path(opt$output, "report"), out_suffix = "qc_report.html",
                       use_canvas = TRUE, opt = opt, params = params)
-    }
+  }
 }
 
 message("--------------------------------------------")
