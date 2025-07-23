@@ -166,6 +166,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
       annotate <- FALSE
       seu <- annotation$seu
       markers <- annotation$markers
+      SingleR_annotation <- annotation$SingleR_annotation
     }
     message('Scaling data')
     scale_start <- Sys.time()
@@ -218,14 +219,10 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     assay <- "RNA"
     expr_metrics <- get_expression_metrics(seu = seu, sigfig = sigfig)
     message("Total processing time: ", Sys.time() - main_start)
-    final_results <- list()
-    final_results$qc <- qc
-    final_results$seu <- seu
-    final_results$sample_qc_pct <- expr_metrics$sample_qc_pct
-    final_results$clusters_pct <- expr_metrics$clusters_pct
-    final_results$markers <- markers
-    final_results$SingleR_annotation <- annotation$SingleR_annotation
-    final_results$integrate <- new_opt$integrate
+    final_results <- list(qc = qc, seu = seu, markers = markers,
+      sample_qc_pct = expr_metrics$sample_qc_pct, integrate = integrate,
+      clusters_pct = expr_metrics$clusters_pct, 
+      SingleR_annotation = SingleR_annotation)
     return(final_results)
 }
 
@@ -359,6 +356,10 @@ write_annot_output <- function(final_results = stop("Missing results object"),
       SingleR_dt <- data.table::as.data.table(final_results$SingleR_annotation)
       data.table::fwrite(SingleR_dt, quote = FALSE,
         file = file.path(opt$output, "SingleR_annotation.tsv"), sep = "\t")
+      # Temporary while we figure out how to load the table properly (it fails
+      # because it's missing certain attributes)
+      saveRDS(final_results$SingleR_annotation, file.path(opt$output,
+              "SingleR_annotation.rds"))
     }
     message("Results saved to ", opt$output)
     return(invisible(NULL))
