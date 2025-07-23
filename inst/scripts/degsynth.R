@@ -182,10 +182,13 @@ option_list <- list(
   optparse::make_option("--lengths.phylo", type = "logical", default = TRUE, action = "store_true", 
             help = "Column of reference metadata to use for annotation."),
   optparse::make_option("--output_dir", type = "character", default = NULL,
-            help = "Directory where results will be written.")
+            help = "Directory where results will be written."),
+  optparse::make_option(c("--seed"), type="numeric", default=NULL, help="Fixed seed. Default NULL (no seed is set).")
 )
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
+
+if(!is.null(opt$seed)) set.seed(opt$seed)
 
 if(is.null(opt$n.diffexp)) {
   opt$n.diffexp <- opt$n.vars * opt$DEGs_proportion
