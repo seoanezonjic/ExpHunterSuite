@@ -187,8 +187,6 @@ dir.create(opt$output_files)
 write.table(cbind(opt), file=file.path(opt$output_files, 
   "opt_input_values.txt"), sep="\t", col.names =FALSE, quote = FALSE)
 
-message("seed is ", opt$seed)
-
 if(!is.null(opt$seed)) set.seed(opt$seed)
 
 #############################################################################
