@@ -130,7 +130,7 @@ option_list <- list(
   optparse::make_option("--genome", type = "character", default = "Unspecified",
             help = paste0("Genome version. Optional, included as extra ",
               "information in output and reports.")),
-  optparse::make_option("--min_cells_per_sample", type = "character", default = 500,
+  optparse::make_option("--min_cells_per_sample", type = "integer", default = 500,
             help = "Min cells per sample. Cells with fewer than this amount of cells will be discarded."),
   optparse::make_option("--min_cell_proportion", type = "numeric", default = 0.1,
             help = "Min percentage of cells expressing gene to consider it a marker."),
@@ -250,7 +250,7 @@ if(file.exists(final_counts_path) & opt$integrate) {
                     ref_de_method = opt$ref_de_method, ref_n = opt$ref_n,
                     BPPARAM = BPPARAM, doublet_list = opt$doublet_list, integration_method = opt$int_method,
                     sketch = opt$sketch, sketch_pct = opt$sketch_pct,
-                    sketch_method = opt$sketch_method, force_ncells = opt$force_ncells, fine.tune=opt$fine_tune,
+                    sketch_method = opt$sketch_method, force_ncells = opt$force_ncells, fine.tune = opt$fine_tune,
                     aggr.ref = opt$aggr_ref,
                     k_weight = opt$k_weight, min_cells_per_sample = opt$min_cells_per_sample,
                     min_cell_proportion = opt$min_cell_proportion, logfc.threshold = opt$log2fc_threshold)
