@@ -126,15 +126,22 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                               aggr.ref = aggr.ref, fine.tune = fine.tune)
     annotate <- TRUE
     qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
-                doublet_list = doublet_list,
-                min_cells_per_sample = min_cells_per_sample)
+                 doublet_list = doublet_list,
+                 min_cells_per_sample = min_cells_per_sample)
     if(length(unique(qc$sample)) == 1) {
       qc <- process_doublets(seu = qc, name = name, doublet_path = doublet_path,
                              assay = "RNA", nfeatures = hvgs, BPPARAM = BPPARAM,
                              includePCs = seq(1, ndims))
     }
     if(!reduce) {
+      all_samples <- unique(qc$sample)
       seu <- subset(qc, subset = qc == 'Pass')
+      qc_samples <- unique(seu$sample)
+      discarded_samples <- paste(all_samples[!all_samples %in% qc_samples],
+                                 collapse = ", ")
+      if(length(all_samples) != length(qc_samples)) {
+        warning("Sample(s) ", discarded_samples, " discarded in QC filtering.")
+      }
     } else {
       seu <- qc
     }
