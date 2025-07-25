@@ -1,176 +1,229 @@
 
 <!--begin.rcode setup
-    colGEX <- c("grey85", "#FEE5D9", "#FCBBA1", "#FC9272", "#FB6A4A", "#EF3B2C", "#CB181D", "#99000D")
-    opt <- plotter$hash_vars$opt
-    subset_by <- plotter$hash_vars$subset_by
-    query <- plotter$hash_vars$query
-    markers <- plotter$hash_vars$markers
-    DEG_list <- plotter$hash_vars$DEG_list
-    DEG_metrics_list <- plotter$hash_vars$DEG_metrics_list
-    DEG_query_list <- plotter$hash_vars$DEG_query_list
-    if(all(plotter$hash_vars$extra_columns == "")) {
-        extra_columns <- NULL
-    } else {
-        extra_columns <- plotter$hash_vars$extra_columns
-    }
-    metadata <- plotter$hash_vars$seu@meta.data
+    # colGEX <- c("grey85", "#FEE5D9", "#FCBBA1", "#FC9272", "#FB6A4A", "#EF3B2C", "#CB181D", "#99000D")
+    # opt <- plotter$hash_vars$opt
+    # subset_by <- plotter$hash_vars$subset_by
+    # query <- plotter$hash_vars$query
+    # markers <- plotter$hash_vars$markers
+    # DEG_list <- plotter$hash_vars$DEG_list
+    # DEG_metrics_list <- plotter$hash_vars$DEG_metrics_list
+    # DEG_query_list <- plotter$hash_vars$DEG_query_list
+    # if(all(plotter$hash_vars$extra_columns == "")) {
+    #     extra_columns <- NULL
+    # } else {
+    #     extra_columns <- plotter$hash_vars$extra_columns
+    # }
+    # metadata <- plotter$hash_vars$seu@meta.data
 
-    get_cells_metadata <- function(heatmap, metadata) {
-        samples <- rownames(heatmap)
-        sample_metadata <- unique(metadata[, c("sample", extra_columns)])
-        rownames(sample_metadata) <- NULL
-        sample_metadata <- sample_metadata[match(sample_metadata$sample, samples), , drop = FALSE]
-    }
+    # get_cells_metadata <- function(heatmap, metadata) {
+    #     samples <- rownames(heatmap)
+    #     sample_metadata <- unique(metadata[, c("sample", extra_columns)])
+    #     rownames(sample_metadata) <- NULL
+    #     sample_metadata <- sample_metadata[match(sample_metadata$sample, samples), , drop = FALSE]
+    # }
     
-    Custom_DotPlot <- function(seu) {
-        if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
-            return("<p>Object contains none of the specified features</p>")
+    # Custom_DotPlot <- function(seu) {
+    #     if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
+    #         return("<p>Object contains none of the specified features</p>")
+    #     }
+    #     if(is.null(seu@meta.data$cell_type)) {
+    #         Seurat::Idents(seu) <- seu@meta.data$seurat_clusters
+    #     } else {
+    #         Seurat::Idents(seu) <- seu@meta.data$cell_type
+    #     }
+    #     scCustomize::DotPlot_scCustom(seu, unique(features), flip_axes = TRUE, 
+    #                                   colors_use = colGEX, x_lab_rotate = TRUE) +
+    #     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
+    # }
+
+    # Custom_DimPlot <- function(seu) {
+    #     ident <- ifelse("cell_type" %in% colnames(seu@meta.data),
+    #                     yes = "cell_type", no = "cluster")
+    #     Seurat::Idents(seu) <- seu@meta.data[[ident]]
+    #     res <- Seurat::DimPlot(seu, reduction = reduction, label = label, repel = TRUE, split.by = split.by,
+    #                     group.by = group.by) 
+    #     if(label) {
+    #       res <- res + ggplot2::theme(legend.position="none")
+    #     }
+    #     return(res)
+    # }
+
+    # top_table <- function(df) {
+    #     top <- 10
+    #     if(nrow(df) < 10) {
+    #         top <- nrow(df)
+    #     }
+    #     res <- df[order(df$avg_log2FC, decreasing = TRUE), ][1:top, ]
+    #     return(res)
+    # }
+
+    # subset_table <- function(df) {
+    #     res <- df[df$gene == features, ]
+    #     return(res)
+    # }
+
+    # Top_vlnplot <- function(seu) {
+    #     scCustomize::Stacked_VlnPlot(seu, pt.size = 0, x_lab_rotate = 90,
+    #                                  features = sort(features))
+    # }
+
+    # DEGs_volcano <- function(input_DEGs) {
+    #     EnhancedVolcano::EnhancedVolcano(input_DEGs, lab = rownames(input_DEGs), title = level,
+    #                                      x = 'avg_log2FC', y = 'p_val_adj', ylim = -0.5, 
+    #                                      pCutoff = opt$DEG_p_val_cutoff,
+    #                                      FCcutoff = opt$min_avg_log2FC)
+    # }
+
+    # get_top_DEGs <- function(input_DEGs) {
+    #     test <- input_DEGs$p_val_adj < opt$DEG_p_val_cutoff
+    #     test <- test & abs(input_DEGs$avg_log2FC > opt$min_avg_log2FC)
+    #     res <- input_DEGs[test, ]
+    #     res <- res[, c("gene", "p_val", "p_val_adj", "avg_log2FC", "pct.1", "pct.2")]
+    #     return(res)
+    # }
+
+    # custom_plotScoreHeatmap <- function(SingleR_annotation) {
+    #     SingleR::plotScoreHeatmap(results = SingleR_annotation, show.pruned = TRUE)
+    # }
+
+    # custom_plotDeltaDistribution <- function(SingleR_annotation) {
+    #     SingleR::plotDeltaDistribution(results = SingleR_annotation, size = 0.1,
+    #         dots.on.top = FALSE)
+    # }
+
+    # custom_plotScoreDistribution <- function(SingleR_annotation) {
+    #     SingleR::plotScoreDistribution(results = SingleR_annotation, size = 0.1,
+    #         dots.on.top = FALSE)
+    # }
+
+    saveRDS(plotter, "plotter.rds")
+
+    get_matrix_medians <- function(scores_matrix) {
+        labels <- unique(scores_matrix$labels)
+        medians <- vector(mode = "numeric", length = length(labels))
+        names(medians) <- labels
+        for(label in labels) {
+            label_score <- scores_matrix[scores_matrix$labels == label, names(scores_matrix) == label, drop = FALSE]
+            medians[label] <- median(label_score[[label]])
         }
-        if(is.null(seu@meta.data$cell_type)) {
-            Seurat::Idents(seu) <- seu@meta.data$seurat_clusters
-        } else {
-            Seurat::Idents(seu) <- seu@meta.data$cell_type
-        }
-        scCustomize::DotPlot_scCustom(seu, unique(features), flip_axes = TRUE, 
-                                      colors_use = colGEX, x_lab_rotate = TRUE) +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
+        return(list(medians_df = data.frame(medians = medians), global_median = median(medians)))
     }
 
-    Custom_DimPlot <- function(seu) {
-        ident <- ifelse("cell_type" %in% colnames(seu@meta.data),
-                        yes = "cell_type", no = "cluster")
-        Seurat::Idents(seu) <- seu@meta.data[[ident]]
-        res <- Seurat::DimPlot(seu, reduction = reduction, label = label, repel = TRUE, split.by = split.by,
-                        group.by = group.by) 
-        if(label) {
-          res <- res + ggplot2::theme(legend.position="none")
-        }
-        return(res)
-    }
-
-    top_table <- function(df) {
-        top <- 10
-        if(nrow(df) < 10) {
-            top <- nrow(df)
-        }
-        res <- df[order(df$avg_log2FC, decreasing = TRUE), ][1:top, ]
-        return(res)
-    }
-
-    subset_table <- function(df) {
-        res <- df[df$gene == features, ]
-        return(res)
-    }
-
-    Top_vlnplot <- function(seu) {
-        scCustomize::Stacked_VlnPlot(seu, pt.size = 0, x_lab_rotate = 90,
-                                     features = sort(features))
-    }
-
-    DEGs_volcano <- function(input_DEGs) {
-        EnhancedVolcano::EnhancedVolcano(input_DEGs, lab = rownames(input_DEGs), title = level,
-                                         x = 'avg_log2FC', y = 'p_val_adj', ylim = -0.5, 
-                                         pCutoff = opt$DEG_p_val_cutoff,
-                                         FCcutoff = opt$min_avg_log2FC)
-    }
-
-    get_top_DEGs <- function(input_DEGs) {
-        test <- input_DEGs$p_val_adj < opt$DEG_p_val_cutoff
-        test <- test & abs(input_DEGs$avg_log2FC > opt$min_avg_log2FC)
-        res <- input_DEGs[test, ]
-        res <- res[, c("gene", "p_val", "p_val_adj", "avg_log2FC", "pct.1", "pct.2")]
-        return(res)
-    }
-
-    custom_plotScoreHeatmap <- function(input_SingleR) {
-        SingleR::plotScoreHeatmap(results = input_SingleR, show.pruned = TRUE)
-    }
-
-    custom_plotDeltaDistribution <- function(input_SingleR) {
-        SingleR::plotDeltaDistribution(results = input_SingleR)
-    }
-
-    custom_plotScoreDistribution <- function(input_SingleR) {
-        SingleR::plotScoreDistribution(results = input_SingleR)
+    get_SingleR_medians <- function(SingleR_annotation) {
+        # Scores column is a matrix, so we need to "expand" it with this command
+        scores_matrix <- t(apply(SingleR_annotation["scores"], 1, `[`))
+        scores_matrix <- cbind(scores_matrix, SingleR_annotation[c("labels", "pruned.labels")])
+        scores_matrix[is.na(scores_matrix$pruned.labels), ]$pruned.labels <- "Pruned"
+        pruned_scores_matrix <- scores_matrix[scores_matrix$pruned.labels == "Pruned", ]
+        pass_medians <- get_matrix_medians(scores_matrix)
+        pruned_medians <- get_matrix_medians(pruned_scores_matrix)
+        missing_ids <- !rownames(pass_medians$medians_df) %in% rownames(pruned_medians$medians_df)
+        non_pruned_types <- rownames(pass_medians$medians_df)[missing_ids]
+        zeroes <- data.frame(medians = rep(0, length(non_pruned_types)))
+        rownames(zeroes) <- non_pruned_types
+        pruned_medians$medians_df <- rbind(pruned_medians$medians_df, zeroes)
+        globals <- c(global_median = pass_medians$global_median, pruned_global_median = pruned_medians$global_median)
+        globals <- data.frame(t(data.frame(value = globals)))
+        final_medians <- merge(pass_medians$medians_df, pruned_medians$medians_df, by = 'row.names')
+        rownames(final_medians) <- final_medians[, 1]
+        colnames(final_medians) <- c("labels", "medians", "pruned_medians")
+        return(list(final_medians = final_medians, globals = globals))
     }
 
 end.rcode-->
 
-<h1><strong>SINGLE CELL RNA-SEQ ANNOTATION ANALYSIS</strong></h1>
+# <h1><strong>SINGLE CELL RNA-SEQ ANNOTATION ANALYSIS</strong></h1>
 
-<!--begin.rcode intro
-cat(plotter$create_title("<b>QUALITY CONTROL</b>", "QC", hlevel = 1, indexable = TRUE, clickable = FALSE,
-                          t_id = "QC", clickable_text = ""))
-end.rcode-->
+# <!--begin.rcode intro
+# cat(plotter$create_title("<b>QUALITY CONTROL</b>", "QC", hlevel = 1, indexable = TRUE, clickable = FALSE,
+#                           t_id = "QC", clickable_text = ""))
+# end.rcode-->
 
-<!--begin.rcode sample_qc_pct
-    cat(plotter$create_title("Top genes expression heatmap", "sample QC", hlevel = 2, indexable = FALSE,
-                              clickable = FALSE, t_id = "sample_qc_pct", clickable_text = ""))
-    if(!is.null(extra_columns)) {
-        extra_metadata <- get_cells_metadata(heatmap = plotter$hash_vars$sample_qc_pct, metadata = metadata)
-        sample_heatmap_overlay <- as.list(extra_metadata[, extra_columns, drop = FALSE])
-    } else {
-        sample_heatmap_overlay <- NULL
-    }
-    cat(plotter$prettify_div(plotter$heatmap(list(id = "sample_qc_pct", title = paste0("Top gene expression across ",
-                                                  "samples"), header = NULL, text = FALSE, row_names = NULL,
-                                                  transpose = TRUE, inject_smp_attr = sample_heatmap_overlay,
-                                                  config = list(smpOverlays = names(sample_heatmap_overlay)))), preset = "magic"))
-end.rcode-->
+# <!--begin.rcode sample_qc_pct
+#     cat(plotter$create_title("Top genes expression heatmap", "sample QC", hlevel = 2, indexable = FALSE,
+#                               clickable = FALSE, t_id = "sample_qc_pct", clickable_text = ""))
+#     if(!is.null(extra_columns)) {
+#         extra_metadata <- get_cells_metadata(heatmap = plotter$hash_vars$sample_qc_pct, metadata = metadata)
+#         sample_heatmap_overlay <- as.list(extra_metadata[, extra_columns, drop = FALSE])
+#     } else {
+#         sample_heatmap_overlay <- NULL
+#     }
+#     cat(plotter$prettify_div(plotter$heatmap(list(id = "sample_qc_pct", title = paste0("Top gene expression across ",
+#                                                   "samples"), header = NULL, text = FALSE, row_names = NULL,
+#                                                   transpose = TRUE, inject_smp_attr = sample_heatmap_overlay,
+#                                                   config = list(smpOverlays = names(sample_heatmap_overlay)))), preset = "magic"))
+# end.rcode-->
 
-<!--begin.rcode cell_markers, eval = !is.null(plotter$hash_vars$cell_annotation)
-    elements <- unique(plotter$hash_vars$cell_annotation$type)
-    collapse_list <- vector(mode = "character", length = length(elements) + 2)
-    names(collapse_list) <- c("paragraph", "subtitle", elements)
-    collapse_list["paragraph"] <- paste0("<p>Seurat clusters are defined mathematically. Unless a manual cluster annotation file is provided,\n",
-                                         "our workflow finds cluster markers and compares them to the cell types annotation file. It then\n",
-                                         "analyses matches and determines the most likely cell type for the cluster. These markers are\n",
-                                         "plotted in the following graphs.</p>")
-    collapse_list["subtitle"] <- "<h2>Expression of cell type markers across experiment identities</h2>"
-    for(element_name in elements) {
-        features <- plotter$hash_vars$cell_annotation[plotter$hash_vars$cell_annotation$type == element_name, ]$marker
-        collapse_list[element_name] <- paste(paste0("<h2>", element_name, " markers</h2>"),
-                                       plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
-                                                                 plotting_function = Custom_DotPlot), preset = "magic"), sep = "\n")
-    }
-    markers_html <- paste0(paste(collapse_list, collapse = "\n"), "\n")
-    cat(plotter$create_title("Markers distribution", "markers", hlevel = 2, indexable = FALSE, clickable = TRUE,
-                             t_id = "markers_distribution", clickable_text = ""))
-    cat(plotter$create_collapsable_container(id = "markers_distribution", html_code = markers_html))
-end.rcode-->
+# <!--begin.rcode cell_markers, eval = !is.null(plotter$hash_vars$cell_annotation)
+#     elements <- unique(plotter$hash_vars$cell_annotation$type)
+#     collapse_list <- vector(mode = "character", length = length(elements) + 2)
+#     names(collapse_list) <- c("paragraph", "subtitle", elements)
+#     collapse_list["paragraph"] <- paste0("<p>Seurat clusters are defined mathematically. Unless a manual cluster annotation file is provided,\n",
+#                                          "our workflow finds cluster markers and compares them to the cell types annotation file. It then\n",
+#                                          "analyses matches and determines the most likely cell type for the cluster. These markers are\n",
+#                                          "plotted in the following graphs.</p>")
+#     collapse_list["subtitle"] <- "<h2>Expression of cell type markers across experiment identities</h2>"
+#     for(element_name in elements) {
+#         features <- plotter$hash_vars$cell_annotation[plotter$hash_vars$cell_annotation$type == element_name, ]$marker
+#         collapse_list[element_name] <- paste(paste0("<h2>", element_name, " markers</h2>"),
+#                                        plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
+#                                                                  plotting_function = Custom_DotPlot), preset = "magic"), sep = "\n")
+#     }
+#     markers_html <- paste0(paste(collapse_list, collapse = "\n"), "\n")
+#     cat(plotter$create_title("Markers distribution", "markers", hlevel = 2, indexable = FALSE, clickable = TRUE,
+#                              t_id = "markers_distribution", clickable_text = ""))
+#     cat(plotter$create_collapsable_container(id = "markers_distribution", html_code = markers_html))
+# end.rcode-->
 
-<!--begin.rcode top_markers
-    slot <- ifelse(is.null(plotter$hash_vars$markers$cell_type), no = "cell_type", yes = "cluster")
-    types <- as.character(unique(plotter$hash_vars$markers[[slot]]))
-    collapse_list <- vector(mode = "character", length = length(types))
-    for(type in seq(types)) {
-        plotter$hash_vars$type_markers <- plotter$hash_vars$markers[plotter$hash_vars$markers[slot] == types[type], ]
-        plotter$hash_vars$type_markers[, slot] <- as.character(plotter$hash_vars$type_markers[, slot])
-        collapse_list[type] <- paste(paste0("<h2>Top markers for identity ", types[type]),
-                                            plotter$prettify_div(plotter$table(list(id = "type_markers", header = NULL,
-                                                    row_names = NULL, table_rownames = FALSE, styled = "dt",
-                                                    func = top_table, text = "dynamic"))), sep = "\n")
-    }
-    top_markers_html <- paste0(paste(collapse_list, collapse = "\n"), "\n")
-    if(is.null(plotter$hash_vars$seu@meta.data$cell_type)) {
-        title_group <- "cluster"
-    } else {
-        title_group <- "cell type"
-    }
-    cat(plotter$create_title(paste0("Top 10 markers by ", title_group), "top markers", hlevel = 2, indexable = FALSE, clickable = TRUE,
-                             t_id = "top_markers", clickable_text = ""))
-    paragraph <- paste0("<p>These are the markers that best define the identity group. They might ",
-                        "not match cell type markers.</p>")
-    cat(plotter$create_collapsable_container(id = "top_markers",
-                                             html_code = paste(paragraph, top_markers_html,  sep = "\n")))
-end.rcode-->
+# <!--begin.rcode top_markers
+#     slot <- ifelse(is.null(plotter$hash_vars$markers$cell_type), no = "cell_type", yes = "cluster")
+#     types <- as.character(unique(plotter$hash_vars$markers[[slot]]))
+#     collapse_list <- vector(mode = "character", length = length(types))
+#     for(type in seq(types)) {
+#         plotter$hash_vars$type_markers <- plotter$hash_vars$markers[plotter$hash_vars$markers[slot] == types[type], ]
+#         plotter$hash_vars$type_markers[, slot] <- as.character(plotter$hash_vars$type_markers[, slot])
+#         collapse_list[type] <- paste(paste0("<h2>Top markers for identity ", types[type]),
+#                                             plotter$prettify_div(plotter$table(list(id = "type_markers", header = NULL,
+#                                                     row_names = NULL, table_rownames = FALSE, styled = "dt",
+#                                                     func = top_table, text = "dynamic"))), sep = "\n")
+#     }
+#     top_markers_html <- paste0(paste(collapse_list, collapse = "\n"), "\n")
+#     if(is.null(plotter$hash_vars$seu@meta.data$cell_type)) {
+#         title_group <- "cluster"
+#     } else {
+#         title_group <- "cell type"
+#     }
+#     cat(plotter$create_title(paste0("Top 10 markers by ", title_group), "top markers", hlevel = 2, indexable = FALSE, clickable = TRUE,
+#                              t_id = "top_markers", clickable_text = ""))
+#     paragraph <- paste0("<p>These are the markers that best define the identity group. They might ",
+#                         "not match cell type markers.</p>")
+#     cat(plotter$create_collapsable_container(id = "top_markers",
+#                                              html_code = paste(paragraph, top_markers_html,  sep = "\n")))
+# end.rcode-->
 
 <!--begin.rcode SingleR_annotation, eval = !is.null(plotter$hash_vars$SingleR_annotation)
+    SingleR_medians <- get_SingleR_medians(plotter$hash_vars$SingleR_annotation)
+    final_medians <- SingleR_medians$final_medians
+    cell_pcts <- table(plotter$hash_vars$seu$cell_type) / ncol(plotter$hash_vars$seu)
+    plotter$hash_vars$SingleR_medians_and_pcts <- rbind(SingleR_medians$final_medians, cell_pcts)
+    global_median <- SingleR_medians$globals$global_median
     cat(plotter$create_title("SingleR annotation metrics", "singler_annot", hlevel = 2, indexable = TRUE, clickable = FALSE))
-    cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotScoreHeatmap, text = "dynamic", custom_format = TRUE,
-                             plot_type = "print"))
-    cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotScoreDistribution, text = "dynamic", custom_format = TRUE))
-    cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotDeltaDistribution, text = "dynamic", custom_format = TRUE))
+    SingleR_legend <- c("<b>Assigned</b>: Scores for all cells assigned to this label.",
+                        "<b>Pruned</b>: Scores for all cells assigned to this label but pruned out.",
+                        "<b>Other</b>: Scores that all cells assigned to a different label got for this label.")
+    cat(make_html_list(SingleR_legend))
+    cat(plotter$create_title("General annotation scores", "singler_medians", hlevel = 3, indexable = FALSE, clickable = FALSE))
+    cat("<p> This plot represents the median score for each assigned and pruned label. Horizontal line represents median score across all its respective labels.
+             \"Other\" labels are not included in this plot. </p>")
+    cat(plotter$prettify_div(plotter$barplot(list(id = "SingleR_medians_and_pcts", title = "Median SingleR scores for assigned labels",
+            header = NULL, row_names = NULL, text = FALSE, transpose = TRUE, smp_attr = 1, colorBy = "label", width = "1024",
+            config = list(graphOrientation = "vertical", showLegend = TRUE, xAxisTitle = "label", setMinX = 0, setMaxX = 1,
+                          decorations = list(line = list(list(align = "left", color= "rgb(0,0,0)", label = "global median value",
+                          value = global_median, width = 2)))))), preset = "magic", justify = "left"))
+    # cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotScoreHeatmap, text = "dynamic", custom_format = TRUE,
+    #                          plot_type = "print"))
+    # cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotScoreDistribution, text = "dynamic", custom_format = TRUE))
+    # cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotDeltaDistribution, text = "dynamic", custom_format = TRUE))
 end.rcode-->
 
 <!--begin.rcode Complete_PCA, eval = FALSE
@@ -187,77 +240,77 @@ end.rcode-->
                              preset = "magic"))
 end.rcode-->
 
-<!--begin.rcode Complete_UMAP
-    cat(plotter$create_title("<b>DIMENSIONALITY REDUCTION</b>", "dimreds", hlevel = 1, indexable = TRUE, clickable = FALSE,
-                              t_id = "dimreds", clickable_text = ""))
-    cat(plotter$create_title("UMAP", "full_umap", hlevel = 2, indexable = TRUE, clickable = FALSE,
-                              t_id = "full_umap", clickable_text = ""))
-    reduction <- ifelse("umap.full" %in% names(plotter$hash_vars$seu@reductions), yes = "umap.full", no = "umap")
-    label <- TRUE
-    group.by <- split.by <- NULL
-    cat(plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE, plotting_function = Custom_DimPlot),
-                             preset = "magic"))
-end.rcode-->
+# <!--begin.rcode Complete_UMAP
+#     cat(plotter$create_title("<b>DIMENSIONALITY REDUCTION</b>", "dimreds", hlevel = 1, indexable = TRUE, clickable = FALSE,
+#                               t_id = "dimreds", clickable_text = ""))
+#     cat(plotter$create_title("UMAP", "full_umap", hlevel = 2, indexable = TRUE, clickable = FALSE,
+#                               t_id = "full_umap", clickable_text = ""))
+#     reduction <- ifelse("umap.full" %in% names(plotter$hash_vars$seu@reductions), yes = "umap.full", no = "umap")
+#     label <- TRUE
+#     group.by <- split.by <- NULL
+#     cat(plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE, plotting_function = Custom_DimPlot),
+#                              preset = "magic"))
+# end.rcode-->
 
-<!--begin.rcode umap_splits, eval = plotter$hash_vars$integrate
-    label <- FALSE
-    for(condition in subset_by) {
-        split.by <- condition
-        html_code <- paste0("Each UMAP shown in this section corresponds to one value of split condition.",
-                             plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
-                                                  plotting_function = Custom_DimPlot), preset = "magic"))
-        cat(plotter$create_title(paste0("Grid UMAP representation splitting by ", condition), paste0(condition, " split"), hlevel = 2,
-                                 indexable = FALSE, clickable = TRUE, t_id = paste0(condition, "_split"),
-                                 clickable_text = ""))
-        cat(plotter$create_collapsable_container(id = paste0(condition, "_split"), html_code = html_code))
-    }
-end.rcode-->
+# <!--begin.rcode umap_splits, eval = plotter$hash_vars$integrate
+#     label <- FALSE
+#     for(condition in subset_by) {
+#         split.by <- condition
+#         html_code <- paste0("Each UMAP shown in this section corresponds to one value of split condition.",
+#                              plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
+#                                                   plotting_function = Custom_DimPlot), preset = "magic"))
+#         cat(plotter$create_title(paste0("Grid UMAP representation splitting by ", condition), paste0(condition, " split"), hlevel = 2,
+#                                  indexable = FALSE, clickable = TRUE, t_id = paste0(condition, "_split"),
+#                                  clickable_text = ""))
+#         cat(plotter$create_collapsable_container(id = paste0(condition, "_split"), html_code = html_code))
+#     }
+# end.rcode-->
 
-<!--begin.rcode umap_groups, eval = plotter$hash_vars$integrate
-    label <- FALSE
-    for(condition in subset_by) {
-        split.by <- NULL
-        group.by <- condition
-        html_code <- paste0("Recoloring of general UMAP by each value of highlight condition.",
-                             plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
-                                                  plotting_function = Custom_DimPlot), preset = "magic"))
-        cat(plotter$create_title(paste0("General UMAP representation highlighting ", condition), paste0(condition, " grouped"), hlevel = 2,
-                                 indexable = FALSE, clickable = TRUE, t_id = paste0(condition, "_grouped"),
-                                 clickable_text = ""))
-        cat(plotter$create_collapsable_container(id = paste0(condition, "_grouped"), html_code = html_code))
-    }
-end.rcode-->
+# <!--begin.rcode umap_groups, eval = plotter$hash_vars$integrate
+#     label <- FALSE
+#     for(condition in subset_by) {
+#         split.by <- NULL
+#         group.by <- condition
+#         html_code <- paste0("Recoloring of general UMAP by each value of highlight condition.",
+#                              plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
+#                                                   plotting_function = Custom_DimPlot), preset = "magic"))
+#         cat(plotter$create_title(paste0("General UMAP representation highlighting ", condition), paste0(condition, " grouped"), hlevel = 2,
+#                                  indexable = FALSE, clickable = TRUE, t_id = paste0(condition, "_grouped"),
+#                                  clickable_text = ""))
+#         cat(plotter$create_collapsable_container(id = paste0(condition, "_grouped"), html_code = html_code))
+#     }
+# end.rcode-->
 
-<!--begin.rcode cluster_pct
-    cat(plotter$create_title("Cluster composition of samples", "cluster distribution", hlevel = 2,
-                              indexable = FALSE, clickable = FALSE, t_id = "cluster_distribution",
-                              clickable_text = ""))
-    if(!is.null(extra_columns)) {
-        extra_metadata <- get_cells_metadata(heatmap = plotter$hash_vars$clusters_pct, metadata = metadata)
-        sample_heatmap_overlay <- as.list(extra_metadata[, extra_columns, drop = FALSE])
-    } else {
-        sample_heatmap_overlay <- NULL
-    }
-    cat(plotter$prettify_div(plotter$heatmap(list(id = "clusters_pct", title = "Cell type percentage by sample",
-                                             header = NULL, text = FALSE, row_names = NULL,
-                                             transpose = TRUE, inject_smp_attr = sample_heatmap_overlay,
-                                             config = list(smpOverlays = names(sample_heatmap_overlay)))), preset = "magic"))
-end.rcode-->
+# <!--begin.rcode cluster_pct
+#     cat(plotter$create_title("Cluster composition of samples", "cluster distribution", hlevel = 2,
+#                               indexable = FALSE, clickable = FALSE, t_id = "cluster_distribution",
+#                               clickable_text = ""))
+#     if(!is.null(extra_columns)) {
+#         extra_metadata <- get_cells_metadata(heatmap = plotter$hash_vars$clusters_pct, metadata = metadata)
+#         sample_heatmap_overlay <- as.list(extra_metadata[, extra_columns, drop = FALSE])
+#     } else {
+#         sample_heatmap_overlay <- NULL
+#     }
+#     cat(plotter$prettify_div(plotter$heatmap(list(id = "clusters_pct", title = "Cell type percentage by sample",
+#                                              header = NULL, text = FALSE, row_names = NULL,
+#                                              transpose = TRUE, inject_smp_attr = sample_heatmap_overlay,
+#                                              config = list(smpOverlays = names(sample_heatmap_overlay)))), preset = "magic"))
+# end.rcode-->
 
-<!--begin.rcode subset_titles, eval = !is.null(plotter$hash_vars$subset_seu)
-    cat(plotter$create_title(paste0("<b>RESPONSES OF DIFFERENT ", toupper(subset_by[1]), "S TO ", toupper(subset_by[2]), " VARIATION</b>"),
-                             "subsets_title", hlevel = 2, indexable = TRUE, clickable = FALSE, t_id = "subsets_title",
-                             clickable_text = ""))
-    cat(paste0("<p>In this next section of the report, clustering and DEG analysis is shown for each group in the 
-                \"", subset_by[1], "\" experimental category. This will allow the analysis of the \"", subset_by[2],
-               "\"\n factor on each subgroup independently.</p>"))
-end.rcode-->
+# <!--begin.rcode subset_titles, eval = !is.null(plotter$hash_vars$subset_seu)
+#     cat(plotter$create_title(paste0("<b>RESPONSES OF DIFFERENT ", toupper(subset_by[1]), "S TO ", toupper(subset_by[2]), " VARIATION</b>"),
+#                              "subsets_title", hlevel = 2, indexable = TRUE, clickable = FALSE, t_id = "subsets_title",
+#                              clickable_text = ""))
+#     cat(paste0("<p>In this next section of the report, clustering and DEG analysis is shown for each group in the 
+#                 \"", subset_by[1], "\" experimental category. This will allow the analysis of the \"", subset_by[2],
+#                "\"\n factor on each subgroup independently.</p>"))
+# end.rcode-->
 
-<!--begin.rcode params
-    cat(plotter$create_title("<b>EXECUTION PARAMETERS</b>", "params", hlevel = 1, indexable = TRUE,
-        clickable = FALSE, t_id = "params", clickable_text = ""))
-    opt_names <- names(plotter$hash_vars$params)
-    opt_values <- paste(plotter$hash_vars$params)
-    opt_vector <- paste(opt_names, opt_values, sep = ": ")
-    cat(make_html_list(opt_vector))
-end.rcode-->
+# <!--begin.rcode params
+#     cat(plotter$create_title("<b>EXECUTION PARAMETERS</b>", "params", hlevel = 1, indexable = TRUE,
+#         clickable = FALSE, t_id = "params", clickable_text = ""))
+#     opt_names <- names(plotter$hash_vars$params)
+#     opt_values <- paste(plotter$hash_vars$params)
+#     opt_vector <- paste(opt_names, opt_values, sep = ": ")
+#     cat(make_html_list(opt_vector))
+# end.rcode-->
