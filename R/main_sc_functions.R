@@ -157,6 +157,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                             force_ncells = force_ncells, verbose = verbose)
     }
     assay <- Seurat::DefaultAssay(seu)
+    SingleR_annotation <- NULL
     if(!is.null(SingleR_ref)) {
       message("SingleR reference provided. Annotating cells.")
       annotation <- annotate_SingleR(seu = seu, SingleR_ref = SingleR_ref,
