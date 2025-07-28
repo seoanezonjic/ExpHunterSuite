@@ -236,7 +236,7 @@ main_degenes_Hunter <- function(
 
     DE_all_genes <- NULL
     DEG_pca <- NULL
-    if (any(grepl("[DENL]",modules))){
+    if (any(grepl("[DENLF]",modules))){
       DE_all_genes <- unite_DEG_pack_results(exp_results, p_val_cutoff, 
                                              lfc, minpack_common)
 
