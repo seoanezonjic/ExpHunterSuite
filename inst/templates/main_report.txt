@@ -7,7 +7,7 @@ end.rcode-->
 <!--begin.rcode expression_qc, child=file.path(template_folder, "expression_qc.txt")
 end.rcode-->
 
-<!--begin.rcode child=file.path(template_folder, "dea_results.txt"), eval = any(grepl("[DENL]", plotter$hash_vars$opt$modules))
+<!--begin.rcode child=file.path(template_folder, "dea_results.txt"), eval = any(grepl("[DENLF]", plotter$hash_vars$opt$modules))
 end.rcode--> 
 
 <!--begin.rcode child=file.path(template_folder, "WGCNA_results.txt"), eval = grepl("W", plotter$hash_vars$opt$modules)
