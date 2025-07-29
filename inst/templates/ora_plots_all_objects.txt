@@ -1,5 +1,7 @@
 
 <!--begin.rcode "{{funsys}}_setup"
+	node_label <- plotter$hash_vars$node_label
+	cex_label_category <- plotter$hash_vars$cex_label_category
 	max_genes <- plotter$hash_vars$max_genes
 	n_category <- 30
 	cats_in_enrich_obj <- nrow(plotter$hash_vars$enrich_obj)
@@ -19,11 +21,11 @@
 									  na.value = "#50EA55", midpoint = plotter$hash_vars$pvalcutoff)
 	}
 	enrich_cnet <- function(input_obj) {
-		enrichplot::cnetplot(input_obj, showCategory=n_category, foldChange=plotter$hash_vars$attr_vector) +
+		enrichplot::cnetplot(input_obj, showCategory=n_category, foldChange=plotter$hash_vars$attr_vector, node_label = node_label, cex_label_category = cex_label_category) +
 	 	{if(!is.null(plotter$hash_vars$attr_vector)) ggplot2::scale_color_gradient2(name = plotter$hash_vars$gene_attribute_name, low = "#0000BF", high = "#bf0000", na.value = "#50EA55") }
 	}
 	enrich_emap <- function(input_obj) {
-		enrichplot::emapplot(input_obj, showCategory = n_category,  min_edge = 0.0000000000000001)
+		enrichplot::emapplot(input_obj, showCategory = n_category, min_edge = 0.0000000000000001, node_label = node_label, cex_label_category = cex_label_category)
 	}
 	enrich_heatplot <- function(input_obj) {
 		enrichplot::heatplot(input_obj, showCategory = n_category, foldChange = plotter$hash_vars$attr_vector)

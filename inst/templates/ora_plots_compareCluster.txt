@@ -1,5 +1,7 @@
 <!--begin.rcode "{{funsys}}_setup"
+	node_label <- plotter$hash_vars$node_label
 	clusters <- split(as.data.frame(plotter$hash_vars$enrich_obj), as.data.frame(plotter$hash_vars$enrich_obj)[, "Cluster"])
+	cex_label_category <- plotter$hash_vars$cex_label_category
 	top_ids_list <- lapply(clusters, function(cluster_df) {
 		sorted <- cluster_df[order(cluster_df$qvalue), ]
 		head(sorted$ID, plotter$hash_vars$showCategories)
@@ -24,13 +26,13 @@
 		clusters_heatplot(input_obj@compareClusterResult)
 	}
 	enrich_cnet <- function(input_obj) {
-		enrichplot::cnetplot(input_obj, showCategory= plotter$hash_vars$showCategories)
+		enrichplot::cnetplot(input_obj, showCategory = plotter$hash_vars$showCategories, node_label = node_label, cex_label_category = cex_label_category)
 	}
 	enrich_emap <- function(input_obj) {
 		enrichplot::emapplot(input_obj, showCategory = plotter$hash_vars$showCategories, pie.params = list(pie = "Count"),
 												 shadowtext = FALSE, node_label = node_label, edge.params = list(min = 0.0000000000000001),
 												 group_category = group_category, nCluster = nCluster, nWords = nWords, repel = TRUE,
-												 layout.params = list(layout = "nicely"))
+												 layout.params = list(layout = "nicely"), cex_label_category = cex_label_category)
 	}
 	clnetplot <- function(compareCluster, ...) {
         mod_enrich_obj <- compareCluster
@@ -69,8 +71,6 @@ end.rcode-->
 	 	   The size of the functional category nodes shows the number of connected genes.</p>"
 	)
 	if (nrow(as.data.frame(plotter$hash_vars$enrich_obj)) > 2) {
-		## @AEM UNTESTED, THIS CONDITION WILL ONLY BE MET IN LARGER TESTS, ONCE THAT'S DONE I'LL REMOVE THIS COMMENT.
-		## IF YOU SEE THIS YOU ARE WELCOME TO YELL AT ME, EVEN MORE SO IF THIS BLOCK BREAKS
 			cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
 				plotting_function = enrich_cnet, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
 	} else {
@@ -90,11 +90,12 @@ end.rcode-->
 		} else {
 			nCluster <- NULL
 			nWords <- 4
-			node_label <- "category"
 			group_category <- FALSE
 		}
 		emap_res <- plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
 			  plotting_function = enrich_emap, plot_type = "plot"), inject_string = "class=\"plot_real_size\")")
+		# Reset node label to original value
+		node_label <- plotter$hash_vars$node_label
 	} else {
 		emap_res <- "<p>This graph cannot be plotted because fewer than two functional categories were enriched</p>"
 	}
