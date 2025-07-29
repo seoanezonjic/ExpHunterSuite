@@ -10,12 +10,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   main_path_script <- dirname(full.fpath)
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
-  custom_libraries <- c('general_functions.R', "io_handling.R",
-    'functional_analysis_library.R', 'plotting_functions.R', "main_clusters_to_enrichment.R",
-    "write_report.R")
-  for (lib in custom_libraries){
-    source(file.path(root_path, 'R', lib))
-  }
+  devtools::load_all(root_path)
   template_folder <- file.path(root_path, 'inst', 'templates')
   organisms_table_file <- file.path(root_path, "inst", "external_data", 
         "organism_table.txt")
@@ -80,7 +75,12 @@ option_list <- list(
   optparse::make_option("--max_genes_plot", type="integer", default=200, 
                         help="Number of genes to show on clusterProfiler cnet"),
   optparse::make_option(c("-o", "--output_path"), type="character", default=NA,
-                        help="Define the output path.")
+                        help="Define the output path."),
+  optparse::make_option(c("--cex_label_category"), type="numeric", default=1,
+                        help="Number between 0 and 1. The closer it is to zero, the smaller the labels will be."),
+    optparse::make_option(c("--node_label"), type="character", default="category",
+                        help="How nodes will be labeled. Possible values: \"category\" (the default), \"group\", \"all\", \"none\".")
+
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
@@ -162,6 +162,7 @@ enrichments_ORA <- ce_list[["enrichments_ORA"]]
 write_clusters_to_enrichment(output_path = output_path, mode = opt$mode,
   enrichments_ORA=enrichments_ORA, task_size = opt$task_size,
   workers = opt$workers, template_folder = template_folder,
+  node_label = opt$node_label, cex_label_category = opt$cex_label_category,
   top_categories = opt$top_categories, group_results = opt$group_results,
   n_category = opt$showCategories, sim_thr = opt$sim_thr, 
   summary_common_name = opt$summary_common_name, pvalcutoff = opt$pvalcutoff,
