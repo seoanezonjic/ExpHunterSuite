@@ -109,5 +109,13 @@ a data frame detailing which genes are differentially expressed in dataset.
 from package \code{compcodeR}.
 }
 \examples{
+B_625_625 <- generate_synth_DEGs(dataset = "B_625_625", n.vars = 12500, 
+                                 samples.per.cond = 5, n.diffexp = 1250, 
+                                 repl.id = 1, seqdepth = 1e7, 
+                                 fraction.upregulated = 0.5, 
+                                 between.group.diffdisp = FALSE, 
+                                 filter.threshold.total = 1, 
+                                 filter.threshold.mediancpm = 0, 
+                                 fraction.non.overdispersed = 0)
 B_625_625
 }

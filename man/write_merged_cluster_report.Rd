@@ -12,6 +12,8 @@ write_merged_cluster_report(
   sample_classes = NULL,
   DEGH_results = NULL,
   showCategories,
+  node_label = 1,
+  cex_label_category = "category",
   group_results,
   func_results = NULL,
   source_folder = NULL,
@@ -30,6 +32,12 @@ write_merged_cluster_report(
 \item{DEGH_results}{DEGenes Hunter results object.}
 
 \item{showCategories}{number of categories in the figures (per cluster)}
+
+\item{node_label}{Number between 0 and 1. The closer it is to zero, the
+smaller the labels will be.}
+
+\item{cex_label_category}{How nodes will be labeled. Possible values:
+\"category\" (the default), \"group\", \"all\", \"none\".}
 
 \item{group_results}{experimental - whether to group results in the emap plot
 and functional (f). Default = "fc"}

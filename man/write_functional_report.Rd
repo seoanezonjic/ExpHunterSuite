@@ -21,6 +21,8 @@ write_functional_report(
   pvalcutoff = 0.05,
   template_folder = NULL,
   max_genes = 200,
+  node_label = "category",
+  cex_label_category = 1,
   files_css = file.path(template_folder, "styles.css")
 )
 }
@@ -58,6 +60,12 @@ R value}
 \item{template_folder}{(OPTIONAL) RMD templates folder}
 
 \item{max_genes}{maximum number of genes to plot in cnet plot}
+
+\item{node_label}{Number between 0 and 1. The closer it is to zero, the
+smaller the labels will be.}
+
+\item{cex_label_category}{How nodes will be labeled. Possible values:
+\"category\" (the default), \"group\", \"all\", \"none\".}
 
 \item{files_css}{Path to css file to inject. By default it injects styles.css
 found in ExpHunterSuite's templates directory.}

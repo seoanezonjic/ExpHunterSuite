@@ -14,6 +14,8 @@ write_clusters_to_enrichment(
   workers = 1,
   top_categories = NULL,
   group_results = FALSE,
+  cex_label_category = 1,
+  node_label = "category",
   n_category = 30,
   sim_thr = 0.7,
   pvalcutoff = 0.1,
@@ -44,6 +46,12 @@ write_clusters_to_enrichment(
 \item{top_categories}{numbers of categories from each cluster to use for merge}
 
 \item{group_results}{experimental - whether to group results in the emap plot}
+
+\item{cex_label_category}{How nodes will be labeled. Possible values:
+\"category\" (the default), \"group\", \"all\", \"none\".}
+
+\item{node_label}{Number between 0 and 1. The closer it is to zero, the
+smaller the labels will be.}
 
 \item{n_category}{number of categories in the figures (per cluster)}
 

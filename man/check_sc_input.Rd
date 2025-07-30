@@ -48,8 +48,7 @@ checks and pre-processes input of main SC analysis functions. Outdated, needs
 overhaul.
 }
 \examples{
- \dontrun{
- ### THIS EXAMPLE NEEDS TO BE FIXED
-   check_sc_input()
- }
+new_opt <- check_sc_input(integrate = TRUE, sketch = TRUE, fine.tune = TRUE,
+                  aggr.ref = FALSE, SingleR_ref = "Non_NULL", reduce = FALSE)
+new_opt
 }
