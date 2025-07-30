@@ -4,6 +4,26 @@
 ################################################################################
 
 
+################### OPTIONS
+option_list <- list(
+    optparse::make_option(c("-i", "--input_folder"), type="character", 
+        default="",
+        help="Folder that include subfolders names as sequencing samples that contains quntification files"),
+    optparse::make_option(c("-m", "--mapper"), type="character", 
+        help="Program that were use to quantify mappings. salmon, kallisto, rsem and stringtie are available.",
+        default="salmon"),
+     optparse::make_option(c("-a", "--annotation_file"), type="character", 
+        help="GFF or GTF annotation file.",
+        default=NULL),
+    optparse::make_option(c("--output_type"), type="character", 
+        help="Indicate if the output must include [G] gene counts (gene_counts.txt), [T] transcript counts (transcript_counts.txt) or both",
+        default="GT"),
+   optparse::make_option(c("-o", "--output_folder"), type="character",
+        default=".", 
+        help = "Output folder"))
+opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
+
+
 ############################################################
 ##                      SETUP PROGRAM                     ##
 ############################################################
@@ -27,25 +47,6 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   require('ExpHunterSuite')
   root_path <- find.package('ExpHunterSuite')
 }
-
-################### OPTIONS
-option_list <- list(
-    optparse::make_option(c("-i", "--input_folder"), type="character", 
-        default="",
-        help="Folder that include subfolders names as sequencing samples that contains quntification files"),
-    optparse::make_option(c("-m", "--mapper"), type="character", 
-        help="Program that were use to quantify mappings. salmon, kallisto, rsem and stringtie are available.",
-        default="salmon"),
-     optparse::make_option(c("-a", "--annotation_file"), type="character", 
-        help="GFF or GTF annotation file.",
-        default=NULL),
-    optparse::make_option(c("--output_type"), type="character", 
-        help="Indicate if the output must include [G] gene counts (gene_counts.txt), [T] transcript counts (transcript_counts.txt) or both",
-        default="GT"),
-   optparse::make_option(c("-o", "--output_folder"), type="character",
-     	default=".", 
-        help = "Output folder"))
-opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 quant_data <- parse_pseudocounts(opt$input_folder, opt$mapper, opt$output_type, opt$annotation_file)
 

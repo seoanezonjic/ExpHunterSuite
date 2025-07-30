@@ -1,34 +1,6 @@
 #! /usr/bin/env Rscript
-#############################################
-############## FUNCTIONAL HUNTER ###########
-#############################################
-if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
-    full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  
-               error=function(e) # works when using R CMD
-              normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
-                commandArgs())], '='))[2]))
-    main_path_script <- dirname(full.fpath)
-    root_path <- file.path(main_path_script, '..', '..')
 
-    custom_libraries <- c('general_functions.R', 
-        'functional_analysis_library.R', 'plotting_functions.R', 
-        'main_functional_hunter.R', "io_handling.R", "plotting_functions.R", 
-        "write_report.R", "factor_mining.R", "statistics_functions.R")
-    for (lib in custom_libraries){
-        source(file.path(root_path, 'R', lib))
-    }
-    organisms_table_file <- file.path(root_path, "inst", "external_data", 
-        "organism_table.txt")
-    template_folder <- file.path(root_path, 'inst', 'templates')
 
-}else{
-    require('ExpHunterSuite')
-    root_path <- find.package('ExpHunterSuite')
-    template_folder <- file.path(root_path, 'templates')
-    organisms_table_file <- file.path(root_path, "external_data", 
-        "organism_table.txt")
-}
- 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 ##                                                                      ##
 ##                            INITIALIZE                                ##                                                     
@@ -117,10 +89,37 @@ option_list <- list(
     help="Similarity cutoff for grouping categories in Summary mode. Default=%default"),
   optparse::make_option("--group_results", type="logical", default=FALSE, 
     action = "store_true", help="Functions are grouped in most frequent words in emaplots."),
-   optparse::make_option("--summary_common_name", type="character", default="ancestor", 
-                        help="Name of the term groups. 'significant' to use the most significant term of each group. 'ancestor' to use the common ancestor of the group")
+  optparse::make_option("--summary_common_name", type="character", default="ancestor", 
+                        help="Name of the term groups. 'significant' to use the most significant term of each group. 'ancestor' to use the common ancestor of the group"),
+  optparse::make_option(c("--cex_label_category"), type="numeric", default=1,
+                        help="Number between 0 and 1. The closer it is to zero, the smaller the labels will be."),
+  optparse::make_option(c("--node_label"), type="character", default="category",
+                        help="How nodes will be labeled. Possible values: \"category\" (the default), \"group\", \"all\", \"none\".")
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
+
+#############################################
+############## FUNCTIONAL HUNTER ###########
+#############################################
+if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
+    full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  
+               error=function(e) # works when using R CMD
+              normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
+                commandArgs())], '='))[2]))
+    main_path_script <- dirname(full.fpath)
+    root_path <- file.path(main_path_script, '..', '..')
+    devtools::load_all(root_path)
+    organisms_table_file <- file.path(root_path, "inst", "external_data", 
+        "organism_table.txt")
+    template_folder <- file.path(root_path, 'inst', 'templates')
+
+}else{
+    require('ExpHunterSuite')
+    root_path <- find.package('ExpHunterSuite')
+    template_folder <- file.path(root_path, 'templates')
+    organisms_table_file <- file.path(root_path, "external_data", 
+        "organism_table.txt")
+}
 
 # NB remote and save_query don't do anything - need to fix remote so it can toggle Biomart
 
@@ -199,11 +198,10 @@ func_results <- main_functional_hunter(hunter_results = hunter_results, model_or
                     top_categories = opt$top_categories, sim_thr = opt$sim_thr,
                     summary_common_name = opt$summary_common_name, clusters_flag = clusters_flag)
 write_enrich_files(func_results, opt$output_files)
-
 write_functional_report(hunter_results = hunter_results, cores = opt$cores,
                         func_results = func_results, task_size = opt$task_size,
-                        output_files = opt$output_files,
-                        organisms_table = organisms_table,
+                        output_files = opt$output_files, node_label = opt$node_label,
+                        organisms_table = organisms_table, cex_label_category = opt$cex_label_category,
                         template_folder = template_folder,
                         showCategories = opt$showCategories,
                         max_genes = opt$max_genes_plot,

@@ -2,28 +2,6 @@
 
 
 ##########################################
-## LOAD LIBRARIES
-##########################################
-
-if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
-  # Obtain this script directory
-  full.fpath <- normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
-                  commandArgs())], '='))[2])
-  main_path_script <- dirname(full.fpath)
-  root_path <- file.path(main_path_script, '..', '..')
-  # Load custom libraries
-  custom_libraries <- c('main_abgenes_Hunter.R', 'DROP_functions.R')
-  for (lib in custom_libraries){
-    source(file.path(root_path, 'R', lib))
-  }
-  template_folder <- file.path(root_path, 'inst', 'templates')
-} else {
-  require('ExpHunterSuite')
-  root_path <- find.package('ExpHunterSuite')
-  template_folder <- file.path(root_path, 'templates')
-}
-
-##########################################
 ## OPTPARSE
 ##########################################
 
@@ -63,6 +41,25 @@ option_list <- list(
   )
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
+
+##########################################
+## LOAD LIBRARIES
+##########################################
+
+if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
+  # Obtain this script directory
+  full.fpath <- normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
+                  commandArgs())], '='))[2])
+  main_path_script <- dirname(full.fpath)
+  root_path <- file.path(main_path_script, '..', '..')
+  # Load custom libraries
+  devtools::load_all(root_path)
+  template_folder <- file.path(root_path, 'inst', 'templates')
+} else {
+  require('ExpHunterSuite')
+  root_path <- find.package('ExpHunterSuite')
+  template_folder <- file.path(root_path, 'templates')
+}
 
 ##########################################
 ## MAIN

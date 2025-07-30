@@ -1,27 +1,6 @@
 #!/usr/bin/env Rscript
 
 
-############################################################
-##                      SETUP PROGRAM                     ##
-############################################################
-options(warn=1)
-if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
-  # Obtain this script directory
-  full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile), 
-                 error=function(e) # works when using R CMD
-                normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
-                  commandArgs())], '='))[2]))
-  main_path_script <- dirname(full.fpath)
-  root_path <- file.path(main_path_script, '..', '..')
-  # Load custom libraries
-  devtools::load_all(root_path)
-  template_folder <- file.path(root_path, 'inst/templates')
-}else{
-  require('ExpHunterSuite')
-  root_path <- find.package('ExpHunterSuite')
-  template_folder <- file.path(root_path, 'templates')
-}
-
 option_list <- list(
   optparse::make_option(c("-i", "--input_files"), type="character", default=NULL,
     help="Comma separated input files. Indicate active and supplementary tables throught -A and -S respectively. All files are active by default."),
@@ -56,6 +35,27 @@ option_list <- list(
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
+############################################################
+##                      SETUP PROGRAM                     ##
+############################################################
+options(warn=1)
+if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
+  # Obtain this script directory
+  full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile), 
+                 error=function(e) # works when using R CMD
+                normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
+                  commandArgs())], '='))[2]))
+  main_path_script <- dirname(full.fpath)
+  root_path <- file.path(main_path_script, '..', '..')
+  # Load custom libraries
+  devtools::load_all(root_path)
+  template_folder <- file.path(root_path, 'inst/templates')
+}else{
+  require('ExpHunterSuite')
+  root_path <- find.package('ExpHunterSuite')
+  template_folder <- file.path(root_path, 'templates')
+}
+
 if(!is.null(opt$seed)) set.seed(opt$seed)
 
 if(!file.exists(opt$output_files))
@@ -64,9 +64,13 @@ if(!file.exists(opt$output_files))
 input_files <- split_str(opt$input_files, ",")
 input_tables <- lapply(input_files, read.table, header = TRUE, sep = "\t", check.names = FALSE, row.names = 1)
 names(input_tables) <- gsub("\\..*", "", basename(input_files))
-
 act_des <- parse_multivar_input(opt$act_des)
 colnames(act_des) <- act_des[1,]
+act_qual <- names(act_des)[act_des["type", ] == "n"]
+for(table in act_qual) {
+  input_tables[[table]] <- data.frame(lapply(input_tables[[table]], as.factor),
+                                  row.names = rownames(input_tables[[table]]))
+}
 
 numeric_factors <- NULL
 string_factors <- NULL
@@ -88,7 +92,7 @@ if (!is.null(opt$supp_desc)){
   merged_supp_tables <- merge_all_df(unlist(supp_tables, recursive = FALSE))
   merged_supp_tables$sample <- rownames(merged_supp_tables)
 }
-
+save.image('Testing.RData')
 pca_res <- lapply(act_des, perform_individual_analysis,
                           all_files = input_tables, 
                           numeric_factors = numeric_factors,
@@ -96,6 +100,9 @@ pca_res <- lapply(act_des, perform_individual_analysis,
                           target = merged_supp_tables,
                           hcpc_consol = opt$hcpc_consol,
                           n_clusters = opt$n_clusters, time = opt$time,
+                          parallel = opt$parallel)
+perform_individual_analysis(table_data = act_des[[2]], all_files = input_tables, numeric_factors = numeric_factors, string_factors = string_factors, 
+                          target = merged_supp_tables, hcpc_consol = opt$hcpc_consol, n_clusters = opt$n_clusters, time = opt$time,
                           parallel = opt$parallel)
 
 pca_res$ind_analysis <- names(pca_res)

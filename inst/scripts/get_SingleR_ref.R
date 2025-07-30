@@ -1,6 +1,29 @@
 #! /usr/bin/env Rscript
 
 
+option_list <- list(
+  optparse::make_option(c("-r", "--reference"), type = "character",
+    help = "SingleR reference to use."),
+  optparse::make_option(c("-v", "--version"), type = "character",
+    help = "Celldex version of reference."),
+  optparse::make_option("--replace", type = "logical", default = FALSE, action = "store_true",
+    help = "Replace existing directory"),
+  optparse::make_option("--verbose", type = "logical", default = TRUE, action = "store_true",
+    help = "Display progress"),
+  optparse::make_option("--quiet", type = "logical", default = FALSE, action = "store_false",
+    dest = "verbose", help = "Display progress"),
+  optparse::make_option("--database", type = "character", help = "Database to consult
+    (\"celldex\" or \"scRNAseq\") or a path to local reference"),
+  optparse::make_option("--ref_label", type = "character", default = NULL,
+    help = "Column of reference metadata to use for annotation. Only used in scRNAseq mode"),
+  optparse::make_option("--cpu", type = "integer", default = NULL,
+    help = "CPUs to use when calling data.table::fread"),
+  optparse::make_option("--only_showcase", type = "logical", default = FALSE, action = "store_true",
+    help = "Simply load reference and produce showcase report")
+)  
+
+opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+
 if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   # Obtain this script directory
   full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile), 
@@ -25,29 +48,6 @@ col_to_table <- function(column, col_names) {
   colnames(res) <- col_names
   return(res)
 }
-
-option_list <- list(
-  optparse::make_option(c("-r", "--reference"), type = "character",
-    help = "SingleR reference to use."),
-  optparse::make_option(c("-v", "--version"), type = "character",
-    help = "Celldex version of reference."),
-  optparse::make_option("--replace", type = "logical", default = FALSE, action = "store_true",
-  	help = "Replace existing directory"),
-  optparse::make_option("--verbose", type = "logical", default = TRUE, action = "store_true",
-  	help = "Display progress"),
-  optparse::make_option("--quiet", type = "logical", default = FALSE, action = "store_false",
-  	dest = "verbose", help = "Display progress"),
-  optparse::make_option("--database", type = "character", help = "Database to consult
-    (\"celldex\" or \"scRNAseq\") or a path to local reference"),
-  optparse::make_option("--ref_label", type = "character", default = NULL,
-    help = "Column of reference metadata to use for annotation. Only used in scRNAseq mode"),
-  optparse::make_option("--cpu", type = "integer", default = NULL,
-    help = "CPUs to use when calling data.table::fread"),
-  optparse::make_option("--only_showcase", type = "logical", default = FALSE, action = "store_true",
-    help = "Simply load reference and produce showcase report")
-)  
-
-opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
 opt$name <- basename(opt$reference)
 if(opt$version != "") {

@@ -4,34 +4,6 @@
 ############################### DEgenes Hunter #################################
 ################################################################################
 
-
-############################################################
-##                      SETUP PROGRAM                     ##
-############################################################
-options(warn=1)
-if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
-  # Obtain this script directory
-  full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile), 
-                 error=function(e) # works when using R CMD
-                normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
-                  commandArgs())], '='))[2]))
-  main_path_script <- dirname(full.fpath)
-  root_path <- file.path(main_path_script, '..', '..')
-  # Load custom libraries
-  custom_libraries <- c('main_degenes_Hunter.R', 'io_handling.R', 
-    'general_functions.R', 'dif_expression_packages.R', 
-    'qc_and_benchmarking_functions.R', 'correlation_packages.R', 
-    'plotting_functions.R', 'write_report.R', "statistics_functions.R", "factor_mining.R")
-  for (lib in custom_libraries){
-    source(file.path(root_path, 'R', lib))
-  }
-  template_folder <- file.path(root_path, 'inst', 'templates')
-}else{
-  require('ExpHunterSuite')
-  root_path <- find.package('ExpHunterSuite')
-  template_folder <- file.path(root_path, 'templates')
-}
-
 #Prepare command line input 
 option_list <- list(
   optparse::make_option(c("-i", "--input_file"), type="character", default=NULL,
@@ -180,6 +152,34 @@ option_list <- list(
     default=NULL, help="Seed to define in degenes_Hunter.R script. Will affect PCA results. Leave empty (\"\") to use a random seed, else provide an integer.")
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
+
+############################################################
+##                      SETUP PROGRAM                     ##
+############################################################
+options(warn=1)
+if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
+  # Obtain this script directory
+  full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile), 
+                 error=function(e) # works when using R CMD
+                normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
+                  commandArgs())], '='))[2]))
+  main_path_script <- dirname(full.fpath)
+  root_path <- file.path(main_path_script, '..', '..')
+  # Load custom libraries
+  custom_libraries <- c('main_degenes_Hunter.R', 'io_handling.R', 
+    'general_functions.R', 'dif_expression_packages.R', 
+    'qc_and_benchmarking_functions.R', 'correlation_packages.R', 
+    'plotting_functions.R', 'write_report.R', "statistics_functions.R", "factor_mining.R")
+  for (lib in custom_libraries){
+    source(file.path(root_path, 'R', lib))
+  }
+  template_folder <- file.path(root_path, 'inst', 'templates')
+}else{
+  require('ExpHunterSuite')
+  root_path <- find.package('ExpHunterSuite')
+  template_folder <- file.path(root_path, 'templates')
+}
+
 ############################################################################
 # DRAFT INPUT/OUTPUT
 ############################################################################

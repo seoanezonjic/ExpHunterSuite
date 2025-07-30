@@ -1,5 +1,14 @@
 #! /usr/bin/env Rscript
 
+
+option_list <- list(
+  optparse::make_option(c("-g", "--gtf"), type="character", default=NULL,
+    help="GTF file for txdb."),
+  optparse::make_option(c("-o", "--output_dir"), type="character", default=NULL,
+    help="Path to output directory.")
+  )
+opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
+
 ##########################################
 ## LOAD LIBRARIES
 ##########################################
@@ -19,13 +28,6 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   template_folder <- file.path(root_path, 'templates')
 }
 
-option_list <- list(
-  optparse::make_option(c("-g", "--gtf"), type="character", default=NULL,
-    help="GTF file for txdb."),
-  optparse::make_option(c("-o", "--output_dir"), type="character", default=NULL,
-    help="Path to output directory.")
-  )
-opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 preprocessing_results <- preprocess_gtf(opt$gtf)
 

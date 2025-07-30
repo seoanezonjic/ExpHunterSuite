@@ -1,6 +1,37 @@
 #! /usr/bin/env Rscript
 
 
+option_list <- list(
+  optparse::make_option(c("-m", "--mae_counts"), type="character", default=NULL,
+    help="MAE counts file."),
+  optparse::make_option(c("-q", "--qc_counts"), type="character", default=NULL,
+    help="QC counts file."),
+  optparse::make_option(c("-g", "--genome_version"), type="character", default=NULL,
+    help="Genome release in UCSC format."),
+  optparse::make_option(c("-a", "--add_af"), type="logical", default = FALSE, action = "store_true",
+    help="Whether or not to add allelic frequency info sourced from gnomAD."),
+  optparse::make_option(c("-x", "--max_af"), type="integer", default = 0.001,
+    help="Max allelic frequency cutoff to consider as a rare variant."),
+  optparse::make_option(c("-f", "--gene_mapping_file"), type="character", default=NULL,
+    help="Gene mapping file in tsv format."),
+  optparse::make_option(c("-d", "--dataset"), type="character", default=NULL,
+    help="Dataset name."),
+  optparse::make_option(c("--allelic_ratio_cutoff"), type="integer", default=0.8,
+    help="Min allelic ratio cutoff to consider as allelic imbalace."),
+  optparse::make_option(c("-p", "--p_adj_cutoff"), type="integer", default=0.05,
+    help="Min adjusted P value cutoff to consider an observation significant."),
+  optparse::make_option(c("-c", "--max_var_freq_cohort"), type="integer", default = 0.04,
+    help="Max allelic frequency in cohort cutoff to consider as a rare variant."),
+  optparse::make_option(c("-s", "--sample_annotation"), type="character", default=NULL,
+    help="Sample annotation table in tsv format."),
+  optparse::make_option(c("-v", "--qc_vcf"), type="character", default=NULL,
+    help="High-quality VCF file to use as golden standard"),
+  optparse::make_option(c("-n", "--cpu"), type="integer", default=1,
+    help="Number of CPUs provided to job.")
+  )
+
+opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
+
 ##########################################
 ## LOAD LIBRARIES
 ##########################################
@@ -65,37 +96,6 @@ run_deseq_qc <- function(file) {
 	S4Vectors::mcols(qc_gr) = S4Vectors::DataFrame(RNA_GT = rmae$RNA_GT)
 	return(qc_gr)
 }
-
-option_list <- list(
-  optparse::make_option(c("-m", "--mae_counts"), type="character", default=NULL,
-    help="MAE counts file."),
-  optparse::make_option(c("-q", "--qc_counts"), type="character", default=NULL,
-    help="QC counts file."),
-  optparse::make_option(c("-g", "--genome_version"), type="character", default=NULL,
-    help="Genome release in UCSC format."),
-  optparse::make_option(c("-a", "--add_af"), type="logical", default = FALSE, action = "store_true",
-    help="Whether or not to add allelic frequency info sourced from gnomAD."),
-  optparse::make_option(c("-x", "--max_af"), type="integer", default = 0.001,
-    help="Max allelic frequency cutoff to consider as a rare variant."),
-  optparse::make_option(c("-f", "--gene_mapping_file"), type="character", default=NULL,
-    help="Gene mapping file in tsv format."),
-  optparse::make_option(c("-d", "--dataset"), type="character", default=NULL,
-    help="Dataset name."),
-  optparse::make_option(c("--allelic_ratio_cutoff"), type="integer", default=0.8,
-    help="Min allelic ratio cutoff to consider as allelic imbalace."),
-  optparse::make_option(c("-p", "--p_adj_cutoff"), type="integer", default=0.05,
-    help="Min adjusted P value cutoff to consider an observation significant."),
-  optparse::make_option(c("-c", "--max_var_freq_cohort"), type="integer", default = 0.04,
-    help="Max allelic frequency in cohort cutoff to consider as a rare variant."),
-  optparse::make_option(c("-s", "--sample_annotation"), type="character", default=NULL,
-    help="Sample annotation table in tsv format."),
-  optparse::make_option(c("-v", "--qc_vcf"), type="character", default=NULL,
-    help="High-quality VCF file to use as golden standard"),
-  optparse::make_option(c("-n", "--cpu"), type="integer", default=1,
-    help="Number of CPUs provided to job.")
-  )
-
-opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 ## Configuration
 

@@ -2,37 +2,6 @@
 
 
 ##########################################
-## LOAD LIBRARIES
-##########################################
-
-if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
-  # Obtain this script directory
-  full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile), 
-                 error=function(e) # works when using R CMD
-                normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
-                  commandArgs())], '='))[2]))
-  main_path_script <- dirname(full.fpath)
-  root_path <- file.path(main_path_script, '..', '..')
-  # Load custom libraries
-  if(Sys.getenv("integrate") == "TRUE" & Sys.getenv("sketch") == "TRUE") {
-    custom_libraries <- c('sc_library.R', 'main_sc_functions.R', 'general_functions.R')
-    devtools::load_all(Sys.getenv("HTMLREPORT_PATH"))
-    source_folder <- file.path(find.package("htmlreportR"), "inst")
-    for (lib in custom_libraries){
-      source(file.path(root_path, 'R', lib))
-    }
-  } else {
-    source_folder <- NULL
-    devtools::load_all(root_path)
-  }
-  template_folder <- file.path(root_path, 'inst', 'templates')
-}else{
-  require('ExpHunterSuite')
-  root_path <- find.package('ExpHunterSuite')
-  template_folder <- file.path(root_path, 'templates')
-}
-
-##########################################
 ## OPTPARSE
 ##########################################
 
@@ -139,6 +108,37 @@ option_list <- list(
 )
 
 params <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+
+##########################################
+## LOAD LIBRARIES
+##########################################
+
+if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
+  # Obtain this script directory
+  full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile), 
+                 error=function(e) # works when using R CMD
+                normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
+                  commandArgs())], '='))[2]))
+  main_path_script <- dirname(full.fpath)
+  root_path <- file.path(main_path_script, '..', '..')
+  # Load custom libraries
+  if(Sys.getenv("integrate") == "TRUE" & Sys.getenv("sketch") == "TRUE") {
+    custom_libraries <- c('sc_library.R', 'main_sc_functions.R', 'general_functions.R')
+    devtools::load_all(Sys.getenv("HTMLREPORT_PATH"))
+    source_folder <- file.path(find.package("htmlreportR"), "inst")
+    for (lib in custom_libraries){
+      source(file.path(root_path, 'R', lib))
+    }
+  } else {
+    source_folder <- NULL
+    devtools::load_all(root_path)
+  }
+  template_folder <- file.path(root_path, 'inst', 'templates')
+}else{
+  require('ExpHunterSuite')
+  root_path <- find.package('ExpHunterSuite')
+  template_folder <- file.path(root_path, 'templates')
+}
 
 options(future.globals.maxSize = 15e+09)
 options(Seurat.object.assay.version = 'v5')

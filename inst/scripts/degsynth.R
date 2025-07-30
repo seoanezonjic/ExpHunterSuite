@@ -1,32 +1,9 @@
 #! /usr/bin/env Rscript
 
-#' @author Fernando Moreno Jabato <jabato(at)uma(dot)es>
 
-#############################################
-### CONFIGURE 
-#############################################
-
-options(warn=1)
-if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
-  # Loading libraries
-  # suppressPackageStartupMessages(require(optparse)) 
-  # suppressPackageStartupMessages(require(TCC))
-
-  # Obtain this script directory
-  full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  
-                 error=function(e) # works when using R CMD
-                normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
-                  commandArgs())], '='))[2]))
-  main_path_script <- dirname(full.fpath)
-  root_path <- file.path(main_path_script, '..', '..')
-  # Load custom libraries
-  devtools::load_all(root_path)
-}else{
-  require('ExpHunterSuite')
-  root_path <- find.package('ExpHunterSuite')
-}
-
-#Loading libraries
+##########################################
+## OPTPARSE
+##########################################
 
 option_list <- list(
   optparse::make_option(c("-m", "--mode"), type = "character", default = "compcodeR",
@@ -187,6 +164,30 @@ option_list <- list(
 )
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
+
+#############################################
+### LOADING LIBRARIES
+#############################################
+
+options(warn=1)
+if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
+  # Loading libraries
+  # suppressPackageStartupMessages(require(optparse)) 
+  # suppressPackageStartupMessages(require(TCC))
+
+  # Obtain this script directory
+  full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile),  
+                 error=function(e) # works when using R CMD
+                normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
+                  commandArgs())], '='))[2]))
+  main_path_script <- dirname(full.fpath)
+  root_path <- file.path(main_path_script, '..', '..')
+  # Load custom libraries
+  devtools::load_all(root_path)
+}else{
+  require('ExpHunterSuite')
+  root_path <- find.package('ExpHunterSuite')
+}
 
 if(!is.null(opt$seed)) set.seed(opt$seed)
 

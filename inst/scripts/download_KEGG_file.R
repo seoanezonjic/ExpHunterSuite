@@ -1,6 +1,16 @@
 #!/usr/bin/env Rscript
 
 options(warn=1)
+
+########################## OPTIONS
+option_list <- list(
+    optparse::make_option(c("-K", "--kegg_data_file"), ,type = "character", default=NULL,
+                        help=paste0("path to download KEGG data file. If unspecified, defaults to inst/kegg_data_files")), 
+      optparse::make_option(c("-O", "--model_organism"), type="character", default="Human", 
+                        help="Model organism.")
+)
+opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
+
 if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   # Obtain this script directory
   full.fpath <- tryCatch(normalizePath(parent.frame(2)$ofile), 
@@ -24,15 +34,6 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   organisms_table_file <- file.path(root_path, "external_data", 
         "organism_table.txt")
 }
-
-########################## OPTIONS
-option_list <- list(
-	  optparse::make_option(c("-K", "--kegg_data_file"), ,type = "character", default=NULL,
-                        help=paste0("path to download KEGG data file. If unspecified, defaults to inst/kegg_data_files")), 
-      optparse::make_option(c("-O", "--model_organism"), type="character", default="Human", 
-                        help="Model organism.")
-)
-opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 organisms_table <- get_organism_table(organisms_table_file)
 current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]

@@ -1,5 +1,24 @@
 #!/usr/bin/env Rscript
 
+
+option_list <- list(
+  optparse::make_option(c("-i", "--input_file"), type="character", default=NULL,
+                        help="Table to annotate"),
+  optparse::make_option(c("-o", "--output_file"), type="character", default='Annotated_table.txt',
+                        help="Define the output path. Default = %default"),
+  optparse::make_option(c("-c", "--column"), type="character", default=1,
+                        help="Column name or index or 'rownames' with ensembl_IDs. Default = %default"),
+  optparse::make_option(c("-m", "--mirna"), type= "logical", default = FALSE, action ="store_true",
+                        help= "Indicate if the ids to translate are miRNA (from miRBase to mature ID). If activated -O, -I and -K are ignored"),
+  optparse::make_option(c("-I", "--input_keytype"), type="character", default=NULL,
+                        help="Set the input keytype. Default=%default : All possible keytypes will be printed"),
+  optparse::make_option(c("-K", "--output_keytype"), type="character", default="SYMBOL",
+                        help="Set the output keytype. Default=%default"),
+  optparse::make_option(c("-O", "--organism"), type="character", default="Human",
+                        help="Set the model organism. Default = %default")
+)
+opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
+
 options(warn=1)
 if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   # Obtain this script directory
@@ -20,26 +39,6 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   organisms_table_file <- file.path(root_path, "external_data", 
         "organism_table.txt")
 }
-
-
-
-option_list <- list(
-	optparse::make_option(c("-i", "--input_file"), type="character", default=NULL,
-                        help="Table to annotate"),
-	optparse::make_option(c("-o", "--output_file"), type="character", default='Annotated_table.txt',
-                        help="Define the output path. Default = %default"),
-	optparse::make_option(c("-c", "--column"), type="character", default=1,
-                        help="Column name or index or 'rownames' with ensembl_IDs. Default = %default"),
-  optparse::make_option(c("-m", "--mirna"), type= "logical", default = FALSE, action ="store_true",
-                        help= "Indicate if the ids to translate are miRNA (from miRBase to mature ID). If activated -O, -I and -K are ignored"),
-	optparse::make_option(c("-I", "--input_keytype"), type="character", default=NULL,
-                        help="Set the input keytype. Default=%default : All possible keytypes will be printed"),
-	optparse::make_option(c("-K", "--output_keytype"), type="character", default="SYMBOL",
-                        help="Set the output keytype. Default=%default"),
-	optparse::make_option(c("-O", "--organism"), type="character", default="Human",
-                        help="Set the model organism. Default = %default")
-)
-opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 organisms_table <- get_organism_table(organisms_table_file)
 current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$organism,]
