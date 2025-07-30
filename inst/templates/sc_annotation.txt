@@ -130,6 +130,7 @@
         colnames(cell_pcts) <- c("labels", "cell_pct")
         final_medians <- rbind(final_medians, Pruned = c(labels = "Pruned", medians = globals$pruned_global_median, pruned_medians = 0))
         final_medians <- merge(final_medians, cell_pcts, by = "labels")
+        rownames(final_medians) <- final_medians[, 1]
         return(list(final_medians = final_medians, globals = globals))
     }
 
@@ -207,23 +208,38 @@ end.rcode-->
 <!--begin.rcode SingleR_annotation, eval = !is.null(plotter$hash_vars$SingleR_annotation)
     SingleR_medians_and_pcts <- get_SingleR_medians_and_pcts(SingleR_annotation = plotter$hash_vars$SingleR_annotation, seu = plotter$hash_vars$seu)
     plotter$hash_vars$final_medians <- SingleR_medians_and_pcts$final_medians
-    global_median <- plotter$hash_vars$SingleR_medians_and_pcts$globals$global_median
-    cat(plotter$create_title("SingleR annotation metrics", "singler_annot", hlevel = 2, indexable = TRUE, clickable = FALSE))
+    global_median <- SingleR_medians_and_pcts$globals$global_median
+    pruned_global_median <- SingleR_medians_and_pcts$globals$pruned_global_median
+    cat(plotter$create_title("<b>SINGLER ANNOTATION METRICS</b>", "singler_annot", hlevel = 1, indexable = TRUE, clickable = FALSE))
     SingleR_legend <- c("<b>Assigned</b>: Scores for all cells assigned to this label.",
                         "<b>Pruned</b>: Scores for all cells assigned to this label but pruned out.",
                         "<b>Other</b>: Scores that all cells assigned to a different label got for this label.")
     cat(make_html_list(SingleR_legend))
-    cat(plotter$create_title("General annotation scores", "singler_medians", hlevel = 3, indexable = FALSE, clickable = FALSE))
+    cat("<a href=\"https://www.bioconductor.org/packages/devel/bioc/vignettes/SingleR/inst/doc/SingleR.html\"> Link to SingleR documentation </a>")
+    cat(plotter$create_title("General annotation scores", "singler_medians", hlevel = 2, indexable = FALSE, clickable = FALSE))
     cat("<p> This plot represents the median score for each assigned and pruned label. Horizontal line represents median score across all its respective labels.
-             \"Other\" labels are not included in this plot. </p>")
+             \"Other\" labels are not included in this plot. A third series representing percentage of cells annotated as each cell type is also shown. </p>")
     cat(plotter$prettify_div(plotter$barplot(list(id = "final_medians", title = "Median SingleR scores for assigned labels",
             header = NULL, row_names = NULL, text = FALSE, transpose = TRUE, smp_attr = 1, colorBy = "label", width = "1024",
             config = list(graphOrientation = "vertical", showLegend = TRUE, xAxisTitle = "label", setMinX = 0, setMaxX = 1,
                           decorations = list(line = list(list(align = "left", color= "rgb(0,0,0)", label = "global median value",
-                          value = global_median, width = 2)))))), preset = "magic", justify = "left"))
+                          value = global_median, width = 2), list(align = "left", color= "rgb(0,0,0)", label = "global pruned median value",
+                          value = pruned_global_median, width = 2)))))), preset = "magic", justify = "left"))
+    cat(plotter$create_title("Label score heatmap", "score_heatmap", hlevel = 2, indexable = FALSE, clickable = FALSE))
+    cat("<p> This heatmap represents the score that each SingleR cluster got for each cell type. Top bar represents which label
+             each individual cell ended up getting. The higher the intensity, the greater the score. The second line, \"Pruned\",
+             means that the highlighted cell was discarded after annotation due to low delta value. See delta scores section for
+             the definition of \"delta\". </p>")
     cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotScoreHeatmap, text = "dynamic", custom_format = TRUE,
                              plot_type = "print"))
+    cat(plotter$create_title("Score distribution", "score_distribution", hlevel = 2, indexable = FALSE, clickable = FALSE))
+    cat("<p> These violin plots represent the score distributions for each label. \"Assigned\" cells are the final cells that got
+             that label. \"Pruned\" cells are cells that got that label but were later discarded due to low delta value. \"Other\"
+             cells are all other cells in the experiment (those that got a different label). </p>")
     cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotScoreDistribution, text = "dynamic", custom_format = TRUE))
+    cat(plotter$create_title("Delta distribution", "delta_distribution", hlevel = 2, indexable = FALSE, clickable = FALSE))
+    cat("<p> These violin plots represent the delta value distributions for each label. In SingleR annotation, \"delta\" is defined
+             as the difference between the score for the assigned label and the median across all labels for each cell. </p>")
     cat(plotter$static_plot_main(id = "SingleR_annotation", plotting_function = custom_plotDeltaDistribution, text = "dynamic", custom_format = TRUE))
 end.rcode-->
 
