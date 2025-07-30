@@ -426,6 +426,10 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
 #' @param source_folder htmlreportR source folder to load js and css libraries
 #' @param files_css Path to css file to inject. By default it injects styles.css
 #' found in ExpHunterSuite's templates directory.
+#' @param node_label Number between 0 and 1. The closer it is to zero, the 
+#' smaller the labels will be.
+#' @param cex_label_category How nodes will be labeled. Possible values: 
+#' \"category\" (the default), \"group\", \"all\", \"none\".
 #' @return void
 #' @importFrom enrichplot emapplot
 #' @importFrom enrichplot dotplot
@@ -528,6 +532,10 @@ write_clusters_to_enrichment <- function(output_path="results",
 #' @param source_folder htmlreportR source folder to load js and css libraries
 #' @param files_css Path to css file to inject. By default it injects styles.css
 #' found in ExpHunterSuite's templates directory.
+#' @param node_label Number between 0 and 1. The closer it is to zero, the 
+#' smaller the labels will be.
+#' @param cex_label_category How nodes will be labeled. Possible values: 
+#' \"category\" (the default), \"group\", \"all\", \"none\".
 #' @return void
 #' @importFrom rmarkdown render
 #' @export
