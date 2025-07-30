@@ -579,7 +579,7 @@ test_that("get_fc_vs_ncells returns NULL if input is NULL, regardless of
 test_that("test check_sc_input, integrate and sketch to TRUE, SingleR_ref,
            reduce to FALSE", {
   output <- suppressMessages(check_sc_input(integrate = TRUE, sketch = TRUE,
-                           SingleR_ref = "Non_NULL", reduce = FALSE))
+   fine.tune = TRUE, aggr.ref = FALSE, SingleR_ref = "Non_NULL", reduce = FALSE))
   expected <- list(integrate = FALSE, sketch = FALSE, aggr.ref = FALSE,
                    fine.tune = TRUE)
   expect_equal(output, expected)
@@ -588,7 +588,7 @@ test_that("test check_sc_input, integrate and sketch to TRUE, SingleR_ref,
 test_that("test check_sc_input, integrate and sketch to FALSE, SingleR_ref,
            reduce to TRUE", {
   output <- suppressMessages(check_sc_input(integrate = TRUE, sketch = TRUE,
-                           SingleR_ref = "Non_NULL", reduce = TRUE))
+   fine.tune = TRUE, aggr.ref = FALSE, SingleR_ref = "Non_NULL", reduce = TRUE))
   expected <- list(integrate = FALSE, sketch = FALSE, aggr.ref = TRUE,
                    fine.tune = FALSE)
   expect_equal(output, expected)
@@ -596,8 +596,8 @@ test_that("test check_sc_input, integrate and sketch to FALSE, SingleR_ref,
 
 test_that("test check_sc_input, integrate and sketch to TRUE, no SingleR_ref,
            reduce to FALSE", {
-  output <- check_sc_input(integrate = TRUE, sketch = TRUE,
-                           SingleR_ref = NULL, reduce = FALSE)
+  output <- check_sc_input(integrate = TRUE, sketch = TRUE, fine.tune = TRUE,
+                           aggr.ref = FALSE, SingleR_ref = NULL, reduce = FALSE)
   expected <- list(integrate = TRUE, sketch = TRUE, aggr.ref = FALSE,
                    fine.tune = TRUE)
   expect_equal(output, expected)
