@@ -469,10 +469,9 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
 #' @returns A markers data frame with a new column for cell type assigned to
 #' cluster.
 #' @examples
-#'  \dontrun{
-#'  ### THIS EXAMPLE NEEDS TO BE FIXED
-#'    check_sc_input()
-#'  }
+#' new_opt <- check_sc_input(integrate = TRUE, sketch = TRUE, fine.tune = TRUE,
+#'                   aggr.ref = FALSE, SingleR_ref = "Non_NULL", reduce = FALSE)
+#' new_opt
 #' @export
 
 check_sc_input <- function(metadata = NULL, DEG_target = NULL, integrate = NULL,
