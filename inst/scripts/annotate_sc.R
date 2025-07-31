@@ -87,6 +87,10 @@ option_list <- list(
             help = "Filter imported counts according to string."),
   optparse::make_option("--ref_filter", type = "character", default = "",
             help = "Filter SingleR reference according to string."),
+  optparse::make_option("--save_trained_object", type = "logical", default = FALSE, action = "store_true",
+            help = "hether or not trained SingleR object should be saved to disk. Will be saved in output/trained_SingleR.R."),
+  optparse::make_option("--load_trained_object", type = "logical", default = FALSE, action = "store_true",
+            help = "Whether or not trained SingleR object should be loaded from disk. Will be loaded from output/trained_SingleR.R."),
   optparse::make_option("--sketch", type = "logical", default = FALSE, action = "store_true",
             help = "Sketch experiment."),
   optparse::make_option("--force_ncells", type = "integer", default = NA_integer_,
@@ -251,7 +255,7 @@ if(file.exists(final_counts_path) & opt$integrate) {
                     BPPARAM = BPPARAM, doublet_list = opt$doublet_list, integration_method = opt$int_method,
                     sketch = opt$sketch, sketch_pct = opt$sketch_pct,
                     sketch_method = opt$sketch_method, force_ncells = opt$force_ncells, fine.tune = opt$fine_tune,
-                    aggr.ref = opt$aggr_ref,
+                    aggr.ref = opt$aggr_ref, save_trained_object = opt$save_trained_object, load_trained_object = opt$load_trained_object,
                     k_weight = opt$k_weight, min_cells_per_sample = opt$min_cells_per_sample,
                     min_cell_proportion = opt$min_cell_proportion, logfc.threshold = opt$log2fc_threshold)
   if(opt$integrate) {
