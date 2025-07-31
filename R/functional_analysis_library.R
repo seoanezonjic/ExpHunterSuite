@@ -781,14 +781,13 @@ summarize_merged_ora <- function(ORA_merged, sim_thr=0.7,
   for (funsys in names(ORA_merged)) {
     sum_table <- sum_enrichments[[funsys]]
     sum_table <- (sum_table > pthreshold) + 0
-    sum_table <- sum_table[rownames(sum_table) != "to_remove",]
+    sum_table <- sum_table[rownames(sum_table) != "to_remove", , drop = FALSE]
     summ_enr_table <- sum_table
     rownames(summ_enr_table) <- get_GOid_term(rownames(summ_enr_table))
-
     summ_enr_clean <-  clean_parentals_in_matrix(sum_table, funsys)
     rownames(summ_enr_clean) <- get_GOid_term(rownames(summ_enr_clean))
-    summ_enr_clean <- summ_enr_clean[rowSums(summ_enr_clean < pthreshold) != 0,]
-   
+    pass_terms <- rowSums(summ_enr_clean < pthreshold) != 0
+    summ_enr_clean <- summ_enr_clean[pass_terms, , drop = FALSE]
     full_enr_table <- cluster_enr_to_matrix(
                                       ORA_merged[[funsys]]@compareClusterResult)
     full_enr_table <- (full_enr_table > pthreshold) + 0
