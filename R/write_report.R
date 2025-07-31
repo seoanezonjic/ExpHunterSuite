@@ -316,7 +316,14 @@ output_pairs_all <- merge(output_pairs_all, best_strats, by.x ="miRNA_ID", by.y 
 write_summarize_heatmaps <- function(summarized_ORA, output_path) {
   for (funsys in names(summarized_ORA)) {
    summ_ora_funsys <- summarized_ORA[[funsys]]
-   heatmaply::heatmaply(summ_ora_funsys$summ_enr_table, 
+   table_n_terms <- ncol(summ_ora_funsys$summ_enr_table)
+   clean_n_terms <- ncol(summ_ora_funsys$summ_enr_clean)
+   full_n_terms <- ncol(summ_ora_funsys$full_enr_table)
+   if(table_n_terms < 2) {
+    message("Fewer than two terms enriched in category ", funsys, " in summary table.",
+            " Skipping heatmap.")
+   } else {
+     heatmaply::heatmaply(summ_ora_funsys$summ_enr_table, 
                          grid_color = "gray50",
                          seriate = "mean",
                          grid_width = 0.00001,
@@ -327,31 +334,42 @@ write_summarize_heatmaps <- function(summarized_ORA, output_path) {
                          midpoint = 0.5, 
                          limits = c(0, 1)),
                          file = file.path(output_path, paste0("summ_",funsys,'_heatmap.html')))
-    heatmaply::heatmaply(summ_ora_funsys$summ_enr_clean, 
-                         grid_color = "gray50",
-                         seriate = "mean",
-                         grid_width = 0.00001,
-                         fontsize_row = 11,
-                          fontsize_col = 13,
-                         dendrogram = "both",
-                         scale_fill_gradient_fun = ggplot2::scale_fill_gradient2(
-                         low = "#EE8291", 
-                         high = "white", 
-                         midpoint = 0.5, 
-                         limits = c(0, 1)),
-                         file = file.path(output_path, paste0("summ_rem_parent_",funsys,'_heatmap.html')))
-    heatmaply::heatmaply(summ_ora_funsys$full_enr_table, 
-                        grid_color = "gray50",
-                        seriate = "mean",
-                        dendrogram = "both",
-                        grid_width = 0.00001,
-                        scale_fill_gradient_fun = ggplot2::scale_fill_gradient2(
-                        low = "#EE8291", 
-                        high = "white", 
-                        midpoint = 0.5, 
-                        limits = c(0, 1)),
-                        file = file.path(output_path, paste0("full_",
-                                         funsys,'_heatmap.html')))
+   }
+   if(clean_n_terms < 2) {
+    message("Fewer than two terms enriched in category ", funsys, " in cleaned table.",
+            " Skipping heatmap.")
+   } else {
+     heatmaply::heatmaply(summ_ora_funsys$summ_enr_clean, 
+                          grid_color = "gray50",
+                          seriate = "mean",
+                          grid_width = 0.00001,
+                          fontsize_row = 11,
+                           fontsize_col = 13,
+                          dendrogram = "both",
+                          scale_fill_gradient_fun = ggplot2::scale_fill_gradient2(
+                          low = "#EE8291", 
+                          high = "white", 
+                          midpoint = 0.5, 
+                          limits = c(0, 1)),
+                          file = file.path(output_path, paste0("summ_rem_parent_",funsys,'_heatmap.html')))
+   }
+   if(full_n_terms < 2) {
+     message("Fewer than two terms enriched in category ", funsys, " in full table.",
+             " Skipping heatmap.")
+   } else {
+     heatmaply::heatmaply(summ_ora_funsys$full_enr_table, 
+                     grid_color = "gray50",
+                     seriate = "mean",
+                     dendrogram = "both",
+                     grid_width = 0.00001,
+                     scale_fill_gradient_fun = ggplot2::scale_fill_gradient2(
+                     low = "#EE8291", 
+                     high = "white", 
+                     midpoint = 0.5, 
+                     limits = c(0, 1)),
+                     file = file.path(output_path, paste0("full_",
+                                      funsys,'_heatmap.html')))
+   }
   }
 }
 
