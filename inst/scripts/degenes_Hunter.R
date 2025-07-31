@@ -78,7 +78,7 @@ option_list <- list(
     default="",
     help=paste0("Columns in the target file to be used as categorical",
       " factors for the correlation analysis. If more than one to be used,",
-      " should be comma separated")),
+      " should be comma separated. \"treat\" is always used as string factor.")),
   optparse::make_option(c("-N", "--numeric_factors"), type="character", 
     default="",
     help=paste0("Columns in the target file to be used as numeric (continuous)",
