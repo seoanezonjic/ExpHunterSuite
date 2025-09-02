@@ -120,7 +120,7 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
     integration_method = "Harmony", sketch = FALSE, sketch_pct = 25, 
     force_ncells = NA_integer_, sketch_method = "LeverageScore", min.pct = 0.1,
     doublet_path = getwd(), min_cell_proportion = 0.1, logfc.threshold = 0.25,
-    aggr.ref = FALSE, fine.tune = TRUE, pretrained_dataset = NULL,
+    aggr.ref = FALSE, fine.tune = TRUE,
     save_trained_object = FALSE, load_trained_object = FALSE){
     main_start <- Sys.time()
     new_opt <- check_sc_input(integrate = integrate, sketch = sketch,
