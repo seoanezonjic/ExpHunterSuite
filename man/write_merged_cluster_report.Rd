@@ -12,8 +12,12 @@ write_merged_cluster_report(
   sample_classes = NULL,
   DEGH_results = NULL,
   showCategories,
-  node_label = 1,
-  cex_label_category = "category",
+  node_label = "category",
+  size_item = 1,
+  size_category = 1,
+  size_edge = 1,
+  hilight = "none",
+  hilight_alpha = 0.3,
   group_results,
   func_results = NULL,
   source_folder = NULL,
@@ -33,11 +37,23 @@ write_merged_cluster_report(
 
 \item{showCategories}{number of categories in the figures (per cluster)}
 
-\item{node_label}{Number between 0 and 1. The closer it is to zero, the
-smaller the labels will be.}
+\item{node_label}{How to label the nodes. Default "category". Other possible
+values: "all", "none", "item", "exclusive", "share".}
 
-\item{cex_label_category}{How nodes will be labeled. Possible values:
-\"category\" (the default), \"group\", \"all\", \"none\".}
+\item{size_item}{Size of nodes. Smaller than 1 values will reduce size,
+higher than 1 values will increase it. Default: 1.}
+
+\item{size_category}{Size of category labels. Smaller than 1 values will
+reduce size, higher than 1 values will increase it. Default: 1.}
+
+\item{size_edge}{Size of edges. Smaller than 1 values will reduce size,+
+higher than 1 values will increase it. Default: 1.}
+
+\item{hilight}{Name of category to highlight. Default "none".}
+
+\item{hilight_alpha}{Transparency value that will be applied to categories
+not highlighted. Must be a value between 0 (completely transparent) and 1
+(completely opaque). Default: 0.3.}
 
 \item{group_results}{experimental - whether to group results in the emap plot
 and functional (f). Default = "fc"}

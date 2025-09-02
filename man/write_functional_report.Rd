@@ -22,7 +22,11 @@ write_functional_report(
   template_folder = NULL,
   max_genes = 200,
   node_label = "category",
-  cex_label_category = 1,
+  size_item = 1,
+  size_category = 1,
+  size_edge = 1,
+  hilight = "none",
+  hilight_alpha = 0.3,
   files_css = file.path(template_folder, "styles.css")
 )
 }
@@ -61,11 +65,23 @@ R value}
 
 \item{max_genes}{maximum number of genes to plot in cnet plot}
 
-\item{node_label}{Number between 0 and 1. The closer it is to zero, the
-smaller the labels will be.}
+\item{node_label}{How to label the nodes. Default "category". Other possible
+values: "all", "none", "item", "exclusive", "share".}
 
-\item{cex_label_category}{How nodes will be labeled. Possible values:
-\"category\" (the default), \"group\", \"all\", \"none\".}
+\item{size_item}{Size of nodes. Smaller than 1 values will reduce size,
+higher than 1 values will increase it. Default: 1.}
+
+\item{size_category}{Size of category labels. Smaller than 1 values will
+reduce size, higher than 1 values will increase it. Default: 1.}
+
+\item{size_edge}{Size of edges. Smaller than 1 values will reduce size,+
+higher than 1 values will increase it. Default: 1.}
+
+\item{hilight}{Name of category to highlight. Default "none".}
+
+\item{hilight_alpha}{Transparency value that will be applied to categories
+not highlighted. Must be a value between 0 (completely transparent) and 1
+(completely opaque). Default: 0.3.}
 
 \item{files_css}{Path to css file to inject. By default it injects styles.css
 found in ExpHunterSuite's templates directory.}
