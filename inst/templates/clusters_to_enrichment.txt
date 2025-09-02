@@ -5,7 +5,6 @@
 if (!is.null(opt$description)){
   cat(opt$description)
 }
-
 end.rcode-->
 
 <!--begin.rcode render_partial, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis' 
