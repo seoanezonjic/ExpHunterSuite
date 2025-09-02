@@ -173,12 +173,13 @@ If the \code{slot} parameter is "scale.data" no filtering is performed.}
 \item \code{FALSE}: Do not perform fine-tuning..
 }}
 
-\item{save_trained_object}{A boolean. If TRUE, trained object will be saved to disk,
-and further calls to the pipeline will recognize and load it instead of retraining.
+\item{save_trained_object}{A boolean. If TRUE, trained object will be saved
+to disk, and further calls to the pipeline will recognize and load it instead
+of retraining.
 Default FALSE.}
 
-\item{load_trained_object}{A boolean. If TRUE, trained object will be loaded from
-disk.}
+\item{load_trained_object}{A boolean. If TRUE, trained object will be loaded
+from disk.}
 }
 \value{
 invisible(final_results list. Contains multiple items:

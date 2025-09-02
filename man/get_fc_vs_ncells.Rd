@@ -26,7 +26,8 @@ NULL.}
 
 \item{p_val_cutoff}{A numeric. Max adjusted p value cutoff.}
 
-\item{min_counts}{An integer. Minimum gene counts to consider a gene as expressed.}
+\item{min_counts}{An integer. Minimum gene counts to consider a gene as
+expressed.}
 }
 \value{
 A list containing fc and ncells data frames.

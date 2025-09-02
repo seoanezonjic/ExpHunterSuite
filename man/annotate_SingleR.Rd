@@ -64,12 +64,13 @@ reference.}
 \item{subset_by}{A string vector. Categories to consider in integrative
 analysis.}
 
-\item{save_trained_object}{A boolean. If TRUE, trained object will be saved to disk,
-and further calls to the pipeline will recognize and load it instead of retraining.
+\item{save_trained_object}{A boolean. If TRUE, trained object will be saved
+to disk, and further calls to the pipeline will recognize and load it instead
+of retraining.
 Default FALSE.}
 
-\item{load_trained_object}{A boolean. If TRUE, trained object will be loaded from
-disk.}
+\item{load_trained_object}{A boolean. If TRUE, trained object will be loaded
+from disk.}
 }
 \value{
 A seurat object with a new sketched assay.

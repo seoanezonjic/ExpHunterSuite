@@ -85,12 +85,13 @@ if \code{ref} is a \linkS4class{SummarizedExperiment} object (or is a list that 
 \item{BPPARAM}{A \linkS4class{BiocParallelParam} object specifying how parallelization should be performed in other steps,
 see \code{?\link[SingleR]{trainSingleR}} and \code{?\link[SingleR]{classifySingleR}} for more details.}
 
-\item{save_trained_object}{A boolean. If TRUE, trained object will be saved to disk,
-and further calls to the pipeline will recognize and load it instead of retraining.
+\item{save_trained_object}{A boolean. If TRUE, trained object will be saved
+to disk, and further calls to the pipeline will recognize and load it instead
+of retraining.
 Default FALSE.}
 
-\item{load_trained_object}{A boolean. If TRUE, trained object will be loaded from
-disk.}
+\item{load_trained_object}{A boolean. If TRUE, trained object will be loaded
+from disk.}
 }
 \description{
 apply_SingleR
