@@ -13,14 +13,16 @@ option_list <- list(
   optparse::make_option("--quiet", type = "logical", default = FALSE, action = "store_false",
     dest = "verbose", help = "Display progress"),
   optparse::make_option("--database", type = "character", help = "Database to consult
-    (\"celldex\" or \"scRNAseq\") or a path to local reference"),
+    (\"celldex\" or \"scRNAseq\") or a path to local database"),
+    optparse::make_option("--output", type = "character", help = "Path where reference
+      will be locally saved."),
   optparse::make_option("--ref_label", type = "character", default = NULL,
     help = "Column of reference metadata to use for annotation. Only used in scRNAseq mode"),
   optparse::make_option("--cpu", type = "integer", default = NULL,
     help = "CPUs to use when calling data.table::fread"),
   optparse::make_option("--only_showcase", type = "logical", default = FALSE, action = "store_true",
     help = "Simply load reference and produce showcase report")
-)  
+)
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
@@ -60,7 +62,12 @@ if(!opt$only_showcase) {
   }
   if(file.exists(opt$database)) {
     message("Generating reference from specified database")
-    meta_file <- Sys.glob(file.path(opt$database, "metadata/meta*.txt"))
+    message("Provided database: ", opt$database)
+    message("Processed reference will be saved in: ", opt$output)
+    if(!file.exists(opt$output)) {
+      dir.create(opt$output)
+    }
+    meta_file <- Sys.glob(file.path(opt$database, "metadata/meta*"))
     if(length(meta_file) > 1) {
       stop('More than one match for metadata file. Please ensure only one metadata
         file matches the expression "meta*.txt"')
@@ -88,6 +95,8 @@ if(!opt$only_showcase) {
       read_sparse_matrix <- NULL
     }
     tenX_dirs <- dirname(Sys.glob(paste0(opt$database, "/expression/*/*mtx*")))
+    message("tenX_dirs are:")
+    message(paste0(opt$database, "/expression/*/*mtx*"))
     if(length(tenX_dirs) > 0) {
       tenX_matrices <- vector(mode = "list", length = length(tenX_dirs))
       for(tenX_dir in seq(tenX_dirs)) {
@@ -98,12 +107,14 @@ if(!opt$only_showcase) {
       message("10X matrices loaded. Merging (this may take a while)")
       merged_tenX_matrix <- SeuratObject::RowMergeSparseMatrices(tenX_matrices[[1]], tenX_matrices[-1])
     } else {
-      read_sparse_matrix <- NULL
+      merged_tenX_matrix <- NULL
     }
     if(!is.null(read_sparse_matrix) & !is.null(merged_tenX_matrix)) {
      final_sparse_matrix <- SeuratObject::RowMergeSparseMatrices(read_sparse_matrix, merged_tenX_matrix)  
     } else {
-      if(is.null(read_sparse_matrix)) {
+      if(is.null(read_sparse_matrix) & is.null(merged_tenX_matrix)) {
+        final_sparse_matrix <- Seurat::Read10X(file.path(opt$database, "expression"))
+      } else if(is.null(read_sparse_matrix)) {
         final_sparse_matrix <- merged_tenX_matrix
       } else {
         final_sparse_matrix <- read_sparse_matrix
@@ -116,10 +127,9 @@ if(!opt$only_showcase) {
     metadata <- metadata[, -1]
     ref <- SummarizedExperiment::SummarizedExperiment(assays=list(counts = final_sparse_matrix), colData = metadata)
     ref <- scater::logNormCounts(ref)
-    ref_seu <- CreateSeuratObject(counts = final_sparse_matrix, meta.data = metadata)
+    ref_seu <- Seurat::CreateSeuratObject(counts = final_sparse_matrix, meta.data = metadata)
     ref_seu <- SeuratObject::RenameAssays(object = ref_seu, assay.name = "RNA", new.assay.name = "originalexp", verbose = opt$verbose)
-  }
-  if(opt$database == "scRNAseq") {
+  } else if(opt$database == "scRNAseq") {
     ref <- scRNAseq::fetchDataset(opt$reference, opt$version)
     # Removing unlabelled cells or cells without a clear label.
     ref <- ref[, !is.na(ref[[opt$ref_label]]) & ref[[opt$ref_label]]!="unclear"] 
@@ -127,15 +137,15 @@ if(!opt$only_showcase) {
     ref@assays@data$counts <- as(ref@assays@data$counts, "dgCMatrix")
     ref@assays@data$logcounts <- as(ref@assays@data$logcounts, "dgCMatrix")
     ref_seu <- Seurat::as.Seurat(ref)
-  }
-  if(opt$database == "celldex") {
+  } else if(opt$database == "celldex") {
     ref <- celldex::fetchReference(opt$reference, opt$version)
     ref@assays@data$counts <- as(ref@assays@data$counts, "dgCMatrix")
     ref@assays@data$logcounts <- as(ref@assays@data$logcounts, "dgCMatrix")
     ref_seu <- Seurat::as.Seurat(ref)
+  } else {
+    stop("Unknown database. Must be \"celldex\", \"scRNAseq\" or path to a local dataset to convert to reference.")
   }
   HDF5Array::saveHDF5SummarizedExperiment(x = ref, dir = opt$reference, verbose = opt$verbose, replace = opt$replace)
-  save.image('ref_testing_again.RData')
   message("Reference saved successfully in ", opt$reference)
   message("Converting reference to seurat object to calculate UMAP")
   ref_seu <- Seurat::NormalizeData(object = ref_seu, verbose = opt$verbose,
@@ -174,6 +184,9 @@ fields_to_remove <- grepl("orig.ident|nCount|nFeature|sizeFactor", names(meta))
 meta <- meta[, !fields_to_remove]
 tables <- lapply(meta, col_to_table, col_names = c("Type", "Frequency"))
 names(tables) <- colnames(meta)
+
+save.image('ref_testing.RData')
+stop('test')
 
 write_sc_report(final_results = list(tables = tables, seu = ref_seu), template_folder = template_folder, output = getwd(),
                 template = "sc_ref_showcase.txt", out_suffix = "ref_showcase.html", opt = opt)
