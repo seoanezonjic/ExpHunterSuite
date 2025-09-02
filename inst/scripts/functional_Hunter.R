@@ -208,7 +208,7 @@ func_results <- main_functional_hunter(hunter_results = hunter_results, model_or
 write_enrich_files(func_results, opt$output_files)
 write_functional_report(hunter_results = hunter_results, cores = opt$cores,
                         func_results = func_results, task_size = opt$task_size,
-                        output_files = opt$output_files, node_label = opt$node_label,
+                        output_files = opt$output_files,
                         organisms_table = organisms_table, size_item = opt$size_item, size_category = opt$size_category,
                         size_edge = opt$size_edge, hilight = opt$hilight, hilight_alpha = opt$hilight_alpha, node_label = opt$node_label,
                         template_folder = template_folder, showCategories = opt$showCategories, max_genes = opt$max_genes_plot,
