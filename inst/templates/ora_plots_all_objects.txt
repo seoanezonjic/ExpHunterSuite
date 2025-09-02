@@ -30,8 +30,8 @@
 	 	{if(!is.null(plotter$hash_vars$attr_vector)) ggplot2::scale_color_gradient2(name = plotter$hash_vars$gene_attribute_name, low = "#0000BF", high = "#bf0000", na.value = "#50EA55") }
 	}
 	enrich_emap <- function(input_obj) {
-		enrichplot::emapplot(input_obj, showCategory = n_category, min_edge = 0.0000000000000001, node_label = node_label, size_item = size_item,
-		size_category = size_category, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha)
+		enrichplot::emapplot(input_obj, showCategory = n_category, min_edge = 0.0000000000000001, node_label = node_label,
+		size_category = size_category, size_edge = size_edge)
 	}
 	enrich_heatplot <- function(input_obj) {
 		enrichplot::heatplot(input_obj, showCategory = n_category, foldChange = plotter$hash_vars$attr_vector)
