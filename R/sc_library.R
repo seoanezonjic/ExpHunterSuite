@@ -898,7 +898,8 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
 #' cell type, as calculated with Seurat.
 #' @param min_avg_log2FC A numeric. Minimum absolute log2FC cutoff.
 #' @param p_val_cutoff A numeric. Max adjusted p value cutoff.
-#' @param min_counts An integer. Minimum gene counts to consider a gene as expressed.
+#' @param min_counts An integer. Minimum gene counts to consider a gene as
+#' expressed.
 #' @param query A character vector. List of genes to analyze. Default
 #' NULL.
 #' @returns A list containing fc and ncells data frames.
@@ -1364,8 +1365,10 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
 #' @examples
 #' data(pbmc_tiny)
 #' pbmc_tiny$seurat_clusters <- c(1, 2)
-#' clust_anno <- data.frame(seurat_clusters = seq(2), name = c("T Cells", "B Cells"))
-#' anno_tiny <- annotate_seurat(seu = pbmc_tiny, cluster_annotation = clust_anno)
+#' clust_anno <- data.frame(seurat_clusters = seq(2), name = c("T Cells",
+#'                          "B Cells"))
+#' anno_tiny <- annotate_seurat(seu = pbmc_tiny,
+#'                              cluster_annotation = clust_anno)
 #' @export
 
 annotate_seurat <- function(seu, cell_annotation = NULL, logfc.threshold = 0.1,
@@ -1401,16 +1404,16 @@ annotate_seurat <- function(seu, cell_annotation = NULL, logfc.threshold = 0.1,
 #'
 #' @importFrom BiocParallel bpisup bpstart bpstop
 #' @importFrom DelayedArray getAutoBPPARAM setAutoBPPARAM
-#' @importFrom SingleR .to_clean_matrix trainSingleR .DeprecatedclassifySingleR
-#' @importFrom SingleR .is_list
+#' @importFrom SingleR trainSingleR
 #' @importFrom DelayedArray DelayedArray
 #' @inheritParams SingleR::SingleR
 #' @inheritParams SingleR::trainSingleR
-#' @param save_trained_object A boolean. If TRUE, trained object will be saved to disk,
-#' and further calls to the pipeline will recognize and load it instead of retraining.
+#' @param save_trained_object A boolean. If TRUE, trained object will be saved
+#' to disk, and further calls to the pipeline will recognize and load it instead
+#' of retraining.
 #' Default FALSE.
-#' @param load_trained_object A boolean. If TRUE, trained object will be loaded from
-#' disk.
+#' @param load_trained_object A boolean. If TRUE, trained object will be loaded 
+#' from disk.
 #' @param out_dir Directory where trained object will be saved/loaded from.
 #' @examples
 #'  \dontrun{
@@ -1427,16 +1430,20 @@ apply_SingleR <- function (test, ref, labels, method = NULL, clusters = NULL,
     check.missing = TRUE, num.threads = BiocParallel::bpnworkers(BPPARAM),
     out_dir = getwd(), BNPARAM = NULL, BPPARAM = SerialParam(),
     save_trained_object = FALSE, load_trained_object = FALSE) {
+      .to_clean_matrix <- get_unexported_function("SingleR", ".to_clean_matrix")
+      .DeprecatedclassifySingleR <- get_unexported_function("SingleR",
+                                                   ".DeprecatedclassifySingleR")
+      .is_list <- get_unexported_function("SingleR", ".is_list")
       if (!BiocParallel::bpisup(BPPARAM) && !is(BPPARAM, "MulticoreParam")) {
           BiocParallel::bpstart(BPPARAM)
           on.exit(BiocParallel::bpstop(BPPARAM))
       }
-      test <- SingleR:::.to_clean_matrix(test, assay.type.test, check.missing,
+      test <- .to_clean_matrix(test, assay.type.test, check.missing,
           msg = "test", BPPARAM = BPPARAM)
-      if (single.ref <- !SingleR:::.is_list(ref)) {
+      if (single.ref <- !.is_list(ref)) {
           ref <- list(ref)
       }
-      ref <- lapply(ref, FUN = SingleR:::.to_clean_matrix, assay.type = assay.type.ref,
+      ref <- lapply(ref, FUN = .to_clean_matrix, assay.type = assay.type.ref,
           check.missing = check.missing, msg = "ref", BPPARAM = BPPARAM)
       refnames <- Reduce(intersect, lapply(ref, rownames))
       keep <- intersect(rownames(test), refnames)
@@ -1456,11 +1463,11 @@ apply_SingleR <- function (test, ref, labels, method = NULL, clusters = NULL,
       }
       if(isFALSE(load_trained_object)) {
         train_start <- Sys.time()
-        trained <- SingleR::trainSingleR(ref, labels, genes = genes, sd.thresh = sd.thresh,
-          de.method = de.method, de.n = de.n, de.args = de.args,
-          aggr.ref = aggr.ref, aggr.args = aggr.args, recompute = recompute,
-          restrict = restrict, check.missing = FALSE, BNPARAM = BNPARAM,
-          num.threads = num.threads, BPPARAM = BPPARAM)
+        trained <- SingleR::trainSingleR(ref, labels, genes = genes,
+          sd.thresh = sd.thresh, de.method = de.method, de.n = de.n,
+          de.args = de.args, aggr.ref = aggr.ref, aggr.args = aggr.args,
+          recompute = recompute, restrict = restrict, check.missing = FALSE,
+          BNPARAM = BNPARAM, num.threads = num.threads, BPPARAM = BPPARAM)
         train_end <- Sys.time()
         message("Time to train: ", train_end - train_start, ".")
         if(isTRUE(save_trained_object)) {
@@ -1470,7 +1477,8 @@ apply_SingleR <- function (test, ref, labels, method = NULL, clusters = NULL,
         trained <- readRDS(file.path(out_dir, "trained_SingleR.rds"))
       }
       if (!is.null(method)) {
-          SingleR:::.Deprecated(msg = "'method=\"cluster\"' is no longer necessary when 'cluster=' is specified")
+          .Deprecated(msg = "'method=\"cluster\"' is no longer necessary when
+            'cluster=' is specified")
       }
       if (!is.null(clusters)) {
           oldp <- BiocParallel::getAutoBPPARAM()
@@ -1479,9 +1487,9 @@ apply_SingleR <- function (test, ref, labels, method = NULL, clusters = NULL,
           test <- colsum(DelayedArray::DelayedArray(test), clusters)
       }
       class_start <- Sys.time()
-      res <- SingleR::classifySingleR(test, trained, quantile = quantile, fine.tune = fine.tune,
-          tune.thresh = tune.thresh, prune = prune, check.missing = TRUE,
-          num.threads = num.threads, BPPARAM = BPPARAM)
+      res <- SingleR::classifySingleR(test, trained, quantile = quantile,
+          fine.tune = fine.tune, tune.thresh = tune.thresh, prune = prune,
+          check.missing = TRUE, num.threads = num.threads, BPPARAM = BPPARAM)
       class_end <- Sys.time()
       message("Time to classify: ", class_end - class_start, ".")
       return(res)
