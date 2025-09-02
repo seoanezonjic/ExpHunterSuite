@@ -382,15 +382,24 @@ write_summarize_heatmaps <- function(summarized_ORA, output_path) {
 #' @param DEGH_results DEGenes Hunter results object.
 #' @param files_css Path to css file to inject. By default it injects styles.css
 #' found in ExpHunterSuite's templates directory.
-#' @param node_label Number between 0 and 1. The closer it is to zero, the 
-#' smaller the labels will be.
-#' @param cex_label_category How nodes will be labeled. Possible values: 
-#' \"category\" (the default), \"group\", \"all\", \"none\".
+#' @param node_label How to label the nodes. Default "category". Other possible
+#' values: "all", "none", "item", "exclusive", "share".
+#' @param size_item Size of nodes. Smaller than 1 values will reduce size,
+#' higher than 1 values will increase it. Default: 1.
+#' @param size_category Size of category labels. Smaller than 1 values will
+#' reduce size, higher than 1 values will increase it. Default: 1.
+#' @param size_edge Size of edges. Smaller than 1 values will reduce size,+
+#' higher than 1 values will increase it. Default: 1.
+#' @param hilight Name of category to highlight. Default "none".
+#' @param hilight_alpha Transparency value that will be applied to categories
+#' not highlighted. Must be a value between 0 (completely transparent) and 1
+#' (completely opaque). Default: 0.3.
 #' @returns invisible(NULL)
 write_merged_cluster_report <- function(enrichments_ORA, results_path,
     template_folder, sample_classes=NULL, DEGH_results=NULL, showCategories,
-    node_label = 1, cex_label_category = "category",
-    group_results, func_results = NULL, source_folder = NULL,
+    node_label = "category", size_item = 1, size_category = 1, size_edge = 1,
+    hilight = "none", hilight_alpha = 0.3, group_results, func_results = NULL,
+    source_folder = NULL,
     files_css = file.path(template_folder, "styles.css")) {
     message("\tRendering full cluster reports")
     if(is.null(enrichments_ORA)) {
@@ -406,7 +415,9 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
         tmp_folder <- file.path(results_path, "tmp_lib")
         template <- file.path(template_folder, "clusters_main_report.txt")
         container <- list(flags_cluster = flags_cluster,
-            node_label = node_label, cex_label_category = cex_label_category,
+            node_label = node_label, size_item = size_item,
+            size_category = size_category, size_edge = size_edge,
+            hilight = hilight, hilight_alpha = hilight_alpha,
             DEGH_results = DEGH_results, sample_classes = sample_classes,
             func_results = func_results, enrichments_ORA = enrichments_ORA,
             group_results = group_results, showCategories = showCategories)
@@ -444,10 +455,18 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
 #' @param source_folder htmlreportR source folder to load js and css libraries
 #' @param files_css Path to css file to inject. By default it injects styles.css
 #' found in ExpHunterSuite's templates directory.
-#' @param node_label Number between 0 and 1. The closer it is to zero, the 
-#' smaller the labels will be.
-#' @param cex_label_category How nodes will be labeled. Possible values: 
-#' \"category\" (the default), \"group\", \"all\", \"none\".
+#' @param node_label How to label the nodes. Default "category". Other possible
+#' values: "all", "none", "item", "exclusive", "share".
+#' @param size_item Size of nodes. Smaller than 1 values will reduce size,
+#' higher than 1 values will increase it. Default: 1.
+#' @param size_category Size of category labels. Smaller than 1 values will
+#' reduce size, higher than 1 values will increase it. Default: 1.
+#' @param size_edge Size of edges. Smaller than 1 values will reduce size,+
+#' higher than 1 values will increase it. Default: 1.
+#' @param hilight Name of category to highlight. Default "none".
+#' @param hilight_alpha Transparency value that will be applied to categories
+#' not highlighted. Must be a value between 0 (completely transparent) and 1
+#' (completely opaque). Default: 0.3.
 #' @return void
 #' @importFrom enrichplot emapplot
 #' @importFrom enrichplot dotplot
@@ -460,10 +479,11 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
 write_clusters_to_enrichment <- function(output_path="results",
       output_file="results", mode="PR", enrichments_ORA=NULL, task_size = 1,
       workers = 1, top_categories = NULL, group_results = FALSE,
-      cex_label_category = 1, node_label = "category",
-      n_category = 30, sim_thr = 0.7, pvalcutoff = 0.1, gene_attributes=NULL,
-      max_genes = 200, summary_common_name = "ancestor", simplify = FALSE,
-      gene_attribute_name=NULL, clean_parentals = FALSE, source_folder = NULL,
+      node_label = "category", size_item = 1, size_category = 1, size_edge = 1,
+      hilight = "none", hilight_alpha = 0.3, n_category = 30, sim_thr = 0.7,
+      pvalcutoff = 0.1, gene_attributes=NULL, max_genes = 200,
+      summary_common_name = "ancestor", simplify = FALSE,
+      gene_attribute_name = NULL, clean_parentals = FALSE, source_folder = NULL,
       template_folder = file.path(find.package('ExpHunterSuite'), 'templates'),
       files_css = file.path(template_folder, "styles.css")){
       enrichments_ORA_merged <- process_cp_list(enrichments_ORA,
@@ -480,7 +500,9 @@ write_clusters_to_enrichment <- function(output_path="results",
           write_enrich_clusters(enrichments_ORA, output_path)
           write_func_cluster_report(enrichments_for_reports, output_path,
             gene_attributes, workers = workers, task_size = task_size,
-            node_label = node_label, cex_label_category = cex_label_category,
+            node_label = node_label, size_item = size_item,
+            size_category = size_category, size_edge = size_edge,
+            hilight = hilight, hilight_alpha = hilight_alpha,
             template_folder = template_folder, source_folder = source_folder,
             gene_attribute_name = gene_attribute_name, files_css = files_css)
       }
@@ -519,7 +541,9 @@ write_clusters_to_enrichment <- function(output_path="results",
       }
       if(grepl("R", mode)) {
         write_merged_cluster_report(enrichments_ORA_merged,
-            node_label = node_label, cex_label_category = cex_label_category,
+            node_label = node_label, size_item = size_item,
+            size_category = size_category, size_edge = size_edge,
+            hilight = hilight, hilight_alpha = hilight_alpha,
             results_path = output_path, template_folder, 
             showCategories = n_category, group_results=group_results)
       }
@@ -550,10 +574,18 @@ write_clusters_to_enrichment <- function(output_path="results",
 #' @param source_folder htmlreportR source folder to load js and css libraries
 #' @param files_css Path to css file to inject. By default it injects styles.css
 #' found in ExpHunterSuite's templates directory.
-#' @param node_label Number between 0 and 1. The closer it is to zero, the 
-#' smaller the labels will be.
-#' @param cex_label_category How nodes will be labeled. Possible values: 
-#' \"category\" (the default), \"group\", \"all\", \"none\".
+#' @param node_label How to label the nodes. Default "category". Other possible
+#' values: "all", "none", "item", "exclusive", "share".
+#' @param size_item Size of nodes. Smaller than 1 values will reduce size,
+#' higher than 1 values will increase it. Default: 1.
+#' @param size_category Size of category labels. Smaller than 1 values will
+#' reduce size, higher than 1 values will increase it. Default: 1.
+#' @param size_edge Size of edges. Smaller than 1 values will reduce size,+
+#' higher than 1 values will increase it. Default: 1.
+#' @param hilight Name of category to highlight. Default "none".
+#' @param hilight_alpha Transparency value that will be applied to categories
+#' not highlighted. Must be a value between 0 (completely transparent) and 1
+#' (completely opaque). Default: 0.3.
 #' @return void
 #' @importFrom rmarkdown render
 #' @export
@@ -570,8 +602,8 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
     task_size = 1, report = "fc", source_folder = NULL, group_results = FALSE,
     showCategories = 30, corr_threshold = 0.8, pvalcutoff = 0.05,
     template_folder = NULL, max_genes = 200, node_label = "category",
-    cex_label_category = 1,
-    files_css = file.path(template_folder, "styles.css")) {
+    size_item = 1, size_category = 1, size_edge = 1, hilight = "none",
+    hilight_alpha = 0.3, files_css = file.path(template_folder, "styles.css")) {
     if(is.null(template_folder)){
       template_folder <- file.path(find.package('ExpHunterSuite'), 'templates')
     }
@@ -623,7 +655,9 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
                   flags_ora = flags_ora, flags_gsea = flags_gsea,
                   sample_classes = sample_classes,
                   attr_vector = attr_vector,
-                  cex_label_category = cex_label_category,
+                  node_label = node_label, size_item = size_item,
+                  size_category = size_category, size_edge = size_edge,
+                  hilight = hilight, hilight_alpha = hilight_alpha,
                   gene_attribute_name = gene_attribute_name,
                   enrichments_ORA = enrichments_ORA,
                   ennrichments_ORA_expanded = enrichments_ORA_expanded,
@@ -669,8 +703,9 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
                 sample_classes = sample_classes, DEGH_results = DEGH_results, 
                 showCategories = showCategories, group_results = group_results,
                 func_results = func_results, source_folder = source_folder,
-                node_label = node_label,
-                cex_label_category = cex_label_category)
+                node_label = node_label, size_item = size_item,
+                size_category = size_category, size_edge = size_edge,
+                hilight = hilight, hilight_alpha = hilight_alpha)
             write_summarize_heatmaps(func_results$summarized_ora, results_path)
     }
 
@@ -809,8 +844,9 @@ parse_strat_text <- function(strategies){
 write_func_cluster_report <- function(enrichments_for_reports, output_path, 
   gene_attributes, workers, task_size, template_folder, max_genes = 200,
   gene_attribute_name="fold change", source_folder = NULL,
-  files_css = file.path(template_folder, "styles.css"), node_label = "category",
-  cex_label_category = 1){
+  files_css = file.path(template_folder, "styles.css"), node_label = node_label,
+  size_item = size_item, size_category = size_category, size_edge = size_edge,
+  hilight = hilight, hilight_alpha = hilight_alpha){
   clean_tmpfiles_mod <- function() {
     message("Calling clean_tmpfiles_mod()")
   }
@@ -827,7 +863,9 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
                                              "_report.html"))
     container <- list(func_results = func_results, cl_flags_ora = cl_flags_ora,
                       max_genes = max_genes, node_label = node_label,
-                      cex_label_category = cex_label_category)
+                      size_item = size_item, size_category = size_category,
+                      size_edge = size_edge, hilight = hilight,
+                      hilight_alpha = hilight_alpha)
     message("\tRendering regular report")
     template <- file.path(template_folder, "clusters_to_enrichment.txt")
     plotter <- htmlreportR::htmlReport$new(title_doc = "func cluster",
