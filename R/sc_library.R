@@ -1399,11 +1399,13 @@ annotate_seurat <- function(seu, cell_annotation = NULL, logfc.threshold = 0.1,
 #' `apply_SingleR` runs the training part of SingleR::SingleR wrapper for both
 #' training and classifying.
 #'
-#' @importFrom BiocParallel bpisup bpstart bpstop getAutoBPPARAM setAutoBPPARAM
+#' @importFrom BiocParallel bpisup bpstart bpstop
+#' @importFrom DelayedArray getAutoBPPARAM setAutoBPPARAM
 #' @importFrom SingleR .to_clean_matrix trainSingleR .DeprecatedclassifySingleR
 #' @importFrom SingleR .is_list
-#' @importFrom DelayedArray::DelayedArray
+#' @importFrom DelayedArray DelayedArray
 #' @inheritParams SingleR::SingleR
+#' @inheritParams SingleR::trainSingleR
 #' @param save_trained_object A boolean. If TRUE, trained object will be saved to disk,
 #' and further calls to the pipeline will recognize and load it instead of retraining.
 #' Default FALSE.
@@ -1478,7 +1480,7 @@ apply_SingleR <- function (test, ref, labels, method = NULL, clusters = NULL,
       }
       class_start <- Sys.time()
       res <- SingleR::classifySingleR(test, trained, quantile = quantile, fine.tune = fine.tune,
-          tune.thresh = tune.thresh, prune = prune, check.missing = TRUE, test.genes = rownames(test),
+          tune.thresh = tune.thresh, prune = prune, check.missing = TRUE,
           num.threads = num.threads, BPPARAM = BPPARAM)
       class_end <- Sys.time()
       message("Time to classify: ", class_end - class_start, ".")
@@ -1493,12 +1495,12 @@ apply_SingleR <- function (test, ref, labels, method = NULL, clusters = NULL,
 #' @inheritParams main_annotate_sc
 #' @inheritParams apply_SingleR
 #' @inheritParams calculate_markers
+#' @inheritParams SingleR::trainSingleR
 #' @importFrom BiocParallel SerialParam
 #' @param fine.tune A boolean.
 #'   * `TRUE` (the default): Fine-tune statistical model built for transfer.
 #'   * `FALSE`: Do not perform fine-tuning..
 #' @param assay Seurat object assay to use for annotation. Default "RNA".
-#' @param 
 #' @returns A seurat object with a new sketched assay.
 #' @examples
 #'  \dontrun{
