@@ -515,14 +515,13 @@ write_clusters_to_enrichment <- function(output_path="results",
             n_Cluster <- min(floor(nrow(enrich)/7), 20)
             pp <- enrichplot::emapplot(enrich, showCategory= n_category,
                                       pie="Count", layout = "nicely",
-                                      shadowtext = FALSE, node_label = "group",
+                                      node_label = node_label,
                                       group_category = TRUE, 
                                       nCluster = min(floor(nrow(enrich)/7), 20),
                                                      nWords = 6, repel = TRUE)
           }else{
             pp <- enrichplot::emapplot(enrich, showCategory= n_category,
-                                       pie="Count", layout = "nicely", 
-                                       shadowtext = FALSE, repel = TRUE)
+                                       pie="Count", layout = "nicely")
           }
           ggplot2::ggsave(filename = file.path(output_path,
                             paste0("emaplot_", funsys, ".png")), pp, width = 30,
