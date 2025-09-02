@@ -90,11 +90,19 @@ option_list <- list(
   optparse::make_option("--group_results", type="logical", default=FALSE, 
     action = "store_true", help="Functions are grouped in most frequent words in emaplots."),
   optparse::make_option("--summary_common_name", type="character", default="ancestor", 
-                        help="Name of the term groups. 'significant' to use the most significant term of each group. 'ancestor' to use the common ancestor of the group"),
-  optparse::make_option(c("--cex_label_category"), type="numeric", default=1,
-                        help="Number between 0 and 1. The closer it is to zero, the smaller the labels will be."),
+    help="Name of the term groups. 'significant' to use the most significant term of each group. 'ancestor' to use the common ancestor of the group."),
+  optparse::make_option(c("--size_item"), type="numeric", default=1,
+    help="Size of nodes. Smaller than 1 values will reduce size, higher than 1 values will increase it."),
+  optparse::make_option(c("--size_category"), type="numeric", default=1,
+    help="Size of category labels. Smaller than 1 values will reduce size, higher than 1 values will increase it."),
+  optparse::make_option(c("--size_edge"), type="numeric", default=1,
+    help="Size of edges. Smaller than 1 values will reduce size, higher than 1 values will increase it."),
+  optparse::make_option(c("--hilight"), type="character", default="category", help="Name of category to highlight."),
+  optparse::make_option(c("--hilight_alpha"), type="integer", default=0.3,
+    help="Transparency value that will be applied to categories not highlighted. Must be a value between 0 (completely transparent) and 1
+    (completely opaque)."),
   optparse::make_option(c("--node_label"), type="character", default="category",
-                        help="How nodes will be labeled. Possible values: \"category\" (the default), \"group\", \"all\", \"none\".")
+    help="How nodes will be labeled. Possible values: \"category\" (the default), \"group\", \"all\", \"none\".")
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
@@ -201,10 +209,8 @@ write_enrich_files(func_results, opt$output_files)
 write_functional_report(hunter_results = hunter_results, cores = opt$cores,
                         func_results = func_results, task_size = opt$task_size,
                         output_files = opt$output_files, node_label = opt$node_label,
-                        organisms_table = organisms_table, cex_label_category = opt$cex_label_category,
-                        template_folder = template_folder,
-                        showCategories = opt$showCategories,
-                        max_genes = opt$max_genes_plot,
-                        group_results = opt$group_results,
-                        corr_threshold = opt$corr_threshold,
-                        pvalcutoff = opt$pthreshold, report = opt$report_modes)
+                        organisms_table = organisms_table, size_item = opt$size_item, size_category = opt$size_category,
+                        size_edge = opt$size_edge, hilight = opt$hilight, hilight_alpha = opt$hilight_alpha, node_label = opt$node_label,
+                        template_folder = template_folder, showCategories = opt$showCategories, max_genes = opt$max_genes_plot,
+                        group_results = opt$group_results, corr_threshold = opt$corr_threshold, pvalcutoff = opt$pthreshold,
+                        report = opt$report_modes)

@@ -58,9 +58,18 @@ option_list <- list(
                         help="Number of genes to show on clusterProfiler cnet"),
   optparse::make_option(c("-o", "--output_path"), type="character", default=NA,
                         help="Define the output path."),
-  optparse::make_option(c("--cex_label_category"), type="numeric", default=1,
-                        help="Number between 0 and 1. The closer it is to zero, the smaller the labels will be."),
-    optparse::make_option(c("--node_label"), type="character", default="category",
+  optparse::make_option(c("--size_item"), type="numeric", default=1,
+                        help="Size of nodes. Smaller than 1 values will reduce size, higher than 1 values will increase it."),
+  optparse::make_option(c("--size_category"), type="numeric", default=1,
+                        help="Size of category labels. Smaller than 1 values will reduce size, higher than 1 values will increase it."),
+  optparse::make_option(c("--size_edge"), type="numeric", default=1,
+                        help="Size of edges. Smaller than 1 values will reduce size, higher than 1 values will increase it."),
+  optparse::make_option(c("--hilight"), type="character", default="category",
+                        help="Name of category to highlight."),
+  optparse::make_option(c("--hilight_alpha"), type="integer", default=0.3,
+                        help="Transparency value that will be applied to categories not highlighted. Must be a value between 0
+                        (completely transparent) and 1 (completely opaque)."),
+  optparse::make_option(c("--node_label"), type="character", default="category",
                         help="How nodes will be labeled. Possible values: \"category\" (the default), \"group\", \"all\", \"none\".")
 
 )
@@ -166,13 +175,13 @@ ce_list <- main_clusters_to_enrichment(
   readable = readable
 )
 enrichments_ORA <- ce_list[["enrichments_ORA"]]
-
 write_clusters_to_enrichment(output_path = output_path, mode = opt$mode,
   enrichments_ORA=enrichments_ORA, task_size = opt$task_size,
   workers = opt$workers, template_folder = template_folder,
-  node_label = opt$node_label, cex_label_category = opt$cex_label_category,
+  node_label = opt$node_label, size_item = opt$size_item, size_category = opt$size_category,
+  size_edge = opt$size_edge, hilight = opt$hilight, hilight_alpha = opt$hilight_alpha,
   top_categories = opt$top_categories, group_results = opt$group_results,
-  n_category = opt$showCategories, sim_thr = opt$sim_thr, 
+  n_category = opt$showCategories, sim_thr = opt$sim_thr,
   summary_common_name = opt$summary_common_name, pvalcutoff = opt$pvalcutoff,
   gene_attributes = ce_list[["gene_attributes"]],
   gene_attribute_name = ce_list[["gene_attribute_name"]], 
