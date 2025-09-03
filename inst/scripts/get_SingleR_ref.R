@@ -14,7 +14,7 @@ option_list <- list(
     dest = "verbose", help = "Display progress"),
   optparse::make_option("--database", type = "character", help = "Database to consult
     (\"celldex\" or \"scRNAseq\") or a path to local database"),
-    optparse::make_option("--output", type = "character", help = "Path where reference
+  optparse::make_option("--output", type = "character", help = "Path where reference
       will be locally saved."),
   optparse::make_option("--ref_label", type = "character", default = NULL,
     help = "Column of reference metadata to use for annotation. Only used in scRNAseq mode"),
@@ -25,6 +25,7 @@ option_list <- list(
 )
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+print(opt)
 
 if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   # Obtain this script directory
@@ -55,6 +56,9 @@ opt$name <- basename(opt$reference)
 if(opt$version != "") {
   opt$reference <- paste(opt$reference, opt$version, sep = "_")
 }
+
+message("Output is")
+message(opt$output)
 
 if(!opt$only_showcase) {
   if(is.null(opt$reference)) {
