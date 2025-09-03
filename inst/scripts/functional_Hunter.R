@@ -93,6 +93,8 @@ option_list <- list(
                         help="Name of the term groups. 'significant' to use the most significant term of each group. 'ancestor' to use the common ancestor of the group"),
   optparse::make_option(c("--cex_label_category"), type="numeric", default=1,
                         help="Number between 0 and 1. The closer it is to zero, the smaller the labels will be."),
+  optparse::make_option(c("--cex_line"), type="numeric", default=1,
+                        help="Number between 0 and 1. The closer it is to zero, the smaller the lines will be."),
   optparse::make_option(c("--node_label"), type="character", default="category",
                         help="How nodes will be labeled. Possible values: \"category\" (the default), \"group\", \"all\", \"none\".")
 )
@@ -202,6 +204,7 @@ write_functional_report(hunter_results = hunter_results, cores = opt$cores,
                         func_results = func_results, task_size = opt$task_size,
                         output_files = opt$output_files, node_label = opt$node_label,
                         organisms_table = organisms_table, cex_label_category = opt$cex_label_category,
+                        cex_line = opt$cex_line,
                         template_folder = template_folder,
                         showCategories = opt$showCategories,
                         max_genes = opt$max_genes_plot,

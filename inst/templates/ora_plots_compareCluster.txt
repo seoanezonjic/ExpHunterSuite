@@ -2,6 +2,7 @@
 	node_label <- plotter$hash_vars$node_label
 	clusters <- split(as.data.frame(plotter$hash_vars$enrich_obj), as.data.frame(plotter$hash_vars$enrich_obj)[, "Cluster"])
 	cex_label_category <- plotter$hash_vars$cex_label_category
+	cex_line <- plotter$hash_vars$cex_line
 	top_ids_list <- lapply(clusters, function(cluster_df) {
 		sorted <- cluster_df[order(cluster_df$qvalue), ]
 		head(sorted$ID, plotter$hash_vars$showCategories)
@@ -26,13 +27,13 @@
 		clusters_heatplot(input_obj@compareClusterResult)
 	}
 	enrich_cnet <- function(input_obj) {
-		enrichplot::cnetplot(input_obj, showCategory = plotter$hash_vars$showCategories, node_label = node_label, cex_label_category = cex_label_category)
+		enrichplot::cnetplot(input_obj, showCategory = plotter$hash_vars$showCategories, node_label = node_label, cex_label_category = cex_label_category, cex_line = cex_line)
 	}
 	enrich_emap <- function(input_obj) {
 		enrichplot::emapplot(input_obj, showCategory = plotter$hash_vars$showCategories, pie.params = list(pie = "Count"),
 												 shadowtext = FALSE, node_label = node_label, edge.params = list(min = 0.0000000000000001),
 												 group_category = group_category, nCluster = nCluster, nWords = nWords, repel = TRUE,
-												 layout.params = list(layout = "nicely"), cex_label_category = cex_label_category)
+												 layout.params = list(layout = "nicely"), cex_label_category = cex_label_category, cex_line = cex_line)
 	}
 	clnetplot <- function(compareCluster, ...) {
         mod_enrich_obj <- compareCluster

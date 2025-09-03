@@ -382,14 +382,14 @@ write_summarize_heatmaps <- function(summarized_ORA, output_path) {
 #' @param DEGH_results DEGenes Hunter results object.
 #' @param files_css Path to css file to inject. By default it injects styles.css
 #' found in ExpHunterSuite's templates directory.
-#' @param node_label Number between 0 and 1. The closer it is to zero, the 
-#' smaller the labels will be.
-#' @param cex_label_category How nodes will be labeled. Possible values: 
+#' @param node_label How nodes will be labeled. Possible values: 
 #' \"category\" (the default), \"group\", \"all\", \"none\".
+#' @param cex_label_category Number between 0 and 1. The closer it is to zero, the 
+#' smaller the labels will be.
 #' @returns invisible(NULL)
 write_merged_cluster_report <- function(enrichments_ORA, results_path,
     template_folder, sample_classes=NULL, DEGH_results=NULL, showCategories,
-    node_label = 1, cex_label_category = "category",
+    node_label = "category", cex_label_category = 1, cex_line = 1,
     group_results, func_results = NULL, source_folder = NULL,
     files_css = file.path(template_folder, "styles.css")) {
     message("\tRendering full cluster reports")
@@ -407,6 +407,7 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
         template <- file.path(template_folder, "clusters_main_report.txt")
         container <- list(flags_cluster = flags_cluster,
             node_label = node_label, cex_label_category = cex_label_category,
+            cex_line = cex_line,
             DEGH_results = DEGH_results, sample_classes = sample_classes,
             func_results = func_results, enrichments_ORA = enrichments_ORA,
             group_results = group_results, showCategories = showCategories)
@@ -460,7 +461,7 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
 write_clusters_to_enrichment <- function(output_path="results",
       output_file="results", mode="PR", enrichments_ORA=NULL, task_size = 1,
       workers = 1, top_categories = NULL, group_results = FALSE,
-      cex_label_category = 1, node_label = "category",
+      cex_label_category = 1, cex_line = 1, node_label = "category",
       n_category = 30, sim_thr = 0.7, pvalcutoff = 0.1, gene_attributes=NULL,
       max_genes = 200, summary_common_name = "ancestor", simplify = FALSE,
       gene_attribute_name=NULL, clean_parentals = FALSE, source_folder = NULL,
@@ -481,6 +482,7 @@ write_clusters_to_enrichment <- function(output_path="results",
           write_func_cluster_report(enrichments_for_reports, output_path,
             gene_attributes, workers = workers, task_size = task_size,
             node_label = node_label, cex_label_category = cex_label_category,
+            cex_line = cex_line,
             template_folder = template_folder, source_folder = source_folder,
             gene_attribute_name = gene_attribute_name, files_css = files_css)
       }
@@ -520,6 +522,7 @@ write_clusters_to_enrichment <- function(output_path="results",
       if(grepl("R", mode)) {
         write_merged_cluster_report(enrichments_ORA_merged,
             node_label = node_label, cex_label_category = cex_label_category,
+            cex_line = cex_line,
             results_path = output_path, template_folder, 
             showCategories = n_category, group_results=group_results)
       }
@@ -570,7 +573,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
     task_size = 1, report = "fc", source_folder = NULL, group_results = FALSE,
     showCategories = 30, corr_threshold = 0.8, pvalcutoff = 0.05,
     template_folder = NULL, max_genes = 200, node_label = "category",
-    cex_label_category = 1,
+    cex_label_category = 1, cex_line = 1,
     files_css = file.path(template_folder, "styles.css")) {
     if(is.null(template_folder)){
       template_folder <- file.path(find.package('ExpHunterSuite'), 'templates')
@@ -624,6 +627,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
                   sample_classes = sample_classes,
                   attr_vector = attr_vector,
                   cex_label_category = cex_label_category,
+                  cex_line = cex_line,
                   gene_attribute_name = gene_attribute_name,
                   enrichments_ORA = enrichments_ORA,
                   ennrichments_ORA_expanded = enrichments_ORA_expanded,
@@ -669,7 +673,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
                 sample_classes = sample_classes, DEGH_results = DEGH_results, 
                 showCategories = showCategories, group_results = group_results,
                 func_results = func_results, source_folder = source_folder,
-                node_label = node_label,
+                node_label = node_label, cex_line = cex_line,
                 cex_label_category = cex_label_category)
             write_summarize_heatmaps(func_results$summarized_ora, results_path)
     }
@@ -810,7 +814,7 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
   gene_attributes, workers, task_size, template_folder, max_genes = 200,
   gene_attribute_name="fold change", source_folder = NULL,
   files_css = file.path(template_folder, "styles.css"), node_label = "category",
-  cex_label_category = 1){
+  cex_label_category = 1, cex_line = 1){
   clean_tmpfiles_mod <- function() {
     message("Calling clean_tmpfiles_mod()")
   }
@@ -827,7 +831,7 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
                                              "_report.html"))
     container <- list(func_results = func_results, cl_flags_ora = cl_flags_ora,
                       max_genes = max_genes, node_label = node_label,
-                      cex_label_category = cex_label_category)
+                      cex_label_category = cex_label_category, cex_line = cex_line)
     message("\tRendering regular report")
     template <- file.path(template_folder, "clusters_to_enrichment.txt")
     plotter <- htmlreportR::htmlReport$new(title_doc = "func cluster",
