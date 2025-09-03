@@ -1,4 +1,5 @@
 <!--begin.rcode "{{funsys}}_setup"
+	library(ggtangle)
 	node_label <- plotter$hash_vars$node_label
 	clusters <- split(as.data.frame(plotter$hash_vars$enrich_obj), as.data.frame(plotter$hash_vars$enrich_obj)[, "Cluster"])
 	size_item <- plotter$hash_vars$size_item

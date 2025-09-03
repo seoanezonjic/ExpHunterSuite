@@ -1,5 +1,6 @@
 
 <!--begin.rcode "{{funsys}}_setup"
+	library(ggtangle)
 	node_label <- plotter$hash_vars$node_label
 	size_item <- plotter$hash_vars$size_item
     size_category <- plotter$hash_vars$size_category
