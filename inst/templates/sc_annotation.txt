@@ -133,7 +133,7 @@
         rownames(final_medians) <- final_medians[, 1]
         return(list(final_medians = final_medians, globals = globals))
     }
-
+plotter$hash_vars$seu@meta.data$cell_type[is.na(plotter$hash_vars$seu@meta.data$cell_type)] <- "Pruned"
 end.rcode-->
 
 <h1><strong>SINGLE CELL RNA-SEQ ANNOTATION ANALYSIS</strong></h1>
