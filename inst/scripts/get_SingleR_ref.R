@@ -61,12 +61,13 @@ message("Output is")
 message(opt$output)
 
 if(!opt$only_showcase) {
-  if(is.null(opt$reference)) {
-    stop('No reference provided. Please see get_SingleR_ref.R --help')
+  if(opt$reference == "" & !file.exists(opt$database)) {
+    stop('Unspecified remote database and non-existant local database.
+          Please see get_SingleR_ref.R --help')
   }
   if(file.exists(opt$database)) {
     message("Generating reference from specified database")
-    message("Provided database: ", opt$database)
+    message("Database: ", opt$database)
     message("Processed reference will be saved in: ", opt$output)
     if(!file.exists(opt$output)) {
       dir.create(opt$output)
@@ -99,8 +100,6 @@ if(!opt$only_showcase) {
       read_sparse_matrix <- NULL
     }
     tenX_dirs <- dirname(Sys.glob(paste0(opt$database, "/expression/*/*mtx*")))
-    message("tenX_dirs are:")
-    message(paste0(opt$database, "/expression/*/*mtx*"))
     if(length(tenX_dirs) > 0) {
       tenX_matrices <- vector(mode = "list", length = length(tenX_dirs))
       for(tenX_dir in seq(tenX_dirs)) {
@@ -163,11 +162,9 @@ if(!opt$only_showcase) {
   ref_seu <- Seurat::FindClusters(ref_seu, resolution = 0.33, verbose = opt$verbose)
   ref_seu <- Seurat::RunUMAP(object = ref_seu, dims = seq(10), verbose = opt$verbose,
                            reduction = "pca", return.model = TRUE)
-  dir.create(file.path(opt$reference, "counts"))
-  dir.create(file.path(opt$reference, "embeddings"))
-  message("Saving showcase-ready reference to disk")
-  opt$output <- opt$reference
+  dir.create(file.path(opt$output, "counts"))
   dir.create(file.path(opt$output, "embeddings"))
+  message("Saving showcase-ready reference to disk")
   write_annot_output(final_results = list(seu = ref_seu), opt = opt, assay = "originalexp")
 } else {
   message("Loading SingleR ref for showcase report")
@@ -188,9 +185,6 @@ fields_to_remove <- grepl("orig.ident|nCount|nFeature|sizeFactor", names(meta))
 meta <- meta[, !fields_to_remove]
 tables <- lapply(meta, col_to_table, col_names = c("Type", "Frequency"))
 names(tables) <- colnames(meta)
-
-save.image('ref_testing.RData')
-stop('test')
 
 write_sc_report(final_results = list(tables = tables, seu = ref_seu), template_folder = template_folder, output = getwd(),
                 template = "sc_ref_showcase.txt", out_suffix = "ref_showcase.html", opt = opt)
