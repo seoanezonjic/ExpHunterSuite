@@ -416,7 +416,6 @@ lp <- lapply(1:N, function(i){
 mat <- do.call(rbind, lp)
 row.names(mat) <- dna_samples
 colnames(mat) <- rna_samples
-save.image('Testing.RData')
 melt_mat <- data.table::as.data.table(reshape2::melt(mat))
 
 identityCutoff <- .85

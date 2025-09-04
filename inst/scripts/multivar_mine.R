@@ -92,7 +92,7 @@ if (!is.null(opt$supp_desc)){
   merged_supp_tables <- merge_all_df(unlist(supp_tables, recursive = FALSE))
   merged_supp_tables$sample <- rownames(merged_supp_tables)
 }
-save.image('Testing.RData')
+
 pca_res <- lapply(act_des, perform_individual_analysis,
                           all_files = input_tables, 
                           numeric_factors = numeric_factors,
