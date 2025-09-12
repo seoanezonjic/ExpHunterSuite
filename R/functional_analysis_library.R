@@ -751,9 +751,10 @@ merge_clusters <- function(results_list) {
 }
 
 filter_cluster_enrichment <- function(compareCluster, filter_list){
-    compareCluster@compareClusterResult <- compareCluster@compareClusterResult[
-              compareCluster@compareClusterResult$Cluster %in% filter_list,]
-    return(compareCluster)
+  clust_data <- compareCluster@compareClusterResult
+  clust_data <- clust_data[clust_data$Cluster %in% filter_list, , drop = FALSE]
+  compareCluster@compareClusterResult <- clust_data
+  return(compareCluster)
 }
 
 hamming_binary <- function(X, Y = NULL) {
@@ -801,7 +802,6 @@ summarize_merged_ora <- function(ORA_merged, sim_thr=0.7,
 summarize_categories <- function(all_enrichments, sim_thr = 0.7, 
   common_name = "significant"){
    enrichment_summary <- list()
-       # save(list = ls(all.names = TRUE), file = "summarize_environment.RData")
   clusterized_terms <- clusterize_terms(all_enrichments, threshold = sim_thr, 
     common_name = common_name)
 
@@ -824,7 +824,6 @@ summarize_categories <- function(all_enrichments, sim_thr = 0.7,
 #' @importFrom GO.db GOBPPARENTS GOBPANCESTOR GOMFPARENTS GOMFANCESTOR GOCCPARENTS GOCCANCESTOR
 clusterize_terms <- function(all_enrichments, threshold = 0.7, 
   common_name = "significant"){
-    # save(list = ls(all.names = TRUE), file = "clusterize_environment.RData")
   clusterized_terms <- list()
   for (funsys in names(all_enrichments)){
     if (funsys=="BP"){
@@ -1016,7 +1015,6 @@ clean_parentals_in_matrix <- function(enrichment_mx, subont){
 
 #' @importFrom utils head
 filter_top_categories <- function(enrichments_ORA_merged, top_c = 50){
-  # save(enrichments_ORA_merged, file="enrichments_ORA_merged.RData")
   if(! is.null(top_c)) {
     for (funsys in names(enrichments_ORA_merged)){
       filtered_enrichments <- 
