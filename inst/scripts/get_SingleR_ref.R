@@ -148,8 +148,8 @@ if(!opt$only_showcase) {
   } else {
     stop("Unknown database. Must be \"celldex\", \"scRNAseq\" or path to a local dataset to convert to reference.")
   }
-  HDF5Array::saveHDF5SummarizedExperiment(x = ref, dir = opt$reference, verbose = opt$verbose, replace = opt$replace)
-  message("Reference saved successfully in ", opt$reference)
+  HDF5Array::saveHDF5SummarizedExperiment(x = ref, dir = opt$output, verbose = opt$verbose, replace = opt$replace)
+  message("Reference saved successfully in ", opt$output)
   message("Converting reference to seurat object to calculate UMAP")
   ref_seu <- Seurat::NormalizeData(object = ref_seu, verbose = opt$verbose,
                                    normalization.method = "RC", scale.factor = 1e6)
