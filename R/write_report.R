@@ -414,7 +414,7 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
             # Drop categories with fewer than two enriched clusters. This is
             # a comparative report, it does not make sense to render it with
             # just one cluster.
-            res <- res & length(unique(clust_data$Cluster)) < 2
+            res <- res & length(unique(clust_data$Cluster)) > 1
             return(res)
         })
         names(flags_cluster) <- names(enrichments_ORA)
