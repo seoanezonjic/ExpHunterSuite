@@ -207,7 +207,7 @@ if(opt$mode == "classic") {
   replicates = opt$replicates, ngenes = opt$ngenes, FC_min = opt$FC_min,
   DEGs_proportion = opt$DEGs_proportion, FC_max = opt$FC_max, P_up = opt$P_up)
 }
-saveRDS(opt, "opt.rds")
+
 if(opt$mode == "compcodeR") {
   generate_synth_DEGs(dataset = opt$dataset, n.vars = opt$n.vars, samples.per.cond = opt$samples.per.cond,
         n.diffexp = opt$n.diffexp, repl.id = opt$repl.id, seqdepth = opt$seqdepth, fraction.upregulated = opt$fraction.upregulated,
