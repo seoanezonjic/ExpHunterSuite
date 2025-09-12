@@ -52,7 +52,7 @@ for(funsys in names(plotter$hash_vars$flags_cluster)) {
     exp_res <- knitr::knit_expand(file.path(template_folder, "ora_plots_compareCluster.txt"))
     res[[funsys]] <- knitr::knit(text=exp_res, quiet=TRUE)
   } else {
-    res[[funsys]] <- paste0("<h2> <strong>No enrichment found for ", funsys, "</strong></h2>")
+    res[[funsys]] <- paste0("<h2> <strong>No enrichment found for ", funsys, " or only one cluster enriched. See grouped plot.</strong></h2>")
   }
 }
 cat(unlist(res), sep = '\n')
