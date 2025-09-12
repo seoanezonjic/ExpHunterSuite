@@ -156,25 +156,14 @@ if("KEGG" %in% all_funsys) {
 }
 
 ################################### MAIN ##
-ce_list <- main_clusters_to_enrichment(
-  input_file = opt$input_file,
-  gene_attribute_file = opt$gene_attribute_file,
-  org_db = org_db,
-  gene_keytype = opt$gene_keytype,
-  temp_file = temp_file,
-  force = opt$force,
-  all_funsys = all_funsys,
-  task_size = opt$task_size,
-  current_organism_info = current_organism_info,
-  workers = opt$workers,
-  pvalcutoff = opt$pvalcutoff,
-  qvalcutoff = opt$qvalcutoff,
-  all_custom_gmt = all_custom_gmt,
-  kegg_data_file = kegg_data_file,
-  universe = universe,
-  readable = readable
-)
+ce_list <- main_clusters_to_enrichment(input_file = opt$input_file, gene_attribute_file = opt$gene_attribute_file,
+  org_db = org_db, gene_keytype = opt$gene_keytype, temp_file = temp_file, force = opt$force, all_funsys = all_funsys,
+  task_size = opt$task_size, current_organism_info = current_organism_info, workers = opt$workers, pvalcutoff = opt$pvalcutoff,
+  qvalcutoff = opt$qvalcutoff, all_custom_gmt = all_custom_gmt, kegg_data_file = kegg_data_file, universe = universe,
+  readable = readable)
+
 enrichments_ORA <- ce_list[["enrichments_ORA"]]
+
 write_clusters_to_enrichment(output_path = output_path, mode = opt$mode,
   enrichments_ORA=enrichments_ORA, task_size = opt$task_size,
   workers = opt$workers, template_folder = template_folder,
