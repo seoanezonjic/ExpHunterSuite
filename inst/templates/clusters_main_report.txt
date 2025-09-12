@@ -44,7 +44,7 @@ results_cluster <- flags_cluster[plotter$hash_vars$flags_cluster]
 cat(htmlreportR:::make_html_list(list_content = results_cluster))
 end.rcode-->
 
-<!--begin.rcode multiple_children, echo=FALSE, results='asis'
+<!--begin.rcode expand_compareCluster_funsys, echo=FALSE, results='asis'
 res <- list()
 for(funsys in names(plotter$hash_vars$flags_cluster)) {
   if(plotter$hash_vars$flags_cluster[[funsys]] == TRUE) {
