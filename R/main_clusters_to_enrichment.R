@@ -55,7 +55,6 @@ main_clusters_to_enrichment <- function(
     }
     names(cluster_genes_list) <- cluster_genes[,1]
 
-
     enrichments_ORA <- multienricher_ora(all_funsys =  all_funsys, 
                                   genes_list =  cluster_genes_list, 
                                   task_size = task_size, 
