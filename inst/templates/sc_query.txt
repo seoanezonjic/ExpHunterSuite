@@ -12,6 +12,9 @@
     metadata <- plotter$hash_vars$seu@meta.data
     get_cells_metadata <- function(heatmap) {
         samples <- rownames(heatmap)
+        missing_cats <- extra_columns[!extra_columns %in% colnames(metadata)]
+        warning("Columns ", paste0(missing_cats, collapse = ", "), " not present in metadata. They will not be used.")
+        extra_columns <<- extra_columns[extra_columns %in% colnames(metadata)]
         sample_metadata <- unique(metadata[, c("sample", extra_columns)])
         rownames(sample_metadata) <- NULL
         sample_metadata <- sample_metadata[match(samples, sample_metadata$sample), ]
