@@ -38,13 +38,13 @@ apply_SingleR(
 }
 \arguments{
 \item{test}{A numeric matrix of single-cell expression values where rows are genes and columns are cells.
-Alternatively, a \linkS4class{SummarizedExperiment} object containing such a matrix.}
+Alternatively, a \link[SummarizedExperiment]{SummarizedExperiment} object containing such a matrix.}
 
-\item{ref}{A numeric matrix of (usually log-transformed) expression values from a reference dataset,
-or a \linkS4class{SummarizedExperiment} object containing such a matrix;
+\item{ref}{A numeric matrix of (usually normalized and log-transformed) expression values from a reference dataset,
+or a \link[SummarizedExperiment]{SummarizedExperiment} object containing such a matrix;
 see \code{\link[SingleR]{trainSingleR}} for details.
 
-Alternatively, a list or \linkS4class{List} of SummarizedExperiment objects or numeric matrices containing multiple references.
+Alternatively, a list or \link[S4Vectors]{List} of SummarizedExperiment objects or numeric matrices containing multiple references.
 Row names may be different across entries but only the intersection will be used, see Details.}
 
 \item{labels}{A character vector or factor of known labels for all samples in \code{ref}.
@@ -66,15 +66,21 @@ If set, annotation is performed on the aggregated cluster profiles, otherwise it
 \item{restrict}{A character vector of gene names to use for marker selection.
 By default, all genes in \code{ref} are used.}
 
-\item{quantile, fine.tune, tune.thresh, prune}{Further arguments to pass to \code{\link[SingleR]{classifySingleR}}.}
+\item{quantile}{A numeric scalar specifying the quantile of the correlation distribution to use to compute the score for each label.}
+
+\item{fine.tune}{A logical scalar indicating whether fine-tuning should be performed.}
+
+\item{tune.thresh}{A numeric scalar specifying the maximum difference from the maximum correlation to use in fine-tuning.}
+
+\item{prune}{A logical scalar indicating whether label pruning should be performed.}
 
 \item{assay.type.test}{An integer scalar or string specifying the assay of \code{test} containing the relevant expression matrix,
-if \code{test} is a \linkS4class{SummarizedExperiment} object.}
+if \code{test} is a \link[SummarizedExperiment]{SummarizedExperiment} object.}
 
 \item{assay.type.ref}{An integer scalar or string specifying the assay of \code{ref} containing the relevant expression matrix,
-if \code{ref} is a \linkS4class{SummarizedExperiment} object (or is a list that contains one or more such objects).}
+if \code{ref} is a \link[SummarizedExperiment]{SummarizedExperiment} object (or is a list that contains one or more such objects).}
 
-\item{check.missing}{Logical scalar indicating whether rows should be checked for missing values (and if found, removed).}
+\item{check.missing}{Deprecated, use \code{check.missing.test} and \code{check.missing.ref} instead.}
 
 \item{num.threads}{Integer scalar specifying the number of threads to use for index building and classification.}
 
@@ -82,7 +88,7 @@ if \code{ref} is a \linkS4class{SummarizedExperiment} object (or is a list that 
 
 \item{BNPARAM}{Deprecated and ignored.}
 
-\item{BPPARAM}{A \linkS4class{BiocParallelParam} object specifying how parallelization should be performed in other steps,
+\item{BPPARAM}{A \link[BiocParallel]{BiocParallelParam} object specifying how parallelization should be performed in other steps,
 see \code{?\link[SingleR]{trainSingleR}} and \code{?\link[SingleR]{classifySingleR}} for more details.}
 
 \item{save_trained_object}{A boolean. If TRUE, trained object will be saved
