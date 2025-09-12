@@ -31,7 +31,7 @@
 		clusters_heatplot(input_obj@compareClusterResult)
 	}
 	enrich_cnet <- function(input_obj) {
-		enrichplot::cnetplot(input_obj, showCategory = plotter$hash_vars$showCategories, node_label = node_label, size_item = size_item,
+		ggtangle::cnetplot(input_obj, showCategory = plotter$hash_vars$showCategories, node_label = node_label, size_item = size_item,
 		size_category = size_category, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha)
 	}
 	enrich_emap <- function(input_obj) {
