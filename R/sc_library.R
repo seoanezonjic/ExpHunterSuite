@@ -1408,6 +1408,7 @@ annotate_seurat <- function(seu, cell_annotation = NULL, logfc.threshold = 0.1,
 #' @importFrom DelayedArray DelayedArray
 #' @inheritParams SingleR::SingleR
 #' @inheritParams SingleR::trainSingleR
+#' @inheritParams SingleR::classifySingleR
 #' @param save_trained_object A boolean. If TRUE, trained object will be saved
 #' to disk, and further calls to the pipeline will recognize and load it instead
 #' of retraining.
