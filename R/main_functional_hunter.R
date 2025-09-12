@@ -183,8 +183,8 @@ main_functional_hunter <- function(
                 pvalueCutoff = pthreshold, qvalueCutoff = qthreshold, 
                 custom_sets=custom, kegg_file = kegg_data_file, workers=cores, 
                 task_size=task_size, return_all = TRUE, universe=universe)
-
-            clusters_enr_ora_merged<- process_cp_list(clusters_enr_ora, simplify, clean_parentals)
+            clusters_enr_ora_merged<- process_cp_list(enrichments_ORA = clusters_enr_ora,
+                simplify_results = simplify, clean_parentals = clean_parentals)
             func_results$WGCNA_ORA <- clusters_enr_ora_merged
             func_results$WGCNA_ORA_expanded <- add_term_sim_ora(clusters_enr_ora)
 
