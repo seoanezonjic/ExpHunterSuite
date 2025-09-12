@@ -408,8 +408,15 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
         if(is.null(source_folder)) {
             source_folder <- find.package("htmlreportR")
         }
-        flags_cluster <- sapply(enrichments_ORA,
-                                function(x) nrow(x@compareClusterResult)) != 0
+        flags_cluster <- sapply(enrichments_ORA, function(x) {
+            clust_data <- x@compareClusterResult
+            res <- nrow(clust_data) != 0
+            # Drop categories with fewer than two enriched clusters. This is
+            # a comparative report, it does not make sense to render it with
+            # just one cluster.
+            res <- res & length(unique(clust_data$Cluster)) < 2
+            return(res)
+        })
         names(flags_cluster) <- names(enrichments_ORA)
         outf_cls <- file.path(results_path, "clusters_func_report.html")
         tmp_folder <- file.path(results_path, "tmp_lib")
@@ -630,7 +637,8 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
     }
     current_organism_info <- subset(organisms_table, 
     rownames(organisms_table) %in% model_organism)
-    # Prepare the flag lists
+    # Prepare the flag lists. Categories set to FALSE will not be represented
+    # in report.
     flags_ora <- sapply(func_results$ORA, nrow) != 0
     names(flags_ora) <- names(func_results$ORA)
     flags_gsea <- sapply(func_results$GSEA, nrow) != 0
