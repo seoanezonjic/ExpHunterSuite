@@ -1,7 +1,7 @@
 test_that("preprocess_gtf works as intended", {
   gtf <- system.file("extData/testdata", "gencode.v45.toy.annotation.gtf",
                      package = "ExpHunterSuite")
-  txdb <- suppressMessages(txdbmaker::makeTxDbFromGFF(gtf))
+  txdb <- suppressMessages(suppressWarnings(txdbmaker::makeTxDbFromGFF(gtf)))
   GenomeInfoDb::keepStandardChromosomes(txdb)
   count_ranges <- GenomicFeatures::exonsBy(txdb, by = "gene")
   gene_name_mapping <- .map_genes(gtf)
@@ -11,7 +11,7 @@ test_that("preprocess_gtf works as intended", {
                           count_ranges = count_ranges,
                           gene_name_mapping = gene_name_mapping)
   expected_output$txdb@metadata$genomeInfo$`Creation time` <- ""
-  actual_output <- suppressMessages(preprocess_gtf(gtf))
+  actual_output <- suppressMessages(suppressWarnings(preprocess_gtf(gtf)))
   actual_output$txdb <- GenomicFeatures::transcripts(actual_output$txdb)
   actual_output$txdb@metadata$genomeInfo$`Creation time` <- ""
   actual_output$count_ranges@metadata$genomeInfo$`Creation time` <- ""
