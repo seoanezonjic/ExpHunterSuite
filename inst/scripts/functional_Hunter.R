@@ -27,7 +27,7 @@ option_list <- list(
     help=paste0("Input gene IDs. Available IDs are: ENSEMBL (E), entrezgene",
         " (e), TAIR/Arabidopsis (T), Gene Names (G), Gene Symbol (e.g. HGNC for human). [Default:%default]")),          
   optparse::make_option(c("-f", "--func_annot_db"), type="character", 
-    default="gKR",
+    default="KR",
     help=paste0("Functional annotation database and enrichment method(s) to",
         " use (topGO: G = GO | clusterProfiler: K = KEGG, g = GO, R = ",
         "Reactome). D = Disease Ontology (DO), d = DGN. [Default=%default]")),
