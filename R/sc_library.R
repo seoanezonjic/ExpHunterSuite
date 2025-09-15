@@ -385,7 +385,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 }
 
 .get_subset_DEGs <- function(seu, subset_by, cond, sub_value, conds,
-        logfc.threshold, min.pct, clust_num, verbose = FALSE) {
+        logfc.threshold, min.pct, clust_num, verbose = FALSE, layer = "data") {
   subset_seu <- subset_seurat(seu, subset_by, sub_value)
   meta <- as.character(subset_seu@meta.data[[cond]])
   ncells <- c(sum(meta==conds[1]), sum(meta==conds[2]))
@@ -399,7 +399,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
     Seurat::Idents(subset_seu) <- cond  
     markers <- Seurat::FindMarkers(subset_seu, ident.1 = conds[1],
         logfc.threshold = logfc.threshold, ident.2 = conds[2],
-        verbose = verbose, min.pct = min.pct)
+        verbose = verbose, min.pct = min.pct, layer = layer)
     markers$gene <- rownames(markers)
   }
   return(markers)
@@ -430,11 +430,11 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 }
 
 .get_global_DEGs <- function(seu, cond, conds, min.pct = 0.1, verbose = FALSE,
-                             logfc.threshold = 0.25){
+                             logfc.threshold = 0.25, layer = "data"){
   Seurat::Idents(seu) <- seu@meta.data[, tolower(cond)]
   global_DEGs <- Seurat::FindMarkers(seu, ident.1 = conds[1],
         logfc.threshold = logfc.threshold, min.pct = min.pct,
-        ident.2 = conds[2], verbose = verbose)
+        ident.2 = conds[2], verbose = verbose, layer = layer)
   global_DEGs$gene <- rownames(global_DEGs)
   nums <- sapply(global_DEGs, is.numeric)
   global_DEGs[nums] <- lapply(global_DEGs[nums], signif, 2)
@@ -782,7 +782,7 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
   names(top_samples) <- samples
   for(sample in samples) {
     subset <- subset_seurat(seu, sample_col, sample)
-    genes <- Seurat::GetAssayData(subset, assay, layer)
+    genes <- Seurat::GetAssayData(subset, assay = assay, layer = layer)
     expressed_genes <- vector(mode = "integer", length = nrow(genes))
     names(expressed_genes) <- rownames(genes)
     expressed_genes <- Matrix::rowSums(genes!=0) / ncol(genes)
