@@ -47,7 +47,7 @@ option_list <- list(
   optparse::make_option(c("-d", "--description_file"), type="character", default=NULL,
                         help="Markdown file describing of the enriched clusters."),
   optparse::make_option(c("-k", "--gene_keytype"), type="character", default="ENTREZID",
-                        help="What identifier is being used for the genes in the clusters?. Default=%default"),
+                        help=paste("Gene label type. Valid labels: \"ENTREZID\" (Entrez), \"ENSEMBL\" (Ensembl), \"SYMBOL\" (HGNC). Default: %default."),
   optparse::make_option(c("--gmt_id"), type="character", default="ENTREZID",
                         help="What identifier is being used for the genes in the custom gmt file. Default=%default"),
   optparse::make_option(c("-g", "--gene_attribute_file"), type="character", default=NULL,
