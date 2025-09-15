@@ -695,3 +695,51 @@ test_that("test .add_target_info, complex case", {
   output <- .add_target_info(seu = test_pbmc, DEG_target = DEG_target)$deg_group
   expect_equal(output, expected)
 })
+
+test_that("test .get_matrices, simple case", {
+  test_pbmc <- pbmc_tiny
+  test_pbmc$cell_type <- "g1"
+  test_pbmc$cell_type[8:15] <- "g2"
+  test_DEGs <- DEG_list
+  test_DEGs$global <- NULL
+  m1 <- data.frame(matrix(0, nrow = 3, ncol = 7))
+  m2 <- data.frame(matrix(0, nrow = 3, ncol = 8))
+  rownames(m1) <- c("PPBP", "IGLL5", "VDAC3")
+  colnames(m1) <- c("ATGCCAGAACGACT", "CATGGCCTGTGCAT", "GAACCTGATGAACC",
+                    "TGACTGGATTCTCA", "AGTCAGACTGCACA", "TCTGATACACGTGT",
+                    "TGGTATCTAAACAG") 
+  rownames(m2) <- rownames(m1)
+  colnames(m2) <- c("GCAGCTCTGTTTCT", "GATATAACACGCAT", "AATGTTGACAGTCA",
+                    "AGGTCATGAGTGTC", "AGAGATGATCTCGC", "GGGTAACTCTAGTG",
+                    "CATGAGACACGGGA", "TACGCCACTCCGAA")
+  m1[1, 3] <- 4.753095
+  m1[3, 4] <- 4.378773
+  m1[3, 7] <- 5.057837
+  m2[2, 4] <- 5.089387
+  m2[3, 3] <- 4.615121
+  m2[1, 5] <- 3.976987
+  m2[2, 6] <- 7.303943
+  m2[3, 5] <- 7.326021
+  m1 <- Matrix::Matrix(as.matrix(m1))
+  m2 <- Matrix::Matrix(as.matrix(m2))
+  matrix_list <- list(g1 = m1, g2 = m2)
+  DEG_df <- data.frame(IGLL5 = c(0.2, 0.0), PPBP = c(0, 1), VDAC3 = c(1.0, 0.2))
+  rownames(DEG_df) <- c("g1", "g2")
+  expected_matrices <- list(DEG_df = DEG_df, matrices = matrix_list)
+  matrices <- .get_matrices(seu = test_pbmc, meta = test_pbmc$cell_type,
+                DEG_list = test_DEGs, genes = c("PPBP", "IGLL5", "VDAC3"))
+  expect_equal(matrices, expected_matrices, tolerance = 6e-8)
+})
+
+test_that("test .get_matrices when only one cell is present in one of the
+           idents", {
+  test_pbmc <- pbmc_tiny
+  test_pbmc$cell_type <- "g1"
+  test_pbmc$cell_type[15] <- "g2"
+  test_DEGs <- DEG_list
+  test_DEGs$global <- NULL
+  matrices <- suppressWarnings(.get_matrices(seu = test_pbmc,
+              meta = test_pbmc$cell_type, DEG_list = test_DEGs,
+              genes = c("PPBP", "IGLL5", "VDAC3")))
+  expect_null(matrices$matrices$g2)
+})
