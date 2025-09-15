@@ -928,7 +928,7 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
     }
     DEG_list$global <- NULL
     empty_DEGs <- unlist(lapply(DEG_list,
-                                function(x) return(isFALSE(unlist(x))))) 
+                                function(x) return(isFALSE(unlist(x)))))
     DEG_list[empty_DEGs] <- NULL
     if(length(DEG_list) < 1) {
       warning("No per-identity DEG analysis present in DEG list.")
@@ -949,6 +949,12 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
   DEG_matrices <- matrices
   for(ident in names(DEG_list)) {
     ident_seu <- seu[, meta == ident]
+    if(ncol(ident_seu) < 2) {
+      warning("Identity ", ident, " was assigned to only one cell in ",
+              "experiment. Removing from DEG metrics.")
+      DEG_matrices[[ident]] <- NULL
+      next
+    }
     matrix <- SeuratObject::GetAssayData(ident_seu, layer = "data")
     matrix <- matrix[rownames(matrix) %in% genes, , drop = FALSE]
     matrices[[ident]] <- matrix
@@ -973,8 +979,8 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
 .add_ncell_df <- function(matrices = stop("No counts matrices supplied"),
                           DEG_df = stop("No DEG data frame supplied"),
                           min_counts = 1) {
-  ncell_df <- .process_matrix_list(matrices, .is_expressed_matrix,
-              min_counts = min_counts)
+  ncell_df <- .process_matrix_list(matrix_list = matrices,
+    processing_function = .is_expressed_matrix, min_counts = min_counts)
   # Different genes or cell types/clusters might be discarded due to DEG
   # thresholds or count thresholds. We must update both data frames accordingly.
   # This could be a function instead of this repetitive code.
@@ -1041,8 +1047,10 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
 }
 
 .is_expressed_matrix <- function(matrix, min_counts = 1) {
-  matrix@x[matrix@x < min_counts] <- 0
-  matrix@x[matrix@x > 0] <- 1
+  if(!is.null(matrix)) {
+    matrix@x[matrix@x < min_counts] <- 0
+    matrix@x[matrix@x > 0] <- 1
+  }
   return(matrix)
 }
 
@@ -1051,6 +1059,8 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
   if(!is.null(processing_function)) {
     matrix_list <- lapply(matrix_list, processing_function,
                           min_counts = min_counts)
+    NULL_pos <- lapply(matrix_list, is.null)
+    matrix_list <- matrix_list[!unlist(NULL_pos)]
   }
   res <- lapply(matrix_list, Matrix::rowSums)
   res <- do.call(rbind, res)
