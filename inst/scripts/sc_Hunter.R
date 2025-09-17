@@ -80,7 +80,6 @@ names(DEG_list) <- unlist(strsplit(names(DEG_targets), "_target"))
 message("--------------------------------------------")
 message("---------WRITING SC HUNTER REPORTS----------")
 message("--------------------------------------------")
-
 for(target_name in names(DEG_targets)) {
   DEG_name <- unlist(strsplit(target_name, "_target"))
   message(paste0("Writing ", DEG_name, " report"))
