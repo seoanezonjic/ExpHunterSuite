@@ -11,6 +11,7 @@
 #' @inheritParams annotate_SingleR
 #' @inheritParams apply_SingleR
 #' @importFrom BiocParallel SerialParam
+#' @importFrom Seurat VariableFeatures
 #' @param seu A seurat object.
 #' @param name Project name. Default NULL (no project name)
 #' @param query A string vector. List of genes to explore in dataset
@@ -85,37 +86,21 @@
 #' @returns invisible(final_results list. Contains multiple items:
 #' * qc: seurat object prior to filtering and analysis.
 #' * seu: processed seurat object.
+#' * markers: Data frame of marker genes.
 #' * sample_qc_pct: Gene expression matrix of union of top N expressed genes in
 #'                  all samples.
-#' * clusters_pct: A data frame with expression levels for query genes in each
-#'                 cluster (or cell type, if annotated).
-#' * query_exp: A data frame with expression levels for query genes in each
-#'              sample.
-#' * query_pct: A data frame with expression levels for query genes in each 
-#'              sample.
-#' * query_cluster_pct: Same as query_pct, but subset by one or even two
-#'                      conditions.
-#' * markers: Data frame of marker genes.
-#' * SingleR_annotation: Trained SingleR annotation object.
-#' * DEG_list: List of differentially expressed genes across speficied
-#'             conditions. Performed globally and in each cluster or cell type
-#'             subset.
-#' * subset_seu: Analyzed seurat objects, subset by integration condition.
-#' * subset_DEGs: Same as DEG_list, but subset by integration condition.
 #' * integrate: Whether or not to trigger integrative analysis. Workflow
 #'              contains a few key differences depending on this argument.
-#' @details subset_seu and subset_DEGs only trigger if two conditions have
-#' been provided for integrative analysis, and they will contain two objects,
-#' each only containing samples corresponding to one of the two possible values
-#' in the second experimental condition. That allows isolating the effect
-#' of each experimental condition to be analyzed and compared separately.)
+#' * clusters_pct: A data frame with the cluster composition of samples.
+#' * SingleR_annotation: Trained SingleR annotation object.
 
-main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
-    resolution = 0.5, p_adj_cutoff = 5e-3, name = NULL, integrate = FALSE,
-    cluster_annotation = NULL, cell_annotation = NULL, scalefactor = 10000,
-    hvgs = 2000, subset_by = NULL, ndims = 10, normalmethod = "LogNormalize",
-    verbose = FALSE, output = getwd(), reduce = FALSE, min_cells_per_sample=500,
-    ref_label = NULL, SingleR_ref = NULL, ref_de_method = NULL, ref_n = NULL,
+main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
+    sigfig = 2, resolution = 0.5, p_adj_cutoff = 5e-3, name = NULL,
+    integrate = FALSE, cluster_annotation = NULL, cell_annotation = NULL,
+    scalefactor = 10000, hvgs = 2000, subset_by = NULL, ndims = 10,
+    normalmethod = "LogNormalize", verbose = FALSE, output = getwd(),
+    reduce = FALSE, min_cells_per_sample=500, ref_label = NULL,
+    SingleR_ref = NULL, ref_de_method = NULL, ref_n = NULL,
     BPPARAM = SerialParam(), doublet_list = NULL, k_weight = 100,
     integration_method = "Harmony", sketch = FALSE, sketch_pct = 25, 
     force_ncells = NA_integer_, sketch_method = "LeverageScore", min.pct = 0.1,
@@ -162,8 +147,8 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
                                         selection.method = "vst", assay = "RNA")
     if(new_opt$sketch) {
       seu <- process_sketch(seu = seu, sketch_method = sketch_method,
-                            sketch_pct = sketch_pct, hvgs = hvgs,
-                            force_ncells = force_ncells, verbose = verbose)
+          sketch_pct = sketch_pct, hvgs = hvgs, force_ncells = force_ncells,
+          features = Seurat::VariableFeatures(seu), verbose = verbose)
     }
     assay <- Seurat::DefaultAssay(seu)
     SingleR_annotation <- NULL
@@ -218,8 +203,8 @@ main_annotate_sc <- function(seu, minqcfeats, percentmt, query, sigfig = 2,
         subset_by = subset_by, cluster_annotation = cluster_annotation,
         p_adj_cutoff = p_adj_cutoff, assay = assay, verbose = verbose,
         min.pct = min.pct, logfc.threshold = logfc.threshold, 
-        integrate = new_opt$integrate)
-        message("Time to annotate: ", Sys.time() - annot_start)
+        integrate = new_opt$integrate, layer = "scale.data")
+      message("Time to annotate: ", Sys.time() - annot_start)
       seu <- annotation$seu
       markers <- annotation$markers
     }
