@@ -47,12 +47,18 @@ end.rcode-->
 <!--begin.rcode expand_compareCluster_funsys, echo=FALSE, results='asis'
 res <- list()
 for(funsys in names(plotter$hash_vars$flags_cluster)) {
+  plotter$hash_vars$enrich_obj <- plotter$hash_vars$enrichments_ORA[[funsys]]
   if(plotter$hash_vars$flags_cluster[[funsys]] == TRUE) {
-    plotter$hash_vars$enrich_obj <- plotter$hash_vars$enrichments_ORA[[funsys]]
     exp_res <- knitr::knit_expand(file.path(template_folder, "ora_plots_compareCluster.txt"))
     res[[funsys]] <- knitr::knit(text=exp_res, quiet=TRUE)
   } else {
-    res[[funsys]] <- paste0("<h2> <strong>No enrichment found for ", funsys, " or only one cluster enriched. See grouped plot.</strong></h2>")
+    clusters <- unique(plotter$hash_vars$enrich_obj@compareClusterResult$Cluster)
+    if(0 < length(clusters) & length(clusters) < 2) {
+      message <- paste0("Only cluster ", clusters, " contains enrichment results in category ", funsys, ".")
+    } else {
+      message <- paste0("No enrichment found for category ", funsys, ".")
+    }
+    res[[funsys]] <- paste0("<h2> <strong>", message, " See grouped plot.</strong></h2>")
   }
 }
 cat(unlist(res), sep = '\n')
