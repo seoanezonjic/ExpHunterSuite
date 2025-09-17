@@ -385,7 +385,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 }
 
 .get_subset_DEGs <- function(seu, subset_by, cond, sub_value, conds,
-        logfc.threshold, min.pct, clust_num, verbose = FALSE, layer = "data") {
+        logfc.threshold, min.pct, clust_num, verbose = FALSE,
+        layer = "scale.data") {
   subset_seu <- subset_seurat(seu, subset_by, sub_value)
   meta <- as.character(subset_seu@meta.data[[cond]])
   ncells <- c(sum(meta==conds[1]), sum(meta==conds[2]))
@@ -406,7 +407,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 }
 
 .get_subset_markers <- function(seu, subset_by, cond, conds, DEG, verbose,
-                                min.pct, assay, logfc.threshold) {
+                        min.pct, assay, logfc.threshold, layer = "scale.data"){
   sub_values <- as.character(sort(unique(seu@meta.data[[subset_by]])))
   sub_markers <- vector(mode = "list", length = length(sub_values))
   names(sub_markers) <- as.character(sub_values)
@@ -415,11 +416,12 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
     if(DEG) {
       markers <- .get_subset_DEGs(seu = seu, subset_by = subset_by, cond = cond,
                     sub_value = sub_values[i], conds = conds, min.pct = min.pct,
-                    clust_num = i, verbose = verbose,
+                    clust_num = i, verbose = verbose, layer = layer,
                     logfc.threshold = logfc.threshold)
     } else {
       markers <- Seurat::FindConservedMarkers(seu, ident.1 = sub_values[i],
-                          grouping.var = cond, verbose = verbose, assay = assay)
+                          grouping.var = cond, verbose = verbose, assay = assay,
+                          layer = layer)
       markers[[subset_by]] <- sub_values[i]
     }
     nums <- sapply(markers, is.numeric)
@@ -430,7 +432,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 }
 
 .get_global_DEGs <- function(seu, cond, conds, min.pct = 0.1, verbose = FALSE,
-                             logfc.threshold = 0.25, layer = "data"){
+                             logfc.threshold = 0.25, layer = "scale.data"){
   Seurat::Idents(seu) <- seu@meta.data[, tolower(cond)]
   global_DEGs <- Seurat::FindMarkers(seu, ident.1 = conds[1],
         logfc.threshold = logfc.threshold, min.pct = min.pct,
@@ -490,19 +492,19 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 
 get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
       logfc.threshold = 0.25, verbose = FALSE, assay = "RNA", values = NULL,
-      min.pct = 0.1) {
+      min.pct = 0.1, layer = "scale.data") {
   conds <- .extract_conditions(metadata = seu@meta.data, cond = cond,
                                values = values)
   marker_meta <- list(high = paste0(cond, ": ", conds[1]),
                       low = paste0(cond, ": ", conds[2]))
   sub_markers <- .get_subset_markers(seu = seu, subset_by = subset_by,
     conds = conds, cond = cond, DEG = DEG, verbose = verbose, min.pct = min.pct,
-    assay = assay, logfc.threshold = logfc.threshold)
+    assay = assay, logfc.threshold = logfc.threshold, layer = layer)
   if(DEG) {
     message("Calculating global DEGs")
     sub_markers[["global"]] <- .get_global_DEGs(seu = seu, cond = cond,
         logfc.threshold = logfc.threshold, conds = conds, min.pct = min.pct,
-        verbose = verbose)
+        verbose = verbose, layer = layer)
   }
   if(all(c("cell_type", "seurat_clusters") %in% colnames(seu@meta.data))) {
     metadata <- unique(seu@meta.data[, c("seurat_clusters", "cell_type")])
@@ -546,7 +548,8 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 
 calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE,
                               idents = NULL, integrate = FALSE, min.pct = 0.01,
-                              logfc.threshold = 0.1, assay = "RNA") {
+                              logfc.threshold = 0.1, assay = "RNA",
+                              layer = "scale.data") {
   test <- FALSE
   if(length(subset_by) == 1) {
     test <- length(subset_by) == 1 & integrate
@@ -558,13 +561,14 @@ calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE,
   if(run_conserved) {
     markers <- get_sc_markers(seu = seu, cond = subset_by, DEG = FALSE,
                               subset_by = idents, verbose = verbose,
-                              assay = assay)
+                              assay = assay, layer = layer)
     markers <- collapse_markers(markers$markers)
   }else{
     Seurat::Idents(seu) <- seu@meta.data[[idents]]
     markers <- Seurat::FindAllMarkers(seu, only.pos = TRUE, min.pct = min.pct,
                                       logfc.threshold = logfc.threshold,
-                                      verbose = verbose, assay = assay)
+                                      verbose = verbose, assay = assay,
+                                      layer = layer)
     colnames(markers)[colnames(markers) == "cluster"] <- "seurat_clusters"
     rownames(markers) <- NULL
   }
@@ -592,7 +596,7 @@ calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE,
 #' @export
 
 analyze_sc_query <- function(seu, query, sigfig = 2, sample_col = "sample",
-  layer = "data") {
+  layer = "scale.data") {
   if(all(!query %in% rownames(seu))) {
     warning("None of the query genes are expressed in the dataset",
              immediate. = TRUE)
@@ -658,10 +662,10 @@ get_clusters_distribution <- function(seu, sigfig = 3, sample_col = "sample") {
 #' @examples
 #' data(pbmc_tiny)
 #' get_query_distribution(seu = pbmc_tiny, query = c("PPBP", "CA2"), sigfig = 2,
-#' layer = "data", sample_col = "orig.ident")
+#' layer = "scale.data", sample_col = "orig.ident")
 #' @export
 
-get_query_distribution <- function(seu, query, sigfig = 3, layer = "data",
+get_query_distribution <- function(seu, query, sigfig = 3, layer = "scale.data",
   sample_col = "sample") {
   genes <- SeuratObject::FetchData(seu, query, layer = layer)
   genes <- cbind(seu@meta.data[sample_col], genes)
@@ -697,7 +701,7 @@ get_query_distribution <- function(seu, query, sigfig = 3, layer = "data",
 #' @export
 
 get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
-                          layer = "data") {
+                          layer = "scale.data") {
   if(length(by) < 1 || 2 < length(by)) {
     stop("Invalid 'by' length. Must be 1 or 2")
   }
@@ -955,7 +959,7 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
       DEG_matrices[[ident]] <- NULL
       next
     }
-    matrix <- SeuratObject::GetAssayData(ident_seu, layer = "data")
+    matrix <- SeuratObject::GetAssayData(ident_seu, layer = "scale.data")
     matrix <- matrix[rownames(matrix) %in% genes, , drop = FALSE]
     matrices[[ident]] <- matrix
     DEG_matrices[[ident]] <- .process_DEG_matrix(DEG_matrix = DEG_list[[ident]],
@@ -1082,7 +1086,7 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
 #' breakdown_query(input = pbmc_tiny, query = c("PPBP", "CA2"))
 #' @export
 
-breakdown_query <- function(input, query, assay = "RNA", layer = "data") {
+breakdown_query <- function(input, query, assay = "RNA", layer = "scale.data") {
   # This pseudo-method dispatch comes from an error when subsetting a seurat
   # object only by cells NOT selected by sketch. Once it is solved, this will
   # always assume a seurat object.
@@ -1132,6 +1136,7 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data") {
 #' @returns A boolean. `TRUE` if it contains exclusive pairs, `FALSE` otherwise.
 
 .has_exclusive_idents <- function(seu, cond, idents) {
+  res <- FALSE
   meta <- seu@meta.data[, c(cond, idents)]
   meta <- meta[complete.cases(meta), ]
   groups <- unique(meta[[cond]])
@@ -1149,8 +1154,6 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data") {
             'more categories. Affected pair(s): ', mis_msg,
             ". \nDefaulting to general marker analysis.")
     res <- TRUE
-  }else{
-    res <- FALSE
   }
   return(res)
 }
@@ -1174,7 +1177,7 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data") {
 #' expr = FALSE))
 #' @export
 
-subset_seurat <- function(seu, column, value, expr = FALSE, layer = "data") {
+subset_seurat <- function(seu, column, value, expr = FALSE, layer = "scale.data") {
   # Argument "expr" comes from an error when subsetting a seurat
   # object only by cells NOT selected by sketch. Once it is solved, this will
   # always return a seurat object.
@@ -1331,7 +1334,7 @@ run_scDblFinder <- function(seu, assay = "counts", includePCs = 10,
 
 sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
                         sketched.assay = "sketch", cell.pct = 25,
-                        force.ncells = NA_integer_) {
+                        force.ncells = NA_integer_, features = NULL) {
   perform_sketch <- FALSE
   if(!is.na(force.ncells)) {
     message("force.ncells has non-empty value. Forcing sketch.")
@@ -1345,7 +1348,7 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
     } else {
       ncells <- ceiling(mean(table(seu$sample)) * cell.pct / 100)
       if(ncells < 5000) {
-        warning("Fewer than five thousahd cells selected for sketching.")
+        warning("Fewer than five thousand cells selected for sketching.")
       }
       if(ncells * length(unique(seu$sample)) < 30000) {
         message("Fewer than thirty thousand cells selected. Disabling sketch.")
@@ -1356,7 +1359,8 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
   } 
   if(perform_sketch) {
     seu <- Seurat::SketchData(object = seu, ncells = ncells, method = method,
-                              assay = assay, sketched.assay = sketched.assay)
+                              features = features, assay = assay,
+                              sketched.assay = sketched.assay)
     Seurat::DefaultAssay(seu) <- "sketch" 
   }
   return(seu)
@@ -1382,15 +1386,16 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
 #' @export
 
 annotate_seurat <- function(seu, cell_annotation = NULL, logfc.threshold = 0.1,
-                            subset_by = NULL, cluster_annotation = NULL,
-                            p_adj_cutoff = 1e-5, verbose = FALSE, assay = "RNA",
-                            integrate = FALSE, min.pct = 0.1) {
+  subset_by = NULL, cluster_annotation = NULL, p_adj_cutoff = 1e-5,
+  verbose = FALSE, assay = "RNA", integrate = FALSE, min.pct = 0.1,
+  layer = "scale.data") {
   res <- NULL
   if(!is.null(cell_annotation)) {
     message("Dynamically annotating clusters.")
     res <- annotate_clusters(seu = seu, subset_by = subset_by, assay = assay,
       integrate = integrate, idents = "seurat_clusters", verbose = verbose,
-      p_adj_cutoff = p_adj_cutoff, cell_annotation = cell_annotation)
+      p_adj_cutoff = p_adj_cutoff, cell_annotation = cell_annotation,
+      layer = layer)
   } else {
   if(!is.null(cluster_annotation)){
     message("Clusters annotation file provided. Renaming clusters.")
@@ -1402,7 +1407,8 @@ annotate_seurat <- function(seu, cell_annotation = NULL, logfc.threshold = 0.1,
     idents <- "seurat_clusters"
   }
   markers <- calculate_markers(seu = seu, verbose = verbose, assay = assay,
-                integrate = integrate, idents = idents, subset_by = subset_by)
+                integrate = integrate, idents = idents, subset_by = subset_by,
+                layer = layer)
   res <- list(seu = seu, markers = markers)
   }
   return(res)
@@ -1539,12 +1545,10 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
                              load_trained_object = FALSE){
   SingleR_start <- Sys.time()
   counts_matrix <- Seurat::GetAssayData(seu, assay = assay)
-  SingleR_annotation <- apply_SingleR(test = counts_matrix,
+  SingleR_annotation <- SingleR::SingleR(test = counts_matrix,
     ref = SingleR_ref, labels = SingleR_ref[[ref_label]], de.n = ref_n,
     assay.type.test = "scale.data", de.method = ref_de_method,
-    BPPARAM = BPPARAM, aggr.ref = aggr.ref, fine.tune = fine.tune,
-    save_trained_object = save_trained_object,
-    load_trained_object = load_trained_object)
+    BPPARAM = BPPARAM, aggr.ref = aggr.ref, fine.tune = fine.tune)
   message("SingleR annotation time: ", Sys.time() - SingleR_start)
   seu@meta.data$cell_type <- SingleR_annotation$pruned.labels
   seu@meta.data$cell_type[is.na(seu@meta.data$cell_type)] <- "Pruned"
@@ -1573,13 +1577,17 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
 
 annotate_clusters <- function(seu, subset_by = NULL, cell_annotation,
                               assay = "RNA", integrate = FALSE, verbose = FALSE,
-                              idents = "seurat_clusters", p_adj_cutoff = 1e-5){
+                              idents = "seurat_clusters", p_adj_cutoff = 1e-5,
+                              layer = "scale.data"){
   message("Calculating cluster markers")
   markers <- calculate_markers(seu = seu, subset_by = subset_by,
                                integrate = integrate, verbose = verbose,
-                               idents = idents, assay = assay)
+                               idents = idents, assay = assay, layer = layer)
   marker_clusters <- unique(as.numeric(markers$seurat_clusters))
   seu_clusters <- unique(as.numeric(seu$seurat_clusters))
+  if("sketch" %in% names(seu)) {
+    seu_clusters <- seu_clusters[complete.cases(seu_clusters)]
+  }
   missing <- which(!seu_clusters %in% marker_clusters)
   if(length(missing) > 0) {
     empty_row <- data.frame(matrix(0, ncol = ncol(markers)))
