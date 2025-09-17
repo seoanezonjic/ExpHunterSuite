@@ -5,15 +5,15 @@ option_list <- list(
   optparse::make_option(c("-r", "--reference"), type = "character",
     help = "SingleR reference to use."),
   optparse::make_option(c("-v", "--version"), type = "character",
-    help = "Celldex version of reference."),
+    help = "celldex / scRNAseq reference version."),
+  optparse::make_option(c("-n", "--name"), type = "character",
+    help = "celldex / scRNAseq reference name."),
   optparse::make_option("--replace", type = "logical", default = FALSE, action = "store_true",
     help = "Replace existing directory"),
   optparse::make_option("--verbose", type = "logical", default = TRUE, action = "store_true",
     help = "Display progress"),
   optparse::make_option("--quiet", type = "logical", default = FALSE, action = "store_false",
     dest = "verbose", help = "Display progress"),
-  optparse::make_option("--database", type = "character", help = "Database to consult
-    (\"celldex\" or \"scRNAseq\") or a path to local database"),
   optparse::make_option("--output", type = "character", help = "Path where reference
       will be locally saved."),
   optparse::make_option("--ref_label", type = "character", default = NULL,
@@ -25,7 +25,6 @@ option_list <- list(
 )
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
-print(opt)
 
 if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   # Obtain this script directory
@@ -52,33 +51,25 @@ col_to_table <- function(column, col_names) {
   return(res)
 }
 
-opt$name <- basename(opt$reference)
-if(opt$version != "") {
-  opt$reference <- paste(opt$reference, opt$version, sep = "_")
-}
-
-message("Output is")
-message(opt$output)
-
 if(!opt$only_showcase) {
-  if(opt$reference == "" & !file.exists(opt$database)) {
+  if(opt$reference == "" & !file.exists(opt$reference)) {
     stop('Unspecified remote database and non-existant local database.
           Please see get_SingleR_ref.R --help')
   }
-  if(file.exists(opt$database)) {
+  if(file.exists(opt$reference)) {
     message("Generating reference from specified database")
-    message("Database: ", opt$database)
+    message("Database: ", opt$reference)
     message("Processed reference will be saved in: ", opt$output)
     if(!file.exists(opt$output)) {
       dir.create(opt$output)
     }
-    meta_file <- Sys.glob(file.path(opt$database, "metadata/meta*"))
+    meta_file <- Sys.glob(file.path(opt$reference, "metadata/meta*"))
     if(length(meta_file) > 1) {
       stop('More than one match for metadata file. Please ensure only one metadata
         file matches the expression "meta*.txt"')
     }
     metadata <- read.table(meta_file, sep = '\t', header = TRUE)
-    expr_files <- Sys.glob(paste0(opt$database, "/expression/*txt*"))
+    expr_files <- Sys.glob(paste0(opt$reference, "/expression/*txt*"))
     if(length(expr_files) > 0) {
       data.table::setDTthreads(threads = opt$CPU)
       expr_matrices <- vector(mode = "list", length = length(expr_files))
@@ -99,7 +90,7 @@ if(!opt$only_showcase) {
     } else {
       read_sparse_matrix <- NULL
     }
-    tenX_dirs <- dirname(Sys.glob(paste0(opt$database, "/expression/*/*mtx*")))
+    tenX_dirs <- dirname(Sys.glob(paste0(opt$reference, "/expression/*/*mtx*")))
     if(length(tenX_dirs) > 0) {
       tenX_matrices <- vector(mode = "list", length = length(tenX_dirs))
       for(tenX_dir in seq(tenX_dirs)) {
@@ -116,7 +107,7 @@ if(!opt$only_showcase) {
      final_sparse_matrix <- SeuratObject::RowMergeSparseMatrices(read_sparse_matrix, merged_tenX_matrix)  
     } else {
       if(is.null(read_sparse_matrix) & is.null(merged_tenX_matrix)) {
-        final_sparse_matrix <- Seurat::Read10X(file.path(opt$database, "expression"))
+        final_sparse_matrix <- Seurat::Read10X(file.path(opt$reference, "expression"))
       } else if(is.null(read_sparse_matrix)) {
         final_sparse_matrix <- merged_tenX_matrix
       } else {
@@ -132,16 +123,16 @@ if(!opt$only_showcase) {
     ref <- scater::logNormCounts(ref)
     ref_seu <- Seurat::CreateSeuratObject(counts = final_sparse_matrix, meta.data = metadata)
     ref_seu <- SeuratObject::RenameAssays(object = ref_seu, assay.name = "RNA", new.assay.name = "originalexp", verbose = opt$verbose)
-  } else if(opt$database == "scRNAseq") {
-    ref <- scRNAseq::fetchDataset(opt$reference, opt$version)
+  } else if(opt$reference == "scRNAseq") {
+    ref <- scRNAseq::fetchDataset(opt$name, opt$version)
     # Removing unlabelled cells or cells without a clear label.
     ref <- ref[, !is.na(ref[[opt$ref_label]]) & ref[[opt$ref_label]]!="unclear"] 
     ref <- scater::logNormCounts(ref)
     ref@assays@data$counts <- as(ref@assays@data$counts, "dgCMatrix")
     ref@assays@data$logcounts <- as(ref@assays@data$logcounts, "dgCMatrix")
     ref_seu <- Seurat::as.Seurat(ref)
-  } else if(opt$database == "celldex") {
-    ref <- celldex::fetchReference(opt$reference, opt$version)
+  } else if(opt$reference == "celldex") {
+    ref <- celldex::fetchReference(opt$name, opt$version)
     ref@assays@data$counts <- as(ref@assays@data$counts, "dgCMatrix")
     ref@assays@data$logcounts <- as(ref@assays@data$logcounts, "dgCMatrix")
     ref_seu <- Seurat::as.Seurat(ref)
