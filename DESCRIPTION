@@ -27,7 +27,7 @@ Depends: R (>= 4.4.0)
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 biocViews: GeneExpressionWorkflow
 URL: https://github.com/seoanezonjic/ExpHunterSuite
 BugReports: https://github.com/seoanezonjic/ExpHunterSuite/issues
