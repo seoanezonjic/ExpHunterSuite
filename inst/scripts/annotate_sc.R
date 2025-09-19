@@ -55,6 +55,9 @@ option_list <- list(
             help = "Provided CPUs."),
   optparse::make_option("--imported_counts", type = "character", default = "",
             help = "Imported counts directory."),
+  optparse::make_option("--meta_file", type = "character", default = "",
+            help = "Imported counts metadata file. If empty, it will be assumed to be located in
+            \"imported_counts/meta.tsv\"."),
   optparse::make_option("--cell_annotation", type = "character", default = "",
             help = "Cell types annotation file. Will be used to dynamically
                     annotate clusters."),
@@ -169,11 +172,12 @@ message("CPU provided to BiocParallel: ", opt$cpu)
 ##########################################
 final_counts_path <- file.path(opt$output, "counts/matrix.mtx.gz")
 if(!file.exists(final_counts_path) | !opt$integrate) {
-  # Input parser function
-  # Reference loader function
   SingleR_ref <- NULL
   if(opt$SingleR_ref != "/" & file.exists(opt$SingleR_ref)) {
     SingleR_ref <- load_SingleR_ref(path = opt$SingleR_ref, version = opt$ref_version, filter = opt$ref_filter)
+    if(!opt$ref_label %in% colnames(SummarizedExperiment::colData(SingleR_ref))) {
+      stop(opt$ref_label, " not in reference metadata. Please see reference report (get_SingleR_ref.R --only_showcase to generate it).")
+    }
   }
   if(opt$integrate) {
     if(opt$imported_counts == "") {
@@ -182,7 +186,7 @@ if(!file.exists(final_counts_path) | !opt$integrate) {
     } else {
       seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(opt$imported_counts, gene.column = 1),
                                         project = opt$name, min.cells = 1, min.features = 1)
-      seu_meta <- read.table(file.path(opt$imported_counts, "meta.tsv"), sep = "\t", header = TRUE)
+      seu_meta <- read.table(file.path(opt$meta_file), sep = "\t", header = TRUE)
       rownames(seu_meta) <- colnames(seu)
       seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
     }
@@ -215,7 +219,6 @@ if(!file.exists(final_counts_path) | !opt$integrate) {
     message('Downsampling seurat object')
     seu <- downsample_seurat(seu, cells = 500, features = 5000)
   }
-  # Function end
 }
 
 if(file.exists(final_counts_path) & opt$integrate) {
