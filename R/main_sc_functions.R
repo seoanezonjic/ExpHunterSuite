@@ -13,9 +13,8 @@
 #' @importFrom BiocParallel SerialParam
 #' @importFrom Seurat VariableFeatures
 #' @param seu A seurat object.
-#' @param name Project name. Default NULL (no project name)
-#' @param query A string vector. List of genes to explore in dataset
-#' @param sigfig An integer. Significant figures to output
+#' @param name Project name. Default NULL (no project name).
+#' @param sigfig An integer. Significant figures to retain in output.
 #' @param resolution An integer. Controls clustering granularity. Default 0.5
 #' @param p_adj_cutoff A float. Adjusted p-value cutoff by which to consider a
 #' marker valid for cell type annotation.
