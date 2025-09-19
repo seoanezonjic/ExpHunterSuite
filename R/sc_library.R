@@ -465,6 +465,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #'
 #' @importFrom Seurat Idents FindMarkers FindConservedMarkers
 #' @inheritParams Seurat::FindMarkers
+#' @inheritParams SeuratObject::GetAssayData
 #' @param seu Seurat object to analyze.
 #' @param DEG A boolean.
 #'   * `TRUE`: Function will calculate differentally expressed genes.
@@ -686,6 +687,7 @@ get_query_distribution <- function(seu, query, sigfig = 3, layer = "scale.data",
 #' `get_query_pct` gets the percentage of cells in each sample of a seurat
 #' object which expresses genes specified in a list of queries.
 #'
+#' @inheritParams get_top_genes
 #' @param seu Seurat object to analyze.
 #' @param query Vector of query genes whose expression to analyze.
 #' @param sigfig Significant figure cutoff.
@@ -701,7 +703,7 @@ get_query_distribution <- function(seu, query, sigfig = 3, layer = "scale.data",
 #' @export
 
 get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
-                          layer = "scale.data") {
+                          layer = "scale.data", min_counts = 10) {
   if(length(by) < 1 || 2 < length(by)) {
     stop("Invalid 'by' length. Must be 1 or 2")
   }
@@ -734,8 +736,8 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
       }
       subset_list[[element]] <- new_subset
       pct_list[[element]] <- lapply(X = subset_list[[element]],
-                                    FUN = breakdown_query, query = query,
-                                    assay = assay, layer = layer)
+                      FUN = breakdown_query, query = query, assay = assay,
+                      layer = layer, min_counts = min_counts)
       pct_list[[element]] <- do.call(rbind, pct_list[[element]]) * 100
       pct_list[[element]] <- signif(pct_list[[element]], sigfig)
       if("cell_type" %in% by) {
@@ -748,7 +750,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
     names(pct_list) <- names(subset_list)
   } else {
     pct_list <- lapply(X = subset_list, FUN = breakdown_query, query = query,
-                       assay = assay, layer = layer)
+                       assay = assay, layer = layer, min_counts = min_counts)
     pct_list <- do.call(rbind, pct_list) * 100
     pct_list <- signif(pct_list, sigfig)
   }
@@ -761,8 +763,9 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
 #' of cells for each sample in a seurat object, and returns a vector with the
 #' union of these genes.
 #'
-#' @importFrom Seurat GetAssayData
+#' @importFrom SeuratObject GetAssayData
 #' @inheritParams get_query_pct
+#' @inheritParams get_fc_vs_ncells
 #' @param seu Seurat object to analyze
 #' @param top Top N genes to retrieve.
 #' @param sample_col Seurat object metadata column containing sample
@@ -777,7 +780,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
 #' @export
 
 get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
-                          sample_col = "sample") {
+                          sample_col = "sample", min_counts = 10) {
   if(top < 1) {
     stop("Invalid \"top\" argument. Must be greater than 1, was ", top)
   }
@@ -786,7 +789,8 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
   names(top_samples) <- samples
   for(sample in samples) {
     subset <- subset_seurat(seu, sample_col, sample)
-    genes <- Seurat::GetAssayData(subset, assay = assay, layer = layer)
+    genes <- SeuratObject::GetAssayData(subset, assay = assay, layer = layer)
+    genes[genes < min_counts] <- 0
     expressed_genes <- vector(mode = "integer", length = nrow(genes))
     names(expressed_genes) <- rownames(genes)
     expressed_genes <- Matrix::rowSums(genes!=0) / ncol(genes)
@@ -805,6 +809,7 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
 #' expressed in every sample in a seurat object.
 #' @inheritParams get_query_pct
 #' @inheritParams get_top_genes
+#' @inheritParams get_fc_vs_ncells
 #' @returns Gene expression matrix of union of top N expressed genes in all
 #' samples.
 #' @examples
@@ -815,11 +820,11 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
 #' @export
 
 get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
-                       sigfig = 2, sample_col = "sample") {
+                       sigfig = 2, sample_col = "sample", min_counts = 10) {
   top_genes <- get_top_genes(seu = seu, top = top, assay = assay, layer = layer,
-                             sample_col = sample_col)
+                             sample_col = sample_col, min_counts = min_counts)
   res <- get_query_pct(seu = seu, query = top_genes, by = sample_col,
-                       sigfig = sigfig)
+                       sigfig = sigfig, min_counts = min_counts)
   return(res)
 }
 
@@ -845,10 +850,11 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
 }
 
 .get_fc <- function(seu, meta, genes, DEG_list, min_avg_log2FC, p_val_cutoff,
-                    query) {
+                    query, layer) {
   matrix_list <- .get_matrices(seu = seu, meta = meta, genes = genes,
                         DEG_list = DEG_list, min_avg_log2FC = min_avg_log2FC,
-                        p_val_cutoff = p_val_cutoff, query = query)
+                        p_val_cutoff = p_val_cutoff, query = query,
+                        layer = layer)
   DEG_df <- matrix_list$DEG_df
   if(any(!query %in% colnames(DEG_df))) {
     miss_DEG <- paste(query[!query %in% colnames(DEG_df)], collapse = "\", \"")
@@ -875,7 +881,7 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
 }
 
 .run_fc_vs_ncells <- function(seu, DEG_list, query, return_output, genes_warn,
-                              meta, check, res = NULL, min_counts) {
+                              meta, check, res = NULL, min_counts, layer) {
   res <- NULL
   processed_query <- .process_query(seu = seu, DEG_list = DEG_list,
         query = query, return_output = return_output, genes_warn = genes_warn)
@@ -883,7 +889,8 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
   if(return_output) {
     fc_res <- .get_fc(seu = seu, meta = meta, query = processed_query$query,
       p_val_cutoff = check$p_val_cutoff, genes = processed_query$gene_list,
-      DEG_list = DEG_list, min_avg_log2FC = check$min_avg_log2FC)
+      DEG_list = DEG_list, min_avg_log2FC = check$min_avg_log2FC,
+      layer = layer)
     res <- .add_ncell_df(DEG_df = fc_res$DEG_df, min_counts = min_counts,
                      matrices = fc_res$matrix_list$matrices)
   }
@@ -897,6 +904,7 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
 #' dimensions. The first contains the amount of cells of each type that express
 #' each gene, and the second the log2FC of said gene for every given cell type.
 #'
+#' @inheritParams SeuratObject::GetAssayData
 #' @param seu Input seurat object.
 #' @param DEG_list A data frame. Table of differentially expressed genes per
 #' cell type, as calculated with Seurat.
@@ -914,7 +922,7 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
 #' @export
 
 get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
-                            p_val_cutoff = 0.01, min_counts = 1) {
+                    p_val_cutoff = 0.01, min_counts = 1, layer = "scale.data") {
   genes_warn <- NULL
   res <- NULL
   return_output <- TRUE
@@ -940,14 +948,15 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
     } else {
       res <- .run_fc_vs_ncells(seu = seu, DEG_list = DEG_list, query = query,
               return_output = return_output, genes_warn = genes_warn,
-              meta = meta, check = check, min_counts = min_counts)
+              meta = meta, check = check, min_counts = min_counts,
+              layer = layer)
     }
   }
   return(res)
 }
 
 .get_matrices <- function(seu, meta, genes, DEG_list, min_avg_log2FC = 0.2,
-                          p_val_cutoff = 0.01, query = NULL) {
+                      p_val_cutoff = 0.01, query = NULL, layer = "scale.data") {
   matrices <- vector(mode = "list", length = length(DEG_list))
   names(matrices) <- names(DEG_list)
   DEG_matrices <- matrices
@@ -959,7 +968,7 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
       DEG_matrices[[ident]] <- NULL
       next
     }
-    matrix <- SeuratObject::GetAssayData(ident_seu, layer = "scale.data")
+    matrix <- SeuratObject::GetAssayData(ident_seu, layer = layer)
     matrix <- matrix[rownames(matrix) %in% genes, , drop = FALSE]
     matrices[[ident]] <- matrix
     DEG_matrices[[ident]] <- .process_DEG_matrix(DEG_matrix = DEG_list[[ident]],
@@ -1052,8 +1061,15 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
 
 .is_expressed_matrix <- function(matrix, min_counts = 1) {
   if(!is.null(matrix)) {
-    matrix@x[matrix@x < min_counts] <- 0
-    matrix@x[matrix@x > 0] <- 1
+    if(is(matrix, "dgCMatrix")) {
+      matrix@x[matrix@x < min_counts] <- 0
+      matrix@x[matrix@x > 0] <- 1
+    } else {
+      df <- data.frame(matrix)
+      df[df < min_counts] <- 0
+      df[df > 0] <- 1
+      matrix <- as.matrix(df)
+    }
   }
   return(matrix)
 }
@@ -1086,7 +1102,8 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
 #' breakdown_query(input = pbmc_tiny, query = c("PPBP", "CA2"))
 #' @export
 
-breakdown_query <- function(input, query, assay = "RNA", layer = "scale.data") {
+breakdown_query <- function(input, query, assay = "RNA", layer = "scale.data",
+                            min_counts = 10) {
   # This pseudo-method dispatch comes from an error when subsetting a seurat
   # object only by cells NOT selected by sketch. Once it is solved, this will
   # always assume a seurat object.
@@ -1099,6 +1116,7 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "scale.data") {
   } else {
     genes <- input
   }
+  genes[genes < min_counts] <- 0
   if(is.null(names(genes))) {
     features <- rownames(genes)
   } else {
@@ -1313,6 +1331,8 @@ run_scDblFinder <- function(seu, assay = "counts", includePCs = 10,
 #' `sketch_sc_experiment` determines optimal cell number to sketch seurat assay.
 #' If it is larger than specified minimum, it proceeds with sketching, else it 
 #' is skipped.
+#' @importFrom Seurat SketchData DefaultAssay
+#' @inheritParams Seurat::SketchData
 #' @param seu Seurat object to sketch.
 #' Default value of 5000, recommended by Seurat tutorials.
 #' @param force.ncells An integer. Number of cells to forcibly use in sketch.
@@ -1685,6 +1705,7 @@ process_doublets <- function(seu, name = NULL, doublet_path = getwd(),
 #' process_sketch
 #'
 #' `process_sketch` is a wrapper for Seurat sketching step.
+#' @importFrom Seurat VariableFeatures FindVariableFeatures
 #' @inheritParams sketch_sc_experiment
 #' @inheritParams Seurat::FindVariableFeatures
 #' @inheritParams main_annotate_sc
@@ -1704,10 +1725,10 @@ process_doublets <- function(seu, name = NULL, doublet_path = getwd(),
 #' @export
 
 process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
-                           verbose = FALSE){
+                   verbose = FALSE, features = seurat::VariableFeatures(seu)){
   message("Sketching sample data")
   sketch_start <- Sys.time()
-  seu <- sketch_sc_experiment(seu = seu, assay = "RNA",
+  seu <- sketch_sc_experiment(seu = seu, assay = "RNA", features = features,
     method = sketch_method, sketched.assay = "sketch", cell.pct = sketch_pct,
     force.ncells = force_ncells)
   sketch_end <- Sys.time()
@@ -1730,6 +1751,7 @@ process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
 #' step of our pipeline.
 #' @inheritParams get_qc_pct
 #' @inheritParams get_clusters_distribution
+#' @inheritParams get_fc_vs_ncells
 #' @returns A list containing expression quality metrics and cluster
 #' distribution metrics.'
 #' @examples
@@ -1738,9 +1760,11 @@ process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
 #' get_expression_metrics(seu = pbmc_tiny, sigfig = 2, sample_col = "groups")
 #' @export
 
-get_expression_metrics <- function(seu, sigfig, sample_col = "sample") {
+get_expression_metrics <- function(seu, sigfig, sample_col = "sample",
+                                   min_counts = 10) {
   message("Extracting expression quality metrics")
-  sample_qc_pct <- get_qc_pct(seu = seu, sample_col = sample_col)
+  sample_qc_pct <- get_qc_pct(seu = seu, sample_col = sample_col,
+                              min_counts = min_counts)
   message("Extracting clusters distribution. This might take a while.")
   clusters_pct <- get_clusters_distribution(seu = seu, sigfig = sigfig,
                                             sample_col = sample_col)
@@ -1773,6 +1797,8 @@ process_sc_params <- function(params = list(), mode = "annotation") {
     params$ref_de_method <- params$ref_filter <- params$filter_dataset <- ""
     params$exp_design <- ""
     params$ref_version <- ""
+    params$meta_file <- ""
+    params$imported_counts <- ""
   } else {
     params$target_genes <- ""
   }
@@ -1826,6 +1852,9 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   }
   if(params$filter_dataset == "") {
     params$filter_dataset <- NULL
+  }
+  if(params$meta_file == "" & params$imported_counts != "") {
+    params$meta_file <- file.path(params$imported_counts, "meta.tsv")
   }
   return(list(opt = params, doublet_list = doublet_list,
               out_suffix = out_suffix))
