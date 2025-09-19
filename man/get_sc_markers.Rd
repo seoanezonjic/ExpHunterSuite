@@ -13,7 +13,8 @@ get_sc_markers(
   verbose = FALSE,
   assay = "RNA",
   values = NULL,
-  min.pct = 0.1
+  min.pct = 0.1,
+  layer = "scale.data"
 )
 }
 \arguments{
@@ -49,6 +50,8 @@ error.}
 \item{min.pct}{only test genes that are detected in a minimum fraction of
 min.pct cells in either of the two populations. Meant to speed up the function
 by not testing genes that are very infrequently expressed. Default is 0.01}
+
+\item{layer}{Name of layer to get or set}
 }
 \value{
 A list containing one marker or DEG data frame per cluster, plus

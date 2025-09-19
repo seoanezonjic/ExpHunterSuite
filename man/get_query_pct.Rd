@@ -4,7 +4,15 @@
 \alias{get_query_pct}
 \title{get_query_pct}
 \usage{
-get_query_pct(seu, query, by, sigfig = 2, assay = "RNA", layer = "data")
+get_query_pct(
+  seu,
+  query,
+  by,
+  sigfig = 2,
+  assay = "RNA",
+  layer = "scale.data",
+  min_counts = 10
+)
 }
 \arguments{
 \item{seu}{Seurat object to analyze.}
@@ -18,6 +26,9 @@ get_query_pct(seu, query, by, sigfig = 2, assay = "RNA", layer = "data")
 \item{assay}{Seurat object assay to break down.}
 
 \item{layer}{Layer of seurat object assay to break down.}
+
+\item{min_counts}{An integer. Minimum gene counts to consider a gene as
+expressed.}
 }
 \value{
 A data frame with percentage of cells expressing query genes in each

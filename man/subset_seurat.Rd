@@ -4,7 +4,7 @@
 \alias{subset_seurat}
 \title{subset_seurat}
 \usage{
-subset_seurat(seu, column, value, expr = FALSE, layer = "data")
+subset_seurat(seu, column, value, expr = FALSE, layer = "scale.data")
 }
 \arguments{
 \item{seu}{Seurat object.}

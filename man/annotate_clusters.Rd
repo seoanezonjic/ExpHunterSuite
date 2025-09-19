@@ -12,7 +12,8 @@ annotate_clusters(
   integrate = FALSE,
   verbose = FALSE,
   idents = "seurat_clusters",
-  p_adj_cutoff = 1e-05
+  p_adj_cutoff = 1e-05,
+  layer = "scale.data"
 )
 }
 \arguments{
@@ -35,6 +36,8 @@ bother with subsetting if FALSE.}
 markers in case conserved mode cannot be triggered.}
 
 \item{p_adj_cutoff}{Minimum adjusted p-value of markers to consider.}
+
+\item{layer}{Name of layer to get or set}
 }
 \value{
 Annotated seurat object.

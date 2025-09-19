@@ -9,7 +9,8 @@ get_top_genes(
   top = 20,
   assay = "RNA",
   layer = "counts",
-  sample_col = "sample"
+  sample_col = "sample",
+  min_counts = 10
 )
 }
 \arguments{
@@ -23,6 +24,9 @@ get_top_genes(
 
 \item{sample_col}{Seurat object metadata column containing sample
 information. Default "sample", as per our workflow.}
+
+\item{min_counts}{An integer. Minimum gene counts to consider a gene as
+expressed.}
 }
 \value{
 A vector containing the union of the top N genes of each sample of

@@ -14,7 +14,8 @@ annotate_seurat(
   verbose = FALSE,
   assay = "RNA",
   integrate = FALSE,
-  min.pct = 0.1
+  min.pct = 0.1,
+  layer = "scale.data"
 )
 }
 \arguments{
@@ -46,6 +47,8 @@ bother with subsetting if FALSE.}
 \item{min.pct}{only test genes that are detected in a minimum fraction of
 min.pct cells in either of the two populations. Meant to speed up the function
 by not testing genes that are very infrequently expressed. Default is 0.01}
+
+\item{layer}{Name of layer to get or set}
 }
 \value{
 A seurat object with a new sketched assay.

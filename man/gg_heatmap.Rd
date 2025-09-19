@@ -34,7 +34,8 @@ case it will convert input data to a data frame.}
 
 \item{x_axis, y_axis}{Names of X and Y axes.}
 
-\item{fill}{Fill colour.}
+\item{fill}{Fill colour. \code{fill_alpha()} can be used to set the transparency
+of the fill.}
 
 \item{text_plot}{Label to add to plot.}
 

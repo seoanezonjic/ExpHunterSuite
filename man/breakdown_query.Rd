@@ -4,7 +4,13 @@
 \alias{breakdown_query}
 \title{breakdown_query}
 \usage{
-breakdown_query(input, query, assay = "RNA", layer = "data")
+breakdown_query(
+  input,
+  query,
+  assay = "RNA",
+  layer = "scale.data",
+  min_counts = 10
+)
 }
 \arguments{
 \item{input}{Input object to breakdown. Can be a seurat object or a
@@ -15,6 +21,9 @@ single-cell counts matrix.}
 \item{assay}{Seurat object assay to break down.}
 
 \item{layer}{Layer of seurat object assay to break down.}
+
+\item{min_counts}{An integer. Minimum gene counts to consider a gene as
+expressed.}
 }
 \value{
 A data frame of the proportion of cells (between 0 and 1) that

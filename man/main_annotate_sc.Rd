@@ -8,9 +8,8 @@ non-integrative analysis.}
 \usage{
 main_annotate_sc(
   seu,
-  minqcfeats,
-  percentmt,
-  query,
+  minqcfeats = 500,
+  percentmt = 5,
   sigfig = 2,
   resolution = 0.5,
   p_adj_cutoff = 0.005,
@@ -58,16 +57,14 @@ Default 500}
 \item{percentmt}{A float. Maximum MT percentage to consider a cell valid.
 Default 5}
 
-\item{query}{A string vector. List of genes to explore in dataset}
-
-\item{sigfig}{An integer. Significant figures to output}
+\item{sigfig}{An integer. Significant figures to retain in output.}
 
 \item{resolution}{An integer. Controls clustering granularity. Default 0.5}
 
 \item{p_adj_cutoff}{A float. Adjusted p-value cutoff by which to consider a
 marker valid for cell type annotation.}
 
-\item{name}{Project name. Default NULL (no project name)}
+\item{name}{Project name. Default NULL (no project name).}
 
 \item{integrate}{A boolean.
 \itemize{
@@ -186,38 +183,19 @@ invisible(final_results list. Contains multiple items:
 \itemize{
 \item qc: seurat object prior to filtering and analysis.
 \item seu: processed seurat object.
+\item markers: Data frame of marker genes.
 \item sample_qc_pct: Gene expression matrix of union of top N expressed genes in
 all samples.
-\item clusters_pct: A data frame with expression levels for query genes in each
-cluster (or cell type, if annotated).
-\item query_exp: A data frame with expression levels for query genes in each
-sample.
-\item query_pct: A data frame with expression levels for query genes in each
-sample.
-\item query_cluster_pct: Same as query_pct, but subset by one or even two
-conditions.
-\item markers: Data frame of marker genes.
-\item SingleR_annotation: Trained SingleR annotation object.
-\item DEG_list: List of differentially expressed genes across speficied
-conditions. Performed globally and in each cluster or cell type
-subset.
-\item subset_seu: Analyzed seurat objects, subset by integration condition.
-\item subset_DEGs: Same as DEG_list, but subset by integration condition.
 \item integrate: Whether or not to trigger integrative analysis. Workflow
 contains a few key differences depending on this argument.
+\item clusters_pct: A data frame with the cluster composition of samples.
+\item SingleR_annotation: Trained SingleR annotation object.
 }
 }
 \description{
 main_annotate_sc
 is the main seurat analysis function, which can be used for integrative or
 non-integrative analysis.
-}
-\details{
-subset_seu and subset_DEGs only trigger if two conditions have
-been provided for integrative analysis, and they will contain two objects,
-each only containing samples corresponding to one of the two possible values
-in the second experimental condition. That allows isolating the effect
-of each experimental condition to be analyzed and compared separately.)
 }
 \examples{
  \dontrun{

@@ -10,7 +10,8 @@ process_sketch(
   sketch_pct,
   force_ncells,
   hvgs,
-  verbose = FALSE
+  verbose = FALSE,
+  features = seurat::VariableFeatures(seu)
 )
 }
 \arguments{
@@ -36,6 +37,9 @@ default 2000.}
 to Seurat::FindVariableFeatures call..
 \item \code{FALSE} (the default): Function will be quiet.
 }}
+
+\item{features}{A character vector of feature names to include in the
+sketched assay.}
 }
 \value{
 A seurat object with a new sketched assay.

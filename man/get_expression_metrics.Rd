@@ -4,7 +4,7 @@
 \alias{get_expression_metrics}
 \title{get_expression_metrics}
 \usage{
-get_expression_metrics(seu, sigfig, sample_col = "sample")
+get_expression_metrics(seu, sigfig, sample_col = "sample", min_counts = 10)
 }
 \arguments{
 \item{seu}{Seurat object to analyze.}
@@ -13,6 +13,9 @@ get_expression_metrics(seu, sigfig, sample_col = "sample")
 
 \item{sample_col}{Seurat object metadata column containing sample
 information. Default "sample", as per our workflow.}
+
+\item{min_counts}{An integer. Minimum gene counts to consider a gene as
+expressed.}
 }
 \value{
 A list containing expression quality metrics and cluster

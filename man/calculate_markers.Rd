@@ -12,7 +12,8 @@ calculate_markers(
   integrate = FALSE,
   min.pct = 0.01,
   logfc.threshold = 0.1,
-  assay = "RNA"
+  assay = "RNA",
+  layer = "scale.data"
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ If the \code{slot} parameter is "scale.data" no filtering is performed.}
 
 \item{assay}{A string. Assay whose markers will be calculated. Default "RNA",
 as per usual workflow.}
+
+\item{layer}{Name of layer to get or set}
 }
 \value{
 Marker or DEG data frame.

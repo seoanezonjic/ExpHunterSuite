@@ -10,7 +10,8 @@ sketch_sc_experiment(
   method = "LeverageScore",
   sketched.assay = "sketch",
   cell.pct = 25,
-  force.ncells = NA_integer_
+  force.ncells = NA_integer_,
+  features = NULL
 )
 }
 \arguments{
@@ -29,6 +30,9 @@ tutorial.}
 
 \item{force.ncells}{An integer. Number of cells to forcibly use in sketch.
 NA by default.}
+
+\item{features}{A character vector of feature names to include in the
+sketched assay.}
 }
 \value{
 A seurat object with a new sketched assay.

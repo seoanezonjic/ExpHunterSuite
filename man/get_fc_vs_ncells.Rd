@@ -10,7 +10,8 @@ get_fc_vs_ncells(
   min_avg_log2FC = 0.2,
   query = NULL,
   p_val_cutoff = 0.01,
-  min_counts = 1
+  min_counts = 1,
+  layer = "scale.data"
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ NULL.}
 
 \item{min_counts}{An integer. Minimum gene counts to consider a gene as
 expressed.}
+
+\item{layer}{Name of layer to get or set}
 }
 \value{
 A list containing fc and ncells data frames.
