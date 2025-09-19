@@ -222,7 +222,19 @@ test_that("get_query_pct works in simple case", {
   expected_df[3, ] <- c(20, 40, 20)
   colnames(expected_df) <- query
   output_df <- suppressMessages(get_query_pct(seu = test_pbmc, query = query,
-                                by = "sample", layer = "counts"))
+                              by = "sample", layer = "counts", min_counts = 0))
+  expect_equal(output_df, expected_df)
+})
+
+test_that("get_query_pct can apply minimum counts filter", {
+  expected_df <- matrix(nrow = 3, ncol = 3)
+  rownames(expected_df) <- c("A", "B", "C")
+  expected_df[1, ] <- c(rep(0, 3))
+  expected_df[2, ] <- c(0, 0, 0)
+  expected_df[3, ] <- c(0, 20, 20)
+  colnames(expected_df) <- query
+  output_df <- suppressMessages(get_query_pct(seu = test_pbmc, query = query,
+                              by = "sample", layer = "counts", min_counts = 10))
   expect_equal(output_df, expected_df)
 })
 
@@ -235,10 +247,10 @@ test_that("get_query_pct gives warning if any query genes are not found", {
   expected_df[3, ] <- c(20, 40, 20)
   colnames(expected_df) <- query
   warnings <- capture_warnings(suppressMessages(get_query_pct(seu = test_pbmc,
-                               query = missing_query, by = "sample")))
+      query = missing_query, by = "sample", layer = "counts", min_counts = 0)))
   expect_match(warnings, "NOEXPA, NOEXPB")
   output_df <- suppressWarnings(suppressMessages(get_query_pct(seu = test_pbmc,
-                               query = missing_query, by = "sample")))
+      query = missing_query, by = "sample", layer = "counts", min_counts = 0)))
   expect_equal(output_df, expected_df)
 })
 
@@ -249,7 +261,7 @@ test_that("get_query_pct works with query of length one", {
   expected_df[, 1] <- c(20, 0, 20)
   colnames(expected_df) <- single_query
   output_df <- suppressMessages(get_query_pct(seu = test_pbmc, by = "sample",
-                                query = single_query))
+                      query = single_query, layer = "counts", min_counts = 0))
   expect_equal(output_df, expected_df)
 })
 
@@ -260,7 +272,7 @@ test_that("get_query_pct works with alternate 'by' arguments", {
   expected_df[, 1] <- c(0, 33, 33, 0, 0)
   colnames(expected_df) <- single_query
   output_df <- suppressMessages(get_query_pct(seu = test_pbmc, by = "cell_type",
-                                query = single_query))
+                      query = single_query, layer = "counts", min_counts = 0))
   testthat::expect_equal(output_df, expected_df)
 })
 
@@ -281,7 +293,7 @@ test_that("get_query_pct works with 'by' argument of length 2", {
   expected_list <- list(A = dfA, B = dfB, C = dfC)
   output_list <- suppressMessages(get_query_pct(seu = pbmc_updated,
                   query =  query, by = c("sample", "seurat_clusters"),
-                  layer = "counts"))
+                  layer = "counts", min_counts = 0))
   expect_equal(output_list, expected_list)
 })
 
@@ -402,7 +414,8 @@ test_pbmc@meta.data$seurat_clusters <- c(rep(0, 5), rep (1, 5), rep (2, 5))
 test_that("breakdown_query works in simple case", {
   expected_df <- c(0.130, 0.130, 0.270)
   names(expected_df) <- query
-  output_df <- signif(breakdown_query(test_pbmc, query), 2)
+  output_df <- signif(breakdown_query(test_pbmc, query, layer = "data",
+                                      min_counts = 0), 2)
   expect_equal(output_df, expected_df)
 })
 
@@ -410,7 +423,8 @@ test_that("breakdown_query works with counts matrix", {
   expected_df <- c(0.130, 0.130, 0.270)
   names(expected_df) <- query
   counts_matrix <- Seurat::GetAssayData(test_pbmc, layer = "data")
-  output_df <- signif(breakdown_query(counts_matrix, query), 2)
+  output_df <- signif(breakdown_query(counts_matrix, query, layer = "data",
+                                      min_counts = 0), 2)
   expect_equal(output_df, expected_df)
 })
 
@@ -420,7 +434,7 @@ test_that("breakdown_query gives warning if any query genes are not found", {
   names(expected_df) <- query
   expect_warning(breakdown_query(test_pbmc, missing_query), "NOEXPA, NOEXPB")
   output_df <- suppressWarnings(signif(breakdown_query(test_pbmc,
-                                                       missing_query), 2))
+                            missing_query, layer = "data", min_counts = 0), 2))
   expect_equal(output_df, expected_df)
 })
 
@@ -428,8 +442,8 @@ test_that("breakdown_query works with query of length one", {
   single_query <- c("PPBP")
   expected_df <- 0.13
   names(expected_df) <- single_query
-  output_df <- suppressMessages(signif(breakdown_query(test_pbmc, single_query),
-                                2))
+  output_df <- suppressMessages(signif(breakdown_query(test_pbmc, single_query,
+                                layer = "data", min_counts = 0), 2))
   expect_equal(output_df, expected_df)
 })
 
@@ -446,9 +460,12 @@ expected_big <- c("PPBP", "IGLL5", "VDAC3", "CD1C", "AKR1C3", "PF4", "MYL9",
 test_pbmc <- subset(test_pbmc, features = rownames(counts))
 
 test_that("get_top_genes works as expected", {
-  expect_equal(get_top_genes(test_pbmc, top = 1), expected_vector)
-  expect_equal(get_top_genes(test_pbmc, top = 10), expected_big)
-  expect_error(get_top_genes(test_pbmc, top = 0), "greater than 1, was 0")
+  expect_equal(get_top_genes(test_pbmc, top = 1, min_counts = 0),
+               expected_vector)
+  expect_equal(get_top_genes(test_pbmc, top = 10, min_counts = 0),
+               expected_big)
+  expect_error(get_top_genes(test_pbmc, top = 0, min_counts = 0),
+               "greater than 1, was 0")
 })
 
 test_that("get_top_genes works even if N is greater than number of expressed
@@ -472,7 +489,21 @@ DEG_list <- list(global = "This should not exist", g1 = DEG_g1, g2 = DEG_g2)
 test_that("get_fc_vs_ncells works as intended", {
   output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
                              min_avg_log2FC = 0.2, p_val_cutoff = 0.01,
-                             min_counts = 1)
+                             min_counts = 1, layer = "data")
+  expected_DEGs <- data.frame(PPBP = c(0, 1), IGLL5 = c(0.2, 0.0),
+                              VDAC3 = c(1.0, 0.2))
+  expected_ncells <- data.frame(PPBP = rep(1, 2), IGLL5 = c(0, 2),
+                                VDAC3 = rep(2, 2))
+  rownames(expected_DEGs) <- c("g1", "g2")
+  rownames(expected_ncells) <- c("g1", "g2")
+  expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
+  expect_equal(output, expected)
+})
+
+test_that("get_fc_vs_ncells works with scaled data (dense matrix)", {
+  output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
+                             min_avg_log2FC = 0.2, p_val_cutoff = 0.01,
+                             min_counts = 1, layer = "scale.data")
   expected_DEGs <- data.frame(PPBP = c(0, 1), IGLL5 = c(0.2, 0.0),
                               VDAC3 = c(1.0, 0.2))
   expected_ncells <- data.frame(PPBP = rep(1, 2), IGLL5 = c(0, 2),
@@ -489,7 +520,7 @@ test_that("get_fc_vs_ncells works with DEG tables containing different genes", {
   test_DEG_list[[3]] <- test_DEG_list[[3]][3:4, ]
   output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = test_DEG_list,
                              min_avg_log2FC = 0.2, p_val_cutoff = 0.01,
-                             min_counts = 1)
+                             min_counts = 1, layer = "data")
   expected_DEGs <- data.frame(IGLL5 = c(0.2, 0.0), VDAC3 = c(0.0, 0.2))
   expected_ncells <- data.frame(IGLL5 = c(0, 2), VDAC3 = rep(2, 2))
   rownames(expected_DEGs) <- c("g1", "g2")
@@ -499,9 +530,9 @@ test_that("get_fc_vs_ncells works with DEG tables containing different genes", {
 })
 
 test_that("get_fc_vs_ncells works with target list", {
-  output <- suppressMessages(get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
-                             min_avg_log2FC = Inf, p_val_cutoff = -Inf,
-                             min_counts = 1, query = c("PPBP", "VDAC3")))
+  output <- suppressMessages(get_fc_vs_ncells(seu = test_pbmc, layer = "data",
+                min_avg_log2FC = Inf, p_val_cutoff = -Inf, DEG_list = DEG_list,
+                min_counts = 1, query = c("PPBP", "VDAC3")))
   expected_DEGs <- data.frame(PPBP = 0:1, VDAC3 = c(1.0, 0.2))
   expected_ncells <- data.frame(PPBP = rep(1, 2), VDAC3 = rep(2, 2))
   rownames(expected_DEGs) <- c("g1", "g2")
@@ -516,7 +547,7 @@ test_that("get_fc_vs_ncells can handle no target genes being present in seurat
   ## should be a way to capture the warning while still saving output.
   expect_warning(suppressMessages(get_fc_vs_ncells(seu = test_pbmc,
                  DEG_list = DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf,
-                 min_counts = 1, query = c("None", "Zilch"))),
+                 min_counts = 1, query = c("None", "Zilch"), layer = "data")),
                  "None of the target genes are expressed in seurat object.")
   output <- suppressWarnings(suppressMessages(get_fc_vs_ncells(seu = test_pbmc,
                              DEG_list = DEG_list, min_avg_log2FC = Inf,
@@ -529,11 +560,11 @@ test_that("get_fc_vs_ncells can handle some target genes not being present in
          seurat object", {
   expect_warning(suppressMessages(get_fc_vs_ncells(seu = test_pbmc,
                  DEG_list = DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf,
-                 min_counts = 1, query = c("None", "Zilch", "PPBP"))),
-                 'None", "Zilch"')
+                 min_counts = 1, query = c("None", "Zilch", "PPBP"),
+                 layer = "data")), c('"None", "Zilch"'))
   output <- suppressMessages(suppressWarnings(get_fc_vs_ncells(seu = test_pbmc,
                              DEG_list = DEG_list, min_avg_log2FC = Inf,
-                             p_val_cutoff = -Inf, min_counts = 1,
+                             p_val_cutoff = -Inf, min_counts = 1, layer = "data",
                              query = c("None", "Zilch", "PPBP"))))
   expected_DEGs <- data.frame(PPBP = 1)
   rownames(expected_DEGs) <- c("g2")
@@ -547,7 +578,7 @@ test_that("get_fc_vs_ncells can handle FALSE and NULL values in DEG_list", {
   test_DEG_list$g3 <- data.frame(FALSE)
   output <- suppressMessages(get_fc_vs_ncells(seu = test_pbmc,
             DEG_list = test_DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf,
-            min_counts = 1, query = "PPBP"))
+            min_counts = 1, query = "PPBP", layer = "data"))
   expected_DEGs <- data.frame(PPBP = 1)
   rownames(expected_DEGs) <- c("g2")
   expected_ncells <- expected_DEGs
@@ -559,21 +590,25 @@ test_that("get_fc_vs_ncells returns NULL if all non-global values in DEG_list
            are FALSE", {
   test_DEG_list <- DEG_list
   test_DEG_list$g1 <- test_DEG_list$g2 <- test_DEG_list$g3 <- data.frame(FALSE)
-  warnings <- capture_warnings(get_fc_vs_ncells(seu = test_pbmc, DEG_list = test_DEG_list,
-                 min_avg_log2FC = 0, p_val_cutoff = 1, min_counts = 1))
+  warnings <- capture_warnings(get_fc_vs_ncells(seu = test_pbmc,
+                DEG_list = test_DEG_list, min_avg_log2FC = 0, p_val_cutoff = 1,
+                min_counts = 1, layer = "data"))
   expect_match(warnings, "No per-identity DEG analysis present in DEG list.")
-  expect_null(suppressWarnings(get_fc_vs_ncells(seu = test_pbmc, DEG_list = test_DEG_list,
-                 min_avg_log2FC = 0, p_val_cutoff = 1, min_counts = 1)))
+  expect_null(suppressWarnings(get_fc_vs_ncells(seu = test_pbmc,
+                DEG_list = test_DEG_list, min_avg_log2FC = 0, p_val_cutoff = 1,
+                min_counts = 1)))
 })
 
 test_that("get_fc_vs_ncells returns NULL if input is NULL, regardless of
            global", {
   test_DEG_list <- NULL
   warnings <- capture_warnings(get_fc_vs_ncells(seu = test_pbmc, min_counts = 1,
-    DEG_list = test_DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf))
+    DEG_list = test_DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf,
+    layer = "data"))
   expect_match(warnings, "Empty DEG_list provided")
   expect_null(suppressWarnings(get_fc_vs_ncells(seu = test_pbmc, min_counts = 1,
-    DEG_list = test_DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf)))
+    DEG_list = test_DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf,
+    layer = "data")))
 })
 
 test_that("test check_sc_input, integrate and sketch to TRUE, SingleR_ref,
@@ -618,7 +653,7 @@ test_that("test process_sc_params, annotation mode", {
                  cluster_annotation = "", cell_annotation = "",
                  SingleR_ref = "SingleR_ref", ref_version = "1",
                  ref_label = "cell_type", ref_de_method = "wilcox", ref_n = 15,
-                 ref_filter = "", target_genes = "gene1;gene2")
+                 ref_filter = "", target_genes = "gene1;gene2", meta_file = "")
   output <- suppressMessages(process_sc_params(params = params,
                                                mode = "annotation"))
   output$opt <- output$opt[order(names(output$opt))]
@@ -629,6 +664,7 @@ test_that("test process_sc_params, annotation mode", {
   expected$opt$filter_dataset <- NULL
   expected$opt$ref_filter <- NULL
   expected$opt <- expected$opt[order(names(expected$opt))]
+  expected$opt$meta_file <- ""
   expect_equal(output, expected)
 })
 
@@ -644,6 +680,8 @@ test_that("test process_sc_params, DEG mode", {
   expected$opt <- c(expected$opt, new_opt)
   expected$opt$subset_by <- ""
   expected$out_suffix <- "sample_annotation_report.html"
+  expected$opt$imported_counts <- ""
+  expected$opt$meta_file <- ""
   output$opt <- output$opt[order(names(output$opt))]
   expected$opt <- expected$opt[order(names(expected$opt))]
   expect_equal(output, expected)
@@ -668,6 +706,8 @@ test_that("test process_sc_params, query mode", {
   expected$opt$ref_n <- NULL
   expected$opt$filter_dataset <- NULL
   expected$opt$ref_filter <- NULL
+  expected$opt$imported_counts <- ""
+  expected$opt$meta_file <- ""
   output$opt <- output$opt[order(names(output$opt))]
   expected$opt <- expected$opt[order(names(expected$opt))]
   expect_equal(output, expected)
@@ -727,7 +767,7 @@ test_that("test .get_matrices, simple case", {
   rownames(DEG_df) <- c("g1", "g2")
   expected_matrices <- list(DEG_df = DEG_df, matrices = matrix_list)
   matrices <- .get_matrices(seu = test_pbmc, meta = test_pbmc$cell_type,
-                DEG_list = test_DEGs, genes = c("PPBP", "IGLL5", "VDAC3"))
+      layer = "data", DEG_list = test_DEGs, genes = c("PPBP", "IGLL5", "VDAC3"))
   expect_equal(matrices, expected_matrices, tolerance = 6e-8)
 })
 
@@ -738,7 +778,7 @@ test_that("test .get_matrices when only one cell is present in one of the
   test_pbmc$cell_type[15] <- "g2"
   test_DEGs <- DEG_list
   test_DEGs$global <- NULL
-  matrices <- suppressWarnings(.get_matrices(seu = test_pbmc,
+  matrices <- suppressWarnings(.get_matrices(seu = test_pbmc, layer = "data",
               meta = test_pbmc$cell_type, DEG_list = test_DEGs,
               genes = c("PPBP", "IGLL5", "VDAC3")))
   expect_null(matrices$matrices$g2)
