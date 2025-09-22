@@ -28,8 +28,7 @@ get_qc_pct(
 \item{sample_col}{Seurat object metadata column containing sample
 information. Default "sample", as per our workflow.}
 
-\item{min_counts}{An integer. Minimum gene counts to consider a gene as
-expressed.}
+\item{min_counts}{Counts required to consider a gene as expressed.}
 }
 \value{
 Gene expression matrix of union of top N expressed genes in all

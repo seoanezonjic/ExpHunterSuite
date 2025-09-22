@@ -25,8 +25,7 @@ get_top_genes(
 \item{sample_col}{Seurat object metadata column containing sample
 information. Default "sample", as per our workflow.}
 
-\item{min_counts}{An integer. Minimum gene counts to consider a gene as
-expressed.}
+\item{min_counts}{Counts required to consider a gene as expressed.}
 }
 \value{
 A vector containing the union of the top N genes of each sample of

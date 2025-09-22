@@ -44,6 +44,7 @@ main_annotate_sc(
   logfc.threshold = 0.25,
   aggr.ref = FALSE,
   fine.tune = TRUE,
+  min_counts = 10,
   save_trained_object = FALSE,
   load_trained_object = FALSE
 )
@@ -169,6 +170,8 @@ If the \code{slot} parameter is "scale.data" no filtering is performed.}
 \item \code{TRUE} (the default): Fine-tune statistical model built for transfer.
 \item \code{FALSE}: Do not perform fine-tuning..
 }}
+
+\item{min_counts}{Min counts to consider a gene is expressed in a cell.}
 
 \item{save_trained_object}{A boolean. If TRUE, trained object will be saved
 to disk, and further calls to the pipeline will recognize and load it instead

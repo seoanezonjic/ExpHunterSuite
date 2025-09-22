@@ -22,8 +22,7 @@ single-cell counts matrix.}
 
 \item{layer}{Layer of seurat object assay to break down.}
 
-\item{min_counts}{An integer. Minimum gene counts to consider a gene as
-expressed.}
+\item{min_counts}{Counts required to consider a gene as expressed.}
 }
 \value{
 A data frame of the proportion of cells (between 0 and 1) that

@@ -4,7 +4,13 @@
 \alias{get_expression_metrics}
 \title{get_expression_metrics}
 \usage{
-get_expression_metrics(seu, sigfig, sample_col = "sample", min_counts = 10)
+get_expression_metrics(
+  seu,
+  sigfig,
+  sample_col = "sample",
+  min_counts = 10,
+  layer = "scale.data"
+)
 }
 \arguments{
 \item{seu}{Seurat object to analyze.}
@@ -14,8 +20,9 @@ get_expression_metrics(seu, sigfig, sample_col = "sample", min_counts = 10)
 \item{sample_col}{Seurat object metadata column containing sample
 information. Default "sample", as per our workflow.}
 
-\item{min_counts}{An integer. Minimum gene counts to consider a gene as
-expressed.}
+\item{min_counts}{Counts required to consider a gene as expressed.}
+
+\item{layer}{Layer of seurat object assay to break down.}
 }
 \value{
 A list containing expression quality metrics and cluster

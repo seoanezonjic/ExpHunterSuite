@@ -31,7 +31,7 @@ apply_SingleR(
   num.threads = BiocParallel::bpnworkers(BPPARAM),
   out_dir = getwd(),
   BNPARAM = NULL,
-  BPPARAM = SerialParam(),
+  BPPARAM = BiocParallel::SerialParam(),
   save_trained_object = FALSE,
   load_trained_object = FALSE
 )

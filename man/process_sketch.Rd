@@ -11,7 +11,7 @@ process_sketch(
   force_ncells,
   hvgs,
   verbose = FALSE,
-  features = seurat::VariableFeatures(seu)
+  features = Seurat::VariableFeatures(seu)
 )
 }
 \arguments{
