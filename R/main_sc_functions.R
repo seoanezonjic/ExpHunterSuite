@@ -10,6 +10,7 @@
 #' @inheritParams main_sc_Hunter
 #' @inheritParams annotate_SingleR
 #' @inheritParams apply_SingleR
+#' @inheritParams get_expression_metrics
 #' @importFrom BiocParallel SerialParam
 #' @importFrom Seurat VariableFeatures
 #' @param seu A seurat object.
@@ -104,7 +105,7 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
     integration_method = "Harmony", sketch = FALSE, sketch_pct = 25, 
     force_ncells = NA_integer_, sketch_method = "LeverageScore", min.pct = 0.1,
     doublet_path = getwd(), min_cell_proportion = 0.1, logfc.threshold = 0.25,
-    aggr.ref = FALSE, fine.tune = TRUE,
+    aggr.ref = FALSE, fine.tune = TRUE, min_counts = 10,
     save_trained_object = FALSE, load_trained_object = FALSE){
     main_start <- Sys.time()
     new_opt <- check_sc_input(integrate = integrate, sketch = sketch,
@@ -211,7 +212,8 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
       seu <- project_sketch(seu = seu, reduction = reduction, ndims = ndims)
     }
     assay <- "RNA"
-    expr_metrics <- get_expression_metrics(seu = seu, sigfig = sigfig)
+    expr_metrics <- get_expression_metrics(seu = seu, sigfig = sigfig,
+                        min_counts = min_counts, layer = "scale.data")
     message("Total processing time: ", Sys.time() - main_start)
     final_results <- list(qc = qc, seu = seu, markers = markers,
       sample_qc_pct = expr_metrics$sample_qc_pct, integrate = integrate,
@@ -315,6 +317,7 @@ main_analyze_sc_query <- function(seu, query, sigfig = 2, layer = "counts",
 #' @param opt Options used in script call.
 #' @importFrom data.table fwrite as.data.table
 #' @importFrom DropletUtils write10xCounts
+#' @importFrom Matrix Matrix
 #' @export
 #' @examples
 #' \dontrun{
@@ -324,7 +327,7 @@ main_analyze_sc_query <- function(seu, query, sigfig = 2, layer = "counts",
 #' @returns invisible(NULL)
 
 write_annot_output <- function(final_results = stop("Missing results object"),
-                               opt = NULL, assay = "RNA", layer = "data") {
+                               opt = NULL, assay = "RNA", layer = "scale.data"){
     if(is.null(opt$output)) {
       opt$output <- getwd()
     }
@@ -334,6 +337,9 @@ write_annot_output <- function(final_results = stop("Missing results object"),
     metadata <- seu@meta.data
     reduction <- seu[[reduction]]
     counts <- Seurat::GetAssayData(seu, assay = assay, layer = layer)
+    if(!is(counts, "Matrix")) {
+      counts <- Matrix::Matrix(counts, sparse = TRUE)
+    }
     DropletUtils::write10xCounts(path = file.path(opt$output, "counts"),
                             x = counts, overwrite = TRUE, genome = opt$genome,
                             gene.type = "Gene Expression")
