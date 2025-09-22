@@ -110,6 +110,8 @@ option_list <- list(
             help = "Min cells per sample. Cells with fewer than this amount of cells will be discarded."),
   optparse::make_option("--min_cell_proportion", type = "numeric", default = 0.1,
             help = "Min percentage of cells expressing gene to consider it a marker."),
+    optparse::make_option("--min_counts", type = "numeric", default = 10,
+            help = "Counts needed to consider a gene as expressed in quality control."),
   optparse::make_option("--log2fc_threshold", type = "numeric", default = 0.25,
             help = "Min log-X-fold difference between groups to consider a gene as a marker.")
 )
@@ -228,14 +230,15 @@ if(file.exists(final_counts_path) & opt$integrate) {
   seu_meta <- read.table(file.path(opt$output, "counts/meta.tsv"), sep = "\t", header = TRUE)
   rownames(seu_meta) <- colnames(seu)
   seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
-  seu$RNA$data <- seu$RNA$counts
+  seu$RNA$scale.data <- seu$RNA$counts
   markers <- read.table(file.path(opt$output, "markers.tsv"), sep = "\t", header = TRUE)
   embeddings <- read.table(file.path(opt$output, "embeddings", "cell_embeddings.tsv"), header = TRUE)
   seu$umap <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'umap_', assay = 'RNA')
-  expr_metrics <- get_expression_metrics(seu = seu, sigfig = 2)
+  expr_metrics <- get_expression_metrics(seu = seu, sigfig = 2, layer = "scale.data", min_counts = opt$min_counts)
   # SingleR_annotation_file <- file.path(opt$output, "SingleR_annotation.tsv")
   SingleR_annotation_file <- file.path(opt$output, "SingleR_annotation.rds")
-  if(file.exists(SingleR_annotation_file)) {
+  if(file.exists(SingleR_annotation_file) & opt$SingleR_ref == "") {
+    message("Reading SingleR annotation file, located at ", SingleR_annotation_file)
     # SingleR_annotation <- read.table(SingleR_annotation_file, sep = "\t", header = TRUE)
     # Temporary while we figure out how to load the table properly (it fails
     # because it's missing certain attributes)
@@ -248,7 +251,7 @@ if(file.exists(final_counts_path) & opt$integrate) {
 } else {
   message("Analyzing seurat object")
   final_results <- main_annotate_sc(seu = seu, cluster_annotation = opt$cluster_annotation, name = opt$name,
-                    ndims = opt$ndims, resolution = opt$resolution, subset_by = opt$subset_by,
+                    ndims = opt$ndims, resolution = opt$resolution, subset_by = opt$subset_by, min_counts = opt$min_counts,
                     cell_annotation = opt$cell_annotation, minqcfeats = opt$minqcfeats, percentmt = opt$percentmt,
                     hvgs = opt$hvgs, scalefactor = opt$scalefactor, normalmethod = opt$normalmethod,
                     p_adj_cutoff = opt$p_adj_cutoff, verbose = opt$verbose, sigfig = 2,
