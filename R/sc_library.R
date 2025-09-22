@@ -770,6 +770,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
 #' @param top Top N genes to retrieve.
 #' @param sample_col Seurat object metadata column containing sample
 #' information. Default "sample", as per our workflow.
+#' @param min_counts Counts required to consider a gene as expressed.
 #'
 #' @returns A vector containing the union of the top N genes of each sample of
 #' input Seurat object.
@@ -788,6 +789,7 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
   top_samples <- vector(mode = "list", length = length(samples))
   names(top_samples) <- samples
   for(sample in samples) {
+    message("Getting top genes for sample ", sample, ".")
     subset <- subset_seurat(seu, sample_col, sample)
     genes <- SeuratObject::GetAssayData(subset, assay = assay, layer = layer)
     genes[genes < min_counts] <- 0
@@ -1411,19 +1413,19 @@ annotate_seurat <- function(seu, cell_annotation = NULL, logfc.threshold = 0.1,
   layer = "scale.data") {
   res <- NULL
   if(!is.null(cell_annotation)) {
-    message("Dynamically annotating clusters.")
+    message("Dynamically annotating clusters")
     res <- annotate_clusters(seu = seu, subset_by = subset_by, assay = assay,
       integrate = integrate, idents = "seurat_clusters", verbose = verbose,
       p_adj_cutoff = p_adj_cutoff, cell_annotation = cell_annotation,
       layer = layer)
   } else {
   if(!is.null(cluster_annotation)){
-    message("Clusters annotation file provided. Renaming clusters.")
+    message("Clusters annotation file provided. Renaming clusters")
     seu <- rename_clusters(seu = seu,
                            new_clusters = cluster_annotation$name)
     idents <- "cell_type"
   } else {
-    warning("No data provided for cluster annotation.", immediate. = TRUE)
+    warning("No data provided for cluster annotation", immediate. = TRUE)
     idents <- "seurat_clusters"
   }
   markers <- calculate_markers(seu = seu, verbose = verbose, assay = assay,
@@ -1438,7 +1440,7 @@ annotate_seurat <- function(seu, cell_annotation = NULL, logfc.threshold = 0.1,
 #' `apply_SingleR` runs the training part of SingleR::SingleR wrapper for both
 #' training and classifying.
 #'
-#' @importFrom BiocParallel bpisup bpstart bpstop
+#' @importFrom BiocParallel bpisup bpstart bpstop SerialParam
 #' @importFrom DelayedArray getAutoBPPARAM setAutoBPPARAM
 #' @importFrom SingleR trainSingleR
 #' @importFrom DelayedArray DelayedArray
@@ -1465,7 +1467,7 @@ apply_SingleR <- function (test, ref, labels, method = NULL, clusters = NULL,
     restrict = NULL, quantile = 0.8, fine.tune = TRUE, tune.thresh = 0.05,
     prune = TRUE, assay.type.test = "logcounts", assay.type.ref = "logcounts",
     check.missing = TRUE, num.threads = BiocParallel::bpnworkers(BPPARAM),
-    out_dir = getwd(), BNPARAM = NULL, BPPARAM = SerialParam(),
+    out_dir = getwd(), BNPARAM = NULL, BPPARAM = BiocParallel::SerialParam(),
     save_trained_object = FALSE, load_trained_object = FALSE) {
       .to_clean_matrix <- get_unexported_function("SingleR", ".to_clean_matrix")
       .DeprecatedclassifySingleR <- get_unexported_function("SingleR",
@@ -1725,7 +1727,7 @@ process_doublets <- function(seu, name = NULL, doublet_path = getwd(),
 #' @export
 
 process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
-                   verbose = FALSE, features = seurat::VariableFeatures(seu)){
+                   verbose = FALSE, features = Seurat::VariableFeatures(seu)){
   message("Sketching sample data")
   sketch_start <- Sys.time()
   seu <- sketch_sc_experiment(seu = seu, assay = "RNA", features = features,
@@ -1761,10 +1763,10 @@ process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
 #' @export
 
 get_expression_metrics <- function(seu, sigfig, sample_col = "sample",
-                                   min_counts = 10) {
+                                   min_counts = 10, layer = "scale.data") {
   message("Extracting expression quality metrics")
   sample_qc_pct <- get_qc_pct(seu = seu, sample_col = sample_col,
-                              min_counts = min_counts)
+                              min_counts = min_counts, layer = "scale.data")
   message("Extracting clusters distribution. This might take a while.")
   clusters_pct <- get_clusters_distribution(seu = seu, sigfig = sigfig,
                                             sample_col = sample_col)
