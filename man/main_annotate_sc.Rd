@@ -44,9 +44,7 @@ main_annotate_sc(
   logfc.threshold = 0.25,
   aggr.ref = FALSE,
   fine.tune = TRUE,
-  min_counts = 10,
-  save_trained_object = FALSE,
-  load_trained_object = FALSE
+  min_counts = 10
 )
 }
 \arguments{
@@ -172,14 +170,6 @@ If the \code{slot} parameter is "scale.data" no filtering is performed.}
 }}
 
 \item{min_counts}{Min counts to consider a gene is expressed in a cell.}
-
-\item{save_trained_object}{A boolean. If TRUE, trained object will be saved
-to disk, and further calls to the pipeline will recognize and load it instead
-of retraining.
-Default FALSE.}
-
-\item{load_trained_object}{A boolean. If TRUE, trained object will be loaded
-from disk.}
 }
 \value{
 invisible(final_results list. Contains multiple items:

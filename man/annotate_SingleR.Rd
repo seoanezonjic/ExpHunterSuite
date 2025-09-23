@@ -9,16 +9,14 @@ annotate_SingleR(
   SingleR_ref = NULL,
   ref_n = 25,
   integrate = "TRUE",
-  BPPARAM = SerialParam(),
   ref_de_method = "wilcox",
+  BPPARAM = BiocParallel::SerialParam(),
   ref_label = ref_label,
   aggr.ref = FALSE,
   fine.tune = TRUE,
   assay = "RNA",
   verbose = FALSE,
-  subset_by = NULL,
-  save_trained_object = FALSE,
-  load_trained_object = FALSE
+  subset_by = NULL
 )
 }
 \arguments{
@@ -38,10 +36,10 @@ time. Will not be used if ref_de_method is empty.}
 \item \code{FALSE} (the default): Do not perform integration.
 }}
 
-\item{BPPARAM}{Parameters to pass to BiocParallel framework.}
-
 \item{ref_de_method}{Method to use for marker calculation in single-cell
 reference.}
+
+\item{BPPARAM}{Parameters to pass to BiocParallel framework.}
 
 \item{ref_label}{Reference column to use in annotation.}
 
@@ -63,14 +61,6 @@ reference.}
 
 \item{subset_by}{A string vector. Categories to consider in integrative
 analysis.}
-
-\item{save_trained_object}{A boolean. If TRUE, trained object will be saved
-to disk, and further calls to the pipeline will recognize and load it instead
-of retraining.
-Default FALSE.}
-
-\item{load_trained_object}{A boolean. If TRUE, trained object will be loaded
-from disk.}
 }
 \value{
 A seurat object with a new sketched assay.
