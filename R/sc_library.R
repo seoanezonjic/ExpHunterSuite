@@ -1432,112 +1432,13 @@ annotate_seurat <- function(seu, cell_annotation = NULL, logfc.threshold = 0.1,
   return(res)
 }
 
-#' apply_SingleR
-#' `apply_SingleR` runs the training part of SingleR::SingleR wrapper for both
-#' training and classifying.
-#'
-#' @importFrom BiocParallel bpisup bpstart bpstop SerialParam
-#' @importFrom DelayedArray getAutoBPPARAM setAutoBPPARAM
-#' @importFrom SingleR trainSingleR
-#' @importFrom DelayedArray DelayedArray
-#' @inheritParams SingleR::SingleR
-#' @inheritParams SingleR::trainSingleR
-#' @inheritParams SingleR::classifySingleR
-#' @param save_trained_object A boolean. If TRUE, trained object will be saved
-#' to disk, and further calls to the pipeline will recognize and load it instead
-#' of retraining.
-#' Default FALSE.
-#' @param load_trained_object A boolean. If TRUE, trained object will be loaded 
-#' from disk.
-#' @param out_dir Directory where trained object will be saved/loaded from.
-#' @examples
-#'  \dontrun{
-#'    data(pbmc_tiny)
-#'    apply_SingleR(pbmc_tiny, tiny_ref)
-#'  }
-#' @export
-
-apply_SingleR <- function (test, ref, labels, method = NULL, clusters = NULL,
-    genes = "de", sd.thresh = 1, de.method = "classic", de.n = NULL,
-    de.args = list(), aggr.ref = FALSE, aggr.args = list(), recompute = TRUE,
-    restrict = NULL, quantile = 0.8, fine.tune = TRUE, tune.thresh = 0.05,
-    prune = TRUE, assay.type.test = "logcounts", assay.type.ref = "logcounts",
-    check.missing = TRUE, num.threads = BiocParallel::bpnworkers(BPPARAM),
-    out_dir = getwd(), BNPARAM = NULL, BPPARAM = BiocParallel::SerialParam(),
-    save_trained_object = FALSE, load_trained_object = FALSE) {
-      .to_clean_matrix <- get_unexported_function("SingleR", ".to_clean_matrix")
-      .DeprecatedclassifySingleR <- get_unexported_function("SingleR",
-                                                   ".DeprecatedclassifySingleR")
-      .is_list <- get_unexported_function("SingleR", ".is_list")
-      if (!BiocParallel::bpisup(BPPARAM) && !is(BPPARAM, "MulticoreParam")) {
-          BiocParallel::bpstart(BPPARAM)
-          on.exit(BiocParallel::bpstop(BPPARAM))
-      }
-      test <- .to_clean_matrix(test, assay.type.test, check.missing,
-          msg = "test", BPPARAM = BPPARAM)
-      if (single.ref <- !.is_list(ref)) {
-          ref <- list(ref)
-      }
-      ref <- lapply(ref, FUN = .to_clean_matrix, assay.type = assay.type.ref,
-          check.missing = check.missing, msg = "ref", BPPARAM = BPPARAM)
-      refnames <- Reduce(intersect, lapply(ref, rownames))
-      keep <- intersect(rownames(test), refnames)
-      if (length(keep) == 0) {
-          stop("no common genes between 'test' and 'ref'")
-      }
-      if (!identical(keep, rownames(test))) {
-          test <- test[keep, ]
-      }
-      for (i in seq_along(ref)) {
-          if (!identical(keep, rownames(ref[[i]]))) {
-              ref[[i]] <- ref[[i]][keep, , drop = FALSE]
-          }
-      }
-      if (single.ref) {
-          ref <- ref[[1]]
-      }
-      if(isFALSE(load_trained_object)) {
-        train_start <- Sys.time()
-        trained <- SingleR::trainSingleR(ref, labels, genes = genes,
-          sd.thresh = sd.thresh, de.method = de.method, de.n = de.n,
-          de.args = de.args, aggr.ref = aggr.ref, aggr.args = aggr.args,
-          recompute = recompute, restrict = restrict, check.missing = FALSE,
-          BNPARAM = BNPARAM, num.threads = num.threads, BPPARAM = BPPARAM)
-        train_end <- Sys.time()
-        message("Time to train: ", train_end - train_start, ".")
-        if(isTRUE(save_trained_object)) {
-          saveRDS(trained, file.path(out_dir, "trained_SingleR.rds"))
-        }
-      } else {
-        trained <- readRDS(file.path(out_dir, "trained_SingleR.rds"))
-      }
-      if (!is.null(method)) {
-          .Deprecated(msg = "'method=\"cluster\"' is no longer necessary when
-            'cluster=' is specified")
-      }
-      if (!is.null(clusters)) {
-          oldp <- BiocParallel::getAutoBPPARAM()
-          BiocParallel::setAutoBPPARAM(BPPARAM)
-          on.exit(BiocParallel::setAutoBPPARAM(oldp), add = TRUE)
-          test <- colsum(DelayedArray::DelayedArray(test), clusters)
-      }
-      class_start <- Sys.time()
-      res <- SingleR::classifySingleR(test, trained, quantile = quantile,
-          fine.tune = fine.tune, tune.thresh = tune.thresh, prune = prune,
-          check.missing = TRUE, num.threads = num.threads, BPPARAM = BPPARAM)
-      class_end <- Sys.time()
-      message("Time to classify: ", class_end - class_start, ".")
-      return(res)
-}
-
-
 #' annotate_SingleR
 #'
 #' `annotate_SingleR` is a wrapper for SingleR annotation strategy,
 #' simplifies function call.
 #' @inheritParams main_annotate_sc
-#' @inheritParams apply_SingleR
 #' @inheritParams calculate_markers
+#' @inheritParams SingleR::SingleR
 #' @inheritParams SingleR::trainSingleR
 #' @importFrom BiocParallel SerialParam
 #' @param fine.tune A boolean.
@@ -1555,12 +1456,11 @@ apply_SingleR <- function (test, ref, labels, method = NULL, clusters = NULL,
 #' @export
 
 annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
-                             integrate = "TRUE",
-                             BPPARAM = SerialParam(), ref_de_method = "wilcox",
+                             integrate = "TRUE", ref_de_method = "wilcox",
+                             BPPARAM = BiocParallel::SerialParam(), 
                              ref_label = ref_label, aggr.ref = FALSE,
                              fine.tune = TRUE, assay = "RNA", verbose = FALSE,
-                             subset_by = NULL, save_trained_object = FALSE,
-                             load_trained_object = FALSE){
+                             subset_by = NULL){
   SingleR_start <- Sys.time()
   counts_matrix <- Seurat::GetAssayData(seu, assay = assay)
   SingleR_annotation <- SingleR::SingleR(test = counts_matrix,
