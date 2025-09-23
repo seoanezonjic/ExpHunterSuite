@@ -173,8 +173,8 @@ test_that(".has_exclusive_idents can identify that no exclusive idents
   test_pbmc <- pbmc_tiny
   test_pbmc@meta.data$seurat_clusters <- 0
   test_pbmc@meta.data$seurat_clusters[c(8:15)] <- 1
-  expect_false(suppressWarnings(.has_exclusive_idents(seu = test_pbmc,
-                                  idents = "seurat_clusters", cond = "groups")))
+  expect_false(.has_exclusive_idents(seu = test_pbmc,
+                                  idents = "seurat_clusters", cond = "groups"))
 })
 
 test_that("get_clusters_distribution properly calculates percentages", {
