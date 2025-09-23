@@ -1159,17 +1159,13 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "scale.data",
   res <- FALSE
   meta <- seu@meta.data[, c(cond, idents)]
   meta <- meta[complete.cases(meta), ]
-  groups <- unique(meta[[cond]])
-  clusters <- unique(meta[[idents]])
-  pairs <- expand.grid(groups, clusters)
-  sum_matches <- vector(mode = "integer", length = nrow(pairs))
-  for(pair in seq(nrow(pairs))) {
-    matches <- apply(meta, 1, function(x) x == pairs[pair, ])
-    sum_matches[pair] <- sum(colSums(matches) == 2)
-  }
-  if(any(sum_matches < 3)) {
-    mismatch <- pairs[which(sum_matches < 3), ]
-    mis_msg <- paste(apply(mismatch, 1, paste, collapse = "-"), collapse = ", ")
+  exclusives <- table(meta) < 3
+  if(any(exclusives)) {
+    coords <- which(exclusives == TRUE, arr.ind = TRUE)
+    first_cond <- rownames(exclusives)[coords[, 1]]
+    second_cond <- colnames(exclusives)[coords[, 2]]
+    pairs <- paste(first_cond, second_cond, sep = "-")
+    mis_msg <- paste(pairs, collapse = ", ")
     warning('One or more identities contain fewer than three cells for one or ',
             'more categories. Affected pair(s): ', mis_msg,
             ". \nDefaulting to general marker analysis.")
