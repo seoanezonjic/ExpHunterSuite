@@ -173,6 +173,7 @@ message("CPU provided to BiocParallel: ", opt$cpu)
 ## MAIN
 ##########################################
 final_counts_path <- file.path(opt$output, "counts/matrix.mtx.gz")
+counts_rds_path <- file.path(opt$output, "counts/counts.rds")
 if(!file.exists(final_counts_path) | !opt$integrate) {
   SingleR_ref <- NULL
   if(opt$SingleR_ref != "/" & file.exists(opt$SingleR_ref)) {
@@ -223,10 +224,16 @@ if(!file.exists(final_counts_path) | !opt$integrate) {
   }
 }
 
-if(file.exists(final_counts_path) & opt$integrate) {
+final_counts_path <- file.path(opt$output, "counts/matrix.mtx.gz")
+
+if((file.exists(final_counts_path) | file.exists(counts_rds_path)) & opt$integrate) {
   message("Reconstructing Seurat object from directory ", opt$output, ". Not launching QC report.")
-  seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(file.path(opt$output, "counts"), gene.column = 1),
-                                    project = opt$name, min.cells = 1, min.features = 1)
+  if(file.exists(counts_rds_path)) {
+    counts <- readRDS(counts_rds_path)
+  } else {
+    counts <- Seurat::Read10X(file.path(opt$output, "counts"), gene.column = 1)
+  }
+  seu <- Seurat::CreateSeuratObject(counts = counts, project = opt$name, min.cells = 1, min.features = 1)
   seu_meta <- read.table(file.path(opt$output, "counts/meta.tsv"), sep = "\t", header = TRUE)
   rownames(seu_meta) <- colnames(seu)
   seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
@@ -234,10 +241,10 @@ if(file.exists(final_counts_path) & opt$integrate) {
   markers <- read.table(file.path(opt$output, "markers.tsv"), sep = "\t", header = TRUE)
   embeddings <- read.table(file.path(opt$output, "embeddings", "cell_embeddings.tsv"), header = TRUE)
   seu$umap <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'umap_', assay = 'RNA')
-  expr_metrics <- get_expression_metrics(seu = seu, sigfig = 2, layer = "scale.data", min_counts = opt$min_counts)
+  expr_metrics <- get_expression_metrics(seu = seu, sigfig = 2, layer = "data", min_counts = opt$min_counts)
   # SingleR_annotation_file <- file.path(opt$output, "SingleR_annotation.tsv")
   SingleR_annotation_file <- file.path(opt$output, "SingleR_annotation.rds")
-  if(file.exists(SingleR_annotation_file) & opt$SingleR_ref == "") {
+  if(file.exists(SingleR_annotation_file) & opt$SingleR_ref != "") {
     message("Reading SingleR annotation file, located at ", SingleR_annotation_file)
     # SingleR_annotation <- read.table(SingleR_annotation_file, sep = "\t", header = TRUE)
     # Temporary while we figure out how to load the table properly (it fails
@@ -261,14 +268,13 @@ if(file.exists(final_counts_path) & opt$integrate) {
                     BPPARAM = BPPARAM, doublet_list = opt$doublet_list, integration_method = opt$int_method,
                     sketch = opt$sketch, sketch_pct = opt$sketch_pct,
                     sketch_method = opt$sketch_method, force_ncells = opt$force_ncells, fine.tune = opt$fine_tune,
-                    aggr.ref = opt$aggr_ref, save_trained_object = opt$save_trained_object, load_trained_object = opt$load_trained_object,
-                    k_weight = opt$k_weight, min_cells_per_sample = opt$min_cells_per_sample,
+                    aggr.ref = opt$aggr_ref, k_weight = opt$k_weight, min_cells_per_sample = opt$min_cells_per_sample,
                     min_cell_proportion = opt$min_cell_proportion, logfc.threshold = opt$log2fc_threshold)
   if(opt$integrate) {
       message("--------------------------------------------")
       message("----------SAVING RESULTS TO DISK------------")
       message("--------------------------------------------")
-      write_annot_output(final_results = final_results, opt = opt)
+      write_annot_output(final_results = final_results, opt = opt, layer = "data")
       message("--------------------------------------------")
       message("------------WRITING QC REPORT---------------")
       message("--------------------------------------------")
