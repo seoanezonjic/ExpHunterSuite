@@ -164,8 +164,7 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
     }
     message('Scaling data')
     scale_start <- Sys.time()
-    seu <- Seurat::ScaleData(object = seu, verbose = verbose,
-                             features = rownames(seu))
+    seu <- Seurat::ScaleData(object = seu, verbose = verbose)
     message("Scaling time: ", Sys.time() - scale_start)
     message('Reducing dimensionality')
     seu <- Seurat::RunPCA(seu, assay = assay, npcs = ndims, verbose = verbose)
@@ -212,7 +211,7 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
     }
     assay <- "RNA"
     expr_metrics <- get_expression_metrics(seu = seu, sigfig = sigfig,
-                        min_counts = min_counts, layer = "scale.data")
+                        min_counts = min_counts, layer = "data")
     message("Total processing time: ", Sys.time() - main_start)
     final_results <- list(qc = qc, seu = seu, markers = markers,
       sample_qc_pct = expr_metrics$sample_qc_pct, integrate = integrate,
@@ -326,7 +325,7 @@ main_analyze_sc_query <- function(seu, query, sigfig = 2, layer = "counts",
 #' @returns invisible(NULL)
 
 write_annot_output <- function(final_results = stop("Missing results object"),
-                               opt = NULL, assay = "RNA", layer = "scale.data"){
+                               opt = NULL, assay = "RNA", layer = "data"){
     if(is.null(opt$output)) {
       opt$output <- getwd()
     }
@@ -337,11 +336,17 @@ write_annot_output <- function(final_results = stop("Missing results object"),
     reduction <- seu[[reduction]]
     counts <- Seurat::GetAssayData(seu, assay = assay, layer = layer)
     if(!is(counts, "Matrix")) {
-      counts <- Matrix::Matrix(counts, sparse = TRUE)
+      # Bifurcation needed. Under some specific cases, scaled counts data are
+      # created in dense format, and there we have been unable to find a way
+      # to write them to MatrixMarket format. For now, this function merely
+      # saves them in rds format.
+      write_dense_matrix(counts = counts, output = file.path(opt$output,
+        "counts", "counts.rds"))
+    } else {
+      DropletUtils::write10xCounts(path = file.path(opt$output, "counts"),
+                        x = counts, overwrite = TRUE, genome = opt$genome,
+                        gene.type = "Gene Expression")
     }
-    DropletUtils::write10xCounts(path = file.path(opt$output, "counts"),
-                            x = counts, overwrite = TRUE, genome = opt$genome,
-                            gene.type = "Gene Expression")
     write.table(metadata, sep = "\t", quote = FALSE, row.names = TRUE,
                 file = file.path(opt$output, "counts", "meta.tsv"))
     write.table(reduction@cell.embeddings, sep = "\t", quote = FALSE,
@@ -362,6 +367,32 @@ write_annot_output <- function(final_results = stop("Missing results object"),
     }
     message("Results saved to ", opt$output)
     return(invisible(NULL))
+}
+
+#' write_dense_matrix
+#' write dense matrix to a format compatible with our workflow.
+#'
+#' @inheritParams DropletUtils::write10xCounts
+#' @param counts A dense matrix.
+#' @param output Name of rds file to save.
+#' @export
+#' @examples
+#' \dontrun{
+#'    write_dense_matrix(counts = matrix, output = "./test.rds")
+#' }
+#' @returns invisible(NULL)
+#' @details
+#' Under some specific cases, scaled counts data are created in dense format,
+#' and we have been unable to find a way to write them to MatrixMarket format.
+#' For now, this function merely saves them in rds format. Hopefully we will
+#' eventually find a way to properly handle this case and save it in the right
+#' format.
+
+write_dense_matrix <- function(counts, output) {
+  if(!file.exists(dirname(output))) {
+    dir.create(dirname(output))
+  }
+  saveRDS(object = counts, file = output)
 }
 
 #' write_sc_report
