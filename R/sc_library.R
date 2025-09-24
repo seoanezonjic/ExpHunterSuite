@@ -407,7 +407,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 }
 
 .get_subset_markers <- function(seu, subset_by, cond, conds, DEG, verbose,
-                        min.pct, assay, logfc.threshold, layer = "scale.data"){
+                        min.pct, assay, logfc.threshold, layer = "data"){
   sub_values <- as.character(sort(unique(seu@meta.data[[subset_by]])))
   sub_markers <- vector(mode = "list", length = length(sub_values))
   names(sub_markers) <- as.character(sub_values)
@@ -432,7 +432,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 }
 
 .get_global_DEGs <- function(seu, cond, conds, min.pct = 0.1, verbose = FALSE,
-                             logfc.threshold = 0.25, layer = "scale.data"){
+                             logfc.threshold = 0.25, layer = "data"){
   Seurat::Idents(seu) <- seu@meta.data[, tolower(cond)]
   global_DEGs <- Seurat::FindMarkers(seu, ident.1 = conds[1],
         logfc.threshold = logfc.threshold, min.pct = min.pct,
@@ -493,7 +493,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 
 get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
       logfc.threshold = 0.25, verbose = FALSE, assay = "RNA", values = NULL,
-      min.pct = 0.1, layer = "scale.data") {
+      min.pct = 0.1, layer = "data") {
   conds <- .extract_conditions(metadata = seu@meta.data, cond = cond,
                                values = values)
   marker_meta <- list(high = paste0(cond, ": ", conds[1]),
@@ -924,7 +924,7 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
 #' @export
 
 get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
-                    p_val_cutoff = 0.01, min_counts = 1, layer = "scale.data") {
+                    p_val_cutoff = 0.01, min_counts = 1, layer = "data") {
   genes_warn <- NULL
   res <- NULL
   return_output <- TRUE
