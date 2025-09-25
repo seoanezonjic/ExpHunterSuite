@@ -106,6 +106,8 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode mat_stats, eval = require("sparseMatrixStats")
+	cat(plotter$create_title("Counts matrices stats", "counts_stats", hlevel = 1, indexable = FALSE,
+							  clickable = FALSE, clickable_text = ""))
 	cat("<p>Summary of matrix stats:</p>
 		<ul>
 			<li>*Raw*: Pre-quality control seurat layer. </li>
@@ -124,6 +126,10 @@ end.rcode-->
 	names(qc_counts) <- paste0(qc_layers, "_raw")
 	counts_list <- c(seu_counts, qc_counts)
 	plotter$hash_vars$mat_stats <- as.data.frame(get_densities(counts_list))
+	cat(plotter$create_title("Counts matrix density stats", "counts_stats", hlevel = 2, indexable = FALSE, clickable = FALSE, clickable_text = ""))
+	cat("<p> This table shows table density stats with a value between 0 and 1.
+		Single-Cell counts matrices should have very low values for this number, as most counts should be at zero. Only exception should be
+		the scaled counts matrix, as it is calculated only on variable features and centered across each gene's mean expression value.</p>")
 	cat(plotter$table(list(id = "mat_stats", header = NULL, row_names = NULL, table_rownames = FALSE, styled = "dt", text = FALSE)))
 	
 end.rcode-->
