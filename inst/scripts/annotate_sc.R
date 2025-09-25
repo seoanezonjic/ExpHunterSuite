@@ -177,7 +177,7 @@ counts_rds_path <- file.path(opt$output, "counts/counts.rds")
 if(!file.exists(final_counts_path) | !opt$integrate) {
   SingleR_ref <- NULL
   if(opt$SingleR_ref != "/" & file.exists(opt$SingleR_ref)) {
-    SingleR_ref <- load_SingleR_ref(path = opt$SingleR_ref, version = opt$ref_version, filter = opt$ref_filter)
+    SingleR_ref <- load_SingleR_ref(path = opt$SingleR_ref, filter = opt$ref_filter)
     if(!opt$ref_label %in% colnames(SummarizedExperiment::colData(SingleR_ref))) {
       stop(opt$ref_label, " not in reference metadata. Please see reference report (get_SingleR_ref.R --only_showcase to generate it).")
     }
@@ -237,7 +237,7 @@ if((file.exists(final_counts_path) | file.exists(counts_rds_path)) & opt$integra
   seu_meta <- read.table(file.path(opt$output, "counts/meta.tsv"), sep = "\t", header = TRUE)
   rownames(seu_meta) <- colnames(seu)
   seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
-  seu$RNA$scale.data <- seu$RNA$counts
+  seu$RNA$data <- seu$RNA$counts
   markers <- read.table(file.path(opt$output, "markers.tsv"), sep = "\t", header = TRUE)
   embeddings <- read.table(file.path(opt$output, "embeddings", "cell_embeddings.tsv"), header = TRUE)
   seu$umap <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'umap_', assay = 'RNA')
