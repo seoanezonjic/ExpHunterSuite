@@ -372,7 +372,6 @@ write_annot_output <- function(final_results = stop("Missing results object"),
 #' write_dense_matrix
 #' write dense matrix to a format compatible with our workflow.
 #'
-#' @inheritParams DropletUtils::write10xCounts
 #' @param counts A dense matrix.
 #' @param output Name of rds file to save.
 #' @export
