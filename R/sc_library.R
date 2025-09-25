@@ -386,7 +386,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 
 .get_subset_DEGs <- function(seu, subset_by, cond, sub_value, conds,
         logfc.threshold, min.pct, clust_num, verbose = FALSE,
-        layer = "scale.data") {
+        layer = "data") {
   subset_seu <- subset_seurat(seu, subset_by, sub_value)
   meta <- as.character(subset_seu@meta.data[[cond]])
   ncells <- c(sum(meta==conds[1]), sum(meta==conds[2]))
@@ -550,7 +550,7 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
 calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE,
                               idents = NULL, integrate = FALSE, min.pct = 0.01,
                               logfc.threshold = 0.1, assay = "RNA",
-                              layer = "scale.data") {
+                              layer = "data") {
   test <- FALSE
   if(length(subset_by) == 1) {
     test <- length(subset_by) == 1 & integrate
@@ -597,7 +597,7 @@ calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE,
 #' @export
 
 analyze_sc_query <- function(seu, query, sigfig = 2, sample_col = "sample",
-  layer = "scale.data") {
+  layer = "data") {
   if(all(!query %in% rownames(seu))) {
     warning("None of the query genes are expressed in the dataset",
              immediate. = TRUE)
@@ -663,10 +663,10 @@ get_clusters_distribution <- function(seu, sigfig = 3, sample_col = "sample") {
 #' @examples
 #' data(pbmc_tiny)
 #' get_query_distribution(seu = pbmc_tiny, query = c("PPBP", "CA2"), sigfig = 2,
-#' layer = "scale.data", sample_col = "orig.ident")
+#' layer = "data", sample_col = "orig.ident")
 #' @export
 
-get_query_distribution <- function(seu, query, sigfig = 3, layer = "scale.data",
+get_query_distribution <- function(seu, query, sigfig = 3, layer = "data",
   sample_col = "sample") {
   genes <- SeuratObject::FetchData(seu, query, layer = layer)
   genes <- cbind(seu@meta.data[sample_col], genes)
@@ -703,7 +703,7 @@ get_query_distribution <- function(seu, query, sigfig = 3, layer = "scale.data",
 #' @export
 
 get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
-                          layer = "scale.data", min_counts = 10) {
+                          layer = "data", min_counts = 10) {
   if(length(by) < 1 || 2 < length(by)) {
     stop("Invalid 'by' length. Must be 1 or 2")
   }
@@ -958,7 +958,7 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
 }
 
 .get_matrices <- function(seu, meta, genes, DEG_list, min_avg_log2FC = 0.2,
-                      p_val_cutoff = 0.01, query = NULL, layer = "scale.data") {
+                      p_val_cutoff = 0.01, query = NULL, layer = "data") {
   matrices <- vector(mode = "list", length = length(DEG_list))
   names(matrices) <- names(DEG_list)
   DEG_matrices <- matrices
@@ -1104,7 +1104,7 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
 #' breakdown_query(input = pbmc_tiny, query = c("PPBP", "CA2"))
 #' @export
 
-breakdown_query <- function(input, query, assay = "RNA", layer = "scale.data",
+breakdown_query <- function(input, query, assay = "RNA", layer = "data",
                             min_counts = 10) {
   # This pseudo-method dispatch comes from an error when subsetting a seurat
   # object only by cells NOT selected by sketch. Once it is solved, this will
@@ -1193,7 +1193,7 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "scale.data",
 #' expr = FALSE))
 #' @export
 
-subset_seurat <- function(seu, column, value, expr = FALSE, layer = "scale.data") {
+subset_seurat <- function(seu, column, value, expr = FALSE, layer = "data") {
   # Argument "expr" comes from an error when subsetting a seurat
   # object only by cells NOT selected by sketch. Once it is solved, this will
   # always return a seurat object.
@@ -1406,7 +1406,7 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
 annotate_seurat <- function(seu, cell_annotation = NULL, logfc.threshold = 0.1,
   subset_by = NULL, cluster_annotation = NULL, p_adj_cutoff = 1e-5,
   verbose = FALSE, assay = "RNA", integrate = FALSE, min.pct = 0.1,
-  layer = "scale.data") {
+  layer = "data") {
   res <- NULL
   if(!is.null(cell_annotation)) {
     message("Dynamically annotating clusters")
@@ -1465,8 +1465,8 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
   counts_matrix <- Seurat::GetAssayData(seu, assay = assay)
   SingleR_annotation <- SingleR::SingleR(test = counts_matrix,
     ref = SingleR_ref, labels = SingleR_ref[[ref_label]], de.n = ref_n,
-    assay.type.test = "scale.data", de.method = ref_de_method,
-    BPPARAM = BPPARAM, aggr.ref = aggr.ref, fine.tune = fine.tune)
+    de.method = ref_de_method, BPPARAM = BPPARAM, aggr.ref = aggr.ref,
+    fine.tune = fine.tune)
   message("SingleR annotation time: ", Sys.time() - SingleR_start)
   seu@meta.data$cell_type <- SingleR_annotation$pruned.labels
   seu@meta.data$cell_type[is.na(seu@meta.data$cell_type)] <- "Pruned"
@@ -1496,7 +1496,7 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
 annotate_clusters <- function(seu, subset_by = NULL, cell_annotation,
                               assay = "RNA", integrate = FALSE, verbose = FALSE,
                               idents = "seurat_clusters", p_adj_cutoff = 1e-5,
-                              layer = "scale.data"){
+                              layer = "data"){
   message("Calculating cluster markers")
   markers <- calculate_markers(seu = seu, subset_by = subset_by,
                                integrate = integrate, verbose = verbose,
@@ -1659,10 +1659,10 @@ process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
 #' @export
 
 get_expression_metrics <- function(seu, sigfig, sample_col = "sample",
-                                   min_counts = 10, layer = "scale.data") {
+                                   min_counts = 10, layer = "data") {
   message("Extracting expression quality metrics")
   sample_qc_pct <- get_qc_pct(seu = seu, sample_col = sample_col,
-                              min_counts = min_counts, layer = "scale.data")
+                              min_counts = min_counts, layer = layer)
   message("Extracting clusters distribution. This might take a while.")
   clusters_pct <- get_clusters_distribution(seu = seu, sigfig = sigfig,
                                             sample_col = sample_col)
@@ -1765,21 +1765,17 @@ process_sc_params <- function(params = list(), mode = "annotation") {
 #' metadata.
 #' @importFrom HDF5Array loadHDF5SummarizedExperiment
 #' @param path Path to reference to load.
-#' @param version Version of reference to load.
 #' @param filter Filter to apply to reference.
 #' @returns Loaded and optionally filtered SingleR reference.
 #' @examples
 #'  \dontrun{
-#'    load_SingleR_Ref(path = "my_reference", version = "2018-03-24",
+#'    load_SingleR_Ref(path = "my_reference",
 #'                     filter = "Age <= 3 years | phenotype == patient")
 #'  }
 #' @export
 
-load_SingleR_ref <- function(path, version = NULL, filter = "") {
+load_SingleR_ref <- function(path, filter = "") {
   SingleR_ref <- NULL
-  if(!is.null(version)) {
-    path <- paste(path, version, sep = "_")
-  }
   message("Loading provided SingleR reference")
   SingleR_ref <- HDF5Array::loadHDF5SummarizedExperiment(dir = path,prefix = "")
   message("Total cells in reference: ", ncol(SingleR_ref), ".")
