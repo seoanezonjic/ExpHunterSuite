@@ -15,7 +15,7 @@ annotate_seurat(
   assay = "RNA",
   integrate = FALSE,
   min.pct = 0.1,
-  layer = "scale.data"
+  layer = "data"
 )
 }
 \arguments{

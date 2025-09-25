@@ -14,7 +14,7 @@ get_sc_markers(
   assay = "RNA",
   values = NULL,
   min.pct = 0.1,
-  layer = "scale.data"
+  layer = "data"
 )
 }
 \arguments{

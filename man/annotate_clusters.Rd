@@ -13,7 +13,7 @@ annotate_clusters(
   verbose = FALSE,
   idents = "seurat_clusters",
   p_adj_cutoff = 1e-05,
-  layer = "scale.data"
+  layer = "data"
 )
 }
 \arguments{

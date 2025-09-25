@@ -13,7 +13,7 @@ calculate_markers(
   min.pct = 0.01,
   logfc.threshold = 0.1,
   assay = "RNA",
-  layer = "scale.data"
+  layer = "data"
 )
 }
 \arguments{

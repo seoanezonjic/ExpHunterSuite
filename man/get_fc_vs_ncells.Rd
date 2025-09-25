@@ -11,7 +11,7 @@ get_fc_vs_ncells(
   query = NULL,
   p_val_cutoff = 0.01,
   min_counts = 1,
-  layer = "scale.data"
+  layer = "data"
 )
 }
 \arguments{

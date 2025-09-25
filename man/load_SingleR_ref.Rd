@@ -4,12 +4,10 @@
 \alias{load_SingleR_ref}
 \title{load_SingleR_ref}
 \usage{
-load_SingleR_ref(path, version = NULL, filter = "")
+load_SingleR_ref(path, filter = "")
 }
 \arguments{
 \item{path}{Path to reference to load.}
-
-\item{version}{Version of reference to load.}
 
 \item{filter}{Filter to apply to reference.}
 }
@@ -23,7 +21,7 @@ metadata.
 }
 \examples{
  \dontrun{
-   load_SingleR_Ref(path = "my_reference", version = "2018-03-24",
+   load_SingleR_Ref(path = "my_reference",
                     filter = "Age <= 3 years | phenotype == patient")
  }
 }

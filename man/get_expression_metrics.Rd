@@ -9,7 +9,7 @@ get_expression_metrics(
   sigfig,
   sample_col = "sample",
   min_counts = 10,
-  layer = "scale.data"
+  layer = "data"
 )
 }
 \arguments{

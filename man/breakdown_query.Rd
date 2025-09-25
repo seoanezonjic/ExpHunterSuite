@@ -4,13 +4,7 @@
 \alias{breakdown_query}
 \title{breakdown_query}
 \usage{
-breakdown_query(
-  input,
-  query,
-  assay = "RNA",
-  layer = "scale.data",
-  min_counts = 10
-)
+breakdown_query(input, query, assay = "RNA", layer = "data", min_counts = 10)
 }
 \arguments{
 \item{input}{Input object to breakdown. Can be a seurat object or a

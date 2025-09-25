@@ -10,7 +10,7 @@ get_query_pct(
   by,
   sigfig = 2,
   assay = "RNA",
-  layer = "scale.data",
+  layer = "data",
   min_counts = 10
 )
 }

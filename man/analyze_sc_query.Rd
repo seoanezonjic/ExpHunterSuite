@@ -4,13 +4,7 @@
 \alias{analyze_sc_query}
 \title{analyze_sc_query}
 \usage{
-analyze_sc_query(
-  seu,
-  query,
-  sigfig = 2,
-  sample_col = "sample",
-  layer = "scale.data"
-)
+analyze_sc_query(seu, query, sigfig = 2, sample_col = "sample", layer = "data")
 }
 \arguments{
 \item{seu}{Seurat object.}

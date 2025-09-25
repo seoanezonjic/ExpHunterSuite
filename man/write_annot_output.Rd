@@ -9,7 +9,7 @@ write_annot_output(
   final_results = stop("Missing results object"),
   opt = NULL,
   assay = "RNA",
-  layer = "scale.data"
+  layer = "data"
 )
 }
 \arguments{
