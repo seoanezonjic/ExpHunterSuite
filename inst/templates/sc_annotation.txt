@@ -114,7 +114,9 @@
         # Scores column is a matrix, so we need to "expand" it with this command
         scores_matrix <- t(apply(SingleR_annotation["scores"], 1, `[`))
         scores_matrix <- cbind(scores_matrix, SingleR_annotation[c("labels", "pruned.labels")])
-        scores_matrix[is.na(scores_matrix$pruned.labels), ]$pruned.labels <- "Pruned"
+        if(any(is.na(scores_matrix$pruned.labels))) {
+            scores_matrix[is.na(scores_matrix$pruned.labels), ]$pruned.labels <- "Pruned"
+        }
         pruned_scores_matrix <- scores_matrix[scores_matrix$pruned.labels == "Pruned", ]
         pass_medians <- get_matrix_medians(scores_matrix)
         pruned_medians <- get_matrix_medians(pruned_scores_matrix)
