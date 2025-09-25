@@ -201,7 +201,7 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
         subset_by = subset_by, cluster_annotation = cluster_annotation,
         p_adj_cutoff = p_adj_cutoff, assay = assay, verbose = verbose,
         min.pct = min.pct, logfc.threshold = logfc.threshold, 
-        integrate = new_opt$integrate, layer = "scale.data")
+        integrate = new_opt$integrate, layer = "data")
       message("Time to annotate: ", Sys.time() - annot_start)
       seu <- annotation$seu
       markers <- annotation$markers
