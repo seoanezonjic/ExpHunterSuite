@@ -188,7 +188,7 @@ test_that("get_clusters_distribution properly calculates percentages", {
   expected_pct <- data.frame(expected_pct) * 100
   colnames(expected_pct) <- 1:3
   rownames(expected_pct) <- c("A", "B", "C")
-  output_pct <- get_clusters_distribution(test_pbmc, 2)
+  output_pct <- suppressMessages(get_clusters_distribution(test_pbmc, 2))
   expect_equal(output_pct, expected_pct)
 })
 
@@ -460,17 +460,18 @@ expected_big <- c("PPBP", "IGLL5", "VDAC3", "CD1C", "AKR1C3", "PF4", "MYL9",
 test_pbmc <- subset(test_pbmc, features = rownames(counts))
 
 test_that("get_top_genes works as expected", {
-  expect_equal(get_top_genes(test_pbmc, top = 1, min_counts = 0),
-               expected_vector)
-  expect_equal(get_top_genes(test_pbmc, top = 10, min_counts = 0),
-               expected_big)
-  expect_error(get_top_genes(test_pbmc, top = 0, min_counts = 0),
-               "greater than 1, was 0")
+  expect_equal(suppressMessages(get_top_genes(test_pbmc, top = 1,
+    min_counts = 0)), expected_vector)
+  expect_equal(suppressMessages(get_top_genes(test_pbmc, top = 10,
+    min_counts = 0)), expected_big)
+  expect_error(suppressMessages(get_top_genes(test_pbmc, top = 0,
+    min_counts = 0)), "greater than 1, was 0")
 })
 
 test_that("get_top_genes works even if N is greater than number of expressed
        genes", {
-  expect_equal(get_top_genes(test_pbmc, top = 10e99999), expected_big)
+  expect_equal(suppressMessages(get_top_genes(test_pbmc, top = 10e99999)),
+               expected_big)
 })
 
 test_pbmc <- pbmc_tiny
@@ -659,6 +660,7 @@ test_that("test process_sc_params, annotation mode", {
   output$opt <- output$opt[order(names(output$opt))]
   expected <- list(opt = params, doublet_list = NULL)
   expected$opt$extra_columns <- c("one", "two")
+  expected$opt$top_N <- NA
   expected$out_suffix <- "annotation_report.html"
   expected$opt$target_genes <- ""
   expected$opt$filter_dataset <- NULL
@@ -671,7 +673,7 @@ test_that("test process_sc_params, annotation mode", {
 test_that("test process_sc_params, DEG mode", {
   params <- list(name = "test", p_adj_cutoff = 1, verbose = FALSE,
                  subset_by = "genotype;time", cpu = "2", min_avg_log2FC = 1,
-                 target_genes = "", mincells = 1)
+                 target_genes = "", mincells = 1, top_N = Inf)
   output <- suppressMessages(process_sc_params(params = params, mode = "DEG"))
   expected <- list(opt = params, doublet_list = NULL)
   new_opt <- list(cell_annotation = "", cluster_annotation = "",
@@ -682,6 +684,7 @@ test_that("test process_sc_params, DEG mode", {
   expected$out_suffix <- "sample_annotation_report.html"
   expected$opt$imported_counts <- ""
   expected$opt$meta_file <- ""
+  expected$opt$top_N <- NA
   output$opt <- output$opt[order(names(output$opt))]
   expected$opt <- expected$opt[order(names(expected$opt))]
   expect_equal(output, expected)
@@ -708,6 +711,7 @@ test_that("test process_sc_params, query mode", {
   expected$opt$ref_filter <- NULL
   expected$opt$imported_counts <- ""
   expected$opt$meta_file <- ""
+  expected$opt$top_N <- NA
   output$opt <- output$opt[order(names(output$opt))]
   expected$opt <- expected$opt[order(names(expected$opt))]
   expect_equal(output, expected)
@@ -782,4 +786,46 @@ test_that("test .get_matrices when only one cell is present in one of the
               meta = test_pbmc$cell_type, DEG_list = test_DEGs,
               genes = c("PPBP", "IGLL5", "VDAC3")))
   expect_null(matrices$matrices$g2)
+})
+
+test_that("test .get_union_FCs works with default call", {
+  expected <- data.frame(g1 = c(0.0, 0.2, 1.0, -0.1),
+                         g2 = c(1.0, 0.0, 0.2, 0.0))
+  rownames(expected) <- c("PPBP", "IGLL5", "VDAC3", "GNLY")
+  expected <- as.matrix(expected)
+  output <- .get_union_FCs(DEG_list = DEG_list)
+  expect_equal(output, expected)
+})
+
+test_that("test .get_union_FCs properly applies FC filter", {
+  expected <- data.frame(g1 = c(1, 0), g2 = c(0, 1))
+  rownames(expected) <- c("VDAC3", "PPBP")
+  expected <- as.matrix(expected)
+  output <- .get_union_FCs(DEG_list, min_log2FC = 1, p_val_cutoff = 1)
+  expect_equal(output, expected)
+})
+
+test_that("test .get_union_FCs works when specifying top argument", {
+  expected <- data.frame(g1 = c(1, 0), g2 = c(0.2, 1))
+  rownames(expected) <- c("VDAC3", "PPBP")
+  expected <- as.matrix(expected)
+  output <- .get_union_FCs(DEG_list, top = 1, p_val_cutoff = 1)
+  expect_equal(output, expected)
+})
+
+test_that("test .get_union_FCs can handle FC and top arguments at once", {
+  expected <- data.frame(g1 = c(1, rep(0, 3)), g2 = c(0, 0, 1, 0))
+  rownames(expected) <- c("VDAC3", "IGLL5", "PPBP", "GNLY")
+  expected <- as.matrix(expected)
+  output <- .get_union_FCs(DEG_list, min_log2FC = 1, top = 2, p_val_cutoff = 1)
+  expect_equal(output, expected)
+})
+
+test_that("test .get_union_FCs applies p-value filter", {
+  expected <- data.frame(g1 = c(0.0, 0.2, 1.0, -0.1),
+                         g2 = c(1.0, 0.0, 0.2, 0.0))
+  rownames(expected) <- c("PPBP", "IGLL5", "VDAC3", "GNLY")
+  expected <- as.matrix(expected)
+  output <- .get_union_FCs(DEG_list = DEG_list, p_val_cutoff = 0)
+  expect_equal(output, expected)
 })
