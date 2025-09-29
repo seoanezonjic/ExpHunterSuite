@@ -11,11 +11,12 @@ main_sc_Hunter(
   seu,
   p_val_cutoff = 0.001,
   min_avg_log2FC = 0.5,
-  min_counts = 10,
+  min_counts = 0.5,
   query = NULL,
   verbose = FALSE,
   min_cell_proportion = 0.01,
-  output_path = getwd()
+  output_path = getwd(),
+  top = NULL
 )
 }
 \arguments{
@@ -42,6 +43,8 @@ expressing DEG. Despite Seurat::FindMarkers being called "min.pct", it is
 not a percentage but a value from 0 to 1.}
 
 \item{output_path}{Path where output will be written.}
+
+\item{top}{An integer. Top N DEGs to represent in certain plots.}
 }
 \value{
 A list containing DEG results, metrics and a query subset of

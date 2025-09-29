@@ -8,7 +8,7 @@ get_qc_pct(
   seu,
   top = 20,
   assay = "RNA",
-  layer = "counts",
+  layer = "data",
   sigfig = 2,
   sample_col = "sample",
   min_counts = 10
@@ -41,6 +41,6 @@ expressed in every sample in a seurat object.
 \examples{
 data(pbmc_tiny)
 pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
-get_qc_pct(seu = pbmc_tiny, top = 5, assay = "RNA", layer = "counts",
+get_qc_pct(seu = pbmc_tiny, top = 5, assay = "RNA", layer = "data",
            sample_col = "orig.ident", sigfig = 2)
 }

@@ -44,7 +44,7 @@ main_annotate_sc(
   logfc.threshold = 0.25,
   aggr.ref = FALSE,
   fine.tune = TRUE,
-  min_counts = 10
+  min_counts = 0.5
 )
 }
 \arguments{

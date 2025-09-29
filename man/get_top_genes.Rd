@@ -8,7 +8,7 @@ get_top_genes(
   seu,
   top = 20,
   assay = "RNA",
-  layer = "counts",
+  layer = "data",
   sample_col = "sample",
   min_counts = 10
 )
