@@ -34,7 +34,7 @@
   		rownames(df) <- xAxis
   	}
 
-    make_top_n_expression_table <- function(count_data, n = 5) {
+   make_top_n_expression_table <- function(count_data, n = 5) {
 	    top_n_index <- order(rowSums(count_data), decreasing=TRUE)[1:n]
 	    sample_totals <- colSums(count_data)
 	    top_n_count <- count_data[top_n_index, ]
