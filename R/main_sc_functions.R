@@ -105,7 +105,7 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
     integration_method = "Harmony", sketch = FALSE, sketch_pct = 25, 
     force_ncells = NA_integer_, sketch_method = "LeverageScore", min.pct = 0.1,
     doublet_path = getwd(), min_cell_proportion = 0.1, logfc.threshold = 0.25,
-    aggr.ref = FALSE, fine.tune = TRUE, min_counts = 10){
+    aggr.ref = FALSE, fine.tune = TRUE, min_counts = 0.5){
     main_start <- Sys.time()
     new_opt <- check_sc_input(integrate = integrate, sketch = sketch,
                               SingleR_ref = SingleR_ref, reduce = reduce,
@@ -239,6 +239,7 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
 #' @param query A string vector. List of genes to focus on DEG analysis in
 #' addition to regular DEG analysis.
 #' @param output_path Path where output will be written.
+#' @param top An integer. Top N DEGs to represent in certain plots.
 #' @returns A list containing DEG results, metrics and a query subset of
 #' DEG results.
 #' @export
@@ -256,9 +257,9 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
 #' print(DEG_results)
 
 main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
-                           min_avg_log2FC = 0.5, min_counts = 10, query = NULL,
+                           min_avg_log2FC = 0.5, min_counts = 0.5, query = NULL,
                            verbose = FALSE, min_cell_proportion = 0.01,
-                           output_path = getwd()) {
+                           output_path = getwd(), top = NULL) {
   message('Starting DEG analysis.')
   DEG_query <- NULL
   seu <- .add_target_info(seu = seu, DEG_target = DEG_target)
@@ -275,7 +276,10 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
     DEG_query <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
                                   min_counts = min_counts, query = query)
   }
-  return(list(DEGs = DEGs, DEG_metrics = DEG_metrics, DEG_query = DEG_query))
+  FC_distrib <- .get_union_FCs(DEGs$markers, top = top,
+                      p_val_cutoff = p_val_cutoff, min_log2FC = min_avg_log2FC)
+  return(list(DEGs = DEGs, DEG_metrics = DEG_metrics, DEG_query = DEG_query,
+              FC_distribution = FC_distrib))
 }
 
 #' analyze_sc_query
@@ -465,7 +469,8 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
     query_cluster_pct = final_results$query_data$query_cluster_pct,
     cell_annotation = opt$cell_annotation, extra_columns = opt$extra_columns,
     target_name = final_results$target_name,
-    integrate = final_results$integrate)
+    integrate = final_results$integrate,
+    FC_distribution = final_results$FC_distribution)
     plotter <- htmlreportR::htmlReport$new(title_doc = paste0(opt$name,
                             analysis, " report"), container = container,
                             tmp_folder = tmp_folder, src = source_folder,
