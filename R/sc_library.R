@@ -639,6 +639,7 @@ analyze_sc_query <- function(seu, query, sigfig = 2, sample_col = "sample",
 #' @export
 
 get_clusters_distribution <- function(seu, sigfig = 3, sample_col = "sample") {
+  message("Calculating identity distribution of samples")
   clusters_column <- ifelse("cell_type" %in% colnames(seu@meta.data), 
                             "cell_type", "seurat_clusters")
   clusters_table <- table(seu@meta.data[, c(sample_col, clusters_column)])
@@ -780,7 +781,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
 #'               sample_col = "orig.ident")
 #' @export
 
-get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
+get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "data",
                           sample_col = "sample", min_counts = 10) {
   if(top < 1) {
     stop("Invalid \"top\" argument. Must be greater than 1, was ", top)
@@ -817,11 +818,11 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "counts",
 #' @examples
 #' data(pbmc_tiny)
 #' pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
-#' get_qc_pct(seu = pbmc_tiny, top = 5, assay = "RNA", layer = "counts",
+#' get_qc_pct(seu = pbmc_tiny, top = 5, assay = "RNA", layer = "data",
 #'            sample_col = "orig.ident", sigfig = 2)
 #' @export
 
-get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
+get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "data",
                        sigfig = 2, sample_col = "sample", min_counts = 10) {
   top_genes <- get_top_genes(seu = seu, top = top, assay = assay, layer = layer,
                              sample_col = sample_col, min_counts = min_counts)
@@ -832,7 +833,8 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
 
 .process_query <- function(seu, DEG_list, query, return_output, genes_warn) {
     if(is.null(query)) {
-      gene_list <- .get_union_DEGenes(DEG_list = DEG_list)
+      gene_list <- .get_union_DEGenes(DEG_list = DEG_list, top = NA,
+                                      min_log2FC = 0)
     } else {
       gene_list <- query
       if(any(!query %in% rownames(seu)) & is.null(genes_warn)) {
@@ -924,7 +926,7 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "counts",
 #' @export
 
 get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
-                    p_val_cutoff = 0.01, min_counts = 1, layer = "data") {
+                p_val_cutoff = 0.01, min_counts = 1, layer = "data") {
   genes_warn <- NULL
   res <- NULL
   return_output <- TRUE
@@ -985,9 +987,21 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
   return(list(DEG_df = DEG_df, matrices = matrices))
 }
 
-.get_union_DEGenes <- function(DEG_list) {
-  res <- unique(do.call(c, lapply(DEG_list,
-                function(matrix) return(rownames(matrix)))))
+.get_union_DEGenes <- function(DEG_list, top = NA, min_log2FC = 0) {
+  res <- unique(do.call(c, lapply(DEG_list, .get_DEGenes, top = top,
+                                  min_log2FC = min_log2FC)))
+  return(res)
+}
+
+.get_DEGenes <- function(DEG_df, top = NA, min_log2FC = 0) {
+  if(!is.na(top)) {
+    DEG_df <- DEG_df[order(abs(DEG_df$avg_log2FC), decreasing = TRUE), ,
+                     drop = FALSE]
+    DEG_df <- DEG_df[seq(1, top), , drop = FALSE]
+  } else {
+    DEG_df <- DEG_df[abs(DEG_df$avg_log2FC) >= abs(min_log2FC), , drop = FALSE]
+  }
+  res <- rownames(DEG_df)
   return(res)
 }
 
@@ -1089,6 +1103,43 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
   res <- res[, Matrix::colSums(res) > 0, drop = FALSE]
   return(as.data.frame(res))
 }
+
+#' .get_union_FCs
+#'
+#' `get_union_FCs` extracts the union of all differentially expressed genes
+#' across every cell type in a single-cell experiment, then returns a heatmap
+#' that shows its FC value in every cell type. It is a specific cell type
+#' plot, so global DEGs are excluded from the calculation.
+#' @param DEG_list A list containing DEG results.
+#' @param top An integer. Top DEGs to extract from each cell type, by logFC
+#' value. Takes precedence over min_log2FC value. Default NULL.
+#' @param min_log2FC A numeric. A log2FC threshold to set for top DEG selection.
+#' default 2.
+#' @param p_val_cutoff Maximum p-value to consider a genes as differentially
+#' expressed.
+#' @returns A heatmap containing the log2FC value for the union of the top
+#' DEGs of every cell type in the experiment, for every cell type in the
+#' experiment.
+
+.get_union_FCs <- function(DEG_list, top = NA, min_log2FC = 0,
+                           p_val_cutoff = 0.05) {
+  DEG_list <- DEG_list[names(DEG_list) != "global"]
+  genes_list <- .get_union_DEGenes(DEG_list = DEG_list, top = top,
+                                   min_log2FC = min_log2FC)
+  heatmap <- data.frame(matrix(0, nrow = length(DEG_list),
+                        ncol = length(genes_list)))
+  colnames(heatmap) <- genes_list
+  rownames(heatmap) <- names(DEG_list)
+  for(ident in names(DEG_list)) {
+    ident_vector <- .process_DEG_matrix(DEG_matrix = DEG_list[[ident]],
+      min_avg_log2FC = min_log2FC, p_val_cutoff = p_val_cutoff,
+      genes_list = genes_list, ident = ident)
+    heatmap[ident, ] <- ident_vector[match(colnames(heatmap),
+                                     names(ident_vector))]
+  }
+  return(t(heatmap))
+}
+
 
 #' breakdown_query
 #'
@@ -1702,6 +1753,8 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   }
   if(mode == "DEG") {
     params$extra_columns <- ""
+  } else {
+    params$top_N <- Inf
   }
   message("Analyzing ", params$name)
   exp_design <- doublet_list <- NULL
@@ -1733,6 +1786,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   if(params$extra_columns != "") {
     params$extra_columns <- tolower(unlist(strsplit(params$extra_columns, ";")))
   }
+  if(params$top_N == Inf) params$top_N <- NA
   if(params$samples_to_integrate != "") {
     samples <- read.table(params$samples_to_integrate, sep = "\t",
                           header = FALSE)[[1]]
