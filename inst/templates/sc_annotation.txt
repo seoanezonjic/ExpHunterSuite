@@ -5,9 +5,6 @@
     subset_by <- plotter$hash_vars$subset_by
     query <- plotter$hash_vars$query
     markers <- plotter$hash_vars$markers
-    DEG_list <- plotter$hash_vars$DEG_list
-    DEG_metrics_list <- plotter$hash_vars$DEG_metrics_list
-    DEG_query_list <- plotter$hash_vars$DEG_query_list
     if(all(plotter$hash_vars$extra_columns == "")) {
         extra_columns <- NULL
     } else {
@@ -18,11 +15,13 @@
     get_cells_metadata <- function(heatmap, metadata) {
         samples <- rownames(heatmap)
         missing_cats <- extra_columns[!extra_columns %in% colnames(metadata)]
-        warning("Columns ", paste0(missing_cats, collapse = ", "), " not present in metadata. They will not be used.")
+        if(length(missing_cats) > 0) {
+            warning("Columns ", paste0(missing_cats, collapse = ", "), " not present in metadata. They will not be used.")
+        }
         extra_columns <<- extra_columns[extra_columns %in% colnames(metadata)]
         sample_metadata <- unique(metadata[, c("sample", extra_columns)])
         rownames(sample_metadata) <- NULL
-        sample_metadata <- sample_metadata[match(sample_metadata$sample, samples), , drop = FALSE]
+        sample_metadata <- sample_metadata[match(samples, sample_metadata$sample), , drop = FALSE]
     }
     
     Custom_DotPlot <- function(seu) {

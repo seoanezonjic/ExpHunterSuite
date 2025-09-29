@@ -12,6 +12,7 @@
     plotter$hash_vars$comparison_FCs <- comparison_metrics$DEG_df
     plotter$hash_vars$comparison_ncells <- comparison_metrics$ncell_df
     comparison_DEGs <- DEG_list$DEGs
+    plotter$hash_vars$FC_distribution <- DEG_list$FC_distribution
 
     DEGs_volcano <- function(input_DEGs) {
         EnhancedVolcano::EnhancedVolcano(input_DEGs, lab = rownames(input_DEGs), title = level,
@@ -68,9 +69,19 @@ end.rcode-->
         cat(DEG_legend)
         cat(plotter$prettify_div(plotter$heatmap(list(id = "comparison_FCs", header = NULL, row_names = NULL, text = "dynamic",
                                          extra_data = list(id ="comparison_ncells", header = NULL, row_names = NULL, text = "dynamic"),
-                                         config = list(sizeLegendTitle = "Number of cells"),
+                                         config = list(sizeLegendTitle = "Number of cells"), x_label = "log2FC",
                                          title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
     }
+end.rcode-->
+
+<!--begin.rcode FC_distrib, eval = !is.null(plotter$hash_vars$FC_distribution)
+    cat(plotter$create_title("Distribution of log2FC values per identity", "FC_distrib", hlevel = 2, indexable = TRUE, clickable = FALSE, t_id = "FC_DEG"))
+    cat("<p>This plot shows an overview of the most significant DEGs across the entire dataset. It extracts the top DEGs
+        from each individual identity comparison, and then generates the union of these lists. This union is then used
+        in the plot shown below, representing FC values of these genes for every identity DEG analysis.
+        Identity will normally be cell type.</p>")
+    cat(plotter$prettify_div(plotter$heatmap(list(id = "FC_distribution", header = NULL, row_names = NULL, text = "dynamic",
+                                 x_label = "log2FC", title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
 end.rcode-->
 
 <!--begin.rcode DEG_analysis, eval = length(DEG_list) > 0
@@ -79,9 +90,19 @@ end.rcode-->
     cat(plotter$create_title(paste0("DEG analysis: target ", comparison), paste0(comparison, "_DEGs"), hlevel = 2,
                          indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEGs"),
                          clickable_text = ""))
-    level <- "global"
+    legend <- "<p>DEG analysis glossary:</p>
+                <ul>
+                    <li> <b>GLOBAL<b>: DEGs calculated on all cells in the experiment. Cells are divided by the category selected for analysis, and DEGs are calculated
+                    between the two groups.
+                    <li> <b>Identity<b>: DEGs calculated on cells belonging to specified identity. Identity will normally be cell type, but can also be seurat cluster.
+                    First, the subset of cells belonging to the specified identity are subset from the experiment, and then it is divided into two groups for DEG
+                    calculation.
+                </ul>"
+    cat(legend)
+    level <- "GLOBAL"
     title <- "Global"
-    plotter$hash_vars$comparison_DEGs <- comparison_DEGs$markers[["global"]]
+    names(comparison_DEGs$markers)[names(comparison_DEGs$markers) == "global"] <- "GLOBAL"
+    plotter$hash_vars$comparison_DEGs <- comparison_DEGs$markers[["GLOBAL"]]
     DEG_legend <- paste0("<p>", comparison_DEGs$meta$high, " (positive log2FC) vs ",
                          comparison_DEGs$meta$low, " (negative log2FC). </p>")
     cat(DEG_legend)
@@ -142,7 +163,7 @@ end.rcode-->
             cat(DEG_legend)
             cat(plotter$prettify_div(plotter$heatmap(list(id = "comparison_FCs", header = NULL, row_names = NULL, text = "dynamic",
                                      extra_data = list(id ="comparison_ncells", header = NULL, row_names = NULL, text = "dynamic"),
-                                     config = list(sizeLegendTitle = "Number of cells"),
+                                     config = list(sizeLegendTitle = "Number of cells"), x_label = "log2FC",
                                      title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
         }
     }
