@@ -987,19 +987,28 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
   return(list(DEG_df = DEG_df, matrices = matrices))
 }
 
-.get_union_DEGenes <- function(DEG_list, top = NA, min_log2FC = 0) {
+.get_union_DEGenes <- function(DEG_list, top = NA, min_log2FC = 0,
+                               p_val_cutoff = 1) {
   res <- unique(do.call(c, lapply(DEG_list, .get_DEGenes, top = top,
-                                  min_log2FC = min_log2FC)))
+                        min_log2FC = min_log2FC, p_val_cutoff = p_val_cutoff)))
   return(res)
 }
 
-.get_DEGenes <- function(DEG_df, top = NA, min_log2FC = 0) {
+.get_DEGenes <- function(DEG_df, top = NA, min_log2FC = 0, p_val_cutoff = 1) {
+  res <- NULL
+  DEG_df <- DEG_df[DEG_df$p_val_adj <= p_val_cutoff, ]
+  DEG_df <- DEG_df[abs(DEG_df$avg_log2FC) >= abs(min_log2FC), ]
+  if(nrow(DEG_df) < 1) {
+    warning("No significant DEGs found (thresholds too strict)")
+  }
   if(!is.na(top)) {
-    DEG_df <- DEG_df[order(abs(DEG_df$avg_log2FC), decreasing = TRUE), ,
-                     drop = FALSE]
-    DEG_df <- DEG_df[seq(1, top), , drop = FALSE]
-  } else {
-    DEG_df <- DEG_df[abs(DEG_df$avg_log2FC) >= abs(min_log2FC), , drop = FALSE]
+    if(nrow(DEG_df) < top) {
+      warning("Top larger than total DEGs. Selecting all DEGs.")
+    } else {
+        DEG_df <- DEG_df[order(abs(DEG_df$avg_log2FC), decreasing = TRUE), ,
+                         drop = FALSE]
+        DEG_df <- DEG_df[seq(1, top), , drop = FALSE]
+    }
   }
   res <- rownames(DEG_df)
   return(res)
@@ -1125,7 +1134,7 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
                            p_val_cutoff = 0.05) {
   DEG_list <- DEG_list[names(DEG_list) != "global"]
   genes_list <- .get_union_DEGenes(DEG_list = DEG_list, top = top,
-                                   min_log2FC = min_log2FC)
+                          min_log2FC = min_log2FC, p_val_cutoff = p_val_cutoff)
   heatmap <- data.frame(matrix(0, nrow = length(DEG_list),
                         ncol = length(genes_list)))
   colnames(heatmap) <- genes_list
