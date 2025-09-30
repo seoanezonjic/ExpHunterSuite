@@ -472,7 +472,7 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
     integrate = final_results$integrate,
     FC_distribution = final_results$FC_distribution)
     plotter <- htmlreportR::htmlReport$new(title_doc = paste0(opt$name,
-                            analysis, " report"), container = container,
+                            " ", analysis, " report"), container = container,
                             tmp_folder = tmp_folder, src = source_folder,
                             compress_obj = FALSE, files_css = files_css)
     plotter$build(template)
