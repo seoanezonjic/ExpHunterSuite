@@ -85,7 +85,7 @@ end.rcode-->
                                                   transpose = TRUE)), preset = "magic")
     }
     html_code <- paste(query_clusters, collapse = "\n")
-    cat(plotter$create_title("Query gene cell percentages by identity", "query identity", hlevel = 2,
+    cat(plotter$create_title("Query gene cell percentages by cell type", "query identity", hlevel = 2,
                               indexable = FALSE, clickable = TRUE, t_id = "query_identity",
                               clickable_text = ""))
     cat(plotter$create_collapsable_container(id = "query_identity", html_code = html_code))

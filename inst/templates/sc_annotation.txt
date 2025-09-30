@@ -170,7 +170,7 @@ end.rcode-->
                                          "our workflow finds cluster markers and compares them to the cell types annotation file. It then\n",
                                          "analyses matches and determines the most likely cell type for the cluster. These markers are\n",
                                          "plotted in the following graphs.</p>")
-    collapse_list["subtitle"] <- "<h2>Expression of cell type markers across experiment identities</h2>"
+    collapse_list["subtitle"] <- "<h2>Expression of cell type markers across identified cell types</h2>"
     for(element_name in elements) {
         features <- plotter$hash_vars$cell_annotation[plotter$hash_vars$cell_annotation$type == element_name, ]$marker
         collapse_list[element_name] <- paste(paste0("<h2>", element_name, " markers</h2>"),
@@ -190,7 +190,7 @@ end.rcode-->
     for(type in seq(types)) {
         plotter$hash_vars$type_markers <- plotter$hash_vars$markers[plotter$hash_vars$markers[slot] == types[type], ]
         plotter$hash_vars$type_markers[, slot] <- as.character(plotter$hash_vars$type_markers[, slot])
-        collapse_list[type] <- paste(paste0("<h2>Top markers for identity ", types[type]),
+        collapse_list[type] <- paste(paste0("<h2>Top markers for cell type ", types[type]),
                                             plotter$prettify_div(plotter$table(list(id = "type_markers", header = NULL,
                                                     row_names = NULL, table_rownames = FALSE, styled = "dt",
                                                     func = top_table, text = "dynamic"))), sep = "\n")
@@ -203,7 +203,7 @@ end.rcode-->
     }
     cat(plotter$create_title(paste0("Top 10 markers by ", title_group), "top markers", hlevel = 2, indexable = FALSE, clickable = TRUE,
                              t_id = "top_markers", clickable_text = ""))
-    paragraph <- paste0("<p>These are the markers that best define the identity group. They might ",
+    paragraph <- paste0("<p>These are the markers that best define the cell group. They might ",
                         "not match cell type markers.</p>")
     cat(plotter$create_collapsable_container(id = "top_markers",
                                              html_code = paste(paragraph, top_markers_html,  sep = "\n")))

@@ -1,5 +1,6 @@
 
 <!--begin.rcode setup
+    saveRDS(plotter, "plotter.rds")
     colGEX <- c("grey85", "#FEE5D9", "#FCBBA1", "#FC9272", "#FB6A4A", "#EF3B2C", "#CB181D", "#99000D")
     comparison <- plotter$hash_vars$target_name
     opt <- plotter$hash_vars$opt
@@ -78,8 +79,7 @@ end.rcode-->
     cat(plotter$create_title("Distribution of log2FC values per identity", "FC_distrib", hlevel = 2, indexable = TRUE, clickable = FALSE, t_id = "FC_DEG"))
     cat("<p>This plot shows an overview of the most significant DEGs across the entire dataset. It extracts the top DEGs
         from each individual identity comparison, and then generates the union of these lists. This union is then used
-        in the plot shown below, representing FC values of these genes for every identity DEG analysis.
-        Identity will normally be cell type.</p>")
+        in the plot shown below, representing FC values of these genes for every identity DEG analysis.</p>")
     cat(plotter$prettify_div(plotter$heatmap(list(id = "FC_distribution", header = NULL, row_names = NULL, text = "dynamic",
                                  x_label = "log2FC", title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
 end.rcode-->
@@ -94,7 +94,7 @@ end.rcode-->
                 <ul>
                     <li> <b>GLOBAL<b>: DEGs calculated on all cells in the experiment. Cells are divided by the category selected for analysis, and DEGs are calculated
                     between the two groups.
-                    <li> <b>Identity<b>: DEGs calculated on cells belonging to specified identity. Identity will normally be cell type, but can also be seurat cluster.
+                    <li> <b>Cell type<b>: DEGs calculated on cells belonging to specified identity. Cell type will normally be cell type, but can also be seurat cluster.
                     First, the subset of cells belonging to the specified identity are subset from the experiment, and then it is divided into two groups for DEG
                     calculation.
                 </ul>"
@@ -120,7 +120,7 @@ end.rcode-->
         title <- paste0("Cluster ", level)
         plotter$hash_vars$comparison_DEGs <- comparison_DEGs$markers[[j]]
         if(FALSE %in% comparison_DEGs$markers[[j]]) {
-            main <- plotter$prettify_div(paste0("<p>Identity ", level, " contained exclusive pairs,
+            main <- plotter$prettify_div(paste0("<p>Cell type ", level, " contained exclusive pairs,
                                      DEG analysis was not possible."), preset = "magic")
             samples_html[[j]] <- main
         }else{
