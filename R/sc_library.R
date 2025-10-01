@@ -385,8 +385,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 }
 
 .get_subset_DEGs <- function(seu, subset_by, cond, sub_value, conds,
-        logfc.threshold, min.pct, clust_num, verbose = FALSE,
-        layer = "data") {
+        logfc.threshold = 0, min.pct, clust_num, verbose = FALSE,
+        layer = "data", p_val_cutoff = 1, simple_DEG_pct = FALSE) {
   subset_seu <- subset_seurat(seu, subset_by, sub_value)
   meta <- as.character(subset_seu@meta.data[[cond]])
   ncells <- c(sum(meta==conds[1]), sum(meta==conds[2]))
@@ -401,13 +401,28 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
     markers <- Seurat::FindMarkers(subset_seu, ident.1 = conds[1],
         logfc.threshold = logfc.threshold, ident.2 = conds[2],
         verbose = verbose, min.pct = min.pct, layer = layer)
+    if(!simple_DEG_pct) {
+      pct_cols <- grep("pct", colnames(markers))
+      pct_keep <- apply(markers[pct_cols], 1,
+                        function(x) return(all(x >= min.pct)))
+      markers <- markers[which(pct_keep), , drop = FALSE]
+    }
     markers$gene <- rownames(markers)
+    markers <- markers[abs(markers$avg_log2FC) >= abs(logfc.threshold), ,
+                       drop = FALSE]
+    markers <- markers[markers$p_val_adj <= p_val_cutoff, , drop = FALSE]
+    if(nrow(markers) < 1) {
+      warning('Cluster ', clust_num, ' contains no significant DEGs. Consider
+               relaxing thresholds.')
+      markers <- data.frame(FALSE)
+    }
   }
   return(markers)
 }
 
 .get_subset_markers <- function(seu, subset_by, cond, conds, DEG, verbose,
-                        min.pct, assay, logfc.threshold, layer = "data"){
+    p_val_cutoff, min.pct, assay, logfc.threshold, layer = "data",
+    simple_DEG_pct = FALSE){
   sub_values <- as.character(sort(unique(seu@meta.data[[subset_by]])))
   sub_markers <- vector(mode = "list", length = length(sub_values))
   names(sub_markers) <- as.character(sub_values)
@@ -415,9 +430,9 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
     message("Analyzing cluster ", i, "/", length(sub_values))
     if(DEG) {
       markers <- .get_subset_DEGs(seu = seu, subset_by = subset_by, cond = cond,
-                    sub_value = sub_values[i], conds = conds, min.pct = min.pct,
-                    clust_num = i, verbose = verbose, layer = layer,
-                    logfc.threshold = logfc.threshold)
+    sub_value = sub_values[i], conds = conds, min.pct = min.pct, clust_num = i,
+    verbose = verbose, layer = layer, simple_DEG_pct = simple_DEG_pct,
+    logfc.threshold = logfc.threshold, p_val_cutoff = p_val_cutoff)
     } else {
       markers <- Seurat::FindConservedMarkers(seu, ident.1 = sub_values[i],
                           grouping.var = cond, verbose = verbose, assay = assay,
@@ -481,6 +496,11 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' which to perform the comparison. Must specify two conditions. Default NULL,
 #' will use all values. If there are more than two, function will return an
 #' error.
+#' @param simple_DEG_pct By default, Seurat's marker calculation function
+#' includes a cell proportion filter, but it only checks if any of the two
+#' groups is above this threshold. `simple_DEG_pct` corrects this behaviour.
+#' its default value, FALSE, triggers a check that removes DEGs where _any_
+#' of the two groups is below the threshold.
 #' @returns A list containing one marker or DEG data frame per cluster, plus
 #' an additional one for global DEGs if performing differential analysis.
 #' @examples
@@ -493,14 +513,15 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 
 get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
       logfc.threshold = 0.25, verbose = FALSE, assay = "RNA", values = NULL,
-      min.pct = 0.1, layer = "data") {
+      min.pct = 0.1, layer = "data", p_val_cutoff = 1, simple_DEG_pct = FALSE) {
   conds <- .extract_conditions(metadata = seu@meta.data, cond = cond,
                                values = values)
   marker_meta <- list(high = paste0(cond, ": ", conds[1]),
                       low = paste0(cond, ": ", conds[2]))
   sub_markers <- .get_subset_markers(seu = seu, subset_by = subset_by,
-    conds = conds, cond = cond, DEG = DEG, verbose = verbose, min.pct = min.pct,
-    assay = assay, logfc.threshold = logfc.threshold, layer = layer)
+    p_val_cutoff = p_val_cutoff, conds = conds, cond = cond, DEG = DEG,
+    verbose = verbose, min.pct = min.pct, assay = assay, layer = layer,
+    simple_DEG_pct = simple_DEG_pct, logfc.threshold = logfc.threshold)
   if(DEG) {
     message("Calculating global DEGs")
     sub_markers[["global"]] <- .get_global_DEGs(seu = seu, cond = cond,
@@ -869,7 +890,7 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "data",
 }
 
 .check_query_for_fc <- function(query, seu, p_val_cutoff, min_avg_log2FC,
-                                genes_warn = NULL) {
+                                genes_warn = NULL, DEG_list) {
   if(!is.null(query)) {
     message("Starting analysis for target gene list. DEG cutoffs disabled.")
     if(all(!query %in% rownames(seu))) {
@@ -934,7 +955,7 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
     warning("Empty DEG_list provided.")
     return_output <- FALSE
   } else {
-    check <- .check_query_for_fc(query = query, seu = seu,
+    check <- .check_query_for_fc(query = query, seu = seu, DEG_list = DEG_list,
                   min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff)
     genes_warn <- check$genes_warn
     if("cell_type" %in% colnames(seu@meta.data)) {
@@ -979,18 +1000,27 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
                    min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff,
                    genes_list = genes, ident = ident, query = query)
   }
-  DEG_df <- do.call(rbind, DEG_matrices)
-  ## Have to remove zeroes again, not in process_DEG_matrix, because we want to
-  ## remove genes set to zero in ALL idents, not ident by ident
-  DEG_df <- DEG_df[, colSums(abs(DEG_df)) > 0, drop = FALSE]
-  DEG_df <- DEG_df[rowSums(abs(DEG_df)) > 0, , drop = FALSE]
-  return(list(DEG_df = DEG_df, matrices = matrices))
+  if(length(DEG_matrices) < 1) {
+    warning("No significant DEGs found. Results cannot be produced.")
+    res <- list(DEG_df = NULL, matrices = NULL)
+  } else {
+      DEG_df <- do.call(rbind, DEG_matrices)
+      ## Have to remove zeroes again, not in process_DEG_matrix, because we want to
+      ## remove genes set to zero in ALL idents, not ident by ident
+      DEG_df <- DEG_df[, colSums(abs(DEG_df)) > 0, drop = FALSE]
+      DEG_df <- DEG_df[rowSums(abs(DEG_df)) > 0, , drop = FALSE]
+      res <- list(DEG_df = DEG_df, matrices = matrices)
+  }
+  return(res)
 }
 
 .get_union_DEGenes <- function(DEG_list, top = NA, min_log2FC = 0,
                                p_val_cutoff = 1) {
   res <- unique(do.call(c, lapply(DEG_list, .get_DEGenes, top = top,
                         min_log2FC = min_log2FC, p_val_cutoff = p_val_cutoff)))
+  if(length(res) < 1) {
+    warning("No significant DEGs found (thresholds too strict)")
+  }
   return(res)
 }
 
@@ -998,9 +1028,6 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
   res <- NULL
   DEG_df <- DEG_df[DEG_df$p_val_adj <= p_val_cutoff, ]
   DEG_df <- DEG_df[abs(DEG_df$avg_log2FC) >= abs(min_log2FC), ]
-  if(nrow(DEG_df) < 1) {
-    warning("No significant DEGs found (thresholds too strict)")
-  }
   if(!is.na(top)) {
     if(nrow(DEG_df) < top) {
       warning("Top larger than total DEGs. Selecting all DEGs.")
@@ -1029,12 +1056,14 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
   return(list(DEG_df = DEG_df, ncell_df = ncell_df))
 }
 
-.check_DEG_matrix <- function(matrix, ident, query = NULL) {
+.check_DEG_matrix <- function(matrix, ident, query = NULL, genes_list) {
   process_res <- TRUE
   if(is.null(matrix) | FALSE %in% matrix) {
       process_res <- FALSE
-  }
-  if(!is.null(query)) {
+  } else if(!any(genes_list %in% rownames(matrix))) {
+    message("No significant DEGs found in ident \"", ident,"\".")
+    process_res <- FALSE
+  } else if(!is.null(query)) {
       if(!any(query %in% rownames(matrix))) {
       message("Query genes are not differentially expressed in ident \"", ident,
         "\".")
@@ -1058,7 +1087,8 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
                                 p_val_cutoff = 0.01, genes_list = NULL,
                                 query = NULL) {
   res <- NULL
-  run <- .check_DEG_matrix(matrix = DEG_matrix, query = query, ident = ident)
+  run <- .check_DEG_matrix(matrix = DEG_matrix, query = query, ident = ident,
+                           genes_list = genes_list)
   if(run) {
     DEG_matrix <- DEG_matrix[rownames(DEG_matrix) %in% genes_list, ,
                              drop = FALSE]
@@ -1133,6 +1163,9 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
 .get_union_FCs <- function(DEG_list, top = NA, min_log2FC = 0,
                            p_val_cutoff = 0.05) {
   DEG_list <- DEG_list[names(DEG_list) != "global"]
+  empty_DEGs <- unlist(lapply(DEG_list,
+                                function(x) return(isFALSE(unlist(x)))))
+  DEG_list <- DEG_list[which(!empty_DEGs)]
   genes_list <- .get_union_DEGenes(DEG_list = DEG_list, top = top,
                           min_log2FC = min_log2FC, p_val_cutoff = p_val_cutoff)
   heatmap <- data.frame(matrix(0, nrow = length(DEG_list),
@@ -1143,8 +1176,10 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
     ident_vector <- .process_DEG_matrix(DEG_matrix = DEG_list[[ident]],
       min_avg_log2FC = min_log2FC, p_val_cutoff = p_val_cutoff,
       genes_list = genes_list, ident = ident)
-    heatmap[ident, ] <- ident_vector[match(colnames(heatmap),
+    if(!is.null(ident_vector)) {
+      heatmap[ident, ] <- ident_vector[match(colnames(heatmap),
                                      names(ident_vector))]
+    }
   }
   return(t(heatmap))
 }
@@ -1253,18 +1288,20 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data",
 #' expr = FALSE))
 #' @export
 
-subset_seurat <- function(seu, column, value, expr = FALSE, layer = "data") {
+subset_seurat <- function(seu, column, value, expr = FALSE, layer = "data",
+                          operator = "==") {
   # Argument "expr" comes from an error when subsetting a seurat
   # object only by cells NOT selected by sketch. Once it is solved, this will
   # always return a seurat object.
   expr_vec <- Seurat::FetchData(seu, vars = column)
+  positions <- get(operator)(expr_vec, value)
   if(expr) {
-    expr_vec <- expr_vec[expr_vec == value, , drop = FALSE]
+    expr_vec <- expr_vec[positions, , drop = FALSE]
     cells <- rownames(expr_vec)
     expr_data <- Seurat::GetAssayData(seu, layer = layer)
     subset <- expr_data[, colnames(expr_data) %in% cells, drop = FALSE]
   } else {
-    subset <- seu[, which(expr_vec == value)]  
+    subset <- seu[, which(positions)]  
   }
   return(subset)
 }

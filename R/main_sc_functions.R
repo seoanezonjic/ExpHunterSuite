@@ -224,6 +224,7 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
 #' `main_sc_Hunter` is the main seurat analysis function. Can be used
 #' for integrative or non-integrative analysis.
 #'
+#' @inheritParams get_sc_markers
 #' @param seu Seurat object to analyze.
 #' @param DEG_target A string vector. Categories by which DEG analysis will be
 #' performed
@@ -257,17 +258,22 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
 #' print(DEG_results)
 
 main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
-                           min_avg_log2FC = 0.5, min_counts = 0.5, query = NULL,
-                           verbose = FALSE, min_cell_proportion = 0.01,
-                           output_path = getwd(), top = NULL) {
+  simple_DEG_pct = FALSE, min_avg_log2FC = 0.5, min_counts = 0.5, query = NULL,
+  verbose = FALSE, min_cell_proportion = 0.01, output_path = getwd(),
+  top = NULL) {
   message('Starting DEG analysis.')
-  DEG_query <- NULL
-  seu <- .add_target_info(seu = seu, DEG_target = DEG_target)
   subset_target <- ifelse("cell_type" %in% colnames(seu@meta.data),
                            yes = "cell_type", no = "seurat_clusters")
+  if(subset_target == "cell_type") {
+    seu <- subset_seurat(seu, column = "cell_type", value = "Pruned",
+                         operator = "!=")
+  }
+  DEG_query <- NULL
+  seu <- .add_target_info(seu = seu, DEG_target = DEG_target)
   DEGs <- get_sc_markers(seu = seu, cond = "deg_group", DEG = TRUE,
-                         subset_by = subset_target, verbose = verbose,
-                         values = "Ctrl,Treat", min.pct = min_cell_proportion)
+    logfc.threshold = min_avg_log2FC, subset_by = subset_target,
+    p_val_cutoff = p_val_cutoff, verbose = verbose, values = "Ctrl,Treat",
+    min.pct = min_cell_proportion)
   message("Extracting DEG cell metrics")
   DEG_metrics <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
                   min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff,
@@ -276,7 +282,7 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
     DEG_query <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
                                   min_counts = min_counts, query = query)
   }
-  FC_distrib <- .get_union_FCs(DEGs$markers, top = top,
+  FC_distrib <- .get_union_FCs(DEG_list = DEGs$markers, top = top,
                       p_val_cutoff = p_val_cutoff, min_log2FC = min_avg_log2FC)
   return(list(DEGs = DEGs, DEG_metrics = DEG_metrics, DEG_query = DEG_query,
               FC_distribution = FC_distrib))
