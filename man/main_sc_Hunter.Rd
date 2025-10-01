@@ -10,6 +10,7 @@ main_sc_Hunter(
   DEG_target,
   seu,
   p_val_cutoff = 0.001,
+  simple_DEG_pct = FALSE,
   min_avg_log2FC = 0.5,
   min_counts = 0.5,
   query = NULL,
@@ -27,6 +28,12 @@ performed}
 
 \item{p_val_cutoff}{Adjusted p-val cutoff for significant DEGs.
 Default 5e-3.}
+
+\item{simple_DEG_pct}{By default, Seurat's marker calculation function
+includes a cell proportion filter, but it only checks if any of the two
+groups is above this threshold. \code{simple_DEG_pct} corrects this behaviour.
+its default value, FALSE, triggers a check that removes DEGs where \emph{any}
+of the two groups is below the threshold.}
 
 \item{min_avg_log2FC}{Average log2fc cutoff for significant DEGs.
 Default 0.5.}

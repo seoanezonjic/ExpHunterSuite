@@ -14,7 +14,9 @@ get_sc_markers(
   assay = "RNA",
   values = NULL,
   min.pct = 0.1,
-  layer = "data"
+  layer = "data",
+  p_val_cutoff = 1,
+  simple_DEG_pct = FALSE
 )
 }
 \arguments{
@@ -37,10 +39,9 @@ X-fold difference (log-scale) between the two groups of cells. Default is 0.1
 Increasing logfc.threshold speeds up the function, but can miss weaker signals.
 If the \code{slot} parameter is "scale.data" no filtering is performed.}
 
-\item{verbose}{A boolean. Will be passed to Seurat function calls.}
+\item{verbose}{Print a progress bar once expression testing begins}
 
-\item{assay}{A string. Assay whose markers will be calculated. Default "RNA",
-as per usual workflow.}
+\item{assay}{Assay to use in differential expression testing}
 
 \item{values}{A comma-separated string delimiting values of cond column by
 which to perform the comparison. Must specify two conditions. Default NULL,
@@ -52,6 +53,14 @@ min.pct cells in either of the two populations. Meant to speed up the function
 by not testing genes that are very infrequently expressed. Default is 0.01}
 
 \item{layer}{Name of layer to get or set}
+
+\item{p_val_cutoff}{Adjusted p-value threshold for significant DEGenes.}
+
+\item{simple_DEG_pct}{By default, Seurat's marker calculation function
+includes a cell proportion filter, but it only checks if any of the two
+groups is above this threshold. \code{simple_DEG_pct} corrects this behaviour.
+its default value, FALSE, triggers a check that removes DEGs where \emph{any}
+of the two groups is below the threshold.}
 }
 \value{
 A list containing one marker or DEG data frame per cluster, plus

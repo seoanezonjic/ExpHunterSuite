@@ -4,7 +4,14 @@
 \alias{subset_seurat}
 \title{subset_seurat}
 \usage{
-subset_seurat(seu, column, value, expr = FALSE, layer = "data")
+subset_seurat(
+  seu,
+  column,
+  value,
+  expr = FALSE,
+  layer = "data",
+  operator = "=="
+)
 }
 \arguments{
 \item{seu}{Seurat object.}
@@ -16,6 +23,9 @@ subset_seurat(seu, column, value, expr = FALSE, layer = "data")
 \item{expr}{Directly subset expression matrix instead of seurat object.}
 
 \item{layer}{Seurat object layer to subset.}
+
+\item{operator}{Operator to use in logical comparison. Default: "==",
+equality. To test for inequality, set to "!=".}
 }
 \value{
 A subset of the seurat object, which itself is a seurat object or an

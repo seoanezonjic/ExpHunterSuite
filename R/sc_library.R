@@ -489,9 +489,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' to group data to find conserved markers.
 #' @param subset_by Metadata column by which seurat object will be subset for
 #' marker calculation.
-#' @param verbose A boolean. Will be passed to Seurat function calls.
-#' @param assay A string. Assay whose markers will be calculated. Default "RNA",
-#' as per usual workflow.
+#' @param p_val_cutoff Adjusted p-value threshold for significant DEGenes.
 #' @param values A comma-separated string delimiting values of cond column by
 #' which to perform the comparison. Must specify two conditions. Default NULL,
 #' will use all values. If there are more than two, function will return an
@@ -1278,6 +1276,8 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data",
 #' @param seu Seurat object.
 #' @param column Column with value by which to subset input.
 #' @param value Value to search within column.
+#' @param operator Operator to use in logical comparison. Default: "==",
+#' equality. To test for inequality, set to "!=".
 #' @param expr Directly subset expression matrix instead of seurat object.
 #' @param layer Seurat object layer to subset.
 #' @returns A subset of the seurat object, which itself is a seurat object or an
