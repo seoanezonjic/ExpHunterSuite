@@ -447,11 +447,17 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 }
 
 .get_global_DEGs <- function(seu, cond, conds, min.pct = 0.1, verbose = FALSE,
-                             logfc.threshold = 0.25, layer = "data"){
+               logfc.threshold = 0.25, layer = "data", simple_DEG_pct = FALSE){
   Seurat::Idents(seu) <- seu@meta.data[, tolower(cond)]
   global_DEGs <- Seurat::FindMarkers(seu, ident.1 = conds[1],
         logfc.threshold = logfc.threshold, min.pct = min.pct,
         ident.2 = conds[2], verbose = verbose, layer = layer)
+  if(!simple_DEG_pct) {
+      pct_cols <- grep("pct", colnames(global_DEGs))
+      pct_keep <- apply(global_DEGs[pct_cols], 1,
+                        function(x) return(all(x >= min.pct)))
+      global_DEGs <- global_DEGs[which(pct_keep), , drop = FALSE]
+    }
   global_DEGs$gene <- rownames(global_DEGs)
   nums <- sapply(global_DEGs, is.numeric)
   global_DEGs[nums] <- lapply(global_DEGs[nums], signif, 2)
@@ -524,7 +530,7 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
     message("Calculating global DEGs")
     sub_markers[["global"]] <- .get_global_DEGs(seu = seu, cond = cond,
         logfc.threshold = logfc.threshold, conds = conds, min.pct = min.pct,
-        verbose = verbose, layer = layer)
+        verbose = verbose, layer = layer, simple_DEG_pct = simple_DEG_pct)
   }
   if(all(c("cell_type", "seurat_clusters") %in% colnames(seu@meta.data))) {
     metadata <- unique(seu@meta.data[, c("seurat_clusters", "cell_type")])
