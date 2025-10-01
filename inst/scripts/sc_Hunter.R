@@ -12,6 +12,8 @@ option_list <- list(
             help = "Avg log2fc cutoff for significant DEGs."),
   optparse::make_option("--min_cell_proportion", type = "numeric", default = 0.1,
             help = "Min percentage of cells expressing DEG in each group."),
+  optparse::make_option("--simple_DEG_pct", type = "logical", default = FALSE, action = "store_true",
+            help = "Do not override Seurat's default handling of min.pct argument (passed as min_cell_proportion in this script)."), 
   optparse::make_option("--top_N", type = "numeric", default = 10,
             help = "Top N DEGs to represent in certain plots"),
   optparse::make_option("--min_counts", type = "numeric", default = 10,
@@ -75,8 +77,8 @@ seu$RNA$data <- seu$RNA$counts
 DEG_list <- parallel_list(X = DEG_targets, FUN = main_sc_Hunter, workers = opt$cpu, seu = seu,
                           p_val_cutoff = opt$p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
                           min_cell_proportion = opt$min_cell_proportion, top = opt$top_N,
-                          query = opt$target_genes,
-                          output_path = opt$output, min_counts = opt$min_counts, verbose = opt$verbose)
+                          query = opt$target_genes, output_path = opt$output,
+                          min_counts = opt$min_counts, verbose = opt$verbose)
 names(DEG_list) <- unlist(strsplit(names(DEG_targets), "_target"))
 
 message("--------------------------------------------")
@@ -86,7 +88,7 @@ for(target_name in names(DEG_targets)) {
   DEG_name <- unlist(strsplit(target_name, "_target"))
   message(paste0("Writing ", DEG_name, " report"))
   DEG_results <- list(seu = seu, DEG_list = DEG_list[[DEG_name]], opt = opt, target = DEG_targets[[target_name]], target_name = DEG_name)
-  write_sc_report(final_results = DEG_results, opt = opt, template_folder = template_folder,
+  write_sc_report(final_results = DEG_results, opt = opt, template_folder = template_folder, analysis = "Single-Cell Differential Expression",
                   output = file.path(opt$output, "report"),  template = "sc_DEGs.txt",
                   out_suffix = paste0(DEG_name, "_DEG_report.html"), params = params)
 }
