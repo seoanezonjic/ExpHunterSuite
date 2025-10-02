@@ -282,8 +282,6 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
     DEG_query <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
                                   min_counts = min_counts, query = query)
   }
-  FC_distrib <- .get_union_FCs(DEG_list = DEGs$markers, top = top,
-                      p_val_cutoff = p_val_cutoff, min_log2FC = min_avg_log2FC)
   return(list(DEGs = DEGs, DEG_metrics = DEG_metrics, DEG_query = DEG_query,
               FC_distribution = FC_distrib))
 }
