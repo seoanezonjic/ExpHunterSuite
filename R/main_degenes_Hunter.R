@@ -39,6 +39,7 @@
 #' @return expression analysis result object with studies performed
 #' @keywords method
 #' @importFrom rlang .data
+#' @importFrom edgeR cpm
 #' @export
 #' @examples
 #' data(toc)
@@ -150,19 +151,22 @@ main_degenes_Hunter <- function(
     raw <- raw[c(index_control_cols,index_treatmn_cols)]
     raw[is.na(raw)] <- 0 # Substitute NA values
 
-    filtered_data <- filter_count(reads, minlibraries, raw, filter_type, 
+    cpm_table <- edgeR::cpm(raw)
+    raw_filter <- filter_count(reads, minlibraries, raw, cpm_table, filter_type, 
                                index_control_cols, index_treatmn_cols, target)
-    raw_filter <- filtered_data[["raw"]]
-    cpm_table <- filtered_data[["cpm_table"]]
 
-    var_filter <- filter_by_variance(raw_filter, 
-                                     q_filter = count_var_quantile, 
-                                     target = target)
-    default_norm <- list(default = 
-                      as.data.frame(var_filter[["deseq2_normalized_counts"]]))
-    raw_filter <- var_filter[["fil_count_mtrx"]]
-
+    # TODO: split normalization ffrom 'get_gene_variance' function?
+    var_data <- get_gene_variance(raw_filter, target = target) 
     
+    if(count_var_quantile > 0){
+      raw_filter <- filter_by_variance(raw_filter, 
+                     q_filter = count_var_quantile, 
+                     variances = var_data[["variances"]])
+    }
+    default_norm <- list(default = 
+                      as.data.frame(var_data[["deseq2_normalized_counts"]]))
+    var_filter <- var_data # TODO: For report compatibility, the template should be refactorized
+    var_filter['thr'] <- count_var_quantile
 
     #computing PCA for all_genes
     full_pca <- compute_pca(pca_data = default_norm$default,
@@ -236,7 +240,7 @@ main_degenes_Hunter <- function(
 
     DE_all_genes <- NULL
     DEG_pca <- NULL
-    if (any(grepl("[DENLF]",modules))){
+    if (any(grepl("[DENL]",modules))){
       DE_all_genes <- unite_DEG_pack_results(exp_results, p_val_cutoff, 
                                              lfc, minpack_common)
 
@@ -260,10 +264,12 @@ main_degenes_Hunter <- function(
       DE_all_genes$Row.names <- NULL
     }
 
-    # Add the filtered genes back
-    DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
-    DE_all_genes <- merge(DE_all_genes, cpm_stats, by=0, sort=FALSE)
-    DE_all_genes <- transform(DE_all_genes, row.names=Row.names, Row.names=NULL)
+    if(!is.null(DE_all_genes)){
+      # Add the filtered genes back
+      DE_all_genes <- add_filtered_genes(DE_all_genes, raw)
+      DE_all_genes <- merge(DE_all_genes, cpm_stats, by=0, sort=FALSE)
+      DE_all_genes <- transform(DE_all_genes, row.names=Row.names, Row.names=NULL)
+    }
     
     correlation_metrics <- NULL
     if(grepl("P", modules)) { # CASE P: PCIT, TODO: RESTORE FUNCTION, PEDRO 
@@ -423,16 +429,16 @@ check_input_main_degenes_Hunter <- function(raw,
                 raw=raw, reads=reads, target=target))
 }
 
-#' @importFrom edgeR cpm
 filter_count <- function(reads, 
                          minlibraries, 
-                         raw, 
+                         raw,
+                         cpm_table, 
                          filter_type, 
                          index_control_cols, 
                          index_treatmn_cols,
                          target){
     # Prepare filtered set
-    cpm_table <- edgeR::cpm(raw)
+    
     if(reads != 0){
       if (filter_type == "separate") {
         # genes with cpm greater than --reads value for 
@@ -466,25 +472,30 @@ filter_count <- function(reads,
         raw <- raw
       }
     }
-    return(list(raw=raw, cpm_table=cpm_table))
+    return(raw)
 }
 
 #' @importFrom stats quantile formula
 #' @importFrom DESeq2 DESeqDataSetFromMatrix DESeq counts
-filter_by_variance <- function(count_matrix, q_filter, target){
-
+get_gene_variance <- function(count_matrix, target){
   dds <- DESeq2::DESeqDataSetFromMatrix(countData = count_matrix,
                                   colData = target,
                                   design = stats::formula("~ treat"))
   dds <- DESeq2::DESeq(dds)
   normalized_counts <- DESeq2::counts(dds, normalized=TRUE)
+  #normalized_counts <- SummarizedExperiment::assay(DESeq2::rlog(dds, blind=TRUE))
   variances <- matrixStats::rowVars(normalized_counts)
+  return(list( 
+    variance_dis = variances, 
+    deseq2_normalized_counts = normalized_counts))
+}
+
+
+#' @importFrom stats quantile formula
+filter_by_variance <- function(count_matrix, q_filter, variances){
   threshold <- stats::quantile(variances, q_filter)
   fil_count_mtrx <- count_matrix[variances >= threshold,]
-  return(list(fil_count_mtrx = fil_count_mtrx, 
-    variance_dis = variances, 
-     thr = q_filter,
-     deseq2_normalized_counts = normalized_counts))
+  return(fil_count_mtrx)
 }
 
 prepare_model_text <- function(model_variables, 
