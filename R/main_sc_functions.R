@@ -282,8 +282,7 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
     DEG_query <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
                                   min_counts = min_counts, query = query)
   }
-  return(list(DEGs = DEGs, DEG_metrics = DEG_metrics, DEG_query = DEG_query,
-              FC_distribution = FC_distrib))
+  return(list(DEGs = DEGs, DEG_metrics = DEG_metrics, DEG_query = DEG_query))
 }
 
 #' analyze_sc_query
