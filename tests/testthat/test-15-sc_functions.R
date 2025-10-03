@@ -509,8 +509,8 @@ test_that("get_fc_vs_ncells works as intended", {
                              min_counts = 1, layer = "data")
   expected_DEGs <- data.frame(PPBP = c(0, 1), IGLL5 = c(0.2, 0.0),
                               VDAC3 = c(1.0, 0.2))
-  expected_ncells <- data.frame(PPBP = rep(1, 2), IGLL5 = c(0, 2),
-                                VDAC3 = rep(2, 2))
+  expected_ncells <- data.frame(PPBP = c(14, 12), IGLL5 = c(0, 25),
+                                VDAC3 = c(29, 25))
   rownames(expected_DEGs) <- c("g1", "g2")
   rownames(expected_ncells) <- c("g1", "g2")
   expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
@@ -523,8 +523,8 @@ test_that("get_fc_vs_ncells works with scaled data (dense matrix)", {
                              min_counts = 1, layer = "scale.data")
   expected_DEGs <- data.frame(PPBP = c(0, 1), IGLL5 = c(0.2, 0.0),
                               VDAC3 = c(1.0, 0.2))
-  expected_ncells <- data.frame(PPBP = rep(1, 2), IGLL5 = c(0, 2),
-                                VDAC3 = rep(2, 2))
+  expected_ncells <- data.frame(PPBP = c(14, 12), IGLL5 = c(0, 25),
+                                VDAC3 = c(29, 25))
   rownames(expected_DEGs) <- c("g1", "g2")
   rownames(expected_ncells) <- c("g1", "g2")
   expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
@@ -539,7 +539,7 @@ test_that("get_fc_vs_ncells works with DEG tables containing different genes", {
                              min_avg_log2FC = 0.2, p_val_cutoff = 0.01,
                              min_counts = 1, layer = "data")
   expected_DEGs <- data.frame(IGLL5 = c(0.2, 0.0), VDAC3 = c(0.0, 0.2))
-  expected_ncells <- data.frame(IGLL5 = c(0, 2), VDAC3 = rep(2, 2))
+  expected_ncells <- data.frame(IGLL5 = c(0, 25), VDAC3 = c(29, 25))
   rownames(expected_DEGs) <- c("g1", "g2")
   rownames(expected_ncells) <- c("g1", "g2")
   expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
@@ -551,7 +551,7 @@ test_that("get_fc_vs_ncells works with target list", {
                 min_avg_log2FC = Inf, p_val_cutoff = -Inf, DEG_list = DEG_list,
                 min_counts = 1, query = c("PPBP", "VDAC3")))
   expected_DEGs <- data.frame(PPBP = 0:1, VDAC3 = c(1.0, 0.2))
-  expected_ncells <- data.frame(PPBP = rep(1, 2), VDAC3 = rep(2, 2))
+  expected_ncells <- data.frame(PPBP = c(14, 12), VDAC3 = c(29, 25))
   rownames(expected_DEGs) <- c("g1", "g2")
   rownames(expected_ncells) <- c("g1", "g2")
   expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
@@ -570,7 +570,7 @@ test_that("get_fc_vs_ncells can handle no target genes being present in seurat
                              DEG_list = DEG_list, min_avg_log2FC = Inf,
                              p_val_cutoff = -Inf,
                              min_counts = 1, query = c("None", "Zilch"))))
-  expect_equal(output, NULL)
+  expect_null(output)
 })
 
 test_that("get_fc_vs_ncells can handle some target genes not being present in
@@ -580,12 +580,13 @@ test_that("get_fc_vs_ncells can handle some target genes not being present in
                  min_counts = 1, query = c("None", "Zilch", "PPBP"),
                  layer = "data")), c('"None", "Zilch"'))
   output <- suppressMessages(suppressWarnings(get_fc_vs_ncells(seu = test_pbmc,
-                             DEG_list = DEG_list, min_avg_log2FC = Inf,
-                             p_val_cutoff = -Inf, min_counts = 1, layer = "data",
-                             query = c("None", "Zilch", "PPBP"))))
+                            DEG_list = DEG_list, min_avg_log2FC = Inf,
+                            p_val_cutoff = -Inf, min_counts = 1, layer = "data",
+                            query = c("None", "Zilch", "PPBP"))))
   expected_DEGs <- data.frame(PPBP = 1)
   rownames(expected_DEGs) <- c("g2")
-  expected_ncells <- expected_DEGs
+  expected_ncells <- data.frame(PPBP = 12)
+  rownames(expected_ncells) <- c("g2")
   expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
   expect_equal(output, expected)
 })
@@ -598,7 +599,8 @@ test_that("get_fc_vs_ncells can handle FALSE and NULL values in DEG_list", {
             min_counts = 1, query = "PPBP", layer = "data"))
   expected_DEGs <- data.frame(PPBP = 1)
   rownames(expected_DEGs) <- c("g2")
-  expected_ncells <- expected_DEGs
+  expected_ncells <- data.frame(PPBP = 12)
+  rownames(expected_ncells) <- c("g2")
   expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
   expect_equal(output, expected)
 })
