@@ -506,7 +506,7 @@ DEG_list <- list(global = "This should not exist", g1 = DEG_g1, g2 = DEG_g2)
 test_that("get_fc_vs_ncells works as intended", {
   output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
                              min_avg_log2FC = 0.2, p_val_cutoff = 0.01,
-                             min_counts = 1, layer = "data")
+                             layer = "data")
   expected_DEGs <- data.frame(PPBP = c(0, 1), IGLL5 = c(0.2, 0.0),
                               VDAC3 = c(1.0, 0.2))
   expected_ncells <- data.frame(PPBP = c(14, 12), IGLL5 = c(0, 25),
@@ -520,13 +520,12 @@ test_that("get_fc_vs_ncells works as intended", {
 test_that("get_fc_vs_ncells works with scaled data (dense matrix)", {
   output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = DEG_list,
                              min_avg_log2FC = 0.2, p_val_cutoff = 0.01,
-                             min_counts = 1, layer = "scale.data")
+                             layer = "scale.data")
   expected_DEGs <- data.frame(PPBP = c(0, 1), IGLL5 = c(0.2, 0.0),
                               VDAC3 = c(1.0, 0.2))
-  expected_ncells <- data.frame(PPBP = c(14, 12), IGLL5 = c(0, 25),
-                                VDAC3 = c(29, 25))
-  rownames(expected_DEGs) <- c("g1", "g2")
-  rownames(expected_ncells) <- c("g1", "g2")
+  expected_ncells <- data.frame(matrix(100, 2, 3))
+  colnames(expected_ncells) <- c("PPBP", "IGLL5", "VDAC3")
+  rownames(expected_DEGs) <- rownames(expected_ncells) <- c("g1", "g2")
   expected <- list(DEG_df = expected_DEGs, ncell_df = expected_ncells)
   expect_equal(output, expected)
 })
@@ -537,7 +536,7 @@ test_that("get_fc_vs_ncells works with DEG tables containing different genes", {
   test_DEG_list[[3]] <- test_DEG_list[[3]][3:4, ]
   output <- get_fc_vs_ncells(seu = test_pbmc, DEG_list = test_DEG_list,
                              min_avg_log2FC = 0.2, p_val_cutoff = 0.01,
-                             min_counts = 1, layer = "data")
+                             layer = "data")
   expected_DEGs <- data.frame(IGLL5 = c(0.2, 0.0), VDAC3 = c(0.0, 0.2))
   expected_ncells <- data.frame(IGLL5 = c(0, 25), VDAC3 = c(29, 25))
   rownames(expected_DEGs) <- c("g1", "g2")
@@ -549,7 +548,7 @@ test_that("get_fc_vs_ncells works with DEG tables containing different genes", {
 test_that("get_fc_vs_ncells works with target list", {
   output <- suppressMessages(get_fc_vs_ncells(seu = test_pbmc, layer = "data",
                 min_avg_log2FC = Inf, p_val_cutoff = -Inf, DEG_list = DEG_list,
-                min_counts = 1, query = c("PPBP", "VDAC3")))
+                query = c("PPBP", "VDAC3")))
   expected_DEGs <- data.frame(PPBP = 0:1, VDAC3 = c(1.0, 0.2))
   expected_ncells <- data.frame(PPBP = c(14, 12), VDAC3 = c(29, 25))
   rownames(expected_DEGs) <- c("g1", "g2")
@@ -564,12 +563,12 @@ test_that("get_fc_vs_ncells can handle no target genes being present in seurat
   ## should be a way to capture the warning while still saving output.
   expect_warning(suppressMessages(get_fc_vs_ncells(seu = test_pbmc,
                  DEG_list = DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf,
-                 min_counts = 1, query = c("None", "Zilch"), layer = "data")),
+                 query = c("None", "Zilch"), layer = "data")),
                  "None of the target genes are expressed in seurat object.")
   output <- suppressWarnings(suppressMessages(get_fc_vs_ncells(seu = test_pbmc,
                              DEG_list = DEG_list, min_avg_log2FC = Inf,
                              p_val_cutoff = -Inf,
-                             min_counts = 1, query = c("None", "Zilch"))))
+                             query = c("None", "Zilch"))))
   expect_null(output)
 })
 
@@ -577,11 +576,11 @@ test_that("get_fc_vs_ncells can handle some target genes not being present in
          seurat object", {
   expect_warning(suppressMessages(get_fc_vs_ncells(seu = test_pbmc,
                  DEG_list = DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf,
-                 min_counts = 1, query = c("None", "Zilch", "PPBP"),
+                 query = c("None", "Zilch", "PPBP"),
                  layer = "data")), c('"None", "Zilch"'))
   output <- suppressMessages(suppressWarnings(get_fc_vs_ncells(seu = test_pbmc,
                             DEG_list = DEG_list, min_avg_log2FC = Inf,
-                            p_val_cutoff = -Inf, min_counts = 1, layer = "data",
+                            p_val_cutoff = -Inf, layer = "data",
                             query = c("None", "Zilch", "PPBP"))))
   expected_DEGs <- data.frame(PPBP = 1)
   rownames(expected_DEGs) <- c("g2")
@@ -596,7 +595,7 @@ test_that("get_fc_vs_ncells can handle FALSE and NULL values in DEG_list", {
   test_DEG_list$g3 <- data.frame(FALSE)
   output <- suppressMessages(get_fc_vs_ncells(seu = test_pbmc,
             DEG_list = test_DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf,
-            min_counts = 1, query = "PPBP", layer = "data"))
+            query = "PPBP", layer = "data"))
   expected_DEGs <- data.frame(PPBP = 1)
   rownames(expected_DEGs) <- c("g2")
   expected_ncells <- data.frame(PPBP = 12)
@@ -611,21 +610,20 @@ test_that("get_fc_vs_ncells returns NULL if all non-global values in DEG_list
   test_DEG_list$g1 <- test_DEG_list$g2 <- test_DEG_list$g3 <- data.frame(FALSE)
   warnings <- capture_warnings(get_fc_vs_ncells(seu = test_pbmc,
                 DEG_list = test_DEG_list, min_avg_log2FC = 0, p_val_cutoff = 1,
-                min_counts = 1, layer = "data"))
+                layer = "data"))
   expect_match(warnings, "No per-identity DEG analysis present in DEG list.")
   expect_null(suppressWarnings(get_fc_vs_ncells(seu = test_pbmc,
-                DEG_list = test_DEG_list, min_avg_log2FC = 0, p_val_cutoff = 1,
-                min_counts = 1)))
+               DEG_list = test_DEG_list, min_avg_log2FC = 0, p_val_cutoff = 1)))
 })
 
 test_that("get_fc_vs_ncells returns NULL if input is NULL, regardless of
            global", {
   test_DEG_list <- NULL
-  warnings <- capture_warnings(get_fc_vs_ncells(seu = test_pbmc, min_counts = 1,
+  warnings <- capture_warnings(get_fc_vs_ncells(seu = test_pbmc,
     DEG_list = test_DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf,
     layer = "data"))
   expect_match(warnings, "Empty DEG_list provided")
-  expect_null(suppressWarnings(get_fc_vs_ncells(seu = test_pbmc, min_counts = 1,
+  expect_null(suppressWarnings(get_fc_vs_ncells(seu = test_pbmc,
     DEG_list = test_DEG_list, min_avg_log2FC = Inf, p_val_cutoff = -Inf,
     layer = "data")))
 })
@@ -863,4 +861,21 @@ test_that("subset_seurat works for alternate operator", {
                "AGTCAGACTGCACA", "AGGTCATGAGTGTC", "GGGTAACTCTAGTG",
                "CATGAGACACGGGA", "TACGCCACTCCGAA")
   expect_equal(colnames(output), expected)
-  })
+})
+
+test_that("filter_sc_counts works as intended", {
+  expected <- matrix(0, 10, 15)
+  expected[2, 13] <- 15
+  expected[3, 12] <- 29
+  expected <- Matrix::Matrix(expected)
+  rownames(expected) <- c("PPBP", "IGLL5", "VDAC3", "CD1C", "AKR1C3", "PF4",
+                          "MYL9", "GNLY", "TREML1", "CA2")
+  colnames(expected) <- c("ATGCCAGAACGACT", "CATGGCCTGTGCAT", "GAACCTGATGAACC",
+                          "TGACTGGATTCTCA", "AGTCAGACTGCACA", "TCTGATACACGTGT",
+                          "TGGTATCTAAACAG", "GCAGCTCTGTTTCT", "GATATAACACGCAT",
+                          "AATGTTGACAGTCA", "AGGTCATGAGTGTC", "AGAGATGATCTCGC",
+                          "GGGTAACTCTAGTG", "CATGAGACACGGGA", "TACGCCACTCCGAA")
+  output <- suppressMessages(filter_sc_counts(object = pbmc_tiny,
+                             min_counts = 2, layer = "counts"))
+  expect_equal(output$RNA$counts, expected)
+})
