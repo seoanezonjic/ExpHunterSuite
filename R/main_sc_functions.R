@@ -140,6 +140,7 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
     seu <- Seurat::NormalizeData(object = seu, verbose = verbose,
       normalization.method = normalmethod, scale.factor = scalefactor)
     message("Normalization time: ", Sys.time() - norm_start)
+    seu <- filter_sc_counts(seu, min_counts = min_counts, layer = "data")
     message('Finding variable features')
     seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs,
                                         verbose = verbose,
@@ -211,7 +212,7 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
     }
     assay <- "RNA"
     expr_metrics <- get_expression_metrics(seu = seu, sigfig = sigfig,
-                        min_counts = min_counts, layer = "data")
+                                           min_counts = 0, layer = "data")
     message("Total processing time: ", Sys.time() - main_start)
     final_results <- list(qc = qc, seu = seu, markers = markers,
       sample_qc_pct = expr_metrics$sample_qc_pct, integrate = integrate,
@@ -235,7 +236,8 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
 #' @param min_cell_proportion Minimum threshold of percentage of cells
 #' expressing DEG. Despite Seurat::FindMarkers being called "min.pct", it is
 #' not a percentage but a value from 0 to 1.
-#' @param min_counts Min counts to consider a gene is expressed in a cell.
+#' @param min_counts An integer. Minimum gene counts to consider a gene as
+#' expressed.
 #' @param verbose Print extra execution information.
 #' @param query A string vector. List of genes to focus on DEG analysis in
 #' addition to regular DEG analysis.
@@ -271,16 +273,19 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
   DEG_query <- NULL
   seu <- .add_target_info(seu = seu, DEG_target = DEG_target)
   DEGs <- get_sc_markers(seu = seu, cond = "deg_group", DEG = TRUE,
-    logfc.threshold = min_avg_log2FC, subset_by = subset_target,
-    p_val_cutoff = p_val_cutoff, verbose = verbose, values = "Ctrl,Treat",
-    min.pct = min_cell_proportion)
+    logfc.threshold = 0.5, subset_by = subset_target,
+    p_val_cutoff = 0.05, verbose = verbose, values = "Ctrl,Treat",
+    min.pct = 0.1)
+  # Need to create this function
+  DEGs <- tag_DEGs(DEGs = DEGs, p_val_cutoff = p_val_cutoff,
+                   min_cell_proportion = min_cell_proportion,
+                   min_avg_log2FC = min_avg_log2FC)
   message("Extracting DEG cell metrics")
   DEG_metrics <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
-                  min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff,
-                  min_counts = min_counts)
+                  min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff)
   if(!is.null(query)) {
     DEG_query <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
-                                  min_counts = min_counts, query = query)
+                                  query = query)
   }
   return(list(DEGs = DEGs, DEG_metrics = DEG_metrics, DEG_query = DEG_query))
 }
