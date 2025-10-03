@@ -910,7 +910,7 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "data",
 }
 
 .run_fc_vs_ncells <- function(seu, DEG_list, query, return_output, genes_warn,
-                              meta, check, res = NULL, min_counts, layer) {
+                              meta, check, res = NULL, layer) {
   res <- NULL
   processed_query <- .process_query(seu = seu, DEG_list = DEG_list,
         query = query, return_output = return_output, genes_warn = genes_warn)
@@ -920,8 +920,8 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "data",
       p_val_cutoff = check$p_val_cutoff, genes = processed_query$gene_list,
       DEG_list = DEG_list, min_avg_log2FC = check$min_avg_log2FC,
       layer = layer)
-    res <- .add_ncell_df(DEG_df = fc_res$DEG_df, min_counts = min_counts,
-                     matrices = fc_res$matrix_list$matrices)
+    res <- .add_ncell_df(DEG_df = fc_res$DEG_df,
+                         matrices = fc_res$matrix_list$matrices)
   }
   return(res)
 }
@@ -939,8 +939,6 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "data",
 #' cell type, as calculated with Seurat.
 #' @param min_avg_log2FC A numeric. Minimum absolute log2FC cutoff.
 #' @param p_val_cutoff A numeric. Max adjusted p value cutoff.
-#' @param min_counts An integer. Minimum gene counts to consider a gene as
-#' expressed.
 #' @param query A character vector. List of genes to analyze. Default
 #' NULL.
 #' @returns A list containing fc and ncells data frames.
@@ -951,7 +949,7 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "data",
 #' @export
 
 get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
-                p_val_cutoff = 0.01, min_counts = 1, layer = "data") {
+                p_val_cutoff = 0.01, layer = "data") {
   genes_warn <- NULL
   res <- NULL
   return_output <- TRUE
@@ -977,8 +975,7 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
     } else {
       res <- .run_fc_vs_ncells(seu = seu, DEG_list = DEG_list, query = query,
               return_output = return_output, genes_warn = genes_warn,
-              meta = meta, check = check, min_counts = min_counts,
-              layer = layer)
+              meta = meta, check = check, layer = layer)
     }
   }
   return(res)
@@ -1046,10 +1043,9 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
 }
 
 .add_ncell_df <- function(matrices = stop("No counts matrices supplied"),
-                          DEG_df = stop("No DEG data frame supplied"),
-                          min_counts = 1) {
+                          DEG_df = stop("No DEG data frame supplied")) {
   ncell_df <- .process_matrix_list(matrix_list = matrices,
-    processing_function = .is_expressed_matrix, min_counts = min_counts)
+                                   processing_function = .is_expressed_matrix)
   for(group in names(matrices)) {
     ncell_df[group, ] <- ncell_df[group, , drop = FALSE]/ncol(matrices[[group]])
   }
@@ -1122,26 +1118,22 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
   return(res)
 }
 
-.is_expressed_matrix <- function(matrix, min_counts = 1) {
+.is_expressed_matrix <- function(matrix) {
   if(!is.null(matrix)) {
     if(is(matrix, "dgCMatrix")) {
-      matrix@x[matrix@x < min_counts] <- 0
-      matrix@x[matrix@x > 0] <- 1
+      matrix@x[abs(matrix@x) > 0] <- 1
     } else {
       df <- data.frame(matrix)
-      df[df < min_counts] <- 0
-      df[df > 0] <- 1
+      df[abs(df) > 0] <- 1
       matrix <- as.matrix(df)
     }
   }
   return(matrix)
 }
 
-.process_matrix_list <- function(matrix_list, processing_function = NULL,
-                                 min_counts = 1) {
+.process_matrix_list <- function(matrix_list, processing_function = NULL) {
   if(!is.null(processing_function)) {
-    matrix_list <- lapply(matrix_list, processing_function,
-                          min_counts = min_counts)
+    matrix_list <- lapply(matrix_list, processing_function)
     NULL_pos <- lapply(matrix_list, is.null)
     matrix_list <- matrix_list[!unlist(NULL_pos)]
   }
@@ -1916,4 +1908,34 @@ load_SingleR_ref <- function(path, filter = "") {
   seu <- seu[, which(seu$sample %in% DEG_target$sample)]
   seu$deg_group <- DEG_target$treat[match(seu$sample, DEG_target$sample)]
   return(seu)
+}
+
+#' filter_sc_counts
+#'
+#' `filter_sc_counts` takes a seurat object, extracts the counts matrix from
+#' the specified layer and applies a min count filter, then slots it back in
+#' the original seurat layer.
+#' @importFrom SeuratObject GetAssayData
+#' @importParams SeuratObject::GetAssayData
+#' @param min_counts Minimum counts threshold to consider a cell expresses
+#' a gene.
+#' @returns Seurat object with filtered layer.
+#' @examples
+#' data(pbmc_tiny)
+#' counts <- SeuratObject::GetAssayData(object = seu, layer = "data")
+#' filtered_pbmc <- filter_sc_counts(object = seu, layer = "data",
+#'                                   min_counts = 2)
+#' filtered_counts <- SeuratObject::GetAssayData(object = seu, layer = "data")
+#' print(counts)
+#' print(filtered_counts)
+#' @export
+
+filter_sc_counts <- function(object, layer = "data", min_counts) {
+  expr <- GetAssayData(object, "RNA", layer)
+  expr_genes <- sum(expr > 0)
+  expr[expr < min_counts] <- 0
+  filtered_genes <- (expr_genes - sum(expr > 0)) / expr_genes * 100
+  message("Min counts filter removed ", filtered_genes, "% of genes.")
+  object$RNA[layer] <- expr
+  return(object)
 }
