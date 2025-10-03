@@ -1050,6 +1050,10 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
                           min_counts = 1) {
   ncell_df <- .process_matrix_list(matrix_list = matrices,
     processing_function = .is_expressed_matrix, min_counts = min_counts)
+  for(group in names(matrices)) {
+    ncell_df[group, ] <- ncell_df[group, , drop = FALSE]/ncol(matrices[[group]])
+  }
+  ncell_df <- signif(ncell_df * 100, 2)
   # Different genes or cell types/clusters might be discarded due to DEG
   # thresholds or count thresholds. We must update both data frames accordingly.
   # This could be a function instead of this repetitive code.
