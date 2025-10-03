@@ -85,28 +85,31 @@ end.rcode-->
 
 <!--begin.rcode DEG_summary, eval = length(DEG_list) > 0
     saveRDS(plotter, "plotter.rds")
-    cat(plotter$create_title("<b>DIFFERENTIAL EXPRESSION SUMMARY OF CELL GROUPS</b>", "DEG_metrics", hlevel = 2, indexable = TRUE,
-                          clickable = FALSE, t_id = "DEG_metrics", clickable_text = ""))
-    cat(paste0("<p>A minimum feature count filter has been applied in this step, which means DEGs considered",
-               " for this plot follow stricter criteria. This was done in order to not overload the figure.</p>"))
     cat(plotter$create_title(paste0("DEG SUMMARY FOR TARGET ", toupper(comparison)), paste0(comparison, "_DEG_metrics"), hlevel = 2,
                  indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEG_metrics"), clickable_text = ""))
+    cat(plotter$create_title("<b>DIFFERENTIAL EXPRESSION SUMMARY OF CELL GROUPS</b>", "DEG_metrics", hlevel = 2, indexable = TRUE,
+                          clickable = FALSE, t_id = "DEG_metrics", clickable_text = ""))
+    cat("<p>These plots show an overview of the most significant DEGs across the entire dataset. They extract the top DEGs
+         from each individual cell group comparison, and then generate the union of these lists. This union is then used
+         in the plots shown below, representing FC values of these genes for every cell group DEG analysis.</p>")
+    cat(paste0("<p>A minimum feature count filter has been applied in this step, which means DEGs considered",
+               " for this plot follow stricter criteria. This was done in order to not overload the figure.</p>"))
     if(any(dim(plotter$hash_vars$comparison_FCs) < 1) | is.null(plotter$hash_vars$comparison_FCs)) {
         cat(paste0("<p> No significant DEGs found for target ", comparison, ".</p>"))
     } else {
         DEG_legend <- paste0("<p>", comparison_meta$high, " (positive log2FC) vs ",
         comparison_meta$low, " (negative log2FC). </p>")
         cat(DEG_legend)
-        cat(plotter$prettify_div(plotter$heatmap(list(id = "comparison_FCs", header = NULL, row_names = NULL, text = "dynamic",
-                                         extra_data = list(id ="comparison_ncells", header = NULL, row_names = NULL, text = "dynamic"),
-                                         config = list(sizeLegendTitle = "Number of cells"), x_label = "log2FC",
-                                         title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
+        fc <- plotter$heatmap(list(id = "comparison_FCs", header = NULL, row_names = NULL, text = "dynamic",
+                    x_label = "log2FC", title = "Gene average log2FC", transpose = FALSE))
+        fc_vs_ncells <- plotter$heatmap(list(id = "comparison_FCs", header = NULL, row_names = NULL, text = "dynamic",
+                    extra_data = list(id ="comparison_ncells", header = NULL, row_names = NULL, text = "dynamic", transpose = FALSE),
+                    config = list(sizeLegendTitle = "Number of cells"), x_label = "log2FC",
+                    title = "Gene average log2FC vs cells expressing gene", transpose = FALSE))
+        grid_code <- paste(list(fc, fc_vs_ncells), collapse = "\n\n")
+        cat(plotter$prettify_div(plotter$prettify_div(grid_code, width = "1200px"), overflow = "hidden"))
     }
-    cat("<p>Thess plots show an overview of the most significant DEGs across the entire dataset. They extract the top DEGs
-        from each individual cell group comparison, and then generate the union of these lists. This union is then used
-        in the plots shown below, representing FC values of these genes for every cell group DEG analysis.</p>")
-    cat(plotter$prettify_div(plotter$heatmap(list(id = "FC_distribution", header = NULL, row_names = NULL, text = "dynamic",
-                                 x_label = "log2FC", title = "Gene average log2FC vs cells expressing gene")), preset = "magic"))
+    
 end.rcode-->
 
 <!--begin.rcode DEG_analysis, eval = length(DEG_list) > 0
