@@ -140,7 +140,8 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
     seu <- Seurat::NormalizeData(object = seu, verbose = verbose,
       normalization.method = normalmethod, scale.factor = scalefactor)
     message("Normalization time: ", Sys.time() - norm_start)
-    seu <- filter_sc_counts(seu, min_counts = min_counts, layer = "data")
+    filter_layers <- grep("data", names(seu$RNA@layers), value = TRUE)
+    seu <- filter_sc_counts(seu, min_counts = min_counts, layer = filter_layers)
     message('Finding variable features')
     seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs,
                                         verbose = verbose,
@@ -198,11 +199,11 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
     seu <- SeuratObject::JoinLayers(seu)
     if(annotate) {
       annot_start <- Sys.time()
-      annotation <- annotate_seurat(seu = seu, cell_annotation = cell_annotation,
-        subset_by = subset_by, cluster_annotation = cluster_annotation,
-        p_adj_cutoff = p_adj_cutoff, assay = assay, verbose = verbose,
-        min.pct = min.pct, logfc.threshold = logfc.threshold, 
-        integrate = new_opt$integrate, layer = "data")
+      annotation <- annotate_seurat(seu = seu, subset_by = subset_by,
+        cell_annotation = cell_annotation, assay = assay, verbose = verbose,
+        cluster_annotation = cluster_annotation, p_adj_cutoff = p_adj_cutoff, 
+        min.pct = min.pct, logfc.threshold = logfc.threshold, layer = "data",
+        integrate = new_opt$integrate)
       message("Time to annotate: ", Sys.time() - annot_start)
       seu <- annotation$seu
       markers <- annotation$markers

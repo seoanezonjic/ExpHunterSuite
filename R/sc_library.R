@@ -1916,9 +1916,10 @@ load_SingleR_ref <- function(path, filter = "") {
 #' the specified layer and applies a min count filter, then slots it back in
 #' the original seurat layer.
 #' @importFrom SeuratObject GetAssayData
-#' @importParams SeuratObject::GetAssayData
+#' @inheritParams SeuratObject::GetAssayData
 #' @param min_counts Minimum counts threshold to consider a cell expresses
 #' a gene.
+#' @param layers A string vector of layers to filter.
 #' @returns Seurat object with filtered layer.
 #' @examples
 #' data(pbmc_tiny)
@@ -1930,12 +1931,21 @@ load_SingleR_ref <- function(path, filter = "") {
 #' print(filtered_counts)
 #' @export
 
-filter_sc_counts <- function(object, layer = "data", min_counts) {
+filter_sc_counts <- function(object, layers = "data", min_counts) {
+  filtered_layers <- lapply(layers, function(layer) {
+                  .filter_layer(object = object, min_counts = min_counts,
+                                layer = layer)
+                  })
+  object$RNA@layers[layers] <- filtered_layers
+  return(object)
+}
+
+.filter_layer <- function(object, layer, min_counts) {
   expr <- GetAssayData(object, "RNA", layer)
   expr_genes <- sum(expr > 0)
   expr[expr < min_counts] <- 0
   filtered_genes <- (expr_genes - sum(expr > 0)) / expr_genes * 100
   message("Min counts filter removed ", filtered_genes, "% of genes.")
   object$RNA[layer] <- expr
-  return(object)
+  return(object$RNA[layer])
 }
