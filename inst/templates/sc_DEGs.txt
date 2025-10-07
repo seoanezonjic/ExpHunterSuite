@@ -1,6 +1,5 @@
 
 <!--begin.rcode setup
-    colGEX <- c("grey85", "#FEE5D9", "#FCBBA1", "#FC9272", "#FB6A4A", "#EF3B2C", "#CB181D", "#99000D")
     comparison <- plotter$hash_vars$target_name
     opt <- plotter$hash_vars$opt
     query <- plotter$hash_vars$query
@@ -15,8 +14,10 @@
     plotter$hash_vars$FC_distribution <- DEG_list$FC_distribution
 
     DEGs_volcano <- function(input_DEGs) {
+       alphas <- apply(pcts[, c("pct.1","pct.2")], 1, function(x) return(max(x)))
        EnhancedVolcano::EnhancedVolcano(input_DEGs, lab = rownames(input_DEGs), title = level, x = 'avg_log2FC',
-                        y = 'p_val_adj', ylim = -0.5,  pCutoff = opt$p_val_cutoff, FCcutoff = opt$min_avg_log2FC) 
+                        y = 'p_val_adj', ylim = -0.5,  pCutoff = opt$p_val_cutoff, FCcutoff = opt$min_avg_log2FC,
+                        colAlpha = alphas, legendLabels = c("Discarded", expression("Log"[2]*"FC"), "adj P-val", "Significant"))
     }
 
     get_top_DEGs <- function(input_DEGs) {
@@ -84,7 +85,6 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode DEG_summary, eval = length(DEG_list) > 0
-    saveRDS(plotter, "plotter.rds")
     cat(plotter$create_title(paste0("DEG SUMMARY FOR TARGET ", toupper(comparison)), paste0(comparison, "_DEG_metrics"), hlevel = 2,
                  indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEG_metrics"), clickable_text = ""))
     cat(plotter$create_title("<b>DIFFERENTIAL EXPRESSION SUMMARY OF CELL GROUPS</b>", "DEG_metrics", hlevel = 2, indexable = TRUE,
