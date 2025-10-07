@@ -879,3 +879,38 @@ test_that("filter_sc_counts works as intended", {
                              min_counts = 2, layer = "counts"))
   expect_equal(output$RNA$counts, expected)
 })
+
+DEG_tags <- DEG_g1
+DEG_tags$pct.1 <- c(0, 0, 0.5, 0.5)
+DEG_tags$pct.2 <- c(0, 0.5, 0, 0.5)
+DEG_tags$p_val_adj <- c(1, 0, 0.5, 0.1)
+DEG_tags$avg_log2FC <- c(10, 5, 0, 0.5)
+rownames(DEG_tags) <- DEG_tags$gene
+
+test_that("tag_DEGs works with default values", {
+  expected <- c("High_P-val,Low_proportion", "Low_proportion",
+                   "Low_FC,High_P-val,Low_proportion", "Pass")
+  output <- tag_DEGs(DEG_df = DEG_tags)
+  expect_equal(output$qc, expected)
+})
+
+test_that("tag_DEGs works with lax values", {
+  expected <- rep("Pass", 4)
+  output <- tag_DEGs(DEG_df = DEG_tags, p_val_cutoff = 1, min_avg_log2FC = 0,
+                     min_cell_proportion = 0)
+  expect_equal(output$qc, expected)
+})
+
+test_that("tag_DEGs works with strict values", {
+  expected <- rep("Low_FC,High_P-val,Low_proportion", 4)
+  expected[2] <- "Low_FC,Low_proportion"
+  output <- tag_DEGs(DEG_df = DEG_tags, p_val_cutoff = 0, min_avg_log2FC = 99,
+                     min_cell_proportion = 100)
+  expect_equal(output$qc, expected)
+})
+
+test_that("tag_DEGs works with NULL or FALSE data frames", {
+  expect_no_error(tag_DEGs(DEG_df = NULL))
+  expect_no_error(tag_DEGs(DEG_df = FALSE))
+})
+
