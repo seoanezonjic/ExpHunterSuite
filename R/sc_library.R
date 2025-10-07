@@ -1237,7 +1237,7 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data",
   return(pct)   
 }
 
-#' .has_exclusive_idents
+#' Check for exclusive condition-identity pairs.
 #'
 #' `.has_exclusive_idents` checks whether any condition-identity pairs in
 #' seurat object has less than three occurrences, which makes certain analyzes
@@ -1247,14 +1247,17 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data",
 #' @param cond Condition to check
 #' @param idents Identity class to which to set seurat object before calculating
 #' markers in case conserved mode cannot be triggered.
+#' @param lim Minimum of occurences to not consider a pair as exclusive.
+#' Default 3, we do not see a reason to change it, as function was specifically
+#' designed to handle this case, but might as well make it customisable.
 #'
 #' @returns A boolean. `TRUE` if it contains exclusive pairs, `FALSE` otherwise.
 
-.has_exclusive_idents <- function(seu, cond, idents) {
+.has_exclusive_idents <- function(seu, cond, idents, lim = 3) {
   res <- FALSE
   meta <- seu@meta.data[, c(cond, idents)]
   meta <- meta[complete.cases(meta), ]
-  exclusives <- table(meta) < 3
+  exclusives <- table(meta) < lim
   if(any(exclusives)) {
     coords <- which(exclusives == TRUE, arr.ind = TRUE)
     first_cond <- rownames(exclusives)[coords[, 1]]
@@ -1269,7 +1272,7 @@ breakdown_query <- function(input, query, assay = "RNA", layer = "data",
   return(res)
 }
 
-#' subset_seurat
+#' Subset a seurat object
 #'
 #' `subset_seurat` subsets a seurat object by a specified value of provided
 #' column.
@@ -1308,7 +1311,7 @@ subset_seurat <- function(seu, column, value, expr = FALSE, layer = "data",
   return(subset)
 }
 
-#' downsample_seurat
+#' Downsample a seurat object
 #'
 #' `downsample_seurat` takes a seurat object as input, and downsamples it to
 #' specified number of cells and features. You can also input specific lists
@@ -1348,7 +1351,7 @@ downsample_seurat <- function(seu, cells = 500, features = 5000,
   return(seu)
 }
 
-#' read_and_format_targets
+#' Handle formatting of target files
 #'
 #' `read_and_format_targets` formats a marker-celltype table into a list
 #'
@@ -1369,7 +1372,7 @@ read_and_format_targets <- function(file) {
   return(markers)
 }
 
-#' extract_metadata
+#' Extract metadata from seurat object.
 #'
 #' `extract_metadata` extracts metadata dataframe from Seurat objects
 #' 
@@ -1392,7 +1395,7 @@ extract_metadata <- function(seu){
   return(seu)
 }
 
-# run_scDblFinder
+# Find doublets in a single-cell experiment.
 #'
 #' `run_scDblFinder` is a wrapper for the scDblFinder pipeline
 #'
@@ -1423,7 +1426,7 @@ run_scDblFinder <- function(seu, assay = "counts", includePCs = 10,
   return(res)
 }
 
-#' sketch_sc_experiment
+#' Perform sketching on single-cell experiment
 #'
 #' `sketch_sc_experiment` determines optimal cell number to sketch seurat assay.
 #' If it is larger than specified minimum, it proceeds with sketching, else it 
@@ -1483,7 +1486,7 @@ sketch_sc_experiment <- function(seu, assay = "RNA", method = "LeverageScore",
   return(seu)
 }
 
-#' annotate_seurat
+#' Choose and apply annotation algorithm
 #'
 #' `annotate_seurat` is a wrapper and dispatch for different annotation
 #' strategies for a seurat object.
@@ -1531,7 +1534,7 @@ annotate_seurat <- function(seu, cell_annotation = NULL, logfc.threshold = 0.1,
   return(res)
 }
 
-#' annotate_SingleR
+#' Apply SingleR annotation algorithm
 #'
 #' `annotate_SingleR` is a wrapper for SingleR annotation strategy,
 #' simplifies function call.
@@ -1578,7 +1581,7 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
           SingleR_annotation = SingleR_annotation))
 }
 
-#' annotate_clusters
+#' Apply known cell type annotation algorithm
 #'
 #' `annotate_clusters` is a function which implements our cell type annotation
 #' algorithm.
@@ -1623,7 +1626,7 @@ annotate_clusters <- function(seu, subset_by = NULL, cell_annotation,
   return(list(seu = seu, markers = markers))
 }
 
-#' project_sketch
+#' Project sketching results onto entire single-cell experiment
 #'
 #' `project_sketch` is a wrapper for the sketch projection steps.
 #' @param seu Seurat object whose sketch data to project.
@@ -1656,7 +1659,7 @@ project_sketch <- function(seu, reduction, ndims){
   return(seu)
 }
 
-#' process_doublets
+#' Doublets processing for a single-cell experiment
 #'
 #' `process_doublets` simplifies doublet detection and tagging process, as well
 #' as removes doublets from seurat object.
@@ -1699,7 +1702,7 @@ process_doublets <- function(seu, name = NULL, doublet_path = getwd(),
   return(qc)
 }
 
-#' process_sketch
+#' Handle sketching details in single-cell experiment
 #'
 #' `process_sketch` is a wrapper for Seurat sketching step.
 #' @importFrom Seurat VariableFeatures FindVariableFeatures
@@ -1742,7 +1745,7 @@ process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
   return(seu)
 }
 
-#' get_expression_metrics
+#' Extract single-cell expression metrics
 #'
 #' `get_expression_metrics` is a wrapper for the expression metrics extraction
 #' step of our pipeline.
@@ -1770,7 +1773,7 @@ get_expression_metrics <- function(seu, sigfig, sample_col = "sample",
 
 # SCRIPTING FUNCTIONS
 
-#' process_sc_params
+#' Process single-cell script parameters
 #'
 #' `process_sc_params` processes parameter list and turns it into an option list
 #' usable by main sc functions.
@@ -1860,7 +1863,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
               out_suffix = out_suffix))
 }
 
-#' load_SingleR_ref
+#' Load SingleR reference
 #'
 #' `load_SingleR_ref` reads a SingleR reference from specified path. It can
 #' handle multiple versions of the same reference, and also filter it by
@@ -1910,7 +1913,7 @@ load_SingleR_ref <- function(path, filter = "") {
   return(seu)
 }
 
-#' filter_sc_counts
+#' Filter single-cell counts matrix
 #'
 #' `filter_sc_counts` takes a seurat object, extracts the counts matrix from
 #' the specified layer and applies a min count filter, then slots it back in
@@ -1943,9 +1946,49 @@ filter_sc_counts <- function(object, layers = "data", min_counts) {
 .filter_layer <- function(object, layer, min_counts) {
   expr <- GetAssayData(object, "RNA", layer)
   expr_genes <- sum(expr > 0)
-  expr[expr < min_counts] <- 0
+  expr@x[expr@x < min_counts] <- 0
+  expr <- Matrix::drop0(expr)
   filtered_genes <- (expr_genes - sum(expr > 0)) / expr_genes * 100
   message("Min counts filter removed ", filtered_genes, "% of genes.")
   object$RNA[layer] <- expr
   return(object$RNA[layer])
+}
+
+#' Tag DEGs by failed filter
+#'
+#' `tag_DEGs` takes a DEG data frame and adds tags according to several
+#' filters.
+#' @param DEG_df DEG data frame to tag.
+#' @param p_val_cutoff Genes with an adjusted P-value higher than this argument
+#' will be tagged as high_pval.
+#' @param min_avg_log2FC Genes whose average log2FC is smaller than this value
+#' will be tagged as low_fc.
+#' @param min_cell_proportion Genes expressed in a percentage of cells smaller
+#' than this number in any of the two groups will be tagged as low_cell_pct.
+#' @examples
+#' DEGs <- data.frame(avg_log2FC = c(0, 0.2, 1, -0.1),
+#'                    gene = c("PPBP", "IGLL5", "VDAC3", "GNLY"),
+#'                    p_val_adj = c(0, 0, 0, 0), pct.1 = c(0, 0, 0.5, 0.5),
+#'                    p_val_adj = c(1, 0, 0.5, 0.1), pct.2 = c(0, 0.5, 0, 0.5),
+#'                    avg_log2FC = c(10, 5, 0, 0.5))
+#' DEGs <- tag_DEGs(DEG_df = DEGs)
+
+tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
+                     min_cell_proportion = 0.1) {
+  res <- NULL
+  if(!is.null(DEG_df) & !isFALSE(DEG_df)) {
+    DEG_df$qc <- ""
+    low_fc <- which(abs(DEG_df$avg_log2FC) < abs(min_avg_log2FC))
+    DEG_df$qc[low_fc] <- "Low_FC"
+    high_pval <- which(DEG_df$p_val_adj > p_val_cutoff)
+    DEG_df$qc[high_pval] <- paste(DEG_df$qc[high_pval], "High_P-val", sep = ",")
+    pcts <- DEG_df[c("pct.1", "pct.2")]
+    low_pct <- apply(pcts, 1, function(x) any(x < min_cell_proportion))
+    DEG_df$qc[low_pct] <- paste(DEG_df$qc[low_pct], "Low_proportion", sep = ",")
+    DEG_df$qc[which(DEG_df$qc == "")] <- "Pass"
+    commas <- grep("^,", DEG_df$qc)
+    DEG_df$qc[commas] <- sub(",", "", DEG_df$qc[commas])
+    res <- DEG_df
+  }
+  return(res)
 }
