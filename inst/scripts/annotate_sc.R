@@ -224,8 +224,6 @@ if(!file.exists(final_counts_path) | !opt$integrate) {
   }
 }
 
-final_counts_path <- file.path(opt$output, "counts/matrix.mtx.gz")
-
 if((file.exists(final_counts_path) | file.exists(counts_rds_path)) & opt$integrate) {
   message("Reconstructing Seurat object from directory ", opt$output, ". Not launching QC report.")
   if(file.exists(counts_rds_path)) {
