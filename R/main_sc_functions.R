@@ -277,10 +277,11 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
     logfc.threshold = 0.5, subset_by = subset_target,
     p_val_cutoff = 0.05, verbose = verbose, values = "Ctrl,Treat",
     min.pct = 0.1)
-  # Need to create this function
-  DEGs <- tag_DEGs(DEGs = DEGs, p_val_cutoff = p_val_cutoff,
+  DEGs$markers <- lapply(DEGs$markers, function(DEGs) {
+                   tag_DEGs(DEGs = DEGs, p_val_cutoff = p_val_cutoff,
                    min_cell_proportion = min_cell_proportion,
                    min_avg_log2FC = min_avg_log2FC)
+                  })
   message("Extracting DEG cell metrics")
   DEG_metrics <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
                   min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff)
@@ -321,7 +322,8 @@ main_analyze_sc_query <- function(seu, query, sigfig = 2, layer = "counts",
 }
 
 #' write_annot_output
-#' writes final counts matrix and annotated metadata of a seurat experiment.
+#' writes final counts matrix and annotated metadata of a single-cell
+#' experiment.
 #'
 #' @param final_results final_results object output from main_annotate_sc
 #' @param assay,layer Assay and layer from where counts will be retrieved.
@@ -360,6 +362,51 @@ write_annot_output <- function(final_results = stop("Missing results object"),
                         x = counts, overwrite = TRUE, genome = opt$genome,
                         gene.type = "Gene Expression")
     }
+    write.table(metadata, sep = "\t", quote = FALSE, row.names = TRUE,
+                file = file.path(opt$output, "counts", "meta.tsv"))
+    write.table(reduction@cell.embeddings, sep = "\t", quote = FALSE,
+            row.names = TRUE, file = file.path(opt$output, "embeddings",
+            "cell_embeddings.tsv"))
+    if(!is.null(final_results$markers)) {
+      write.table(final_results$markers, sep = "\t", quote = FALSE,
+                  row.names = TRUE, file = file.path(opt$output, "markers.tsv"))
+    }
+    if(!is.null(final_results$SingleR_annotation)) {
+      SingleR_dt <- data.table::as.data.table(final_results$SingleR_annotation)
+      data.table::fwrite(SingleR_dt, quote = FALSE,
+        file = file.path(opt$output, "SingleR_annotation.tsv"), sep = "\t")
+      # Temporary while we figure out how to load the table properly (it fails
+      # because it's missing certain attributes)
+      saveRDS(final_results$SingleR_annotation, file.path(opt$output,
+              "SingleR_annotation.rds"))
+    }
+    message("Results saved to ", opt$output)
+    return(invisible(NULL))
+}
+
+#' write_DEG_output
+#' writes DEG matrices of a single-cell experiment.
+#'
+#' @param final_results final_results object output from main_annotate_sc
+#' @param assay,layer Assay and layer from where counts will be retrieved.
+#' @param opt Options used in script call.
+#' @importFrom data.table fwrite as.data.table
+#' @importFrom DropletUtils write10xCounts
+#' @importFrom Matrix Matrix
+#' @export
+#' @examples
+#' \dontrun{
+#'    write_annot_output(final_results = test_results, opt = params,
+#'                       assay = "RNA", layer = "data")
+#' }
+#' @returns invisible(NULL)
+
+write_DEG_output <- function(final_results = stop("Missing results object"),
+                             opt = NULL){
+    if(is.null(opt$output)) {
+      opt$output <- getwd()
+    }
+    
     write.table(metadata, sep = "\t", quote = FALSE, row.names = TRUE,
                 file = file.path(opt$output, "counts", "meta.tsv"))
     write.table(reduction@cell.embeddings, sep = "\t", quote = FALSE,
