@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{annotate_seurat}
 \alias{annotate_seurat}
-\title{annotate_seurat}
+\title{Choose and apply annotation algorithm}
 \usage{
 annotate_seurat(
   seu,

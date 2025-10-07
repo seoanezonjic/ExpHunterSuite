@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{get_expression_metrics}
 \alias{get_expression_metrics}
-\title{get_expression_metrics}
+\title{Extract single-cell expression metrics}
 \usage{
 get_expression_metrics(
   seu,

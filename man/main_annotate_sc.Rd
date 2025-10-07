@@ -169,7 +169,8 @@ If the \code{slot} parameter is "scale.data" no filtering is performed.}
 \item \code{FALSE}: Do not perform fine-tuning..
 }}
 
-\item{min_counts}{Min counts to consider a gene is expressed in a cell.}
+\item{min_counts}{An integer. Minimum gene counts to consider a gene as
+expressed.}
 }
 \value{
 invisible(final_results list. Contains multiple items:

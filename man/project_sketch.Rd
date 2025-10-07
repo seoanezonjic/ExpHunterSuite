@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{project_sketch}
 \alias{project_sketch}
-\title{project_sketch}
+\title{Project sketching results onto entire single-cell experiment}
 \usage{
 project_sketch(seu, reduction, ndims)
 }

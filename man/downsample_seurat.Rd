@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{downsample_seurat}
 \alias{downsample_seurat}
-\title{downsample_seurat}
+\title{Downsample a seurat object}
 \usage{
 downsample_seurat(
   seu,

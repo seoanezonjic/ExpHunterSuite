@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{process_sketch}
 \alias{process_sketch}
-\title{process_sketch}
+\title{Handle sketching details in single-cell experiment}
 \usage{
 process_sketch(
   seu,

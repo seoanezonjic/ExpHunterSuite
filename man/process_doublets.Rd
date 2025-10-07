@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{process_doublets}
 \alias{process_doublets}
-\title{process_doublets}
+\title{Doublets processing for a single-cell experiment}
 \usage{
 process_doublets(
   seu,

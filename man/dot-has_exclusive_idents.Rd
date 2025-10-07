@@ -2,9 +2,9 @@
 % Please edit documentation in R/sc_library.R
 \name{.has_exclusive_idents}
 \alias{.has_exclusive_idents}
-\title{.has_exclusive_idents}
+\title{Check for exclusive condition-identity pairs.}
 \usage{
-.has_exclusive_idents(seu, cond, idents)
+.has_exclusive_idents(seu, cond, idents, lim = 3)
 }
 \arguments{
 \item{seu}{Seurat object}
@@ -13,6 +13,10 @@
 
 \item{idents}{Identity class to which to set seurat object before calculating
 markers in case conserved mode cannot be triggered.}
+
+\item{lim}{Minimum of occurences to not consider a pair as exclusive.
+Default 3, we do not see a reason to change it, as function was specifically
+designed to handle this case, but might as well make it customisable.}
 }
 \value{
 A boolean. \code{TRUE} if it contains exclusive pairs, \code{FALSE} otherwise.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{sketch_sc_experiment}
 \alias{sketch_sc_experiment}
-\title{sketch_sc_experiment}
+\title{Perform sketching on single-cell experiment}
 \usage{
 sketch_sc_experiment(
   seu,

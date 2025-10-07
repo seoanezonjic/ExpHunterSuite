@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{extract_metadata}
 \alias{extract_metadata}
-\title{extract_metadata}
+\title{Extract metadata from seurat object.}
 \usage{
 extract_metadata(seu)
 }

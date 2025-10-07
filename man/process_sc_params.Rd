@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{process_sc_params}
 \alias{process_sc_params}
-\title{process_sc_params}
+\title{Process single-cell script parameters}
 \usage{
 process_sc_params(params = list(), mode = "annotation")
 }

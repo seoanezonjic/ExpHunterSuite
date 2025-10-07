@@ -38,7 +38,8 @@ of the two groups is below the threshold.}
 \item{min_avg_log2FC}{Average log2fc cutoff for significant DEGs.
 Default 0.5.}
 
-\item{min_counts}{Min counts to consider a gene is expressed in a cell.}
+\item{min_counts}{An integer. Minimum gene counts to consider a gene as
+expressed.}
 
 \item{query}{A string vector. List of genes to focus on DEG analysis in
 addition to regular DEG analysis.}

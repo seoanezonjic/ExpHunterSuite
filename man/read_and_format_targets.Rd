@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{read_and_format_targets}
 \alias{read_and_format_targets}
-\title{read_and_format_targets}
+\title{Handle formatting of target files}
 \usage{
 read_and_format_targets(file)
 }

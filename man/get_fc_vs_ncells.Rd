@@ -10,7 +10,6 @@ get_fc_vs_ncells(
   min_avg_log2FC = 0.2,
   query = NULL,
   p_val_cutoff = 0.01,
-  min_counts = 1,
   layer = "data"
 )
 }
@@ -26,9 +25,6 @@ cell type, as calculated with Seurat.}
 NULL.}
 
 \item{p_val_cutoff}{A numeric. Max adjusted p value cutoff.}
-
-\item{min_counts}{An integer. Minimum gene counts to consider a gene as
-expressed.}
 
 \item{layer}{Name of layer to get or set}
 }

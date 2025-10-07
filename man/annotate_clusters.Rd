@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{annotate_clusters}
 \alias{annotate_clusters}
-\title{annotate_clusters}
+\title{Apply known cell type annotation algorithm}
 \usage{
 annotate_clusters(
   seu,

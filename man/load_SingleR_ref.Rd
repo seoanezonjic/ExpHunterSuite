@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{load_SingleR_ref}
 \alias{load_SingleR_ref}
-\title{load_SingleR_ref}
+\title{Load SingleR reference}
 \usage{
 load_SingleR_ref(path, filter = "")
 }

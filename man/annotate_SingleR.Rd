@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{annotate_SingleR}
 \alias{annotate_SingleR}
-\title{annotate_SingleR}
+\title{Apply SingleR annotation algorithm}
 \usage{
 annotate_SingleR(
   seu,

@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{subset_seurat}
 \alias{subset_seurat}
-\title{subset_seurat}
+\title{Subset a seurat object}
 \usage{
 subset_seurat(
   seu,
