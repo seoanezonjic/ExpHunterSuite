@@ -277,8 +277,8 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
     logfc.threshold = 0.5, subset_by = subset_target,
     p_val_cutoff = 0.05, verbose = verbose, values = "Ctrl,Treat",
     min.pct = 0.1)
-  DEGs$markers <- lapply(DEGs$markers, function(DEGs) {
-                   tag_DEGs(DEGs = DEGs, p_val_cutoff = p_val_cutoff,
+  DEGs$markers <- lapply(DEGs$markers, function(DEG_df) {
+                   tag_DEGs(DEG_df = DEG_df, p_val_cutoff = p_val_cutoff,
                    min_cell_proportion = min_cell_proportion,
                    min_avg_log2FC = min_avg_log2FC)
                   })
@@ -339,8 +339,8 @@ main_analyze_sc_query <- function(seu, query, sigfig = 2, layer = "counts",
 #' }
 #' @returns invisible(NULL)
 
-write_annot_output <- function(final_results = stop("Missing results object"),
-                               opt = NULL, assay = "RNA", layer = "data"){
+write_annot_output <- function(final_results, opt = NULL, assay = "RNA",
+                               layer = "data"){
     if(is.null(opt$output)) {
       opt$output <- getwd()
     }
@@ -384,11 +384,12 @@ write_annot_output <- function(final_results = stop("Missing results object"),
     return(invisible(NULL))
 }
 
-#' write_DEG_output
-#' writes DEG matrices of a single-cell experiment.
+#' Write DEG results to disk
+#' `write_DEG_output `writes DEG matrices of a single-cell experiment, along
+#' with metrics and metadata.'
 #'
-#' @param final_results final_results object output from main_annotate_sc
-#' @param assay,layer Assay and layer from where counts will be retrieved.
+#' @param name Name of DEG_list element to process.
+#' @param DEG_list Complete list of DEG results.
 #' @param opt Options used in script call.
 #' @importFrom data.table fwrite as.data.table
 #' @importFrom DropletUtils write10xCounts
@@ -396,37 +397,67 @@ write_annot_output <- function(final_results = stop("Missing results object"),
 #' @export
 #' @examples
 #' \dontrun{
-#'    write_annot_output(final_results = test_results, opt = params,
-#'                       assay = "RNA", layer = "data")
+#'    write_DEG_output(DEG_results = test_results, opt = params,
+#'                     name = "important_comparison")
 #' }
 #' @returns invisible(NULL)
 
-write_DEG_output <- function(final_results = stop("Missing results object"),
-                             opt = NULL){
-    if(is.null(opt$output)) {
+write_DEG_output <- function(name, DEG_list, opt = NULL){
+  DEG_results <- DEG_list[[name]]
+  if(is.null(opt$output)) {
       opt$output <- getwd()
+  }
+  output <- file.path(opt$output, "DEG", name)
+  if(!file.exists(output)) {
+    dir.create(output, recursive = TRUE)
+  }
+  message("Writing DEG metrics")
+  meta <- DEG_results$DEGs$meta
+  markers <- DEG_results$DEGs$markers
+  DEG_df <- DEG_results$DEG_metrics$DEG_df
+  ncell_df <- DEG_results$DEG_metrics$ncell_df
+  query <- DEG_results$DEG_query
+  write.table(meta, sep = "\t", quote = FALSE, row.names = FALSE,
+              file = file.path(output, "meta.tsv"))
+  if(!is.null(DEG_df)) {
+    if(nrow(DEG_df) > 0) {
+      write.table(DEG_df, sep = "\t", quote = FALSE, row.names = TRUE,
+                  file = file.path(output, "DEG_df.tsv"))
     }
-    
-    write.table(metadata, sep = "\t", quote = FALSE, row.names = TRUE,
-                file = file.path(opt$output, "counts", "meta.tsv"))
-    write.table(reduction@cell.embeddings, sep = "\t", quote = FALSE,
-            row.names = TRUE, file = file.path(opt$output, "embeddings",
-            "cell_embeddings.tsv"))
-    if(!is.null(final_results$markers)) {
-      write.table(final_results$markers, sep = "\t", quote = FALSE,
-                  row.names = TRUE, file = file.path(opt$output, "markers.tsv"))
+  }
+  if(!is.null(ncell_df)) {
+    if(nrow(ncell_df) > 0) {
+      write.table(ncell_df, sep = "\t", quote = FALSE, row.names = TRUE,
+                  file = file.path(output, "ncell_df.tsv"))
     }
-    if(!is.null(final_results$SingleR_annotation)) {
-      SingleR_dt <- data.table::as.data.table(final_results$SingleR_annotation)
-      data.table::fwrite(SingleR_dt, quote = FALSE,
-        file = file.path(opt$output, "SingleR_annotation.tsv"), sep = "\t")
-      # Temporary while we figure out how to load the table properly (it fails
-      # because it's missing certain attributes)
-      saveRDS(final_results$SingleR_annotation, file.path(opt$output,
-              "SingleR_annotation.rds"))
+  }
+  if(!is.null(query)) {
+    message("Writing query DEG analysis")
+    write.table(query, sep = "\t", quote = FALSE, row.names = TRUE,
+              file = file.path(output, "query.tsv"))
+  }
+  message("Writing full DEG tables")
+  lapply(names(markers), function(x){
+    .write_deg_table(deg = markers, name = x, output = output)
+  })
+  message("Results saved to ", output)
+  return(invisible(NULL))
+}
+
+load_DEG_output <- function(targets, load_path) {
+  res <- vector(mode = "list", length = length(targets))
+  names(res) <- targets
+  for(target in targets) {
+    message("Reading data for target ", target)
+    dir <- file.path(load_path, "DEG", target)
+    if(!file.exists(dir)) {
+      warning("Directory ", dir, " does not exist. Skipping.")
+      res[[target]] <- NULL
+      next
     }
-    message("Results saved to ", opt$output)
-    return(invisible(NULL))
+    res[[target]] <- .read_DEG_from_dir(dir)
+  }
+  return(res)
 }
 
 #' write_dense_matrix
