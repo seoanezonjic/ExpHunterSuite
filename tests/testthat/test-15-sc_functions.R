@@ -1,6 +1,6 @@
 
 markers_df <- data.frame(samples = 1:4, seurat_clusters = 1:4,
-                           gene = toupper(letters[1:4]))
+                         gene = LETTERS[1:4])
 markers_df$p_val_adj <- rep(1e-5, nrow(markers_df))
 markers_df$avg_log2FC <- rep(1, nrow(markers_df))
 
@@ -78,7 +78,7 @@ test_that("match_cell_types, cluster with no significant markers", {
   test_markers_df <- markers_df
   test_markers_df$p_val_adj[1] <- 1
   test_markers_df$seurat_clusters <- 4:1
-  genes <- toupper(letters[1:3])
+  genes <- LETTERS[1:3]
   types <- c("type1", "type2", "type3")
   cell_annotation <- data.frame(markers = genes, type = types)
   expected_df <- test_markers_df[order(test_markers_df$seurat_clusters), ]
@@ -94,8 +94,8 @@ test_that("match_cell_types, cluster with no significant markers", {
 
 test_that("match_cell_types where one cluster has no markers", {
   test_markers_df <- markers_df[-3, ]
-  genes <- toupper(letters[1:3])
-  cell_annotation <- data.frame(markers = toupper(letters[1:3]),
+  genes <- LETTERS[1:3]
+  cell_annotation <- data.frame(markers = LETTERS[1:3],
                                 type = c("type1", "type2", "type3"))
   expected_df <- data.frame(samples = c(1, 2, 4), seurat_clusters = c(1, 2, 4),
                             gene = c("A", "B", "D"), p_val_adj = 1e-05,
@@ -268,7 +268,7 @@ test_that("get_query_pct works with query of length one", {
 test_that("get_query_pct works with alternate 'by' arguments", {
   single_query <- "PPBP"
   expected_df <- matrix(nrow = 5, ncol = 1)
-  rownames(expected_df) <- c(paste0(0:4, ". type", toupper(letters[1:5])))
+  rownames(expected_df) <- c(paste0(0:4, ". type", LETTERS[1:5]))
   expected_df[, 1] <- c(0, 33, 33, 0, 0)
   colnames(expected_df) <- single_query
   output_df <- suppressMessages(get_query_pct(seu = test_pbmc, by = "cell_type",
@@ -417,7 +417,7 @@ test_that("get_sc_markers properly applies min_pct filter", {
 test_that("rename_clusters simply assigns names to clusters", {
   test_pbmc$seurat_clusters <- 1:15
   Seurat::Idents(test_pbmc) <- test_pbmc$seurat_clusters
-  new_clusters <- paste0("Type", toupper(letters[1:15]))
+  new_clusters <- paste0("Type", LETTERS[1:15])
   annotated <- suppressWarnings(rename_clusters(test_pbmc, new_clusters))
   output <- annotated@meta.data$cell_type
   expect_equal(as.character(output), new_clusters)
@@ -911,6 +911,6 @@ test_that("tag_DEGs works with strict values", {
 
 test_that("tag_DEGs works with NULL or FALSE data frames", {
   expect_no_error(tag_DEGs(DEG_df = NULL))
-  expect_no_error(tag_DEGs(DEG_df = FALSE))
+  expect_no_error(tag_DEGs(DEG_df = data.frame(FALSE)))
 })
 
