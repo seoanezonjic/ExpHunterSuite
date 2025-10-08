@@ -394,7 +394,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
     lowcell_conds <- paste(conds[which(ncells < 3)], collapse = ", ")
     warning('Cluster ', clust_num, ' contains fewer than three cells for',
             ' condition(s) \'', lowcell_conds, '\'. Skipping DEG ',
-            'analysis.', immediate. = TRUE)
+            'analysis', immediate. = TRUE)
     markers <- data.frame(FALSE)
   } else {
     Seurat::Idents(subset_seu) <- cond  
@@ -412,8 +412,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
                        drop = FALSE]
     markers <- markers[markers$p_val_adj <= p_val_cutoff, , drop = FALSE]
     if(nrow(markers) < 1) {
-      warning('Cluster ', clust_num, ' contains no significant DEGs. Consider
-               relaxing thresholds.')
+      warning('Cluster ', clust_num, ' contains no significant DEGs')
       markers <- data.frame(FALSE)
     }
   }
@@ -437,6 +436,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
       markers <- Seurat::FindConservedMarkers(seu, ident.1 = sub_values[i],
                           grouping.var = cond, verbose = verbose, assay = assay,
                           layer = layer)
+      markers <- markers[markers$p_val_adj <= p_val_cutoff, , drop = FALSE]
       markers[[subset_by]] <- sub_values[i]
     }
     nums <- sapply(markers, is.numeric)
@@ -447,21 +447,27 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 }
 
 .get_global_DEGs <- function(seu, cond, conds, min.pct = 0.1, verbose = FALSE,
-               logfc.threshold = 0.25, layer = "data", simple_DEG_pct = FALSE){
+               logfc.threshold = 0.25, layer = "data", simple_DEG_pct = FALSE,
+               p_val_cutoff = p_val_cutoff){
   Seurat::Idents(seu) <- seu@meta.data[, tolower(cond)]
-  global_DEGs <- Seurat::FindMarkers(seu, ident.1 = conds[1],
+  globals <- Seurat::FindMarkers(seu, ident.1 = conds[1],
         logfc.threshold = logfc.threshold, min.pct = min.pct,
         ident.2 = conds[2], verbose = verbose, layer = layer)
+  globals <- globals[globals$p_val_adj <= p_val_cutoff, , drop = FALSE]
   if(!simple_DEG_pct) {
-      pct_cols <- grep("pct", colnames(global_DEGs))
-      pct_keep <- apply(global_DEGs[pct_cols], 1,
+      pct_cols <- grep("pct", colnames(globals))
+      pct_keep <- apply(globals[pct_cols], 1,
                         function(x) return(all(x >= min.pct)))
-      global_DEGs <- global_DEGs[which(pct_keep), , drop = FALSE]
+      globals <- globals[which(pct_keep), , drop = FALSE]
     }
-  global_DEGs$gene <- rownames(global_DEGs)
-  nums <- sapply(global_DEGs, is.numeric)
-  global_DEGs[nums] <- lapply(global_DEGs[nums], signif, 2)
-  return(global_DEGs)
+  globals$gene <- rownames(globals)
+  nums <- sapply(globals, is.numeric)
+  globals[nums] <- lapply(globals[nums], signif, 2)
+  if(nrow(globals) < 1) {
+    warning("No significant DEGs found in global analysis")
+    globals <- data.frame(FALSE)
+  }
+  return(globals)
 }
 
 .extract_conditions <- function(metadata, cond, values) {
@@ -530,7 +536,8 @@ get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
     message("Calculating global DEGs")
     sub_markers[["global"]] <- .get_global_DEGs(seu = seu, cond = cond,
         logfc.threshold = logfc.threshold, conds = conds, min.pct = min.pct,
-        verbose = verbose, layer = layer, simple_DEG_pct = simple_DEG_pct)
+        p_val_cutoff = p_val_cutoff, verbose = verbose, layer = layer,
+        simple_DEG_pct = simple_DEG_pct)
   }
   if(all(c("cell_type", "seurat_clusters") %in% colnames(seu@meta.data))) {
     metadata <- unique(seu@meta.data[, c("seurat_clusters", "cell_type")])
@@ -1975,8 +1982,7 @@ filter_sc_counts <- function(object, layers = "data", min_counts) {
 
 tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
                      min_cell_proportion = 0.1) {
-  res <- NULL
-  if(!is.null(DEG_df) & !isFALSE(DEG_df)) {
+  if(!is.null(DEG_df) & !isFALSE(unlist(DEG_df))) {
     DEG_df$qc <- ""
     low_fc <- which(abs(DEG_df$avg_log2FC) < abs(min_avg_log2FC))
     DEG_df$qc[low_fc] <- "Low_FC"
@@ -1988,7 +1994,35 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
     DEG_df$qc[which(DEG_df$qc == "")] <- "Pass"
     commas <- grep("^,", DEG_df$qc)
     DEG_df$qc[commas] <- sub(",", "", DEG_df$qc[commas])
-    res <- DEG_df
   }
-  return(res)
+  return(DEG_df)
+}
+
+.write_deg_table <- function(deg, name, output) {
+  if(!isFALSE(unlist(deg[[name]]))) {
+    out_name <- gsub("\\d. ", "", name)
+    out_name <- gsub(" ", "_", out_name)
+    out_name <- gsub("\\(|\\)", "", out_name)
+    write.table(deg[[name]], sep = "\t", quote = FALSE, row.names = TRUE,
+                file = file.path(output, paste0(out_name, ".tsv")))
+  } else {
+    message("No DEGs for cell type ", name, ".")
+  }
+  return(invisible(NULL))
+}
+
+.read_DEG_from_dir <- function(directory) {
+  files <- dir(directory, full.names = TRUE)
+  names(files) <- unlist(strsplit(basename(files), ".tsv"))
+  tables <- lapply(files, function(file) read.table(file, sep = "\t",
+                                                    header = TRUE))
+  target_results <- list()
+  target_results$DEGs$meta <- tables$meta
+  target_results$DEG_metrics$DEG_df <- tables$DEG_df
+  target_results$DEG_metrics$ncell_df <- tables$ncell_df
+  target_results$DEG_query <- tables$query
+  metrics <- which(names(tables) %in% c("meta", "DEG_df", "ncell_df", "query"))
+  markers <- tables[-metrics]
+  target_results$DEGs$markers <- markers
+  return(target_results)
 }
