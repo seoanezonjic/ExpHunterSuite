@@ -54,6 +54,9 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 }
 
 opt <- process_sc_params(params, mode = "DEG")$opt
+if(!file.exists(opt$input)) {
+  stop("No counts file found, please ensure the annotation module has been run. Path searched: ", opt$input)
+}
 
 if(opt$targets_folder == "" | !file.exists(opt$targets_folder)) {
   stop(paste0("Provided targets directory does not exist. Was ", opt$targets_folder))
@@ -67,19 +70,42 @@ if(opt$targets_folder == "" | !file.exists(opt$targets_folder)) {
   names(DEG_targets) <- tools::file_path_sans_ext(basename(target_files))
 }
 
-message("Reconstructing Seurat object from directory ", opt$input)
-seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(opt$input, gene.column = 1),
-                                  project = opt$name, min.cells = 1, min.features = 1)
-seu_meta <- read.table(file.path(opt$input, "meta.tsv"), sep = "\t", header = TRUE)
-rownames(seu_meta) <- colnames(seu)
-seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
-seu$RNA$data <- seu$RNA$counts
-DEG_list <- parallel_list(X = DEG_targets, FUN = main_sc_Hunter, workers = opt$cpu, seu = seu,
-                          p_val_cutoff = opt$p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
-                          min_cell_proportion = opt$min_cell_proportion, top = opt$top_N,
-                          query = opt$target_genes, output_path = opt$output,
-                          min_counts = opt$min_counts, verbose = opt$verbose)
-names(DEG_list) <- unlist(strsplit(names(DEG_targets), "_target"))
+load_targets <- list()
+for(target in names(DEG_targets)) {
+  path <- file.path(opt$output, "DEG", gsub("_target", "", target))
+  if(file.exists(path)) {
+    load_targets <- c(load_targets, DEG_targets[names(DEG_targets) == target])
+    DEG_targets <- DEG_targets[names(DEG_targets) != target]
+  }
+}
+
+DEG_list <- NULL
+if(length(DEG_targets) > 0) {
+  message("Reconstructing Seurat object from directory ", opt$input)
+  seu <- SeuratObject::CreateSeuratObject(counts = Seurat::Read10X(opt$input, gene.column = 1),
+                                          project = opt$name, min.cells = 1, min.features = 1)
+  seu_meta <- read.table(file.path(opt$input, "meta.tsv"), sep = "\t", header = TRUE)
+  rownames(seu_meta) <- colnames(seu)
+  seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
+  seu$RNA$data <- seu$RNA$counts
+  DEG_list <- parallel_list(X = DEG_targets, FUN = main_sc_Hunter, workers = opt$cpu, seu = seu,
+                            p_val_cutoff = opt$p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
+                            min_cell_proportion = opt$min_cell_proportion, top = opt$top_N,
+                            query = opt$target_genes, output_path = opt$output,
+                            min_counts = opt$min_counts, verbose = opt$verbose)
+  names(DEG_list) <- unlist(strsplit(names(DEG_targets), "_target"))
+  parallel_list(X = names(DEG_list), FUN = write_DEG_output, workers = opt$cpu, DEG_list = DEG_list, opt = opt)
+}
+
+load_DEG_list <- NULL
+if(length(load_targets) > 0) {
+  message("Reading DEG results from disk")
+  target_names <- unlist(strsplit(names(load_targets), "_target"))
+  load_DEG_list <- load_DEG_output(targets = target_names, load_path = opt$output)
+}
+
+DEG_list <- c(DEG_list, load_DEG_list)
+DEG_targets <- c(DEG_targets, load_targets)
 
 message("--------------------------------------------")
 message("---------WRITING SC HUNTER REPORTS----------")
@@ -87,8 +113,7 @@ message("--------------------------------------------")
 for(target_name in names(DEG_targets)) {
   DEG_name <- unlist(strsplit(target_name, "_target"))
   message(paste0("Writing ", DEG_name, " report"))
-  DEG_results <- list(seu = seu, DEG_list = DEG_list[[DEG_name]], opt = opt, target = DEG_targets[[target_name]], target_name = DEG_name)
+  DEG_results <- list(DEG_list = DEG_list[[DEG_name]], opt = opt, target = DEG_targets[[target_name]], target_name = DEG_name)
   write_sc_report(final_results = DEG_results, opt = opt, template_folder = template_folder, analysis = "Single-Cell Differential Expression",
-                  output = file.path(opt$output, "report"),  template = "sc_DEGs.txt",
-                  out_suffix = paste0(DEG_name, "_DEG_report.html"), params = params)
+                  output = file.path(opt$output, "report"), template = "sc_DEGs.txt", out_suffix = paste0(DEG_name, "_DEG_report.html"), params = params)
 }
