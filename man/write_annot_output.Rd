@@ -6,12 +6,7 @@
 writes final counts matrix and annotated metadata of a single-cell
 experiment.}
 \usage{
-write_annot_output(
-  final_results = stop("Missing results object"),
-  opt = NULL,
-  assay = "RNA",
-  layer = "data"
-)
+write_annot_output(final_results, opt = NULL, assay = "RNA", layer = "data")
 }
 \arguments{
 \item{final_results}{final_results object output from main_annotate_sc}

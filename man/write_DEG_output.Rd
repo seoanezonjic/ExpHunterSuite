@@ -2,28 +2,30 @@
 % Please edit documentation in R/main_sc_functions.R
 \name{write_DEG_output}
 \alias{write_DEG_output}
-\title{write_DEG_output
-writes DEG matrices of a single-cell experiment.}
+\title{Write DEG results to disk
+\code{write_DEG_output }writes DEG matrices of a single-cell experiment, along
+with metrics and metadata.'}
 \usage{
-write_DEG_output(final_results = stop("Missing results object"), opt = NULL)
+write_DEG_output(name, DEG_list, opt = NULL)
 }
 \arguments{
-\item{final_results}{final_results object output from main_annotate_sc}
+\item{name}{Name of DEG_list element to process.}
+
+\item{DEG_list}{Complete list of DEG results.}
 
 \item{opt}{Options used in script call.}
-
-\item{assay, layer}{Assay and layer from where counts will be retrieved.}
 }
 \value{
 invisible(NULL)
 }
 \description{
-write_DEG_output
-writes DEG matrices of a single-cell experiment.
+Write DEG results to disk
+\code{write_DEG_output }writes DEG matrices of a single-cell experiment, along
+with metrics and metadata.'
 }
 \examples{
 \dontrun{
-   write_annot_output(final_results = test_results, opt = params,
-                      assay = "RNA", layer = "data")
+   write_DEG_output(DEG_results = test_results, opt = params,
+                    name = "important_comparison")
 }
 }

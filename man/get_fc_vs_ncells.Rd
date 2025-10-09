@@ -7,9 +7,9 @@
 get_fc_vs_ncells(
   seu,
   DEG_list,
-  min_avg_log2FC = 0.2,
+  min_avg_log2FC = 0.5,
   query = NULL,
-  p_val_cutoff = 0.01,
+  p_val_cutoff = 0.05,
   layer = "data"
 )
 }

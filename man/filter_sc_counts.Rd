@@ -24,10 +24,11 @@ the original seurat layer.
 }
 \examples{
 data(pbmc_tiny)
-counts <- SeuratObject::GetAssayData(object = seu, layer = "data")
-filtered_pbmc <- filter_sc_counts(object = seu, layer = "data",
+counts <- SeuratObject::GetAssayData(object = pbmc_tiny, layer = "data")
+filtered_pbmc <- filter_sc_counts(object = pbmc_tiny, layer = "data",
                                   min_counts = 2)
-filtered_counts <- SeuratObject::GetAssayData(object = seu, layer = "data")
+filtered_counts <- SeuratObject::GetAssayData(object = pbmc_tiny,
+                                              layer = "data")
 print(counts)
 print(filtered_counts)
 }
