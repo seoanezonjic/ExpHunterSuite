@@ -284,7 +284,7 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
                   })
   message("Extracting DEG cell metrics")
   DEG_metrics <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
-                  min_avg_log2FC = min_avg_log2FC, p_val_cutoff = p_val_cutoff)
+                                  min_avg_log2FC = 0.5, p_val_cutoff = 0.05)
   if(!is.null(query)) {
     DEG_query <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
                                   query = query)
@@ -433,8 +433,10 @@ write_DEG_output <- function(name, DEG_list, opt = NULL){
   }
   if(!is.null(query)) {
     message("Writing query DEG analysis")
-    write.table(query, sep = "\t", quote = FALSE, row.names = TRUE,
-              file = file.path(output, "query.tsv"))
+    write.table(query$DEG_df, sep = "\t", quote = FALSE, row.names = TRUE,
+              file = file.path(output, "query_DEG_df.tsv"))
+    write.table(query$ncell_df, sep = "\t", quote = FALSE, row.names = TRUE,
+              file = file.path(output, "query_ncell_df.tsv"))
   }
   message("Writing full DEG tables")
   lapply(names(markers), function(x){
@@ -444,7 +446,8 @@ write_DEG_output <- function(name, DEG_list, opt = NULL){
   return(invisible(NULL))
 }
 
-load_DEG_output <- function(targets, load_path) {
+load_DEG_output <- function(targets, load_path, min_avg_log2FC,
+                            min_cell_proportion, p_val_cutoff) {
   res <- vector(mode = "list", length = length(targets))
   names(res) <- targets
   for(target in targets) {
@@ -455,7 +458,9 @@ load_DEG_output <- function(targets, load_path) {
       res[[target]] <- NULL
       next
     }
-    res[[target]] <- .read_DEG_from_dir(dir)
+    res[[target]] <- .read_DEG_from_dir(directory = dir,
+    min_avg_log2FC = min_avg_log2FC, min_cell_proportion = min_cell_proportion,
+    p_val_cutoff = p_val_cutoff)
   }
   return(res)
 }
