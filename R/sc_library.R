@@ -63,21 +63,21 @@ tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL,
   seu$percent.mt <- Seurat::PercentageFeatureSet(seu, pattern = "(?i)^MT-")
   seu$percent.rb <- Seurat::PercentageFeatureSet(seu, pattern = "(?i)^RP[SL]")
   colnames(seu@meta.data) <- tolower(colnames(seu@meta.data))
-  seu$qc <- ""
-  seu$qc[seu$nfeature_rna < minqcfeats] <- "Low_nFeature"
+  seu$filter <- ""
+  seu$filter[seu$nfeature_rna < minqcfeats] <- "Low_nFeature"
   high_mt <- which(seu$percent.mt > percentmt)
-  seu$qc[high_mt] <- paste(seu$qc[high_mt], "High_MT", sep = ",")
+  seu$filter[high_mt] <- paste(seu$filter[high_mt], "High_MT", sep = ",")
   n_cells <- table(seu$sample)
   low_cell <- names(n_cells)[n_cells < min_cells_per_sample]
   low_cell <- seu$sample %in% low_cell
-  seu$qc[low_cell] <- paste(seu$qc[low_cell], "low_cell", sep = ",")
+  seu$filter[low_cell] <- paste(seu$filter[low_cell], "low_cell", sep = ",")
   if(!is.null(doublet_list)) {
      message("Doublet list provided. Marking barcodes")
      seu <- tag_doublets(seu, doublet_list)
   }
-  seu$qc[seu$qc == ""] <- "Pass"
-  commas <- grep("^,", seu$qc)
-  seu$qc[commas] <- sub(",", "", seu$qc[commas])
+  seu$filter[seu$filter == ""] <- "Pass"
+  commas <- grep("^,", seu$filter)
+  seu$filter[commas] <- sub(",", "", seu$filter[commas])
   return(seu)
 }
 
@@ -97,9 +97,9 @@ tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL,
 
 tag_doublets <- function(seu, doublet_list) {
   doublet <- rownames(seu@meta.data) %in% doublet_list
-  seu@meta.data$qc[doublet] <- paste(seu@meta.data$qc[doublet], "Doublet",
+  seu@meta.data$filter[doublet] <- paste(seu@meta.data$filter[doublet], "Doublet",
                                         sep = ",")
-  seu@meta.data$qc <- gsub("Pass,Doublet", "Doublet", seu@meta.data$qc)
+  seu@meta.data$filter <- gsub("Pass,Doublet", "Doublet", seu@meta.data$filter)
   return(seu)
 }
 
@@ -955,8 +955,8 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "data",
 #'  }
 #' @export
 
-get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.2, query = NULL,
-                p_val_cutoff = 0.01, layer = "data") {
+get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.5, query = NULL,
+                p_val_cutoff = 0.05, layer = "data") {
   genes_warn <- NULL
   res <- NULL
   return_output <- TRUE
@@ -1982,18 +1982,23 @@ filter_sc_counts <- function(object, layers = "data", min_counts) {
 
 tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
                      min_cell_proportion = 0.1) {
-  if(!is.null(DEG_df) & !isFALSE(unlist(DEG_df))) {
-    DEG_df$qc <- ""
-    low_fc <- which(abs(DEG_df$avg_log2FC) < abs(min_avg_log2FC))
-    DEG_df$qc[low_fc] <- "Low_FC"
-    high_pval <- which(DEG_df$p_val_adj > p_val_cutoff)
-    DEG_df$qc[high_pval] <- paste(DEG_df$qc[high_pval], "High_P-val", sep = ",")
-    pcts <- DEG_df[c("pct.1", "pct.2")]
-    low_pct <- apply(pcts, 1, function(x) any(x < min_cell_proportion))
-    DEG_df$qc[low_pct] <- paste(DEG_df$qc[low_pct], "Low_proportion", sep = ",")
-    DEG_df$qc[which(DEG_df$qc == "")] <- "Pass"
-    commas <- grep("^,", DEG_df$qc)
-    DEG_df$qc[commas] <- sub(",", "", DEG_df$qc[commas])
+  if(!is.null(DEG_df)) {
+    if(!isFALSE(unlist(DEG_df))) {
+      DEG_df$filter <- ""
+      DEG_df$prevalent <- FALSE
+      low_fc <- which(abs(DEG_df$avg_log2FC) < abs(min_avg_log2FC))
+      DEG_df$filter[low_fc] <- "Low_FC"
+      high_pval <- which(DEG_df$p_val_adj > p_val_cutoff)
+      DEG_df$filter[high_pval] <- paste(DEG_df$filter[high_pval], "High_P-val", sep = ",")
+      pcts <- DEG_df[c("pct.1", "pct.2")]
+      pcts <- signif(pcts, 2)
+      low_pct <- apply(pcts, 1, function(x) any(x < min_cell_proportion))
+      DEG_df$filter[low_pct] <- paste(DEG_df$filter[low_pct], "Low_proportion", sep = ",")
+      DEG_df$filter[which(DEG_df$filter == "")] <- "Pass"
+      commas <- grep("^,", DEG_df$filter)
+      DEG_df$filter[commas] <- sub(",", "", DEG_df$filter[commas])
+      DEG_df$prevalent[DEG_df$filter == "Pass"] <- TRUE
+    }
   }
   return(DEG_df)
 }
@@ -2011,7 +2016,8 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
   return(invisible(NULL))
 }
 
-.read_DEG_from_dir <- function(directory) {
+.read_DEG_from_dir <- function(directory, min_avg_log2FC,
+                               min_cell_proportion, p_val_cutoff) {
   files <- dir(directory, full.names = TRUE)
   names(files) <- unlist(strsplit(basename(files), ".tsv"))
   tables <- lapply(files, function(file) read.table(file, sep = "\t",
@@ -2020,9 +2026,16 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
   target_results$DEGs$meta <- tables$meta
   target_results$DEG_metrics$DEG_df <- tables$DEG_df
   target_results$DEG_metrics$ncell_df <- tables$ncell_df
-  target_results$DEG_query <- tables$query
-  metrics <- which(names(tables) %in% c("meta", "DEG_df", "ncell_df", "query"))
+  target_results$DEG_query$DEG_df <- tables$query_DEG_df
+  target_results$DEG_query$ncell_df <- tables$query_ncell_df
+  metrics <- which(names(tables) %in% c("meta", "DEG_df", "ncell_df", "query_DEG_df",
+                                        "query_ncell_df"))
   markers <- tables[-metrics]
+  markers <- lapply(markers, function(DEG_df) {
+                   tag_DEGs(DEG_df = DEG_df, p_val_cutoff = p_val_cutoff,
+                   min_cell_proportion = min_cell_proportion,
+                   min_avg_log2FC = min_avg_log2FC)
+                  })
   target_results$DEGs$markers <- markers
   return(target_results)
 }
