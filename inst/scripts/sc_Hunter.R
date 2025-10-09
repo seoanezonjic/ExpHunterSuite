@@ -101,7 +101,9 @@ load_DEG_list <- NULL
 if(length(load_targets) > 0) {
   message("Reading DEG results from disk")
   target_names <- unlist(strsplit(names(load_targets), "_target"))
-  load_DEG_list <- load_DEG_output(targets = target_names, load_path = opt$output)
+  load_DEG_list <- load_DEG_output(targets = target_names, load_path = opt$output,
+                                   min_avg_log2FC = opt$min_avg_log2FC, min_cell_proportion = opt$min_cell_proportion,
+                                   p_val_cutoff = opt$p_val_cutoff)
 }
 
 DEG_list <- c(DEG_list, load_DEG_list)
