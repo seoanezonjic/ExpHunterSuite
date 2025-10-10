@@ -436,8 +436,17 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
       markers <- Seurat::FindConservedMarkers(seu, ident.1 = sub_values[i],
                           grouping.var = cond, verbose = verbose, assay = assay,
                           layer = layer)
-      markers <- markers[markers$p_val_adj <= p_val_cutoff, , drop = FALSE]
-      markers[[subset_by]] <- sub_values[i]
+      pval_cols <- grep("p_val_adj", colnames(markers))
+      pvals_keep <- apply(markers[pval_cols], 1,
+                        function(x) return(all(x <= p_val_cutoff)))
+      markers <- markers[which(pvals_keep), , drop = FALSE]
+      if(nrow(markers) < 1) {
+        warning("No significant markers found for value ", sub_values[i],
+          " of condition ", cond, ".")
+        markers <- NULL
+      } else {
+        markers[[subset_by]] <- sub_values[i]
+      }
     }
     nums <- sapply(markers, is.numeric)
     markers[nums] <- lapply(markers[nums], signif, 2)
@@ -897,7 +906,7 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "data",
     warning("Target gene(s) \"", miss_DEG, "\" are not differentially ",
             "expressed in dataset.", immediate. = TRUE)
   }
-  return(list(matrix_list = matrix_list, DEG_df = DEG_df))
+  return(list(matrix_list = matrix_list$matrices, DEG_df = matrix_list$DEG_df))
 }
 
 .check_query_for_fc <- function(query, seu, p_val_cutoff, min_avg_log2FC,
@@ -927,8 +936,7 @@ get_qc_pct <- function(seu, top = 20, assay = "RNA", layer = "data",
       p_val_cutoff = check$p_val_cutoff, genes = processed_query$gene_list,
       DEG_list = DEG_list, min_avg_log2FC = check$min_avg_log2FC,
       layer = layer)
-    res <- .add_ncell_df(DEG_df = fc_res$DEG_df,
-                         matrices = fc_res$matrix_list$matrices)
+    res <- .add_ncell_df(DEG_df = fc_res$DEG_df, matrices = fc_res$matrix_list)
   }
   return(res)
 }
@@ -1034,36 +1042,40 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.5, query = NULL,
 
 .get_DEGenes <- function(DEG_df, top = NA, min_log2FC = 0, p_val_cutoff = 1) {
   res <- NULL
-  DEG_df <- DEG_df[DEG_df$p_val_adj <= p_val_cutoff, ]
-  DEG_df <- DEG_df[abs(DEG_df$avg_log2FC) >= abs(min_log2FC), ]
-  if(!is.na(top)) {
-    if(nrow(DEG_df) < top) {
-      warning("Top larger than total DEGs. Selecting all DEGs.")
-    } else {
-        DEG_df <- DEG_df[order(abs(DEG_df$avg_log2FC), decreasing = TRUE), ,
-                         drop = FALSE]
-        DEG_df <- DEG_df[seq(1, top), , drop = FALSE]
+  if(!is.null(DEG_df)) {
+    DEG_df <- DEG_df[DEG_df$p_val_adj <= p_val_cutoff, ]
+    DEG_df <- DEG_df[abs(DEG_df$avg_log2FC) >= abs(min_log2FC), ]
+    if(!is.na(top)) {
+      if(nrow(DEG_df) < top) {
+        warning("Top larger than total DEGs. Selecting all DEGs.")
+      } else {
+          DEG_df <- DEG_df[order(abs(DEG_df$avg_log2FC), decreasing = TRUE), ,
+                           drop = FALSE]
+          DEG_df <- DEG_df[seq(1, top), , drop = FALSE]
+      }
     }
+    res <- rownames(DEG_df)
   }
-  res <- rownames(DEG_df)
   return(res)
 }
 
-.add_ncell_df <- function(matrices = stop("No counts matrices supplied"),
-                          DEG_df = stop("No DEG data frame supplied")) {
-  ncell_df <- .process_matrix_list(matrix_list = matrices,
+.add_ncell_df <- function(matrices, DEG_df) {
+  ncell_df <- NULL
+  if(!is.null(DEG_df)) {
+    ncell_df <- .process_matrix_list(matrix_list = matrices,
                                    processing_function = .is_expressed_matrix)
-  for(group in names(matrices)) {
-    ncell_df[group, ] <- ncell_df[group, , drop = FALSE]/ncol(matrices[[group]])
+    for(group in names(matrices)) {
+      ncell_df[group,] <- ncell_df[group,,drop = FALSE]/ncol(matrices[[group]])
+    }
+    ncell_df <- signif(ncell_df * 100, 2)
+    # Different genes or cell types/clusters might be discarded due to DEG
+    # or count thresholds. We must update both data frames accordingly.
+    # This could be a function instead of this repetitive code.
+    col_intersection <- intersect(colnames(ncell_df), colnames(DEG_df))
+    row_intersection <- intersect(rownames(ncell_df), rownames(DEG_df))
+    DEG_df <- DEG_df[row_intersection, col_intersection, drop = FALSE]
+    ncell_df <- ncell_df[row_intersection, col_intersection, drop = FALSE]
   }
-  ncell_df <- signif(ncell_df * 100, 2)
-  # Different genes or cell types/clusters might be discarded due to DEG
-  # thresholds or count thresholds. We must update both data frames accordingly.
-  # This could be a function instead of this repetitive code.
-  col_intersection <- intersect(colnames(ncell_df), colnames(DEG_df))
-  row_intersection <- intersect(rownames(ncell_df), rownames(DEG_df))
-  DEG_df <- DEG_df[row_intersection, col_intersection, drop = FALSE]
-  ncell_df <- ncell_df[row_intersection, col_intersection, drop = FALSE]
   return(list(DEG_df = DEG_df, ncell_df = ncell_df))
 }
 
@@ -1167,7 +1179,7 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.5, query = NULL,
 #' DEGs of every cell type in the experiment, for every cell type in the
 #' experiment.
 
-.get_union_FCs <- function(DEG_list, top = NA, min_log2FC = 0,
+.get_union_FCs <- function(DEG_list, top = NA, min_log2FC = 0.5,
                            p_val_cutoff = 0.05) {
   DEG_list <- DEG_list[names(DEG_list) != "global"]
   empty_DEGs <- unlist(lapply(DEG_list,
@@ -1933,10 +1945,11 @@ load_SingleR_ref <- function(path, filter = "") {
 #' @returns Seurat object with filtered layer.
 #' @examples
 #' data(pbmc_tiny)
-#' counts <- SeuratObject::GetAssayData(object = seu, layer = "data")
-#' filtered_pbmc <- filter_sc_counts(object = seu, layer = "data",
+#' counts <- SeuratObject::GetAssayData(object = pbmc_tiny, layer = "data")
+#' filtered_pbmc <- filter_sc_counts(object = pbmc_tiny, layer = "data",
 #'                                   min_counts = 2)
-#' filtered_counts <- SeuratObject::GetAssayData(object = seu, layer = "data")
+#' filtered_counts <- SeuratObject::GetAssayData(object = pbmc_tiny,
+#'                                               layer = "data")
 #' print(counts)
 #' print(filtered_counts)
 #' @export
@@ -1979,9 +1992,11 @@ filter_sc_counts <- function(object, layers = "data", min_counts) {
 #'                    p_val_adj = c(1, 0, 0.5, 0.1), pct.2 = c(0, 0.5, 0, 0.5),
 #'                    avg_log2FC = c(10, 5, 0, 0.5))
 #' DEGs <- tag_DEGs(DEG_df = DEGs)
+#' @export
 
 tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
                      min_cell_proportion = 0.1) {
+  res <- NULL
   if(!is.null(DEG_df)) {
     if(!isFALSE(unlist(DEG_df))) {
       DEG_df$filter <- ""
@@ -1998,20 +2013,21 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
       commas <- grep("^,", DEG_df$filter)
       DEG_df$filter[commas] <- sub(",", "", DEG_df$filter[commas])
       DEG_df$prevalent[DEG_df$filter == "Pass"] <- TRUE
+      res <- DEG_df
     }
   }
-  return(DEG_df)
+  return(res)
 }
 
 .write_deg_table <- function(deg, name, output) {
-  if(!isFALSE(unlist(deg[[name]]))) {
-    out_name <- gsub("\\d. ", "", name)
-    out_name <- gsub(" ", "_", out_name)
-    out_name <- gsub("\\(|\\)", "", out_name)
-    write.table(deg[[name]], sep = "\t", quote = FALSE, row.names = TRUE,
-                file = file.path(output, paste0(out_name, ".tsv")))
-  } else {
-    message("No DEGs for cell type ", name, ".")
+  if(!is.null(deg[[name]])) {
+    if(!isFALSE(unlist(deg[[name]]))) {
+      out_name <- gsub("\\d. ", "", name)
+      out_name <- gsub(" ", "_", out_name)
+      out_name <- gsub("\\(|\\)", "", out_name)
+      write.table(deg[[name]], sep = "\t", quote = FALSE, row.names = TRUE,
+                  file = file.path(output, paste0(out_name, ".tsv")))
+    }
   }
   return(invisible(NULL))
 }
