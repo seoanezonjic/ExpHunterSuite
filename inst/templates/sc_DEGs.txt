@@ -34,14 +34,12 @@ end.rcode-->
 
 <h1><strong>SINGLE CELL RNA-SEQ DIFFERENTIAL EXPRESSION ANALYSIS</strong></h1>
 
-<!--begin.rcode control_table, echo = FALSE, warning=FALSE
+<!--begin.rcode sample_tables, echo = FALSE, warning=FALSE
+    cat(plotter$create_title("<b>DESCRIPTION OF SAMPLES</b>", id = "samples_title", hlevel = 2, indexable =TRUE))
     cat(plotter$create_title("First group of samples (to be referred to as control in the rest of the report)",
                               id = "control_table", hlevel = 3, indexable = FALSE))
     plotter$hash_vars$controls <- plotter$hash_vars$target$sample[plotter$hash_vars$target$treat == "Ctrl"]
     cat(make_html_list(plotter$hash_vars$controls))
-end.rcode-->
-
-<!--begin.rcode treatment_table, echo = FALSE, warning=FALSE
     cat(plotter$create_title("Second group of samples (to be referred to as treatment in the rest of the report)",
                               id = "treatment_table", hlevel = 3, indexable = FALSE))
     plotter$hash_vars$treat <- plotter$hash_vars$target$sample[plotter$hash_vars$target$treat == "Treat"]
@@ -49,7 +47,10 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode GLOBAL_DEGs
-    legend <- "<p>DEG analysis glossary:</p>
+    cat(plotter$create_title(paste0("<b>GLOBAL DEG ANALYSIS: TARGET ", toupper(comparison), "</b>"), paste0(comparison, "_DEGs"), hlevel = 2,
+                         indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEGs"),
+                         clickable_text = ""))
+    legend <- "<p><b>DEG ANALYSIS GLOSSARY:</b></p>
              <ul>
                  <li> <b>GLOBAL</b>: DEGs calculated on all cells in the experiment. Cells are divided by the category selected for analysis, and DEGs are calculated
                  between the two groups. </li>
@@ -60,9 +61,6 @@ end.rcode-->
                  </ul>
              </ul>"
     cat(legend)
-    cat(plotter$create_title(paste0("<b>DEG ANALYSIS: TARGET ", comparison, "</b>"), paste0(comparison, "_DEGs"), hlevel = 2,
-                         indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEGs"),
-                         clickable_text = ""))
     DEG_level <- "GLOBAL"
     title <- "Global"
     names(comparison_DEGs$markers)[names(comparison_DEGs$markers) == "global"] <- "GLOBAL"
@@ -76,21 +74,16 @@ end.rcode-->
         cat(paste("<p> No significant DEGs found for cell group", DEG_level, "</p>"))
     } else {
         cat(plotter$prettify_div(plotter$static_plot_main("comparison_DEGs", custom_format = TRUE,
-            plotting_function = DEGs_volcano), preset = "magic"))
-        html_code <- plotter$prettify_div(plotter$table(list(id = "comparison_DEGs", header = NULL, row_names = NULL,
+            plotting_function = DEGs_volcano, resizable = TRUE,), preset = "magic"))
+        cat(plotter$prettify_div(plotter$table(list(id = "comparison_DEGs", header = NULL, row_names = NULL,
                                                     table_rownames = FALSE, styled = "dt", text = "dynamic",
-                                                    func = get_DEG_table)), preset = "magic")
-        cat(plotter$create_title("Global DEGenes table", "global DEG table", hlevel = 3, indexable = FALSE,
-                                  clickable = TRUE, t_id = paste0(comparison, "_global_DEG_table"), clickable_text = ""))
-        cat(plotter$create_collapsable_container(id = paste0(comparison, "_global_DEG_table"), html_code = html_code))
+                                                    func = get_DEG_table)), preset = "magic"))
     }
 end.rcode-->
 
 <!--begin.rcode DEG_summary, eval = length(DEG_list) > 0
-    cat(plotter$create_title(paste0("DEG SUMMARY FOR TARGET ", toupper(comparison)), paste0(comparison, "_DEG_metrics"), hlevel = 2,
-                 indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEG_metrics"), clickable_text = ""))
-    cat(plotter$create_title("<b>DIFFERENTIAL EXPRESSION SUMMARY OF CELL GROUPS</b>", "DEG_metrics", hlevel = 2, indexable = TRUE,
-                          clickable = FALSE, t_id = "DEG_metrics", clickable_text = ""))
+    cat(plotter$create_title(paste0("<b>DIFFERENTIAL EXPRESSION SUMMARY OF CELL GROUPS: TARGET ", toupper(comparison), "</b>"),
+        "DEG_metrics", hlevel = 2, indexable = TRUE, clickable = FALSE, t_id = "DEG_metrics", clickable_text = ""))
     cat("<p>These plots show an overview of the most significant DEGs across the entire dataset. They extract the top DEGs
          from each individual cell group comparison, and then generate the union of these lists. This union is then used
          in the plots shown below, representing FC values of these genes for every cell group DEG analysis.</p>")
@@ -114,51 +107,44 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode DEG_analysis
-    samples_html <- vector(mode = "character", length = length(comparison_DEGs) - 1)
     no_global_degs <- comparison_DEGs$markers[names(comparison_DEGs$markers) != "GLOBAL"]
     if(length(no_global_degs) < 1) {
         cat("<p> No significant DEGs found in per-cell-type analysis </p>")
     } else {
+        cat(plotter$create_title(paste0("<b>CELL GROUP DEG ANALYSIS: TARGET ", toupper(comparison), "</b>"), paste0(comparison, " DEG identities"),
+                             hlevel = 2, indexable = FALSE, clickable = FALSE))
         for (j in seq(length(no_global_degs))) {
             DEG_level <- names(no_global_degs)[j]
-            title <- paste0("Cluster ", DEG_level)
+            title <- paste0("Cell group ", DEG_level)
             plotter$hash_vars$comparison_DEGs <- no_global_degs[[j]]
-            if(FALSE %in% no_global_degs[[j]]) {
+            if(is.null(plotter$hash_vars$comparison_DEGs)) {
+                main <- plotter$prettify_div(paste0("<p>Cell type ", DEG_level, " contained no significant DEGs.</p>"), preset = "magic")
+            } else if(FALSE %in% no_global_degs[[j]]) {
                 main <- plotter$prettify_div(paste0("<p>Cell type ", DEG_level, " contained exclusive pairs,
-                                         DEG analysis was not possible."), preset = "magic")
-                samples_html[[j]] <- main
-            }else{
+                                         DEG analysis was not possible.</p>"), preset = "magic")
+            } else {
                 main <- plotter$prettify_div(plotter$static_plot_main("comparison_DEGs", custom_format = TRUE,
-                                 plotting_function = DEGs_volcano), preset = "magic")
+                                 plotting_function = DEGs_volcano, resizable = TRUE,), preset = "magic")
                 table_code <- plotter$prettify_div(plotter$table(list(id = "comparison_DEGs", header = NULL,
                                                                  row_names = NULL, table_rownames = FALSE,
                                                                  styled = "dt", text = "dynamic", func = get_DEG_table)),
                                                    preset = "magic")
-                table_title <- plotter$create_title(paste0(title, " DEGenes table"), paste0(title," DEG table"), hlevel = 3,
-                                         indexable = FALSE, clickable = TRUE, t_id = paste0(title, "_DEG_table_", comparison),
-                                         clickable_text = "")
-                table_container <- plotter$create_collapsable_container(id = paste0(title, "_DEG_table_", comparison),
-                                                                        html_code = table_code)
-                samples_html[[j]] <- paste(DEG_legend, main, table_title, table_container, collapse = "\n")
+                ident_content <- paste(DEG_legend, main, table_code, collapse = "\n")
+                cat(plotter$create_title(id = paste0(DEG_level, " DEG results"), paste0(DEG_level, "_DEG_results"), hlevel = 3, indexable = FALSE,
+                clickable = TRUE, t_id = paste0(DEG_level, "_collapsable"), clickable_text = ""))
+                cat(plotter$create_collapsable_container(id = paste0(DEG_level, "_collapsable"), html_code = ident_content))
             }
         }
-        samples_html <- paste(samples_html, collapse = "\n")
-        cat(plotter$create_title(paste0(comparison, " DEG analysis subset by cell group"), paste0(comparison, " DEG identities"),
-                                 hlevel = 2, indexable = FALSE, clickable = TRUE,
-                                 t_id = paste0(comparison, "_identity_DEG"), clickable_text = ""))
-        cat(plotter$create_collapsable_container(id = paste0(comparison, "_identity_DEG"), html_code = samples_html))
     }
 end.rcode-->
 
 <!--begin.rcode DEG_query, eval = length(DEG_list) > 0
-    cat(plotter$create_title("Differential expression metrics of query genes", "DEG_query", hlevel = 2, indexable = TRUE,
-                              clickable = FALSE, t_id = "DEG_query", clickable_text = ""))
     if(is.null(query_metrics)) {
         cat(paste0("<p>Query DEG analysis was not possible for analysis ", comparison, ".<p>"))
     } else {
         plotter$hash_vars$comparison_FCs <- query_metrics$DEG_df
         plotter$hash_vars$comparison_ncells <- query_metrics$ncell_df
-        cat(plotter$create_title(paste0("DEG QUERY SUMMARY FOR TARGET ", toupper(comparison)), paste0(comparison, "_DEG_query"), hlevel = 2,
+        cat(plotter$create_title(paste0("<b>DEG QUERY SUMMARY FOR TARGET ", toupper(comparison), "</b>"), paste0(comparison, "_DEG_query"), hlevel = 2,
                      indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEG_query"), clickable_text = ""))
         if(any(dim(plotter$hash_vars$comparison_FCs) < 1)) {
             cat(paste0("<p> No significant DEGs found for target ", comparison, ".</p>"))
