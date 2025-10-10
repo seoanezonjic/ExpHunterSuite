@@ -287,7 +287,7 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
                                   min_avg_log2FC = 0.5, p_val_cutoff = 0.05)
   if(!is.null(query)) {
     DEG_query <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
-                                  query = query)
+                        query = query, min_avg_log2FC = 0, p_val_cutoff = 1)
   }
   return(list(DEGs = DEGs, DEG_metrics = DEG_metrics, DEG_query = DEG_query))
 }
@@ -322,6 +322,7 @@ main_analyze_sc_query <- function(seu, query, sigfig = 2, layer = "counts",
 }
 
 #' write_annot_output
+#'
 #' writes final counts matrix and annotated metadata of a single-cell
 #' experiment.
 #'
@@ -385,6 +386,7 @@ write_annot_output <- function(final_results, opt = NULL, assay = "RNA",
 }
 
 #' Write DEG results to disk
+#'
 #' `write_DEG_output `writes DEG matrices of a single-cell experiment, along
 #' with metrics and metadata.'
 #'
@@ -446,6 +448,21 @@ write_DEG_output <- function(name, DEG_list, opt = NULL){
   return(invisible(NULL))
 }
 
+#' load output from previous execution of DEG module
+#'
+#' `load_DEG_output` loads a previous execution of our Single-Cell DEA.
+#' @inheritParams main_sc_Hunter
+#' @param targets Vector of target names.
+#' @param load_path Path where target executions will be found.
+#' @export
+#' @examples
+#' \dontrun{
+#'    load_DEG_output(targets = c("42_vs_68", "Ctrl_vs_Mut"),
+#'                    load_path = "path/to/results")
+#' }
+#' @returns A DEG results list with identical structure to main_sc_Hunter
+#' output.
+
 load_DEG_output <- function(targets, load_path, min_avg_log2FC,
                             min_cell_proportion, p_val_cutoff) {
   res <- vector(mode = "list", length = length(targets))
@@ -465,8 +482,10 @@ load_DEG_output <- function(targets, load_path, min_avg_log2FC,
   return(res)
 }
 
-#' write_dense_matrix
-#' write dense matrix to a format compatible with our workflow.
+#' Write dense counts matrix
+#'
+#' `write_dense_matrix` writes a dense counts matrix in a format compatible
+#' with our workflow.
 #'
 #' @param counts A dense matrix.
 #' @param output Name of rds file to save.
