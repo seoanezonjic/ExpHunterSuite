@@ -377,11 +377,11 @@ test_that("get_sc_markers works as intended, DEG FALSE", {
 
 test_that("get_sc_markers skips exclusive clusters in DEG analysis", {
   expected_warning <- paste0("Cluster 2 contains fewer than three cells for ",
-                "condition\\(s\\) 'g2'. Skipping DEG analysis.")
-  expect_warning(suppressMessages(get_sc_markers(seu = test_pbmc,
+                "condition\\(s\\) 'g2'. Skipping DEG analysis")
+  suppressMessages(expect_warning(get_sc_markers(seu = test_pbmc,
                  cond = "groups", DEG = TRUE, verbose = FALSE,
-                 subset_by = "seurat_clusters", simple_DEG_pct = TRUE)),
-                 expected_warning)
+                 subset_by = "seurat_clusters", simple_DEG_pct = TRUE),
+                 expected_warning))
   expect_false(suppressWarnings(suppressMessages(get_sc_markers(seu = test_pbmc,
     cond = "groups", DEG = TRUE, verbose = FALSE, subset_by = "seurat_clusters",
     simple_DEG_pct = TRUE)$markers[[2]][[1]])))
@@ -390,11 +390,11 @@ test_that("get_sc_markers skips exclusive clusters in DEG analysis", {
 test_that("get_sc_markers skips exclusive clusters in DEG analysis, alternate
            idents", {
   expected_warning <- paste0("Cluster 2 contains fewer than three cells for ",
-                "condition\\(s\\) 'g2'. Skipping DEG analysis.")
-  expect_warning(suppressMessages(get_sc_markers(seu = test_pbmc,
+                "condition\\(s\\) 'g2'. Skipping DEG analysis")
+  suppressMessages(expect_warning(get_sc_markers(seu = test_pbmc,
                  cond = "groups", DEG = TRUE, verbose = FALSE,
-                 subset_by = "cell_types", simple_DEG_pct = TRUE)),
-                 expected_warning)
+                 subset_by = "cell_types", simple_DEG_pct = TRUE),
+                 expected_warning))
   expect_false(suppressWarnings(suppressMessages(get_sc_markers(seu = test_pbmc,
          cond = "groups", DEG = TRUE, verbose = FALSE, subset_by = "cell_types",
          simple_DEG_pct = TRUE)$markers[[2]][[1]])))
@@ -805,9 +805,8 @@ test_that("test .get_matrices when only one cell is present in one of the
 })
 
 test_that("test .get_union_FCs works with default call", {
-  expected <- data.frame(g1 = c(0.0, 0.2, 1.0, -0.1),
-                         g2 = c(1.0, 0.0, 0.2, 0.0))
-  rownames(expected) <- c("PPBP", "IGLL5", "VDAC3", "GNLY")
+  expected <- data.frame(g1 = c(1, 0), g2 = c(0, 1))
+  rownames(expected) <- c("VDAC3", "PPBP")
   expected <- as.matrix(expected)
   output <- .get_union_FCs(DEG_list = DEG_list)
   expect_equal(output, expected)
@@ -825,7 +824,7 @@ test_that("test .get_union_FCs works when specifying top argument", {
   expected <- data.frame(g1 = c(1, 0), g2 = c(0.2, 1))
   rownames(expected) <- c("VDAC3", "PPBP")
   expected <- as.matrix(expected)
-  output <- .get_union_FCs(DEG_list, top = 1, p_val_cutoff = 1)
+  output <- .get_union_FCs(DEG_list, top = 1, min_log2FC = 0, p_val_cutoff = 1)
   expect_equal(output, expected)
 })
 
@@ -842,7 +841,7 @@ test_that("test .get_union_FCs applies p-value filter", {
                          g2 = c(1.0, 0.0, 0.2, 0.0))
   rownames(expected) <- c("PPBP", "IGLL5", "VDAC3", "GNLY")
   expected <- as.matrix(expected)
-  output <- .get_union_FCs(DEG_list = DEG_list, p_val_cutoff = 0)
+  output <- .get_union_FCs(DEG_list = DEG_list, p_val_cutoff = 0,min_log2FC = 0)
   expect_equal(output, expected)
 })
 
@@ -891,14 +890,16 @@ test_that("tag_DEGs works with default values", {
   expected <- c("High_P-val,Low_proportion", "Low_proportion",
                    "Low_FC,High_P-val,Low_proportion", "Pass")
   output <- tag_DEGs(DEG_df = DEG_tags)
-  expect_equal(output$qc, expected)
+  expect_equal(output$filter, expected)
+  expect_equal(output$prevalent, c(rep(FALSE, 3), TRUE))
 })
 
 test_that("tag_DEGs works with lax values", {
   expected <- rep("Pass", 4)
   output <- tag_DEGs(DEG_df = DEG_tags, p_val_cutoff = 1, min_avg_log2FC = 0,
                      min_cell_proportion = 0)
-  expect_equal(output$qc, expected)
+  expect_equal(output$filter, expected)
+  expect_true(all(output$prevalent == TRUE))
 })
 
 test_that("tag_DEGs works with strict values", {
@@ -906,7 +907,8 @@ test_that("tag_DEGs works with strict values", {
   expected[2] <- "Low_FC,Low_proportion"
   output <- tag_DEGs(DEG_df = DEG_tags, p_val_cutoff = 0, min_avg_log2FC = 99,
                      min_cell_proportion = 100)
-  expect_equal(output$qc, expected)
+  expect_equal(output$filter, expected)
+  expect_true(all(output$prevalent == FALSE))
 })
 
 test_that("tag_DEGs works with NULL or FALSE data frames", {
