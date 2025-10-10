@@ -2,9 +2,7 @@
 % Please edit documentation in R/main_sc_functions.R
 \name{write_DEG_output}
 \alias{write_DEG_output}
-\title{Write DEG results to disk
-\code{write_DEG_output }writes DEG matrices of a single-cell experiment, along
-with metrics and metadata.'}
+\title{Write DEG results to disk}
 \usage{
 write_DEG_output(name, DEG_list, opt = NULL)
 }
@@ -19,7 +17,6 @@ write_DEG_output(name, DEG_list, opt = NULL)
 invisible(NULL)
 }
 \description{
-Write DEG results to disk
 \code{write_DEG_output }writes DEG matrices of a single-cell experiment, along
 with metrics and metadata.'
 }

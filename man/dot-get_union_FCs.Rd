@@ -4,7 +4,7 @@
 \alias{.get_union_FCs}
 \title{.get_union_FCs}
 \usage{
-.get_union_FCs(DEG_list, top = NA, min_log2FC = 0, p_val_cutoff = 0.05)
+.get_union_FCs(DEG_list, top = NA, min_log2FC = 0.5, p_val_cutoff = 0.05)
 }
 \arguments{
 \item{DEG_list}{A list containing DEG results.}

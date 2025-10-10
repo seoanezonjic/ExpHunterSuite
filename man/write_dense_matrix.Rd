@@ -2,8 +2,7 @@
 % Please edit documentation in R/main_sc_functions.R
 \name{write_dense_matrix}
 \alias{write_dense_matrix}
-\title{write_dense_matrix
-write dense matrix to a format compatible with our workflow.}
+\title{Write dense counts matrix}
 \usage{
 write_dense_matrix(counts, output)
 }
@@ -16,8 +15,8 @@ write_dense_matrix(counts, output)
 invisible(NULL)
 }
 \description{
-write_dense_matrix
-write dense matrix to a format compatible with our workflow.
+\code{write_dense_matrix} writes a dense counts matrix in a format compatible
+with our workflow.
 }
 \details{
 Under some specific cases, scaled counts data are created in dense format,

@@ -2,9 +2,7 @@
 % Please edit documentation in R/main_sc_functions.R
 \name{write_annot_output}
 \alias{write_annot_output}
-\title{write_annot_output
-writes final counts matrix and annotated metadata of a single-cell
-experiment.}
+\title{write_annot_output}
 \usage{
 write_annot_output(final_results, opt = NULL, assay = "RNA", layer = "data")
 }
@@ -19,7 +17,6 @@ write_annot_output(final_results, opt = NULL, assay = "RNA", layer = "data")
 invisible(NULL)
 }
 \description{
-write_annot_output
 writes final counts matrix and annotated metadata of a single-cell
 experiment.
 }
