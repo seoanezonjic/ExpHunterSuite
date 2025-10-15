@@ -686,6 +686,17 @@ test_that("test process_sc_params, annotation mode", {
   expect_equal(output, expected)
 })
 
+test_that("test process_sc_params removes duplicate target genes", {
+  params <- list(name = "test", p_adj_cutoff = 1, verbose = FALSE,
+                 subset_by = "genotype;time", cpu = "2", min_avg_log2FC = 1,
+                 target_genes = "TREM2;TREM2;DAP12", mincells = 1, top_N = Inf)
+  expect_warning(suppressMessages(process_sc_params(params = params,
+    mode = "DEG")), "Removing duplicates of gene TREM2 from query.")
+  output <- suppressMessages(suppressWarnings(process_sc_params(params = params,
+              mode = "DEG")))
+  expect_equal(output$opt$target_genes, c("TREM2", "DAP12"))
+  })
+
 test_that("test process_sc_params, DEG mode", {
   params <- list(name = "test", p_adj_cutoff = 1, verbose = FALSE,
                  subset_by = "genotype;time", cpu = "2", min_avg_log2FC = 1,
