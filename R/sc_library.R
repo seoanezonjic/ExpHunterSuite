@@ -1846,6 +1846,12 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   if(params$integrate) out_suffix <- "annotation_report.html"
   if(params$target_genes != "") {
     params$target_genes <- strsplit(params$target_genes, split = ";")[[1]]
+    dupes <- duplicated(params$target_genes)
+    if(any(dupes)) {
+      warn_dupes <- paste(params$target_genes[dupes], sep = ", ")
+      warning("Removing duplicates of gene ", warn_dupes, " from query.")
+      params$target_genes <- params$target_genes[!dupes]
+    }
   }
   if(params$subset_by != "") {
     params$subset_by <- tolower(unlist(strsplit(params$subset_by, ";")))
@@ -1999,20 +2005,26 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
   res <- NULL
   if(!is.null(DEG_df)) {
     if(!isFALSE(unlist(DEG_df))) {
-      DEG_df$filter <- ""
+      DEG_df$cause_for_rejection <- ""
       DEG_df$prevalent <- FALSE
       low_fc <- which(abs(DEG_df$avg_log2FC) < abs(min_avg_log2FC))
-      DEG_df$filter[low_fc] <- "Low_FC"
+      DEG_df$cause_for_rejection[low_fc] <- "Low_FC"
       high_pval <- which(DEG_df$p_val_adj > p_val_cutoff)
-      DEG_df$filter[high_pval] <- paste(DEG_df$filter[high_pval], "High_P-val", sep = ",")
+      filter_vector <- paste(DEG_df$cause_for_rejection[high_pval],
+                             "High_P-val", sep = ",")
+      DEG_df$cause_for_rejection[high_pval] <- filter_vector
       pcts <- DEG_df[c("pct.1", "pct.2")]
       pcts <- signif(pcts, 2)
       low_pct <- apply(pcts, 1, function(x) any(x < min_cell_proportion))
-      DEG_df$filter[low_pct] <- paste(DEG_df$filter[low_pct], "Low_proportion", sep = ",")
-      DEG_df$filter[which(DEG_df$filter == "")] <- "Pass"
-      commas <- grep("^,", DEG_df$filter)
-      DEG_df$filter[commas] <- sub(",", "", DEG_df$filter[commas])
-      DEG_df$prevalent[DEG_df$filter == "Pass"] <- TRUE
+      filter_vector <- paste(DEG_df$cause_for_rejection[low_pct],
+                             "Low_proportion", sep = ",")
+      DEG_df$cause_for_rejection[low_pct] <- filter_vector
+      accepted <- which(DEG_df$cause_for_rejection == "")
+      DEG_df$cause_for_rejection[accepted] <- "None"
+      commas <- grep("^,", DEG_df$cause_for_rejection)
+      no_commas <- sub(",", "", DEG_df$cause_for_rejection[commas])
+      DEG_df$cause_for_rejection[commas] <- no_commas
+      DEG_df$prevalent[DEG_df$cause_for_rejection == "None"] <- TRUE
       res <- DEG_df
     }
   }
