@@ -2024,7 +2024,8 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
       commas <- grep("^,", DEG_df$cause_for_rejection)
       no_commas <- sub(",", "", DEG_df$cause_for_rejection[commas])
       DEG_df$cause_for_rejection[commas] <- no_commas
-      DEG_df$prevalent[DEG_df$cause_for_rejection == "None"] <- TRUE
+      DEG_df$DEG <- FALSE
+      DEG_df$DEG[DEG_df$cause_for_rejection == "None"] <- TRUE
       res <- DEG_df
     }
   }
