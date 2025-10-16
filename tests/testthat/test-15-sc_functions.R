@@ -899,18 +899,18 @@ rownames(DEG_tags) <- DEG_tags$gene
 
 test_that("tag_DEGs works with default values", {
   expected <- c("High_P-val,Low_proportion", "Low_proportion",
-                   "Low_FC,High_P-val,Low_proportion", "Pass")
+                   "Low_FC,High_P-val,Low_proportion", "None")
   output <- tag_DEGs(DEG_df = DEG_tags)
-  expect_equal(output$filter, expected)
-  expect_equal(output$prevalent, c(rep(FALSE, 3), TRUE))
+  expect_equal(output$cause_for_rejection, expected)
+  expect_equal(output$DEG, c(rep(FALSE, 3), TRUE))
 })
 
 test_that("tag_DEGs works with lax values", {
-  expected <- rep("Pass", 4)
+  expected <- rep("None", 4)
   output <- tag_DEGs(DEG_df = DEG_tags, p_val_cutoff = 1, min_avg_log2FC = 0,
                      min_cell_proportion = 0)
-  expect_equal(output$filter, expected)
-  expect_true(all(output$prevalent == TRUE))
+  expect_equal(output$cause_for_rejection, expected)
+  expect_true(all(output$DEG == TRUE))
 })
 
 test_that("tag_DEGs works with strict values", {
@@ -918,8 +918,8 @@ test_that("tag_DEGs works with strict values", {
   expected[2] <- "Low_FC,Low_proportion"
   output <- tag_DEGs(DEG_df = DEG_tags, p_val_cutoff = 0, min_avg_log2FC = 99,
                      min_cell_proportion = 100)
-  expect_equal(output$filter, expected)
-  expect_true(all(output$prevalent == FALSE))
+  expect_equal(output$cause_for_rejection, expected)
+  expect_true(all(output$DEG == FALSE))
 })
 
 test_that("tag_DEGs works with NULL or FALSE data frames", {
