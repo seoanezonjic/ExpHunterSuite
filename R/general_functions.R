@@ -280,3 +280,26 @@ parse_filter <- function(object, expression) {
                        operator, ' ', value))
   return(subset_expr)
 }
+
+#' Write parsed options
+#'
+#' `write_opt` takes a parsed option list and writes it to disk, in order
+#' to have a control of the latest execution of a script that is easily
+#' readable.
+#' @importFrom HDF5Array loadHDF5SummarizedExperiment
+#' @param opt Option list to write.
+#' @param output Path where opt file will be saved.
+#' @returns invisible(NULL)
+#' @examples
+#'  \dontrun{
+#'    load_SingleR_Ref(path = "my_reference",
+#'                     filter = "Age <= 3 years | phenotype == patient")
+#'  }
+#' @export
+
+write_opt <- function(opt, output = getwd()) {
+  exec_params <- paste(names(opt), unlist(opt), sep = ": ")
+  fileConn <- file(file.path(opt$output, "execution_parameters.txt"))
+  writeLines(text = exec_params, con = fileConn)
+  close(fileConn)
+}
