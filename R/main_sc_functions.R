@@ -121,7 +121,7 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
     }
     if(!reduce) {
       all_samples <- unique(qc$sample)
-      seu <- subset(qc, subset = qc == 'Pass')
+      seu <- subset(qc, subset = filter == 'Pass')
       qc_samples <- unique(seu$sample)
       discarded_samples <- paste(all_samples[!all_samples %in% qc_samples],
                                  collapse = ", ")
@@ -452,8 +452,14 @@ write_DEG_output <- function(name, DEG_list, opt = NULL){
 #'
 #' `load_DEG_output` loads a previous execution of our Single-Cell DEA.
 #' @inheritParams main_sc_Hunter
+#' @param query A string vector. Query to explore in DEG results. Will only
+#' be used if it differs from query used in saved analysis.
 #' @param targets Vector of target names.
 #' @param load_path Path where target executions will be found.
+#' @param recalc_query A boolean.
+#'   * `TRUE`: Recalculate query metrics.
+#'   * `FALSE` (the default): Load query metrics.
+#' @param seu A seurat object. Only used if recalc_query is TRUE.
 #' @export
 #' @examples
 #' \dontrun{
@@ -463,8 +469,9 @@ write_DEG_output <- function(name, DEG_list, opt = NULL){
 #' @returns A DEG results list with identical structure to main_sc_Hunter
 #' output.
 
-load_DEG_output <- function(targets, load_path, min_avg_log2FC,
-                            min_cell_proportion, p_val_cutoff) {
+load_DEG_output <- function(targets, load_path, min_avg_log2FC, p_val_cutoff,
+                            recalc_query = FALSE, min_cell_proportion, seu,
+                            query = NULL) {
   res <- vector(mode = "list", length = length(targets))
   names(res) <- targets
   for(target in targets) {
@@ -475,9 +482,10 @@ load_DEG_output <- function(targets, load_path, min_avg_log2FC,
       res[[target]] <- NULL
       next
     }
-    res[[target]] <- .read_DEG_from_dir(directory = dir,
-    min_avg_log2FC = min_avg_log2FC, min_cell_proportion = min_cell_proportion,
-    p_val_cutoff = p_val_cutoff)
+    res[[target]] <- .read_DEG_from_dir(directory = dir, seu = seu,
+      query = query, min_avg_log2FC = min_avg_log2FC, target = target,
+      min_cell_proportion = min_cell_proportion, recalc_query = recalc_query,
+      p_val_cutoff = p_val_cutoff)
   }
   return(res)
 }
