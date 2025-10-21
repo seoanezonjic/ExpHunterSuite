@@ -162,7 +162,7 @@ end.rcode-->
                                                   config = list(smpOverlays = names(sample_heatmap_overlay)))), preset = "magic"))
 end.rcode-->
 
-<!--begin.rcode cell_markers, eval = !is.null(plotter$hash_vars$cell_annotation)
+<!--begin.rcode canon_markers, eval = !is.null(plotter$hash_vars$cell_annotation)
     elements <- unique(plotter$hash_vars$cell_annotation$type)
     collapse_list <- vector(mode = "character", length = length(elements) + 2)
     names(collapse_list) <- c("paragraph", "subtitle", elements)
@@ -178,7 +178,7 @@ end.rcode-->
                                                                  plotting_function = Custom_DotPlot), preset = "magic"), sep = "\n")
     }
     markers_html <- paste0(paste(collapse_list, collapse = "\n"), "\n")
-    cat(plotter$create_title("Markers distribution", "markers", hlevel = 2, indexable = FALSE, clickable = TRUE,
+    cat(plotter$create_title("Canonical markers distribution", "markers", hlevel = 2, indexable = FALSE, clickable = TRUE,
                              t_id = "markers_distribution", clickable_text = ""))
     cat(plotter$create_collapsable_container(id = "markers_distribution", html_code = markers_html))
 end.rcode-->
@@ -201,7 +201,7 @@ end.rcode-->
     } else {
         title_group <- "cell type"
     }
-    cat(plotter$create_title(paste0("Top 10 markers by ", title_group), "top markers", hlevel = 2, indexable = FALSE, clickable = TRUE,
+    cat(plotter$create_title(paste0("Top 10 canonical markers by ", title_group), "top markers", hlevel = 2, indexable = FALSE, clickable = TRUE,
                              t_id = "top_markers", clickable_text = ""))
     paragraph <- paste0("<p>These are the markers that best define the cell group. They might ",
                         "not match cell type markers.</p>")
