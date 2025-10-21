@@ -1578,7 +1578,7 @@ annotate_seurat <- function(seu, cell_annotation = NULL, logfc.threshold = 0.1,
 
 annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
                              integrate = "TRUE", ref_de_method = "wilcox",
-                             BPPARAM = BiocParallel::SerialParam(), 
+                             BPPARAM = BiocParallel::SerialParam(),
                              ref_label = ref_label, aggr.ref = FALSE,
                              fine.tune = TRUE, assay = "RNA", verbose = FALSE,
                              subset_by = NULL){
@@ -1809,6 +1809,7 @@ get_expression_metrics <- function(seu, sigfig, sample_col = "sample",
 
 process_sc_params <- function(params = list(), mode = "annotation") {
   out_suffix <- "sample_annotation_report.html"
+  params$recalc_query <- FALSE
   if(mode != "annotation") {
     params$cluster_annotation <- params$cell_annotation <- ""
     params$doublet_file <- params$samples_to_integrate <- params$subset_by <- ""
@@ -1851,6 +1852,15 @@ process_sc_params <- function(params = list(), mode = "annotation") {
       warn_dupes <- paste(params$target_genes[dupes], sep = ", ")
       warning("Removing duplicates of gene ", warn_dupes, " from query.")
       params$target_genes <- params$target_genes[!dupes]
+    }
+  }
+  opt_file <- file.path(params$output, "execution_parameters.txt")
+  if(file.exists(opt_file)) {
+    last_query <- grep("target_genes", readLines(opt_file), value = TRUE)
+    last_query <- strsplit(strsplit(last_query, ": ")[[1]][2], ";")[[1]]
+    curr_query <- params$target_genes
+    if(any(sort(last_query) != sort(curr_query))) {
+      params$recalc_query <- TRUE
     }
   }
   if(params$subset_by != "") {
@@ -1975,7 +1985,8 @@ filter_sc_counts <- function(object, layers = "data", min_counts) {
   expr@x[expr@x < min_counts] <- 0
   expr <- Matrix::drop0(expr)
   filtered_genes <- (expr_genes - sum(expr > 0)) / expr_genes * 100
-  message("Min counts filter removed ", filtered_genes, "% of genes.")
+  message("Min counts filter removed ", filtered_genes, "% of genes from ",
+          "layer ", layer)
   object$RNA[layer] <- expr
   return(object$RNA[layer])
 }
@@ -2035,18 +2046,15 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
 .write_deg_table <- function(deg, name, output) {
   if(!is.null(deg[[name]])) {
     if(!isFALSE(unlist(deg[[name]]))) {
-      out_name <- gsub("\\d. ", "", name)
-      out_name <- gsub(" ", "_", out_name)
-      out_name <- gsub("\\(|\\)", "", out_name)
       write.table(deg[[name]], sep = "\t", quote = FALSE, row.names = TRUE,
-                  file = file.path(output, paste0(out_name, ".tsv")))
+                  file = file.path(output, paste0(name, ".tsv")))
     }
   }
   return(invisible(NULL))
 }
 
-.read_DEG_from_dir <- function(directory, min_avg_log2FC,
-                               min_cell_proportion, p_val_cutoff) {
+.read_DEG_from_dir <- function(directory, min_avg_log2FC, recalc_query, target,
+                               min_cell_proportion, p_val_cutoff, seu, query) {
   files <- dir(directory, full.names = TRUE)
   names(files) <- unlist(strsplit(basename(files), ".tsv"))
   tables <- lapply(files, function(file) read.table(file, sep = "\t",
@@ -2055,16 +2063,22 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
   target_results$DEGs$meta <- tables$meta
   target_results$DEG_metrics$DEG_df <- tables$DEG_df
   target_results$DEG_metrics$ncell_df <- tables$ncell_df
-  target_results$DEG_query$DEG_df <- tables$query_DEG_df
-  target_results$DEG_query$ncell_df <- tables$query_ncell_df
   metrics <- which(names(tables) %in% c("meta", "DEG_df", "ncell_df", "query_DEG_df",
                                         "query_ncell_df"))
   markers <- tables[-metrics]
   markers <- lapply(markers, function(DEG_df) {
                    tag_DEGs(DEG_df = DEG_df, p_val_cutoff = p_val_cutoff,
-                   min_cell_proportion = min_cell_proportion,
-                   min_avg_log2FC = min_avg_log2FC)
+                            min_cell_proportion = min_cell_proportion,
+                            min_avg_log2FC = min_avg_log2FC)
                   })
   target_results$DEGs$markers <- markers
+  if(!recalc_query) {
+    target_results$DEG_query$DEG_df <- tables$query_DEG_df
+    target_results$DEG_query$ncell_df <- tables$query_ncell_df
+  } else {
+    message("Recalculating query for target ", target)
+    target_results$DEG_query<- get_fc_vs_ncells(seu = seu, query = query,
+                                                DEG_list = markers)
+  }
   return(target_results)
 }
