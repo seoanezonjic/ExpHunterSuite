@@ -80,7 +80,7 @@ for(target in names(DEG_targets)) {
 }
 
 DEG_list <- NULL
-if(length(DEG_targets) > 0) {
+if(length(DEG_targets) > 0 | isTRUE(opt$recalc_query)) {
   message("Reconstructing Seurat object from directory ", opt$input)
   seu <- SeuratObject::CreateSeuratObject(counts = Seurat::Read10X(opt$input, gene.column = 1),
                                           project = opt$name, min.cells = 1, min.features = 1)
@@ -88,6 +88,11 @@ if(length(DEG_targets) > 0) {
   rownames(seu_meta) <- colnames(seu)
   seu <- Seurat::AddMetaData(seu, seu_meta, row.names("Cell_ID"))
   seu$RNA$data <- seu$RNA$counts
+} else {
+  seu <- NULL
+}
+
+if(length(DEG_targets) > 0) {
   DEG_list <- parallel_list(X = DEG_targets, FUN = main_sc_Hunter, workers = opt$cpu, seu = seu,
                             p_val_cutoff = opt$p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
                             min_cell_proportion = opt$min_cell_proportion, top = opt$top_N,
@@ -95,19 +100,22 @@ if(length(DEG_targets) > 0) {
                             min_counts = opt$min_counts, verbose = opt$verbose)
   names(DEG_list) <- unlist(strsplit(names(DEG_targets), "_target"))
   parallel_list(X = names(DEG_list), FUN = write_DEG_output, workers = opt$cpu, DEG_list = DEG_list, opt = opt)
+  message("Execution successful. Writing parameters to ", params$output, "/execution_parameters.txt")
+  write_opt(opt = params, output = file.path(params$output, "execution_parameters.txt"))
 }
 
 load_DEG_list <- NULL
 if(length(load_targets) > 0) {
   message("Reading DEG results from disk")
   target_names <- unlist(strsplit(names(load_targets), "_target"))
-  load_DEG_list <- load_DEG_output(targets = target_names, load_path = opt$output,
+  load_DEG_list <- load_DEG_output(targets = target_names, load_path = opt$output, recalc_query = opt$recalc_query,
                                    min_avg_log2FC = opt$min_avg_log2FC, min_cell_proportion = opt$min_cell_proportion,
-                                   p_val_cutoff = opt$p_val_cutoff)
+                                   p_val_cutoff = opt$p_val_cutoff, seu = seu)
 }
 
 DEG_list <- c(DEG_list, load_DEG_list)
 DEG_targets <- c(DEG_targets, load_targets)
+write_opt(opt = params, output = file.path(params$output, "execution_parameters.txt"))
 
 message("--------------------------------------------")
 message("---------WRITING SC HUNTER REPORTS----------")
