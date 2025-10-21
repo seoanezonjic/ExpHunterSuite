@@ -8,8 +8,11 @@ load_DEG_output(
   targets,
   load_path,
   min_avg_log2FC,
+  p_val_cutoff,
+  recalc_query = FALSE,
   min_cell_proportion,
-  p_val_cutoff
+  seu,
+  query = NULL
 )
 }
 \arguments{
@@ -20,12 +23,23 @@ load_DEG_output(
 \item{min_avg_log2FC}{Average log2fc cutoff for significant DEGs.
 Default 0.5.}
 
+\item{p_val_cutoff}{Adjusted p-val cutoff for significant DEGs.
+Default 5e-3.}
+
+\item{recalc_query}{A boolean.
+\itemize{
+\item \code{TRUE}: Recalculate query metrics.
+\item \code{FALSE} (the default): Load query metrics.
+}}
+
 \item{min_cell_proportion}{Minimum threshold of percentage of cells
 expressing DEG. Despite Seurat::FindMarkers being called "min.pct", it is
 not a percentage but a value from 0 to 1.}
 
-\item{p_val_cutoff}{Adjusted p-val cutoff for significant DEGs.
-Default 5e-3.}
+\item{seu}{A seurat object. Only used if recalc_query is TRUE.}
+
+\item{query}{A string vector. Query to explore in DEG results. Will only
+be used if it differs from query used in saved analysis.}
 }
 \value{
 A DEG results list with identical structure to main_sc_Hunter

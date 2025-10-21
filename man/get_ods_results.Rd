@@ -2,8 +2,7 @@
 % Please edit documentation in R/DROP_functions.R
 \name{get_ods_results}
 \alias{get_ods_results}
-\title{Wrapper for DROP OUTRIDER results script.
-\code{get_ods_results} extracts the results from an ods object.}
+\title{Wrapper for DROP OUTRIDER results script.}
 \usage{
 get_ods_results(
   ods,
@@ -32,6 +31,5 @@ A list with two items. The first one, named "all", contains all
 results. The second one, "table", only contains significant results.
 }
 \description{
-Wrapper for DROP OUTRIDER results script.
 \code{get_ods_results} extracts the results from an ods object.
 }

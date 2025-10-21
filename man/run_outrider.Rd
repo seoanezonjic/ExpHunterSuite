@@ -2,9 +2,7 @@
 % Please edit documentation in R/DROP_functions.R
 \name{run_outrider}
 \alias{run_outrider}
-\title{Wrapper for DROP main OUTRIDER script.
-\code{run_outrider} takes a filtered Outrider dataset and runs the OUTRIDER
-algorithm on it.}
+\title{Wrapper for DROP main OUTRIDER script.}
 \usage{
 run_outrider(ods_unfitted, implementation, max_dim_proportion)
 }
@@ -21,7 +19,6 @@ dimension. Default 3, optimum for aberrant expression.}
 A fitted outrider dataset.
 }
 \description{
-Wrapper for DROP main OUTRIDER script.
 \code{run_outrider} takes a filtered Outrider dataset and runs the OUTRIDER
 algorithm on it.
 }

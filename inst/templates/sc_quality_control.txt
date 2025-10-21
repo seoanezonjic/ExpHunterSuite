@@ -38,7 +38,7 @@
 	}
 
 	aggregate_data <- function(data) {
-		res <- data.frame(table(data$qc))
+		res <- data.frame(table(data$filter))
 		colnames(res) <- c("Filter", "Ncells")
 		res$Filter <- as.character(res$Filter)
 		return(res)
