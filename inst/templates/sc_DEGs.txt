@@ -101,12 +101,12 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode DEG_summary, eval = length(DEG_list) > 0
-    cat("<div style = \"background-color:#ffca99; padding:10px;\">")
+    cat("<div style = \"background-color:#b3ecff; padding:10px;\">")
     cat(plotter$create_title(paste0("<b>DIFFERENTIAL EXPRESSION SUMMARY OF CELL GROUPS: TARGET ", toupper(comparison), "</b>"),
         "DEG_metrics", hlevel = 2, indexable = TRUE, clickable = FALSE, t_id = "DEG_metrics", clickable_text = ""))
-    cat("<p>These plots show an overview of the most significant DEGs across the entire dataset. They extract the top DEGs
-         from each individual cell group comparison, and then generate the union of these lists. This union is then used
-         in the plots shown below, representing FC values of these genes for every cell group DEG analysis.</p>")
+    cat("<p>These plots show an overview of the most significant DEGs across the entire dataset. The top DEGs from each individual
+        cell group comparison are extracted, and the union of these lists is calculated. This union is then used in the plots
+        shown below, representing FC values of these genes for every cell group DEG analysis.</p>")
     cat(paste0("<p>A minimum feature count filter has been applied in this step, which means DEGs considered",
                " for this plot follow stricter criteria. This was done in order to not overload the figure.</p>"))
     cat(paste0("<p>Only prevalent DEGs are shown in this plot.</p>"))
