@@ -403,6 +403,7 @@ filter_counts <- function(counts, txdb, fpkm_cutoff) {
 }
 
 #' Wrapper for DROP main OUTRIDER script.
+#'
 #' `run_outrider` takes a filtered Outrider dataset and runs the OUTRIDER
 #' algorithm on it.
 #' @inheritParams main_abgenes_Hunter
@@ -428,14 +429,95 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
   }
   Nsteps <- min(maxSteps, b)
   pars_q <- unique(round(exp(seq(log(5), log(b), length.out = Nsteps))))
-  ods_unfitted <- OUTRIDER::findEncodingDim(ods_unfitted, params = pars_q,
+  ods_unfitted <- findEncodingDim(ods_unfitted, params = pars_q,
                       implementation = implementation)
   ods <- OUTRIDER::OUTRIDER(ods_unfitted, implementation = implementation)
   message("outrider fitting finished")
   return(ods)   
 }
 
+#' find OUTRIDER encoding dimensions
+#'
+#' `findEncodingDim` Finds the optimal encoding dimension for a given data set
+#' by running a grid search based on the provided parameter set.
+#'
+#' @importFrom OUTRIDER estimateSizeFactors getBestQ
+#' @importFrom BiocParallel bplapply SerialParam bpparam
+#' @importFrom SummarizedExperiment assay
+#' @details This function has been copied from version 1.20.1 of package
+#' OUTRIDER, as it has been deleted in more modern versions. OUTRIDER 1.26.2
+#' has supposedly implemented a faster algorithm, but as 21/10/2025 it has not
+#' been incorporated into the DROP pipeline. Thus, we have been forced to
+#' copy the function until we have time to incorporate the new algorithm.
+#' Supposedly, OUTRIDER::findInjectZscore is the function we're looking for,
+#' but we cannot test it right now.
+#'
+#' @param ods An OutriderDataSet
+#' @param params Set of possible q values.
+#' @param freq Frequency of outlier, defaults to 1E-2
+#' @param zScore Set of possible injection Z-score, defaults to 3.
+#' @param sdlog Standard deviation of the sitribution on the log scale.
+#' @param lnorm If TRUE, the default, Z-scores are drawn from a log normal 
+#'             distribution with a mean of \code{log(zScore)} in log-scale.
+#' @param inj Injection strategy, by default 'both'.
+#' @param ... Further arguments passed on to the \code{controlForConfounders}
+#'             function.
+#' @param BPPARAM BPPARAM object by default bpparam().
+#'
+#' @return The optimal encoding dimension
+#'
+#' @examples
+#' ods <- makeExampleOutriderDataSet()
+#' encDimSearchParams <- c(5, 8, 10, 12, 15)
+#' zScoreParams <- c(2, 3, 5, 'lnorm')
+#' implementation <- 'autoencoder'
+#' register(MulticoreParam(4))
+#' \dontshow{
+#'     ods <- ods[1:12,1:12]
+#'     encDimSearchParams <- c(2)
+#'     zScoreParams <- c('lnorm')
+#'     register(SerialParam())
+#'     implementation <- 'pca'
+#' }
+#' ods1 <- findEncodingDim(ods, params=encDimSearchParams, 
+#'         implementation=implementation)
+#' plotEncDimSearch(ods1)
+#' 
+#' ods2 <- findInjectZscore(ods, zScoreParams=zScoreParams,
+#'         encDimParams=encDimSearchParams, implementation=implementation)
+#' plotEncDimSearch(ods2)
+#'
+#' @export
+
+findEncodingDim <- function(ods, 
+                    params=seq(2, min(100, ncol(ods) - 1, nrow(ods) - 1), 2),
+                    freq=1E-2, zScore=3, sdlog=log(1.6), lnorm=TRUE,
+                    inj='both', ..., BPPARAM=BiocParallel::bpparam()){
+    evalAutoCorr <- get_unexported_function("OUTRIDER", "evalAutoCorrection")
+    injectOutliers <- get_unexported_function("OUTRIDER", "injectOutliers")
+    val_ods <- get_unexported_function("OUTRIDER", "validateOutriderDataSet")
+    # compute auto Correction
+    ods <- OUTRIDER::estimateSizeFactors(ods)
+    ods <- injectOutliers(ods, freq=freq, zScore=zScore, inj=inj, lnorm=lnorm,
+                          sdlog=sdlog)
+    eval <- BiocParallel::bplapply(X=params, ..., BPPARAM=BPPARAM, 
+        FUN=function(i, ..., evalAucPRLoss=NA){
+            evalAutoCorr(ods, encoding_dim=i,
+                         BPPARAM=BiocParallel::SerialParam(), ...)})
+    metadata(ods)[['encDimTable']] <- data.table::data.table(
+            encodingDimension= params, evaluationLoss= unlist(eval), 
+            evalMethod='aucPR')
+    metadata(ods)[['optimalEncDim']] <- NULL
+    metadata(ods)[['optimalEncDim']] <- OUTRIDER::getBestQ(ods)
+    counts(ods) <- SummarizedExperiment::assay(ods, 'trueCounts')
+    val_ods(ods)
+    return(ods)
+}
+
+
+
 #' Wrapper for DROP OUTRIDER results script.
+#'
 #' `get_ods_results` extracts the results from an ods object.
 #' @inheritParams main_abgenes_Hunter
 #' @param ods A fitted outrider dataset.
