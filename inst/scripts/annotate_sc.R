@@ -110,7 +110,7 @@ option_list <- list(
               help = "Min cells per sample. Cells with fewer than this amount of cells will be discarded."),
   optparse::make_option("--min_cell_proportion", type = "numeric", default = 0.1,
               help = "Min percentage of cells expressing gene to consider it a marker."),
-    optparse::make_option("--min_counts", type = "numeric", default = 10,
+    optparse::make_option("--min_counts", type = "numeric", default = 0.5,
               help = "Counts needed to consider a gene as expressed in quality control."),
   optparse::make_option("--log2fc_threshold", type = "numeric", default = 0.25,
               help = "Min log-X-fold difference between groups to consider a gene as a marker.")
