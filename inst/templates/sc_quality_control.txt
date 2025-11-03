@@ -44,16 +44,46 @@
 		return(res)
 	}
 
-	get_densities <- function(matrix_list) {
-		res <- lapply(matrix_list, get_density)
+	get_matrix_densities <- function(matrix_list) {
+		res <- lapply(matrix_list, get_matrix_density)
 		return(res)
 	}
 
-	get_density <- function(counts) {
+	get_matrix_density <- function(counts) {
 		total <- prod(dim(counts))
 		zeroes <- sum(sparseMatrixStats::colCounts(counts, value = 0))
 		density <- zeroes/total
 		return(1 - density)
+	}
+
+	get_sample_densities <- function(seu, layer) {
+		counts <- Seurat::GetAssayData(seu, layer = layer)
+		sample_sums <- lapply(unique(seu$sample), function(sample) {
+			get_sample_sums(seu = seu, sample = sample, counts = counts)})
+		densities <- Reduce(function(df1, df2) merge(df1, df2, by = "gene", all = TRUE), sample_sums)
+		rownames(densities) <- densities$gene
+		densities[is.na(densities)] <- 0
+		densities <- densities[rowSums(densities[, -1]) > 0, ]
+		densities <- reshape2::melt(densities)
+		colnames(densities)[2] <- "variable"
+		return(densities)
+	}
+
+	get_sample_sums <- function(seu, sample, counts) {
+		cells <- rownames(seu@meta.data[seu@meta.data$sample == sample, ])
+		indices <- which(colnames(counts) %in% cells)
+		counts_distr <- Matrix::rowSums(counts[indices, ])
+		counts_distr <- data.frame(counts_distr)
+		colnames(counts_distr) <- sample
+		counts_distr <- log2(counts_distr + 1)
+		counts_distr$gene <- rownames(counts_distr)
+		return(counts_distr)
+	}
+
+	plot_cpm_density <- function(ggplot_obj) { 
+	   ggplot_obj + ggplot2::aes(x = value, colour = variable) +
+	   ggplot2::geom_density() + ggplot2::xlab(expression(log[2](counts + 1))) +
+	   ggplot2::geom_vline(xintercept = log2(plotter$hash_vars$opt$reads + 1))
 	}
 
 	metrics <- c("ncount_rna", "nfeature_rna", "percent.mt", "percent.rb")
@@ -85,6 +115,23 @@ Davis James McCarthy, John C Marioni, and Sarah A Teichmann. 2016.
                               t_id = "filter", clickable_text = ""))
 end.rcode-->
 
+<!--begin.rcode counts_distrib
+	saveRDS(plotter, "le_plotter.rds")
+	cat(plotter$create_title("Visualizing normalization results", id = "density_title", hlevel = 3,
+							 indexable = TRUE))
+	cat(paste0("<p>These density plots show the distributions of count data before and after normalization (shown for
+		normalization method", names(plotter$hash_vars$all_data_normalized)[1]))
+	cat(plotter$create_title("Representation of raw counts (layer \"counts\")", id = "raw_dens", hlevel = 4,
+							 indexable = FALSE))
+	plotter$hash_vars$raw_densities <- get_sample_densities(plotter$hash_vars$seu, "counts")
+	cat(plotter$static_ggplot_main("raw_densities", resizable = TRUE, header = NULL, row_names = NULL,
+          plotting_function = plot_cpm_density))
+		cat(plotter$create_title("Representation of normalized counts (layer \"data\")", id = "norm_dens", hlevel = 4,
+							 indexable = FALSE))
+	plotter$hash_vars$norm_densities <- get_sample_densities(plotter$hash_vars$seu, "data")
+	cat(plotter$static_ggplot_main("norm_densities", resizable = TRUE, header = NULL, row_names = NULL,
+          plotting_function = plot_cpm_density))
+end.rcode-->
 <!--begin.rcode Filter plots
 	cat(plotter$create_title("Filtering summary", "filter violin", hlevel = 2, indexable = FALSE,
 							  clickable = FALSE, clickable_text = ""))
@@ -125,7 +172,7 @@ end.rcode-->
 	qc_counts <- lapply(qc_layers, function(layer) Seurat::GetAssayData(qc, layer = layer))
 	names(qc_counts) <- paste0(qc_layers, "_raw")
 	counts_list <- c(seu_counts, qc_counts)
-	plotter$hash_vars$mat_stats <- as.data.frame(get_densities(counts_list))
+	plotter$hash_vars$mat_stats <- as.data.frame(get_matrix_densities(counts_list))
 	cat(plotter$create_title("Counts matrix density stats", "counts_stats", hlevel = 2, indexable = FALSE, clickable = FALSE, clickable_text = ""))
 	cat("<p> This table shows table density stats with a value between 0 and 1.
 		Single-Cell counts matrices should have very low values for this number, as most counts should be at zero. Only exception should be
