@@ -155,7 +155,6 @@ options(Seurat.object.assay.version = 'v5')
 ##########################################
 ## LOADING INPUT FILES
 ##########################################
-
 updated_params <- process_sc_params(params, mode = "annotation")
 opt <- updated_params$opt
 doublet_list <- updated_params$doublet_list
@@ -281,7 +280,6 @@ if((file.exists(final_counts_path) | file.exists(counts_rds_path)) & opt$integra
                       use_canvas = TRUE, opt = opt, params = params)
   }
 }
-
 message("--------------------------------------------")
 message("---------WRITING ANNOTATION REPORT----------")
 message("--------------------------------------------")
