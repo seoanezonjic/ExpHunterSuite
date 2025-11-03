@@ -138,7 +138,7 @@ end.rcode-->
 <!--begin.rcode density_distribution_cpm, echo = FALSE, warning=FALSE
 	cat(plotter$create_title("Visualizing normalization results", id = "density_title", hlevel = 3,
 							 indexable = TRUE))
-	cat(paste0("<p>These boxplots show the distributions of count data before and after normalization (shown for
+	cat(paste0("<p>These density plots show the distributions of count data before and after normalization (shown for
 		normalization method", names(plotter$hash_vars$all_data_normalized)[1]))
 	cat(plotter$create_title("Representation of cpm unfiltered data", id = "cpm_repr", hlevel = 4,
 							 indexable = FALSE))
