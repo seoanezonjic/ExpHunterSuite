@@ -83,7 +83,7 @@
 #'                   DEG_p_val_cutoff = 5e-3, min_cells_per_sample = 500,
 #'                   min_avg_log2FC = 0.5, k_weight = 90)
 #'  }
-#' @returns invisible(final_results list. Contains multiple items:
+#' @returns final results list. Contains multiple items:
 #' * qc: seurat object prior to filtering and analysis.
 #' * seu: processed seurat object.
 #' * markers: Data frame of marker genes.
