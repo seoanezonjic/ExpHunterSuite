@@ -1,13 +1,13 @@
 
-#' read_sc_counts
+#' Read counts from disk
 #'
 #' `read_sc_counts` creates a seurat object from cellranger counts
 #'
 #' @importFrom Seurat Read10X CreateSeuratObject
 #' @param name sample name
 #' @param input path to cellranger counts
-#' @param mincells min number of cells for which a feature is recorded
-#' @param minfeats min number of features for which a cell is recorded
+#' @param mincells min number of cells to consider a feature is expressed.
+#' @param minfeats min number of features for valid cells.
 #' @param exp_design experiment design table
 #' 
 #' @returns Seurat object
@@ -127,7 +127,12 @@ add_sc_design <- function(seu, name, exp_design){
     stop("Seurat object contains more than one sample. Please use ",
          "Seurat::AddMetaData")
   }
-  exp_design <- as.list(exp_design[exp_design$sample == name,])
+  exp_sample <- which(exp_design$sample == name)
+  if(length(exp_sample) < 1) {
+    stop("Sample is not present in experimental design. Please ensure ",
+         "it is properly formed and correct sample has been supplied.")
+  }
+  exp_design <- as.list(exp_design[exp_sample, ])
   seu <- Seurat::AddMetaData(object = seu, metadata = exp_design)
   return(seu)
 }
@@ -162,11 +167,13 @@ merge_seurat <- function(project_name, exp_design, count_path,
   full_paths <- Sys.glob(paste(count_path, suffix, sep = "/"))
   seu.list <- sapply(exp_design$sample, function(sample) {
     sample_path <- grep(sample, full_paths, value = TRUE)
-    d10x <- Seurat::Read10X(sample_path)
-    seu <- Seurat::CreateSeuratObject(counts = d10x, project = sample,
-                    min.cells = 1, min.features = 1)
-    seu <- add_sc_design(seu = seu, name = sample, exp_design = exp_design)
-    })
+    if(length(sample_path) < 1) {
+      warning("Sample ", sample, " is not among input paths. Skipping.")
+      res <- NULL
+    } else {
+      res <- read_sc_counts(input = sample_path, name = sample, mincells = 1,
+                            minfeats = 1, exp_design = exp_design)
+    }})
   merged_seu <- merge(seu.list[[1]], y = seu.list[-1],
                       add.cell.ids = exp_design$sample, project = project_name)
   merged_seu <- SeuratObject::JoinLayers(merged_seu)
@@ -1828,6 +1835,11 @@ process_sc_params <- function(params = list(), mode = "annotation") {
     params$top_N <- Inf
   }
   message("Analyzing ", params$name)
+  if(!is.null(params$input)) {
+    if(length(Sys.glob(params$input)) < 1) {
+      stop("No input directories exsist. Globbed expression was ", params$input)
+    }
+  }
   exp_design <- doublet_list <- NULL
   if(file.exists(params$exp_design)) {
     params$exp_design <- read.table(params$exp_design, sep = "\t",
