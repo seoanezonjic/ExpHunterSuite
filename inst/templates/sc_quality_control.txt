@@ -72,7 +72,7 @@
 	get_sample_sums <- function(seu, sample, counts) {
 		cells <- rownames(seu@meta.data[seu@meta.data$sample == sample, ])
 		indices <- which(colnames(counts) %in% cells)
-		counts_distr <- Matrix::rowSums(counts[indices, ])
+		counts_distr <- Matrix::rowSums(counts[, indices])
 		counts_distr <- data.frame(counts_distr)
 		colnames(counts_distr) <- sample
 		counts_distr <- log2(counts_distr + 1)
@@ -116,7 +116,6 @@ Davis James McCarthy, John C Marioni, and Sarah A Teichmann. 2016.
 end.rcode-->
 
 <!--begin.rcode counts_distrib
-	saveRDS(plotter, "le_plotter.rds")
 	cat(plotter$create_title("Visualizing normalization results", id = "density_title", hlevel = 3,
 							 indexable = TRUE))
 	cat(paste0("<p>These density plots show the distributions of count data before and after normalization (shown for
@@ -126,7 +125,7 @@ end.rcode-->
 	plotter$hash_vars$raw_densities <- get_sample_densities(plotter$hash_vars$seu, "counts")
 	cat(plotter$static_ggplot_main("raw_densities", resizable = TRUE, header = NULL, row_names = NULL,
           plotting_function = plot_cpm_density))
-		cat(plotter$create_title("Representation of normalized counts (layer \"data\")", id = "norm_dens", hlevel = 4,
+	cat(plotter$create_title("Representation of normalized counts (layer \"data\")", id = "norm_dens", hlevel = 4,
 							 indexable = FALSE))
 	plotter$hash_vars$norm_densities <- get_sample_densities(plotter$hash_vars$seu, "data")
 	cat(plotter$static_ggplot_main("norm_densities", resizable = TRUE, header = NULL, row_names = NULL,
