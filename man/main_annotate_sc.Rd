@@ -173,7 +173,7 @@ If the \code{slot} parameter is "scale.data" no filtering is performed.}
 expressed.}
 }
 \value{
-invisible(final_results list. Contains multiple items:
+final results list. Contains multiple items:
 \itemize{
 \item qc: seurat object prior to filtering and analysis.
 \item seu: processed seurat object.

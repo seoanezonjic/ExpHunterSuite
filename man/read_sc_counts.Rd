@@ -2,7 +2,7 @@
 % Please edit documentation in R/sc_library.R
 \name{read_sc_counts}
 \alias{read_sc_counts}
-\title{read_sc_counts}
+\title{Read counts from disk}
 \usage{
 read_sc_counts(name, input, mincells = 1, minfeats = 1, exp_design)
 }
@@ -11,9 +11,9 @@ read_sc_counts(name, input, mincells = 1, minfeats = 1, exp_design)
 
 \item{input}{path to cellranger counts}
 
-\item{mincells}{min number of cells for which a feature is recorded}
+\item{mincells}{min number of cells to consider a feature is expressed.}
 
-\item{minfeats}{min number of features for which a cell is recorded}
+\item{minfeats}{min number of features for valid cells.}
 
 \item{exp_design}{experiment design table}
 }
