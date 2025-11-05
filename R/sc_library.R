@@ -60,6 +60,7 @@ read_sc_counts <- function(name, input, mincells = 1, minfeats = 1, exp_design){
 
 tag_qc <- function(seu, minqcfeats = 500, percentmt = 5, doublet_list = NULL,
                    min_cells_per_sample = 500){
+  # TODO: Add low read filter
   seu$percent.mt <- Seurat::PercentageFeatureSet(seu, pattern = "(?i)^MT-")
   seu$percent.rb <- Seurat::PercentageFeatureSet(seu, pattern = "(?i)^RP[SL]")
   colnames(seu@meta.data) <- tolower(colnames(seu@meta.data))
@@ -1441,6 +1442,7 @@ extract_metadata <- function(seu){
 
 run_scDblFinder <- function(seu, assay = "counts", includePCs = 10,
                             nfeatures = 2000, BPPARAM = NULL) {
+  # TODO: Remove low read cells before running scDblFinder
   sce <- Seurat::as.SingleCellExperiment(seu, assay = assay)
   sce <- scDblFinder::scDblFinder(sce, clusters = FALSE, nfeatures = nfeatures,
                                   includePCs = includePCs, BPPARAM = BPPARAM)
@@ -1861,7 +1863,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
     params$target_genes <- strsplit(params$target_genes, split = ";")[[1]]
     dupes <- duplicated(params$target_genes)
     if(any(dupes)) {
-      warn_dupes <- paste(params$target_genes[dupes], sep = ", ")
+      warn_dupes <- paste(params$target_genes[dupes], collapse = ", ")
       warning("Removing duplicates of gene ", warn_dupes, " from query.")
       params$target_genes <- params$target_genes[!dupes]
     }
