@@ -1,26 +1,5 @@
 
 <!--begin.rcode setup
-    comparison <- plotter$hash_vars$target_name
-    opt <- plotter$hash_vars$opt
-    query <- plotter$hash_vars$query
-    DEG_list <- plotter$hash_vars$DEG_list
-    comparison_meta <- DEG_list$DEGs$meta
-    DEG_legend <- paste0("<p>", comparison_meta$high, " (positive log2FC) vs ",
-                         comparison_meta$low, " (negative log2FC). </p>")
-    DEG_metrics_list <- plotter$hash_vars$DEG_metrics_list
-    DEG_query_list <- plotter$hash_vars$DEG_query_list
-    globals <- plotter$hash_vars$DEG_list$DEGs$markers$global
-    prevalent_list <- globals$gene[globals$prevalent]
-    comparison_metrics <- DEG_list$DEG_metrics
-    query_metrics <- DEG_list$DEG_query
-    comparison_FCs <- comparison_metrics$DEG_df
-    comparison_ncells <- comparison_metrics$ncell_df
-    comparison_FCs <- comparison_FCs[, colnames(comparison_FCs) %in% prevalent_list, drop = FALSE]
-    comparison_ncells <- comparison_ncells[, colnames(comparison_ncells) %in% prevalent_list, drop = FALSE]
-    plotter$hash_vars$comparison_FCs <- comparison_FCs
-    plotter$hash_vars$comparison_ncells <- comparison_ncells
-    comparison_DEGs <- DEG_list$DEGs
-
     DEGs_volcano <- function(input_DEGs) {
        alphas <- apply(input_DEGs[, c("pct.1","pct.2")], 1, function(x) return(max(x)))
        EnhancedVolcano::EnhancedVolcano(input_DEGs, lab = rownames(input_DEGs), title = DEG_level, x = 'avg_log2FC',
@@ -35,6 +14,34 @@
         }
         return(res)
     }
+
+    get_prevalent_list <- function(DEG_list) {
+        DEGs <- DEG_list$DEGs$markers
+        DEGs <- DEGs[names(DEGs) != "global"]
+        prevalent_list <- lapply(DEGs, function(df) return(rownames(df[df$DEG, ])))
+        res <- unique(unlist(prevalent_list))
+        return(res)
+    }
+
+    comparison <- plotter$hash_vars$target_name
+    opt <- plotter$hash_vars$opt
+    query <- plotter$hash_vars$query
+    DEG_list <- plotter$hash_vars$DEG_list
+    comparison_meta <- DEG_list$DEGs$meta
+    DEG_legend <- paste0("<p>", comparison_meta$high, " (positive log2FC) vs ",
+                         comparison_meta$low, " (negative log2FC). </p>")
+    DEG_metrics_list <- DEG_list$DEG_metrics
+    DEG_query_list <- plotter$hash_vars$DEG_query_list
+    globals <- plotter$hash_vars$DEG_list$DEGs$markers$global
+    prevalent_list <- get_prevalent_list(DEG_list)
+    query_metrics <- DEG_list$DEG_query
+    comparison_FCs <- DEG_metrics_list$DEG_df
+    comparison_ncells <- DEG_metrics_list$ncell_df
+    comparison_FCs <- comparison_FCs[, colnames(comparison_FCs) %in% prevalent_list, drop = FALSE]
+    comparison_ncells <- comparison_ncells[, colnames(comparison_ncells) %in% prevalent_list, drop = FALSE]
+    plotter$hash_vars$comparison_FCs <- comparison_FCs
+    plotter$hash_vars$comparison_ncells <- comparison_ncells
+    comparison_DEGs <- DEG_list$DEGs
 
 end.rcode-->
 
