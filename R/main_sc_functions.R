@@ -169,6 +169,8 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
     seu <- Seurat::ScaleData(object = seu, verbose = verbose)
     message("Scaling time: ", Sys.time() - scale_start)
     message('Reducing dimensionality')
+    ## TO DO: See if Lapacian Eigendecomposition improves UMAP
+    ## (https://satijalab.org/seurat/reference/rungraphlaplacian)
     seu <- Seurat::RunPCA(seu, assay = assay, npcs = ndims, verbose = verbose)
     reduction <- "pca"
     if(new_opt$integrate) {
