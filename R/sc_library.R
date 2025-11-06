@@ -1868,7 +1868,11 @@ process_sc_params <- function(params = list(), mode = "annotation") {
       params$target_genes <- params$target_genes[!dupes]
     }
   }
-  opt_file <- file.path(params$output, "execution_parameters.txt")
+  if(!is.null(params$output)) {
+    opt_file <- file.path(params$output, "execution_parameters.txt")
+  } else {
+    opt_file <- ""
+  }
   if(file.exists(opt_file)) {
     last_query <- grep("target_genes", readLines(opt_file), value = TRUE)
     last_query <- strsplit(strsplit(last_query, ": ")[[1]][2], ";")[[1]]
