@@ -174,8 +174,6 @@ end.rcode-->
     if(is.null(query_metrics)) {
         cat(paste0("<p>Query DEG analysis was not possible for analysis ", comparison, ".<p>"))
     } else {
-        plotter$hash_vars$comparison_FCs <- query_metrics$DEG_df
-        plotter$hash_vars$comparison_ncells <- query_metrics$ncell_df
         cat(plotter$create_title(paste0("<b>DEG QUERY SUMMARY FOR TARGET ", toupper(comparison), "</b>"), paste0(comparison, "_DEG_query"), hlevel = 2,
                      indexable = TRUE, clickable = FALSE, t_id = paste0(comparison, "_DEG_query"), clickable_text = ""))
         cat("<p>Both prevalent and non-prevalent DEGs are shown in this plot</p>")
@@ -183,10 +181,12 @@ end.rcode-->
             cat(paste0("<p> No significant DEGs found for target ", comparison, ".</p>"))
         } else {
             cat(DEG_legend)
-            fc <- plotter$heatmap(list(id = "comparison_FCs", header = NULL, row_names = NULL, text = "dynamic",
+            plotter$hash_vars$query_FCs <- query_metrics$DEG_df
+            plotter$hash_vars$query_ncells <- query_metrics$ncell_df
+            fc <- plotter$heatmap(list(id = "query_FCs", header = NULL, row_names = NULL, text = "dynamic",
                                   x_label = "log2FC", transpose = FALSE, title = "Gene average log2FC vs cells expressing gene"))
-            fc_vs_ncells <- plotter$heatmap(list(id = "comparison_FCs", header = NULL, row_names = NULL, text = "dynamic",
-                    extra_data = list(id ="comparison_ncells", header = NULL, row_names = NULL, text = "dynamic", transpose = FALSE),
+            fc_vs_ncells <- plotter$heatmap(list(id = "query_FCs", header = NULL, row_names = NULL, text = "dynamic",
+                    extra_data = list(id ="query_ncells", header = NULL, row_names = NULL, text = "dynamic", transpose = FALSE),
                     config = list(sizeLegendTitle = "Cell %"), x_label = "log2FC",
                     title = "Gene average log2FC vs cell % expressing gene", transpose = FALSE))
             grid_code <- paste(list(fc, fc_vs_ncells), collapse = "\n\n")
