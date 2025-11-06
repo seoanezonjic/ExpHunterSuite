@@ -665,7 +665,7 @@ test_that("test process_sc_params, annotation mode", {
                  sketch = TRUE, sketch_pct = 0.25, force_ncells = "",
                  sketch_method = "LeverageScore", extra_columns = "one;two",
                  k_weight = 100, genome = "hg38", exp_design = "",
-                 subset_by = "", cpu = "2", input = "empty_dir",
+                 subset_by = "", cpu = "2", input = NULL,
                  suffix = "suffix", imported_counts = "",
                  cluster_annotation = "", cell_annotation = "",
                  SingleR_ref = "SingleR_ref", ref_version = "1",
@@ -683,6 +683,9 @@ test_that("test process_sc_params, annotation mode", {
   expected$opt$ref_filter <- NULL
   expected$opt <- expected$opt[order(names(expected$opt))]
   expected$opt$meta_file <- ""
+  expected$opt$recalc_query <- FALSE
+  output$opt <- output$opt[order(names(output$opt))]
+  expected$opt <- expected$opt[order(names(expected$opt))]
   expect_equal(output, expected)
 })
 
@@ -712,6 +715,7 @@ test_that("test process_sc_params, DEG mode", {
   expected$opt$imported_counts <- ""
   expected$opt$meta_file <- ""
   expected$opt$top_N <- NA
+  expected$opt$recalc_query <- FALSE
   output$opt <- output$opt[order(names(output$opt))]
   expected$opt <- expected$opt[order(names(expected$opt))]
   expect_equal(output, expected)
@@ -739,6 +743,7 @@ test_that("test process_sc_params, query mode", {
   expected$opt$imported_counts <- ""
   expected$opt$meta_file <- ""
   expected$opt$top_N <- NA
+  expected$opt$recalc_query <- FALSE
   output$opt <- output$opt[order(names(output$opt))]
   expected$opt <- expected$opt[order(names(expected$opt))]
   expect_equal(output, expected)
