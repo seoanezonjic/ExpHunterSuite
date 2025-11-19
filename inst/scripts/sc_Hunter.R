@@ -4,6 +4,8 @@
 option_list <- list(
   optparse::make_option(c("-n", "--name"), type = "character", default = NULL,
             help = "Experiment name."),
+  optparse::make_option(c("-D", "--DE_method"), type = "character", default = NULL,
+            help = "DE method to use."),
   optparse::make_option("--targets_folder", type = "character", default = "",
             help = "Directory containing target files"),
   optparse::make_option("--p_val_cutoff", type = "numeric", default = "5e-3",
@@ -71,9 +73,10 @@ if(opt$targets_folder == "" | !file.exists(opt$targets_folder)) {
 }
 
 load_targets <- list()
+
 for(target in names(DEG_targets)) {
-  path <- file.path(opt$output, "DEG", gsub("_target", "", target))
-  if(file.exists(path)) {
+  temp_dir <- file.path(opt$output, "DEG", gsub("_target", "", target), "temp", opt$DE_method)
+  if(file.exists(temp_dir)) {
     load_targets <- c(load_targets, DEG_targets[names(DEG_targets) == target])
     DEG_targets <- DEG_targets[names(DEG_targets) != target]
   }
@@ -96,7 +99,7 @@ if(length(DEG_targets) > 0) {
   DEG_list <- parallel_list(X = DEG_targets, FUN = main_sc_Hunter, workers = opt$cpu, seu = seu,
                             p_val_cutoff = opt$p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
                             min_cell_proportion = opt$min_cell_proportion, top = opt$top_N,
-                            query = opt$target_genes, output_path = opt$output,
+                            query = opt$target_genes, output_path = opt$output, DE_method = opt$DE_method,
                             min_counts = opt$min_counts, verbose = opt$verbose)
   names(DEG_list) <- unlist(strsplit(names(DEG_targets), "_target"))
   parallel_list(X = names(DEG_list), FUN = write_DEG_output, workers = opt$cpu, DEG_list = DEG_list, opt = opt)
@@ -106,11 +109,11 @@ if(length(DEG_targets) > 0) {
 
 load_DEG_list <- NULL
 if(length(load_targets) > 0) {
-  message("Reading DEG results from disk")
+  message("Reading DEG temp files from disk")
   target_names <- unlist(strsplit(names(load_targets), "_target"))
   load_DEG_list <- load_DEG_output(targets = target_names, load_path = opt$output, recalc_query = opt$recalc_query,
                                    min_avg_log2FC = opt$min_avg_log2FC, min_cell_proportion = opt$min_cell_proportion,
-                                   p_val_cutoff = opt$p_val_cutoff, seu = seu)
+                                   p_val_cutoff = opt$p_val_cutoff, seu = seu, DE_method = opt$DE_method)
 }
 
 DEG_list <- c(DEG_list, load_DEG_list)
