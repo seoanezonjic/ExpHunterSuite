@@ -12,7 +12,7 @@ option_list <- list(
   optparse::make_option(c("-r", "--replicates"), type="integer", default=3,
     help="Number of replicates for control/treatment group. Default: %default"),
   optparse::make_option(c("-n", "--ngenes"), type="integer", default=20000,
-    help="Number of genes. Default : %default"),
+    help="Number of genes in simulated dataset. Number in final dataset might be lower due to filtering. Default : %default"),
   optparse::make_option(c("-d", "--DEGs_proportion"), type="double", 
     default=0.2,
     help=paste0("Proportion of differentially expressed genes (DEGs).",
@@ -36,11 +36,6 @@ option_list <- list(
       " be generated")),
   optparse::make_option(c("--dataset"), type = "character", default = "B_625_625",
     help = "A name or identifier for the data set/simulation settings."),
-  optparse::make_option(c("--n.vars"), type = "integer", default = 12500,
-    help = paste("The initial number of genes in the simulated data set. Based",
-                 "on the filtering conditions (‘filter.threshold.total’ and",
-                 "‘filter.threshold.mediancpm’), the number of genes in the",
-                 "final data set may be lower than this number.", sep = "\n")),
   optparse::make_option("--samples.per.cond", type = "integer", default = 5,
     help = "The number of samples in each of the two conditions"),
   optparse::make_option("--n.diffexp", type = "integer", default = NULL,
@@ -209,7 +204,7 @@ if(opt$mode == "classic") {
 }
 
 if(opt$mode == "compcodeR") {
-  generate_synth_DEGs(dataset = opt$dataset, n.vars = opt$n.vars, samples.per.cond = opt$samples.per.cond,
+  generate_synth_DEGs(dataset = opt$dataset, n.vars = opt$ngenes, samples.per.cond = opt$samples.per.cond,
         n.diffexp = opt$n.diffexp, repl.id = opt$repl.id, seqdepth = opt$seqdepth, fraction.upregulated = opt$fraction.upregulated,
         between.group.diffdisp = opt$between.group.diffdisp, filter.threshold.total = opt$filter.threshold.total,
         filter.threshold.mediancpm = opt$filter.threshold.mediancpm, fraction.non.overdispersed = opt$fraction.non.overdispersed,
