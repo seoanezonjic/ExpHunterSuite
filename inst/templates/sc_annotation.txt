@@ -1,5 +1,8 @@
 
 <!--begin.rcode setup
+    if(!is.null(plotter$hash_vars$SingleR_annotation)) {
+        saveRDS(plotter, "SingleR_plotter.rds")
+    }
     colGEX <- c("grey85", "#FEE5D9", "#FCBBA1", "#FC9272", "#FB6A4A", "#EF3B2C", "#CB181D", "#99000D")
     opt <- plotter$hash_vars$opt
     subset_by <- plotter$hash_vars$subset_by
@@ -40,7 +43,7 @@
 
     Custom_DimPlot <- function(seu) {
         ident <- ifelse("cell_type" %in% colnames(seu@meta.data),
-                        yes = "cell_type", no = "cluster")
+                        yes = "cell_type", no = "seurat_clusters")
         Seurat::Idents(seu) <- seu@meta.data[[ident]]
         res <- Seurat::DimPlot(seu, reduction = reduction, label = label, repel = TRUE, split.by = split.by,
                         group.by = group.by) 
@@ -137,7 +140,9 @@
         rownames(final_medians) <- final_medians[, 1]
         return(list(final_medians = final_medians, globals = globals))
     }
-plotter$hash_vars$seu@meta.data$cell_type[is.na(plotter$hash_vars$seu@meta.data$cell_type)] <- "Pruned"
+    meta <- plotter$hash_vars$seu@meta.data
+    if(!is.null(meta$cell_type)) meta$cell_type[is.na(meta$cell_type)] <- "Pruned"
+    plotter$hash_vars$seu@meta.data <- meta
 end.rcode-->
 
 <h1><strong>SINGLE CELL RNA-SEQ ANNOTATION ANALYSIS</strong></h1>
@@ -162,7 +167,7 @@ end.rcode-->
                                                   config = list(smpOverlays = names(sample_heatmap_overlay)))), preset = "magic"))
 end.rcode-->
 
-<!--begin.rcode canon_markers, eval = !is.null(plotter$hash_vars$cell_annotation)
+<!--begin.rcode canon_markers, eval = plotter$hash_vars$cell_annotation != ""
     elements <- unique(plotter$hash_vars$cell_annotation$type)
     collapse_list <- vector(mode = "character", length = length(elements) + 2)
     names(collapse_list) <- c("paragraph", "subtitle", elements)
