@@ -392,9 +392,9 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   return(res)
 }
 
-.get_subset_DEGs <- function(seu, subset_by, cond, sub_value, conds,
-        logfc.threshold = 0, min.pct, clust_num, verbose = FALSE,
-        layer = "data", p_val_cutoff = 1, simple_DEG_pct = FALSE) {
+.get_subset_DEGs <- function(seu, subset_by, cond, sub_value, conds, min.pct,
+  DE_method = "wilcox", logfc.threshold = 0, clust_num, verbose = FALSE,
+  layer = "data", p_val_cutoff = 1, simple_DEG_pct = FALSE) {
   subset_seu <- subset_seurat(seu, subset_by, sub_value)
   meta <- as.character(subset_seu@meta.data[[cond]])
   ncells <- c(sum(meta==conds[1]), sum(meta==conds[2]))
@@ -407,8 +407,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
   } else {
     Seurat::Idents(subset_seu) <- cond  
     markers <- Seurat::FindMarkers(subset_seu, ident.1 = conds[1],
-        logfc.threshold = logfc.threshold, ident.2 = conds[2],
-        verbose = verbose, min.pct = min.pct, layer = layer)
+        logfc.threshold = logfc.threshold, ident.2 = conds[2], layer = layer,
+        test.use = DE_method, verbose = verbose, min.pct = min.pct)
     if(!simple_DEG_pct) {
       pct_cols <- grep("pct", colnames(markers))
       pct_keep <- apply(markers[pct_cols], 1,
@@ -429,7 +429,7 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 
 .get_subset_markers <- function(seu, subset_by, cond, conds, DEG, verbose,
     p_val_cutoff, min.pct, assay, logfc.threshold, layer = "data",
-    simple_DEG_pct = FALSE){
+    simple_DEG_pct = FALSE, DE_method = "wilcox"){
   sub_values <- as.character(sort(unique(seu@meta.data[[subset_by]])))
   sub_markers <- vector(mode = "list", length = length(sub_values))
   names(sub_markers) <- as.character(sub_values)
@@ -439,7 +439,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
       markers <- .get_subset_DEGs(seu = seu, subset_by = subset_by, cond = cond,
     sub_value = sub_values[i], conds = conds, min.pct = min.pct, clust_num = i,
     verbose = verbose, layer = layer, simple_DEG_pct = simple_DEG_pct,
-    logfc.threshold = logfc.threshold, p_val_cutoff = p_val_cutoff)
+    logfc.threshold = logfc.threshold, p_val_cutoff = p_val_cutoff,
+    DE_method = DE_method)
     } else {
       markers <- Seurat::FindConservedMarkers(seu, ident.1 = sub_values[i],
                           grouping.var = cond, verbose = verbose, assay = assay,
@@ -465,9 +466,9 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 
 .get_global_DEGs <- function(seu, cond, conds, min.pct = 0.1, verbose = FALSE,
                logfc.threshold = 0.25, layer = "data", simple_DEG_pct = FALSE,
-               p_val_cutoff = p_val_cutoff){
+               p_val_cutoff = p_val_cutoff, DE_method = "wilcox"){
   Seurat::Idents(seu) <- seu@meta.data[, tolower(cond)]
-  globals <- Seurat::FindMarkers(seu, ident.1 = conds[1],
+  globals <- Seurat::FindMarkers(seu, ident.1 = conds[1], test.use = DE_method,
         logfc.threshold = logfc.threshold, min.pct = min.pct,
         ident.2 = conds[2], verbose = verbose, layer = layer)
   globals <- globals[globals$p_val_adj <= p_val_cutoff, , drop = FALSE]
@@ -538,23 +539,23 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #'                subset_by = "seurat_clusters")
 #' @export
 
-get_sc_markers <- function(seu, cond = NULL, subset_by, DEG = FALSE,
-      logfc.threshold = 0.25, verbose = FALSE, assay = "RNA", values = NULL,
-      min.pct = 0.1, layer = "data", p_val_cutoff = 1, simple_DEG_pct = FALSE) {
+get_sc_markers <- function(seu, cond = NULL, DEG = FALSE, DE_method = "wilcox",
+  verbose = FALSE, logfc.threshold = 0.25, simple_DEG_pct = FALSE, subset_by,
+  assay = "RNA", values = NULL, p_val_cutoff = 1, min.pct = 0.1, layer = "data") {
   conds <- .extract_conditions(metadata = seu@meta.data, cond = cond,
                                values = values)
   marker_meta <- list(high = paste0(cond, ": ", conds[1]),
                       low = paste0(cond, ": ", conds[2]))
-  sub_markers <- .get_subset_markers(seu = seu, subset_by = subset_by,
-    p_val_cutoff = p_val_cutoff, conds = conds, cond = cond, DEG = DEG,
-    verbose = verbose, min.pct = min.pct, assay = assay, layer = layer,
+  sub_markers <- .get_subset_markers(seu =seu, DEG = DEG, DE_method = DE_method,
+    min.pct = min.pct, verbose = verbose, subset_by = subset_by, layer = layer,
+    conds = conds, p_val_cutoff = p_val_cutoff, assay = assay, cond = cond,
     simple_DEG_pct = simple_DEG_pct, logfc.threshold = logfc.threshold)
   if(DEG) {
     message("Calculating global DEGs")
     sub_markers[["global"]] <- .get_global_DEGs(seu = seu, cond = cond,
         logfc.threshold = logfc.threshold, conds = conds, min.pct = min.pct,
         p_val_cutoff = p_val_cutoff, verbose = verbose, layer = layer,
-        simple_DEG_pct = simple_DEG_pct)
+        simple_DEG_pct = simple_DEG_pct, DE_method = DE_method)
   }
   if(all(c("cell_type", "seurat_clusters") %in% colnames(seu@meta.data))) {
     metadata <- unique(seu@meta.data[, c("seurat_clusters", "cell_type")])
@@ -1538,14 +1539,14 @@ annotate_seurat <- function(seu, cell_annotation = NULL, logfc.threshold = 0.1,
   verbose = FALSE, assay = "RNA", integrate = FALSE, min.pct = 0.1,
   layer = "data") {
   res <- NULL
-  if(!is.null(cell_annotation)) {
+  if(is.data.frame(cell_annotation)) {
     message("Dynamically annotating clusters")
     res <- annotate_clusters(seu = seu, subset_by = subset_by, assay = assay,
       integrate = integrate, idents = "seurat_clusters", verbose = verbose,
       p_adj_cutoff = p_adj_cutoff, cell_annotation = cell_annotation,
       layer = layer)
   } else {
-  if(!is.null(cluster_annotation)){
+  if(is.data.frame(cluster_annotation)){
     message("Clusters annotation file provided. Renaming clusters")
     seu <- rename_clusters(seu = seu,
                            new_clusters = cluster_annotation$name)
@@ -1592,7 +1593,7 @@ annotate_SingleR <- function(seu, SingleR_ref = NULL, ref_n = 25,
                              fine.tune = TRUE, assay = "RNA", verbose = FALSE,
                              subset_by = NULL){
   SingleR_start <- Sys.time()
-  counts_matrix <- Seurat::GetAssayData(seu, assay = assay)
+  counts_matrix <- SeuratObject::GetAssayData(seu, assay = assay)
   SingleR_annotation <- SingleR::SingleR(test = counts_matrix,
     ref = SingleR_ref, labels = SingleR_ref[[ref_label]], de.n = ref_n,
     de.method = ref_de_method, BPPARAM = BPPARAM, aggr.ref = aggr.ref,
@@ -1833,12 +1834,13 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   }
   if(mode == "DEG") {
     params$extra_columns <- ""
+    if(params$DE_method == "") params$DE_method <- "wilcox"
   } else {
     params$top_N <- Inf
   }
   message("Analyzing ", params$name)
   if(!is.null(params$input)) {
-    if(length(Sys.glob(params$input)) < 1) {
+    if(length(Sys.glob(params$input)) < 1 & is.null(params$imported_counts)) {
       stop("No input directories exsist. Globbed expression was ", params$input)
     }
   }
@@ -1998,7 +2000,7 @@ filter_sc_counts <- function(object, layers = "data", min_counts) {
 }
 
 .filter_layer <- function(object, layer, min_counts) {
-  expr <- GetAssayData(object, "RNA", layer)
+  expr <- SeuratObject::GetAssayData(object, "RNA", layer)
   expr_genes <- sum(expr > 0)
   expr@x[expr@x < min_counts] <- 0
   expr <- Matrix::drop0(expr)

@@ -265,7 +265,7 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
 main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
   simple_DEG_pct = FALSE, min_avg_log2FC = 0.5, min_counts = 0.5, query = NULL,
   verbose = FALSE, min_cell_proportion = 0.01, output_path = getwd(),
-  top = NULL) {
+  top = NULL, DE_method = "wilcox") {
   message('Starting DEG analysis.')
   subset_target <- ifelse("cell_type" %in% colnames(seu@meta.data),
                            yes = "cell_type", no = "seurat_clusters")
@@ -276,13 +276,13 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
   DEG_query <- NULL
   seu <- .add_target_info(seu = seu, DEG_target = DEG_target)
   DEGs <- get_sc_markers(seu = seu, cond = "deg_group", DEG = TRUE,
-    logfc.threshold = 0.5, subset_by = subset_target,
+    logfc.threshold = 0.5, subset_by = subset_target, DE_method = DE_method,
     p_val_cutoff = 0.05, verbose = verbose, values = "Ctrl,Treat",
     min.pct = 0.1)
   DEGs$markers <- lapply(DEGs$markers, function(DEG_df) {
                    tag_DEGs(DEG_df = DEG_df, p_val_cutoff = p_val_cutoff,
-                   min_cell_proportion = min_cell_proportion,
-                   min_avg_log2FC = min_avg_log2FC)
+                            min_cell_proportion = min_cell_proportion,
+                            min_avg_log2FC = min_avg_log2FC)
                   })
   message("Extracting DEG cell metrics")
   DEG_metrics <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
@@ -411,42 +411,56 @@ write_DEG_output <- function(name, DEG_list, opt = NULL){
   if(is.null(opt$output)) {
       opt$output <- getwd()
   }
-  output <- file.path(opt$output, "DEG", name)
-  if(!file.exists(output)) {
-    dir.create(output, recursive = TRUE)
+  target_output <- file.path(opt$output, "DEG", name)
+  temp_dir <- file.path(target_output, "temp", opt$DE_method)
+  res_dir <- file.path(target_output, paste0("Results_", opt$DE_method))
+  if(!file.exists(temp_dir)) {
+    dir.create(temp_dir, recursive = TRUE)
   }
-  message("Writing DEG metrics")
+  if(!file.exists(res_dir)) {
+    dir.create(res_dir, recursive = TRUE)
+  }
+  write_temp_files(DEG_results, temp_dir)
+  write_DEG_results(DEG_results, res_dir)
+  message("Writing temp files for future report rescue")
+}
+
+write_DEG_results <- function(DEG_results, out_dir = getwd()) {
+  message("WIP")
+}
+
+write_temp_files <- function(DEG_results, out_dir = getwd()) {
   meta <- DEG_results$DEGs$meta
   markers <- DEG_results$DEGs$markers
   DEG_df <- DEG_results$DEG_metrics$DEG_df
   ncell_df <- DEG_results$DEG_metrics$ncell_df
   query <- DEG_results$DEG_query
   write.table(meta, sep = "\t", quote = FALSE, row.names = FALSE,
-              file = file.path(output, "meta.tsv"))
+              file = file.path(out_dir, "meta.tsv"))
   if(!is.null(DEG_df)) {
     if(nrow(DEG_df) > 0) {
       write.table(DEG_df, sep = "\t", quote = FALSE, row.names = TRUE,
-                  file = file.path(output, "DEG_df.tsv"))
+                  file = file.path(out_dir, "DEG_df.tsv"))
     }
   }
   if(!is.null(ncell_df)) {
     if(nrow(ncell_df) > 0) {
       write.table(ncell_df, sep = "\t", quote = FALSE, row.names = TRUE,
-                  file = file.path(output, "ncell_df.tsv"))
+                  file = file.path(out_dir, "ncell_df.tsv"))
     }
   }
   if(!is.null(query)) {
     message("Writing query DEG analysis")
     write.table(query$DEG_df, sep = "\t", quote = FALSE, row.names = TRUE,
-              file = file.path(output, "query_DEG_df.tsv"))
+              file = file.path(out_dir, "query_DEG_df.tsv"))
     write.table(query$ncell_df, sep = "\t", quote = FALSE, row.names = TRUE,
-              file = file.path(output, "query_ncell_df.tsv"))
+              file = file.path(out_dir, "query_ncell_df.tsv"))
   }
   message("Writing full DEG tables")
   lapply(names(markers), function(x){
-    .write_deg_table(deg = markers, name = x, output = output)
+    .write_deg_table(deg = markers, name = x, output = out_dir)
   })
-  message("Results saved to ", output)
+  message("Temp files saved")
   return(invisible(NULL))
 }
 
@@ -473,18 +487,18 @@ write_DEG_output <- function(name, DEG_list, opt = NULL){
 
 load_DEG_output <- function(targets, load_path, min_avg_log2FC, p_val_cutoff,
                             recalc_query = FALSE, min_cell_proportion, seu,
-                            query = NULL) {
+                            query = NULL, DE_method = "wilcox") {
   res <- vector(mode = "list", length = length(targets))
   names(res) <- targets
   for(target in targets) {
     message("Reading data for target ", target)
-    dir <- file.path(load_path, "DEG", target)
-    if(!file.exists(dir)) {
-      warning("Directory ", dir, " does not exist. Skipping.")
+    temp_dir <- file.path(load_path, "DEG", target, "temp", DE_method)
+    if(!file.exists(temp_dir)) {
+      warning("Directory ", temp_dir, " does not exist. Skipping.")
       res[[target]] <- NULL
       next
     }
-    res[[target]] <- .read_DEG_from_dir(directory = dir, seu = seu,
+    res[[target]] <- .read_DEG_from_dir(directory = temp_dir, seu = seu,
       query = query, min_avg_log2FC = min_avg_log2FC, target = target,
       min_cell_proportion = min_cell_proportion, recalc_query = recalc_query,
       p_val_cutoff = p_val_cutoff)
