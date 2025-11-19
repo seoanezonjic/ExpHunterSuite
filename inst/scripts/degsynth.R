@@ -187,7 +187,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 if(!is.null(opt$seed)) set.seed(opt$seed)
 
 if(is.null(opt$n.diffexp)) {
-  opt$n.diffexp <- opt$n.vars * opt$DEGs_proportion
+  opt$n.diffexp <- opt$ngenes * opt$DEGs_proportion
 }
 if(is.null(opt$id.species)) {
   opt$id.species <- as.factor(rep(1, 2 * opt$samples.per.cond))
