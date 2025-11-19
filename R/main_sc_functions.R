@@ -476,6 +476,9 @@ write_temp_files <- function(DEG_results, out_dir = getwd()) {
 #'   * `TRUE`: Recalculate query metrics.
 #'   * `FALSE` (the default): Load query metrics.
 #' @param seu A seurat object. Only used if recalc_query is TRUE.
+#' @param DE_method Method that was used when calculating DEGs. Our pipeline
+#' saves results in a different path depending on the method, as to allow
+#' for multiple simultaneous executions and integration. Default: "wilcox"
 #' @export
 #' @examples
 #' \dontrun{

@@ -7,16 +7,17 @@
 get_sc_markers(
   seu,
   cond = NULL,
-  subset_by,
   DEG = FALSE,
-  logfc.threshold = 0.25,
+  DE_method = "wilcox",
   verbose = FALSE,
+  logfc.threshold = 0.25,
+  simple_DEG_pct = FALSE,
+  subset_by,
   assay = "RNA",
   values = NULL,
-  min.pct = 0.1,
-  layer = "data",
   p_val_cutoff = 1,
-  simple_DEG_pct = FALSE
+  min.pct = 0.1,
+  layer = "data"
 )
 }
 \arguments{
@@ -25,21 +26,30 @@ get_sc_markers(
 \item{cond}{A string. Condition by which to perform DEG analysis, or by which
 to group data to find conserved markers.}
 
-\item{subset_by}{Metadata column by which seurat object will be subset for
-marker calculation.}
-
 \item{DEG}{A boolean.
 \itemize{
 \item \code{TRUE}: Function will calculate differentally expressed genes.
 \item \code{FALSE} (the default): Function will calculate cluster markers.
 }}
 
+\item{DE_method}{A string. Method to use in DEG calculation, passed as
+test.use argument to \code{Seurat::FindMarkers}. Default: "wilcox"}
+
+\item{verbose}{Print a progress bar once expression testing begins}
+
 \item{logfc.threshold}{Limit testing to genes which show, on average, at least
 X-fold difference (log-scale) between the two groups of cells. Default is 0.1
 Increasing logfc.threshold speeds up the function, but can miss weaker signals.
 If the \code{slot} parameter is "scale.data" no filtering is performed.}
 
-\item{verbose}{Print a progress bar once expression testing begins}
+\item{simple_DEG_pct}{By default, Seurat's marker calculation function
+includes a cell proportion filter, but it only checks if any of the two
+groups is above this threshold. \code{simple_DEG_pct} corrects this behaviour.
+its default value, FALSE, triggers a check that removes DEGs where \emph{any}
+of the two groups is below the threshold.}
+
+\item{subset_by}{Metadata column by which seurat object will be subset for
+marker calculation.}
 
 \item{assay}{Assay to use in differential expression testing}
 
@@ -48,19 +58,13 @@ which to perform the comparison. Must specify two conditions. Default NULL,
 will use all values. If there are more than two, function will return an
 error.}
 
+\item{p_val_cutoff}{Adjusted p-value threshold for significant DEGenes.}
+
 \item{min.pct}{only test genes that are detected in a minimum fraction of
 min.pct cells in either of the two populations. Meant to speed up the function
 by not testing genes that are very infrequently expressed. Default is 0.01}
 
 \item{layer}{Name of layer to get or set}
-
-\item{p_val_cutoff}{Adjusted p-value threshold for significant DEGenes.}
-
-\item{simple_DEG_pct}{By default, Seurat's marker calculation function
-includes a cell proportion filter, but it only checks if any of the two
-groups is above this threshold. \code{simple_DEG_pct} corrects this behaviour.
-its default value, FALSE, triggers a check that removes DEGs where \emph{any}
-of the two groups is below the threshold.}
 }
 \value{
 A list containing one marker or DEG data frame per cluster, plus

@@ -17,7 +17,8 @@ main_sc_Hunter(
   verbose = FALSE,
   min_cell_proportion = 0.01,
   output_path = getwd(),
-  top = NULL
+  top = NULL,
+  DE_method = "wilcox"
 )
 }
 \arguments{
@@ -53,6 +54,9 @@ not a percentage but a value from 0 to 1.}
 \item{output_path}{Path where output will be written.}
 
 \item{top}{An integer. Top N DEGs to represent in certain plots.}
+
+\item{DE_method}{A string. Method to use in DEG calculation, passed as
+test.use argument to \code{Seurat::FindMarkers}. Default: "wilcox"}
 }
 \value{
 A list containing DEG results, metrics and a query subset of

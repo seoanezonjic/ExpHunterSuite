@@ -12,7 +12,8 @@ load_DEG_output(
   recalc_query = FALSE,
   min_cell_proportion,
   seu,
-  query = NULL
+  query = NULL,
+  DE_method = "wilcox"
 )
 }
 \arguments{
@@ -40,6 +41,10 @@ not a percentage but a value from 0 to 1.}
 
 \item{query}{A string vector. Query to explore in DEG results. Will only
 be used if it differs from query used in saved analysis.}
+
+\item{DE_method}{Method that was used when calculating DEGs. Our pipeline
+saves results in a different path depending on the method, as to allow
+for multiple simultaneous executions and integration. Default: "wilcox"}
 }
 \value{
 A DEG results list with identical structure to main_sc_Hunter

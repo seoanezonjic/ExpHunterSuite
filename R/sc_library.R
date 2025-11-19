@@ -515,6 +515,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' @param DEG A boolean.
 #'   * `TRUE`: Function will calculate differentally expressed genes.
 #'   * `FALSE` (the default): Function will calculate cluster markers.
+#' @param DE_method A string. Method to use in DEG calculation, passed as
+#' test.use argument to `Seurat::FindMarkers`. Default: "wilcox"
 #' @param cond A string. Condition by which to perform DEG analysis, or by which
 #' to group data to find conserved markers.
 #' @param subset_by Metadata column by which seurat object will be subset for
