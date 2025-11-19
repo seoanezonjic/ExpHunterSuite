@@ -13,7 +13,7 @@ option_list <- list(
     help="Number of replicates for control/treatment group. Default: %default"),
   optparse::make_option(c("-n", "--ngenes"), type="integer", default=20000,
     help="Number of genes in simulated dataset. Number in final dataset might be lower due to filtering. Default : %default"),
-  optparse::make_option(c("-d", "--DEGs_proportion"), type="double", 
+  optparse::make_option(c("-d", "--DEGs_proportion"), type="double",
     default=0.2,
     help=paste0("Proportion of differentially expressed genes (DEGs).",
       " Default: %default")),
@@ -210,4 +210,3 @@ if(opt$mode == "compcodeR") {
         filter.threshold.mediancpm = opt$filter.threshold.mediancpm, fraction.non.overdispersed = opt$fraction.non.overdispersed,
         output_dir = opt$output_dir)
 }
-
