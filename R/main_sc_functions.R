@@ -280,9 +280,9 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
     p_val_cutoff = 0.05, verbose = verbose, values = "Ctrl,Treat",
     min.pct = 0.1)
   DEGs$markers <- lapply(DEGs$markers, function(DEG_df) {
-                   tag_DEGs(DE_method = DE_method, p_val_cutoff = p_val_cutoff,
+                   tag_DEGs(DEG_df = DEG_df, p_val_cutoff = p_val_cutoff,
                             min_cell_proportion = min_cell_proportion,
-                            min_avg_log2FC = min_avg_log2FC, DEG_df = DEG_df)
+                            min_avg_log2FC = min_avg_log2FC)
                   })
   message("Extracting DEG cell metrics")
   DEG_metrics <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
@@ -466,7 +466,7 @@ load_DEG_output <- function(targets, load_path, min_avg_log2FC, p_val_cutoff,
     res[[target]] <- .read_DEG_from_dir(directory = temp_dir, seu = seu,
       query = query, min_avg_log2FC = min_avg_log2FC, target = target,
       min_cell_proportion = min_cell_proportion, recalc_query = recalc_query,
-      p_val_cutoff = p_val_cutoff, DE_method = DE_method)
+      p_val_cutoff = p_val_cutoff)
   }
   return(res)
 }
