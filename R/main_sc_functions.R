@@ -280,9 +280,9 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
     p_val_cutoff = 0.05, verbose = verbose, values = "Ctrl,Treat",
     min.pct = 0.1)
   DEGs$markers <- lapply(DEGs$markers, function(DEG_df) {
-                   tag_DEGs(DEG_df = DEG_df, p_val_cutoff = p_val_cutoff,
+                   tag_DEGs(DE_method = DE_method, p_val_cutoff = p_val_cutoff,
                             min_cell_proportion = min_cell_proportion,
-                            min_avg_log2FC = min_avg_log2FC)
+                            min_avg_log2FC = min_avg_log2FC, DEG_df = DEG_df)
                   })
   message("Extracting DEG cell metrics")
   DEG_metrics <- get_fc_vs_ncells(seu = seu, DEG_list = DEGs$markers,
@@ -420,48 +420,10 @@ write_DEG_output <- function(name, DEG_list, opt = NULL){
   if(!file.exists(res_dir)) {
     dir.create(res_dir, recursive = TRUE)
   }
-  write_temp_files(DEG_results, temp_dir)
-  write_DEG_results(DEG_results, res_dir)
   message("Writing temp files for future report rescue")
-}
-
-write_DEG_results <- function(DEG_results, out_dir = getwd()) {
-  message("WIP")
-}
-
-write_temp_files <- function(DEG_results, out_dir = getwd()) {
-  meta <- DEG_results$DEGs$meta
-  markers <- DEG_results$DEGs$markers
-  DEG_df <- DEG_results$DEG_metrics$DEG_df
-  ncell_df <- DEG_results$DEG_metrics$ncell_df
-  query <- DEG_results$DEG_query
-  write.table(meta, sep = "\t", quote = FALSE, row.names = FALSE,
-              file = file.path(out_dir, "meta.tsv"))
-  if(!is.null(DEG_df)) {
-    if(nrow(DEG_df) > 0) {
-      write.table(DEG_df, sep = "\t", quote = FALSE, row.names = TRUE,
-                  file = file.path(out_dir, "DEG_df.tsv"))
-    }
-  }
-  if(!is.null(ncell_df)) {
-    if(nrow(ncell_df) > 0) {
-      write.table(ncell_df, sep = "\t", quote = FALSE, row.names = TRUE,
-                  file = file.path(out_dir, "ncell_df.tsv"))
-    }
-  }
-  if(!is.null(query)) {
-    message("Writing query DEG analysis")
-    write.table(query$DEG_df, sep = "\t", quote = FALSE, row.names = TRUE,
-              file = file.path(out_dir, "query_DEG_df.tsv"))
-    write.table(query$ncell_df, sep = "\t", quote = FALSE, row.names = TRUE,
-              file = file.path(out_dir, "query_ncell_df.tsv"))
-  }
-  message("Writing full DEG tables")
-  lapply(names(markers), function(x){
-    .write_deg_table(deg = markers, name = x, output = out_dir)
-  })
-  message("Temp files saved")
-  return(invisible(NULL))
+  .write_temp_files(DEG_results, out_dir = temp_dir)
+  message("Writing result tables")
+  .write_DEG_results(DEG_results, out_dir = res_dir, DE_method = opt$DE_method)
 }
 
 #' load output from previous execution of DEG module
@@ -504,7 +466,7 @@ load_DEG_output <- function(targets, load_path, min_avg_log2FC, p_val_cutoff,
     res[[target]] <- .read_DEG_from_dir(directory = temp_dir, seu = seu,
       query = query, min_avg_log2FC = min_avg_log2FC, target = target,
       min_cell_proportion = min_cell_proportion, recalc_query = recalc_query,
-      p_val_cutoff = p_val_cutoff)
+      p_val_cutoff = p_val_cutoff, DE_method = DE_method)
   }
   return(res)
 }
