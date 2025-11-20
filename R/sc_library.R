@@ -2121,9 +2121,9 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
 #' DEGs <- tag_DEGs(DEG_df = DEGs)
 #' @export
 
-get_DEG_table <- function(input_DEGs) {
-  col_vector <- c("gene", "p_val", "p_val_adj", "avg_log2FC", "pct.1", "pct.2",
-                  "cause_for_rejection", "DEG")
+get_DEG_table <- function(input_DEGs, col_vector = c("gene", "p_val",
+                          "p_val_adj", "avg_log2FC", "pct.1", "pct.2",
+                          "cause_for_rejection", "DEG")) {
   res <- input_DEGs[, col_vector]
   if(any(dim(res) < 1)) {
       res <- NULL
