@@ -6,6 +6,8 @@ option_list <- list(
             help = "Experiment name."),
   optparse::make_option(c("-D", "--DE_method"), type = "character", default = NULL,
             help = "DE method to use."),
+  optparse::make_option(c("-m", "--minpack_common"), type = "integer", default = 0,
+            help = "Number of DE packages that need to agree in order to consider a DEG as prevalent"),
   optparse::make_option("--targets_folder", type = "character", default = "",
             help = "Directory containing target files"),
   optparse::make_option("--p_val_cutoff", type = "numeric", default = "5e-3",
