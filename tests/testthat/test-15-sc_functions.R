@@ -691,8 +691,9 @@ test_that("test process_sc_params, annotation mode", {
 
 test_that("test process_sc_params removes duplicate target genes", {
   params <- list(name = "test", p_adj_cutoff = 1, verbose = FALSE,
-                 subset_by = "genotype;time", cpu = "2", min_avg_log2FC = 1,
-                 target_genes = "TREM2;TREM2;DAP12", mincells = 1, top_N = Inf)
+                 DE_method = "", subset_by = "genotype;time", cpu = "2",
+                 min_avg_log2FC = 1, target_genes = "TREM2;TREM2;DAP12",
+                 mincells = 1, top_N = Inf, minpack_common = 0)
   expect_warning(suppressMessages(process_sc_params(params = params,
     mode = "DEG")), "Removing duplicates of gene TREM2 from query.")
   output <- suppressMessages(suppressWarnings(process_sc_params(params = params,
@@ -702,8 +703,9 @@ test_that("test process_sc_params removes duplicate target genes", {
 
 test_that("test process_sc_params, DEG mode", {
   params <- list(name = "test", p_adj_cutoff = 1, verbose = FALSE,
-                 subset_by = "genotype;time", cpu = "2", min_avg_log2FC = 1,
-                 target_genes = "", mincells = 1, top_N = Inf)
+                 DE_method = "", minpack_common = 0, cpu = "2", mincells = 1,
+                 subset_by = "genotype;time", min_avg_log2FC = 1,
+                 target_genes = "", top_N = Inf)
   output <- suppressMessages(process_sc_params(params = params, mode = "DEG"))
   expected <- list(opt = params, doublet_list = NULL)
   new_opt <- list(cell_annotation = "", cluster_annotation = "",
@@ -716,6 +718,8 @@ test_that("test process_sc_params, DEG mode", {
   expected$opt$meta_file <- ""
   expected$opt$top_N <- NA
   expected$opt$recalc_query <- FALSE
+  expected$opt$DE_method <- "wilcox"
+  expected$opt$minpack_common <- 1
   output$opt <- output$opt[order(names(output$opt))]
   expected$opt <- expected$opt[order(names(expected$opt))]
   expect_equal(output, expected)
@@ -930,5 +934,18 @@ test_that("tag_DEGs works with strict values", {
 test_that("tag_DEGs works with NULL or FALSE data frames", {
   expect_no_error(tag_DEGs(DEG_df = NULL))
   expect_no_error(tag_DEGs(DEG_df = data.frame(FALSE)))
+})
+
+test_that("get_DEG_table works as intended", {
+  test_table <- data.frame(matrix(ncol = 5, nrow = 2))
+  colnames(test_table) <- c("irrelevant", "irrelevant2", "irrelevant3",
+                            "relevant", "relevant2")
+  test_table$irrelevant <- c("no", "thanks")
+  test_table$irrelevant2 <- c("really", "no")
+  test_table$irrelevant3 <- c("don't", "showthis")
+  test_table$relevant <- c("yes", "please")
+  test_table$relevant2 <- c("thank", "you")
+  output <- get_DEG_table(test_table, c("relevant", "relevant2"))
+  expect_equal(output, test_table[, c(4, 5)])
 })
 
