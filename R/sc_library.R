@@ -1837,13 +1837,16 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   if(mode == "DEG") {
     params$extra_columns <- ""
     if(params$DE_method == "") params$DE_method <- "wilcox"
+    if(params$minpack_common == 0) {
+      params$minpack_common <- length(params$DE_method)
+    }
   } else {
     params$top_N <- Inf
   }
   message("Analyzing ", params$name)
   if(!is.null(params$input)) {
     if(length(Sys.glob(params$input)) < 1 & is.null(params$imported_counts)) {
-      stop("No input directories exsist. Globbed expression was ", params$input)
+      stop("No input directories exist. Globbed expression was ", params$input)
     }
   }
   exp_design <- doublet_list <- NULL
@@ -2024,6 +2027,8 @@ filter_sc_counts <- function(object, layers = "data", min_counts) {
 #' will be tagged as low_fc.
 #' @param min_cell_proportion Genes expressed in a percentage of cells smaller
 #' than this number in any of the two groups will be tagged as low_cell_pct.
+#' @param DE_method Method used in DEG calculation. Will be used to name tag
+#' column.
 #' @examples
 #' DEGs <- data.frame(avg_log2FC = c(0, 0.2, 1, -0.1),
 #'                    gene = c("PPBP", "IGLL5", "VDAC3", "GNLY"),
@@ -2034,38 +2039,40 @@ filter_sc_counts <- function(object, layers = "data", min_counts) {
 #' @export
 
 tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
-                     min_cell_proportion = 0.1) {
+                     min_cell_proportion = 0.1, DE_method) {
   res <- NULL
   if(!is.null(DEG_df)) {
     if(!isFALSE(unlist(DEG_df))) {
-      DEG_df$cause_for_rejection <- ""
-      DEG_df$prevalent <- FALSE
+      DEG_col <- paste0("DEG_", DE_method)
+      DEG_reject <- paste0("cause_for_rejection_", DE_method)
+      DEG_df[[DEG_reject]] <- ""
       low_fc <- which(abs(DEG_df$avg_log2FC) < abs(min_avg_log2FC))
-      DEG_df$cause_for_rejection[low_fc] <- "Low_FC"
+      DEG_df[[DEG_reject]][low_fc] <- "Low_FC"
       high_pval <- which(DEG_df$p_val_adj > p_val_cutoff)
-      filter_vector <- paste(DEG_df$cause_for_rejection[high_pval],
+      filter_vector <- paste(DEG_df[[DEG_reject]][high_pval],
                              "High_P-val", sep = ",")
-      DEG_df$cause_for_rejection[high_pval] <- filter_vector
+      DEG_df[[DEG_reject]][high_pval] <- filter_vector
       pcts <- DEG_df[c("pct.1", "pct.2")]
       pcts <- signif(pcts, 2)
       low_pct <- apply(pcts, 1, function(x) any(x < min_cell_proportion))
-      filter_vector <- paste(DEG_df$cause_for_rejection[low_pct],
+      filter_vector <- paste(DEG_df[[DEG_reject]][low_pct],
                              "Low_proportion", sep = ",")
-      DEG_df$cause_for_rejection[low_pct] <- filter_vector
-      accepted <- which(DEG_df$cause_for_rejection == "")
-      DEG_df$cause_for_rejection[accepted] <- "None"
-      commas <- grep("^,", DEG_df$cause_for_rejection)
-      no_commas <- sub(",", "", DEG_df$cause_for_rejection[commas])
-      DEG_df$cause_for_rejection[commas] <- no_commas
-      DEG_df$DEG <- FALSE
-      DEG_df$DEG[DEG_df$cause_for_rejection == "None"] <- TRUE
+      DEG_df[[DEG_reject]][low_pct] <- filter_vector
+      accepted <- which(DEG_df[[DEG_reject]] == "")
+      DEG_df[[DEG_reject]][accepted] <- "None"
+      commas <- grep("^,", DEG_df[[DEG_reject]])
+      no_commas <- sub(",", "", DEG_df[[DEG_reject]][commas])
+      DEG_df[[DEG_reject]][commas] <- no_commas
+      DEG_col <- paste0("DEG_", DE_method)
+      DEG_df[[DEG_col]] <- FALSE
+      DEG_df[[DEG_col]][DEG_df[[DEG_reject]] == "None"] <- TRUE
       res <- DEG_df
     }
   }
   return(res)
 }
 
-.write_deg_table <- function(deg, name, output) {
+.write_temp_DEGs <- function(deg, name, output) {
   if(!is.null(deg[[name]])) {
     if(!isFALSE(unlist(deg[[name]]))) {
       write.table(deg[[name]], sep = "\t", quote = FALSE, row.names = TRUE,
@@ -2076,7 +2083,8 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
 }
 
 .read_DEG_from_dir <- function(directory, min_avg_log2FC, recalc_query, target,
-                               min_cell_proportion, p_val_cutoff, seu, query) {
+                               min_cell_proportion, p_val_cutoff, seu, query,
+                               DE_method = "wilcox") {
   files <- dir(directory, full.names = TRUE)
   names(files) <- unlist(strsplit(basename(files), ".tsv"))
   tables <- lapply(files, function(file) read.table(file, sep = "\t",
@@ -2091,7 +2099,8 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
   markers <- lapply(markers, function(DEG_df) {
                    tag_DEGs(DEG_df = DEG_df, p_val_cutoff = p_val_cutoff,
                             min_cell_proportion = min_cell_proportion,
-                            min_avg_log2FC = min_avg_log2FC)
+                            min_avg_log2FC = min_avg_log2FC,
+                            DE_method = DE_method)
                   })
   target_results$DEGs$markers <- markers
   if(!recalc_query) {
@@ -2103,4 +2112,92 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
                                                 DEG_list = markers)
   }
   return(target_results)
+}
+
+#' Extract and calculate relevant info from DEG table
+#'
+#' `get_DEG_table` extracts relevant columns from a DEG output table and
+#' adds a "prevalent" field.
+#' @param input_DEGs Input data frame, created by our sc_Hunter pipeline.
+#' @param minpack_common Number of DE methods that need to agree in order to
+#' consider a DEG as prevalent.
+#' @examples
+#' DEGs <- data.frame(avg_log2FC = c(0, 0.2, 1, -0.1),
+#'                    gene = c("PPBP", "IGLL5", "VDAC3", "GNLY"),
+#'                    p_val_adj = c(0, 0, 0, 0), pct.1 = c(0, 0, 0.5, 0.5),
+#'                    p_val_adj = c(1, 0, 0.5, 0.1), pct.2 = c(0, 0.5, 0, 0.5),
+#'                    avg_log2FC = c(10, 5, 0, 0.5))
+#' DEGs <- tag_DEGs(DEG_df = DEGs)
+#' @export
+
+get_DEG_table <- function(input_DEGs, minpack_common = 1) {
+  reject_cols <- grep("cause_for_rejection_", colnames(input_DEGs), value = TRUE)
+  DEG_cols <- grep("DEG_", colnames(input_DEGs), value = TRUE)
+  col_vector <- c("gene", "p_val", "p_val_adj", "avg_log2FC", "pct.1", "pct.2",
+                  reject_cols, DEG_cols)
+  if(length(DEG_cols) > 1) {
+      input_DEGs$prevalent <- apply(input_DEGs[, DEG_cols, drop = FALSE], 1,
+                                    function(x) sum(x) >= minpack_common)
+      col_vector <- c(col_vector, "prevalent")
+  }
+  res <- input_DEGs[, col_vector]
+  if(any(dim(res) < 1)) {
+      res <- NULL
+  }
+  return(res)
+}
+
+.write_DEG_results <- function(DEG_results, minpack_common = 1, DE_method,
+                               out_dir = getwd()) {
+  DEGs <- DEG_results$DEGs$markers
+  meta <- DEG_results$DEGs$meta
+  out_meta <- paste(names(meta), gsub(":", "", meta), sep = ": ")
+  DEGs <- DEGs[which(!sapply(DEGs, is.null))]
+  for(type in names(DEGs)) {
+    DEGs[[type]]$type <- type
+  }
+  common_table <- do.call(rbind, DEGs)
+  common_table <- get_DEG_table(common_table, minpack_common = minpack_common)
+  rownames(common_table) <- NULL
+  res <- get_DEG_table(common_table)
+  out_name <- file.path(out_dir, paste0("allgenes_", DE_method, ".txt"))
+  write.table(res, file = out_name, quote = FALSE, sep = "\t",
+              row.names = FALSE)
+  writeLines(out_meta, con = file.path(out_dir, "meta.txt"))
+  message("DEG results written in ", out_name)
+}
+
+.write_temp_files <- function(DEG_results, out_dir = getwd()) {
+  meta <- DEG_results$DEGs$meta
+  markers <- DEG_results$DEGs$markers
+  DEG_df <- DEG_results$DEG_metrics$DEG_df
+  ncell_df <- DEG_results$DEG_metrics$ncell_df
+  query <- DEG_results$DEG_query
+  write.table(meta, sep = "\t", quote = FALSE, row.names = FALSE,
+              file = file.path(out_dir, "meta.tsv"))
+  if(!is.null(DEG_df)) {
+    if(nrow(DEG_df) > 0) {
+      write.table(DEG_df, sep = "\t", quote = FALSE, row.names = TRUE,
+                  file = file.path(out_dir, "DEG_df.tsv"))
+    }
+  }
+  if(!is.null(ncell_df)) {
+    if(nrow(ncell_df) > 0) {
+      write.table(ncell_df, sep = "\t", quote = FALSE, row.names = TRUE,
+                  file = file.path(out_dir, "ncell_df.tsv"))
+    }
+  }
+  if(!is.null(query)) {
+    message("Writing query DEG analysis")
+    write.table(query$DEG_df, sep = "\t", quote = FALSE, row.names = TRUE,
+              file = file.path(out_dir, "query_DEG_df.tsv"))
+    write.table(query$ncell_df, sep = "\t", quote = FALSE, row.names = TRUE,
+              file = file.path(out_dir, "query_ncell_df.tsv"))
+  }
+  message("Writing full DEG tables")
+  lapply(names(markers), function(x){
+    .write_temp_DEGs(deg = markers, name = x, output = out_dir)
+  })
+  message("Temp files saved in ", out_dir)
+  return(invisible(NULL))
 }
