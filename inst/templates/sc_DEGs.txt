@@ -7,14 +7,6 @@
                         colAlpha = alphas, legendLabels = c("Discarded", expression("Log"[2]*"FC"), "adj P-val", "Significant"))
     }
 
-    get_DEG_table <- function(input_DEGs) {
-        res <- input_DEGs[, c("gene", "p_val", "p_val_adj", "avg_log2FC", "pct.1", "pct.2", "cause_for_rejection", "DEG")]
-        if(any(dim(res) < 1)) {
-            res <- NULL
-        }
-        return(res)
-    }
-
     get_prevalent_list <- function(DEG_list) {
         DEGs <- DEG_list$DEGs$markers
         DEGs <- DEGs[names(DEGs) != "global"]
@@ -25,6 +17,7 @@
 
     comparison <- plotter$hash_vars$target_name
     opt <- plotter$hash_vars$opt
+    minpack_common <- opt$minpack_common
     query <- plotter$hash_vars$query
     DEG_list <- plotter$hash_vars$DEG_list
     comparison_meta <- DEG_list$DEGs$meta
@@ -76,13 +69,15 @@ end.rcode-->
                      <li> Then, it is divided in two groups for DEG calculation. </li>
                  <li> <b> DEG table fields </b>: </li>
                  <ul>
-                     <li> cause_for_rejection: reason to reject potential DEG (Check execution parameters block to see exact thresholds). Possible values: </li>
+                     <li> cause_for_rejection_[method]: reason that [method] found to reject potential DEG (Check execution parameters block to see exact thresholds). Possible values: </li>
                      <ul>
                          <li> \"Low_FC\". Low average log2FC value. </li>
                          <li> \"Low_proportion\". Too small percentage of cells expressing the gene in any of the two groups.</li>
                          <li> \"High_P-val\". High adjusted P-value of observed difference. </li>
                          <li> \"None\". Passes all filters, NOT rejected.</li>
                      </ul>
+                     <li> DEG_[method]: whether or not [method] has identified gene is differentially expressed. </li>
+                     <li> prevalent: whether or not [opt$min_packages] agree that gene is differentially expressed (NOT IMPLEMENTED). </li>
                  </ul>
              </ul>"
     cat(legend)
