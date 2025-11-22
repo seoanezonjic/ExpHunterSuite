@@ -2112,18 +2112,20 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
 #' `get_DEG_table` extracts relevant columns from a DEG output table and
 #' adds a "prevalent" field.
 #' @param input_DEGs Input data frame, created by our sc_Hunter pipeline.
+#' @param DE_method Method used to calculate DEGs. It will be part of column
+#' names if DE dataframe has been ran through tag_DEGs.
 #' @examples
-#' DEGs <- data.frame(avg_log2FC = c(0, 0.2, 1, -0.1),
-#'                    gene = c("PPBP", "IGLL5", "VDAC3", "GNLY"),
-#'                    p_val_adj = c(0, 0, 0, 0), pct.1 = c(0, 0, 0.5, 0.5),
-#'                    p_val_adj = c(1, 0, 0.5, 0.1), pct.2 = c(0, 0.5, 0, 0.5),
-#'                    avg_log2FC = c(10, 5, 0, 0.5))
-#' DEGs <- tag_DEGs(DEG_df = DEGs)
+#' stop("This example is missing")
 #' @export
 
 get_DEG_table <- function(input_DEGs, col_vector = c("gene", "p_val",
                           "p_val_adj", "avg_log2FC", "pct.1", "pct.2",
-                          "cause_for_rejection", "DEG")) {
+                          "cause_for_rejection", "DEG"), DE_method = NULL) {
+  if(!is.null(DE_method)) {
+    new_cols <- col_vector[-which(col_vector == "gene")]
+    new_cols <- paste0(DE_method, "_", new_cols)
+    col_vector <- c("gene", new_cols)
+  }
   res <- input_DEGs[, col_vector]
   if(any(dim(res) < 1)) {
       res <- NULL
@@ -2149,15 +2151,14 @@ merge_DEG_tables <- function(DEG_tables, minpack_common = length(DEG_tables)) {
   for(type in names(DEGs)) {
     DEGs[[type]]$type <- type
   }
-  common_table <- do.call(rbind, DEGs)
-  common_table <- get_DEG_table(common_table)
-  gene_col <- which(colnames(common_table) == "gene")
-  new_cols <- paste0(DE_method, "_", colnames(common_table)[-gene_col])
-  colnames(common_table)[-gene_col] <- new_cols
-  rownames(common_table) <- NULL
-  res <- get_DEG_table(common_table)
+  DEG_table <- do.call(rbind, DEGs)
+  rownames(DEG_table) <- NULL
+  DEG_table <- get_DEG_table(input_DEGs = DEG_table)
+  gene_col <- which(colnames(DEG_table) == "gene")
+  new_cols <- paste0(DE_method, "_", colnames(DEG_table)[-gene_col])
+  colnames(DEG_table)[-gene_col] <- new_cols
   out_name <- file.path(out_dir, paste0("allgenes_", DE_method, ".txt"))
-  write.table(res, file = out_name, quote = FALSE, sep = "\t",
+  write.table(DEG_table, file = out_name, quote = FALSE, sep = "\t",
               row.names = FALSE)
   writeLines(out_meta, con = file.path(out_dir, "meta.txt"))
   message("DEG results written in ", out_name)
