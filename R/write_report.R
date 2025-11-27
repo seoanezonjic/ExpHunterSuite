@@ -133,44 +133,53 @@ write_general_pca <- function(pca_data, output_files, tag = ""){
   
   merged_metrics <- merge_dim_table_metrics(pca_res)
   if (!is.null(merged_metrics))
-      write.table(merged_metrics, file = file.path(output_files, paste0(tag, "dim_metrics.txt")),sep = "\t", quote = FALSE, row.names=FALSE)
+      write.table(merged_metrics, file = file.path(output_files,
+        paste0(tag, "dim_metrics.txt")),sep = "\t", quote = FALSE,
+        row.names=FALSE)
   
   dimnames(pca_data$pca_data$svd$V) <- dimnames(pca_data$pca_data$var$cor)
-  write.table(pca_data$pca_data$svd$V, quote = FALSE, file = file.path(output_files, paste0(tag, "eigenvectors.txt")), sep = "\t")
+  write.table(pca_data$pca_data$svd$V, quote = FALSE, sep = "\t",
+    file = file.path(output_files, paste0(tag, "eigenvectors.txt")))
   hcpc_table <- pca_data$res.hcpc$call$X
   hcpc_table$samples <- rownames(hcpc_table)
-  write.table(hcpc_table, file = file.path(output_files, paste0(tag, "hcpc.txt")),sep = "\t", quote = FALSE, row.names=FALSE)
+  write.table(hcpc_table, file = file.path(output_files,
+    paste0(tag, "hcpc.txt")), sep = "\t", quote = FALSE, row.names=FALSE)
   if (!is.null(pca_data$pca_data$var$cor)){
-    write.table(pca_data$pca_data$var$cor, file = file.path(output_files, paste0(tag, "pca_vars.txt")), quote = FALSE, sep = "\t")
+    write.table(pca_data$pca_data$var$cor, file = file.path(output_files,
+        paste0(tag, "pca_vars.txt")), quote = FALSE, sep = "\t")
   } else {
-    write.table(pca_data$pca_data$var$eta2, file = file.path(output_files, paste0(tag, "pca_vars.txt")), quote = FALSE, sep = "\t")
+    write.table(pca_data$pca_data$var$eta2, file = file.path(output_files,
+        paste0(tag, "pca_vars.txt")), quote = FALSE, sep = "\t")
   }
 
 }
 
 merge_dim_table_metrics <- function(merged_dim_table){
-        if (is.null(merged_dim_table))
-            return(NULL)
-        
-        if(nrow(merged_dim_table$qualitative) > 0) {
-            names(merged_dim_table$qualitative)[names(merged_dim_table$qualitative) == "R2"] <- "metric"
-            merged_dim_table$qualitative$metric_type <- "R2"
-        } else { merged_dim_table$qualitative <- NULL}
-        
-        if(nrow(merged_dim_table$quantitative) > 0) {
-            names(merged_dim_table$quantitative)[names(merged_dim_table$quantitative) == "correlation"] <- "metric"
-            merged_dim_table$quantitative$metric_type <- "correlation"
-        } else { merged_dim_table$quantitative <- NULL}
-
-        if(nrow(merged_dim_table$qual_category) > 0) {
-            names(merged_dim_table$qual_category)[names(merged_dim_table$qual_category) == "Estimate"] <- "metric"
-            merged_dim_table$qual_category$metric_type <- "coord_var_barycentre"
-         } else { merged_dim_table$qual_category <- NULL}
-
-        dim_data_merged <-data.table::rbindlist(merged_dim_table, use.names = TRUE,idcol = "var_type")
-        dim_data_merged <- as.data.frame(dim_data_merged)
-        dim_data_merged <- dim_data_merged[,c("factor","var_type" ,"metric_type", "dimension","metric","p.value")]
-        return(dim_data_merged)
+    if(is.null(merged_dim_table)) return(NULL)
+    qual <- merged_dim_table$qualitative
+    if(nrow(qual) > 0) {
+        names(qual)[names(qual) == "R2"] <- "metric"
+        qual$metric_type <- "R2"
+    } else { qual <- NULL}
+    merged_dim_table$qualitative <- qual
+    quant <- merged_dim_table$quantitative
+    if(nrow(quant) > 0) {
+        names(quant)[names(quant) == "correlation"] <- "metric"
+        quant$metric_type <- "correlation"
+    } else { quant <- NULL}
+    merged_dim_table$quantitative <- quant
+    cat <- merged_dim_table$qual_category
+    if(nrow(cat) > 0) {
+        names(cat)[names(cat) == "Estimate"] <- "metric"
+        cat$metric_type <- "coord_var_barycentre"
+     } else { cat <- NULL}
+    merged_dim_table$qual_category <- cat
+    dim_data_merged <- data.table::rbindlist(merged_dim_table, use.names = TRUE,
+                                             idcol = "var_type")
+    dim_data_merged <- as.data.frame(dim_data_merged)
+    dim_data_merged <- dim_data_merged[, c("factor","var_type" ,"metric_type",
+                                       "dimension","metric","p.value")]
+    return(dim_data_merged)
 } 
 
 #' Write global coRmiT report
@@ -401,7 +410,7 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
     hilight = "none", hilight_alpha = 0.3, group_results, func_results = NULL,
     source_folder = NULL,
     files_css = file.path(template_folder, "styles.css")) {
-    message("\tRendering full cluster reports")
+    message("Rendering full cluster reports")
     if(is.null(enrichments_ORA)) {
         message("No WGCNA ORA results, not printing cluster report")
     } else {
@@ -670,7 +679,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
                   ennrichments_ORA_expanded = enrichments_ORA_expanded,
                   DEGH_results = DEGH_results, pvalcutoff = pvalcutoff)
     if(grepl("f", report)){
-        message("\tRendering regular report")
+        message("Rendering regular report")
         template <- file.path(template_folder, "functional_report.txt")
         outf <- file.path(results_path, "functional_report.html")
         plotter <- htmlreportR::htmlReport$new(title_doc = "functional report",
@@ -725,7 +734,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
         scaled_counts_table <- as.data.frame(as.table(scaled_counts))
         colnames(scaled_counts_table) <- c("Gene","Sample","Count")
 
-        message("\tRendering individual cluster reports")
+        message("Rendering individual cluster reports")
         if(is.null(enrichments_ORA)) {
           message("No WGCNA ORA results, not printing individual cluster report")
         } else {
@@ -747,7 +756,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
         wgcna_count_sample_trait <- scale_data_matrix(wgcna_count_sample_trait, 
           norm_by_col = TRUE)
 
-        message("\tRendering specific cluster reports")
+        message("Rendering specific cluster reports")
         c_update <- list(norm_counts = norm_counts,
                          scaled_counts_table = scaled_counts_table, cls = cls,
                          cl_eigvalues = cl_eigvalues,
@@ -873,7 +882,7 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
                       size_item = size_item, size_category = size_category,
                       size_edge = size_edge, hilight = hilight,
                       hilight_alpha = hilight_alpha)
-    message("\tRendering regular report")
+    message("Rendering regular report")
     template <- file.path(template_folder, "clusters_to_enrichment.txt")
     plotter <- htmlreportR::htmlReport$new(title_doc = "func cluster",
         container = container, tmp_folder = temp_path_cl, src = source_folder,
