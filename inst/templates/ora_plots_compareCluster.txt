@@ -43,7 +43,7 @@
 	}
 	enrich_emap <- function(input_obj) {
 		## In cluster comparison plot, nodes are very small. That is why we ARE supplying size_item parameter to size_category
-		## argument in this specific cal.
+		## argument in this specific call.
 		if(node_label == "all" | node_label == "group") {
 			warning("emapplot is not compatible with \"all\" nor \"group\" value for node_label argument. Changing to \"category\" for this plot")
 			enrich_node_label <- "category"
