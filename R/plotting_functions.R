@@ -260,6 +260,3 @@ ht2logFCPlot <- function(ht,
     ggplot2::geom_hline(yintercept = 0,linetype="dashed", color = "#636363")
   return(pp)
 }
-
-
-
