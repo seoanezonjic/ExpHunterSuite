@@ -2122,9 +2122,9 @@ get_DEG_table <- function(input_DEGs, col_vector = c("gene", "p_val",
                           "p_val_adj", "avg_log2FC", "pct.1", "pct.2",
                           "cause_for_rejection", "DEG"), DE_method = NULL) {
   if(!is.null(DE_method)) {
-    new_cols <- col_vector[-which(col_vector == "gene")]
+    new_cols <- col_vector[-which(col_vector %in% c("gene", "cell_type"))]
     new_cols <- paste0(DE_method, "_", new_cols)
-    col_vector <- c("gene", new_cols)
+    col_vector <- c("gene", new_cols, "cell_type")
   }
   res <- input_DEGs[, col_vector]
   if(any(dim(res) < 1)) {
@@ -2149,14 +2149,16 @@ merge_DEG_tables <- function(DEG_tables, minpack_common = length(DEG_tables)) {
   out_meta <- paste(names(meta), gsub(":", "", meta), sep = ": ")
   DEGs <- DEGs[which(!sapply(DEGs, is.null))]
   for(type in names(DEGs)) {
-    DEGs[[type]]$type <- type
+    DEGs[[type]]$cell_type <- type
   }
   DEG_table <- do.call(rbind, DEGs)
   rownames(DEG_table) <- NULL
-  DEG_table <- get_DEG_table(input_DEGs = DEG_table)
-  gene_col <- which(colnames(DEG_table) == "gene")
-  new_cols <- paste0(DE_method, "_", colnames(DEG_table)[-gene_col])
-  colnames(DEG_table)[-gene_col] <- new_cols
+  DEG_table <- get_DEG_table(input_DEGs = DEG_table, col_vector = c("gene",
+    "p_val", "p_val_adj", "avg_log2FC", "pct.1", "pct.2", "cause_for_rejection",
+    "DEG", "cell_type"))
+  except_cols <- which(colnames(DEG_table) %in% c("gene", "cell_type"))
+  new_cols <- paste0(DE_method, "_", colnames(DEG_table)[-except_cols])
+  colnames(DEG_table)[-except_cols] <- new_cols
   out_name <- file.path(out_dir, paste0("allgenes_", DE_method, ".txt"))
   write.table(DEG_table, file = out_name, quote = FALSE, sep = "\t",
               row.names = FALSE)
@@ -2185,13 +2187,13 @@ merge_DEG_tables <- function(DEG_tables, minpack_common = length(DEG_tables)) {
     }
   }
   if(!is.null(query)) {
-    message("Writing query DEG analysis")
+    message("Writing temp query DEG analysis")
     write.table(query$DEG_df, sep = "\t", quote = FALSE, row.names = TRUE,
               file = file.path(out_dir, "query_DEG_df.tsv"))
     write.table(query$ncell_df, sep = "\t", quote = FALSE, row.names = TRUE,
               file = file.path(out_dir, "query_ncell_df.tsv"))
   }
-  message("Writing full DEG tables")
+  message("Writing temp DEG tables")
   lapply(names(markers), function(x){
     .write_temp_DEGs(deg = markers, name = x, output = out_dir)
   })
