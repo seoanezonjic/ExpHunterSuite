@@ -1,5 +1,8 @@
+# Template for cluster comparison report
+
 <!--begin.rcode "{{funsys}}_setup"
 	library(ggtangle)
+	layout <- "nicely"
 	node_label <- plotter$hash_vars$node_label
 	clusters <- split(as.data.frame(plotter$hash_vars$enrich_obj), as.data.frame(plotter$hash_vars$enrich_obj)[, "Cluster"])
 	size_item <- plotter$hash_vars$size_item
@@ -7,9 +10,10 @@
     size_edge <- plotter$hash_vars$size_edge
     hilight <- plotter$hash_vars$hilight
     hilight_alpha <- plotter$hash_vars$hilight_alpha
+    n_category <- plotter$hash_vars$showCategories
 	top_ids_list <- lapply(clusters, function(cluster_df) {
 		sorted <- cluster_df[order(cluster_df$qvalue), ]
-		head(sorted$ID, plotter$hash_vars$showCategories)
+		head(sorted$ID, n_category)
 	})
 	distinct_cats_to_plot <- length(unique(unlist(top_ids_list)))
 	bar_dot_plot_height <- ceiling(distinct_cats_to_plot / 2.5) + 1
@@ -20,7 +24,7 @@
 	  return(toshow)
 	}
 	enrich_dotplot <- function(input_obj) {
-		enrichplot::dotplot(input_obj, showCategory= plotter$hash_vars$showCategories)
+		enrichplot::dotplot(input_obj, showCategory= n_category)
 	}
 	clusters_heatplot <- function(compare_cluster_obj){
         pp <- ggplot2::ggplot(compare_cluster_obj, ggplot2::aes_string(x = "Cluster", 
@@ -31,13 +35,24 @@
 		clusters_heatplot(input_obj@compareClusterResult)
 	}
 	enrich_cnet <- function(input_obj) {
-		ggtangle::cnetplot(input_obj, showCategory = plotter$hash_vars$showCategories, node_label = node_label, size_item = size_item,
-		size_category = size_category, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha)
+		# Pie sizes depend on size_category argument, size_item does nothing. This plot has notably small nodes,
+		# so we pass size_item value to size_category argument. In fact, nodes are so small compared to per-cluster
+		# report that we triple it.
+		ggtangle::cnetplot(input_obj, showCategory = n_category, node_label = node_label, layout = layout, label_format = 4,
+		size_category = size_item * 3, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha)
 	}
 	enrich_emap <- function(input_obj) {
-		enrichplot::emapplot(input_obj, showCategory = plotter$hash_vars$showCategories,
-		  nCluster = nCluster, nWords = nWords, node_label = node_label,
-		  size_category = size_category, size_edge = size_edge)
+		## In cluster comparison plot, nodes are very small. That is why we ARE supplying size_item parameter to size_category
+		## argument in this specific cal.
+		if(node_label == "all" | node_label == "group") {
+			warning("emapplot is not compatible with \"all\" nor \"group\" value for node_label argument. Changing to \"category\" for this plot")
+			enrich_node_label <- "category"
+		} else {
+			enrich_node_label <- node_label
+		}
+		enrichplot::emapplot(input_obj, showCategory = n_category, layout = layout, label_format = 4,
+		  nCluster = nCluster, nWords = nWords, node_label = enrich_node_label,
+		  size_category = size_item * 3, size_edge = size_edge)
 	}
 	clnetplot <- function(compareCluster, ...) {
         mod_enrich_obj <- compareCluster
@@ -46,7 +61,7 @@
         return(clnet_plot)
     }
 	custom_clnetplot <- function(input_obj) {
-		clnetplot(input_obj, showCategory = plotter$hash_vars$showCategories)
+		clnetplot(input_obj, showCategory = n_category)
 	}
 	plotter$hash_vars$enrich_df <- format_enr_for_DT(plotter$hash_vars$enrich_obj)
 end.rcode-->

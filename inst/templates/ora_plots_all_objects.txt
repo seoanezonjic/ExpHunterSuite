@@ -1,3 +1,5 @@
+### Template for per-cluster report
+
 
 <!--begin.rcode "{{funsys}}_setup"
 	library(ggtangle)
@@ -9,48 +11,66 @@
     hilight_alpha <- plotter$hash_vars$hilight_alpha
 	max_genes <- plotter$hash_vars$max_genes
 	n_category <- 30
+	gene_attribute_name <- plotter$hash_vars$gene_attribute_name
+	nCluster <- NULL
 	cats_in_enrich_obj <- nrow(plotter$hash_vars$enrich_obj)
 	cats_in_enrich_obj <- min(n_category, cats_in_enrich_obj)
 	bar_dot_plot_height <- ceiling(cats_in_enrich_obj / 2.5) + 1
+	attr_vector <- plotter$hash_vars$attr_vector
+	min_edge <- 0.0000000000000001
+	pvalcutoff <- plotter$hash_vars$pvalcutoff
+	layout <- "nicely"
 	default_width <- set_default_width(enrich_obj = plotter$hash_vars$enrich_obj, showCategory=n_category)
 	enrich_barplot <- function(input_obj) {
 		enrichplot:::barplot.enrichResult(input_obj, showCategory = n_category)
 	}
 	enrich_dotplot <- function(input_obj) {
-		enrichplot::dotplot(input_obj, showCategory=n_category)
+	  enrichplot::dotplot(input_obj, showCategory=n_category)
 	}
 	custom_enrich_density <- function(input_obj) {
-		enrich_density(enrich_result = input_obj, attributes = plotter$hash_vars$attr_vector, showCategory = n_category) +
-		ggplot2::labs(x = plotter$hash_vars$gene_attribute_name, y = NULL, fill = "Enrichment\nFDR") +
+		enrich_density(enrich_result = input_obj, attributes = attr_vector, showCategory = n_category) +
+		ggplot2::labs(x = gene_attribute_name, y = NULL, fill = "Enrichment\nFDR") +
 		ggplot2::scale_fill_gradient2(low = "#3838F3", high = "#F33838", mid = "white",
-									  na.value = "#50EA55", midpoint = plotter$hash_vars$pvalcutoff)
+									  na.value = "#50EA55", midpoint = pvalcutoff)
 	}
 	enrich_cnet <- function(input_obj) {
-		enrichplot::cnetplot(input_obj, showCategory=n_category, foldChange=plotter$hash_vars$attr_vector, node_label = node_label, size_item = size_item,
-		size_category = size_category, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha) +
-	 	{if(!is.null(plotter$hash_vars$attr_vector)) ggplot2::scale_color_gradient2(name = plotter$hash_vars$gene_attribute_name, low = "#0000BF", high = "#bf0000", na.value = "#50EA55") }
+		# Pie sizes depend on size_category argument, size_item does nothing. This plot has notably small nodes,
+		# so we pass size_item value to size_category argument.
+		ggtangle::cnetplot(input_obj, showCategory = n_category, node_label = node_label, layout = layout, label_format = 4,
+		size_category = size_item, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha) +
+	 	{if(!is.null(plotter$hash_vars$attr_vector)) ggplot2::scale_color_gradient2(name = gene_attribute_name, low = "#0000BF", high = "#bf0000",na.value = "#50EA55") }
 	}
 	enrich_emap <- function(input_obj) {
-		enrichplot::emapplot(input_obj, showCategory = n_category, min_edge = 0.0000000000000001, node_label = node_label,
-		size_category = size_category, size_edge = size_edge)
+		# This function has the same issue. Normally, default sizes are perfectly fine for this plot in per-cluster analysis, so
+		# size_item is NOT passed.
+		if(node_label == "all" | node_label == "group") {
+			warning("emapplot is not compatible with \"all\" nor \"group\" value for node_label argument. Changing to \"category\" for this plot")
+			enrich_node_label <- "category"
+		} else {
+			enrich_node_label <- node_label
+		}
+		enrichplot::emapplot(input_obj, showCategory = n_category, min_edge = 0.0000000000000001,
+		  nCluster = nCluster, node_label = enrich_node_label, layout = layout, label_format = 4,
+		  size_category = size_category, size_edge = size_edge)
 	}
 	enrich_heatplot <- function(input_obj) {
-		enrichplot::heatplot(input_obj, showCategory = n_category, foldChange = plotter$hash_vars$attr_vector)
+  		enrichplot::heatplot(input_obj, showCategory = n_category, foldChange = attr_vector)
 	}
 	enrich_upsetplot <- function(input_obj) {
-		enrichplot::upsetplot(input_obj, n=n_category)
+	  enrichplot::upsetplot(input_obj, n = n_category)
 	}
 	force_max_genes_enrobj <- function(enrich_obj, maxGenes = 200, showCategory = 30) {
-        plot_df <- get_plot_df(enrich_obj, showCategory)
-        for(i in seq_len(nrow(plot_df))) {
-            sub_df <- plot_df[1:i,]
-            unique_genes <- unique(sub_df$Gene)
-            if(length(unique_genes) == maxGenes) {
-                cat_ids <- plot_df[1:i, "categoryID"]
-                return(enrich_obj[enrich_obj$Description %in% cat_ids, asis=TRUE])
-            }
-        } 
-    }
+	  plot_df <- get_plot_df(enrich_obj, showCategory)
+	  for(i in seq_len(nrow(plot_df))) {
+	    sub_df <- plot_df[1:i,]
+	    unique_genes <- unique(sub_df$Gene)
+	    if(length(unique_genes) == maxGenes) {
+	      cat_ids <- plot_df[1:i, "categoryID"]
+	      return(enrich_obj[enrich_obj$Description %in% cat_ids, asis=TRUE])
+	    }
+	  } 
+	}
+
 end.rcode-->
 
 <!--begin.rcode "{{funsys}}_plots_ora"
@@ -96,7 +116,7 @@ if(nrow(as.data.frame(plotter$hash_vars$enrich_obj)) > 2) {
 	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
 		  plotting_function = enrich_emap, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
 } else {
-	cat("<p>This graph cannot be plotted because fewer than two functional categories were enriched</p>")
+	cat("<p>This graph cannot be plotted because fewer than two enriched categories have been found.</p>")
 }
 cat("<strong>Heatplot</strong>", 
 	  "<p>Significant genes (x-axis) and the functional categories in which they appear.</p>")
@@ -109,6 +129,6 @@ if (nrow(as.data.frame(plotter$hash_vars$enrich_obj) > 1)){ # Needs, at least, t
 	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
 		  plotting_function = enrich_upsetplot, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
 }else{
-	cat("<p>Genes has been enriched in less than 2 categories, so Upsetplot cannot be printed</p>")
+	cat("<p>Fewer than two enriched categories found. Upsetplot impossible.</p>")
 }
 end.rcode-->
