@@ -47,7 +47,7 @@ option_list <- list(
   optparse::make_option(c("-d", "--description_file"), type="character", default=NULL,
                         help="Markdown file describing of the enriched clusters."),
   optparse::make_option(c("-k", "--gene_keytype"), type="character", default="ENTREZID",
-                        help=paste("Gene label type. Valid labels: \"ENTREZID\" (Entrez), \"ENSEMBL\" (Ensembl), \"SYMBOL\" (HGNC). Default: %default.")),
+                        help=paste("Gene label type. Valid labels: \"ENTREZID\" (Entrez), \"ENSEMBL\" (Ensembl), \"SYMBOL\" (HGNC gene symbol). Default: %default.")),
   optparse::make_option(c("--gmt_id"), type="character", default="ENTREZID",
                         help="What identifier is being used for the genes in the custom gmt file. Default=%default"),
   optparse::make_option(c("-g", "--gene_attribute_file"), type="character", default=NULL,
@@ -59,7 +59,8 @@ option_list <- list(
   optparse::make_option(c("-o", "--output_path"), type="character", default=NA,
                         help="Define the output path."),
   optparse::make_option(c("--size_item"), type="numeric", default=1,
-                        help="Size of nodes. Smaller than 1 values will reduce size, higher than 1 values will increase it."),
+                        help="Size of nodes. Smaller than 1 values will reduce size, higher than 1 values will increase it. Will only affect
+                        comparative report, as default values are almost always fine in per-cluster reports."),
   optparse::make_option(c("--size_category"), type="numeric", default=1,
                         help="Size of category labels. Smaller than 1 values will reduce size, higher than 1 values will increase it."),
   optparse::make_option(c("--size_edge"), type="numeric", default=1,
