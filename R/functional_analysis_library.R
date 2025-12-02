@@ -1074,6 +1074,8 @@ clean_GO_obsolete <- function(enr_obj) {
 
 #' @importFrom GO.db GOBPANCESTOR GOMFANCESTOR GOCCANCESTOR
 clean_all_parentals <- function(enr_obj, subont){
+  # For now this only works with comparative clusters results. We should
+  # make an equivalent function for individual cluster results.
    ##ADD control for enrichresults or comparecluster
   if (subont=="BP"){
     GO_ancestors <- GO.db::GOBPANCESTOR
