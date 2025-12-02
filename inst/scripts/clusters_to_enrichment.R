@@ -65,12 +65,12 @@ option_list <- list(
                         help="Size of category labels. Smaller than 1 values will reduce size, higher than 1 values will increase it."),
   optparse::make_option(c("--size_edge"), type="numeric", default=1,
                         help="Size of edges. Smaller than 1 values will reduce size, higher than 1 values will increase it."),
-  optparse::make_option(c("--hilight"), type="character", default="category",
+  optparse::make_option(c("--hilight"), type="character", default="none",
                         help="Name of category to highlight."),
-  optparse::make_option(c("--hilight_alpha"), type="integer", default=0.3,
+  optparse::make_option(c("--hilight_alpha"), type="integer", default=1,
                         help="Transparency value that will be applied to categories not highlighted. Must be a value between 0
                         (completely transparent) and 1 (completely opaque)."),
-  optparse::make_option(c("--node_label"), type="character", default="category",
+  optparse::make_option(c("--node_label"), type="character", default="all",
                         help="How nodes will be labeled. Possible values: \"category\" (the default), \"group\", \"all\", \"none\".")
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
@@ -110,6 +110,9 @@ if (is.na(output_path)){
 dir.create(output_path)
 output_path <- normalizePath(output_path)
 temp_file <- file.path(output_path, "enr_tmp.RData")
+if(isFALSE(opt$force) & file.exists(temp_file)) {
+  warning(crayon::red$bold("LOADING TEMPORAL FILES, RESCUING ANALYSIS"))
+}
 all_funsys <- unlist(strsplit(opt$funsys, ","))
 organisms_table <- get_organism_table(organisms_table_file)
 current_organism_info <- organisms_table[rownames(organisms_table) %in% opt$model_organism,]
