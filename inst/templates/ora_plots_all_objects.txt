@@ -1,7 +1,6 @@
-### Template for per-cluster report
-
 
 <!--begin.rcode "{{funsys}}_setup"
+	### Template for per-cluster report
 	library(ggtangle)
 	node_label <- plotter$hash_vars$node_label
 	size_item <- plotter$hash_vars$size_item
@@ -34,22 +33,15 @@
 									  na.value = "#50EA55", midpoint = pvalcutoff)
 	}
 	enrich_cnet <- function(input_obj) {
-		# Pie sizes depend on size_category argument, size_item does nothing.
+		# Pie sizes depend on size_category argument, so we pass size_item value to size_category argument.
 		ggtangle::cnetplot(input_obj, showCategory = n_category, node_label = node_label, layout = layout, label_format = 4,
 		size_category = size_category, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha) +
 	 	{if(!is.null(plotter$hash_vars$attr_vector)) ggplot2::scale_color_gradient2(name = gene_attribute_name, low = "#0000BF", high = "#bf0000",na.value = "#50EA55") }
 	}
 	enrich_emap <- function(input_obj) {
-		# This function has the same issue. Normally, default sizes are perfectly fine for this plot in per-cluster analysis, so
-		# size_item is NOT passed.
-		if(node_label == "all" | node_label == "group") {
-			warning("emapplot is not compatible with \"all\" nor \"group\" value for node_label argument. Changing to \"category\" for this plot")
-			enrich_node_label <- "category"
-		} else {
-			enrich_node_label <- node_label
-		}
-		enrichplot::emapplot(input_obj, showCategory = n_category, min_edge = 0.0000000000000001,
-		  nCluster = nCluster, node_label = enrich_node_label, layout = layout, label_format = 4,
+		# Pie sizes depend on size_category argument, so we pass size_item value to size_category argument.
+		enrichplot::emapplot(input_obj, showCategory = n_category, min_edge = min_edge,
+		  nCluster = nCluster, node_label = "category", layout = layout, label_format = 4,
 		  size_category = size_category, size_edge = size_edge)
 	}
 	enrich_heatplot <- function(input_obj) {
