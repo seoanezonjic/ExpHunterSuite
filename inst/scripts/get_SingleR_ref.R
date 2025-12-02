@@ -52,7 +52,7 @@ col_to_table <- function(column, col_names) {
 }
 
 if(!opt$only_showcase) {
-  if(opt$reference == "" & !file.exists(opt$reference)) {
+  if(opt$reference == "" | !file.exists(opt$reference)) {
     stop('Unspecified remote database and non-existant local database.
           Please see get_SingleR_ref.R --help')
   }
@@ -159,6 +159,7 @@ if(!opt$only_showcase) {
   write_annot_output(final_results = list(seu = ref_seu), opt = opt, assay = "originalexp")
 } else {
   message("Loading SingleR ref for showcase report")
+  message("Reading from ", file.path(opt$reference, "counts"))
   ref_seu <- Seurat::CreateSeuratObject(counts = Seurat::Read10X(file.path(opt$reference, "counts"), gene.column = 1),
                                   project = opt$name, min.cells = 1, min.features = 1)
   seu_meta <- read.table(file.path(opt$reference, "counts/meta.tsv"), sep = "\t", header = TRUE)
