@@ -54,24 +54,24 @@ Supposedly, OUTRIDER::findInjectZscore is the function we're looking for,
 but we cannot test it right now.
 }
 \examples{
-ods <- makeExampleOutriderDataSet()
+ods <- OUTRIDER::makeExampleOutriderDataSet()
 encDimSearchParams <- c(5, 8, 10, 12, 15)
 zScoreParams <- c(2, 3, 5, 'lnorm')
 implementation <- 'autoencoder'
-register(MulticoreParam(4))
+register(BiocParallel::MulticoreParam(4))
 \dontshow{
     ods <- ods[1:12,1:12]
     encDimSearchParams <- c(2)
     zScoreParams <- c('lnorm')
-    register(SerialParam())
+    register(BiocParallel::SerialParam())
     implementation <- 'pca'
 }
-ods1 <- findEncodingDim(ods, params=encDimSearchParams, 
+ods1 <- OUTRIDER::findEncodingDim(ods, params=encDimSearchParams, 
         implementation=implementation)
-plotEncDimSearch(ods1)
+OUTRIDER::plotEncDimSearch(ods1)
 
-ods2 <- findInjectZscore(ods, zScoreParams=zScoreParams,
+ods2 <- OUTRIDER::findInjectZscore(ods, zScoreParams=zScoreParams,
         encDimParams=encDimSearchParams, implementation=implementation)
-plotEncDimSearch(ods2)
+OUTRIDER::plotEncDimSearch(ods2)
 
 }

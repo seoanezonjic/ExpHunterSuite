@@ -7,21 +7,23 @@
 get_DEG_table(
   input_DEGs,
   col_vector = c("gene", "p_val", "p_val_adj", "avg_log2FC", "pct.1", "pct.2",
-    "cause_for_rejection", "DEG")
+    "cause_for_rejection", "DEG"),
+  DE_method = NULL
 )
 }
 \arguments{
 \item{input_DEGs}{Input data frame, created by our sc_Hunter pipeline.}
+
+\item{col_vector}{Vector of columns to retrieve from table. Default: gene,
+p_val, p_val_adj, avg_log2FC, pct.1, pct.2, cause_for_rejection, DEG.}
+
+\item{DE_method}{Method used to calculate DEGs. It will be part of column
+names if DE dataframe has been ran through tag_DEGs.}
 }
 \description{
 \code{get_DEG_table} extracts relevant columns from a DEG output table and
 adds a "prevalent" field.
 }
 \examples{
-DEGs <- data.frame(avg_log2FC = c(0, 0.2, 1, -0.1),
-                   gene = c("PPBP", "IGLL5", "VDAC3", "GNLY"),
-                   p_val_adj = c(0, 0, 0, 0), pct.1 = c(0, 0, 0.5, 0.5),
-                   p_val_adj = c(1, 0, 0.5, 0.1), pct.2 = c(0, 0.5, 0, 0.5),
-                   avg_log2FC = c(10, 5, 0, 0.5))
-DEGs <- tag_DEGs(DEG_df = DEGs)
+stop("This example is missing")
 }
