@@ -101,7 +101,7 @@ compute_pca <- function(pca_data,
                     quali.sup=string_factors,
                     ind.sup = add_samples_idx)  
   dim_data <- FactoMineR::dimdesc(pca_res, axes=seq(1, dim_to_keep))
-    dim_data_merged <- merge_dim_tables(dim_data)
+  dim_data_merged <- merge_dim_tables(dim_data)
 
   res.hcpc <- FactoMineR::HCPC(pca_res, graph = FALSE, consol = hcpc_consol, nb.clust = n_clusters)
 

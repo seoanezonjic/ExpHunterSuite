@@ -2114,6 +2114,8 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
 #' @param input_DEGs Input data frame, created by our sc_Hunter pipeline.
 #' @param DE_method Method used to calculate DEGs. It will be part of column
 #' names if DE dataframe has been ran through tag_DEGs.
+#' @param col_vector Vector of columns to retrieve from table. Default: gene,
+#' p_val, p_val_adj, avg_log2FC, pct.1, pct.2, cause_for_rejection, DEG.
 #' @examples
 #' stop("This example is missing")
 #' @export
