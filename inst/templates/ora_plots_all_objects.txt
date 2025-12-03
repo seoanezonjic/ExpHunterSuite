@@ -9,9 +9,8 @@
     hilight <- plotter$hash_vars$hilight
     hilight_alpha <- plotter$hash_vars$hilight_alpha
 	max_genes <- plotter$hash_vars$max_genes
-	n_category <- 30
+	n_category <- plotter$hash_vars$n_category
 	gene_attribute_name <- plotter$hash_vars$gene_attribute_name
-	nCluster <- NULL
 	cats_in_enrich_obj <- nrow(plotter$hash_vars$enrich_obj)
 	cats_in_enrich_obj <- min(n_category, cats_in_enrich_obj)
 	bar_dot_plot_height <- ceiling(cats_in_enrich_obj / 2.5) + 1
@@ -19,30 +18,20 @@
 	min_edge <- 0.0000000000000001
 	pvalcutoff <- plotter$hash_vars$pvalcutoff
 	layout <- "nicely"
-	default_width <- set_default_width(enrich_obj = plotter$hash_vars$enrich_obj, showCategory=n_category)
+	default_width <- set_default_width(enrich_obj = plotter$hash_vars$enrich_obj, showCategory = n_category)
+	cnet_args <- list(n_category = n_category, node_label = node_label, layout = layout,
+		label_format = 4, size_category = size_category, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha)
+	emap_args <- list(n_category = n_category, layout = layout, label_format = 4,
+		size_category = size_category, size_edge = size_edge, min_edge = min_edge)
+	dotplot_args <- list(n_category = n_category)
 	enrich_barplot <- function(input_obj) {
 		enrichplot:::barplot.enrichResult(input_obj, showCategory = n_category)
-	}
-	enrich_dotplot <- function(input_obj) {
-	  enrichplot::dotplot(input_obj, showCategory=n_category)
 	}
 	custom_enrich_density <- function(input_obj) {
 		enrich_density(enrich_result = input_obj, attributes = attr_vector, showCategory = n_category) +
 		ggplot2::labs(x = gene_attribute_name, y = NULL, fill = "Enrichment\nFDR") +
 		ggplot2::scale_fill_gradient2(low = "#3838F3", high = "#F33838", mid = "white",
 									  na.value = "#50EA55", midpoint = pvalcutoff)
-	}
-	enrich_cnet <- function(input_obj) {
-		# Pie sizes depend on size_category argument, so we pass size_item value to size_category argument.
-		ggtangle::cnetplot(input_obj, showCategory = n_category, node_label = node_label, layout = layout, label_format = 4,
-		size_category = size_category, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha) +
-	 	{if(!is.null(plotter$hash_vars$attr_vector)) ggplot2::scale_color_gradient2(name = gene_attribute_name, low = "#0000BF", high = "#bf0000",na.value = "#50EA55") }
-	}
-	enrich_emap <- function(input_obj) {
-		# Pie sizes depend on size_category argument, so we pass size_item value to size_category argument.
-		enrichplot::emapplot(input_obj, showCategory = n_category, min_edge = min_edge,
-		  nCluster = nCluster, node_label = "category", layout = layout, label_format = 4,
-		  size_category = size_category, size_edge = size_edge)
 	}
 	enrich_heatplot <- function(input_obj) {
   		enrichplot::heatplot(input_obj, showCategory = n_category, foldChange = attr_vector)
@@ -65,7 +54,6 @@
 end.rcode-->
 
 <!--begin.rcode "{{funsys}}_plots_ora"
-
 # Add main label
 cat("<h2> <strong>{{funsys}} - Over Representation Analysis</strong></h2>",
 		"<p>The ORA method takes a group of significant genes and performs a Fisher's exact test for each term of the selected functional category.</p>")
@@ -73,31 +61,31 @@ cat("<strong>Barplot</strong>",
 	  "<p>The most highly signficant categories in ascending order, according to adjusted p-value. 
 	  The x-axis represents the number of significant genes found within the functional category.</p>")
 cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE, plotting_function = enrich_barplot, plot_type = "plot", height = bar_dot_plot_height),
-	inject_string = "class=\"plot_real_size\")"))
+	inject_string = "class=\"proper_img\")"))
 cat("<strong>Dotplot</strong>",
     "<p>The most highly signficant categories in descending in categories of gene ratio, defined as the proportion of significant genes that are found in the functional category.
      The x-axis represents the gene ratio and the dot size the number of genes associated with the functional category.</p>")
 cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
-		plotting_function = enrich_dotplot, plot_type = "plot", height = bar_dot_plot_height), inject_string = "class=\"plot_real_size\")"))
+		plotting_function = enrich_dotplot, plotting_args = dotplot_args, plot_type = "plot", height = bar_dot_plot_height), inject_string = "class=\"proper_img\")"))
 if(!is.null(plotter$hash_vars$attr_vector)){
 	cat("<p><strong>Distributions of ", plotter$hash_vars$gene_attribute_name, "</p></strong>", 
 	  "<p>This plot shows the distribution of gene ", plotter$hash_vars$gene_attribute_name," that enriched the top enriched functional term/pathways.
 	   The X axis repressent the distribution values. The color of the distribution repressents the FDR of the enrichment.
 	   The vertical lines represents the first, second and third quartiles.</p>")
 	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
-		  plotting_function = custom_enrich_density, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
+		  plotting_function = custom_enrich_density, plot_type = "plot"), inject_string = "class=\"proper_img\")"))
 }
 cat("<p><strong>Gene-Concept Network</strong></p>", 
 	  "<p>The network connects the top functional categories (brown nodes) to their associated genes (grey or colored nodes).
  	   The size of the functional category nodes shows the number of connected genes.</p>")
 if(length(get_genes(plotter$hash_vars$enrich_obj)) <= max_genes){
 	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
-			plotting_function = enrich_cnet, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
+			plotting_function = enrich_cnet, plotting_args = cnet_args, plot_type = "plot"), inject_string = "class=\"proper_img\")"))
 }else{
 	cat("<p>More than", max_genes, "genes were found among the enriched genes. Only the first", max_genes, "genes belonging to the most significant categories are shown plotted.</p>")
-	plotter$hash_vars$enrich_obj_maxed <- force_max_genes_enrobj(plotter$hash_vars$enrich_obj, maxGenes=max_genes, showCategory=n_category)
+	plotter$hash_vars$enrich_obj_maxed <- force_max_genes_enrobj(plotter$hash_vars$enrich_obj, maxGenes = max_genes, showCategory = n_category)
 	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj_maxed", custom_format = TRUE,
-		  plotting_function = enrich_cnet, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
+		  plotting_function = enrich_cnet, plotting_args = cnet_args, plot_type = "plot", ), inject_string = "class=\"proper_img\")"))
 }
 cat("<strong>Enrich Map plot</strong>", 
     "<p>The top functional categories (nodes), connected if they share genes. Edge thickness represents the number of shared genes.
@@ -105,20 +93,20 @@ cat("<strong>Enrich Map plot</strong>",
 
 if(nrow(as.data.frame(plotter$hash_vars$enrich_obj)) > 2) {
 	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
-		  plotting_function = enrich_emap, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
+		  plotting_function = enrich_emap, plotting_args = emap_args, plot_type = "plot"), inject_string = "class=\"proper_img\")"))
 } else {
 	cat("<p>This graph cannot be plotted because fewer than two enriched categories have been found.</p>")
 }
 cat("<strong>Heatplot</strong>", 
 	  "<p>Significant genes (x-axis) and the functional categories in which they appear.</p>")
 cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
-		  plotting_function = enrich_heatplot, plot_type = "plot", height = bar_dot_plot_height), inject_string = "class=\"plot_real_size\")"))
-cat("<p><strong>Upsetplot</strong></p>\n\n", 
+		  plotting_function = enrich_heatplot, plot_type = "plot", height = bar_dot_plot_height), inject_string = "class=\"proper_img\")"))
+cat("<p><strong>Upsetplot</strong></p>\n\n",
 	 "<p>Genes are clustered according to shared enriched categories.
 	 The y-axis shows the number of genes belonging to the different clusters (top) and categories to which they belong (bottom).</p>")
 if (nrow(as.data.frame(plotter$hash_vars$enrich_obj) > 1)){ # Needs, at least, two categories
 	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
-		  plotting_function = enrich_upsetplot, plot_type = "plot"), inject_string = "class=\"plot_real_size\")"))
+		  plotting_function = enrich_upsetplot, plot_type = "plot"), inject_string = "class=\"proper_img\")"))
 }else{
 	cat("<p>Fewer than two enriched categories found. Upsetplot impossible.</p>")
 }
