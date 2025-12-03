@@ -288,7 +288,7 @@ enrich_emap <- function(input_obj, n_category = 30, size_category = 1,
   min_edge = 1e-16, nCluster = NULL, nWords = 4, group_category = FALSE) {
     p <- enrichplot::emapplot(input_obj, showCategory = n_category,
       min_edge = min_edge, nCluster = nCluster, nWords = nWords,
-      node_label = "category", layout = layout, label_format = label_format,
+      node_label = "none", layout = layout, label_format = label_format,
       size_category = size_category, size_edge = size_edge)
     p <- p + ggtangle::geom_cnet_label(node_label = "all", size = 2.5, fontface = "bold")
     return(p)
