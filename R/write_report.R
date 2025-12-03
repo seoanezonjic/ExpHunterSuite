@@ -405,7 +405,7 @@ write_summarize_heatmaps <- function(summarized_ORA, output_path) {
 #' (completely opaque). Default: 0.3.
 #' @returns invisible(NULL)
 write_merged_cluster_report <- function(enrichments_ORA, results_path,
-    template_folder, sample_classes=NULL, DEGH_results=NULL, showCategories,
+    template_folder, sample_classes=NULL, DEGH_results=NULL, n_category,
     node_label = "category", size_item = 1, size_category = 1, size_edge = 1,
     hilight = "none", hilight_alpha = 0.3, group_results, func_results = NULL,
     source_folder = NULL,
@@ -436,7 +436,7 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
             hilight = hilight, hilight_alpha = hilight_alpha,
             DEGH_results = DEGH_results, sample_classes = sample_classes,
             func_results = func_results, enrichments_ORA = enrichments_ORA,
-            group_results = group_results, showCategories = showCategories)
+            group_results = group_results, n_category = n_category)
         plotter <- htmlreportR::htmlReport$new(container = container,
             title_doc = "clusters functional report", tmp_folder = tmp_folder,
             src = source_folder, compress_obj = TRUE, files_css = files_css)
@@ -517,6 +517,7 @@ write_clusters_to_enrichment <- function(output_path="results",
           write_func_cluster_report(enrichments_for_reports, output_path,
             gene_attributes, workers = workers, task_size = task_size,
             node_label = node_label, size_item = size_item,
+            n_category = n_category,
             size_category = size_category, size_edge = size_edge,
             hilight = hilight, hilight_alpha = hilight_alpha,
             template_folder = template_folder, source_folder = source_folder,
@@ -560,7 +561,7 @@ write_clusters_to_enrichment <- function(output_path="results",
             size_category = size_category, size_edge = size_edge,
             hilight = hilight, hilight_alpha = hilight_alpha,
             results_path = output_path, template_folder, 
-            showCategories = n_category, group_results=group_results)
+            n_category = n_category, group_results=group_results)
       }
 }
 
@@ -859,7 +860,7 @@ parse_strat_text <- function(strategies){
 
 write_func_cluster_report <- function(enrichments_for_reports, output_path, 
   gene_attributes, workers, task_size, template_folder, max_genes = 200,
-  gene_attribute_name="fold change", source_folder = NULL,
+  gene_attribute_name="fold change", source_folder = NULL, n_category = 30,
   files_css = file.path(template_folder, "styles.css"), node_label = node_label,
   size_item = size_item, size_category = size_category, size_edge = size_edge,
   hilight = hilight, hilight_alpha = hilight_alpha){
@@ -879,6 +880,7 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
                                              "_report.html"))
     container <- list(func_results = func_results, cl_flags_ora = cl_flags_ora,
                       max_genes = max_genes, node_label = node_label,
+                      n_category = 30,
                       size_item = size_item, size_category = size_category,
                       size_edge = size_edge, hilight = hilight,
                       hilight_alpha = hilight_alpha)
