@@ -58,7 +58,7 @@ for(funsys in names(plotter$hash_vars$flags_cluster)) {
     } else {
       message <- paste0("No enrichment found for category ", funsys, ".")
     }
-    res[[funsys]] <- paste0("<h2> <strong>", message, " See grouped plot.</strong></h2>")
+    res[[funsys]] <- paste0("<h2> <strong>", message, " See individual report.</strong></h2>")
   }
 }
 cat(unlist(res), sep = '\n')
