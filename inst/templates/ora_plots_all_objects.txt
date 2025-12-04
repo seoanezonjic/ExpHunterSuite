@@ -17,12 +17,13 @@
 	attr_vector <- plotter$hash_vars$attr_vector
 	min_edge <- 0.0000000000000001
 	pvalcutoff <- plotter$hash_vars$pvalcutoff
-	layout <- "nicely"
+	layout <- "with_gem"
+	maxiter <- 3
 	default_width <- set_default_width(enrich_obj = plotter$hash_vars$enrich_obj, showCategory = n_category)
-	cnet_args <- list(n_category = n_category, node_label = node_label, layout = layout,
-		label_format = 4, size_category = size_category, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha)
+	cnet_args <- list(n_category = n_category, node_label = node_label, layout = layout, advanced_opt = list(maxiter = 3),
+		size_category = size_item, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha)
 	emap_args <- list(n_category = n_category, layout = layout, label_format = 4,
-		size_category = size_category, size_edge = size_edge, min_edge = min_edge)
+		size_category = size_item, size_edge = size_edge, min_edge = min_edge)
 	dotplot_args <- list(n_category = n_category)
 	enrich_barplot <- function(input_obj) {
 		enrichplot:::barplot.enrichResult(input_obj, showCategory = n_category)

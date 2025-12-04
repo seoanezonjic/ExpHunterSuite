@@ -2,7 +2,8 @@
 <!--begin.rcode "{{funsys}}_setup"
 	## Template for cluster comparison report
 	library(ggtangle)
-	layout <- "nicely"
+	layout <- "with_gem"
+	maxiter <- 3
 	node_label <- plotter$hash_vars$node_label
 	clusters <- split(as.data.frame(plotter$hash_vars$enrich_obj), as.data.frame(plotter$hash_vars$enrich_obj)[, "Cluster"])
 	size_item <- plotter$hash_vars$size_item
@@ -19,10 +20,10 @@
 	})
 	distinct_cats_to_plot <- length(unique(unlist(top_ids_list)))
 	bar_dot_plot_height <- ceiling(distinct_cats_to_plot / 2.5) + 1
-	cnet_args <- list(n_category = n_category, node_label = node_label, layout = layout,
-		label_format = 4, size_category = size_category, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha)
+	cnet_args <- list(n_category = n_category, node_label = node_label, layout = layout, advanced_opt = list(maxiter = 3),
+		size_category = size_item, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha)
 	emap_args <- list(n_category = n_category, layout = layout, label_format = 4,
-		size_category = size_category, size_edge = size_edge, nWords = nWords, nCluster = NULL)
+		size_category = size_item, size_edge = size_edge, min_edge = 0.2, nWords = nWords, nCluster = NULL)
 	dotplot_args <- list(n_category = n_category)
 	format_enr_for_DT <- function(ER){
 	  toshow <- ggplot2::fortify(ER)[,!colnames(ER@compareClusterResult) %in% 
