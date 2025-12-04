@@ -10,7 +10,7 @@ option_list <- list(
                         help="2 columns - cluster and comma separated gene ids"),
   optparse::make_option(c("-w", "--workers"), type="integer", default=1,
                         help="number of processes for parallel execution. Default=%default"),
-  optparse::make_option(c("-p", "--pvalcutoff"), type="double", default=0.1,
+  optparse::make_option(c("-P", "--pvalcutoff"), type="double", default=0.1,
                         help="Cutoff for P value and adjusted P value for enrichments. Default=%default"),
   optparse::make_option(c("-q", "--qvalcutoff"), type="double", default=0.2,
                         help="Cutoff for Q value for enrichments. Default=%default"),
