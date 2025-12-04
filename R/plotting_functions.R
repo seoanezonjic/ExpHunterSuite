@@ -264,7 +264,7 @@ ht2logFCPlot <- function(ht,
 #' @param advanced_opt Named list of advanced options.
 
 enrich_cnet <- function(input_obj, n_category = 30, node_label = "all",
-  layout = igraph::layout_nicely, label_format = 4, size_category = 1,
+  layout = igraph::layout_nicely, size_category = 1,
   size_edge = 1, hilight = "none", hilight_alpha = 1, attr_vector = NULL,
   gene_attribute_name = NULL, advanced_opt = NULL) {
   # Pie sizes depend on size_category argument, so we pass size_item value
