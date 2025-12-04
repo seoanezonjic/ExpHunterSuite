@@ -1,14 +1,13 @@
 
 <h1> <strong>Functional Report</strong></h1>
 
-<!--begin.rcode main_init, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis' 
+<!--begin.rcode main_init, echo = FALSE, warning = FALSE, message = FALSE, results = 'asis' 
 if (!is.null(opt$description)){
   cat(opt$description)
 }
 end.rcode-->
 
-<!--begin.rcode render_partial, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis' 
-
+<!--begin.rcode render_partial, echo = FALSE, warning = FALSE, message = FALSE, results = 'asis'
 res <- list()
 for(funsys in names(plotter$hash_vars$cl_flags_ora)) {
   if(plotter$hash_vars$cl_flags_ora[[funsys]] == TRUE) {
