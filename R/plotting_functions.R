@@ -261,21 +261,22 @@ ht2logFCPlot <- function(ht,
   return(pp)
 }
 
+#' @param advanced_opt Named list of advanced options.
+
 enrich_cnet <- function(input_obj, n_category = 30, node_label = "all",
   layout = igraph::layout_nicely, label_format = 4, size_category = 1,
   size_edge = 1, hilight = "none", hilight_alpha = 1, attr_vector = NULL,
-  gene_attribute_name = NULL) {
+  gene_attribute_name = NULL, advanced_opt = NULL) {
   # Pie sizes depend on size_category argument, so we pass size_item value
   # to size_category argument.
-  p <- ggtangle::cnetplot(input_obj, showCategory = n_category,
-    node_label = "none", layout = layout, label_format = label_format,
-    size_category = size_category, size_edge = size_edge,
-    hilight = hilight, hilight_alpha = hilight_alpha) +
-  # Editing labels like this gives a lot more of control over them, which
-  # is why we add them like this instead of using the node_label argument
-  # of cnetplot function
-  ggtangle::geom_cnet_label(node_label = node_label, size = 2.5,
+  opt <- c(list(x = input_obj, showCategory = n_category,
+    node_label = "none", layout = layout, size_category = size_category,
+    size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha),
+    advanced_opt)
+  p <- do.call(ggtangle::cnetplot, opt)
+  p <- p + ggtangle::geom_cnet_label(node_label = node_label, size = 2.5,
                 fontface = "bold")
+  # Editing labels like this gives a lot more of control over them
   if(!is.null(attr_vector)) {
     p <- p + ggplot2::scale_color_gradient2(name = gene_attribute_name,
           low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
@@ -285,13 +286,15 @@ enrich_cnet <- function(input_obj, n_category = 30, node_label = "all",
 
 enrich_emap <- function(input_obj, n_category = 30, size_category = 1,
   layout = igraph::layout_nicely, label_format = 4, size_edge = 1,
-  min_edge = 1e-16, nCluster = NULL, nWords = 4, group_category = FALSE) {
-    p <- enrichplot::emapplot(input_obj, showCategory = n_category,
-      min_edge = min_edge, nCluster = nCluster, nWords = nWords,
-      node_label = "none", layout = layout, label_format = label_format,
-      size_category = size_category, size_edge = size_edge)
-    p <- p + ggtangle::geom_cnet_label(node_label = "all", size = 2.5, fontface = "bold")
-    return(p)
+  min_edge = 1e-16, nCluster = NULL, nWords = 4, group_category = FALSE,
+  advanced_opt = NULL) {
+  opt <- c(list(x = input_obj, showCategory = n_category, node_label = "none",
+    min_edge = min_edge, nCluster = nCluster, nWords = nWords, layout = layout,
+    label_format = label_format, size_category = size_category,
+    size_edge = size_edge), advanced_opt)
+  p <- do.call(enrichplot::emapplot, opt)
+  p <- p + ggtangle::geom_cnet_label(node_label = "all", size = 2.5, fontface = "bold")
+  return(p)
 }
 
 enrich_dotplot <- function(input_obj, n_category = 30) {
