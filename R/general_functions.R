@@ -145,6 +145,7 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
     workers <- workers - 1 # Reserve one core for main execution process
     if( workers == 0) workers <- 1
     if(workers > 1){
+      if(!file.exists(main_log_path)) dir.create(main_log_path)
       timestamp <- as.integer(Sys.time())
       log_path <- file.path(main_log_path, as.character(timestamp))
       if(file.exists(log_path)){
@@ -152,7 +153,7 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
         log_path <- file.path(main_log_path, as.character(timestamp))
       }
       log <- TRUE
-      dir.create(log_path, recursive = TRUE)
+      dir.create(log_path)
     }
     param <- BiocParallel::MulticoreParam( 
       workers, tasks = ceiling(length(X)/task_size), stop.on.error = TRUE,
@@ -169,11 +170,11 @@ parallel_list <- function(X, FUNC, workers=2, task_size=1, ...){
                   'fails:', 
                   length(fails))
     if(length(fails) > 0 ){
-      message(tail(attr(res[[fails[1]]], "traceback")))
+      message(attr(res[[fails[1]]], "traceback"))
       stop('Parallel execution has failed at item', fails[1],
                  'and a total of', length(fails) , 'items have failed.')
     } else {
-      unlink(main_log_path, recursive = TRUE)
+      unlink(log_path, recursive = TRUE)
     }
 
     return(res)
