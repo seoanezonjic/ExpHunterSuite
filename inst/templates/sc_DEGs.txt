@@ -95,9 +95,9 @@ end.rcode-->
     } else {
         cat(plotter$prettify_div(plotter$static_plot_main("comparison_DEGs", custom_format = TRUE,
             plotting_function = DEGs_volcano, resizable = TRUE,), preset = "magic"))
-        cat(plotter$prettify_div(plotter$table(list(id = "comparison_DEGs", header = NULL, row_names = NULL,
+        cat((plotter$table(list(id = "comparison_DEGs", header = NULL, row_names = NULL,
                                                     table_rownames = FALSE, styled = "dt", text = "dynamic",
-                                                    func = get_DEG_table)), preset = "magic"))
+                                                    func = get_DEG_table))))
     }
     cat("</div>")
 end.rcode-->
@@ -143,17 +143,16 @@ end.rcode-->
             title <- paste0("Cell group ", DEG_level)
             plotter$hash_vars$comparison_DEGs <- no_global_degs[[j]]
             if(is.null(plotter$hash_vars$comparison_DEGs)) {
-                main <- plotter$prettify_div(paste0("<p>Cell type ", DEG_level, " contained no significant DEGs.</p>"), preset = "magic")
+                main <- paste0("<p>Cell type ", DEG_level, " contained no significant DEGs.</p>")
             } else if(FALSE %in% no_global_degs[[j]]) {
-                main <- plotter$prettify_div(paste0("<p>Cell type ", DEG_level, " contained exclusive pairs,
-                                         DEG analysis was not possible.</p>"), preset = "magic")
+                main <- paste0("<p>Cell type ", DEG_level, " contained exclusive pairs,
+                                DEG analysis was not possible.</p>")
             } else {
                 main <- plotter$prettify_div(plotter$static_plot_main("comparison_DEGs", custom_format = TRUE,
                                  plotting_function = DEGs_volcano, resizable = TRUE,), preset = "magic")
-                table_code <- plotter$prettify_div(plotter$table(list(id = "comparison_DEGs", header = NULL,
-                                                                 row_names = NULL, table_rownames = FALSE,
-                                                                 styled = "dt", text = "dynamic", func = get_DEG_table)),
-                                                   preset = "magic")
+                table_code <- plotter$table(list(id = "comparison_DEGs", header = NULL,
+                                                 row_names = NULL, table_rownames = FALSE,
+                                                 styled = "dt", text = "dynamic", func = get_DEG_table))
                 ident_content <- paste(DEG_legend, main, table_code, collapse = "\n")
                 cat(plotter$create_title(id = paste0(DEG_level, " DEG results"), paste0(DEG_level, "_DEG_results"), hlevel = 3, indexable = FALSE,
                 clickable = TRUE, t_id = paste0(DEG_level, "_collapsable"), clickable_text = ""))
