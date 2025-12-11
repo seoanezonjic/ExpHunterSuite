@@ -98,6 +98,8 @@ write_expression_data <- function(final_results, output_files){
     col.names=NA, sep="\t")
   write.table(final_results[['sample_groups']], file=file.path(output_files, 
     "control_treatment.txt"), row.names=FALSE, quote=FALSE, sep="\t")
+  write.table(final_results[['cpm_table']], file=file.path(output_files, 
+    "cpm_table.txt"), row.names=TRUE, quote=FALSE, sep="\t")
   write_df_list_as_tables(final_results[['all_data_normalized']], 
     prefix = 'Normalized_counts_', root = output_files)
   write_df_list_as_tables(final_results[['all_counts_for_plotting']], 
