@@ -175,14 +175,14 @@ main_degenes_Hunter <- function(
                             numeric_factors = numeric_factors)
     PCA_res <- list("all_genes" = full_pca)
     ############################################################
-    ##             PERFORM EXPRESION ANALYSIS                 ##
+    ##             PERFORM EXPRESSION ANALYSIS                 ##
     ############################################################
     check_and_create_dir(output_files)
 
     exp_results <- perform_expression_analysis(modules, replicatesC, 
                      replicatesT, raw_filter, p_val_cutoff, target, 
                      model_formula_text, external_DEA_data, 
-                     multifactorial)
+                     multifactorial, var_data)
     exp_results[["all_data_normalized"]] <- c(default_norm,
                                               exp_results[["all_data_normalized"]])
 
@@ -437,7 +437,6 @@ filter_count <- function(reads,
                          index_treatmn_cols,
                          target){
     # Prepare filtered set
-    
     if(reads != 0){
       if (filter_type == "separate") {
         # genes with cpm greater than --reads value for 
@@ -461,14 +460,13 @@ filter_count <- function(reads,
           stop("Filter factors not found in target")
         combs_list <- split(target, target[,filt_factors])
         samples_per_combo <- lapply(combs_list, function(x) as.vector(x$sample))
-        cpm_tab_per_combo <- sapply(samples_per_combo, function(x) cpm_table[, x])
+        cpm_tab_per_combo <- sapply(samples_per_combo,function(x)cpm_table[, x])
         combos_passing_filter <- sapply(cpm_tab_per_combo, 
           function(x) rowSums(x >= reads) >= minlibraries)
         keep_cpm <- apply(combos_passing_filter, 1, any)
         raw <- raw[keep_cpm,] # Filter out count data frame
       } else {
         warning("Unrecognized minimum read filter type. No filter will be used")
-        raw <- raw
       }
     }
     return(raw)
@@ -478,15 +476,14 @@ filter_count <- function(reads,
 #' @importFrom DESeq2 DESeqDataSetFromMatrix DESeq counts
 get_gene_variance <- function(count_matrix, target){
   dds <- DESeq2::DESeqDataSetFromMatrix(countData = count_matrix,
-                                  colData = target,
-                                  design = stats::formula("~ treat"))
+                           colData = target, design = stats::formula("~ treat"))
   dds <- DESeq2::DESeq(dds)
   normalized_counts <- DESeq2::counts(dds, normalized=TRUE)
   #normalized_counts <- SummarizedExperiment::assay(DESeq2::rlog(dds, blind=TRUE))
   variances <- matrixStats::rowVars(normalized_counts)
-  return(list( 
-    variance_dis = variances, 
-    deseq2_normalized_counts = normalized_counts))
+  return(list(variance_dis = variances,
+              deseq2_normalized_counts = normalized_counts,
+              default_dds = dds))
 }
 
 
