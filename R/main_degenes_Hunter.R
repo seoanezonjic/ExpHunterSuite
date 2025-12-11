@@ -179,7 +179,6 @@ main_degenes_Hunter <- function(
     ############################################################
     check_and_create_dir(output_files)
 
-
     exp_results <- perform_expression_analysis(modules, replicatesC, 
                      replicatesT, raw_filter, p_val_cutoff, target, 
                      model_formula_text, external_DEA_data, 
@@ -233,9 +232,9 @@ main_degenes_Hunter <- function(
     #################################################################
     ##                    BUILD MAIN RESULT TABLE                  ##
     #################################################################
-    mean_expression_cpm <- rowMeans(raw)
-    min_expression_cpm <- matrixStats::rowMins(as.matrix(raw))
-    max_expression_cpm <- matrixStats::rowMaxs(as.matrix(raw))
+    mean_expression_cpm <- rowMeans(cpm_table)
+    min_expression_cpm <- matrixStats::rowMins(as.matrix(cpm_table))
+    max_expression_cpm <- matrixStats::rowMaxs(as.matrix(cpm_table))
     cpm_stats <- data.frame(mean_expression_cpm, min_expression_cpm, max_expression_cpm)
 
     DE_all_genes <- NULL
@@ -442,7 +441,7 @@ filter_count <- function(reads,
     if(reads != 0){
       if (filter_type == "separate") {
         # genes with cpm greater than --reads value for 
-        # at least --minlibrariess samples for either case or control samples
+        # at least --minlibraries samples for either case or control samples
         to_keep_control <- rowSums(cpm_table[, index_control_cols] > 
                                 reads) >= minlibraries
         to_keep_treatment <- rowSums(cpm_table[, index_treatmn_cols] >
