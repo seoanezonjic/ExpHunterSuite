@@ -11,7 +11,7 @@ perform_expression_analysis <- function(modules,
                                         target, 
                                         model_formula_text, 
                                         external_DEA_data=NULL,
-                                        multifactorial){
+                                        multifactorial, var_data = NULL){
     # Prepare results containers
     all_data_normalized     <- list()
     all_counts_for_plotting <- list()
@@ -37,7 +37,8 @@ perform_expression_analysis <- function(modules,
                                    p_val_cutoff = p_val_cutoff,
                                    target = target,
                                    model_formula_text = model_formula_text,
-                                   multifactorial = multifactorial)
+                                   multifactorial = multifactorial,
+                                   var_data = var_data)
         # Store results
         all_data_normalized[['DESeq2']] <- results[[1]]
         all_counts_for_plotting[['DESeq2']] <- results[[2]]
@@ -201,44 +202,54 @@ perform_expression_analysis <- function(modules,
 #-----------------------------------------------
 #' @importFrom DESeq2 DESeqDataSetFromMatrix DESeq results counts
 #' @importFrom stats formula
+#' @param var_data Pre-computed DESeq2 data ran with default parameters. If
+#' DESeq2 is called with default parameters, this dds object will be used
+#' instead of calculating it again.
 analysis_DESeq2 <- function(data, p_val_cutoff, target, model_formula_text,
-  multifactorial){
-    if(grepl(":nested", multifactorial)){
-      mf_text <- split_mf_text(multifactorial)
-      factor_table <- table(target[, mf_text$mf_factorA])
-      ordered_factors <- names(factor_table)[order(factor_table, decreasing=TRUE)]
-      # Following necessary to perform design matrix trick in DESeq2 Vignette:
-      # Group-specific condition effects, individuals nested within groups
-      ordering_factor <- ordered(target[, mf_text$mf_factorA], 
-        levels=ordered_factors)
-      # Reorder table by group then by patient (paired samples, i.e. factor B)
-      target <- target[order(ordering_factor,  target[, mf_text$mf_factorB]), ]
-      bigger_grouping <- target[, mf_text$mf_factorA] == ordered_factors[1]
-      smaller_grouping <- target[, mf_text$mf_factorA] == ordered_factors[2]
-      target[smaller_grouping, mf_text$mf_factorB] <- 
-                  target[bigger_grouping, mf_text$mf_factorB][seq(1, sum(smaller_grouping))]
-      target <- target[order(as.integer(row.names(target))), ]
-
-      model_formula_text <- paste0("~ ", mf_text$mf_factorA, " + ", 
-                         mf_text$mf_factorA, ":", mf_text$mf_factorB, " + ", mf_text$mf_factorA,":treat")
-      m1 <- model.matrix(stats::formula(model_formula_text), target)
-
-      all.zero <- apply(m1, 2, function(x) all(x==0))
-      idx <- which(all.zero);  
-      m1 <- m1[,-idx]
-  
-      dds <- DESeq2::DESeqDataSetFromMatrix(countData = data,
-            colData = target,
-            design = ~1)
-      dds <- DESeq2::DESeq(dds, full=m1)
-
+  multifactorial, var_data = NULL){
+### BEFORE TOUCHING THIS AGAIN, A TEST IS NEEDED
+    if((!is.null(var_data) & multifactorial == "") & model_formula_text == "~ treat") {
+      message("Default parameters passed to DESeq2 module, not rerunning.")
+      dds <- var_data$default_dds
+      normalized_counts <- as.data.frame(var_data$deseq2_normalized_counts)
     } else {
-      dds <- DESeq2::DESeqDataSetFromMatrix(countData = data,
-                                  colData = target,
-                                  design = stats::formula(model_formula_text))
-      dds <- DESeq2::DESeq(dds)
-    }
+      if(grepl(":nested", multifactorial)){
+        mf_text <- split_mf_text(multifactorial)
+        factor_table <- table(target[, mf_text$mf_factorA])
+        ordered_factors <- names(factor_table)[order(factor_table, decreasing=TRUE)]
+        # Following necessary to perform design matrix trick in DESeq2 Vignette:
+        # Group-specific condition effects, individuals nested within groups
+        ordering_factor <- ordered(target[, mf_text$mf_factorA], 
+          levels=ordered_factors)
+        # Reorder table by group then by patient (paired samples, i.e. factor B)
+        target <- target[order(ordering_factor,  target[, mf_text$mf_factorB]), ]
+        bigger_grouping <- target[, mf_text$mf_factorA] == ordered_factors[1]
+        smaller_grouping <- target[, mf_text$mf_factorA] == ordered_factors[2]
+        target[smaller_grouping, mf_text$mf_factorB] <- 
+                    target[bigger_grouping, mf_text$mf_factorB][seq(1, sum(smaller_grouping))]
+        target <- target[order(as.integer(row.names(target))), ]
 
+        model_formula_text <- paste0("~ ", mf_text$mf_factorA, " + ", 
+                           mf_text$mf_factorA, ":", mf_text$mf_factorB, " + ", mf_text$mf_factorA,":treat")
+        m1 <- model.matrix(stats::formula(model_formula_text), target)
+
+        all.zero <- apply(m1, 2, function(x) all(x==0))
+        idx <- which(all.zero);  
+        m1 <- m1[,-idx]
+    
+        dds <- DESeq2::DESeqDataSetFromMatrix(countData = data,
+              colData = target,
+              design = ~1)
+        dds <- DESeq2::DESeq(dds, full=m1)
+
+      } else {
+        dds <- DESeq2::DESeqDataSetFromMatrix(countData = data,
+                                    colData = target,
+                                    design = stats::formula(model_formula_text))
+        dds <- DESeq2::DESeq(dds)
+      }
+      normalized_counts <- as.data.frame(DESeq2::counts(dds, normalized=TRUE))
+    }
     if(multifactorial != "") {
       mf_options <- get_mf_DE_options(package_name="DESeq2", package_object=dds,
                                       multifactorial=multifactorial, 
@@ -248,7 +259,6 @@ analysis_DESeq2 <- function(data, p_val_cutoff, target, model_formula_text,
     } else {
       all_DESeq2_genes <- DESeq2::results(dds, alpha = p_val_cutoff)
     }
-    normalized_counts <- as.data.frame(DESeq2::counts(dds, normalized=TRUE))
     return(list(normalized_counts, 
            as.data.frame(all_DESeq2_genes), 
            list(de_deseq2=all_DESeq2_genes, DESeq2_dataset=dds)))
