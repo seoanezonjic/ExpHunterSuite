@@ -2027,6 +2027,7 @@ filter_sc_counts <- function(object, layers = "data", min_counts) {
 #' will be tagged as low_fc.
 #' @param min_cell_proportion Genes expressed in a percentage of cells smaller
 #' than this number in any of the two groups will be tagged as low_cell_pct.
+#' @returns A tagged DEG data frame.
 #' @examples
 #' DEGs <- data.frame(avg_log2FC = c(0, 0.2, 1, -0.1),
 #'                    gene = c("PPBP", "IGLL5", "VDAC3", "GNLY"),
@@ -2087,8 +2088,8 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
   target_results$DEGs$meta <- tables$meta
   target_results$DEG_metrics$DEG_df <- tables$DEG_df
   target_results$DEG_metrics$ncell_df <- tables$ncell_df
-  metrics <- which(names(tables) %in% c("meta", "DEG_df", "ncell_df", "query_DEG_df",
-                                        "query_ncell_df"))
+  metrics <- which(names(tables) %in% c("meta", "DEG_df", "ncell_df",
+    "query_DEG_df", "query_ncell_df"))
   markers <- tables[-metrics]
   markers <- lapply(markers, function(DEG_df) {
                    tag_DEGs(DEG_df = DEG_df, p_val_cutoff = p_val_cutoff,
@@ -2116,6 +2117,7 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
 #' names if DE dataframe has been ran through tag_DEGs.
 #' @param col_vector Vector of columns to retrieve from table. Default: gene,
 #' p_val, p_val_adj, avg_log2FC, pct.1, pct.2, cause_for_rejection, DEG.
+#' @returns A subset of the DEG table.
 #' @examples
 #' stop("This example is missing")
 #' @export
@@ -2135,14 +2137,14 @@ get_DEG_table <- function(input_DEGs, col_vector = c("gene", "p_val",
   return(res)
 }
 
-merge_DEG_tables <- function(DEG_tables, minpack_common = length(DEG_tables)) {
-  # Unused for now, will become active once we implement multiple DEG modules.
-  if(length(DEG_cols) > 1) {
-    input_DEGs$prevalent <- apply(input_DEGs[, DEG_cols, drop = FALSE], 1,
-                                  function(x) sum(x) >= minpack_common)
-    col_vector <- c(col_vector, "prevalent")
-  }
-}
+# merge_DEG_tables <- function(DEG_tables, minpack_common = length(DEG_tables)) {
+#   # Unused for now, will become active once we implement multiple DEG modules.
+#   if(length(DEG_cols) > 1) {
+#     input_DEGs$prevalent <- apply(input_DEGs[, DEG_cols, drop = FALSE], 1,
+#                                   function(x) sum(x) >= minpack_common)
+#     col_vector <- c(col_vector, "prevalent")
+#   }
+# }
 
 .write_DEG_results <- function(DEG_results, minpack_common = 1, DE_method,
                                out_dir = getwd()) {
