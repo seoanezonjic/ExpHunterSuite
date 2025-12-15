@@ -20,6 +20,9 @@ p_val, p_val_adj, avg_log2FC, pct.1, pct.2, cause_for_rejection, DEG.}
 \item{DE_method}{Method used to calculate DEGs. It will be part of column
 names if DE dataframe has been ran through tag_DEGs.}
 }
+\value{
+A subset of the DEG table.
+}
 \description{
 \code{get_DEG_table} extracts relevant columns from a DEG output table and
 adds a "prevalent" field.

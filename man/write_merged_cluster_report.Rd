@@ -11,7 +11,7 @@ write_merged_cluster_report(
   template_folder,
   sample_classes = NULL,
   DEGH_results = NULL,
-  showCategories,
+  n_category,
   node_label = "category",
   size_item = 1,
   size_category = 1,
@@ -35,7 +35,8 @@ write_merged_cluster_report(
 
 \item{DEGH_results}{DEGenes Hunter results object.}
 
-\item{showCategories}{number of categories in the figures (per cluster)}
+\item{n_category}{An integer. Number of categories to pass as showCategory
+value to several clusterProfiler plotting functions.}
 
 \item{node_label}{How to label the nodes. Default "category". Other possible
 values: "all", "none", "item", "exclusive", "share".}

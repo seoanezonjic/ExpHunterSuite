@@ -23,6 +23,9 @@ will be tagged as low_fc.}
 \item{min_cell_proportion}{Genes expressed in a percentage of cells smaller
 than this number in any of the two groups will be tagged as low_cell_pct.}
 }
+\value{
+A tagged DEG data frame.
+}
 \description{
 \code{tag_DEGs} takes a DEG data frame and adds tags according to several
 filters.
