@@ -141,7 +141,7 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
       normalization.method = normalmethod, scale.factor = scalefactor)
     message("Normalization time: ", Sys.time() - norm_start)
     filter_layers <- grep("data", names(seu$RNA@layers), value = TRUE)
-    seu <- filter_sc_counts(seu, min_counts = min_counts, layer = filter_layers)
+    seu <- filter_sc_counts(seu, min_counts = min_counts, layers = filter_layers)
     message('Finding variable features')
     seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs,
                                         verbose = verbose,
