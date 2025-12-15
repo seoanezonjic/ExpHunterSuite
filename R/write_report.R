@@ -405,6 +405,8 @@ write_summarize_heatmaps <- function(summarized_ORA, output_path) {
 #' @param hilight_alpha Transparency value that will be applied to categories
 #' not highlighted. Must be a value between 0 (completely transparent) and 1
 #' (completely opaque). Default: 0.3.
+#' @param n_category An integer. Number of categories to pass as showCategory
+#' value to several clusterProfiler plotting functions.
 #' @returns invisible(NULL)
 write_merged_cluster_report <- function(enrichments_ORA, results_path,
     template_folder, sample_classes=NULL, DEGH_results=NULL, n_category,
