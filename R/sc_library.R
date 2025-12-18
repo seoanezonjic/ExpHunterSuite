@@ -649,7 +649,7 @@ calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE,
 #' @export
 
 analyze_sc_query <- function(seu, query, sigfig = 2, sample_col = "sample",
-  layer = "data") {
+  layer = "data", min_counts = 10) {
   if(all(!query %in% rownames(seu))) {
     warning("None of the query genes are expressed in the dataset",
              immediate. = TRUE)
@@ -658,7 +658,7 @@ analyze_sc_query <- function(seu, query, sigfig = 2, sample_col = "sample",
     query_exp <- get_query_distribution(seu = seu, query = query, layer = layer,
                                      sigfig = sigfig, sample_col = sample_col)
     query_pct <- get_query_pct(seu = seu, query = query, by = sample_col,
-                               sigfig = sigfig, layer = layer)
+                        sigfig = sigfig, layer = layer, min_counts = min_counts)
     if("cell_type" %in% colnames(seu@meta.data)) {
       get_by <- c(sample_col, "cell_type")
     } else {
@@ -779,7 +779,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
       for(j in seq(length(sec_items))) {
         sublist_name <- as.character(sec_items[j])
         resubset <- paste0(j, "/", length(sec_items))
-        message("Re-subsetting by", by[2], " ", resubset)
+        message("Re-subsetting by ", by[2], " ", resubset)
         # Expr set to TRUE because double subset can result in only selecting
         # cells that have not been selected by sketch, which breaks seurat
         # object subsetting.
@@ -1987,7 +1987,7 @@ load_SingleR_ref <- function(path, filter = "") {
 #' @examples
 #' data(pbmc_tiny)
 #' counts <- SeuratObject::GetAssayData(object = pbmc_tiny, layer = "data")
-#' filtered_pbmc <- filter_sc_counts(object = pbmc_tiny, layer = "data",
+#' filtered_pbmc <- filter_sc_counts(object = pbmc_tiny, layers = "data",
 #'                                   min_counts = 2)
 #' filtered_counts <- SeuratObject::GetAssayData(object = pbmc_tiny,
 #'                                               layer = "data")

@@ -303,6 +303,9 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
 #' @inheritParams analyze_sc_query
 #' @param layer Seurat object layer to analyze.
 #' @returns A list with the three query analysis objects.
+#' @details As this function is supposed to be used after our annotation
+#' pipeline, which has already applied a min_counts filter, default for this
+#' function is 1.
 #' @examples
 #' \dontrun{
 #'    data(pbmc_tiny)
@@ -313,7 +316,7 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
 #' @export
 
 main_analyze_sc_query <- function(seu, query, sigfig = 2, layer = "counts",
-                                  sample_col = "sample") {
+                                  sample_col = "sample", min_counts = 1) {
   query_data <- analyze_sc_query(seu = seu, query = query, sigfig = sigfig,
                                  layer = layer, sample_col = sample_col)
   query_results <- list()
@@ -558,18 +561,18 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
     dir.create(tmp_folder)
     container <- list(params = params, seu = final_results$seu,
     qc = final_results$qc, subset_by = opt$subset_by, use_canvas = use_canvas,
-    DEG_list = final_results$DEG_list, query = opt$target_genes, opt = opt,
-    p_val_cutoff = opt$DEG_p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
-    tables = final_results$tables, marker_meta = final_results$marker_meta,
-    sample_qc_pct = final_results$sample_qc_pct, target = final_results$target,
-    clusters_pct = final_results$clusters_pct, markers = final_results$markers,
+    DEG_list = final_results$DEG_list, p_val_cutoff = opt$DEG_p_val_cutoff,
+    query = paste(opt$target_genes, collapse = ", "), opt = opt,
+    min_avg_log2FC = opt$min_avg_log2FC, tables = final_results$tables,
+    marker_meta = final_results$marker_meta, target = final_results$target,
+    sample_qc_pct = final_results$sample_qc_pct,markers = final_results$markers,
+    clusters_pct = final_results$clusters_pct,
     query_exp = final_results$query_data$query_exp,
     SingleR_annotation = final_results$SingleR_annotation,
     query_pct = final_results$query_data$query_pct,
     query_cluster_pct = final_results$query_data$query_cluster_pct,
     cell_annotation = opt$cell_annotation, extra_columns = opt$extra_columns,
-    target_name = final_results$target_name,
-    integrate = final_results$integrate,
+    target_name = final_results$target_name,integrate = final_results$integrate,
     FC_distribution = final_results$FC_distribution)
     plotter <- htmlreportR::htmlReport$new(title_doc = paste0(opt$name,
                             " ", analysis, " report"), container = container,
