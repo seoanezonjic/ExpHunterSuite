@@ -12,7 +12,8 @@ main_analyze_sc_query(
   query,
   sigfig = 2,
   layer = "counts",
-  sample_col = "sample"
+  sample_col = "sample",
+  min_counts = 1
 )
 }
 \arguments{
@@ -35,6 +36,11 @@ analyze_sc_query
 is a wrapper for the three query analysis steps:
 \code{get_query_distribution}, \code{get_query_pct} by samples and \code{get_query_pct} by
 samples and cell types.
+}
+\details{
+As this function is supposed to be used after our annotation
+pipeline, which has already applied a min_counts filter, default for this
+function is 1.
 }
 \examples{
 \dontrun{

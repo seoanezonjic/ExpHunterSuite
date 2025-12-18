@@ -25,7 +25,7 @@ the original seurat layer.
 \examples{
 data(pbmc_tiny)
 counts <- SeuratObject::GetAssayData(object = pbmc_tiny, layer = "data")
-filtered_pbmc <- filter_sc_counts(object = pbmc_tiny, layer = "data",
+filtered_pbmc <- filter_sc_counts(object = pbmc_tiny, layers = "data",
                                   min_counts = 2)
 filtered_counts <- SeuratObject::GetAssayData(object = pbmc_tiny,
                                               layer = "data")

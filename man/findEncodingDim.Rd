@@ -58,15 +58,15 @@ ods <- OUTRIDER::makeExampleOutriderDataSet()
 encDimSearchParams <- c(5, 8, 10, 12, 15)
 zScoreParams <- c(2, 3, 5, 'lnorm')
 implementation <- 'autoencoder'
-register(BiocParallel::MulticoreParam(4))
+BiocParallel::register(BiocParallel::MulticoreParam(4))
 \dontshow{
     ods <- ods[1:12,1:12]
     encDimSearchParams <- c(2)
     zScoreParams <- c('lnorm')
-    register(BiocParallel::SerialParam())
+    BiocParallel::register(BiocParallel::SerialParam())
     implementation <- 'pca'
 }
-ods1 <- OUTRIDER::findEncodingDim(ods, params=encDimSearchParams, 
+ods1 <- findEncodingDim(ods, params=encDimSearchParams, 
         implementation=implementation)
 OUTRIDER::plotEncDimSearch(ods1)
 
