@@ -444,6 +444,7 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
 #' @importFrom OUTRIDER estimateSizeFactors getBestQ
 #' @importFrom BiocParallel bplapply SerialParam bpparam
 #' @importFrom SummarizedExperiment assay
+#' @importFrom S4Vectors metadata
 #' @details This function has been copied from version 1.20.1 of package
 #' OUTRIDER, as it has been deleted in more modern versions. OUTRIDER 1.26.2
 #' has supposedly implemented a faster algorithm, but as 21/10/2025 it has not
@@ -476,10 +477,10 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
 #'     ods <- ods[1:12,1:12]
 #'     encDimSearchParams <- c(2)
 #'     zScoreParams <- c('lnorm')
-#'     BiocParallel::registerregister(BiocParallel::SerialParam())
+#'     BiocParallel::register(BiocParallel::SerialParam())
 #'     implementation <- 'pca'
 #' }
-#' ods1 <- OUTRIDER::findEncodingDim(ods, params=encDimSearchParams, 
+#' ods1 <- findEncodingDim(ods, params=encDimSearchParams, 
 #'         implementation=implementation)
 #' OUTRIDER::plotEncDimSearch(ods1)
 #' 
@@ -504,11 +505,11 @@ findEncodingDim <- function(ods,
         FUN=function(i, ..., evalAucPRLoss=NA){
             evalAutoCorr(ods, encoding_dim=i,
                          BPPARAM=BiocParallel::SerialParam(), ...)})
-    metadata(ods)[['encDimTable']] <- data.table::data.table(
+    S4Vectors::metadata(ods)[['encDimTable']] <- data.table::data.table(
             encodingDimension= params, evaluationLoss= unlist(eval), 
             evalMethod='aucPR')
-    metadata(ods)[['optimalEncDim']] <- NULL
-    metadata(ods)[['optimalEncDim']] <- OUTRIDER::getBestQ(ods)
+    S4Vectors::metadata(ods)[['optimalEncDim']] <- NULL
+    S4Vectors::metadata(ods)[['optimalEncDim']] <- OUTRIDER::getBestQ(ods)
     counts(ods) <- SummarizedExperiment::assay(ods, 'trueCounts')
     val_ods(ods)
     return(ods)
