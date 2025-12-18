@@ -95,7 +95,7 @@ end.rcode-->
     } else {
         cat(plotter$prettify_div(plotter$static_plot_main("comparison_DEGs", custom_format = TRUE,
             plotting_function = DEGs_volcano, resizable = TRUE,), preset = "magic"))
-        cat((plotter$table(list(id = "comparison_DEGs", header = NULL, row_names = NULL,
+        cat((plotter$table(list(id = "comparison_DEGs", header = NULL, row_names = NULL, attrib = list(width = "100%"),
                                                     table_rownames = FALSE, styled = "dt", text = "dynamic",
                                                     func = get_DEG_table))))
     }
@@ -150,7 +150,7 @@ end.rcode-->
             } else {
                 main <- plotter$prettify_div(plotter$static_plot_main("comparison_DEGs", custom_format = TRUE,
                                  plotting_function = DEGs_volcano, resizable = TRUE,), preset = "magic")
-                table_code <- plotter$table(list(id = "comparison_DEGs", header = NULL,
+                table_code <- plotter$table(list(id = "comparison_DEGs", header = NULL, attrib = list(width = "100%"),
                                                  row_names = NULL, table_rownames = FALSE,
                                                  styled = "dt", text = "dynamic", func = get_DEG_table))
                 ident_content <- paste(DEG_legend, main, table_code, collapse = "\n")

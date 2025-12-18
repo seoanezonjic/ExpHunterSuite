@@ -1,13 +1,11 @@
 
 <!--begin.rcode setup
+    saveRDS(plotter, "plotter.rds")
     colGEX <- c("grey85", "#FEE5D9", "#FCBBA1", "#FC9272", "#FB6A4A", "#EF3B2C", "#CB181D", "#99000D")
     opt <- plotter$hash_vars$opt
     subset_by <- plotter$hash_vars$subset_by
     query <- plotter$hash_vars$query
     markers <- plotter$hash_vars$markers
-    DEG_list <- plotter$hash_vars$DEG_list
-    DEG_metrics_list <- plotter$hash_vars$DEG_metrics_list
-    DEG_query_list <- plotter$hash_vars$DEG_query_list
     extra_columns <- plotter$hash_vars$extra_columns
     metadata <- plotter$hash_vars$seu@meta.data
     get_cells_metadata <- function(heatmap) {
@@ -45,7 +43,7 @@
     }
 
     if(!is.null(extra_columns)) {
-        extra_metadata <- get_cells_metadata(plotter$hash_vars$sample_qc_pct)
+        extra_metadata <- get_cells_metadata(plotter$hash_vars$query_exp)
         sample_heatmap_overlay <- as.list(extra_metadata[, extra_columns, drop = FALSE])
     } else {
         sample_heatmap_overlay <- NULL
@@ -70,7 +68,7 @@ end.rcode-->
          (see config file for exact value of scale factor).</p>")
     cat(plotter$prettify_div(plotter$heatmap(list(id = "query_exp", extra_data = list(id ="query_pct", header = NULL,
                              row_names = NULL, text = "dynamic"),
-                             title = "Percentage of cells expressing query gene", inject_smp_attr = sample_heatmap_overlay,
+                             title = "Query gene expression levels", inject_smp_attr = sample_heatmap_overlay,
                              header = NULL, text = FALSE, row_names = NULL, config = list(smpOverlays = names(sample_heatmap_overlay)),
                              transpose = TRUE)), preset = "magic"))
 end.rcode-->
