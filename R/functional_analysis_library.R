@@ -1013,6 +1013,30 @@ clean_parentals_in_matrix <- function(enrichment_mx, subont){
   return(enrichment_mx)
 }
 
+scale_cc_textsize <- function(n, min_text, max_text, min_cats, max_cats) {
+  pmax(min_text, pmin(max_text, max_text - (n - min_cats) * ((max_text-min_text) / (max_cats-min_cats))))
+}
+
+multiply_size_item <- function(x, from_min, from_max, to_min, to_max) {
+  to_min + (to_max - to_min) * (x - from_min) / (from_max - from_min)
+}
+
+calc_showCat_compareCluster <- function(enrichments_ORA_merged, n_category, top_categories) {
+  cc <- enrichments_ORA_merged@compareClusterResult
+  cluster_list <- split(cc, cc$Cluster)
+  for (k in 1:n_category) {
+    top_k_list  <- lapply(cluster_list, function(cluster_cc) {
+      cluster_cc[1:min(k, nrow(sub)), ]
+    })
+    cc_top_k <- do.call(rbind, top_k_list)
+    n_unique <- length(unique(cc_top_k$ID))
+    if (n_unique >= top_categories) {
+      return(max(1,k-1))
+    }
+  }
+  return(n_category)
+}
+
 #' @importFrom utils head
 filter_top_categories <- function(enrichments_ORA_merged, top_c = 50){
   if(! is.null(top_c)) {
@@ -1033,6 +1057,8 @@ filter_top_categories <- function(enrichments_ORA_merged, top_c = 50){
   }
   return(enrichments_ORA_merged)
 }
+
+
 
 
 process_cp_list <- function(enrichments_ORA, simplify_results, 

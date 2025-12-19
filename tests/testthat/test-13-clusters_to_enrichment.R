@@ -7,8 +7,11 @@ test_that("Run c2e main", {
   enr_lists <- main_clusters_to_enrichment(input_file, org_db=org_db, 
     current_organism_info=current_organism_info, gene_keytype="ENSEMBL")
 
-
    testthat::expect_equal(
     as.data.frame(enr_lists$enrichments_ORA$MF$two)[1, "ID"], 
     "GO:0004866")
+   compC <- clusterProfiler::merge_result(enr_lists$enrichments_ORA$MF)
+   showCats <- calc_showCat_compareCluster(compC, 10, 20)
+   testthat::expect_equal(showCats, 6)
 })
+

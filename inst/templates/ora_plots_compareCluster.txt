@@ -2,8 +2,10 @@
 <!--begin.rcode "{{funsys}}_setup"
 	## Template for cluster comparison report
 	library(ggtangle)
-	layout <- "with_gem"
+	layout_cnet <- "fr"
+	layout_emap <- "kk"
 	maxiter <- 3
+	legend_pos <- "bottom"
 	node_label <- plotter$hash_vars$node_label
 	clusters <- split(as.data.frame(plotter$hash_vars$enrich_obj), as.data.frame(plotter$hash_vars$enrich_obj)[, "Cluster"])
 	size_item <- plotter$hash_vars$size_item
@@ -12,6 +14,7 @@
     hilight <- plotter$hash_vars$hilight
     hilight_alpha <- plotter$hash_vars$hilight_alpha
     n_category <- plotter$hash_vars$n_category
+    top_categories <- plotter$hash_vars$top_categories
     nWords <- plotter$hash_vars$nWords
     nCluster <- plotter$hash_vars$nCluster
 	top_ids_list <- lapply(clusters, function(cluster_df) {
@@ -20,10 +23,22 @@
 	})
 	distinct_cats_to_plot <- length(unique(unlist(top_ids_list)))
 	bar_dot_plot_height <- ceiling(distinct_cats_to_plot / 2.5) + 1
-	cnet_args <- list(n_category = n_category, node_label = node_label, layout = layout, advanced_opt = list(maxiter = 3),
-		size_category = size_item, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha)
-	emap_args <- list(n_category = n_category, layout = layout, label_format = 4,
-		size_category = size_item, size_edge = size_edge, min_edge = 0.2, nWords = nWords, nCluster = NULL)
+	
+	if(is.null(top_categories)) {
+		top_categories <- length(clusters) * showCategories
+	}
+	n_category <- calc_showCat_compareCluster(plotter$hash_vars$enrich_obj, n_category, top_categories)
+
+	text_size <- scale_cc_textsize(top_categories, min_text=1, max_text=2.5, min_cats=30, max_cats=120)
+	# cat_scale_factor <- 2.5 - text_size
+	size_item <- multiply_size_item(text_size, from_min = 1, from_max = 2.5, to_min = 7,   to_max = 1)
+	size_edge <- multiply_size_item(text_size, from_min = 1, from_max = 2.5, to_min = 0.25,   to_max = 1)
+
+	cnet_args <- list(n_category = n_category, node_label = node_label, layout = layout_cnet,
+		size_category = size_item, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha,  label_size = text_size, legend_pos = legend_pos)
+	emap_args <- list(n_category = n_category, layout = layout_emap, label_format = 4,
+		size_category = size_item, size_edge = size_edge, min_edge = 0.2, 
+		nWords = nWords, nCluster = NULL, label_size = text_size, legend_pos = legend_pos)
 	dotplot_args <- list(n_category = n_category)
 	format_enr_for_DT <- function(ER){
 	  toshow <- ggplot2::fortify(ER)[,!colnames(ER@compareClusterResult) %in% 

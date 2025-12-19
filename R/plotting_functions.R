@@ -266,7 +266,8 @@ ht2logFCPlot <- function(ht,
 enrich_cnet <- function(input_obj, n_category = 30, node_label = "all",
   layout = igraph::layout_nicely, size_category = 1,
   size_edge = 1, hilight = "none", hilight_alpha = 1, attr_vector = NULL,
-  gene_attribute_name = NULL, advanced_opt = NULL) {
+  gene_attribute_name = NULL, advanced_opt = NULL, label_size = 2, 
+  legend_pos = "side") {
   # Pie sizes depend on size_category argument, so we pass size_item value
   # to size_category argument.
   opt <- c(list(x = input_obj, showCategory = n_category,
@@ -274,8 +275,20 @@ enrich_cnet <- function(input_obj, n_category = 30, node_label = "all",
     size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha),
     advanced_opt)
   p <- do.call(ggtangle::cnetplot, opt)
-  p <- p + ggtangle::geom_cnet_label(node_label = node_label, size = 2.5,
+  p <- p + ggtangle::geom_cnet_label(node_label = node_label, size = label_size,
                 fontface = "bold")
+  if(legend_pos == "bottom") {
+    p <- p + theme(
+      legend.position  = "bottom",
+       legend.direction = "vertical",
+       legend.box       = "horizontal"
+    ) +
+    guides(
+      fill = guide_legend(
+      ncol  = 3           
+      )
+    )
+  }
   # Editing labels like this gives a lot more of control over them
   if(!is.null(attr_vector)) {
     p <- p + ggplot2::scale_color_gradient2(name = gene_attribute_name,
@@ -287,13 +300,28 @@ enrich_cnet <- function(input_obj, n_category = 30, node_label = "all",
 enrich_emap <- function(input_obj, n_category = 30, size_category = 1,
   layout = igraph::layout_nicely, label_format = 4, size_edge = 1,
   min_edge = 1e-16, nCluster = NULL, nWords = 4, group_category = FALSE,
-  advanced_opt = NULL) {
+  advanced_opt = NULL, label_size=2.5, legend_pos="side") {
   opt <- c(list(x = input_obj, showCategory = n_category, node_label = "none",
     min_edge = min_edge, nCluster = nCluster, nWords = nWords, layout = layout,
     label_format = label_format, size_category = size_category,
     size_edge = size_edge), advanced_opt)
+
   p <- do.call(enrichplot::emapplot, opt)
-  p <- p + ggtangle::geom_cnet_label(node_label = "all", size = 2.5, fontface = "bold")
+  # p <- p + ggtangle::geom_cnet_label(node_label = "all", size = 2.5, fontface = "bold")
+  p <- do.call(enrichplot::emapplot, opt)
+  p <- p + ggtangle::geom_cnet_label(node_label = "all", size = label_size, fontface = "bold")
+  if(legend_pos == "bottom") {
+    p <- p + theme(
+      legend.position  = "bottom",
+       legend.direction = "vertical",
+       legend.box       = "horizontal"
+    ) +
+    guides(
+      fill = guide_legend(
+      ncol  = 3           
+      )
+    )
+  }
   return(p)
 }
 
