@@ -412,7 +412,7 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
     template_folder, sample_classes=NULL, DEGH_results=NULL, n_category,
     node_label = "category", size_item = 1, size_category = 1, size_edge = 1,
     hilight = "none", hilight_alpha = 0.3, group_results, func_results = NULL,
-    source_folder = NULL,
+    source_folder = NULL, top_categories = top_categories,
     files_css = file.path(template_folder, "styles.css")) {
     message("Rendering full cluster reports")
     if(is.null(enrichments_ORA)) {
@@ -440,7 +440,8 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
             hilight = hilight, hilight_alpha = hilight_alpha,
             DEGH_results = DEGH_results, sample_classes = sample_classes,
             func_results = func_results, enrichments_ORA = enrichments_ORA,
-            group_results = group_results, n_category = n_category)
+            group_results = group_results, n_category = n_category,
+            top_categories = top_categories)
         plotter <- htmlreportR::htmlReport$new(container = container,
             title_doc = "clusters functional report", tmp_folder = tmp_folder,
             src = source_folder, compress_obj = TRUE, files_css = files_css)
@@ -565,7 +566,8 @@ write_clusters_to_enrichment <- function(output_path="results",
             size_category = size_category, size_edge = size_edge,
             hilight = hilight, hilight_alpha = hilight_alpha,
             results_path = output_path, template_folder, 
-            n_category = n_category, group_results=group_results)
+            n_category = n_category, group_results = group_results, 
+            top_categories = top_categories)
       }
 }
 
