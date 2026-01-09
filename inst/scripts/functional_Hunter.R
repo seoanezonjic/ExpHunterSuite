@@ -211,6 +211,6 @@ write_functional_report(hunter_results = hunter_results, cores = opt$cores,
                         output_files = opt$output_files,
                         organisms_table = organisms_table, size_item = opt$size_item, size_category = opt$size_category,
                         size_edge = opt$size_edge, hilight = opt$hilight, hilight_alpha = opt$hilight_alpha, node_label = opt$node_label,
-                        template_folder = template_folder, showCategories = opt$showCategories, max_genes = opt$max_genes_plot,
-                        group_results = opt$group_results, corr_threshold = opt$corr_threshold, pvalcutoff = opt$pthreshold,
-                        report = opt$report_modes)
+                        template_folder = template_folder, showCategories = opt$showCategories, top_categories = opt$top_categories,
+                        max_genes = opt$max_genes_plot, group_results = opt$group_results, corr_threshold = opt$corr_threshold, 
+                        pvalcutoff = opt$pthreshold, report = opt$report_modes)

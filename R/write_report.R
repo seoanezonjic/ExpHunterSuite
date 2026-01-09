@@ -412,7 +412,7 @@ write_merged_cluster_report <- function(enrichments_ORA, results_path,
     template_folder, sample_classes=NULL, DEGH_results=NULL, n_category,
     node_label = "category", size_item = 1, size_category = 1, size_edge = 1,
     hilight = "none", hilight_alpha = 0.3, group_results, func_results = NULL,
-    source_folder = NULL, top_categories = top_categories,
+    source_folder = NULL, top_categories,
     files_css = file.path(template_folder, "styles.css")) {
     message("Rendering full cluster reports")
     if(is.null(enrichments_ORA)) {
@@ -622,7 +622,7 @@ write_clusters_to_enrichment <- function(output_path="results",
 write_functional_report <- function(hunter_results, func_results, cores = 2,
     output_files = getwd(), organisms_table = NULL, fc_colname = "mean_logFCs",
     task_size = 1, report = "fc", source_folder = NULL, group_results = FALSE,
-    showCategories = 30, corr_threshold = 0.8, pvalcutoff = 0.05,
+    showCategories = 30, top_categories = 100, corr_threshold = 0.8, pvalcutoff = 0.05,
     template_folder = NULL, max_genes = 200, node_label = "category",
     size_item = 1, size_category = 1, size_edge = 1, hilight = "none",
     hilight_alpha = 0.3, files_css = file.path(template_folder, "styles.css")) {
@@ -724,11 +724,12 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
             write_merged_cluster_report(enrichments_ORA = enrichments_ORA,
                 results_path = results_path, template_folder = template_folder,
                 sample_classes = sample_classes, DEGH_results = DEGH_results, 
-                showCategories = showCategories, group_results = group_results,
+                n_category = showCategories, group_results = group_results,
                 func_results = func_results, source_folder = source_folder,
                 node_label = node_label, size_item = size_item,
                 size_category = size_category, size_edge = size_edge,
-                hilight = hilight, hilight_alpha = hilight_alpha)
+                hilight = hilight, hilight_alpha = hilight_alpha, 
+                top_categories = top_categories)
             write_summarize_heatmaps(func_results$summarized_ora, results_path)
     }
 
