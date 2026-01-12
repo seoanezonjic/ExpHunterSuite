@@ -17,7 +17,7 @@
 	attr_vector <- plotter$hash_vars$attr_vector
 	min_edge <- 0.0000000000000001
 	pvalcutoff <- plotter$hash_vars$pvalcutoff
-	layout_cnet <- "with_gem"
+	layout_cnet <- "fr"
 	layout_emap <- "kk"
 	# maxiter <- 3
 	default_width <- set_default_width(enrich_obj = plotter$hash_vars$enrich_obj, showCategory = n_category)
