@@ -254,7 +254,7 @@ end.rcode-->
 
 <!--begin.rcode variance_dist, echo = FALSE, eval=!grepl("F", plotter$hash_vars$opt$modules), warning = FALSE, message = FALSE
 
-plotter$hash_vars$gene_count_var <- data.frame(variance = plotter$hash_vars$var_filter[["variance_dis"]])
+plotter$hash_vars$gene_count_var <- data.frame(variance = plotter$hash_vars$var_filter[["variances"]])
 
 cat(plotter$static_ggplot_main("gene_count_var", resizable = TRUE, header = NULL, row_names = NULL,
 								 plotting_function = function(ggplot_obj) {

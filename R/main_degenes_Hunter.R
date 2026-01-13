@@ -150,7 +150,6 @@ main_degenes_Hunter <- function(
     #Indexing selected columns from input count dataframe   
     raw <- raw[c(index_control_cols,index_treatmn_cols)]
     raw[is.na(raw)] <- 0 # Substitute NA values
-
     cpm_table <- edgeR::cpm(raw)
     raw_filter <- filter_count(reads, minlibraries, raw, cpm_table, filter_type, 
                                index_control_cols, index_treatmn_cols, target)
@@ -159,13 +158,20 @@ main_degenes_Hunter <- function(
     var_data <- get_gene_variance(raw_filter, target = target) 
     
     if(count_var_quantile > 0){
+      # We have to filter the raw count with low expresion genes remodev AND the normalized counts to be coherent
       raw_filter <- filter_by_variance(raw_filter, 
+                     q_filter = count_var_quantile, 
+                     variances = var_data[["variances"]])
+      var_data[["deseq2_normalized_counts"]] <- filter_by_variance(var_data[["deseq2_normalized_counts"]], 
+                     q_filter = count_var_quantile, 
+                     variances = var_data[["variances"]])
+      var_data[["default_dds"]] <- filter_by_variance(var_data[["default_dds"]], 
                      q_filter = count_var_quantile, 
                      variances = var_data[["variances"]])
     }
     default_norm <- list(default = 
                       as.data.frame(var_data[["deseq2_normalized_counts"]]))
-    var_filter <- var_data # TODO: For report compatibility, the template should be refactorized
+    var_filter <- var_data # TODO: For report compatibility, the template should be refactor
     var_filter['thr'] <- count_var_quantile
 
     #computing PCA for all_genes
@@ -481,7 +487,7 @@ get_gene_variance <- function(count_matrix, target){
   normalized_counts <- DESeq2::counts(dds, normalized=TRUE)
   #normalized_counts <- SummarizedExperiment::assay(DESeq2::rlog(dds, blind=TRUE))
   variances <- matrixStats::rowVars(normalized_counts)
-  return(list(variance_dis = variances,
+  return(list(variances = variances,
               deseq2_normalized_counts = normalized_counts,
               default_dds = dds))
 }
