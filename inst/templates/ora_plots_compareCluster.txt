@@ -47,6 +47,7 @@
 	  return(toshow)
 	}
 	clusters_heatplot <- function(compare_cluster_obj){
+		compare_cluster_obj$Description <- stringr::str_wrap(compare_cluster_obj$Description, width = 100)
         pp <- ggplot2::ggplot(compare_cluster_obj, ggplot2::aes_string(x = "Cluster", 
         y = "Description", fill = "p.adjust")) + 
         ggplot2::geom_tile()

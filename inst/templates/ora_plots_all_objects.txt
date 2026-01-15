@@ -39,7 +39,12 @@
   		enrichplot::heatplot(input_obj, showCategory = n_category, foldChange = attr_vector)
 	}
 	enrich_upsetplot <- function(input_obj) {
-	  enrichplot::upsetplot(input_obj, n = n_category)
+	    input_obj@result$Description <- stringr::str_wrap(
+          input_obj@result$Description,
+     	  width = 100
+ 		)
+	  enrichplot::upsetplot(input_obj, n = n_category) +  theme(axis.text.y = element_text(lineheight = 0.6, size=200/n_category)
+    )
 	}
 	force_max_genes_enrobj <- function(enrich_obj, maxGenes = 200, showCategory = 30) {
 	  plot_df <- get_plot_df(enrich_obj, showCategory)
