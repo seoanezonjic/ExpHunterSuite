@@ -204,9 +204,9 @@ if(opt$mode == "classic") {
 }
 
 if(opt$mode == "compcodeR") {
-  generate_synth_DEGs(dataset = opt$dataset, n.vars = opt$ngenes, samples.per.cond = opt$samples.per.cond,
+  main_compcodeR(dataset = opt$dataset, n.vars = opt$ngenes, samples.per.cond = opt$samples.per.cond,
         n.diffexp = opt$n.diffexp, repl.id = opt$repl.id, seqdepth = opt$seqdepth, fraction.upregulated = opt$fraction.upregulated,
         between.group.diffdisp = opt$between.group.diffdisp, filter.threshold.total = opt$filter.threshold.total,
         filter.threshold.mediancpm = opt$filter.threshold.mediancpm, fraction.non.overdispersed = opt$fraction.non.overdispersed,
-        output_dir = opt$output_dir)
+        output_dir = opt$output_dir, method = opt$method)
 }
