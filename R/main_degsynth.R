@@ -1,48 +1,3 @@
-#' Funtion used to scale a vector of numeric values from 
-#' (x_min,x_max) range to 
-#' (y_min,y_max) range.
-#'     f : R -> R
-#'      (x_min, x_max) -> (y_min, y_max)
-#'                         vect - x_min
-#'  f(vect,y_min,y_max) =  ------------- x (y_max - y_min) + y_min
-#'                         x_max - x_min
-#'
-#' @param vect vector to be transformated
-#' @param nmin new minimum
-#' @param nmax new maximum
-#' @return transformated vector to new range
-scale_range <- function(vect,nmin,nmax){
-    ((vect - min(vect))/(max(vect)-min(vect)))*(nmax-nmin)+nmin
-}
-
-
-#' Custom function to generate exponentially degradated foldchange range
-#' @param means means vector
-#' @param fcmin minimum foldchange
-#' @param fcmax maximum foldchange
-#' @param meanlog param of rlnorm function
-#' @param sdlog param of rlnorm function
-#' @return a vector of foldchanges to be applied
-#' @importFrom stats ecdf rlnorm
-fcfunc <- function(means,fcmin=1.4, fcmax=3, meanlog = 1, sdlog = 0.8){
-    # Generate exponential distributio 
-    xx <- stats::rlnorm(length(means), meanlog = meanlog, sdlog = sdlog)
-    xx <- scale_range(xx,fcmin, fcmax)
-    ecdffun <- stats::ecdf(xx)
-    xx <- data.frame(FC = xx, Quant = unlist(lapply(xx,ecdffun)))
-    xx <- xx[order(xx$Quant),]
-    xx$Quant <- xx$Quant[seq(from = nrow(xx), to = 1)] # Apply inverse 
-    # Prepare quantiles of observed
-    ecdffun <- stats::ecdf(means)
-    means <- data.frame(X = means, Quant = unlist(lapply(means,ecdffun)))
-    # Merge values
-    if(all(means$B %in% xx$B)){
-        means <- merge(means,xx,by.y = "Quant",sort = FALSE) 
-    }else{
-        stop("Close search not implemented yet")
-    }
-    return(means)
-}
 
 #' Main function to generate synthetic data using an specific exponential 
 #' distribution for logFC
@@ -127,9 +82,9 @@ degsynth <- function(
     }
 }
 
-#' generate_synth_DEGs
+#' main_compcodeR
 #'
-#' `generate_synth_DEGs` Is a wrapper for the `generateSyntheticData` function
+#' `main_compcodeR` Is a wrapper for the `generateSyntheticData` function
 #' from package `compcodeR`.
 #'
 #' @inheritParams compcodeR::generateSyntheticData
@@ -140,7 +95,7 @@ degsynth <- function(
 #' `counts_matrix` contains just the counts matrix. Element `DEGs` contains
 #' a data frame detailing which genes are differentially expressed in dataset.
 #' @examples
-#' B_625_625 <- generate_synth_DEGs(dataset = "B_625_625", n.vars = 12500, 
+#' B_625_625 <- main_compcodeR(dataset = "B_625_625", n.vars = 12500, 
 #'                                  samples.per.cond = 5, n.diffexp = 1250, 
 #'                                  repl.id = 1, seqdepth = 1e7, 
 #'                                  fraction.upregulated = 0.5, 
@@ -151,7 +106,7 @@ degsynth <- function(
 #' B_625_625
 #' @export
 
-generate_synth_DEGs <- function(dataset, n.vars, samples.per.cond, n.diffexp,
+main_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
     repl.id = 1, seqdepth = 1e+07, minfact = 0.7, maxfact = 1.4,
     relmeans = "auto", dispersions = "auto", fraction.upregulated = 1,
     between.group.diffdisp = FALSE, filter.threshold.total = 1,
@@ -162,14 +117,27 @@ generate_synth_DEGs <- function(dataset, n.vars, samples.per.cond, n.diffexp,
     model.process = c("BM", "OU"), selection.strength = 0, id.condition = NULL,
     id.species = as.factor(rep(1, 2 * samples.per.cond)),
     check.id.species = TRUE, lengths.relmeans = NULL,
-    lengths.dispersions = NULL, lengths.phylo = TRUE, output_dir = NULL) {
+    lengths.dispersions = NULL, lengths.phylo = TRUE, output_dir = NULL,
+    method = "vanilla", fixed_DEG_lists = "", fixed_upregulated_DEGs = "") {
+    effect_sizes <- strsplit(effect.size, ",")[[1]]
+    if(method != "vanilla") {
+        synth_diffexp <- 0
+        synth_diffdisp <- FALSE
+    } else {
+        if(length(effect_sizes) > 1) {
+            stop("compcodeR DEG synthesis not compatible with multiple effect",
+                 "sizes. Please provide only one.")
+        }
+        synth_diffexp <- n.diffexp
+        synth_diffdisp <- between.group.diffdisp
+    }
     synth_data <- compcodeR::generateSyntheticData(dataset = dataset,
         n.vars = n.vars, samples.per.cond = samples.per.cond,
-        n.diffexp = n.diffexp, repl.id = repl.id, seqdepth = seqdepth,
+        n.diffexp = synth_diffexp, repl.id = repl.id, seqdepth = seqdepth,
         minfact = minfact, maxfact = maxfact, relmeans = relmeans,
-        dispersions = dispersions, effect.size = effect.size, tree = tree,
+        dispersions = dispersions, effect.size = effect_sizes[1], tree = tree,
         fraction.upregulated = fraction.upregulated, 
-        between.group.diffdisp = between.group.diffdisp, 
+        between.group.diffdisp = synth_diffidsp, 
         filter.threshold.total = filter.threshold.total,
         filter.threshold.mediancpm = filter.threshold.mediancpm,
         fraction.non.overdispersed = fraction.non.overdispersed,
@@ -193,6 +161,13 @@ generate_synth_DEGs <- function(dataset, n.vars, samples.per.cond, n.diffexp,
     DEGs <- synth_data@variable.annotations["differential.expression"]
     DEGs <- cbind(data.frame(gene = rownames(DEGs), DEGs))
     rownames(DEGs) <- NULL
+    if(method != "vanilla") {
+        synth_data <- main_custom_synth(counts_table = counts_table, 
+            experimental_design = experimental_design, nDEGs = nDEGs,
+            fixed_DEG_lists = fixed_DEG_lists, effect_sizes = effect_sizes,
+            fixed_upregulated_DEGs = fixed_upregulated_DEGs, 
+            fraction_upregulated = fraction_upregulated, overlap_overlap_size, deg_method, samples_per_cond)
+    }
     res <- list(all = synth_data, counts_matrix = counts_matrix, DEGs = DEGs,
                 exp_design = exp_design)
     if(!is.null(output_dir)) {
@@ -207,3 +182,60 @@ generate_synth_DEGs <- function(dataset, n.vars, samples.per.cond, n.diffexp,
     }
 }
 
+
+#' main_custom_synth
+#'
+#' `main_custom_synth` Is a wrapper for the `generateSyntheticData` function
+#' from package `compcodeR`.
+#'
+#' @inheritParams compcodeR::generateSyntheticData
+#' @importFrom compcodeR generateSyntheticData
+#' @importFrom utils write.table
+#' @param output_dir Directory where counts matrix and DEG table will be saved.
+#' @returns A list. Element `all` contains the entire results object. Element
+#' `counts_matrix` contains just the counts matrix. Element `DEGs` contains
+#' a data frame detailing which genes are differentially expressed in dataset.
+#' @examples
+#' B_625_625 <- main_custom_synth(dataset = "B_625_625", n.vars = 12500, 
+#'                                  samples.per.cond = 5, n.diffexp = 1250, 
+#'                                  repl.id = 1, seqdepth = 1e7, 
+#'                                  fraction.upregulated = 0.5, 
+#'                                  between.group.diffdisp = FALSE, 
+#'                                  filter.threshold.total = 1, 
+#'                                  filter.threshold.mediancpm = 0, 
+#'                                  fraction.non.overdispersed = 0)
+#' B_625_625
+#' @export
+
+main_custom_synth <- function(counts_table, experimental_design, nDEGs,
+    fixed_DEG_lists, fixed_upregulated_DEGs, effect_sizes,
+    fraction_upregulated, overlap_size, deg_method, samples_per_cond) {
+    if(opt$fixed_DEG_lists == "") {
+        DEG_lists <- create_DEG_lists(universe = rownames(counts_table),
+                                      nDEGs = nDEGs, overlap = overlap_size)    
+    } else {
+        DEG_lists <- read_DEG_lists(paths_string = fixed_DEG_lists)
+    }
+    new_tables <- rename_samples(exp_design = experimental_design,
+                    counts_table = counts_table, conditions_column = c(2, 3))
+    experimental_design <- new_tables$exp_design
+    counts_table <- new_tables$counts_table
+    message("Experimental design is")
+    print(experimental_design)
+    message("Count table head is ")
+    head(counts_table)
+    effect_sizes <- c(opt$effect_size_1, opt$effect_size_2)
+    factor_columns <- c("condition", "condition_2")
+    for(i in seq(factor_columns)) {
+        if(opt$fixed_upregulated_DEGs == "") {
+            n_ups <- floor(opt$fraction_upregulated * length(DEG_lists[[i]]))
+            up_DEGs <- sample(DEG_lists[[i]], n_ups, replace = FALSE)
+        } else {
+            up_DEGs <- read_DEG_lists(opt$fixed_upregulated_DEGs)[[i]]
+        }
+        counts_table <- make_DEG_table(table = counts_table, up_DEGs = up_DEGs,
+            experimental_design = experimental_design, DEGs = DEG_lists[[i]],
+            effect_size = effect_sizes[i], factor_column = factor_columns[i],
+            samples_per_group = opt$samples_per_group, method = opt$method)
+    }
+}
