@@ -92,7 +92,7 @@ degsynth <- function(
 #' @importFrom utils write.table
 #' @param output_dir Directory where counts matrix and DEG table will be saved.
 #' @returns A list. Element `all` contains the entire results object. Element
-#' `counts_matrix` contains just the counts matrix. Element `DEGs` contains
+#' `counts_table` contains just the counts matrix. Element `DEGs` contains
 #' a data frame detailing which genes are differentially expressed in dataset.
 #' @examples
 #' B_625_625 <- main_compcodeR(dataset = "B_625_625", n.vars = 12500, 
@@ -113,13 +113,15 @@ main_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
     filter.threshold.mediancpm = 0, fraction.non.overdispersed = 0,
     random.outlier.high.prob = 0, random.outlier.low.prob = 0,
     single.outlier.high.prob = 0, single.outlier.low.prob = 0,
-    effect.size = 1.5, tree = NULL, prop.var.tree = 1,
-    model.process = c("BM", "OU"), selection.strength = 0, id.condition = NULL,
+    effect_sizes = 1.5, tree = NULL, prop.var.tree = 1,
+    nDEGs = as.character(nvars/2), model.process = c("BM", "OU"),
+    selection.strength = 0, id.condition = NULL, overlap_size = 0,
     id.species = as.factor(rep(1, 2 * samples.per.cond)),
     check.id.species = TRUE, lengths.relmeans = NULL,
     lengths.dispersions = NULL, lengths.phylo = TRUE, output_dir = NULL,
-    method = "vanilla", fixed_DEG_lists = "", fixed_upregulated_DEGs = "") {
-    effect_sizes <- strsplit(effect.size, ",")[[1]]
+    method = "vanilla", fixed_DEG_lists = "", fixed_upregulated_DEGs = "",
+    condition_columns) {
+    effect_sizes <- strsplit(effect_sizes, ",")[[1]]
     if(method != "vanilla") {
         synth_diffexp <- 0
         synth_diffdisp <- FALSE
@@ -137,7 +139,7 @@ main_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
         minfact = minfact, maxfact = maxfact, relmeans = relmeans,
         dispersions = dispersions, effect.size = effect_sizes[1], tree = tree,
         fraction.upregulated = fraction.upregulated, 
-        between.group.diffdisp = synth_diffidsp, 
+        between.group.diffdisp = synth_diffdisp, 
         filter.threshold.total = filter.threshold.total,
         filter.threshold.mediancpm = filter.threshold.mediancpm,
         fraction.non.overdispersed = fraction.non.overdispersed,
@@ -151,27 +153,32 @@ main_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
         selection.strength = selection.strength,
         id.condition = id.condition, lengths.phylo = lengths.phylo,
         lengths.dispersions = lengths.dispersions)
-    counts_matrix <- synth_data@count.matrix
-    counts_matrix <- cbind(data.frame(gene = rownames(counts_matrix)),
-                           counts_matrix)
+    counts_table <- synth_data@count.matrix
+    counts_table <- cbind(data.frame(gene = rownames(counts_table)),
+                           counts_table)
     exp_design <- synth_data@sample.annotations["condition"]
     exp_design <- cbind(data.frame(sample = rownames(exp_design), exp_design))
     rownames(exp_design) <- NULL
-    rownames(counts_matrix) <- NULL
+    rownames(counts_table) <- NULL
     DEGs <- synth_data@variable.annotations["differential.expression"]
     DEGs <- cbind(data.frame(gene = rownames(DEGs), DEGs))
     rownames(DEGs) <- NULL
     if(method != "vanilla") {
-        synth_data <- main_custom_synth(counts_table = counts_table, 
-            experimental_design = experimental_design, nDEGs = nDEGs,
-            fixed_DEG_lists = fixed_DEG_lists, effect_sizes = effect_sizes,
+        synth_data <- custom_synth(counts_table = counts_table, 
+            exp_design = exp_design, nDEGs = nDEGs, effect_sizes = effect_sizes,
+            columns = condition_columns, deg_method = method,
+            fixed_DEG_lists = fixed_DEG_lists, overlap_size = overlap_size, 
             fixed_upregulated_DEGs = fixed_upregulated_DEGs, 
-            fraction_upregulated = fraction_upregulated, overlap_overlap_size, deg_method, samples_per_cond)
+            fraction_upregulated = fraction.upregulated,
+            samples_per_cond = samples.per.cond)
+        counts_table <- synth_data$counts_table
+        exp_design <- synth_data$exp_design
+        DEGs <- synth_data$DEGs
     }
-    res <- list(all = synth_data, counts_matrix = counts_matrix, DEGs = DEGs,
+    res <- list(all = synth_data, counts_table = counts_table, DEGs = DEGs,
                 exp_design = exp_design)
     if(!is.null(output_dir)) {
-        utils::write.table(res$counts_matrix, file.path(output_dir,
+        utils::write.table(res$counts_table, file.path(output_dir,
             "synth_counts.tsv"), quote = FALSE, row.names = FALSE, sep = "\t")
         utils::write.table(res$DEGs, file.path(output_dir,
             "synth_DEGs.tsv"), quote = FALSE, row.names = FALSE, sep = "\t")
@@ -179,63 +186,5 @@ main_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
             "synth_exp_design.tsv"), quote = FALSE, row.names = FALSE, sep = "\t")
     } else {
         return(res)
-    }
-}
-
-
-#' main_custom_synth
-#'
-#' `main_custom_synth` Is a wrapper for the `generateSyntheticData` function
-#' from package `compcodeR`.
-#'
-#' @inheritParams compcodeR::generateSyntheticData
-#' @importFrom compcodeR generateSyntheticData
-#' @importFrom utils write.table
-#' @param output_dir Directory where counts matrix and DEG table will be saved.
-#' @returns A list. Element `all` contains the entire results object. Element
-#' `counts_matrix` contains just the counts matrix. Element `DEGs` contains
-#' a data frame detailing which genes are differentially expressed in dataset.
-#' @examples
-#' B_625_625 <- main_custom_synth(dataset = "B_625_625", n.vars = 12500, 
-#'                                  samples.per.cond = 5, n.diffexp = 1250, 
-#'                                  repl.id = 1, seqdepth = 1e7, 
-#'                                  fraction.upregulated = 0.5, 
-#'                                  between.group.diffdisp = FALSE, 
-#'                                  filter.threshold.total = 1, 
-#'                                  filter.threshold.mediancpm = 0, 
-#'                                  fraction.non.overdispersed = 0)
-#' B_625_625
-#' @export
-
-main_custom_synth <- function(counts_table, experimental_design, nDEGs,
-    fixed_DEG_lists, fixed_upregulated_DEGs, effect_sizes,
-    fraction_upregulated, overlap_size, deg_method, samples_per_cond) {
-    if(opt$fixed_DEG_lists == "") {
-        DEG_lists <- create_DEG_lists(universe = rownames(counts_table),
-                                      nDEGs = nDEGs, overlap = overlap_size)    
-    } else {
-        DEG_lists <- read_DEG_lists(paths_string = fixed_DEG_lists)
-    }
-    new_tables <- rename_samples(exp_design = experimental_design,
-                    counts_table = counts_table, conditions_column = c(2, 3))
-    experimental_design <- new_tables$exp_design
-    counts_table <- new_tables$counts_table
-    message("Experimental design is")
-    print(experimental_design)
-    message("Count table head is ")
-    head(counts_table)
-    effect_sizes <- c(opt$effect_size_1, opt$effect_size_2)
-    factor_columns <- c("condition", "condition_2")
-    for(i in seq(factor_columns)) {
-        if(opt$fixed_upregulated_DEGs == "") {
-            n_ups <- floor(opt$fraction_upregulated * length(DEG_lists[[i]]))
-            up_DEGs <- sample(DEG_lists[[i]], n_ups, replace = FALSE)
-        } else {
-            up_DEGs <- read_DEG_lists(opt$fixed_upregulated_DEGs)[[i]]
-        }
-        counts_table <- make_DEG_table(table = counts_table, up_DEGs = up_DEGs,
-            experimental_design = experimental_design, DEGs = DEG_lists[[i]],
-            effect_size = effect_sizes[i], factor_column = factor_columns[i],
-            samples_per_group = opt$samples_per_group, method = opt$method)
     }
 }
