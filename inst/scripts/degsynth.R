@@ -8,15 +8,29 @@
 option_list <- list(
   optparse::make_option(c("-m", "--mode"), type = "character", default = "compcodeR",
     help = "Function to use to simulate data counts. Possible values:
-              \"Jabato\", \"compcodeR\"."),
+              \"classic\", \"compcodeR\"."),
+  optparse::make_option(c("-M", "--method"), type = "character", default = "vanilla",
+    help = paste("Method to use for DEG synthesis. Values:",
+                 "*\"vanilla\" (the default): compcodeR synthesis. Other ",
+                 "methods will only use compcodeR for initial counts table",
+                 "generation.",
+                 "\"norm\": Simulate a normal distribution",
+                 "\"exp\": simulate an exponential distribution",
+                 "\"det\": simulate a deterministic distribution (multiplying",
+                 "DEG expression by a fixed value)")),
   optparse::make_option(c("-r", "--replicates"), type="integer", default=3,
     help="Number of replicates for control/treatment group. Default: %default"),
   optparse::make_option(c("-n", "--ngenes"), type="integer", default=20000,
     help="Number of genes in simulated dataset. Number in final dataset might be lower due to filtering. Default : %default"),
-  optparse::make_option(c("-d", "--DEGs_proportion"), type="double",
-    default=0.2,
-    help=paste0("Proportion of differentially expressed genes (DEGs).",
+  optparse::make_option(c("-d", "--DEGs_proportion"), type="double", default=0.2,
+    help=paste0("Proportion of differentially expressed genes (DEGs). Default: %default")),
+  optparse::make_option(c("-D", "--ndegs"), type="character",
+    help="A comma-separated string specifying number of DEGs to simulate for each factor. Mandatory flag."),
+  optparse::make_option(c("-O", "--overlap_size"), type="numeric",
+    default="0", help=paste0("A comma-separated string specifying number of DEGs to simulate for each factor",
       " Default: %default")),
+  optparse::make_option(c("-C", "--condition_columns"), type="character",
+    help="Integers separated by commas specifying index of columns in experiment design specifying conditions. Mandatory flag"),
   optparse::make_option(c("-f", "--FC_min"), type="double", default=1.3,
     help="Minimum Fold Change value. Default : %default"),
   optparse::make_option(c("-F", "--FC_max"), type="double", default=3.0,
@@ -116,7 +130,7 @@ option_list <- list(
     help = "The fraction of 'single' outliers with unusually high counts."),
   optparse::make_option("--single.outlier.low.prob", type = "numeric", default = 0,
     help = "The fraction of 'single' outliers with unusually low counts."),
-  optparse::make_option("--effect.size", type = "numeric", default = 1.5,
+  optparse::make_option("--effect_sizes", type = "character", default = 1.5,
     help = paste("The strength of the differential expression, i.e., the",
                  "effect size, between the two conditions. If this is a single",
                  "number, the effect sizes will be obtained by simulating",
@@ -130,7 +144,7 @@ option_list <- list(
                  "gene), which will be used as provided. In this case, the",
                  "‘fraction.upregulated’ and ‘n.diffexp’ arguments will be",
                  "ignored and the values will be derived from the ‘effect.size’",
-                 "vector.", sep = "\n")),
+                 "vector. For multiple effect sizes, separate them with commas.", sep = "\n")),
   optparse::make_option("--tree", type = "character", default = NULL,
             help = paste("A dated phylogenetic tree of class ‘phylo’ with",
                          "`samples.per.cond * 2` species.")),
@@ -192,6 +206,8 @@ if(is.null(opt$n.diffexp)) {
 if(is.null(opt$id.species)) {
   opt$id.species <- as.factor(rep(1, 2 * opt$samples.per.cond))
 }
+if(is.null(opt$ndegs)) stop("--ndegs flag is empty, with no default")
+if(is.null(opt$condition_columns)) stop("--condition_columns flag is empty, with no default")
 
 #############################################
 ### LOAD & PREPARE 
@@ -204,9 +220,15 @@ if(opt$mode == "classic") {
 }
 
 if(opt$mode == "compcodeR") {
-  main_compcodeR(dataset = opt$dataset, n.vars = opt$ngenes, samples.per.cond = opt$samples.per.cond,
+  if(opt$ndegs == "") {
+    nDEGs <- floor(n.vars * opt$DEGs_proportion)
+  } else {
+    nDEGs <- opt$ndegs
+  }
+  save.image("Testing.RData")
+  main_compcodeR(dataset = opt$dataset, n.vars = opt$ngenes, samples.per.cond = opt$samples.per.cond, effect_sizes = opt$effect_sizes,
         n.diffexp = opt$n.diffexp, repl.id = opt$repl.id, seqdepth = opt$seqdepth, fraction.upregulated = opt$fraction.upregulated,
-        between.group.diffdisp = opt$between.group.diffdisp, filter.threshold.total = opt$filter.threshold.total,
+        between.group.diffdisp = opt$between.group.diffdisp, filter.threshold.total = opt$filter.threshold.total, nDEGs = nDEGs,
         filter.threshold.mediancpm = opt$filter.threshold.mediancpm, fraction.non.overdispersed = opt$fraction.non.overdispersed,
-        output_dir = opt$output_dir, method = opt$method)
+        output_dir = opt$output_dir, method = opt$method, overlap_size = opt$overlap_size, condition_columns = opt$condition_columns)
 }
