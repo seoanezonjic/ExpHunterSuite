@@ -304,10 +304,9 @@ main_degenes_Hunter <- function(
 
     coverage_df <- get_counts(cnts_mtx=raw, library_sizes=library_sizes)
     mean_counts_df <- get_mean_counts(cnts_mtx=raw, cpm_table=cpm_table, reads=reads, minlibraries=minlibraries)
-    exp_genes_df <- get_gene_stats(cpm_table=cpm_table, reads=reads)    
-
+    exp_genes_df <- get_gene_stats(cpm_table=cpm_table, reads=reads)
+    variance_df <- get_variance_df(cpm_table = cpm_table, var_filter = var_filter)
  
-
     final_results <- list()
     final_results[['cpm_table']] <- cpm_table
     final_results[['raw_filter']] <- raw_filter
@@ -320,6 +319,7 @@ main_degenes_Hunter <- function(
     final_results[['replicatesT']] <- replicatesT
     final_results[['final_main_params']] <- final_main_params
     final_results[["var_filter"]] <- var_filter
+    final_results[["variance_df"]] <- variance_df
     final_results[["coverage_df"]] <- coverage_df
     final_results[["mean_counts_df"]] <- mean_counts_df
     final_results[["exp_genes_df"]] <- exp_genes_df
@@ -611,4 +611,13 @@ get_gene_stats <- function(cpm_table, reads)
         exp_genes_df$inters_expressed_genes[sample] <- sum(inters_vec)
     }
     return(exp_genes_df)
+}
+
+get_variance_df <- function(cpm_table, var_filter) {
+  means <- rowMeans(cpm_table)
+  var_data <- var_filter$variances
+  variance_df <- data.frame(var = var_filter$variances)
+  variance_df <- merge(variance_df, means, by = 0)
+  colnames(variance_df) <- c("geneID", "variance", "mean_cpm")
+  return(variance_df)
 }
