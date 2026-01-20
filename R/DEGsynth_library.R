@@ -66,28 +66,29 @@ rename_with_dict <- function(vector, dict) {
 #' conditions.
 
 rename_samples <- function(exp_design, condition_columns, counts_table) {
+    new_counts_table <- counts_table[, !colnames(counts_table) == "gene"]
 	subs_design <- exp_design[, c(1, condition_columns), drop = FALSE]
 	new_names <- apply(exp_design[, -1, drop = FALSE], 1, paste, collapse = "_")
 	new_names <- mark_duplicates(new_names)
 	dict <- new_names
 	names(dict) <- exp_design[, 1]
-	colnames(counts_table) <- rename_with_dict(colnames(counts_table), dict)
+	colnames(new_counts_table) <- rename_with_dict(colnames(new_counts_table),
+                                                   dict)
     subs_design$sample <- rename_with_dict(subs_design$sample, dict)
     subs_design <- subs_design[order(subs_design$sample), ]
-    counts_table <- match_counts_to_design(counts_table = counts_table,
-        exp_design = subs_design)
-	return(list(exp_design = subs_design, counts_table = counts_table))
+    new_counts_table <- match_counts_to_design(exp_design = subs_design,
+                                               counts_table = new_counts_table)
+    new_counts_table <- cbind(gene = counts_table$gene, new_counts_table)
+    new_counts_table <- htmlreportR::col_to_rownames(new_counts_table)
+	return(list(exp_design = subs_design, counts_table = new_counts_table))
 }
 
 synth_normal_DEGs <- function(up_vector, stat_vector, effect_size,
                               stdev = 0.2) {
     all_samples <- c(up_vector, stat_vector)
     n_samples <- length(all_samples)
-    mean_value <- mean(all_samples)
     nscale <- length(up_vector)
-    error_size <- stdev # Might need to apply formula here, just stdev for now
-    # Mean value: 0, scale: error_size, size: number_of_samples 
-    # Verificar esto con Fede
+    error_size <- stdev
     noise <- rnorm(n = n_samples, mean = 0, sd = error_size)
     scale_factor <- effect_size + 1 + abs(noise[1:nscale])
     # Factor to apply to control vector to emulate distribution without
@@ -143,7 +144,6 @@ create_DEG_lists <- function(universe, nDEGs, overlap_size) {
     nsample <- nDEGs[[1]]
     overlap <- NULL
     for(i in seq(nDEGs)) {
-        save(list = ls(all = TRUE), file = "envir.RData")
         overlap_abs <- floor(overlap_size * min(nDEGs[[i]])) # Simpson overlap
     	if(i != 1) {
     		universe <- universe[!universe %in% DEG_lists[[i - 1]]]
@@ -156,7 +156,7 @@ create_DEG_lists <- function(universe, nDEGs, overlap_size) {
     	}
     }
     DEG_lists <- DEG_lists[order(names(DEG_lists))]
-    return(list(DEG_lists))
+    return(DEG_lists)
 }
 
 CV <- function(vector) {
@@ -174,6 +174,7 @@ define_conditions <- function(exp_design, factor_column) {
 }
 
 match_counts_to_design <- function(counts_table, exp_design) {
+    counts_table <- counts_table[, colnames(counts_table) != "gene"]
     new_count_order <- match(exp_design$sample, colnames(counts_table))
     res <- counts_table[, new_count_order]
     return(res)
@@ -183,9 +184,6 @@ make_DEG_table <- function(table, exp_design, factor_column, up_DEGs,
                            effect_size, method, DEGs, samples_per_group,
                            stdev = 0.2) {
     conds <- define_conditions(exp_design, factor_column)
-    old_avg_FC <- vector(mode = "numeric", length = length(DEGs))
-    names(old_avg_FC) <- DEGs
-    new_avg_FC <- old_avg_FC
     res <- table
     for(gene in DEGs) {
         if(gene %in% up_DEGs) {
@@ -241,10 +239,9 @@ read_DEG_lists <- function(paths_string) {
 custom_synth <- function(counts_table, exp_design, nDEGs, columns,
     fixed_DEG_lists, fixed_upregulated_DEGs, effect_sizes,
     fraction_upregulated, overlap_size, deg_method, samples_per_cond) {
-    save(list = ls(all = TRUE), file = "envir.RData")
     nDEGs <- as.integer(strsplit(nDEGs, ",")[[1]])
     if(fixed_DEG_lists == "") {
-        DEG_lists <- create_DEG_lists(universe = rownames(counts_table),
+        DEG_lists <- create_DEG_lists(universe = counts_table$gene,
                                 nDEGs = nDEGs, overlap = overlap_size)
     } else {
         DEG_lists <- read_DEG_lists(paths_string = fixed_DEG_lists)
@@ -262,12 +259,7 @@ custom_synth <- function(counts_table, exp_design, nDEGs, columns,
                     counts_table = counts_table, condition_columns = columns)
     exp_design <- new_tables$exp_design
     counts_table <- new_tables$counts_table
-    message("Experimental design is")
-    print(exp_design)
-    message("Count table head is ")
-    head(counts_table)
-    effect_sizes <- c(effect_size_1, effect_size_2)
-    factor_columns <- c("condition", "condition_2")
+    factor_columns <- colnames(new_tables$exp_design)[columns]
     for(i in seq(factor_columns)) {
         if(fixed_upregulated_DEGs == "") {
             n_ups <- floor(fraction_upregulated * length(DEG_lists[[i]]))
@@ -278,7 +270,7 @@ custom_synth <- function(counts_table, exp_design, nDEGs, columns,
         counts_table <- make_DEG_table(table = counts_table, up_DEGs = up_DEGs,
             exp_design = exp_design, DEGs = DEG_lists[[i]],
             effect_size = effect_sizes[i], factor_column = factor_columns[i],
-            samples_per_group = samples_per_group, method = method)
+            samples_per_group = samples_per_cond, method = deg_method)
     }
     DEGs <- get_diffexp_info(counts_table, unique(unlist(DEG_lists)))
     return(list(exp_design = exp_design, counts_table = counts_table,
