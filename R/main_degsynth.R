@@ -120,58 +120,84 @@ main_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
     check.id.species = TRUE, lengths.relmeans = NULL,
     lengths.dispersions = NULL, lengths.phylo = TRUE, output_dir = NULL,
     method = "vanilla", fixed_DEG_lists = "", fixed_upregulated_DEGs = "",
-    condition_columns) {
-    effect_sizes <- strsplit(effect_sizes, ",")[[1]]
+    condition_columns, exp_design = "", inputfile = NULL) {
+    effect_sizes <- as.numeric(strsplit(effect_sizes, ",")[[1]])
+    subset <- FALSE
     if(method != "vanilla") {
         synth_diffexp <- 0
         synth_diffdisp <- FALSE
+        synth_samples.per.cond <- samples.per.cond * 2
+        subset <- TRUE
     } else {
         if(length(effect_sizes) > 1) {
-            stop("compcodeR DEG synthesis not compatible with multiple effect",
-                 "sizes. Please provide only one.")
+            stop("compcodeR vanilla DEG synthesis not compatible with multiple",
+            " effect sizes. Please provide only one")
+        }
+        if(!is.null(inputfile)) {
+            stop("compcodeR DEG synthesis not compatible with external 
+                  counts data. Please change method or do not supply it")
         }
         synth_diffexp <- n.diffexp
         synth_diffdisp <- between.group.diffdisp
+        synth_samples.per.cond <- samples.per.cond
     }
-    synth_data <- compcodeR::generateSyntheticData(dataset = dataset,
-        n.vars = n.vars, samples.per.cond = samples.per.cond,
-        n.diffexp = synth_diffexp, repl.id = repl.id, seqdepth = seqdepth,
-        minfact = minfact, maxfact = maxfact, relmeans = relmeans,
-        dispersions = dispersions, effect.size = effect_sizes[1], tree = tree,
-        fraction.upregulated = fraction.upregulated, 
-        between.group.diffdisp = synth_diffdisp, 
-        filter.threshold.total = filter.threshold.total,
-        filter.threshold.mediancpm = filter.threshold.mediancpm,
-        fraction.non.overdispersed = fraction.non.overdispersed,
-        random.outlier.high.prob = random.outlier.high.prob,
-        random.outlier.low.prob = random.outlier.low.prob,
-        single.outlier.high.prob = single.outlier.high.prob,
-        single.outlier.low.prob = single.outlier.low.prob,
-        check.id.species = check.id.species,
-        prop.var.tree = prop.var.tree, lengths.relmeans = lengths.relmeans,
-        model.process = model.process, id.species = id.species,
-        selection.strength = selection.strength,
-        id.condition = id.condition, lengths.phylo = lengths.phylo,
-        lengths.dispersions = lengths.dispersions)
-    counts_table <- synth_data@count.matrix
-    counts_table <- cbind(data.frame(gene = rownames(counts_table)),
-                           counts_table)
-    exp_design <- synth_data@sample.annotations["condition"]
-    exp_design <- cbind(data.frame(sample = rownames(exp_design), exp_design))
+    if(!is.null(inputfile)) {
+        if(!file.exists(exp_design)) {
+            stop("Supplied input counts but no experimental design.")
+        }
+        counts_table <- read.table(inputfile, sep = "\t", header = TRUE)
+    } else {
+        synth_data <- compcodeR::generateSyntheticData(dataset = dataset,
+            n.vars = n.vars, samples.per.cond = synth_samples.per.cond,
+            n.diffexp = synth_diffexp, repl.id = repl.id, seqdepth = seqdepth,
+            minfact = minfact, maxfact = maxfact, relmeans = relmeans,
+            dispersions = dispersions, effect.size = effect_sizes[1],
+            tree = tree, fraction.upregulated = fraction.upregulated, 
+            between.group.diffdisp = synth_diffdisp, 
+            filter.threshold.total = filter.threshold.total,
+            filter.threshold.mediancpm = filter.threshold.mediancpm,
+            fraction.non.overdispersed = fraction.non.overdispersed,
+            random.outlier.high.prob = random.outlier.high.prob,
+            random.outlier.low.prob = random.outlier.low.prob,
+            single.outlier.high.prob = single.outlier.high.prob,
+            single.outlier.low.prob = single.outlier.low.prob,
+            check.id.species = check.id.species,
+            prop.var.tree = prop.var.tree, lengths.relmeans = lengths.relmeans,
+            model.process = model.process, id.species = id.species,
+            selection.strength = selection.strength,
+            id.condition = id.condition, lengths.phylo = lengths.phylo,
+            lengths.dispersions = lengths.dispersions)
+        counts_table <- synth_data@count.matrix
+        counts_table <- cbind(data.frame(gene = rownames(counts_table)),
+                               counts_table)
+        if(subset) counts_table <- counts_table[, seq(samples.per.cond)]
+        rownames(counts_table) <- NULL
+        DEGs <- synth_data@variable.annotations["differential.expression"]
+        DEGs <- cbind(data.frame(gene = rownames(DEGs), DEGs))
+        rownames(DEGs) <- NULL
+    }
+    if(exp_design == "") {
+        exp_design <- synth_data@sample.annotations["condition"]
+        exp_design <- cbind(data.frame(sample =rownames(exp_design),exp_design))
+    } else if(file.exists(exp_design)) {
+        exp_design <- read.table(exp_design, sep = "\t", header = TRUE)
+    } else {
+        stop("Invalid value for exp_design argument. Was ", exp_design)
+    }
     rownames(exp_design) <- NULL
     rownames(counts_table) <- NULL
-    DEGs <- synth_data@variable.annotations["differential.expression"]
-    DEGs <- cbind(data.frame(gene = rownames(DEGs), DEGs))
-    rownames(DEGs) <- NULL
     if(method != "vanilla") {
-        synth_data <- custom_synth(counts_table = counts_table, 
+        save(list = ls(all = TRUE), file = "envir.RData")
+        synth_data <- custom_synth(counts_table = counts_table,
             exp_design = exp_design, nDEGs = nDEGs, effect_sizes = effect_sizes,
             columns = condition_columns, deg_method = method,
-            fixed_DEG_lists = fixed_DEG_lists, overlap_size = overlap_size, 
-            fixed_upregulated_DEGs = fixed_upregulated_DEGs, 
+            fixed_DEG_lists = fixed_DEG_lists, overlap_size = overlap_size,
+            fixed_upregulated_DEGs = fixed_upregulated_DEGs,
             fraction_upregulated = fraction.upregulated,
             samples_per_cond = samples.per.cond)
         counts_table <- synth_data$counts_table
+        counts_table <- cbind(gene = rownames(counts_table), counts_table)
+        rownames(counts_table) <- NULL
         exp_design <- synth_data$exp_design
         DEGs <- synth_data$DEGs
     }
