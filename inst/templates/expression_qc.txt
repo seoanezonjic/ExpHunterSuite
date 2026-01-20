@@ -254,15 +254,9 @@ end.rcode-->
 
 <!--begin.rcode variance_dist, echo = FALSE, eval=!grepl("F", plotter$hash_vars$opt$modules), warning = FALSE, message = FALSE
 
-plotter$hash_vars$gene_count_var <- data.frame(variance = plotter$hash_vars$var_filter[["variances"]])
+   cat(plotter$prettify_div(plotter$density(list(id = "variance_df", title = "Variance distribution", header = NULL, fields = c(1, 2), smp_attr = 1,
+                        text = "dynamic", row_names = NULL, fillDensity = TRUE, median = TRUE)), preset = "magic"))
 
-cat(plotter$static_ggplot_main("gene_count_var", resizable = TRUE, header = NULL, row_names = NULL,
-								 plotting_function = function(ggplot_obj) {
-								 	ggplot_obj + ggplot2::aes(x = variance) +
-								 	ggplot2::geom_density() +
-								 	ggplot2::geom_vline(xintercept = plotter$hash_vars$var_filter[["thr"]],
-								 	linetype = "dashed", color = "grey")
-								 	}))
 end.rcode-->
 
 <!--begin.rcode all_norm_head, echo=FALSE, results='asis'
