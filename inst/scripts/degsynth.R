@@ -24,12 +24,12 @@ option_list <- list(
     help="Number of genes in simulated dataset. Number in final dataset might be lower due to filtering. Default : %default"),
   optparse::make_option(c("-d", "--DEGs_proportion"), type="double", default=0.2,
     help=paste0("Proportion of differentially expressed genes (DEGs). Default: %default")),
-  optparse::make_option(c("-D", "--ndegs"), type="character",
+  optparse::make_option(c("-D", "--ndegs"), type="character", default = "",
     help="A comma-separated string specifying number of DEGs to simulate for each factor. Mandatory flag."),
   optparse::make_option(c("-O", "--overlap_size"), type="numeric",
     default="0", help=paste0("A comma-separated string specifying number of DEGs to simulate for each factor",
       " Default: %default")),
-  optparse::make_option(c("-C", "--condition_columns"), type="character",
+  optparse::make_option(c("-C", "--condition_columns"), type="character", default = "",
     help="Integers separated by commas specifying index of columns in experiment design specifying conditions. Mandatory flag"),
   optparse::make_option(c("-f", "--FC_min"), type="double", default=1.3,
     help="Minimum Fold Change value. Default : %default"),
@@ -169,7 +169,13 @@ option_list <- list(
             help = "Column of reference metadata to use for annotation."),
   optparse::make_option("--output_dir", type = "character", default = NULL,
             help = "Directory where results will be written."),
-  optparse::make_option(c("--seed"), type="numeric", default=NULL, help="Fixed seed. Default NULL (no seed is set).")
+  optparse::make_option(c("--seed"), type="numeric", default=NULL, help="Fixed seed. Default NULL (no seed is set)."),
+  optparse::make_option("--fixed_DEG_lists", type = "character", default = "",
+            help = "Fixed lists of DEGs. Two files: one for group 1, one for group 2, separated by commas."),
+  optparse::make_option("--fixed_upregulated_DEGs", type = "character", default = "",
+            help = "Fixed lists of upregulated DEGs. Two files: one for group 1, one for group 2, separated by commas."),
+  optparse::make_option("--custom_exp_design", type = "character", default = "",
+            help = "Path to custom experiment design. Ignored in \"vanilla\" mode")
 )
 
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
@@ -206,8 +212,8 @@ if(is.null(opt$n.diffexp)) {
 if(is.null(opt$id.species)) {
   opt$id.species <- as.factor(rep(1, 2 * opt$samples.per.cond))
 }
-if(is.null(opt$ndegs)) stop("--ndegs flag is empty, with no default")
-if(is.null(opt$condition_columns)) stop("--condition_columns flag is empty, with no default")
+if(opt$method != "vanilla" & opt$ndegs == "") stop("--ndegs flag is empty, with no default")
+if(opt$method != "vanilla" & opt$condition_columns == "") stop("--condition_columns flag is empty, with no default")
 
 #############################################
 ### LOAD & PREPARE 
@@ -221,14 +227,15 @@ if(opt$mode == "classic") {
 
 if(opt$mode == "compcodeR") {
   if(opt$ndegs == "") {
-    nDEGs <- floor(n.vars * opt$DEGs_proportion)
+    nDEGs <- floor(opt$ngenes * opt$DEGs_proportion)
   } else {
     nDEGs <- opt$ndegs
   }
-  save.image("Testing.RData")
-  main_compcodeR(dataset = opt$dataset, n.vars = opt$ngenes, samples.per.cond = opt$samples.per.cond, effect_sizes = opt$effect_sizes,
-        n.diffexp = opt$n.diffexp, repl.id = opt$repl.id, seqdepth = opt$seqdepth, fraction.upregulated = opt$fraction.upregulated,
-        between.group.diffdisp = opt$between.group.diffdisp, filter.threshold.total = opt$filter.threshold.total, nDEGs = nDEGs,
-        filter.threshold.mediancpm = opt$filter.threshold.mediancpm, fraction.non.overdispersed = opt$fraction.non.overdispersed,
-        output_dir = opt$output_dir, method = opt$method, overlap_size = opt$overlap_size, condition_columns = opt$condition_columns)
+  main_compcodeR(dataset = opt$dataset, inputfile = opt$inputfile, n.vars = opt$ngenes, samples.per.cond = opt$samples.per.cond,
+        effect_sizes = opt$effect_sizes, n.diffexp = opt$n.diffexp, repl.id = opt$repl.id, seqdepth = opt$seqdepth,
+        fraction.upregulated = opt$fraction.upregulated, between.group.diffdisp = opt$between.group.diffdisp,
+        filter.threshold.total = opt$filter.threshold.total, nDEGs = nDEGs, filter.threshold.mediancpm = opt$filter.threshold.mediancpm,
+        fraction.non.overdispersed = opt$fraction.non.overdispersed, output_dir = opt$output_dir, method = opt$method,
+        overlap_size = opt$overlap_size, condition_columns = opt$condition_columns, fixed_DEG_lists = opt$fixed_DEG_lists,
+        fixed_upregulated_DEGs = opt$fixed_upregulated_DEGs, exp_design = opt$custom_exp_design)
 }
