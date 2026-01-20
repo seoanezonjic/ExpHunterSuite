@@ -252,6 +252,9 @@ end.rcode-->
    cat("<p> Variance of gene counts across samples are represented. Genes with lower variance than selected threshold (dashed grey line) were filtered out. </p>")
 end.rcode-->
 
+<p> Due to a bug in CanvasXpress, density plots with many values close to zero are inverted. This means that the actual distribution is the gray area before
+the coloured section. We apologise for this inconsistency, but it is outside of our control for now. <p>
+
 <!--begin.rcode variance_dist, echo = FALSE, eval=!grepl("F", plotter$hash_vars$opt$modules), warning = FALSE, message = FALSE
 
    cat(plotter$prettify_div(plotter$density(list(id = "variance_df", title = "Variance distribution", header = NULL, fields = c(1, 2), smp_attr = 1,
