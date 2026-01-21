@@ -212,8 +212,8 @@ if(is.null(opt$n.diffexp)) {
 if(is.null(opt$id.species)) {
   opt$id.species <- as.factor(rep(1, 2 * opt$samples.per.cond))
 }
-if(opt$method != "vanilla" & opt$ndegs == "") stop("--ndegs flag is empty, with no default")
-if(opt$method != "vanilla" & opt$condition_columns == "") stop("--condition_columns flag is empty, with no default")
+if(opt$method != "vanilla" & opt$ndegs == "") stop("--ndegs must be set for non-vanilla mode")
+if(opt$method != "vanilla" & opt$condition_columns == "") stop("--condition_columns must be set for non-vanilla mode")
 
 #############################################
 ### LOAD & PREPARE 
