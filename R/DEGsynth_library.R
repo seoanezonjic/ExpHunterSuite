@@ -104,14 +104,12 @@ synth_normal_DEGs <- function(up_vector, stat_vector, effect_size,
 synth_exponential_DEGs <- function(up_vector, stat_vector, effect_size,
                                    stdev = NULL) {
     all_samples <- c(up_vector, stat_vector)
-    row_mean <- mean(all_samples)
     n_samples <- length(all_samples)
     nscale <- length(up_vector)
     ncontrol <- length(stat_vector)
     # Not sure this is the method I should be using
     noise <- rexp(n = n_samples, rate = 1)
     samples <- up_vector * (effect_size + 1 + noise[1:nscale] ** 2)
-    message("Noise is: ", noise[1:nscale], nscale)
     stat_vector <- 1 + noise[(nscale + 1):n_samples]
     return(list(up_vector = round(up_vector),
                 stat_vector = round(stat_vector)))
