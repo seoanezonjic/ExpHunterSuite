@@ -247,18 +247,23 @@ end.rcode-->
    }))
 
    cat("<p>This plot represents the mean counts distribution per gene, classified by filters</p>")
-   cat(plotter$create_title("Gene counts variance distribution", id = "counts_distr_title", hlevel = 3,
-   					       indexable = TRUE))
-   cat("<p> Variance of gene counts across samples are represented. Genes with lower variance than selected threshold (dashed grey line) were filtered out. </p>")
+   
 end.rcode-->
 
 <p> Due to a bug in CanvasXpress, density plots with many values close to zero are inverted. This means that the actual distribution is the gray area before
 the coloured section. We apologise for this inconsistency, but it is outside of our control for now. <p>
 
 <!--begin.rcode variance_dist, echo = FALSE, eval=!grepl("F", plotter$hash_vars$opt$modules), warning = FALSE, message = FALSE
+	
+	# We need so sort out the threshold stuff, previous persions just showed the selected percentile, which makes NO sense at all in this plot. Exact value
+	# should be shown.
+   #cat("<p> Variance of gene counts across samples are represented. Genes with lower variance than selected threshold (dashed grey line) were filtered out. </p>")
 
    cat(plotter$prettify_div(plotter$density(list(id = "variance_df", title = "Variance distribution", header = NULL, fields = c(1, 2), smp_attr = 1,
-                        text = "dynamic", row_names = NULL, fillDensity = TRUE, median = TRUE)), preset = "magic"))
+                        text = "dynamic", row_names = NULL, fillDensity = TRUE, median = TRUE, x_label = "Variance")), preset = "magic"))
+
+   cat(plotter$prettify_div(plotter$scatter2D(list(id = "variance_df", title = "Variance VS mean CPM", header = NULL,
+                        text = "dynamic", row_names = TRUE, fillDensity = TRUE, median = TRUE, x_label = "Variance", y_label = "Mean CPM")), preset = "magic"))
 
 end.rcode-->
 
