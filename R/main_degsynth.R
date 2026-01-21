@@ -114,7 +114,7 @@ main_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
     random.outlier.high.prob = 0, random.outlier.low.prob = 0,
     single.outlier.high.prob = 0, single.outlier.low.prob = 0,
     effect_sizes = 1.5, tree = NULL, prop.var.tree = 1,
-    nDEGs = as.character(nvars/2), model.process = c("BM", "OU"),
+    nDEGs = as.character(n.vars/2), model.process = c("BM", "OU"),
     selection.strength = 0, id.condition = NULL, overlap_size = 0,
     id.species = as.factor(rep(1, 2 * samples.per.cond)),
     check.id.species = TRUE, lengths.relmeans = NULL,
@@ -187,7 +187,6 @@ main_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
     rownames(exp_design) <- NULL
     rownames(counts_table) <- NULL
     if(method != "vanilla") {
-        save(list = ls(all = TRUE), file = "envir.RData")
         synth_data <- custom_synth(counts_table = counts_table,
             exp_design = exp_design, nDEGs = nDEGs, effect_sizes = effect_sizes,
             columns = condition_columns, deg_method = method,
