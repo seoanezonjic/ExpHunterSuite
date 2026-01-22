@@ -46,11 +46,53 @@
 #' data(target)
 #' degh_out <- main_degenes_Hunter(raw=toc, target=target, modules="D")
 
+select_variable_genes_vst <- function(raw_counts, target, z_thr = -2) {
+  counts <- as.matrix(raw_counts)
+  coldata <- data.frame(dummy = rep(1, ncol(counts)),
+                      row.names = colnames(counts))
+
+  dds <- DESeq2::DESeqDataSetFromMatrix(countData = counts, colData = coldata, design = ~ 1)
+  dds <- DESeq2::estimateSizeFactors(dds)
+  dds <- DESeq2::estimateDispersions(dds)
+  vsd <- DESeq2::vst(dds, blind = TRUE)
+
+  mat_vst <- SummarizedExperiment::assay(vsd)
+  mu <- rowMeans(mat_vst)
+  va <- apply(mat_vst, 1, var)
+  print("the first vars are:")
+  print(va[1:5])
+  print("...")
+
+  # We could implement loess smothness factor
+  fit <- stats::loess(va ~ mu, span = 0.3)
+  va_hat <- stats::predict(fit, mu)
+  va_hat <- pmax(va_hat, 1e-8)
+  resid <- va - va_hat
+  z <- (resid - stats::median(resid, na.rm = TRUE)) / stats::mad(resid, na.rm = TRUE)
+
+  # robust z-score robusto: https://stats.stackexchange.com/questions/523865/calculating-robust-z-scores-with-median-and-mad
+  #z <- (va - stats::median(va, na.rm = TRUE)) / stats::mad(va, na.rm = TRUE)
+  #z <- (va - mean(va, na.rm =TRUE)) / sd(va,na.rm=TRUE)
+  print("the z is:")
+  print(stats::median(va, na.rm=TRUE))
+  print(max(z))
+  print(min(z))
+  print(z[1:5])
+
+  keep <- z > z_thr
+  keep_genes <- rownames(mat_vst)[keep]
+  print("the number of genes to keep")
+  print(length(keep_genes))
+
+  return(keep_genes)
+}
+
 main_degenes_Hunter <- function(
     raw = NULL,
     pseudocounts = FALSE,
     target = NULL,
     count_var_quantile = 0,
+    deseq2_variance_threshold=NULL,
     external_DEA_data = NULL,
     output_files = getwd(),
     reads = 2,
@@ -120,7 +162,7 @@ main_degenes_Hunter <- function(
 
     
     numeric_factors <- split_str(numeric_factors, ",")
-    if (sum(numeric_factors == "") >= 1) numeric_factors <- NULL #esto esta para controlar que no haya elementos vacios
+    if(sum(numeric_factors == "") >= 1) numeric_factors <- NULL
 
     string_factors <- split_str(string_factors, ",")
 
@@ -156,7 +198,24 @@ main_degenes_Hunter <- function(
 
     # TODO: split normalization ffrom 'get_gene_variance' function?
     var_data <- get_gene_variance(raw_filter, target = target) 
-    
+
+    print("ajaj")
+    print(nrow(raw_filter))
+    print(ncol(raw_filter))
+    print(raw_filter[1:5,])
+    print("the filter is")
+    print(deseq2_variance_threshold)
+    if(!is.null(deseq2_variance_threshold)) {
+      genes_to_keep <- select_variable_genes_vst(raw_filter, target, z_thr = deseq2_variance_threshold) 
+      raw_filter <- raw_filter[rownames(raw_filter) %in% genes_to_keep, ]
+      var_data[["deseq2_normalized_counts"]] <- var_data[["deseq2_normalized_counts"]][rownames(var_data[["deseq2_normalized_counts"]]) %in% genes_to_keep, ]
+      var_data[["default_dds"]] <- var_data[["default_dds"]][rownames(var_data[["default_dds"]]) %in% genes_to_keep, ]
+      print("ojo")
+      print(nrow(raw_filter))
+      print(ncol(raw_filter))
+      print(raw_filter[1:5,])
+    }
+
     if(count_var_quantile > 0){
       # We have to filter the raw count with low expresion genes remodev AND the normalized counts to be coherent
       raw_filter <- filter_by_variance(raw_filter, 
