@@ -17,6 +17,7 @@ write_functional_report(
   source_folder = NULL,
   group_results = FALSE,
   showCategories = 30,
+  top_categories = 100,
   corr_threshold = 0.8,
   pvalcutoff = 0.05,
   template_folder = NULL,

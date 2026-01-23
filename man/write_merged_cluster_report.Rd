@@ -21,6 +21,7 @@ write_merged_cluster_report(
   group_results,
   func_results = NULL,
   source_folder = NULL,
+  top_categories,
   files_css = file.path(template_folder, "styles.css")
 )
 }
