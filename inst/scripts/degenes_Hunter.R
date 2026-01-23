@@ -247,7 +247,6 @@ if(! is.null(library_sizes)) {
 if(!is.null(opt$query_genes)) {
   opt$query_genes <- strsplit(opt$query_genes, ";")[[1]]
 }
-
 final_results <- main_degenes_Hunter(
   target = target,
   raw = raw_count_table,
