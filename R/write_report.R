@@ -673,7 +673,7 @@ write_functional_report <- function(hunter_results, func_results, cores = 2,
     DEGH_results <- func_results$DEGH_results_annot
     enrichments_ORA_expanded <- func_results$WGCNA_ORA_expanded
     container <- list(hunter_results = hunter_results, max_genes = max_genes,
-                  func_results = func_results,
+                  func_results = func_results, n_category = showCategories,
                   model_organism = model_organism,
                   current_organism_info = current_organism_info,
                   flags_ora = flags_ora, flags_gsea = flags_gsea,
