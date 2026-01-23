@@ -231,7 +231,7 @@ if(opt$mode == "compcodeR") {
   } else {
     nDEGs <- opt$ndegs
   }
-  main_compcodeR(dataset = opt$dataset, inputfile = opt$inputfile, n.vars = opt$ngenes, samples.per.cond = opt$samples.per.cond,
+  run_compcodeR(dataset = opt$dataset, inputfile = opt$inputfile, n.vars = opt$ngenes, samples.per.cond = opt$samples.per.cond,
         effect_sizes = opt$effect_sizes, n.diffexp = opt$n.diffexp, repl.id = opt$repl.id, seqdepth = opt$seqdepth,
         fraction.upregulated = opt$fraction.upregulated, between.group.diffdisp = opt$between.group.diffdisp,
         filter.threshold.total = opt$filter.threshold.total, nDEGs = nDEGs, filter.threshold.mediancpm = opt$filter.threshold.mediancpm,

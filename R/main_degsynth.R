@@ -82,9 +82,9 @@ degsynth <- function(
     }
 }
 
-#' main_compcodeR
+#' run_compcodeR
 #'
-#' `main_compcodeR` Is a wrapper for the `generateSyntheticData` function
+#' `run_compcodeR` Is a wrapper for the `generateSyntheticData` function
 #' from package `compcodeR`.
 #'
 #' @inheritParams compcodeR::generateSyntheticData
@@ -95,7 +95,7 @@ degsynth <- function(
 #' `counts_table` contains just the counts matrix. Element `DEGs` contains
 #' a data frame detailing which genes are differentially expressed in dataset.
 #' @examples
-#' B_625_625 <- main_compcodeR(dataset = "B_625_625", n.vars = 12500, 
+#' B_625_625 <- run_compcodeR(dataset = "B_625_625", n.vars = 12500, 
 #'                                  samples.per.cond = 5, n.diffexp = 1250, 
 #'                                  repl.id = 1, seqdepth = 1e7, 
 #'                                  fraction.upregulated = 0.5, 
@@ -106,7 +106,7 @@ degsynth <- function(
 #' B_625_625
 #' @export
 
-main_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
+run_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
     repl.id = 1, seqdepth = 1e+07, minfact = 0.7, maxfact = 1.4,
     relmeans = "auto", dispersions = "auto", fraction.upregulated = 1,
     between.group.diffdisp = FALSE, filter.threshold.total = 1,
