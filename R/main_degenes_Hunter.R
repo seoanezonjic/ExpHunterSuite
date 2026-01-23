@@ -678,5 +678,6 @@ get_variance_df <- function(cpm_table, var_filter) {
   variance_df <- data.frame(var = var_filter$variances)
   variance_df <- merge(variance_df, means, by = 0)
   colnames(variance_df) <- c("geneID", "variance", "mean_cpm")
+  variance_df <- variance_df[, c("geneID", "mean_cpm", "variance")]
   return(variance_df)
 }

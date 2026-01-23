@@ -263,7 +263,7 @@ the coloured section. We apologise for this inconsistency, but it is outside of 
                         text = "dynamic", row_names = NULL, fillDensity = TRUE, median = TRUE, x_label = "Variance")), preset = "magic"))
 
    cat(plotter$prettify_div(plotter$scatter2D(list(id = "variance_df", title = "Variance VS mean CPM", header = NULL,
-                        text = "dynamic", row_names = TRUE, fillDensity = TRUE, median = TRUE, x_label = "Variance", y_label = "Mean CPM")), preset = "magic"))
+                        text = "dynamic", row_names = TRUE, fillDensity = TRUE, median = TRUE, x_label = "Mean CPM", y_label = "Variance")), preset = "magic"))
 
 end.rcode-->
 
