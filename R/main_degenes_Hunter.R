@@ -6,6 +6,8 @@
 #' @param target set with control and treatment information
 #' @param external_DEA_data external DEA set 
 #' @param count_var_quantile quantile variance threshold
+#' @param deseq2_variance_threshold quantile variance threshold with vs
+#' transformation from deseq2
 #' @param output_files otput files path
 #' @param reads set of reads
 #' @param minlibraries minimum of libraries to use a set of data
@@ -45,6 +47,7 @@
 #' data(toc)
 #' data(target)
 #' degh_out <- main_degenes_Hunter(raw=toc, target=target, modules="D")
+
 main_degenes_Hunter <- function(
     raw = NULL,
     pseudocounts = FALSE,
@@ -498,7 +501,7 @@ filter_count <- function(reads,
 #'
 #' @param raw_counts Raw count matrix/data.frame with genes in rows and samples in columns.
 #' Row names must be gene identifiers (e.g., Ensembl IDs). Values must be non-negative counts.
-#' @param q_thr Numeric in [0, 1]. Quantile threshold applied to robust z-scores of residual
+#' @param q_thr Numeric in \[0, 1\]. Quantile threshold applied to robust z-scores of residual
 #' variance. Genes with `z >= quantile(z, q_thr)` are kept.
 #' - Use small values (e.g., 0.05) for mild filtering ("cleaning": removes only the lowest tail).
 #' - Use larger values (e.g., 0.8–0.95) for aggressive feature selection (keeps only the most variable).
