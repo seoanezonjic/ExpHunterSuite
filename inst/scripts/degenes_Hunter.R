@@ -26,7 +26,7 @@ option_list <- list(
   optparse::make_option(c("--count_var_quantile"), type="double", default=0, 
     help=paste0("Proportion (0-1 value) of low variance genes to filter out. ",
       "Default=%default")),
-  optparse::make_option(c("--deseq2_variance_threshold"), type="double", default=NULL, 
+  optparse::make_option(c("--deseq2_variance_threshold"), type="double", default=0, 
     help=paste0("Robust zscore set to remove those genes with lowest vst-variance (obtained from vst deseq2 functionality)",
       "Default=%default")),
   optparse::make_option(c("-l", "--minlibraries"), type="integer", default=2,
