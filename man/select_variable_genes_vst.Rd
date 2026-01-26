@@ -2,87 +2,42 @@
 % Please edit documentation in R/main_degenes_Hunter.R
 \name{select_variable_genes_vst}
 \alias{select_variable_genes_vst}
-\title{Main DEgenes Hunter Function}
+\title{Select genes by variability using DESeq2 VST and residual variance (quantile threshold)}
 \usage{
-select_variable_genes_vst(raw_counts, target, z_thr = -2)
+select_variable_genes_vst(raw_counts, q_thr = 0.05)
 }
 \arguments{
-\item{target}{set with control and treatment information}
+\item{raw_counts}{Raw count matrix/data.frame with genes in rows and samples in columns.
+Row names must be gene identifiers (e.g., Ensembl IDs). Values must be non-negative counts.}
 
-\item{raw}{Dataframe with raw counts per sample and feature}
-
-\item{external_DEA_data}{external DEA set}
-
-\item{count_var_quantile}{quantile variance threshold}
-
-\item{output_files}{otput files path}
-
-\item{reads}{set of reads}
-
-\item{minlibraries}{minimum of libraries to use a set of data}
-
-\item{filter_type}{filter type to ba applied. Allowed: "separate" or "global"}
-
-\item{p_val_cutoff}{p-value threshold}
-
-\item{lfc}{minimum logFold Change}
-
-\item{modules}{modules to be executed. Allowed: DESeq2 (D), NOISeq (N),
-Limma (L), EdgeR (E), WGCNA (W)}
-
-\item{minpack_common}{minimum of pack that must be significant to tag
-a gene as significant}
-
-\item{model_variables}{custom model}
-
-\item{pseudocounts}{boolean, activate if the input contains pseudocounts}
-
-\item{numerics_as_factors}{transform numeric values to factors. Default: TRUE}
-
-\item{string_factors}{string factors for WGCNA}
-
-\item{numeric_factors}{numeric factors for WGCNA}
-
-\item{WGCNA_memory}{see WGCNA package}
-
-\item{WGCNA_norm_method}{see WGCNA package}
-
-\item{WGCNA_deepsplit}{see WGCNA package}
-
-\item{WGCNA_min_genes_cluster}{see WGCNA package}
-
-\item{WGCNA_detectcutHeight}{see WGCNA package}
-
-\item{WGCNA_mergecutHeight}{see WGCNA package}
-
-\item{WGCNA_all}{see WGCNA package}
-
-\item{WGCNA_blockwiseNetworkType}{see WGCNA package}
-
-\item{WGCNA_blockwiseTOMType}{see WGCNA package}
-
-\item{WGCNA_minCoreKME}{see WGCNA package}
-
-\item{WGCNA_minCoreKMESize}{see WGCNA package}
-
-\item{WGCNA_minKMEtoStay}{see WGCNA package}
-
-\item{WGCNA_corType}{see WGCNA package}
-
-\item{multifactorial}{specify interaction/effect when multifactorial design}
-
-\item{library_sizes}{NULL or a dataframe with sample names and library sizes}
+\item{q_thr}{Numeric in [0, 1]. Quantile threshold applied to robust z-scores of residual
+variance. Genes with \code{z >= quantile(z, q_thr)} are kept.
+\itemize{
+\item Use small values (e.g., 0.05) for mild filtering ("cleaning": removes only the lowest tail).
+\item Use larger values (e.g., 0.8–0.95) for aggressive feature selection (keeps only the most variable).
+}}
 }
 \value{
-expression analysis result object with studies performed
+A character vector with the gene identifiers (rownames of \code{raw_counts})
+that pass the variability threshold.
 }
 \description{
-This function allows you to perform the DEG analysis with different
-algorithms.
+\code{select_variable_genes_vst} selects genes based on their variability after applying
+DESeq2's Variance Stabilizing Transformation (VST). It computes a mean–variance trend
+on the VST scale, obtains residual variances (observed variance minus expected variance),
+converts them to robust z-scores (median/MAD), and keeps genes above a user-defined
+quantile of those z-scores.
+}
+\details{
+This function is intended for exploratory filtering / "cleaning" or feature selection
+prior to downstream analyses such as PCA or clustering.
 }
 \examples{
-data(toc)
-data(target)
-degh_out <- main_degenes_Hunter(raw=toc, target=target, modules="D")
+# counts: matrix of raw counts (genes x samples) with rownames = gene IDs
+# Keep genes above the 5th percentile of residual-variance robust z-scores
+# genes_to_keep <- select_variable_genes_vst(counts, q_thr = 0.05)
+
+# More stringent: keep only the top 10\% most variable genes
+# genes_to_keep <- select_variable_genes_vst(counts, q_thr = 0.90)
+
 }
-\keyword{method}
