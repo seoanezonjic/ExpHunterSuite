@@ -6,7 +6,7 @@
 #' @param target set with control and treatment information
 #' @param external_DEA_data external DEA set 
 #' @param count_var_quantile quantile variance threshold
-#' @param deseq2_variance_threshold quantile variance threshold with vs
+#' @param deseq2_var_quantile quantile variance threshold with vs
 #' transformation from deseq2
 #' @param output_files otput files path
 #' @param reads set of reads
@@ -53,7 +53,7 @@ main_degenes_Hunter <- function(
     pseudocounts = FALSE,
     target = NULL,
     count_var_quantile = 0,
-    deseq2_variance_threshold=0,
+    deseq2_var_quantile=0,
     external_DEA_data = NULL,
     output_files = getwd(),
     reads = 2,
@@ -160,8 +160,8 @@ main_degenes_Hunter <- function(
     # TODO: split normalization ffrom 'get_gene_variance' function?
     var_data <- get_gene_variance(raw_filter, target = target) 
 
-    if(deseq2_variance_threshold > 0) {
-      genes_to_keep <- select_variable_genes_vst(raw_filter, q_thr = deseq2_variance_threshold)
+    if(deseq2_var_quantile > 0) {
+      genes_to_keep <- select_variable_genes_vst(raw_filter, q_thr = deseq2_var_quantile)
       raw_filter <- raw_filter[rownames(raw_filter) %in% genes_to_keep, ]
       var_data[["deseq2_normalized_counts"]] <- var_data[["deseq2_normalized_counts"]][rownames(var_data[["deseq2_normalized_counts"]]) %in% genes_to_keep, ]
       var_data[["default_dds"]] <- var_data[["default_dds"]][rownames(var_data[["default_dds"]]) %in% genes_to_keep, ]
