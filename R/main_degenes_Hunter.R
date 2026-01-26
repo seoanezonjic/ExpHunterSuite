@@ -45,48 +45,6 @@
 #' data(toc)
 #' data(target)
 #' degh_out <- main_degenes_Hunter(raw=toc, target=target, modules="D")
-
-select_variable_genes_vst <- function(raw_counts, target, z_thr = -2) {
-  counts <- as.matrix(raw_counts)
-  coldata <- data.frame(dummy = rep(1, ncol(counts)),
-                      row.names = colnames(counts))
-
-  dds <- DESeq2::DESeqDataSetFromMatrix(countData = counts, colData = coldata, design = ~ 1)
-  dds <- DESeq2::estimateSizeFactors(dds)
-  dds <- DESeq2::estimateDispersions(dds)
-  vsd <- DESeq2::vst(dds, blind = TRUE)
-
-  mat_vst <- SummarizedExperiment::assay(vsd)
-  mu <- rowMeans(mat_vst)
-  va <- apply(mat_vst, 1, var)
-  print("the first vars are:")
-  print(va[1:5])
-  print("...")
-
-  # We could implement loess smothness factor
-  fit <- stats::loess(va ~ mu, span = 0.3)
-  va_hat <- stats::predict(fit, mu)
-  va_hat <- pmax(va_hat, 1e-8)
-  resid <- va - va_hat
-  z <- (resid - stats::median(resid, na.rm = TRUE)) / stats::mad(resid, na.rm = TRUE)
-
-  # robust z-score robusto: https://stats.stackexchange.com/questions/523865/calculating-robust-z-scores-with-median-and-mad
-  #z <- (va - stats::median(va, na.rm = TRUE)) / stats::mad(va, na.rm = TRUE)
-  #z <- (va - mean(va, na.rm =TRUE)) / sd(va,na.rm=TRUE)
-  print("the z is:")
-  print(stats::median(va, na.rm=TRUE))
-  print(max(z))
-  print(min(z))
-  print(z[1:5])
-
-  keep <- z > z_thr
-  keep_genes <- rownames(mat_vst)[keep]
-  print("the number of genes to keep")
-  print(length(keep_genes))
-
-  return(keep_genes)
-}
-
 main_degenes_Hunter <- function(
     raw = NULL,
     pseudocounts = FALSE,
@@ -199,21 +157,11 @@ main_degenes_Hunter <- function(
     # TODO: split normalization ffrom 'get_gene_variance' function?
     var_data <- get_gene_variance(raw_filter, target = target) 
 
-    print("ajaj")
-    print(nrow(raw_filter))
-    print(ncol(raw_filter))
-    print(raw_filter[1:5,])
-    print("the filter is")
-    print(deseq2_variance_threshold)
     if(!is.null(deseq2_variance_threshold)) {
-      genes_to_keep <- select_variable_genes_vst(raw_filter, target, z_thr = deseq2_variance_threshold) 
+      genes_to_keep <- select_variable_genes_vst(raw_filter, q_thr = deseq2_variance_threshold)
       raw_filter <- raw_filter[rownames(raw_filter) %in% genes_to_keep, ]
       var_data[["deseq2_normalized_counts"]] <- var_data[["deseq2_normalized_counts"]][rownames(var_data[["deseq2_normalized_counts"]]) %in% genes_to_keep, ]
       var_data[["default_dds"]] <- var_data[["default_dds"]][rownames(var_data[["default_dds"]]) %in% genes_to_keep, ]
-      print("ojo")
-      print(nrow(raw_filter))
-      print(ncol(raw_filter))
-      print(raw_filter[1:5,])
     }
 
     if(count_var_quantile > 0){
@@ -535,6 +483,63 @@ filter_count <- function(reads,
       }
     }
     return(raw)
+}
+
+#' Select genes by variability using DESeq2 VST and residual variance (quantile threshold)
+#'
+#' `select_variable_genes_vst` selects genes based on their variability after applying
+#' DESeq2's Variance Stabilizing Transformation (VST). It computes a mean–variance trend
+#' on the VST scale, obtains residual variances (observed variance minus expected variance),
+#' converts them to robust z-scores (median/MAD), and keeps genes above a user-defined
+#' quantile of those z-scores.
+#'
+#' This function is intended for exploratory filtering / "cleaning" or feature selection
+#' prior to downstream analyses such as PCA or clustering.
+#'
+#' @param raw_counts Raw count matrix/data.frame with genes in rows and samples in columns.
+#' Row names must be gene identifiers (e.g., Ensembl IDs). Values must be non-negative counts.
+#' @param q_thr Numeric in [0, 1]. Quantile threshold applied to robust z-scores of residual
+#' variance. Genes with `z >= quantile(z, q_thr)` are kept.
+#' - Use small values (e.g., 0.05) for mild filtering ("cleaning": removes only the lowest tail).
+#' - Use larger values (e.g., 0.8–0.95) for aggressive feature selection (keeps only the most variable).
+#'
+#' @returns A character vector with the gene identifiers (rownames of `raw_counts`)
+#' that pass the variability threshold.
+#'
+#' @examples
+#' # counts: matrix of raw counts (genes x samples) with rownames = gene IDs
+#' # Keep genes above the 5th percentile of residual-variance robust z-scores
+#' # genes_to_keep <- select_variable_genes_vst(counts, q_thr = 0.05)
+#'
+#' # More stringent: keep only the top 10% most variable genes
+#' # genes_to_keep <- select_variable_genes_vst(counts, q_thr = 0.90)
+#'
+select_variable_genes_vst <- function(raw_counts,
+                                      q_thr = 0.05) {
+  # TODO (FGC): We need to loof for a way of using an absolute value, and not just the quantile
+  counts <- as.matrix(raw_counts)
+  coldata <- data.frame(dummy = rep(1, ncol(counts)),
+                        row.names = colnames(counts))
+
+  dds <- DESeq2::DESeqDataSetFromMatrix(countData = counts, colData = coldata, design = ~ 1)
+  dds <- DESeq2::estimateSizeFactors(dds)
+  dds <- DESeq2::estimateDispersions(dds)
+  vsd <- DESeq2::vst(dds, blind = TRUE, nsub = 10)
+
+  mat_vst <- SummarizedExperiment::assay(vsd)
+  mu <- rowMeans(mat_vst)
+  va <- apply(mat_vst, 1, var)
+
+  fit <- stats::loess(va ~ mu, span = 0.3)
+  va_hat <- stats::predict(fit, mu)
+  va_hat <- pmax(va_hat, 1e-9)
+  resid <- va - va_hat
+
+  z <- (resid - stats::median(resid, na.rm = TRUE)) / stats::mad(resid, na.rm = TRUE)
+  z_q <- as.numeric(stats::quantile(z, probs = q_thr, na.rm = TRUE, names = FALSE))
+  keep <- z >= z_q
+  keep_genes <- rownames(mat_vst)[keep]
+  return(keep_genes)
 }
 
 #' @importFrom stats quantile formula
