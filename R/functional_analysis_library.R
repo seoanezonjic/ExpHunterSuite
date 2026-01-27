@@ -1022,7 +1022,7 @@ multiply_size_item <- function(x, from_min, from_max, to_min, to_max) {
 }
 
 calc_showCat_compareCluster <- function(enrichments_ORA_merged, n_category, top_categories) {
-  cc <- enrichments_ORA_merged@compareClusterResult
+  cc <- enrichments_ORA_merged
   cluster_list <- split(cc, cc$Cluster)
   for (k in 1:n_category) {
     top_k_list  <- lapply(cluster_list, function(cluster_cc) {
@@ -1038,22 +1038,24 @@ calc_showCat_compareCluster <- function(enrichments_ORA_merged, n_category, top_
 }
 
 #' @importFrom utils head
-filter_top_categories <- function(enrichments_ORA_merged, top_c = 50){
-  if(! is.null(top_c)) {
-    for (funsys in names(enrichments_ORA_merged)){
-      filtered_enrichments <- 
-        enrichments_ORA_merged[[funsys]]@compareClusterResult
-      if (nrow(filtered_enrichments) == 0) next 
-      filtered_enrichments <- filtered_enrichments[order(
-        filtered_enrichments$p.adjust, decreasing = FALSE), ]
-      filtered_enrichments <- Reduce(rbind,by(
-        filtered_enrichments,filtered_enrichments["Cluster"], head, n = top_c))
-      filtered_terms <- unique(filtered_enrichments$Description)
-      enrichments_ORA_merged[[funsys]]@compareClusterResult <- 
-        filtered_enrichments
-      enrichments_ORA_merged[[funsys]]@termsim <- 
-        enrichments_ORA_merged[[funsys]]@termsim[filtered_terms,filtered_terms]
-    }
+filter_top_categories <- function(enrichments_ORA_merged, n_category,
+  top_categories){
+  for (funsys in names(enrichments_ORA_merged)){
+    filtered_enrichments <-
+      enrichments_ORA_merged[[funsys]]@compareClusterResult
+    n_category_new <- calc_showCat_compareCluster(filtered_enrichments,
+      n_category, top_categories)
+    if (nrow(filtered_enrichments) == 0) next
+    filtered_enrichments <- filtered_enrichments[order(
+      filtered_enrichments$p.adjust, decreasing = FALSE), ]
+    filtered_enrichments <- Reduce(rbind,by(
+      filtered_enrichments,filtered_enrichments["Cluster"], head,
+      n = n_category_new))
+    filtered_terms <- unique(filtered_enrichments$Description)
+    enrichments_ORA_merged[[funsys]]@compareClusterResult <-
+      filtered_enrichments
+    enrichments_ORA_merged[[funsys]]@termsim <-
+      enrichments_ORA_merged[[funsys]]@termsim[filtered_terms,filtered_terms]
   }
   return(enrichments_ORA_merged)
 }

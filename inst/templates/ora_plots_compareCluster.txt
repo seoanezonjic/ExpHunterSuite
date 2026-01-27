@@ -25,12 +25,12 @@
 	bar_dot_plot_height <- ceiling(distinct_cats_to_plot / 2.5) + 1
 	
 	if(is.null(top_categories)) {
-		top_categories <- length(clusters) * showCategories
+		top_categories <- length(clusters) * n_category
 	}
-	n_category <- calc_showCat_compareCluster(plotter$hash_vars$enrich_obj, n_category, top_categories)
 
+	dot_heat_plot_width <- 6 + 1 * length(clusters)   
+	dot_heat_plot_height <- 0.35 * distinct_cats_to_plot + 1.5
 	text_size <- scale_cc_textsize(top_categories, min_text=1, max_text=2.5, min_cats=30, max_cats=120)
-	# cat_scale_factor <- 2.5 - text_size
 	size_item <- multiply_size_item(text_size, from_min = 1, from_max = 2.5, to_min = 7,   to_max = 1)
 	size_edge <- multiply_size_item(text_size, from_min = 1, from_max = 2.5, to_min = 0.25,   to_max = 1)
 
@@ -50,7 +50,12 @@
 		compare_cluster_obj$Description <- stringr::str_wrap(compare_cluster_obj$Description, width = 100)
         pp <- ggplot2::ggplot(compare_cluster_obj, ggplot2::aes_string(x = "Cluster", 
         y = "Description", fill = "p.adjust")) + 
-        ggplot2::geom_tile()
+        ggplot2::geom_tile() +
+        theme(
+    	text = element_text(size = 10),
+    	axis.text.x = element_text(angle = 45, hjust = 1),
+    	axis.text.y = element_text(size = 10)
+    )
         return(pp)
     }
 	custom_heatplot <- function(input_obj) {
@@ -83,12 +88,12 @@ end.rcode-->
 	        "<p>The most highly signficant categories in descending in categories of gene ratio, defined as the proportion of significant genes that are found in the functional category.
 	         The x-axis represents the gene ratio and the dot size the number of genes associated with the functional category.</p>")
 	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
-			plotting_function = enrich_dotplot, plotting_args = dotplot_args, plot_type = "plot", height = bar_dot_plot_height), inject_string = "class=\"proper_img\")"))
+			plotting_function = enrich_dotplot, plotting_args = dotplot_args, plot_type = "plot", height = dot_heat_plot_height, width = dot_heat_plot_width), inject_string = "class=\"proper_img\")"))
 
 	cat("<p><strong>Heatplot</strong></p>", 
 		  "<p>Significant genes (x-axis) and the functional categories in which they appear.</p>" )
 	cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
-			  plotting_function = custom_heatplot, plot_type = "plot", height = bar_dot_plot_height), inject_string = "class=\"proper_img\")"))
+			  plotting_function = custom_heatplot, plot_type = "plot", height = dot_heat_plot_height, width = dot_heat_plot_width), inject_string = "class=\"proper_img\")"))
 
 	cat("<p><strong>Gene-Concept Network</strong></p>", 
 		  "<p>The network connects the top functional categories (brown nodes) to their associated genes (grey or colored nodes).

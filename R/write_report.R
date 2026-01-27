@@ -512,7 +512,7 @@ write_clusters_to_enrichment <- function(output_path="results",
                 simplify_results = simplify, clean_parentals = clean_parentals)
       if(!is.null(top_categories)) {
         enrichments_ORA_merged <- filter_top_categories(enrichments_ORA_merged,
-                                                        top_categories)
+                                    n_category, top_categories)
       }
       if(is.null(source_folder)) {
         source_folder <- find.package("htmlreportR")
