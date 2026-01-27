@@ -196,7 +196,7 @@ if(!file.exists(final_counts_path) | !opt$integrate) {
     input <- file.path(opt$input, ifelse(opt$filter, "filtered_feature_bc_matrix",
                                                    "raw_feature_bc_matrix"))
     seu <- read_sc_counts(name = opt$name, input = input, mincells = opt$mincells,
-                      minfeats = opt$minfeats, exp_design = opt$exp_design)
+                          minfeats = opt$minfeats, exp_design = opt$exp_design)
   }
   message(paste0("Total cells in dataset: ", ncol(seu), "."))
   if(!is.null(opt$filter_dataset)) {
