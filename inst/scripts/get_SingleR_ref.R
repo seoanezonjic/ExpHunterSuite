@@ -68,7 +68,7 @@ if(!opt$only_showcase) {
       stop('More than one match for metadata file. Please ensure only one metadata
         file matches the expression "meta*.txt"')
     }
-    metadata <- read.table(meta_file, sep = '\t', header = TRUE)
+    metadata <- read.table(meta_file, sep = '\t', header = TRUE, quote = "")
     expr_files <- Sys.glob(paste0(opt$reference, "/expression/*txt*"))
     if(length(expr_files) > 0) {
       data.table::setDTthreads(threads = opt$CPU)
@@ -117,8 +117,7 @@ if(!opt$only_showcase) {
     final_sparse_matrix <- final_sparse_matrix[, order(colnames(final_sparse_matrix))]
     metadata <- metadata[metadata$NAME %in% colnames(final_sparse_matrix), ]
     metadata <- metadata[order(metadata$NAME), ]
-    rownames(metadata) <- metadata$NAME
-    metadata <- metadata[, -1]
+    metadata <- htmlreportR::col_to_rownames(metadata)
     ref <- SummarizedExperiment::SummarizedExperiment(assays=list(counts = final_sparse_matrix), colData = metadata)
     ref <- scater::logNormCounts(ref)
     ref_seu <- Seurat::CreateSeuratObject(counts = final_sparse_matrix, meta.data = metadata)
