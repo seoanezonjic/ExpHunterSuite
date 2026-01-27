@@ -689,6 +689,44 @@ test_that("test process_sc_params, annotation mode", {
   expect_equal(output, expected)
 })
 
+test_that("test process_sc_params, per sample annotation mode", {
+  root_path <- find.package("ExpHunterSuite")
+  ref_filter <- file.path(root_path, "data", "test_filter")
+  params <- list(name = "test", doublet_file = "", filter = TRUE, mincells = 1,
+                 minfeats = 1, minfeats = 1, minqcfeats = 1, percentmt = 5,
+                 normalmethod = "LogNormalize", scalefactor = 1e5, hvgs = 2e3,
+                 ndims = 10, resolution = 0.33, p_adj_cutoff = 1,
+                 verbose = FALSE, reduce = FALSE, samples_to_integrate = "",
+                 integrate = TRUE, int_method = "RPCA", filter_dataset = "",
+                 sketch = TRUE, sketch_pct = 0.25, force_ncells = "",
+                 sketch_method = "LeverageScore", extra_columns = "one;two",
+                 k_weight = 100, genome = "hg38", exp_design = "",
+                 subset_by = "", cpu = "2", input = NULL,
+                 suffix = "suffix", imported_counts = "",
+                 cluster_annotation = "", cell_annotation = "",
+                 SingleR_ref = "SingleR_ref", ref_version = "1",
+                 ref_label = "cell_type", ref_de_method = "wilcox", ref_n = 15,
+                 ref_filter = ref_filter, target_genes = "gene1;gene2",
+                 meta_file = "")
+  output <- suppressMessages(process_sc_params(params = params,
+                                               mode = "annotation"))
+  output$opt <- output$opt[order(names(output$opt))]
+  expected <- list(opt = params, doublet_list = NULL)
+  expected$opt$extra_columns <- c("one", "two")
+  expected$opt$top_N <- NA
+  expected$out_suffix <- "annotation_report.html"
+  expected$opt$target_genes <- ""
+  expected$opt$filter_dataset <- NULL
+  expected$opt$ref_filter <- NULL
+  expected$opt <- expected$opt[order(names(expected$opt))]
+  expected$opt$meta_file <- ""
+  expected$opt$recalc_query <- FALSE
+  expected$opt$ref_filter <- "test_reference == 2"
+  output$opt <- output$opt[order(names(output$opt))]
+  expected$opt <- expected$opt[order(names(expected$opt))]
+  expect_equal(output, expected)
+})
+
 test_that("test process_sc_params removes duplicate target genes", {
   params <- list(name = "test", p_adj_cutoff = 1, verbose = FALSE,
                  DE_method = "", subset_by = "genotype;time", cpu = "2",
