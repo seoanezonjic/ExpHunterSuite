@@ -1909,6 +1909,10 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   }
   if(params$ref_filter == "") {
     params$ref_filter <- NULL
+  } else if(file.exists(params$ref_filter)) {
+    params$ref_filter <- readLines(params$ref_filter)
+  } else {
+    params$ref_filter <- NULL
   }
   if(params$ref_version == "") {
     params$ref_version <- NULL
@@ -1930,7 +1934,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
 #' metadata.
 #' @importFrom HDF5Array loadHDF5SummarizedExperiment
 #' @param path Path to reference to load.
-#' @param filter Filter to apply to reference.
+#' @param ref_filter Filter to apply to reference.
 #' @returns Loaded and optionally filtered SingleR reference.
 #' @examples
 #'  \dontrun{
@@ -1939,7 +1943,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
 #'  }
 #' @export
 
-load_SingleR_ref <- function(path, filter = "") {
+load_SingleR_ref <- function(path, filter = NULL) {
   SingleR_ref <- NULL
   message("Loading provided SingleR reference")
   SingleR_ref <- HDF5Array::loadHDF5SummarizedExperiment(dir = path,prefix = "")
