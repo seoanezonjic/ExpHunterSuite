@@ -2,8 +2,13 @@
 <!--begin.rcode "{{funsys}}_setup"
 	## Template for cluster comparison report
 	library(ggtangle)
-	layout_cnet <- "fr"
-	layout_emap <- "kk"
+	layout_emap_cnet <- function(g) { 
+	  igraph::layout_with_fr(
+        g,
+        start.temp = 5,
+        niter = 3000
+	  )
+	}
 	maxiter <- 3
 	legend_pos <- "bottom"
 	node_label <- plotter$hash_vars$node_label
@@ -14,7 +19,6 @@
     hilight <- plotter$hash_vars$hilight
     hilight_alpha <- plotter$hash_vars$hilight_alpha
     n_category <- plotter$hash_vars$n_category
-    top_categories <- plotter$hash_vars$top_categories
     nWords <- plotter$hash_vars$nWords
     nCluster <- plotter$hash_vars$nCluster
 	top_ids_list <- lapply(clusters, function(cluster_df) {
@@ -22,21 +26,17 @@
 		head(sorted$ID, n_category)
 	})
 	distinct_cats_to_plot <- length(unique(unlist(top_ids_list)))
-	bar_dot_plot_height <- ceiling(distinct_cats_to_plot / 2.5) + 1
-	
-	if(is.null(top_categories)) {
-		top_categories <- length(clusters) * n_category
-	}
-
 	dot_heat_plot_width <- 6 + 1 * length(clusters)   
-	dot_heat_plot_height <- 0.35 * distinct_cats_to_plot + 1.5
-	text_size <- scale_cc_textsize(top_categories, min_text=1, max_text=2.5, min_cats=30, max_cats=120)
-	size_item <- multiply_size_item(text_size, from_min = 1, from_max = 2.5, to_min = 7,   to_max = 1)
-	size_edge <- multiply_size_item(text_size, from_min = 1, from_max = 2.5, to_min = 0.25,   to_max = 1)
+	dot_heat_plot_height <- 0.2 * distinct_cats_to_plot + 8
+	emap_height_width <-  0.02 * distinct_cats_to_plot + 8
+	cnet_height_width <-  0.03 * distinct_cats_to_plot + 8
+	text_size <- 2
+	fixed_node_size <- scale_cc_textsize(distinct_cats_to_plot, min_text=0.08, max_text=0.3, min_cats=30, max_cats=120)
 
-	cnet_args <- list(n_category = n_category, node_label = node_label, layout = layout_cnet,
-		size_category = size_item, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha,  label_size = text_size, legend_pos = legend_pos)
-	emap_args <- list(n_category = n_category, layout = layout_emap, label_format = 4,
+	cnet_args <- list(n_category = n_category, node_label = node_label, layout = layout_emap_cnet,
+		size_category = size_item, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha,  
+		label_size = text_size, legend_pos = legend_pos)
+	emap_args <- list(n_category = n_category, layout = layout_emap_cnet, label_format = 4,
 		size_category = size_item, size_edge = size_edge, min_edge = 0.2, 
 		nWords = nWords, nCluster = NULL, label_size = text_size, legend_pos = legend_pos)
 	dotplot_args <- list(n_category = n_category)
@@ -101,7 +101,7 @@ end.rcode-->
 	)
 	if (nrow(as.data.frame(plotter$hash_vars$enrich_obj)) > 2) {
 			cat(plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
-				plotting_function = enrich_cnet, plotting_args = cnet_args, plot_type = "plot"), inject_string = "class=\"proper_img\")"))
+				plotting_function = enrich_cnet, plotting_args = cnet_args, plot_type = "plot", height = emap_height_width, width = emap_height_width), inject_string = "class=\"proper_img\")"))
 	} else {
 		cat("<p>This graph can not be plotted because fewer than two functional categories were enriched</p>")
 	}
@@ -122,7 +122,7 @@ end.rcode-->
 			emap_args$group_category <- FALSE
 		}
 		emap_res <- plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
-			  plotting_function = enrich_emap, plotting_args = emap_args, plot_type = "plot"), inject_string = "class=\"proper_img\")")
+			  plotting_function = enrich_emap, plotting_args = emap_args, plot_type = "plot", height = emap_height_width, width = emap_height_width), inject_string = "class=\"proper_img\")")
 		# Reset node label to original value
 		node_label <- plotter$hash_vars$node_label
 	} else {

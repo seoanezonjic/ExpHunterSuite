@@ -307,8 +307,6 @@ enrich_emap <- function(input_obj, n_category = 30, size_category = 1,
     size_edge = size_edge), advanced_opt)
 
   p <- do.call(enrichplot::emapplot, opt)
-  # p <- p + ggtangle::geom_cnet_label(node_label = "all", size = 2.5, fontface = "bold")
-  p <- do.call(enrichplot::emapplot, opt)
   p <- p + ggtangle::geom_cnet_label(node_label = "all", size = label_size, fontface = "bold")
   if(legend_pos == "bottom") {
     p <- p + theme(
@@ -321,6 +319,13 @@ enrich_emap <- function(input_obj, n_category = 30, size_category = 1,
       ncol  = 3           
       )
     )
+    arc_layers <- which(
+      sapply(p$layers, function(l) inherits(l$stat, "StatPie"))
+    )
+    for (i in arc_layers) {
+      p$layers[[i]]$mapping$r  <- rlang::expr(0.1)
+      p$layers[[i]]$mapping$r0 <- rlang::expr(0)
+    }
   }
   return(p)
 }
