@@ -888,7 +888,7 @@ write_func_cluster_report <- function(enrichments_for_reports, output_path,
                                              "_report.html"))
     container <- list(func_results = func_results, cl_flags_ora = cl_flags_ora,
                       max_genes = max_genes, node_label = node_label,
-                      n_category = 30,
+                      n_category = n_category,
                       size_item = size_item, size_category = size_category,
                       size_edge = size_edge, hilight = hilight,
                       hilight_alpha = hilight_alpha)
