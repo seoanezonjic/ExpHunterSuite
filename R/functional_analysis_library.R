@@ -1045,7 +1045,7 @@ filter_top_categories <- function(enrichments_ORA_merged, n_category,
       enrichments_ORA_merged[[funsys]]@compareClusterResult
     n_category_new <- calc_showCat_compareCluster(filtered_enrichments,
       n_category, top_categories)
-    if (nrow(filtered_enrichments) == 0) next
+    if (nrow(filtered_enrichments) < 2) next
     filtered_enrichments <- filtered_enrichments[order(
       filtered_enrichments$p.adjust, decreasing = FALSE), ]
     filtered_enrichments <- Reduce(rbind,by(
