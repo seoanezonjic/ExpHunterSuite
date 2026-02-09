@@ -68,6 +68,10 @@ plot_pca_hab <- function(pca_data) {
 	factoextra::fviz_pca_ind(pca_data, repel = TRUE, habillage = main_cat)
 }
 
+plot_pca_hab_no_label <- function(pca_data) {
+	factoextra::fviz_pca_ind(pca_data, repel = TRUE, habillage = main_cat, label = "none")
+}
+
 plot_pca_qual <- function() {
 	plot(FactoMineR::plot.PCA(data_frame, title = ""))
 }
@@ -102,6 +106,10 @@ plot_hcpc <- function(){
 
 plot_hcpc_map <- function(){
 	plot(data_frame , axes=c(1,2), choice="map", draw.tree= FALSE, title="")
+}
+
+plot_hcpc_map_no_label <- function(){
+	plot(data_frame , axes=c(1,2), choice="map", draw.tree= FALSE, title="", label = "none")
 }
 
 plot_quant_heat <- function(data_frame){
@@ -315,6 +323,7 @@ end.rcode-->
 	cat("This is a simplified plot of the samples displayed in the two main PCs. The color of the samples indicates their experimental condition.")
 	main_cat <- plotter$hash_vars$main_cat
 	cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_pca_hab))
+	cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_pca_hab_no_label))
 end.rcode-->
 
 <!--begin.rcode {{called_from}}_main_mca_hab, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$main_cat) && plotter$hash_vars$multivar_type == "mca"
@@ -597,6 +606,7 @@ cat("This plot represent the coordinates of the samples in the two main Principa
 		The percentage of summarized variance is showed between brackets. 
 		The samples are colored by their HCPC cluster.<br>")
 	cat(plotter$static_plot_main(id = "res.hcpc",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_hcpc_map, plot_type = "autoplot" ))
+	cat(plotter$static_plot_main(id = "res.hcpc",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_hcpc_map_no_label, plot_type = "autoplot" ))
 
 end.rcode-->
 
