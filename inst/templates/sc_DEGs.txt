@@ -111,7 +111,6 @@ end.rcode-->
         shown below, representing FC values of these genes for every cell group DEG analysis.</p>")
     cat(paste0("<p>A minimum feature count filter has been applied in this step, which means DEGs considered",
                " for this plot follow stricter criteria. This was done in order to not overload the figure.</p>"))
-    cat(paste0("<p>Only prevalent DEGs are shown in this plot.</p>"))
     if(any(dim(plotter$hash_vars$comparison_FCs) < 1) | is.null(plotter$hash_vars$comparison_FCs)) {
         cat(paste0("<p> No significant DEGs found for target ", comparison, ".</p>"))
     } else {
