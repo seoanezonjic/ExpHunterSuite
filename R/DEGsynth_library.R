@@ -12,7 +12,7 @@
 #' @param nmax new maximum
 #' @return transformated vector to new range
 scale_range <- function(vect,nmin,nmax){
-    ((vect - min(vect))/(max(vect)-min(vect)))*(nmax-nmin)+nmin
+    return(((vect - min(vect))/(max(vect)-min(vect)))*(nmax-nmin)+nmin)
 }
 
 
@@ -44,6 +44,17 @@ fcfunc <- function(means,fcmin=1.4, fcmax=3, meanlog = 1, sdlog = 0.8){
     return(means)
 }
 
+#' Add tag to duplicate values in vector
+
+#' `mark_duplicates` finds duplicate values inside a vector and appends
+#' a tag to each of them. This tag can either be an index or a letter
+#'
+#' @param vector Input vector
+#' @param index_as_letter A boolean
+#'   * `TRUE`:  Duplicates will be marked as value_A, value_B
+#'   * `FALSE` (the default): Duplicates will be marked as value_1, value_2
+#' @returns A vector with marked duplicates
+
 mark_duplicates <- function(string, index_as_letter = FALSE) {
 	if(index_as_letter) {
 		mark_fun <- function(i) LETTERS[seq_along(i)]
@@ -54,6 +65,15 @@ mark_duplicates <- function(string, index_as_letter = FALSE) {
 	return(res)
 }
 
+#' Use a dictionary to rename a vector
+
+#' `rename_with_dict` renames a vector by consulting a list that links
+#' the original names with the desired names
+#'
+#' @param vector Vector to rename
+#' @param dict Dictionary containing name-new_name pairs
+#' @returns Renamed vector
+
 rename_with_dict <- function(vector, dict) {
     vector_IDs <- match(names(dict), vector)
     dict_IDs <- match(vector, names(dict))
@@ -62,8 +82,18 @@ rename_with_dict <- function(vector, dict) {
     return(vector)
 }
 
+#' Give samples a more descriptive name
+#'
+#' `rename_samples` takes an experimental design table and renames samples
+#' with their experimental conditions, making the design more descriptive at
+#' a first glance and easier to interpret
+#'
+#' @param exp_design A data frame describing the experimental design
 #' @param condition_columns An integer vector. Indices of columns to use as
-#' conditions.
+#' conditions
+#' @param counts_table Counts table where renaming will be propagated
+#' @returns A list. Exp design is the renamed experimental design, counts_table
+#' is the renamed counts table
 
 rename_samples <- function(exp_design, condition_columns, counts_table) {
     new_counts_table <- counts_table[, !colnames(counts_table) == "gene"]
@@ -83,6 +113,23 @@ rename_samples <- function(exp_design, condition_columns, counts_table) {
 	return(list(exp_design = subs_design, counts_table = new_counts_table))
 }
 
+#' Generate synthetic DEGs following a random distribution.
+#'
+#' @description
+#' `synth_normal_DEGs` generates two random vectors by which to multiply
+#' expression values of samples in a counts table. Randomisation is taken from
+#' the normal distribution, with a default standard deviation of two and an
+#' effect size supplied by the user
+#'
+#' `synth_exponential_DEGs` follows an exponential distribution instead
+#'
+#' `synth_deterministic_DEGs` is a simple multiplication, with no noise
+#'
+#' @inheritParams synth_DEGs_by_condition
+#' @returns Two vectors of values by which to multiply expression levels in
+#' counts table. Upregulated vector includes effect size, static vector only
+#' includes noise from the normal distribution.
+
 synth_normal_DEGs <- function(up_vector, stat_vector, effect_size,
                               stdev = 0.2) {
     all_samples <- c(up_vector, stat_vector)
@@ -91,15 +138,13 @@ synth_normal_DEGs <- function(up_vector, stat_vector, effect_size,
     error_size <- stdev
     noise <- rnorm(n = n_samples, mean = 0, sd = error_size)
     scale_factor <- effect_size + 1 + abs(noise[1:nscale])
-    # Factor to apply to control vector to emulate distribution without
-    # scaling as DEG.
-    distr_factor <- stat_vector * 2 * noise[(nscale + 1):n_samples]
+    distr_factor <- stat_vector * 2 * noise[(nscale + 1):n_samples] # Emulate
+    # distribution with no effect size
     up_vector <- up_vector * scale_factor
-    return(list(up_vector = round(up_vector),
-                stat_vector = round(stat_vector)))
+    return(list(up_vector = round(up_vector), stat_vector = round(stat_vector)))
 }
 
-#' @inheritParams synth_deterministic_DEGs
+#' @rdname synth_normal_DEGs
 
 synth_exponential_DEGs <- function(up_vector, stat_vector, effect_size,
                                    stdev = NULL) {
@@ -107,22 +152,36 @@ synth_exponential_DEGs <- function(up_vector, stat_vector, effect_size,
     n_samples <- length(all_samples)
     nscale <- length(up_vector)
     ncontrol <- length(stat_vector)
-    # Not sure this is the method I should be using
     noise <- rexp(n = n_samples, rate = 1)
     samples <- up_vector * (effect_size + 1 + noise[1:nscale] ** 2)
     stat_vector <- 1 + noise[(nscale + 1):n_samples]
-    return(list(up_vector = round(up_vector),
-                stat_vector = round(stat_vector)))
+    return(list(up_vector = round(up_vector), stat_vector = round(stat_vector)))
 }
 
-#' @param stdev Unused, but needed for compatibility.
+#' @inheritParams synth_normal_DEGs
 
 synth_deterministic_DEGs <- function(up_vector, stat_vector, effect_size,
                                      stdev = NULL){
     up_vector <- up_vector * (effect_size + 1)
-    return(list(up_vector = round(up_vector),
-                stat_vector = round(stat_vector)))
+    return(list(up_vector = round(up_vector), stat_vector = round(stat_vector)))
 }
+
+#' Generate DEGs using desired method in specified vectors.
+#'
+#' `synth_DEGs_by_condition` is a wrapper for the synthetic DEG generation
+#' functions. Provide sample vectors and desired method, and this function will
+#' dispatch the corresponding synthetic generator
+#'
+#' @param up_vector Samples that will be upregulated
+#' @param stat_vector Samples that will not be upregulated, but still need
+#' to be randomised in order to not introduce a bias
+#' @param effect_size Effect size to emulate in expression values
+#' @param method Method to use. Values: "norm" (`synth_normal_DEGs`), det
+#' (`synth_deterministic_DEGs`) and "exp" (`synth_exponential_DEGs`)
+#' @param stdev Standard deviation for distribution. Used in `synth_normal_DEGs`
+#' @returns Two vectors of values by which to multiply expression levels in
+#' counts table. Upregulated vector includes effect size, static vector only
+#' includes noise from the normal distribution.
 
 synth_DEGs_by_condition <- function(up_vector, stat_vector, effect_size,
                                     method = "norm", stdev = 0.2) {
@@ -130,9 +189,20 @@ synth_DEGs_by_condition <- function(up_vector, stat_vector, effect_size,
     				   exp = synth_exponential_DEGs)
     synth_function <- function_list[[method]]
     res <- synth_function(up_vector, stat_vector, effect_size, stdev)
-    return(list(up_vector = res$up_vector,
-                stat_vector = res$stat_vector))
+    return(list(up_vector = res$up_vector, stat_vector = res$stat_vector))
 }
+
+#' Randomly select which genes will be differentially expressed 
+#' `create_DEG_lists` takes a list of genes and chooses which among them will
+#' be differentially expressed.
+#'
+#' @param universe List of genes from which DEGs will be chosen
+#' @param nDEGs Vector of number of DEGs to select. One number for every list
+#' of DEGs to generate
+#' @param overlap_size Proportion of DEGs that multiple experimental conditions
+#' will share
+#'
+#' @returns A list containing a vector of DEGs for every experimental condition
 
 create_DEG_lists <- function(universe, nDEGs, overlap_size) {
 	names(nDEGs) <- seq(nDEGs)
@@ -157,9 +227,23 @@ create_DEG_lists <- function(universe, nDEGs, overlap_size) {
     return(DEG_lists)
 }
 
+#' Calculate the coefficient of variation in a vector
+#' `CV` performs a simple calculation to retrieve the coefficient of variation
+#' of a vector
+#'
+#' @param vector Vector whose CV to calculate
+#' @returns The coefficient of variation of the vector
+
 CV <- function(vector) {
     return(var(vector) / mean(vector))
 }
+
+#' Extract samples by their value of requested experimental condition.
+#' `define_conditions` takes an experimental design and the index of a factor
+#' column and creates two vectors, one for each value of the supplied condition
+#'
+#' @param exp_design Experimental design
+#' @param factor_column Index of column whose factor to consider
 
 define_conditions <- function(exp_design, factor_column) {
     factors <- unique(exp_design[,factor_column])
@@ -171,12 +255,32 @@ define_conditions <- function(exp_design, factor_column) {
     return(list(cond_1 = cond_1, cond_2 = cond_2))
 }
 
+#' Sort counts table by samples in experimental design
+#' `match_counts_to_design` makes sure that samples are sorted in the same order
+#' in counts table and experimental design.
+#'
+#' @param counts_table Counts table
+#' @param exp_design Experimental design
+#' @returns Reordered counts table
+
 match_counts_to_design <- function(counts_table, exp_design) {
     counts_table <- counts_table[, colnames(counts_table) != "gene"]
     new_count_order <- match(exp_design$sample, colnames(counts_table))
     res <- counts_table[, new_count_order]
     return(res)
 }
+
+#' Create synthetic DEG table
+#' `make_DEG_table` adds a synthetic differential expression effect to a
+#' counts table. It controls effect size, number of samples, standard deviation
+#' and condition to consider.
+#'
+#' @inheritParams define_conditions
+#' @inheritParams synth_DEGs_by_condition
+#' @param table Counts table to modify
+#' @param up_DEGs Genes to upregulate
+#' @param samples_per_group Number of samples that each group should have
+#' @returns Table with differential expression emulation
 
 make_DEG_table <- function(table, exp_design, factor_column, up_DEGs,
                            effect_size, method, DEGs, samples_per_group,
@@ -203,6 +307,11 @@ make_DEG_table <- function(table, exp_design, factor_column, up_DEGs,
     }
     return(res)
 }
+
+#' Read list of DEGs from disk
+#' `read_DEG_lists` was developed for testing purposes. It loads a list of DEGs
+#' from disk and returns it in a format that makes it usable in our DEG
+#' synthesis library.
 
 read_DEG_lists <- function(paths_string) {
     paths <- strsplit(paths_string, ",")[[1]]
@@ -275,9 +384,19 @@ custom_synth <- function(counts_table, exp_design, nDEGs, columns,
                 DEGs = DEGs))
 }
 
+#' Add a column to a counts table specifying DEG status
+#'
+#' `get_diffexp_info` adds a column to a counts table that specifies whether
+#' or not the gene is differentially expressed, imitating the output of counts
+#' tables generated by the compcodeR library.
+#'
+#' @param counts_table Counts table
+#' @param DEGs List of genes to mark as DEGs
+#' @returns A counts table with a new column with value `1` for DEGs and value
+#' `0` for control genes.
+
 get_diffexp_info <- function(counts_table, DEGs) {
-    res <- data.frame(gene = rownames(counts_table),
-                      differential.expression = 0)
+    res <- data.frame(gene = rownames(counts_table),differential.expression = 0)
     res[res$gene %in% DEGs, ]$differential.expression <- 1
     return(res)
 }
