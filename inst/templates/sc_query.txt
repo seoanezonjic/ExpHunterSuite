@@ -1,6 +1,5 @@
 
 <!--begin.rcode setup
-    saveRDS(plotter, "plotter.rds")
     colGEX <- c("grey85", "#FEE5D9", "#FCBBA1", "#FC9272", "#FB6A4A", "#EF3B2C", "#CB181D", "#99000D")
     opt <- plotter$hash_vars$opt
     subset_by <- plotter$hash_vars$subset_by

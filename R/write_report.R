@@ -914,7 +914,6 @@ render_multivar_report <- function(multivar_res, output_files, template_folder,
     source_folder <- find.package("htmlreportR")
     if( Sys.getenv('HTMLREPORTER_MODE') == 'DEVELOPMENT' )
     source_folder <- file.path(source_folder, "inst")
-
     plotter <- htmlreportR::htmlReport$new(title_doc = "PCA report", 
                 container = multivar_res, src = source_folder,
                 tmp_folder = file.path(normalizePath(output_files), "tmp"),
