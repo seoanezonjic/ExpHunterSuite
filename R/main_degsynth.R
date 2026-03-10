@@ -88,12 +88,17 @@ degsynth <- function(
 #' from package `compcodeR`.
 #'
 #' @inheritParams compcodeR::generateSyntheticData
+#' @inheritParams custom_synth
 #' @importFrom compcodeR generateSyntheticData
 #' @importFrom utils write.table
-#' @param output_dir Directory where counts matrix and DEG table will be saved.
+#' @param output_dir Directory where counts matrix and DEG table will be saved
+#' @param condition_columns An integer vector. Colums to use as factors for DEG
+#' synthesis.
+#' @param inputfile Pre-generated counts table where DEGs will be synthesised.
+#' ONLY compatible with vanilla method.
 #' @returns A list. Element `all` contains the entire results object. Element
 #' `counts_table` contains just the counts matrix. Element `DEGs` contains
-#' a data frame detailing which genes are differentially expressed in dataset.
+#' a data frame detailing which genes are differentially expressed in dataset
 #' @examples
 #' B_625_625 <- run_compcodeR(dataset = "B_625_625", n.vars = 12500, 
 #'                                  samples.per.cond = 5, n.diffexp = 1250, 
@@ -119,11 +124,11 @@ run_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
     id.species = as.factor(rep(1, 2 * samples.per.cond)),
     check.id.species = TRUE, lengths.relmeans = NULL,
     lengths.dispersions = NULL, lengths.phylo = TRUE, output_dir = NULL,
-    method = "vanilla", fixed_DEG_lists = "", fixed_upregulated_DEGs = "",
+    deg_method = "vanilla", fixed_DEG_lists = "", fixed_upregulated_DEGs = "",
     condition_columns, exp_design = "", inputfile = NULL) {
     effect_sizes <- as.numeric(strsplit(effect_sizes, ",")[[1]])
     subset <- FALSE
-    if(method != "vanilla") {
+    if(deg_method != "vanilla") {
         synth_diffexp <- 0
         synth_diffdisp <- FALSE
         synth_samples.per.cond <- samples.per.cond * 2
@@ -134,8 +139,8 @@ run_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
             " effect sizes. Please provide only one")
         }
         if(!is.null(inputfile)) {
-            stop("compcodeR DEG synthesis not compatible with external 
-                  counts data. Please change method or do not supply it")
+            stop("compcodeR vanilla DEG synthesis not compatible with external",
+                 "counts data. Please change deg_method or do not supply it")
         }
         synth_diffexp <- n.diffexp
         synth_diffdisp <- between.group.diffdisp
@@ -186,10 +191,10 @@ run_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
     }
     rownames(exp_design) <- NULL
     rownames(counts_table) <- NULL
-    if(method != "vanilla") {
+    if(deg_method != "vanilla") {
         synth_data <- custom_synth(counts_table = counts_table,
             exp_design = exp_design, nDEGs = nDEGs, effect_sizes = effect_sizes,
-            columns = condition_columns, deg_method = method,
+            columns = condition_columns, deg_deg_method = deg_method,
             fixed_DEG_lists = fixed_DEG_lists, overlap_size = overlap_size,
             fixed_upregulated_DEGs = fixed_upregulated_DEGs,
             fraction_upregulated = fraction.upregulated,

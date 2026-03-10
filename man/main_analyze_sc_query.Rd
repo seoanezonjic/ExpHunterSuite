@@ -27,6 +27,8 @@ main_analyze_sc_query(
 
 \item{sample_col}{Name of column that specifies sample. Default "sample",
 as per our workflow.}
+
+\item{min_counts}{Minimum counts to consider a gene is expressed}
 }
 \value{
 A list with the three query analysis objects.

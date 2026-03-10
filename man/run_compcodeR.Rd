@@ -38,7 +38,7 @@ run_compcodeR(
   lengths.dispersions = NULL,
   lengths.phylo = TRUE,
   output_dir = NULL,
-  method = "vanilla",
+  deg_method = "vanilla",
   fixed_DEG_lists = "",
   fixed_upregulated_DEGs = "",
   condition_columns,
@@ -83,15 +83,24 @@ run_compcodeR(
 
 \item{single.outlier.low.prob}{The fraction of 'single' outliers with unusually low counts.}
 
+\item{effect_sizes}{A string. Comma-separated effect sizes to use for each
+factor}
+
 \item{tree}{a dated phylogenetic tree of class \code{\link[ape]{phylo}} with `samples.per.cond * 2` species.}
 
 \item{prop.var.tree}{the proportion of the common variance explained by the tree for each gene. It can be a scalar, in which case the same parameter is used for all genes. Otherwise it needs to be a vector with length \code{n.vars}. Default to 1.}
+
+\item{nDEGs}{Vector of number of DEGs to select. One number for every list
+of DEGs to generate}
 
 \item{model.process}{the process to be used for phylogenetic simulations. One of "BM" or "OU", default to "BM".}
 
 \item{selection.strength}{if the process is "OU", the selection strength parameter.}
 
 \item{id.condition}{A named vector, indicating which species is in each condition. Default to first `samples.per.cond` species in condition `1` and others in condition `2`.}
+
+\item{overlap_size}{Proportion of DEGs that multiple experimental conditions
+will share}
 
 \item{id.species}{A factor giving the species for each sample. If a tree is used, should be a named vector with names matching the taxa of the tree. Default to \code{rep(1, 2*samples.per.cond)}, i.e. all the samples come from the same species.}
 
@@ -103,12 +112,29 @@ run_compcodeR(
 
 \item{lengths.phylo}{If TRUE, the lengths are simulated according to a phylogenetic Poisson Log-Normal model on the tree, with a BM process. If FALSE, they are simulated according to an iid negative binomial distribution. In both cases, \code{lengths.relmeans} and \code{lengths.dispersions} are used. Default to TRUE if a tree is provided.}
 
-\item{output_dir}{Directory where counts matrix and DEG table will be saved.}
+\item{output_dir}{Directory where counts matrix and DEG table will be saved}
+
+\item{deg_method}{Method to use. Values: "norm" (\code{synth_normal_DEGs}), det
+(\code{synth_deterministic_DEGs}) and "exp" (\code{synth_exponential_DEGs})}
+
+\item{fixed_DEG_lists}{A string. Comma-separated paths to DEG lists to use.
+Will disable random gene selection}
+
+\item{fixed_upregulated_DEGs}{A string. Comma-separated paths to upregulated
+DEGs list. will disable random upregulated DEG selection}
+
+\item{condition_columns}{An integer vector. Colums to use as factors for DEG
+synthesis.}
+
+\item{exp_design}{Experimental design}
+
+\item{inputfile}{Pre-generated counts table where DEGs will be synthesised.
+ONLY compatible with vanilla method.}
 }
 \value{
 A list. Element \code{all} contains the entire results object. Element
 \code{counts_table} contains just the counts matrix. Element \code{DEGs} contains
-a data frame detailing which genes are differentially expressed in dataset.
+a data frame detailing which genes are differentially expressed in dataset
 }
 \description{
 \code{run_compcodeR} Is a wrapper for the \code{generateSyntheticData} function

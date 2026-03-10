@@ -640,8 +640,9 @@ calculate_markers <- function(seu, subset_by = NULL, verbose = FALSE,
 #'
 #' @importFrom Seurat GetAssayData
 #' @inheritParams get_query_distribution
-#' @param layer Seurat object layer to analyze.
-#' @returns A list with the three query analysis objects.
+#' @param layer Seurat object layer to analyze
+#' @param min_counts Minimum counts to consider a gene is expressed
+#' @returns A list with the three query analysis objects
 #' @examples
 #' data(pbmc_tiny)
 #' pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
@@ -772,7 +773,7 @@ get_query_pct <- function(seu, query, by, sigfig = 2, assay = "RNA",
     pct_list <- vector(mode = "list", length = length(subset_list))
     for(element in seq(subset_list)) {
       subdivision <- paste0(element, "/", length(items))
-      message("Subdividing", by[1], " ", subdivision)
+      message("Subdividing ", by[1], " ", subdivision)
       sec_items <- unique(subset_list[[element]]@meta.data[[by[2]]])
       new_subset <- vector(mode = "list", length = length(sec_items))
       names(new_subset) <- sec_items
@@ -1934,7 +1935,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
 #' metadata.
 #' @importFrom HDF5Array loadHDF5SummarizedExperiment
 #' @param path Path to reference to load.
-#' @param ref_filter Filter to apply to reference.
+#' @param filter Filter to apply to reference.
 #' @returns Loaded and optionally filtered SingleR reference.
 #' @examples
 #'  \dontrun{

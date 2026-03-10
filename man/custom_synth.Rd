@@ -19,25 +19,50 @@ custom_synth(
 )
 }
 \arguments{
-\item{output_dir}{Directory where counts matrix and DEG table will be saved.}
+\item{counts_table}{A data frame. Counts table to manipulate for DEG
+synthesis}
+
+\item{exp_design}{Experimental design}
+
+\item{nDEGs}{Vector of number of DEGs to select. One number for every list
+of DEGs to generate}
+
+\item{columns}{An integer vector. Columns to use as factors for DEG synthesis}
+
+\item{fixed_DEG_lists}{A string. Comma-separated paths to DEG lists to use.
+Will disable random gene selection}
+
+\item{fixed_upregulated_DEGs}{A string. Comma-separated paths to upregulated
+DEGs list. will disable random upregulated DEG selection}
+
+\item{effect_sizes}{A string. Comma-separated effect sizes to use for each
+factor}
+
+\item{fraction_upregulated}{A numeric. Fraction of DEGs to upregulate}
+
+\item{overlap_size}{Proportion of DEGs that multiple experimental conditions
+will share}
+
+\item{deg_method}{Method to use. Values: "norm" (\code{synth_normal_DEGs}), det
+(\code{synth_deterministic_DEGs}) and "exp" (\code{synth_exponential_DEGs})}
+
+\item{samples_per_cond}{An integer. Number of samples that each group
+will have}
 }
 \value{
 A list. Element \code{all} contains the entire results object. Element
 \code{counts_matrix} contains just the counts matrix. Element \code{DEGs} contains
-a data frame detailing which genes are differentially expressed in dataset.
+a data frame detailing which genes are differentially expressed in dataset
 }
 \description{
 \code{custom_synth} Is a wrapper for the \code{generateSyntheticData} function
 from package \code{compcodeR}.
 }
 \examples{
-B_625_625 <- main_custom_synth(dataset = "B_625_625", n.vars = 12500, 
-                                 samples.per.cond = 5, n.diffexp = 1250, 
-                                 repl.id = 1, seqdepth = 1e7, 
-                                 fraction.upregulated = 0.5, 
-                                 between.group.diffdisp = FALSE, 
-                                 filter.threshold.total = 1, 
-                                 filter.threshold.mediancpm = 0, 
-                                 fraction.non.overdispersed = 0)
+B_625_625 <- custom_synth(dataset = "B_625_625", n.vars = 12500, repl.id = 1,
+                 samples.per.cond = 5, n.diffexp = 1250, seqdepth = 1e7, 
+                 fraction.upregulated = 0.5, between.group.diffdisp = FALSE,
+                 filter.threshold.total = 1, filter.threshold.mediancpm = 0,
+                 fraction.non.overdispersed = 0)
 B_625_625
 }

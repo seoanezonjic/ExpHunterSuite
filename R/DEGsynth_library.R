@@ -49,7 +49,7 @@ fcfunc <- function(means,fcmin=1.4, fcmax=3, meanlog = 1, sdlog = 0.8){
 #' `mark_duplicates` finds duplicate values inside a vector and appends
 #' a tag to each of them. This tag can either be an index or a letter
 #'
-#' @param vector Input vector
+#' @param string A string
 #' @param index_as_letter A boolean
 #'   * `TRUE`:  Duplicates will be marked as value_A, value_B
 #'   * `FALSE` (the default): Duplicates will be marked as value_1, value_2
@@ -176,7 +176,7 @@ synth_deterministic_DEGs <- function(up_vector, stat_vector, effect_size,
 #' @param stat_vector Samples that will not be upregulated, but still need
 #' to be randomised in order to not introduce a bias
 #' @param effect_size Effect size to emulate in expression values
-#' @param method Method to use. Values: "norm" (`synth_normal_DEGs`), det
+#' @param deg_method Method to use. Values: "norm" (`synth_normal_DEGs`), det
 #' (`synth_deterministic_DEGs`) and "exp" (`synth_exponential_DEGs`)
 #' @param stdev Standard deviation for distribution. Used in `synth_normal_DEGs`
 #' @returns Two vectors of values by which to multiply expression levels in
@@ -184,10 +184,10 @@ synth_deterministic_DEGs <- function(up_vector, stat_vector, effect_size,
 #' includes noise from the normal distribution.
 
 synth_DEGs_by_condition <- function(up_vector, stat_vector, effect_size,
-                                    method = "norm", stdev = 0.2) {
+                                    deg_method = "norm", stdev = 0.2) {
     function_list <- c(norm = synth_normal_DEGs, det = synth_deterministic_DEGs,
     				   exp = synth_exponential_DEGs)
-    synth_function <- function_list[[method]]
+    synth_function <- function_list[[deg_method]]
     res <- synth_function(up_vector, stat_vector, effect_size, stdev)
     return(list(up_vector = res$up_vector, stat_vector = res$stat_vector))
 }
@@ -277,16 +277,17 @@ match_counts_to_design <- function(counts_table, exp_design) {
 #'
 #' @inheritParams define_conditions
 #' @inheritParams synth_DEGs_by_condition
-#' @param table Counts table to modify
+#' @param counts_table Counts table to modify
+#' @param DEGs List of all differentially expressed genes
 #' @param up_DEGs Genes to upregulate
 #' @param samples_per_group Number of samples that each group should have
 #' @returns Table with differential expression emulation
 
-make_DEG_table <- function(table, exp_design, factor_column, up_DEGs,
-                           effect_size, method, DEGs, samples_per_group,
+make_DEG_table <- function(counts_table, exp_design, factor_column, up_DEGs,
+                           effect_size, deg_method, DEGs, samples_per_group,
                            stdev = 0.2) {
     conds <- define_conditions(exp_design, factor_column)
-    res <- table
+    res <- counts_table
     for(gene in DEGs) {
         if(gene %in% up_DEGs) {
             up_cond <- conds$cond_2
@@ -297,11 +298,11 @@ make_DEG_table <- function(table, exp_design, factor_column, up_DEGs,
         }
         up_samples <- exp_design$sample %in% up_cond
         stat_samples <- exp_design$sample %in% stat_cond
-        up_vector <- table[gene, up_samples]
-        stat_vector <- table[gene, stat_samples]
+        up_vector <- counts_table[gene, up_samples]
+        stat_vector <- counts_table[gene, stat_samples]
         synths <- synth_DEGs_by_condition(up_vector = up_vector,
             stat_vector = stat_vector, effect_size = effect_size,
-            method = method, stdev = stdev)
+            deg_method = deg_method, stdev = stdev)
         res[gene, up_samples] <- synths$up_vector
         res[gene, stat_samples] <- synths$stat_vector
     }
@@ -312,6 +313,8 @@ make_DEG_table <- function(table, exp_design, factor_column, up_DEGs,
 #' `read_DEG_lists` was developed for testing purposes. It loads a list of DEGs
 #' from disk and returns it in a format that makes it usable in our DEG
 #' synthesis library.
+#' @param paths_string Comma-separated paths from which to read DEG lists
+#' @returns A list containing all DEG lists.
 
 read_DEG_lists <- function(paths_string) {
     paths <- strsplit(paths_string, ",")[[1]]
@@ -324,22 +327,33 @@ read_DEG_lists <- function(paths_string) {
 #' `custom_synth` Is a wrapper for the `generateSyntheticData` function
 #' from package `compcodeR`.
 #'
-#' @inheritParams compcodeR::generateSyntheticData
 #' @importFrom compcodeR generateSyntheticData
 #' @importFrom utils write.table
-#' @param output_dir Directory where counts matrix and DEG table will be saved.
+#' @inheritParams compcodeR::generateSyntheticData
+#' @inheritParams make_DEG_table
+#' @inheritParams create_DEG_lists
+#' @inheritParams synth_DEGs_by_condition
+#' @param columns An integer vector. Columns to use as factors for DEG synthesis
+#' @param fixed_DEG_lists A string. Comma-separated paths to DEG lists to use.
+#' Will disable random gene selection
+#' @param fixed_upregulated_DEGs A string. Comma-separated paths to upregulated
+#' DEGs list. will disable random upregulated DEG selection
+#' @param effect_sizes A string. Comma-separated effect sizes to use for each
+#' factor
+#' @param fraction_upregulated A numeric. Fraction of DEGs to upregulate
+#' @param counts_table A data frame. Counts table to manipulate for DEG 
+#' synthesis
+#' @param samples_per_cond An integer. Number of samples that each group
+#' will have
 #' @returns A list. Element `all` contains the entire results object. Element
 #' `counts_matrix` contains just the counts matrix. Element `DEGs` contains
-#' a data frame detailing which genes are differentially expressed in dataset.
+#' a data frame detailing which genes are differentially expressed in dataset
 #' @examples
-#' B_625_625 <- main_custom_synth(dataset = "B_625_625", n.vars = 12500, 
-#'                                  samples.per.cond = 5, n.diffexp = 1250, 
-#'                                  repl.id = 1, seqdepth = 1e7, 
-#'                                  fraction.upregulated = 0.5, 
-#'                                  between.group.diffdisp = FALSE, 
-#'                                  filter.threshold.total = 1, 
-#'                                  filter.threshold.mediancpm = 0, 
-#'                                  fraction.non.overdispersed = 0)
+#' B_625_625 <- custom_synth(dataset = "B_625_625", n.vars = 12500, repl.id = 1,
+#'                  samples.per.cond = 5, n.diffexp = 1250, seqdepth = 1e7, 
+#'                  fraction.upregulated = 0.5, between.group.diffdisp = FALSE,
+#'                  filter.threshold.total = 1, filter.threshold.mediancpm = 0,
+#'                  fraction.non.overdispersed = 0)
 #' B_625_625
 #' @export
 

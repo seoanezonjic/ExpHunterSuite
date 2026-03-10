@@ -70,7 +70,7 @@ write_expression_report <- function(exp_results, output_files = getwd(),
     WGCNA_results = exp_results[["WGCNA_results"]])
     
     outf <- file.path(normalizePath(output_files), "DEG_report.html")
-    plotter <- htmlreportR::htmlReport$new(title_doc = "DEG_report",
+    plotter <- htmlReport$new(title_doc = "DEG_report",
         container = container, files_css = files_css, tmp_folder = tmp_folder,
         src = source_folder, compress_obj = TRUE, type_index = "contents_list")
     plotter$build(template)

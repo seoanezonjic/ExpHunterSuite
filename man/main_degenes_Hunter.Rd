@@ -9,7 +9,7 @@ main_degenes_Hunter(
   pseudocounts = FALSE,
   target = NULL,
   count_var_quantile = 0,
-  deseq2_variance_threshold = NULL,
+  deseq2_var_quantile = 0,
   external_DEA_data = NULL,
   output_files = getwd(),
   reads = 2,
@@ -49,7 +49,7 @@ main_degenes_Hunter(
 
 \item{count_var_quantile}{quantile variance threshold}
 
-\item{deseq2_variance_threshold}{quantile variance threshold with vs
+\item{deseq2_var_quantile}{quantile variance threshold with vs
 transformation from deseq2}
 
 \item{external_DEA_data}{external DEA set}
