@@ -666,7 +666,7 @@ analyze_sc_query <- function(seu, query, sigfig = 2, sample_col = "sample",
       get_by <- c(sample_col, "seurat_clusters")
     }
     query_cluster_pct <- get_query_pct(seu = seu, query = query, by = get_by,
-                                       sigfig = sigfig, layer = layer)
+                          sigfig = sigfig,layer = layer,min_counts = min_counts)
     res <- list(query_exp = query_exp, query_pct = query_pct,
                 query_cluster_pct = query_cluster_pct)
   }

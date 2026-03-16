@@ -21,7 +21,9 @@ option_list <- list(
   optparse::make_option("--verbose", type = "logical", default = FALSE, action = "store_true",
             help = "Verbosity of base Seurat and harmony function calls."),
   optparse::make_option("--extra_columns", type = "character", default = "",
-            help = "Comma-separated list of extra conditions to represent in certain plots.")
+            help = "Comma-separated list of extra conditions to represent in certain plots."),
+  optparse::make_option("--min_counts", type = "numeric", default = 0,
+              help = "Counts needed to consider a gene as expressed in expression analysis.")
 )
 
 params <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
@@ -46,7 +48,6 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   root_path <- find.package('ExpHunterSuite')
   template_folder <- file.path(root_path, 'templates')
 }
-
 opt <- process_sc_params(params, mode = "query")$opt
 
 message("Reconstructing Seurat object from directory ", opt$input)
@@ -59,14 +60,13 @@ seu$RNA$data <- seu$RNA$counts
 embeddings <- read.table(file.path(opt$input, "embeddings", "cell_embeddings.tsv"), header = TRUE)
 seu$UMAP_full <- Seurat::CreateDimReducObject(embeddings = as.matrix(embeddings), key = 'UMAPfull_', assay = 'RNA')
 markers <- read.table(file.path(opt$input, "markers.tsv"), sep = "\t", header = TRUE)
-query_data <- main_analyze_sc_query(seu = seu, query = opt$target_genes, sigfig = opt$sigfig)
+query_data <- main_analyze_sc_query(seu = seu, query = opt$target_genes, sigfig = opt$sigfig, min_counts = opt$min_counts)
 
-query_results <- list(seu = seu, query_data = query_data)
+query_results <- list(seu = seu, query_data = query_data, markers = markers)
 
 message("--------------------------------------------")
 message("------WRITING QUERY EXPRESSION REPORT-------")
 message("--------------------------------------------")
 
-write_sc_report(final_results = query_results, template_folder = template_folder,
-                output = file.path(opt$output, "report"), template = "sc_query.txt",
-                out_suffix = "query_report.html", opt = opt, params = params)
+write_sc_report(final_results = query_results, template_folder = template_folder, output = file.path(opt$output, "report"),
+  template = "sc_query.txt", out_suffix = "query_report.html", opt = opt, params = params)

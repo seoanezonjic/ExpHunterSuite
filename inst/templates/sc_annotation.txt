@@ -22,6 +22,7 @@
         sample_metadata <- unique(metadata[, c("sample", extra_columns)])
         rownames(sample_metadata) <- NULL
         sample_metadata <- sample_metadata[match(samples, sample_metadata$sample), , drop = FALSE]
+        return(sample_metadata)
     }
     
     Custom_DotPlot <- function(seu) {

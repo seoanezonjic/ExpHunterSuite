@@ -316,9 +316,9 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
 #' @export
 
 main_analyze_sc_query <- function(seu, query, sigfig = 2, layer = "counts",
-                                  sample_col = "sample", min_counts = 1) {
+                                  sample_col = "sample", min_counts = 10) {
   query_data <- analyze_sc_query(seu = seu, query = query, sigfig = sigfig,
-                                 layer = layer, sample_col = sample_col)
+                  layer = layer,sample_col = sample_col,min_counts = min_counts)
   query_results <- list()
   query_results$query_exp <- query_data$query_exp
   query_results$query_pct <- query_data$query_pct
