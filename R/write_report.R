@@ -12,6 +12,7 @@
 #' @return void
 #' @export
 #' @importFrom rmarkdown render
+#' @importFrom htmlreportR htmlReport
 #' @examples
 #' \dontrun{
 #'      # Load DE analysis results
@@ -408,9 +409,11 @@ write_summarize_heatmaps <- function(summarized_ORA, output_path) {
 #' (completely opaque). Default: 0.3.
 #' @param n_category An integer. Number of categories to pass as showCategory
 #' value to several clusterProfiler plotting functions.
+#' @param top_categories number of cluster categories to merge
 #' @returns invisible(NULL)
+
 write_merged_cluster_report <- function(enrichments_ORA, results_path,
-    template_folder, sample_classes=NULL, DEGH_results=NULL, n_category,
+    template_folder, sample_classes = NULL, DEGH_results = NULL, n_category,
     node_label = "category", size_item = 1, size_category = 1, size_edge = 1,
     hilight = "none", hilight_alpha = 0.3, group_results, func_results = NULL,
     source_folder = NULL, top_categories,
@@ -609,6 +612,7 @@ write_clusters_to_enrichment <- function(output_path="results",
 #' @param hilight_alpha Transparency value that will be applied to categories
 #' not highlighted. Must be a value between 0 (completely transparent) and 1
 #' (completely opaque). Default: 0.3.
+#' @param top_categories number of cluster categories to merge
 #' @return void
 #' @importFrom rmarkdown render
 #' @export

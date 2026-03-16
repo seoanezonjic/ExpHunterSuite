@@ -64,6 +64,8 @@ and functional (f). Default = "fc"}
 
 \item{source_folder}{htmlreportR source folder to load js and css libraries}
 
+\item{top_categories}{number of cluster categories to merge}
+
 \item{files_css}{Path to css file to inject. By default it injects styles.css
 found in ExpHunterSuite's templates directory.}
 }

@@ -13,7 +13,7 @@ main_analyze_sc_query(
   sigfig = 2,
   layer = "counts",
   sample_col = "sample",
-  min_counts = 1
+  min_counts = 10
 )
 }
 \arguments{

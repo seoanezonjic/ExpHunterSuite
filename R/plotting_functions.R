@@ -261,10 +261,32 @@ ht2logFCPlot <- function(ht,
   return(pp)
 }
 
-#' @param advanced_opt Named list of advanced options.
+
+#' Create ClusterProfiler plots
+#'
+#' `enrich_cnet` takes a ClusterProfiler enriched object and creates a
+#' concept network plot
+#'
+#' @importFrom igraph layout_nicely
+#' @importFrom ggtangle cnetplot geom_cnet_label
+#' @importFrom ggplot2 scale_color_gradient2
+#' @inheritParams write_merged_cluster_report
+#' @param input_obj Enrichment results object
+#' @param advanced_opt Named list of advanced options
+#' @param layout igraph layout to use
+#' @param attr_vector Vector with extra attributes to include
+#' @param gene_attribute_name Name of attribute vector
+#' @param label_size Font size for label
+#' @param legend_pos A string. Where to put the legend. "bottom" to place it at
+#' the bottom. Different value to place it at the side.
+#' @param label_format An integer. Wrap length in characters
+#' 
+#' @returns Enriched plot
+
+#' @rdname enrich_cnet
 
 enrich_cnet <- function(input_obj, n_category = 30, node_label = "all",
-  layout = igraph::layout_nicely, size_category = 1,
+  layout = layout_nicely, size_category = 1,
   size_edge = 1, hilight = "none", hilight_alpha = 1, attr_vector = NULL,
   gene_attribute_name = NULL, advanced_opt = NULL, label_size = 2, 
   legend_pos = "side") {
@@ -274,8 +296,8 @@ enrich_cnet <- function(input_obj, n_category = 30, node_label = "all",
     node_label = "none", layout = layout, size_category = size_category,
     size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha),
     advanced_opt)
-  p <- do.call(ggtangle::cnetplot, opt)
-  p <- p + ggtangle::geom_cnet_label(node_label = node_label, size = label_size,
+  p <- do.call(cnetplot, opt)
+  p <- p + geom_cnet_label(node_label = node_label, size = label_size,
                 fontface = "bold")
   if(legend_pos == "bottom") {
     p <- p + theme(
@@ -291,21 +313,21 @@ enrich_cnet <- function(input_obj, n_category = 30, node_label = "all",
   }
   # Editing labels like this gives a lot more of control over them
   if(!is.null(attr_vector)) {
-    p <- p + ggplot2::scale_color_gradient2(name = gene_attribute_name,
+    p <- p + scale_color_gradient2(name = gene_attribute_name,
           low = "#0000BF", high = "#bf0000", na.value = "#50EA55")
   }
   return(p)
 }
 
+#' @rdname enrich_cnet
+
 enrich_emap <- function(input_obj, n_category = 30, size_category = 1,
   layout = igraph::layout_nicely, label_format = 4, size_edge = 1,
-  min_edge = 1e-16, nCluster = NULL, nWords = 4, group_category = FALSE,
   advanced_opt = NULL, label_size=2.5, legend_pos="side") {
-  opt <- c(list(x = input_obj, showCategory = n_category, node_label = "none",
-    min_edge = min_edge, nCluster = nCluster, nWords = nWords, layout = layout,
-    label_format = label_format, size_category = size_category,
-    size_edge = size_edge), advanced_opt)
 
+  opt <- c(list(x = input_obj, showCategory = n_category, node_label = "none",
+    layout = layout, label_format = label_format,
+    size_category = size_category, size_edge = size_edge), advanced_opt)
   p <- do.call(enrichplot::emapplot, opt)
   p <- p + ggtangle::geom_cnet_label(node_label = "all", size = label_size, fontface = "bold")
   if(legend_pos == "bottom") {
@@ -329,6 +351,8 @@ enrich_emap <- function(input_obj, n_category = 30, size_category = 1,
   }
   return(p)
 }
+
+#' @rdname enrich_cnet
 
 enrich_dotplot <- function(input_obj, n_category = 30) {
   p <- enrichplot::dotplot(input_obj, showCategory = n_category, label_format=100) +

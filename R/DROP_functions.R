@@ -445,6 +445,8 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
 #' @importFrom BiocParallel bplapply SerialParam bpparam
 #' @importFrom SummarizedExperiment assay
 #' @importFrom S4Vectors metadata
+#' @importFrom BiocGenerics counts
+#' @importFrom data.table data.table
 #' @details This function has been copied from version 1.20.1 of package
 #' OUTRIDER, as it has been deleted in more modern versions. OUTRIDER 1.26.2
 #' has supposedly implemented a faster algorithm, but as 21/10/2025 it has not
@@ -490,9 +492,8 @@ run_outrider <- function(ods_unfitted, implementation, max_dim_proportion) {
 #'
 #' @export
 
-findEncodingDim <- function(ods, 
+findEncodingDim <- function(ods, freq=1E-2, zScore=3, sdlog=log(1.6),lnorm=TRUE,
                     params=seq(2, min(100, ncol(ods) - 1, nrow(ods) - 1), 2),
-                    freq=1E-2, zScore=3, sdlog=log(1.6), lnorm=TRUE,
                     inj='both', ..., BPPARAM=BiocParallel::bpparam()){
     evalAutoCorr <- get_unexported_function("OUTRIDER", "evalAutoCorrection")
     injectOutliers <- get_unexported_function("OUTRIDER", "injectOutliers")
@@ -510,7 +511,7 @@ findEncodingDim <- function(ods,
             evalMethod='aucPR')
     S4Vectors::metadata(ods)[['optimalEncDim']] <- NULL
     S4Vectors::metadata(ods)[['optimalEncDim']] <- OUTRIDER::getBestQ(ods)
-    counts(ods) <- SummarizedExperiment::assay(ods, 'trueCounts')
+    BiocGenerics::counts(ods) <- SummarizedExperiment::assay(ods, 'trueCounts')
     val_ods(ods)
     return(ods)
 }

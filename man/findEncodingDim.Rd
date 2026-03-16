@@ -6,11 +6,11 @@
 \usage{
 findEncodingDim(
   ods,
-  params = seq(2, min(100, ncol(ods) - 1, nrow(ods) - 1), 2),
   freq = 0.01,
   zScore = 3,
   sdlog = log(1.6),
   lnorm = TRUE,
+  params = seq(2, min(100, ncol(ods) - 1, nrow(ods) - 1), 2),
   inj = "both",
   ...,
   BPPARAM = BiocParallel::bpparam()
@@ -18,8 +18,6 @@ findEncodingDim(
 }
 \arguments{
 \item{ods}{An OutriderDataSet}
-
-\item{params}{Set of possible q values.}
 
 \item{freq}{Frequency of outlier, defaults to 1E-2}
 
@@ -29,6 +27,8 @@ findEncodingDim(
 
 \item{lnorm}{If TRUE, the default, Z-scores are drawn from a log normal
 distribution with a mean of \code{log(zScore)} in log-scale.}
+
+\item{params}{Set of possible q values.}
 
 \item{inj}{Injection strategy, by default 'both'.}
 

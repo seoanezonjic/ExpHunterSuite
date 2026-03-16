@@ -59,10 +59,10 @@ a data frame detailing which genes are differentially expressed in dataset
 from package \code{compcodeR}.
 }
 \examples{
-B_625_625 <- custom_synth(dataset = "B_625_625", n.vars = 12500, repl.id = 1,
-                 samples.per.cond = 5, n.diffexp = 1250, seqdepth = 1e7, 
-                 fraction.upregulated = 0.5, between.group.diffdisp = FALSE,
-                 filter.threshold.total = 1, filter.threshold.mediancpm = 0,
-                 fraction.non.overdispersed = 0)
-B_625_625
+\dontrun{
+synths <- custom_synth(counts_table = counts_table, exp_design = exp_design,
+           nDEGs = 100, columns = "1,2", effect_sizes = "0.5,1.5", 
+           fraction_upregulated = 0.5, overlap_size = 0.1,
+           deg_method = "norm", samples_per_cond = 1)
+}
 }

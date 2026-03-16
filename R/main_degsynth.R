@@ -126,9 +126,9 @@ run_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
     lengths.dispersions = NULL, lengths.phylo = TRUE, output_dir = NULL,
     deg_method = "vanilla", fixed_DEG_lists = "", fixed_upregulated_DEGs = "",
     condition_columns, exp_design = "", inputfile = NULL) {
-    effect_sizes <- as.numeric(strsplit(effect_sizes, ",")[[1]])
     subset <- FALSE
     if(deg_method != "vanilla") {
+        effect_sizes <- as.numeric(strsplit(effect_sizes, ",")[[1]])
         synth_diffexp <- 0
         synth_diffdisp <- FALSE
         synth_samples.per.cond <- samples.per.cond * 2

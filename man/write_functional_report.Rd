@@ -57,6 +57,8 @@ and functional (f). Default = "fc"}
 
 \item{showCategories}{number of categories in the figures (per cluster)}
 
+\item{top_categories}{number of cluster categories to merge}
+
 \item{corr_threshold}{minimum module eigengene-trait vector absolute Pearson
 R value}
 

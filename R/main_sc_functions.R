@@ -95,133 +95,134 @@
 #' * SingleR_annotation: Trained SingleR annotation object.
 
 main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
-    sigfig = 2, resolution = 0.5, p_adj_cutoff = 5e-3, name = NULL,
-    integrate = FALSE, cluster_annotation = NULL, cell_annotation = NULL,
-    scalefactor = 10000, hvgs = 2000, subset_by = NULL, ndims = 10,
-    normalmethod = "LogNormalize", verbose = FALSE, output = getwd(),
-    reduce = FALSE, min_cells_per_sample=500, ref_label = NULL,
-    SingleR_ref = NULL, ref_de_method = NULL, ref_n = NULL,
-    BPPARAM = SerialParam(), doublet_list = NULL, k_weight = 100,
-    integration_method = "Harmony", sketch = FALSE, sketch_pct = 25, 
-    force_ncells = NA_integer_, sketch_method = "LeverageScore", min.pct = 0.1,
-    doublet_path = getwd(), min_cell_proportion = 0.1, logfc.threshold = 0.25,
-    aggr.ref = FALSE, fine.tune = TRUE, min_counts = 0.5){
-    main_start <- Sys.time()
-    new_opt <- check_sc_input(integrate = integrate, sketch = sketch,
-                              SingleR_ref = SingleR_ref, reduce = reduce,
-                              aggr.ref = aggr.ref, fine.tune = fine.tune)
-    annotate <- TRUE
-    qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
-                 doublet_list = doublet_list,
-                 min_cells_per_sample = min_cells_per_sample)
-    if(length(unique(qc$sample)) == 1) {
-      qc <- process_doublets(seu = qc, name = name, doublet_path = doublet_path,
-                             assay = "RNA", nfeatures = hvgs, BPPARAM = BPPARAM,
-                             includePCs = seq(1, ndims))
+  sigfig = 2, resolution = 0.5, p_adj_cutoff = 5e-3, name = NULL,
+  integrate = FALSE, cluster_annotation = NULL, cell_annotation = NULL,
+  scalefactor = 10000, hvgs = 2000, subset_by = NULL, ndims = 10,
+  normalmethod = "LogNormalize", verbose = FALSE, output = getwd(),
+  reduce = FALSE, min_cells_per_sample=500, ref_label = NULL,
+  SingleR_ref = NULL, ref_de_method = NULL, ref_n = NULL,
+  BPPARAM = SerialParam(), doublet_list = NULL, k_weight = 100,
+  integration_method = "Harmony", sketch = FALSE, sketch_pct = 25, 
+  force_ncells = NA_integer_, sketch_method = "LeverageScore", min.pct = 0.1,
+  doublet_path = getwd(), min_cell_proportion = 0.1, logfc.threshold = 0.25,
+  aggr.ref = FALSE, fine.tune = TRUE, min_counts = 0.5){
+  filter <- NULL # So R check does not complain
+  main_start <- Sys.time()
+  new_opt <- check_sc_input(integrate = integrate, sketch = sketch,
+                            SingleR_ref = SingleR_ref, reduce = reduce,
+                            aggr.ref = aggr.ref, fine.tune = fine.tune)
+  annotate <- TRUE
+  qc <- tag_qc(seu = seu, minqcfeats = minqcfeats, percentmt = percentmt,
+                doublet_list = doublet_list,
+                min_cells_per_sample = min_cells_per_sample)
+  if(length(unique(qc$sample)) == 1) {
+    qc <- process_doublets(seu = qc, name = name, doublet_path = doublet_path,
+                            assay = "RNA", nfeatures = hvgs, BPPARAM = BPPARAM,
+                            includePCs = seq(1, ndims))
+  }
+  if(!reduce) {
+    all_samples <- unique(qc$sample)
+    seu <- subset(qc, subset = filter == 'Pass')
+    qc_samples <- unique(seu$sample)
+    discarded_samples <- paste(all_samples[!all_samples %in% qc_samples],
+                                collapse = ", ")
+    if(length(all_samples) != length(qc_samples)) {
+      warning("Sample(s) ", discarded_samples, " discarded in QC filtering.")
     }
-    if(!reduce) {
-      all_samples <- unique(qc$sample)
-      seu <- subset(qc, subset = filter == 'Pass')
-      qc_samples <- unique(seu$sample)
-      discarded_samples <- paste(all_samples[!all_samples %in% qc_samples],
-                                 collapse = ", ")
-      if(length(all_samples) != length(qc_samples)) {
-        warning("Sample(s) ", discarded_samples, " discarded in QC filtering.")
-      }
-    } else {
-      seu <- qc
-    }
-    if(new_opt$integrate) {
-      message("Splitting seurat object by sample.")
-      seu[["RNA"]] <- split(seu[["RNA"]], f = seu$sample)
-    }
-    message('Normalizing data')
-    norm_start <- Sys.time()
-    seu <- Seurat::NormalizeData(object = seu, verbose = verbose,
-      normalization.method = normalmethod, scale.factor = scalefactor)
-    message("Normalization time: ", Sys.time() - norm_start)
-    filter_layers <- grep("data", names(seu$RNA@layers), value = TRUE)
-    seu <- filter_sc_counts(seu, min_counts = min_counts, layers = filter_layers)
-    message('Finding variable features')
-    seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs,
-                                        verbose = verbose,
-                                        selection.method = "vst", assay = "RNA")
-    if(new_opt$sketch) {
-      seu <- process_sketch(seu = seu, sketch_method = sketch_method,
-          sketch_pct = sketch_pct, hvgs = hvgs, force_ncells = force_ncells,
-          features = Seurat::VariableFeatures(seu), verbose = verbose)
-    }
-    assay <- Seurat::DefaultAssay(seu)
-    SingleR_annotation <- NULL
-    if(!is.null(SingleR_ref)) {
-      message("SingleR reference provided. Annotating cells.")
-      annotation <- annotate_SingleR(seu = seu, SingleR_ref = SingleR_ref,
-                    BPPARAM = BPPARAM, ref_n = ref_n, ref_label = ref_label,
-                    verbose = verbose, ref_de_method = ref_de_method,
-                    aggr.ref = new_opt$aggr.ref, fine.tune = new_opt$fine.tune)
-      annotate <- FALSE
-      seu <- annotation$seu
-      markers <- annotation$markers
-      SingleR_annotation <- annotation$SingleR_annotation
-    }
-    message('Scaling data')
-    scale_start <- Sys.time()
-    seu <- Seurat::ScaleData(object = seu, verbose = verbose)
-    message("Scaling time: ", Sys.time() - scale_start)
-    message('Reducing dimensionality')
-    ## TO DO: See if Lapacian Eigendecomposition improves UMAP
-    ## (https://satijalab.org/seurat/reference/rungraphlaplacian)
-    seu <- Seurat::RunPCA(seu, assay = assay, npcs = ndims, verbose = verbose)
-    reduction <- "pca"
-    if(new_opt$integrate) {
-      message('Integrating seurat object')
-      seu <- Seurat::IntegrateLayers(object = seu, orig.reduction = "pca",
-        new.reduction = integration_method, verbose = FALSE, assay = assay,
-        dims = seq(1, ndims), method = paste0(integration_method,
-        "Integration"), scale.layer = "scale.data", k.weight = k_weight)
-      reduction <- integration_method
-    }
-    seu <- Seurat::FindNeighbors(object = seu, dims = seq(ndims),
-                                 assay = assay, reduction = reduction,
-                                 verbose = verbose)
-    if(is.null(SingleR_ref)) {
-      seu <- Seurat::FindClusters(seu, resolution = resolution,
-                                  verbose = verbose)
-      # Seurat starts counting clusters from 0, which is the source of many
-      # headaches when working in R, which starts counting from 1. Therefore,
-      # we introduce this correction. Weirdly enough, coercing it to numeric
-      # already adds 1.
-      seu@meta.data$seurat_clusters <- as.numeric(seu@meta.data$seurat_clusters)
-      Seurat::Idents(seu) <- seu@meta.data$seurat_clusters
-    } else {
-      message("Annotation by clusters not active, skipping clustering.")
-    }
-    seu <- Seurat::RunUMAP(object = seu, dims = seq(ndims), verbose = verbose,
-                           reduction = reduction, return.model = TRUE)
-    seu <- SeuratObject::JoinLayers(seu)
-    if(annotate) {
-      annot_start <- Sys.time()
-      annotation <- annotate_seurat(seu = seu, subset_by = subset_by,
-        cell_annotation = cell_annotation, assay = assay, verbose = verbose,
-        cluster_annotation = cluster_annotation, p_adj_cutoff = p_adj_cutoff, 
-        min.pct = min.pct, logfc.threshold = logfc.threshold, layer = "data",
-        integrate = new_opt$integrate)
-      message("Time to annotate: ", Sys.time() - annot_start)
-      seu <- annotation$seu
-      markers <- annotation$markers
-    }
-    if("sketch" %in% names(seu@assays)) {
-      seu <- project_sketch(seu = seu, reduction = reduction, ndims = ndims)
-    }
-    assay <- "RNA"
-    expr_metrics <- get_expression_metrics(seu = seu, sigfig = sigfig,
-                                           min_counts = 0, layer = "data")
-    message("Total processing time: ", Sys.time() - main_start)
-    final_results <- list(qc = qc, seu = seu, markers = markers,
-      sample_qc_pct = expr_metrics$sample_qc_pct, integrate = integrate,
-      clusters_pct = expr_metrics$clusters_pct, 
-      SingleR_annotation = SingleR_annotation)
-    return(final_results)
+  } else {
+    seu <- qc
+  }
+  if(new_opt$integrate) {
+    message("Splitting seurat object by sample.")
+    seu[["RNA"]] <- split(seu[["RNA"]], f = seu$sample)
+  }
+  message('Normalizing data')
+  norm_start <- Sys.time()
+  seu <- Seurat::NormalizeData(object = seu, verbose = verbose,
+    normalization.method = normalmethod, scale.factor = scalefactor)
+  message("Normalization time: ", Sys.time() - norm_start)
+  filter_layers <- grep("data", names(seu$RNA@layers), value = TRUE)
+  seu <- filter_sc_counts(seu, min_counts = min_counts, layers = filter_layers)
+  message('Finding variable features')
+  seu <- Seurat::FindVariableFeatures(seu, nfeatures = hvgs,
+                                      verbose = verbose,
+                                      selection.method = "vst", assay = "RNA")
+  if(new_opt$sketch) {
+    seu <- process_sketch(seu = seu, sketch_method = sketch_method,
+        sketch_pct = sketch_pct, hvgs = hvgs, force_ncells = force_ncells,
+        features = Seurat::VariableFeatures(seu), verbose = verbose)
+  }
+  assay <- Seurat::DefaultAssay(seu)
+  SingleR_annotation <- NULL
+  if(!is.null(SingleR_ref)) {
+    message("SingleR reference provided. Annotating cells.")
+    annotation <- annotate_SingleR(seu = seu, SingleR_ref = SingleR_ref,
+                  BPPARAM = BPPARAM, ref_n = ref_n, ref_label = ref_label,
+                  verbose = verbose, ref_de_method = ref_de_method,
+                  aggr.ref = new_opt$aggr.ref, fine.tune = new_opt$fine.tune)
+    annotate <- FALSE
+    seu <- annotation$seu
+    markers <- annotation$markers
+    SingleR_annotation <- annotation$SingleR_annotation
+  }
+  message('Scaling data')
+  scale_start <- Sys.time()
+  seu <- Seurat::ScaleData(object = seu, verbose = verbose)
+  message("Scaling time: ", Sys.time() - scale_start)
+  message('Reducing dimensionality')
+  ## TO DO: See if Lapacian Eigendecomposition improves UMAP
+  ## (https://satijalab.org/seurat/reference/rungraphlaplacian)
+  seu <- Seurat::RunPCA(seu, assay = assay, npcs = ndims, verbose = verbose)
+  reduction <- "pca"
+  if(new_opt$integrate) {
+    message('Integrating seurat object')
+    seu <- Seurat::IntegrateLayers(object = seu, orig.reduction = "pca",
+      new.reduction = integration_method, verbose = FALSE, assay = assay,
+      dims = seq(1, ndims), method = paste0(integration_method,
+      "Integration"), scale.layer = "scale.data", k.weight = k_weight)
+    reduction <- integration_method
+  }
+  seu <- Seurat::FindNeighbors(object = seu, dims = seq(ndims),
+                                assay = assay, reduction = reduction,
+                                verbose = verbose)
+  if(is.null(SingleR_ref)) {
+    seu <- Seurat::FindClusters(seu, resolution = resolution,
+                                verbose = verbose)
+    # Seurat starts counting clusters from 0, which is the source of many
+    # headaches when working in R, which starts counting from 1. Therefore,
+    # we introduce this correction. Weirdly enough, coercing it to numeric
+    # already adds 1.
+    seu@meta.data$seurat_clusters <- as.numeric(seu@meta.data$seurat_clusters)
+    Seurat::Idents(seu) <- seu@meta.data$seurat_clusters
+  } else {
+    message("Annotation by clusters not active, skipping clustering.")
+  }
+  seu <- Seurat::RunUMAP(object = seu, dims = seq(ndims), verbose = verbose,
+                          reduction = reduction, return.model = TRUE)
+  seu <- SeuratObject::JoinLayers(seu)
+  if(annotate) {
+    annot_start <- Sys.time()
+    annotation <- annotate_seurat(seu = seu, subset_by = subset_by,
+      cell_annotation = cell_annotation, assay = assay, verbose = verbose,
+      cluster_annotation = cluster_annotation, p_adj_cutoff = p_adj_cutoff, 
+      min.pct = min.pct, logfc.threshold = logfc.threshold, layer = "data",
+      integrate = new_opt$integrate)
+    message("Time to annotate: ", Sys.time() - annot_start)
+    seu <- annotation$seu
+    markers <- annotation$markers
+  }
+  if("sketch" %in% names(seu@assays)) {
+    seu <- project_sketch(seu = seu, reduction = reduction, ndims = ndims)
+  }
+  assay <- "RNA"
+  expr_metrics <- get_expression_metrics(seu = seu, sigfig = sigfig,
+                                          min_counts = 0, layer = "data")
+  message("Total processing time: ", Sys.time() - main_start)
+  final_results <- list(qc = qc, seu = seu, markers = markers,
+    sample_qc_pct = expr_metrics$sample_qc_pct, integrate = integrate,
+    clusters_pct = expr_metrics$clusters_pct, 
+    SingleR_annotation = SingleR_annotation)
+  return(final_results)
 }
 
 #' main_sc_Hunter

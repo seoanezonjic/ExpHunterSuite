@@ -28,5 +28,8 @@ A subset of the DEG table.
 adds a "prevalent" field.
 }
 \examples{
-stop("This example is missing")
+input_DEGs <- data.frame(matrix(ncol = 3, nrow = 4))
+colnames(input_DEGs) <- c("gene", "avg_log2FC", "uninteresting_data")
+print(input_DEGs)
+print(get_DEG_table(input_DEGs, c("gene", "avg_log2FC")))
 }

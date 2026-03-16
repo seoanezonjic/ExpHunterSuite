@@ -49,6 +49,7 @@ fcfunc <- function(means,fcmin=1.4, fcmax=3, meanlog = 1, sdlog = 0.8){
 #' `mark_duplicates` finds duplicate values inside a vector and appends
 #' a tag to each of them. This tag can either be an index or a letter
 #'
+#' @importFrom stats ave
 #' @param string A string
 #' @param index_as_letter A boolean
 #'   * `TRUE`:  Duplicates will be marked as value_A, value_B
@@ -126,6 +127,7 @@ rename_samples <- function(exp_design, condition_columns, counts_table) {
 #' `synth_deterministic_DEGs` is a simple multiplication, with no noise
 #'
 #' @inheritParams synth_DEGs_by_condition
+#' @importFrom stats rnorm
 #' @returns Two vectors of values by which to multiply expression levels in
 #' counts table. Upregulated vector includes effect size, static vector only
 #' includes noise from the normal distribution.
@@ -145,6 +147,7 @@ synth_normal_DEGs <- function(up_vector, stat_vector, effect_size,
 }
 
 #' @rdname synth_normal_DEGs
+#' @importFrom stats rexp
 
 synth_exponential_DEGs <- function(up_vector, stat_vector, effect_size,
                                    stdev = NULL) {
@@ -349,12 +352,12 @@ read_DEG_lists <- function(paths_string) {
 #' `counts_matrix` contains just the counts matrix. Element `DEGs` contains
 #' a data frame detailing which genes are differentially expressed in dataset
 #' @examples
-#' B_625_625 <- custom_synth(dataset = "B_625_625", n.vars = 12500, repl.id = 1,
-#'                  samples.per.cond = 5, n.diffexp = 1250, seqdepth = 1e7, 
-#'                  fraction.upregulated = 0.5, between.group.diffdisp = FALSE,
-#'                  filter.threshold.total = 1, filter.threshold.mediancpm = 0,
-#'                  fraction.non.overdispersed = 0)
-#' B_625_625
+#' \dontrun{
+#' synths <- custom_synth(counts_table = counts_table, exp_design = exp_design,
+#'            nDEGs = 100, columns = "1,2", effect_sizes = "0.5,1.5", 
+#'            fraction_upregulated = 0.5, overlap_size = 0.1,
+#'            deg_method = "norm", samples_per_cond = 1)
+#' }
 #' @export
 
 custom_synth <- function(counts_table, exp_design, nDEGs, columns,
@@ -363,7 +366,7 @@ custom_synth <- function(counts_table, exp_design, nDEGs, columns,
     nDEGs <- as.integer(strsplit(nDEGs, ",")[[1]])
     if(fixed_DEG_lists == "") {
         DEG_lists <- create_DEG_lists(universe = counts_table$gene,
-                                nDEGs = nDEGs, overlap = overlap_size)
+                        nDEGs = nDEGs, overlap_size = overlap_size)
     } else {
         DEG_lists <- read_DEG_lists(paths_string = fixed_DEG_lists)
     }
@@ -388,10 +391,12 @@ custom_synth <- function(counts_table, exp_design, nDEGs, columns,
         } else {
             up_DEGs <- read_DEG_lists(fixed_upregulated_DEGs)[[i]]
         }
-        counts_table <- make_DEG_table(table = counts_table, up_DEGs = up_DEGs,
-            exp_design = exp_design, DEGs = DEG_lists[[i]],
-            effect_size = effect_sizes[i], factor_column = factor_columns[i],
-            samples_per_group = samples_per_cond, method = deg_method)
+        counts_table <- make_DEG_table(counts_table = counts_table,
+                          up_DEGs = up_DEGs, exp_design = exp_design,
+                          DEGs = DEG_lists[[i]], effect_size = effect_sizes[i],
+                          factor_column = factor_columns[i],
+                          deg_method = deg_method,
+                          samples_per_group = samples_per_cond)
     }
     DEGs <- get_diffexp_info(counts_table, unique(unlist(DEG_lists)))
     return(list(exp_design = exp_design, counts_table = counts_table,

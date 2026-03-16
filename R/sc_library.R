@@ -2124,7 +2124,10 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
 #' p_val, p_val_adj, avg_log2FC, pct.1, pct.2, cause_for_rejection, DEG.
 #' @returns A subset of the DEG table.
 #' @examples
-#' stop("This example is missing")
+#' input_DEGs <- data.frame(matrix(ncol = 3, nrow = 4))
+#' colnames(input_DEGs) <- c("gene", "avg_log2FC", "uninteresting_data")
+#' print(input_DEGs)
+#' print(get_DEG_table(input_DEGs, c("gene", "avg_log2FC")))
 #' @export
 
 get_DEG_table <- function(input_DEGs, col_vector = c("gene", "p_val",

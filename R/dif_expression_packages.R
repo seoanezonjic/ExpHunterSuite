@@ -197,14 +197,18 @@ perform_expression_analysis <- function(modules,
     return(exp_results)
 }
 
-
-# DESeq2
-#-----------------------------------------------
+#' analysis_DESeq2
 #' @importFrom DESeq2 DESeqDataSetFromMatrix DESeq results counts
 #' @importFrom stats formula
-#' @param var_data Pre-computed DESeq2 data ran with default parameters. If
+#' @param var_data Pre-computed DESeq2 data run with default parameters. If
 #' DESeq2 is called with default parameters, this dds object will be used
 #' instead of calculating it again.
+#' @param data Data to compute
+#' @param p_val_cutoff P-value threshold to mark a DEG as significant
+#' @param target Data frame describing sample grouping for DEG analysis
+#' @param model_formula_text Pending review to document this properly
+#' @param multifactorial String describing multifactorial analysis to perform
+
 analysis_DESeq2 <- function(data, p_val_cutoff, target, model_formula_text,
   multifactorial, var_data = NULL){
 ### BEFORE TOUCHING THIS AGAIN, A TEST IS NEEDED

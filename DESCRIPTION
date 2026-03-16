@@ -52,7 +52,6 @@ Suggests:
     knitr (>= 1.49),
     sparseMatrixStats (>= 1.20.0)
 Imports:
-    crayon (>= 1.5.3),
     GenomicScores (>= 2.20.2),
     DropletUtils (>= 1.28.1),
     ReactomePA (>= 1.52.0),
