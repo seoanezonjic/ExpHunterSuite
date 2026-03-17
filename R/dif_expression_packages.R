@@ -208,6 +208,8 @@ perform_expression_analysis <- function(modules,
 #' @param target Data frame describing sample grouping for DEG analysis
 #' @param model_formula_text Pending review to document this properly
 #' @param multifactorial String describing multifactorial analysis to perform
+#' @returns A list of two objects: de_deseq2, which contains the DESeq2 DE
+#' analysis, and DESeq2_dataset, which contains only the DESeq dataset.
 
 analysis_DESeq2 <- function(data, p_val_cutoff, target, model_formula_text,
   multifactorial, var_data = NULL){

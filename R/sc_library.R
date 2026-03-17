@@ -851,7 +851,7 @@ get_top_genes <- function(seu, top = 20, assay = "RNA", layer = "data",
     names(expressed_genes) <- rownames(genes)
     expressed_genes <- Matrix::rowSums(genes!=0) / ncol(genes)
     if(length(expressed_genes) > top) {
-      expressed_genes <- sort(expressed_genes, decreasing = TRUE)[1:top]
+      expressed_genes <- sort(expressed_genes, decreasing = TRUE)[seq(top)]
     }
     top_samples[[sample]] <- names(expressed_genes)
   }

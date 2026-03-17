@@ -13,6 +13,9 @@ define_conditions(exp_design, factor_column)
 
 \item{factor_column}{Index of column whose factor to consider}
 }
+\value{
+Two vectors of samples, one for each factor.
+}
 \description{
 Extract samples by their value of requested experimental condition.
 \code{define_conditions} takes an experimental design and the index of a factor

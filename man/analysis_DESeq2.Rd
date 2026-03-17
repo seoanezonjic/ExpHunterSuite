@@ -28,6 +28,10 @@ analysis_DESeq2(
 DESeq2 is called with default parameters, this dds object will be used
 instead of calculating it again.}
 }
+\value{
+A list of two objects: de_deseq2, which contains the DESeq2 DE
+analysis, and DESeq2_dataset, which contains only the DESeq dataset.
+}
 \description{
 analysis_DESeq2
 }

@@ -139,8 +139,8 @@ synth_normal_DEGs <- function(up_vector, stat_vector, effect_size,
     nscale <- length(up_vector)
     error_size <- stdev
     noise <- rnorm(n = n_samples, mean = 0, sd = error_size)
-    scale_factor <- effect_size + 1 + abs(noise[1:nscale])
-    distr_factor <- stat_vector * 2 * noise[(nscale + 1):n_samples] # Emulate
+    scale_factor <- effect_size + 1 + abs(noise[seq(nscale)])
+    distr_factor <- stat_vector * 2 * noise[seq((nscale + 1),n_samples)] # Emulate
     # distribution with no effect size
     up_vector <- up_vector * scale_factor
     return(list(up_vector = round(up_vector), stat_vector = round(stat_vector)))
@@ -247,6 +247,7 @@ CV <- function(vector) {
 #'
 #' @param exp_design Experimental design
 #' @param factor_column Index of column whose factor to consider
+#' @returns Two vectors of samples, one for each factor.
 
 define_conditions <- function(exp_design, factor_column) {
     factors <- unique(exp_design[,factor_column])
