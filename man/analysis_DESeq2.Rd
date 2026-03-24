@@ -18,9 +18,10 @@ analysis_DESeq2(
 
 \item{p_val_cutoff}{P-value threshold to mark a DEG as significant}
 
-\item{target}{Data frame describing sample grouping for DEG analysis}
+\item{target}{Data frame describing sample grouping for DE analysis}
 
-\item{model_formula_text}{Pending review to document this properly}
+\item{model_formula_text}{design formula used to specify the statistical
+model used in the DE analysis step. Generated automatically in our workflow}
 
 \item{multifactorial}{String describing multifactorial analysis to perform}
 

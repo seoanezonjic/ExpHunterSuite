@@ -7,8 +7,11 @@
     markers <- plotter$hash_vars$markers
     extra_columns <- plotter$hash_vars$extra_columns
     metadata <- plotter$hash_vars$seu@meta.data
-    which_type <- ifelse(is.null(seu@meta.data$cell_type), yes = seu@meta.data$seurat_clusters, no = seu@meta.data$cell_type)
-    Seurat::Idents(plotter$hash_vars$seu) <- which_type
+    if(is.null(plotter$hash_vars$seu@meta.data$cell_type)) {
+        Seurat::Idents(plotter$hash_vars$seu) <- metadata$seurat_clusters
+    } else {
+        Seurat::Idents(plotter$hash_vars$seu) <- metadata$cell_type
+    }
     get_cells_metadata <- function(heatmap) {
         samples <- rownames(heatmap)
         missing_cats <- extra_columns[!extra_columns %in% colnames(metadata)]
@@ -23,8 +26,11 @@
         if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
             return("<p>Object contains none of the specified features</p>")
         }
-        Seurat::Idents(seu) <- ifelse(is.null(seu@meta.data$cell_type), yes = seu@meta.data$seurat_clusters,
-                                      no = seu@meta.data$cell_type)
+        if(is.null(seu@meta.data$cell_type)) {
+            Seurat::Idents(seu) <- seu@meta.data$seurat_clusters
+        } else {
+            Seurat::Idents(seu) <- seu@meta.data$cell_type
+        }
         scCustomize::DotPlot_scCustom(seu, unique(features), flip_axes = TRUE, 
                                       colors_use = colGEX, x_lab_rotate = TRUE) +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))

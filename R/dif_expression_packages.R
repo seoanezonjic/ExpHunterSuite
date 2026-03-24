@@ -205,8 +205,9 @@ perform_expression_analysis <- function(modules,
 #' instead of calculating it again.
 #' @param data Data to compute
 #' @param p_val_cutoff P-value threshold to mark a DEG as significant
-#' @param target Data frame describing sample grouping for DEG analysis
-#' @param model_formula_text Pending review to document this properly
+#' @param target Data frame describing sample grouping for DE analysis
+#' @param model_formula_text design formula used to specify the statistical 
+#' model used in the DE analysis step. Generated automatically in our workflow
 #' @param multifactorial String describing multifactorial analysis to perform
 #' @returns A list of two objects: de_deseq2, which contains the DESeq2 DE
 #' analysis, and DESeq2_dataset, which contains only the DESeq dataset.
