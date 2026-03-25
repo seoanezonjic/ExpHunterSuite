@@ -63,7 +63,7 @@ if(!file.exists(opt$input)) {
 }
 
 if(opt$targets_folder == "" | !file.exists(opt$targets_folder)) {
-  stop(paste0("Provided targets directory does not exist. Was ", opt$targets_folder))
+  stop(paste0("Provided targets directory ", opt$targets_folder, " does not exist", ))
 } else {
   target_files <- dir(opt$targets_folder, full.names = TRUE)
   DEG_targets <- vector(mode = "list", length = length(target_files))

@@ -194,7 +194,7 @@ run_compcodeR <- function(dataset, n.vars, samples.per.cond, n.diffexp,
     if(deg_method != "vanilla") {
         synth_data <- custom_synth(counts_table = counts_table,
             exp_design = exp_design, nDEGs = nDEGs, effect_sizes = effect_sizes,
-            columns = condition_columns, deg_deg_method = deg_method,
+            columns = condition_columns, deg_method = deg_method,
             fixed_DEG_lists = fixed_DEG_lists, overlap_size = overlap_size,
             fixed_upregulated_DEGs = fixed_upregulated_DEGs,
             fraction_upregulated = fraction.upregulated,
