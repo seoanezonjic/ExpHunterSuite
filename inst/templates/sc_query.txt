@@ -72,7 +72,7 @@ end.rcode-->
          Represented as the natural logarithm of count ratio, multiplied by a scale factor
          (see config file for exact value of scale factor).</p>")
     cat(plotter$prettify_div(plotter$heatmap(list(id = "query_exp", extra_data = list(id ="query_pct", header = NULL,
-                             row_names = NULL, text = "dynamic"),
+                             row_names = NULL, text = "dynamic", sizeBy = "Cell percentage"), x_label = "Expression",
                              title = "Query gene expression levels", inject_smp_attr = sample_heatmap_overlay,
                              header = NULL, text = FALSE, row_names = NULL, config = list(smpOverlays = names(sample_heatmap_overlay)),
                              transpose = TRUE)), preset = "magic"))

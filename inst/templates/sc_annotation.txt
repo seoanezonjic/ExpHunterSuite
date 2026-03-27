@@ -141,6 +141,10 @@
     meta <- plotter$hash_vars$seu@meta.data
     if(!is.null(meta$cell_type)) meta$cell_type[is.na(meta$cell_type)] <- "Pruned"
     plotter$hash_vars$seu@meta.data <- meta
+
+    if(!is.null(plotter$hash_vars$SingleR_annotation)){
+        plotter$hash_vars$projection_seu <- subset_seurat(seu, column = "cell_type", value = "Pruned", operator = "!=")
+    } else plotter$hash_vars$projection_seu <- plotter$hash_vars$seu
 end.rcode-->
 
 <h1><strong>SINGLE CELL RNA-SEQ ANNOTATION ANALYSIS</strong></h1>
