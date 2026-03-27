@@ -690,8 +690,8 @@ test_that("test process_sc_params, annotation mode", {
 })
 
 test_that("test process_sc_params, per sample annotation mode", {
-  root_path <- find.package("ExpHunterSuite")
-  ref_filter <- file.path(root_path, "tests", "test_files", "test_filter")
+  ref_filter <- system.file("external_data/test_filter.txt",
+                  package = "ExpHunterSuite")
   params <- list(name = "test", doublet_file = "", filter = TRUE, mincells = 1,
                  minfeats = 1, minfeats = 1, minqcfeats = 1, percentmt = 5,
                  normalmethod = "LogNormalize", scalefactor = 1e5, hvgs = 2e3,

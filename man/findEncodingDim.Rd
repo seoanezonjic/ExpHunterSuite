@@ -58,7 +58,7 @@ ods <- OUTRIDER::makeExampleOutriderDataSet()
 encDimSearchParams <- c(5, 8, 10, 12, 15)
 zScoreParams <- c(2, 3, 5, 'lnorm')
 implementation <- 'autoencoder'
-BiocParallel::register(BiocParallel::MulticoreParam(4))
+BiocParallel::register(BiocParallel::MulticoreParam(2))
 \dontshow{
     ods <- ods[1:12,1:12]
     encDimSearchParams <- c(2)
