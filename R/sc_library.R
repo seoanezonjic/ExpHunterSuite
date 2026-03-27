@@ -1077,6 +1077,7 @@ get_fc_vs_ncells<- function(seu, DEG_list, min_avg_log2FC = 0.5, query = NULL,
     ncell_df <- .process_matrix_list(matrix_list = matrices,
                                    processing_function = .is_expressed_matrix)
     for(group in names(matrices)) {
+      if(is.null(matrices[[group]])) next
       ncell_df[group,] <- ncell_df[group,,drop = FALSE]/ncol(matrices[[group]])
     }
     ncell_df <- signif(ncell_df * 100, 2)
