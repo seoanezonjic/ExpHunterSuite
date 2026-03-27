@@ -38,100 +38,100 @@ parse_string_command <- function(cmd, mode) {
       arg <- cmd_parts[i]
       
       if (arg == "-C" || arg == "--Control_columns") {
-        options[["Control_columns"]] <- c("--Control_columns", cmd_parts[i + 1])
+        option_parser$Control_columns <<- c("-C", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-T" || arg == "--Treatment_columns") {
-        options[["Treatment_columns"]] <- c("--Treatment_columns", cmd_parts[i + 1])
+        option_parser$Treatment_columns <<- c("-T", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-r" || arg == "--reads") {
-        options[["min_reads"]] <- c("-r", cmd_parts[i + 1])
+        option_parser$min_reads <<- c("-r", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-l" || arg == "--minlibraries") {
-        options[["min_libraries"]] <- c("-l", cmd_parts[i + 1])
+        option_parser$minlibraries <<- c("-l", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-F" || arg == "--filter_type") {
-        options[["filter_type"]] <- c("--filter_type", cmd_parts[i + 1])
+        option_parser$filter_type <<- c("-F", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-p" || arg == "--p_val_cutoff") {
-        options[["de_pvalue"]] <- c("-p", cmd_parts[i + 1])
+        option_parser$de_pvalue <<- c("-p", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-f" || arg == "--lfc") {
-        options[["de_logfc"]] <- c("-f", cmd_parts[i + 1])
+        option_parser$de_logfc <<- c("-f", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-m" || arg == "--modules") {
-        options[["de_packages"]] <- c("-m", cmd_parts[i + 1])
+        option_parser$de_packages <<- c("-m", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-c" || arg == "--minpack_common") {
-        options[["de_min_pack"]] <- c("-c", cmd_parts[i + 1])
+        option_parser$de_min_pack <<- c("-c", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-t" || arg == "--target_file") {
-        options[["target_path"]] <- c("-t", cmd_parts[i + 1])
+        option_parser$target_path <<- c("-t", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-e" || arg == "--external_DEA_file") {
-        options[["external_DEA_file"]] <- c("--external_DEA_file", cmd_parts[i + 1])
+        option_parser$external_DEA_file <<- c("-e", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-v" || arg == "--model_variables") {
-        options[["de_add_factors"]] <- c("-v", cmd_parts[i + 1])
+        option_parser$de_add_factors <<- c("-v", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-S" || arg == "--string_factors") {
-        options[["string_features"]] <- c("-S", cmd_parts[i + 1])
+        option_parser$string_features <<- c("-S", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-N" || arg == "--numeric_factors") {
-        options[["numeric_features"]] <- c("-N", cmd_parts[i + 1])
+        option_parser$numeric_features <<- c("-N", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-b" || arg == "--WGCNA_memory") {
-        options[["WGCNA_memory"]] <- c("--WGCNA_memory", cmd_parts[i + 1])
+        option_parser$WGCNA_memory <<- c("-b", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "--WGCNA_norm_method") {
-        options[["WGCNA_norm_method"]] <- c("--WGCNA_norm_method", cmd_parts[i + 1])
+        option_parser$WGCNA_norm_method <<- c("-WGCNA_norm_method", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "--WGCNA_deepsplit") {
-        options[["WGCNA_deepsplit"]] <- c("--WGCNA_deepsplit", cmd_parts[i + 1])
+        option_parser$WGCNA_deepsplit <<- c("-WGCNA_deepsplit", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "--WGCNA_min_genes_cluster") {
-        options[["WGCNA_min_genes_cluster"]] <- c("--WGCNA_min_genes_cluster", cmd_parts[i + 1])
+        option_parser$WGCNA_min_genes_cluster <<- c("-WGCNA_min_genes_cluster", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "--WGCNA_detectcutHeight") {
-        options[["WGCNA_detectcutHeight"]] <- c("--WGCNA_detectcutHeight", cmd_parts[i + 1])
+        option_parser$WGCNA_detectcutHeight <<- c("-WGCNA_detectcutHeight", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "--WGCNA_mergecutHeight") {
-        options[["WGCNA_mergecutHeight"]] <- c("--WGCNA_mergecutHeight", cmd_parts[i + 1])
+        option_parser$WGCNA_mergecutHeight <<- c("-WGCNA_mergecutHeight", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-w" || arg == "--WGCNA_all") {
-        options[["WGCNA_ALL"]] <- c("-w", "BOOLEAN")
+        option_parser$WGCNA_all <<- c("-w", cmd_parts[i + 1])
         i <- i + 1
       } else if (arg == "--WGCNA_blockwiseNetworkType") {
-        options[["WGCNA_blockwiseNetworkType"]] <- c("--WGCNA_blockwiseNetworkType", cmd_parts[i + 1])
+        option_parser$WGCNA_blockwiseNetworkType <<- c("-WGCNA_blockwiseNetworkType", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "--WGCNA_blockwiseTOMType") {
-        options[["WGCNA_blockwiseTOMType"]] <- c("--WGCNA_blockwiseTOMType", cmd_parts[i + 1])
+        option_parser$WGCNA_blockwiseTOMType <<- c("-WGCNA_blockwiseTOMType", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "--WGCNA_minCoreKME") {
-        options[["WGCNA_minCoreKME"]] <- c("--WGCNA_minCoreKME", cmd_parts[i + 1])
+        option_parser$WGCNA_minCoreKME <<- c("-WGCNA_minCoreKME", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "--WGCNA_minCoreKMESize") {
-        options[["WGCNA_minCoreKMESize"]] <- c("--WGCNA_minCoreKMESize", cmd_parts[i + 1])
+        option_parser$WGCNA_minCoreKMESize <<- c("-WGCNA_minCoreKMESize", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "--WGCNA_minKMEtoStay") {
-        options[["WGCNA_minKMEtoStay"]] <- c("--WGCNA_minKMEtoStay", cmd_parts[i + 1])
+        option_parser$WGCNA_minKMEtoStay <<- c("-WGCNA_minKMEtoStay", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "--WGCNA_corType") {
-        options[["WGCNA_corType"]] <- c("--WGCNA_corType", cmd_parts[i + 1])
+        option_parser$WGCNA_corType <<- c("-WGCNA_corType", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "--multifactorial") {
-        options[["multifactorial"]] <- c("--multifactorial", cmd_parts[i + 1])
+        option_parser$multifactorial <<- c("-multifactorial", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "-q" || arg == "--query_genes") {
-        options[["query_genes"]] <- c("--query_genes", cmd_parts[i + 1])
+        option_parser$query_genes <<- c("-q", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "--seed") {
-        options[["seed"]] <- c("--seed", cmd_parts[i + 1])
+        option_parser$seed <<- c("-seed", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "--count_var_quantile") {
-        options[["count_var_quantile"]] <- c("--count_var_quantile", cmd_parts[i + 1])
+        option_parser$count_var_quantile <<- c("-count_var_quantile", cmd_parts[i + 1])
         i <- i + 2
       } else if (arg == "--deseq2_var_quantile") {
-        options[["deseq2_var_quantile"]] <- c("--deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
         i <- i + 2
       } else {
         i <- i + 1
@@ -146,49 +146,64 @@ parse_string_command <- function(cmd, mode) {
       arg <- cmd_parts[i]
       
       if (arg == "-m" || arg == "--model_organism") {
-        options[["fun_organism"]] <- c("-m", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("-m", "--model_organism"))
         i <- i + 2
       } else if (arg == "-a" || arg == "--annot_file") {
-        options[["annotation_list"]] <- c("-a", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("-a", "--annot_file"))
         i <- i + 2
       } else if (arg == "-t" || arg == "--input_gene_id") {
-        options[["input_gene_id"]] <- c("-t", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("-t", "--input_gene_id"))
         i <- i + 2
       } else if (arg == "-f" || arg == "--func_annot_db") {
-        options[["func_annot_db"]] <- c("-f", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("-f", "--func_annot_db"))
         i <- i + 2
       } else if (arg == "-G" || arg == "--GO_subont") {
-        options[["GO_subont"]] <- c("-G", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("-G", "--GO_subont"))
         i <- i + 2
       } else if (arg == "-C" || arg == "--custom") {
-        options[["custom_nomenclature"]] <- c("-C", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("-C", "--custom"))
         i <- i + 2
       } else if (arg == "-A" || arg == "--analysis") {
-        options[["fun_an_performance"]] <- c("-A", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("-A", "--analysis"))
         i <- i + 2
       } else if (arg == "-r" || arg == "--remote") {
-        options[["fun_remote_mode"]] <- c("-r", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("-r", "--remote"))
         i <- i + 2
       } else if (arg == "--clean_parentals") {
-        options[["clean_parentals"]] <- c("--clean_parentals", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("clean_parentals"))
         i <- i + 2
       } else if (arg == "-P" || arg == "--pthreshold") {
-        options[["pthreshold"]] <- c("-P", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("-P", "--pthreshold"))
         i <- i + 2
       } else if (arg == "-Q" || arg == "--qthreshold") {
-        options[["qthreshold"]] <- c("-Q", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("-Q", "--qthreshold"))
         i <- i + 2
       } else if (arg == "--max_genes_plot") {
-        options[["max_genes_plot"]] <- c("--max_genes_plot", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("max_genes_plot"))
         i <- i + 2
       } else if (arg == "-c" || arg == "--cores") {
-        options[["cores"]] <- c("-c", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("-c", "--cores"))
         i <- i + 2
       } else if (arg == "-s" || arg == "--task_size") {
-        options[["task_size"]] <- c("-s", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("-s", "--task_size"))
         i <- i + 2
       } else if (arg == "-u" || arg == "--universe") {
-        options[["universe"]] <- c("-u", cmd_parts[i + 1])
+        option_parser$deseq2_var_quantile <<- c("-deseq2_var_quantile", cmd_parts[i + 1])
+        option_parser <- add_option(option_parser, c("-u", "--universe"))
         i <- i + 2
       } else {
         i <- i + 1
@@ -300,16 +315,6 @@ if (opt$mode == 'degenes_Hunter') { # Parse auxiliary file for degenes_Hunter mo
     }
   }
 }
-
-variables <- coerce_variables(variables)
-
-coerce_variables <- function(variables) {
-  for(var in names(variables)) {
-    variables[[var]]$value <- tryCatch(as.numeric())
-  }
-}
-
-save.image('Testing.RData')
 
 command <- generate_command(variables)
 cat(command)
