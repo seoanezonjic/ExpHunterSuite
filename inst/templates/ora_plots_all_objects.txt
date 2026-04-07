@@ -25,7 +25,7 @@
 	cnet_args <- list(n_category = n_category, node_label = node_label, layout = layout_cnet,
 		size_category = size_item, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha)
 	emap_args <- list(n_category = n_category, layout = layout_emap, label_format = 4,
-		size_category = size_item, size_edge = size_edge, min_edge = min_edge)
+		size_category = size_item, size_edge = size_edge)
 	dotplot_args <- list(n_category = n_category)
 	enrich_barplot <- function(input_obj) {
 		enrichplot:::barplot.enrichResult(input_obj, showCategory = n_category)
