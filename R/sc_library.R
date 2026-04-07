@@ -406,8 +406,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
     markers <- data.frame(FALSE)
   } else {
     Seurat::Idents(subset_seu) <- cond  
-    markers <- Seurat::FindMarkers(subset_seu, ident.1 = conds[2],
-        logfc.threshold = logfc.threshold, ident.2 = conds[1], layer = layer,
+    markers <- Seurat::FindMarkers(subset_seu, ident.1 = "Treat",
+        logfc.threshold = logfc.threshold, ident.2 = "Ctrl", layer = layer,
         test.use = DE_method, verbose = verbose, min.pct = min.pct)
     if(!simple_DEG_pct) {
       pct_cols <- grep("pct", colnames(markers))
@@ -468,9 +468,9 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
                logfc.threshold = 0.25, layer = "data", simple_DEG_pct = FALSE,
                p_val_cutoff = p_val_cutoff, DE_method = "wilcox"){
   Seurat::Idents(seu) <- seu@meta.data[, tolower(cond)]
-  globals <- Seurat::FindMarkers(seu, ident.1 = conds[2], test.use = DE_method,
+  globals <- Seurat::FindMarkers(seu, ident.1 = "Treat", test.use = DE_method,
         logfc.threshold = logfc.threshold, min.pct = min.pct,
-        ident.2 = conds[1], verbose = verbose, layer = layer)
+        ident.2 = "Ctrl", verbose = verbose, layer = layer)
   globals <- globals[globals$p_val_adj <= p_val_cutoff, , drop = FALSE]
   if(!simple_DEG_pct) {
       pct_cols <- grep("pct", colnames(globals))
@@ -547,13 +547,15 @@ get_sc_markers <- function(seu, cond = NULL, DEG = FALSE, DE_method = "wilcox",
   layer = "data") {
   conds <- .extract_conditions(metadata = seu@meta.data, cond = cond,
                                values = values)
-  marker_meta <- list(high = paste0(cond, ": ", conds[2]),
-                      low = paste0(cond, ": ", conds[1]))
+  marker_meta <- list(high = paste0(cond, ": ", conds[1]),
+                      low = paste0(cond, ": ", conds[2]))
   sub_markers <- .get_subset_markers(seu =seu, DEG = DEG, DE_method = DE_method,
     min.pct = min.pct, verbose = verbose, subset_by = subset_by, layer = layer,
     conds = conds, p_val_cutoff = p_val_cutoff, assay = assay, cond = cond,
     simple_DEG_pct = simple_DEG_pct, logfc.threshold = logfc.threshold)
   if(DEG) {
+	  marker_meta$high <- "Treat"
+	  marker_meta$low <- "Ctrl"
     message("Calculating global DEGs")
     sub_markers[["global"]] <- .get_global_DEGs(seu = seu, cond = cond,
         logfc.threshold = logfc.threshold, conds = conds, min.pct = min.pct,
