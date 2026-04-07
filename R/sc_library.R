@@ -406,8 +406,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
     markers <- data.frame(FALSE)
   } else {
     Seurat::Idents(subset_seu) <- cond  
-    markers <- Seurat::FindMarkers(subset_seu, ident.1 = conds[1],
-        logfc.threshold = logfc.threshold, ident.2 = conds[2], layer = layer,
+    markers <- Seurat::FindMarkers(subset_seu, ident.1 = conds[2],
+        logfc.threshold = logfc.threshold, ident.2 = conds[1], layer = layer,
         test.use = DE_method, verbose = verbose, min.pct = min.pct)
     if(!simple_DEG_pct) {
       pct_cols <- grep("pct", colnames(markers))
@@ -428,8 +428,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 }
 
 .get_subset_markers <- function(seu, subset_by, cond, conds, DEG, verbose,
-    p_val_cutoff, min.pct, assay, logfc.threshold, layer = "data",
-    simple_DEG_pct = FALSE, DE_method = "wilcox"){
+  p_val_cutoff, min.pct, assay, logfc.threshold, layer = "data",
+  simple_DEG_pct = FALSE, DE_method = "wilcox"){
   sub_values <- as.character(sort(unique(seu@meta.data[[subset_by]])))
   sub_markers <- vector(mode = "list", length = length(sub_values))
   names(sub_markers) <- as.character(sub_values)
@@ -468,9 +468,9 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
                logfc.threshold = 0.25, layer = "data", simple_DEG_pct = FALSE,
                p_val_cutoff = p_val_cutoff, DE_method = "wilcox"){
   Seurat::Idents(seu) <- seu@meta.data[, tolower(cond)]
-  globals <- Seurat::FindMarkers(seu, ident.1 = conds[1], test.use = DE_method,
+  globals <- Seurat::FindMarkers(seu, ident.1 = conds[2], test.use = DE_method,
         logfc.threshold = logfc.threshold, min.pct = min.pct,
-        ident.2 = conds[2], verbose = verbose, layer = layer)
+        ident.2 = conds[1], verbose = verbose, layer = layer)
   globals <- globals[globals$p_val_adj <= p_val_cutoff, , drop = FALSE]
   if(!simple_DEG_pct) {
       pct_cols <- grep("pct", colnames(globals))
@@ -543,11 +543,12 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 
 get_sc_markers <- function(seu, cond = NULL, DEG = FALSE, DE_method = "wilcox",
   verbose = FALSE, logfc.threshold = 0.25, simple_DEG_pct = FALSE, subset_by,
-  assay = "RNA", values = NULL, p_val_cutoff = 1, min.pct = 0.1, layer = "data") {
+  assay = "RNA", values = NULL, p_val_cutoff = 1, min.pct = 0.1,
+  layer = "data") {
   conds <- .extract_conditions(metadata = seu@meta.data, cond = cond,
                                values = values)
-  marker_meta <- list(high = paste0(cond, ": ", conds[1]),
-                      low = paste0(cond, ": ", conds[2]))
+  marker_meta <- list(high = paste0(cond, ": ", conds[2]),
+                      low = paste0(cond, ": ", conds[1]))
   sub_markers <- .get_subset_markers(seu =seu, DEG = DEG, DE_method = DE_method,
     min.pct = min.pct, verbose = verbose, subset_by = subset_by, layer = layer,
     conds = conds, p_val_cutoff = p_val_cutoff, assay = assay, cond = cond,
