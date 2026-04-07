@@ -108,6 +108,7 @@ main_degenes_Hunter <- function(
 
 
     # Infer replicates and group index from target
+
     index_control_cols <- as.character(target$sample[target$treat == "Ctrl"])
     index_treatmn_cols <- as.character(target$sample[target$treat == "Treat"])
     replicatesC <- length(index_control_cols)
@@ -583,7 +584,7 @@ prepare_model_text <- function(model_variables,
     } else {
       model_formula_text <- "~ treat"
     }
-    message("Model for gene expression analysis is:", model_formula_text, "\n")
+    message("Model for gene expression analysis is: ", model_formula_text, "\n")
     return(model_formula_text)
 }
 
