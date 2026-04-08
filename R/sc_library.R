@@ -2080,8 +2080,9 @@ tag_DEGs <- function(DEG_df, p_val_cutoff = 0.1, min_avg_log2FC = 0.5,
 .write_temp_DEGs <- function(deg, name, output) {
   if(!is.null(deg[[name]])) {
     if(!isFALSE(unlist(deg[[name]]))) {
+	    file_name <- gsub("/", "-", name)
       write.table(deg[[name]], sep = "\t", quote = FALSE, row.names = TRUE,
-                  file = file.path(output, paste0(name, ".tsv")))
+                  file = file.path(output, paste0(file_name, ".tsv")))
     }
   }
   return(invisible(NULL))
