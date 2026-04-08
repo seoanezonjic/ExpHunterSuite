@@ -19,7 +19,6 @@
     hilight <- plotter$hash_vars$hilight
     hilight_alpha <- plotter$hash_vars$hilight_alpha
     n_category <- plotter$hash_vars$n_category
-    nWords <- plotter$hash_vars$nWords
     nCluster <- plotter$hash_vars$nCluster
 	top_ids_list <- lapply(clusters, function(cluster_df) {
 		sorted <- cluster_df[order(cluster_df$qvalue), ]
@@ -37,8 +36,8 @@
 		size_category = size_item, size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha,  
 		label_size = text_size, legend_pos = legend_pos)
 	emap_args <- list(n_category = n_category, layout = layout_emap_cnet, label_format = 4,
-		size_category = size_item, size_edge = size_edge, min_edge = 0.2, 
-		nWords = nWords, nCluster = NULL, label_size = text_size, legend_pos = legend_pos)
+		size_category = size_item, size_edge = size_edge, 
+		nCluster = NULL, label_size = text_size, legend_pos = legend_pos)
 	dotplot_args <- list(n_category = n_category)
 	format_enr_for_DT <- function(ER){
 	  toshow <- ggplot2::fortify(ER)[,!colnames(ER@compareClusterResult) %in% 
@@ -113,13 +112,9 @@ end.rcode-->
 	if (nrow(as.data.frame(plotter$hash_vars$enrich_obj)) > 2) {
 		if(plotter$hash_vars$group_results == TRUE) {
 			emap_args$nCluster <- min(floor(nrow(plotter$hash_vars$enrich_obj)/7, 20))
-			emap_args$nWords <- 6
 			emap_args$node_label <- "group"
-			emap_args$group_category <- TRUE
 		} else {
 			emap_args$nCluster <- NULL
-			emap_args$nWords <- 4
-			emap_args$group_category <- FALSE
 		}
 		emap_res <- plotter$prettify_div(plotter$static_plot_main("enrich_obj", custom_format = TRUE,
 			  plotting_function = enrich_emap, plotting_args = emap_args, plot_type = "plot", height = emap_height_width, width = emap_height_width), inject_string = "class=\"proper_img\")")

@@ -292,13 +292,15 @@ enrich_cnet <- function(input_obj, n_category = 30, node_label = "all",
   legend_pos = "side") {
   # Pie sizes depend on size_category argument, so we pass size_item value
   # to size_category argument.
+
+  # Change node_label back to none when enrichplot fixed
   opt <- c(list(x = input_obj, showCategory = n_category,
-    node_label = "none", layout = layout, size_category = size_category,
+    node_label = "all", layout = layout, size_category = size_category,
     size_edge = size_edge, hilight = hilight, hilight_alpha = hilight_alpha),
     advanced_opt)
   p <- do.call(cnetplot, opt)
-  p <- p + geom_cnet_label(node_label = node_label, size = label_size,
-                fontface = "bold")
+  #p <- p + geom_cnet_label(node_label = node_label, size = label_size,
+  #              fontface = "bold")
   if(legend_pos == "bottom") {
     p <- p + theme(
       legend.position  = "bottom",
@@ -323,8 +325,7 @@ enrich_cnet <- function(input_obj, n_category = 30, node_label = "all",
 
 enrich_emap <- function(input_obj, n_category = 30, size_category = 1,
   layout = igraph::layout_nicely, label_format = 4, size_edge = 1,
-  advanced_opt = NULL, label_size=2.5, legend_pos="side") {
-
+  advanced_opt = NULL, label_size=2.5, legend_pos="side", node_label="group") {
   opt <- c(list(x = input_obj, showCategory = n_category, node_label = "none",
     layout = layout, label_format = label_format,
     size_category = size_category, size_edge = size_edge), advanced_opt)
