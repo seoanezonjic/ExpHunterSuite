@@ -300,6 +300,8 @@ test_that("get_query_pct works with 'by' argument of length 2", {
 test_pbmc <- pbmc_tiny
 test_pbmc@meta.data$groups <- "g1"
 test_pbmc@meta.data$groups[7:15] <- "g2"
+test_pbmc@meta.data$deg_group <- "Ctrl"
+test_pbmc@meta.data$deg_group[7:15] <- "Treat"
 test_pbmc@meta.data$seurat_clusters <- 0
 test_pbmc@meta.data$seurat_clusters[3:5] <- 1
 test_pbmc@meta.data$seurat_clusters[15] <- 1
@@ -309,7 +311,7 @@ test_that("get_sc_markers works as intended, DEG TRUE", {
   markers_test_pbmc <- test_pbmc
   markers_test_pbmc$seurat_clusters[11:15] <- 1
   output <- suppressMessages(get_sc_markers(seu = markers_test_pbmc,
-    cond = "groups", DEG = TRUE, verbose = FALSE, subset_by = "seurat_clusters",
+    cond = "deg_group", DEG = TRUE, verbose = FALSE, subset_by = "seurat_clusters",
     simple_DEG_pct = TRUE))$markers
   markers_0 <- data.frame(p_val = 0.27, avg_log2FC = 7.6, pct.1 = 0.5, pct.2 = 0,
                           p_val_adj = 1, gene = "VDAC3")
@@ -332,7 +334,7 @@ test_that("get_sc_markers works as intended with simple_DEG_pct set to FALSE", {
   test_pbmc <- test_pbmc
   test_pbmc$seurat_clusters[11:15] <- 1
   output <- suppressMessages(suppressWarnings(get_sc_markers(seu = test_pbmc,
-    cond = "groups", DEG = TRUE, verbose = FALSE, subset_by = "seurat_clusters",
+    cond = "deg_group", DEG = TRUE, verbose = FALSE, subset_by = "seurat_clusters",
     simple_DEG_pct = FALSE)))$markers
   markers_0 <- data.frame(FALSE)
   markers_1 <- data.frame(p_val = c(0.70, 1), avg_log2FC = c(-1.9, 3.5),
@@ -377,26 +379,26 @@ test_that("get_sc_markers works as intended, DEG FALSE", {
 
 test_that("get_sc_markers skips exclusive clusters in DEG analysis", {
   expected_warning <- paste0("Cluster 2 contains fewer than three cells for ",
-                "condition\\(s\\) 'g2'. Skipping DEG analysis")
+                "condition\\(s\\) 'Treat'. Skipping DEG analysis")
   suppressMessages(expect_warning(get_sc_markers(seu = test_pbmc,
-                 cond = "groups", DEG = TRUE, verbose = FALSE,
+                 cond = "deg_group", DEG = TRUE, verbose = FALSE,
                  subset_by = "seurat_clusters", simple_DEG_pct = TRUE),
                  expected_warning))
   expect_false(suppressWarnings(suppressMessages(get_sc_markers(seu = test_pbmc,
-    cond = "groups", DEG = TRUE, verbose = FALSE, subset_by = "seurat_clusters",
+    cond = "deg_group", DEG = TRUE, verbose = FALSE, subset_by = "seurat_clusters",
     simple_DEG_pct = TRUE)$markers[[2]][[1]])))
 })
 
 test_that("get_sc_markers skips exclusive clusters in DEG analysis, alternate
            idents", {
   expected_warning <- paste0("Cluster 2 contains fewer than three cells for ",
-                "condition\\(s\\) 'g2'. Skipping DEG analysis")
+                "condition\\(s\\) 'Treat'. Skipping DEG analysis")
   suppressMessages(expect_warning(get_sc_markers(seu = test_pbmc,
-                 cond = "groups", DEG = TRUE, verbose = FALSE,
+                 cond = "deg_group", DEG = TRUE, verbose = FALSE,
                  subset_by = "cell_types", simple_DEG_pct = TRUE),
                  expected_warning))
   expect_false(suppressWarnings(suppressMessages(get_sc_markers(seu = test_pbmc,
-         cond = "groups", DEG = TRUE, verbose = FALSE, subset_by = "cell_types",
+         cond = "deg_group", DEG = TRUE, verbose = FALSE, subset_by = "cell_types",
          simple_DEG_pct = TRUE)$markers[[2]][[1]])))
 })
 
@@ -405,12 +407,12 @@ test_that("get_sc_markers properly applies min_pct filter", {
   clusters_to_remove <- local_pbmc@meta.data$seurat_clusters == "1"
   local_pbmc@meta.data <- local_pbmc@meta.data[!clusters_to_remove,]
   expected_warning <- paste0("Cluster 2 contains fewer than three cells for ",
-                "condition(s) 'g2'")
-  suppressMessages(get_sc_markers(seu = local_pbmc, cond = "groups", DEG = TRUE,
+                "condition(s) 'Treat'")
+  suppressMessages(get_sc_markers(seu = local_pbmc, cond = "deg_group", DEG = TRUE,
     verbose = FALSE, subset_by = "cell_types", min.pct = 0.13,
     simple_DEG_pct = TRUE))
   expect_false(suppressWarnings(suppressMessages(get_sc_markers(seu = test_pbmc,
-               cond = "groups", DEG = TRUE, verbose = FALSE,
+               cond = "deg_group", DEG = TRUE, verbose = FALSE,
                subset_by = "cell_types")$markers[[2]][[1]])))
 })
 
@@ -681,6 +683,40 @@ test_that("test process_sc_params, annotation mode", {
   expected$opt$target_genes <- ""
   expected$opt$filter_dataset <- NULL
   expected$opt$ref_filter <- NULL
+  expected$opt <- expected$opt[order(names(expected$opt))]
+  expected$opt$meta_file <- ""
+  expected$opt$recalc_query <- FALSE
+  output$opt <- output$opt[order(names(output$opt))]
+  expected$opt <- expected$opt[order(names(expected$opt))]
+  expect_equal(output, expected)
+})
+
+test_that("test process_sc_params, annotation mode with a reference filter", {
+  params <- list(name = "test", doublet_file = "", filter = TRUE, mincells = 1,
+                 minfeats = 1, minfeats = 1, minqcfeats = 1, percentmt = 5,
+                 normalmethod = "LogNormalize", scalefactor = 1e5, hvgs = 2e3,
+                 ndims = 10, resolution = 0.33, p_adj_cutoff = 1,
+                 verbose = FALSE, reduce = FALSE, samples_to_integrate = "",
+                 integrate = TRUE, int_method = "RPCA", filter_dataset = "",
+                 sketch = TRUE, sketch_pct = 0.25, force_ncells = "",
+                 sketch_method = "LeverageScore", extra_columns = "one;two",
+                 k_weight = 100, genome = "hg38", exp_design = "",
+                 subset_by = "", cpu = "2", input = NULL,
+                 suffix = "suffix", imported_counts = "",
+                 cluster_annotation = "", cell_annotation = "",
+                 SingleR_ref = "SingleR_ref", ref_version = "1",
+                 ref_label = "cell_type", ref_de_method = "wilcox", ref_n = 15,
+                 ref_filter = "cell_type =! Unknown", target_genes = "gene1;gene2", meta_file = "")
+  output <- suppressMessages(process_sc_params(params = params,
+                                               mode = "annotation"))
+  output$opt <- output$opt[order(names(output$opt))]
+  expected <- list(opt = params, doublet_list = NULL)
+  expected$opt$extra_columns <- c("one", "two")
+  expected$opt$top_N <- NA
+  expected$out_suffix <- "annotation_report.html"
+  expected$opt$target_genes <- ""
+  expected$opt$filter_dataset <- NULL
+  expected$opt$ref_filter <- "cell_type =! Unknown"
   expected$opt <- expected$opt[order(names(expected$opt))]
   expected$opt$meta_file <- ""
   expected$opt$recalc_query <- FALSE
