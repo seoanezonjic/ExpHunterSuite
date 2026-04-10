@@ -1916,8 +1916,6 @@ process_sc_params <- function(params = list(), mode = "annotation") {
     params$ref_filter <- NULL
   } else if(file.exists(params$ref_filter)) {
     params$ref_filter <- readLines(params$ref_filter)
-  } else {
-    params$ref_filter <- NULL
   }
   if(params$ref_version == "") {
     params$ref_version <- NULL
@@ -1955,6 +1953,7 @@ load_SingleR_ref <- function(path, filter = NULL) {
   message("Total cells in reference: ", ncol(SingleR_ref), ".")
   if(!is.null(filter)) {
     message("Filtering reference")
+    message("Applying filter ", filter)
     expressions <- strsplit(filter, "&|\\|")[[1]]
     expressions <- gsub(" $", "", expressions)
     expressions <- gsub("^ ", "", expressions)
