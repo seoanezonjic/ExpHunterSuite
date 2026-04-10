@@ -117,7 +117,7 @@ Distributions of correlation P values between miRNAs and target genes obtained u
 The dashed line represents a threshold of 0.05 
 
 <!--begin.rcode methods_comparison_violin_p, echo=FALSE, results = 'asis', warning = FALSE, message = FALSE
-  draw_quantiles <- NULL
+  draw_quantiles <- 0
   ylim <- c(-0.01, 1)
   plot_p_val <- TRUE
   cat(plotter$static_ggplot_main(id = "all_cor_dist_fil", text = "dynamic", header = NULL, row_names = NULL, resizable = TRUE,
