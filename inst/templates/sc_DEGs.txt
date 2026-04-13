@@ -67,6 +67,7 @@ end.rcode-->
                  <ul>
                      <li> First, the subset of cells belonging to the specified cell group are subset from the experiment. </li>
                      <li> Then, it is divided in two groups for DEG calculation. </li>
+		     <li> <b>NOTE</b>: Only DEG method currently implemented is \"wilcox\" (Wilcoxon rank-sum test, or Mann-Whitney U) </li>
                  <li> <b> DEG table fields </b>: </li>
                  <ul>
                      <li> cause_for_rejection_[method]: reason that [method] found to reject potential DEG (Check execution parameters block to see exact thresholds). Possible values: </li>
