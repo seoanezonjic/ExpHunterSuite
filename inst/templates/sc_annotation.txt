@@ -29,11 +29,9 @@
         if(!any(features %in% rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu)))) {
             return("<p>Object contains none of the specified features</p>")
         }
-        if(is.null(seu@meta.data$cell_type)) {
-            Seurat::Idents(seu) <- seu@meta.data$seurat_clusters
-        } else {
-            Seurat::Idents(seu) <- seu@meta.data$cell_type
-        }
+        ident <- ifelse("cell_type" %in% colnames(seu@meta.data),
+                yes = "cell_type", no = "seurat_clusters")
+        Seurat::Idents(seu) <- seu@meta.data[[ident]]
         scCustomize::DotPlot_scCustom(seu, unique(features), flip_axes = TRUE, 
                                       colors_use = colGEX, x_lab_rotate = TRUE) +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
@@ -232,7 +230,7 @@ end.rcode-->
              \"Other\" labels are not included in this plot. A third series representing percentage of cells annotated as each cell type is also shown. </p>")
     cat(plotter$prettify_div(plotter$barplot(list(id = "final_medians", title = "Median SingleR scores for assigned labels",
             header = NULL, row_names = NULL, text = FALSE, transpose = TRUE, smp_attr = 1, colorBy = "label", width = "1024",
-            config = list(graphOrientation = "vertical", showLegend = TRUE, xAxisTitle = "label", setMinX = 0, setMaxX = 1,
+            config = list(graphOrientation = "vertical", showLegend = TRUE, xAxisTitle = "label", smpTextRotate = 45, setMinX = 0, setMaxX = 1,
                           decorations = list(line = list(list(align = "left", color= "rgb(0,0,0)", label = "global median value",
                           value = global_median, width = 2), list(align = "left", color= "rgb(0,0,0)", label = "global pruned median value",
                           value = pruned_global_median, width = 2)))))), preset = "magic", justify = "left"))
