@@ -542,9 +542,8 @@ write_clusters_to_enrichment <- function(output_path="results",
             pp <- enrichplot::emapplot(enrich, showCategory= n_category,
                                       pie="Count", layout = "nicely",
                                       node_label = node_label,
-                                      group_category = TRUE, 
                                       nCluster = min(floor(nrow(enrich)/7), 20),
-                                                     nWords = 6, repel = TRUE)
+                                                     repel = TRUE)
           }else{
             pp <- enrichplot::emapplot(enrich, showCategory= n_category,
                                        pie="Count", layout = "nicely")
