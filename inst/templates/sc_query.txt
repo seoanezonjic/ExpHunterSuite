@@ -42,9 +42,10 @@
     }
 
     Custom_ftplot <- function(seu) {
-        scCustomize::FeaturePlot_scCustom(seu, reduction = "UMAP_full", pt.size = 0.1, num_columns = 1,
-                                          features = feature, na_cutoff = NA, label = TRUE) +
-        ggplot2::scale_color_gradientn(colors = colGEX) + ggplot2::coord_fixed()
+        p <- scCustomize::FeaturePlot_scCustom(seu, reduction = "UMAP_full", pt.size = 0.1, num_columns = 1, split.by = split.by,
+                                          features = feature, na_cutoff = NA, label = TRUE)
+        p <- p + ggplot2::scale_color_gradientn(colors = colGEX) + ggplot2::coord_fixed()
+	return(p)
     }
 
     if(!is.null(extra_columns)) {
@@ -122,14 +123,19 @@ end.rcode-->
     cat(plotter$create_title("Query expression map", "query maps", hlevel = 3, indexable = FALSE,
                               clickable = FALSE, t_id = "query_maps", clickable_text = ""))
     expressed_genes <- rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu, "RNA"))
+    split.by <- "sample"
     for(feature in plotter$hash_vars$opt$target_genes) {
-        if(feature %in% expressed_genes) {
-            cat(plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
-                plotting_function = Custom_ftplot), preset = "magic"))
-        } else {
-            cat(paste0("<p>Feature ", feature, " is not significantly expressed.</p>"))
-        }
+	cat(plotter$create_title(paste0("<strong>", feature, "</strong>"), paste0(feature, "_id"), hlevel = 4, indexable = FALSE, clickable = FALSE, t_id = NULL))
+	for(sample in unique(plotter$hash_vars$seu@meta.data$orig.ident)) {
+		plotter$hash_vars$query_seu <- subset_seurat(plotter$hash_vars$seu, "sample", sample)
+		if(feature %in% expressed_genes) {
+            		cat(plotter$static_plot_main("query_seu", custom_format = TRUE, plotting_function = Custom_ftplot))
+        	} else {
+            		cat(paste0("<p>Feature ", feature, " is not significantly expressed in sample ", sample, ".</p>"))
+        	}
+   	}
     }
+
 end.rcode-->
 
 <!--begin.rcode params
