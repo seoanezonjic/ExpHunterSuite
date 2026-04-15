@@ -262,7 +262,7 @@ end.rcode-->
     reduction <- "pca"
     label <- TRUE
     group.by <- split.by <- NULL
-    cat(plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE, plotting_function = Custom_DimPlot),
+    cat(plotter$prettify_div(plotter$static_plot_main("projection_seu", custom_format = TRUE, plotting_function = Custom_DimPlot),
                              preset = "magic"))
 end.rcode-->
 
@@ -274,7 +274,7 @@ end.rcode-->
     reduction <- ifelse("umap.full" %in% names(plotter$hash_vars$seu@reductions), yes = "umap.full", no = "umap")
     label <- TRUE
     group.by <- split.by <- NULL
-    cat(plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE, plotting_function = Custom_DimPlot),
+    cat(plotter$prettify_div(plotter$static_plot_main("projection_seu", custom_format = TRUE, plotting_function = Custom_DimPlot),
                              justify = "left"))
 end.rcode-->
 
@@ -283,7 +283,7 @@ end.rcode-->
     for(condition in subset_by) {
         split.by <- condition
         html_code <- paste0("Each UMAP shown in this section corresponds to one value of split condition.",
-                             plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
+                             plotter$prettify_div(plotter$static_plot_main("projection_seu", custom_format = TRUE,
                                                   plotting_function = Custom_DimPlot), justify = "left"))
         cat(plotter$create_title(paste0("Grid UMAP representation splitting by ", condition), paste0(condition, " split"), hlevel = 2,
                                  indexable = FALSE, clickable = TRUE, t_id = paste0(condition, "_split"),
@@ -298,7 +298,7 @@ end.rcode-->
         split.by <- NULL
         group.by <- condition
         html_code <- paste0("Recoloring of general UMAP by each value of highlight condition.",
-                             plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
+                             plotter$prettify_div(plotter$static_plot_main("projection_seu", custom_format = TRUE,
                                                   plotting_function = Custom_DimPlot), justify = "left"))
         cat(plotter$create_title(paste0("General UMAP representation highlighting ", condition), paste0(condition, " grouped"), hlevel = 2,
                                  indexable = FALSE, clickable = TRUE, t_id = paste0(condition, "_grouped"),

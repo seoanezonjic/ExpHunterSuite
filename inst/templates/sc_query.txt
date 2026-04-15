@@ -43,7 +43,7 @@
 
     Custom_ftplot <- function(seu) {
         p <- scCustomize::FeaturePlot_scCustom(seu, reduction = "UMAP_full", pt.size = 0.1, num_columns = 1, split.by = split.by,
-                                          features = feature, na_cutoff = NA, label = TRUE)
+                                          features = feature, na_cutoff = NA, label = TRUE, aspect_ratio = 1)
         p <- p + ggplot2::scale_color_gradientn(colors = colGEX) + ggplot2::coord_fixed()
 	return(p)
     }
@@ -55,6 +55,15 @@
         sample_heatmap_overlay <- NULL
     }
 
+    if(!is.null(plotter$hash_vars$seu@meta.data$cell_type)) {
+	if(any(plotter$hash_vars$seu@meta.data$cell_type == "Pruned")) {
+          plotter$hash_vars$projection_seu <- subset_seurat(seu, column = "cell_type", value = "Pruned", operator = "!=")
+        }
+    } else plotter$hash_vars$projection_seu <- plotter$hash_vars$seu
+    ident <- ifelse("cell_type" %in% colnames(plotter$hash_vars$seu@meta.data),
+                    yes = "cell_type", no = "seurat_clusters")
+    Seurat::Idents(plotter$hash_vars$seu) <- seu@meta.data[[ident]]
+    Seurat::Idents(plotter$hash_vars$projection_seu) <- seu@meta.data[[ident]]
 end.rcode-->
 
 <h1><strong>SINGLE CELL RNA-SEQ QUERY EXPRESSION ANALYSIS</strong></h1>
@@ -66,7 +75,7 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode query_analysis, eval = !is.null(plotter$hash_vars$query_exp)
-    cat(plotter$create_title("Query gene expression heatmap", "query_heatmap", hlevel = 2,
+    cat(plotter$create_title("<b>Query gene expression heatmap</b>", "query_heatmap", hlevel = 2,
                               indexable = FALSE, clickable = FALSE, t_id = "query_heatmap",
                               clickable_text = ""))
     cat("<p>This plot represents gene expression profile across samples of query genes.
@@ -89,14 +98,14 @@ end.rcode-->
                                                   transpose = TRUE)), preset = "magic")
     }
     html_code <- paste(query_clusters, collapse = "\n")
-    cat(plotter$create_title("Query gene cell percentages by cell type", "query identity", hlevel = 2,
+    cat(plotter$create_title("<b>Query gene cell percentages by cell type</b>", "query identity", hlevel = 2,
                               indexable = FALSE, clickable = TRUE, t_id = "query_identity",
                               clickable_text = ""))
     cat(plotter$create_collapsable_container(id = "query_identity", html_code = html_code))
 end.rcode-->
 
 <!--begin.rcode query_in_markers
-    cat(plotter$create_title("Query genes distribution", "query genes distribution", hlevel = 2,
+    cat(plotter$create_title("<b>Query genes distribution</b>", "query genes distribution", hlevel = 2,
                               indexable = FALSE, clickable = TRUE, t_id = "query_distrib",
                               clickable_text = ""))
     paragraph <- "<p>These genes have <strong>NOT</strong> been used to annotate cell types</p>"
@@ -107,7 +116,7 @@ end.rcode-->
         code <- plotter$prettify_div(plotter$static_plot_main("seu", custom_format = TRUE,
                                      plotting_function = Custom_DotPlot), preset = "magic")
         table_title <- plotter$create_title("Query genes table", "Query genes Table",
-                                            hlevel = 3, indexable = FALSE, clickable = TRUE,
+                                            hlevel = 2, indexable = FALSE, clickable = TRUE,
                                             t_id = paste0("query_table"), clickable_text = "")
         table <- plotter$prettify_div(plotter$table(list(id = "markers", header = NULL, row_names = NULL,
                                                     table_rownames = FALSE, styled = "dt", func = subset_table, text = "dynamic")),
@@ -120,14 +129,14 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode Query_patterns
-    cat(plotter$create_title("Query expression map", "query maps", hlevel = 3, indexable = FALSE,
+    cat(plotter$create_title("Query expression map", "query maps", hlevel = 2, indexable = FALSE,
                               clickable = FALSE, t_id = "query_maps", clickable_text = ""))
     expressed_genes <- rownames(SeuratObject::GetAssayData(plotter$hash_vars$seu, "RNA"))
     split.by <- "sample"
     for(feature in plotter$hash_vars$opt$target_genes) {
-	cat(plotter$create_title(paste0("<strong>", feature, "</strong>"), paste0(feature, "_id"), hlevel = 4, indexable = FALSE, clickable = FALSE, t_id = NULL))
+	cat(plotter$create_title(paste0("<strong>", feature, "</strong>"), paste0(feature, "_id"), hlevel = 1, indexable = FALSE, clickable = FALSE, t_id = NULL))
 	for(sample in unique(plotter$hash_vars$seu@meta.data$orig.ident)) {
-		plotter$hash_vars$query_seu <- subset_seurat(plotter$hash_vars$seu, "sample", sample)
+		plotter$hash_vars$query_seu <- subset_seurat(plotter$hash_vars$projection_seu, "sample", sample)
 		if(feature %in% expressed_genes) {
             		cat(plotter$static_plot_main("query_seu", custom_format = TRUE, plotting_function = Custom_ftplot))
         	} else {
