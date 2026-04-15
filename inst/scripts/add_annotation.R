@@ -11,13 +11,22 @@ option_list <- list(
   optparse::make_option(c("-m", "--mirna"), type= "logical", default = FALSE, action ="store_true",
                         help= "Indicate if the ids to translate are miRNA (from miRBase to mature ID). If activated -O, -I and -K are ignored"),
   optparse::make_option(c("-I", "--input_keytype"), type="character", default=NULL,
-                        help="Set the input keytype. Default=%default : All possible keytypes will be printed"),
+                        help="Set the input keytype (use flag -l to list valid keytypes). Default=%default: All valid keytypes will be printed"),
   optparse::make_option(c("-K", "--output_keytype"), type="character", default="SYMBOL",
-                        help="Set the output keytype. Default=%default"),
+                        help="Set the output keytype (use flag -l to list valid keytypes). Default=%default"),
   optparse::make_option(c("-O", "--organism"), type="character", default="Human",
-                        help="Set the model organism. Default = %default")
+                        help="Set the model organism. Default = %default"),
+  optparse::make_option(c("-l", "--list_keytypes"), type="logical", default=FALSE,
+                        action = "store_true", help="List valid keytypes and exit")
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
+
+if(opt$list_keytypes) {
+	options(show.error.messages = FALSE)
+	valid_keytypes <- paste(AnnotationDbi::columns(org.Hs.eg.db::org.Hs.eg.db), collapse = ", ")
+	message("Valid keytypes: ", valid_keytypes)
+	stop()
+}
 
 options(warn=1)
 if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
