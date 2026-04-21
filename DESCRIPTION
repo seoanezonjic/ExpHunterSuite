@@ -23,7 +23,7 @@ Authors@R: c(
 	   comment = c(ORCID = "0000-0001-9791-7779"))
   )
 Description: The ExpHunterSuite implements a comprehensive protocol for the analysis of transcriptional data using established *R* packages and combining their results. It covers all key steps in DEG detection, CEG detection and functional analysis for RNA-seq data. It has been implemented as an R package containing functions that can be run interactively. In addition, it also contains scripts that wrap the functions and can be run directly from the command line.
-Depends: R (>= 4.4.0)
+Depends: R (>= 4.5.0)
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
