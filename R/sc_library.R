@@ -535,6 +535,8 @@ match_cell_types <- function(markers_df, cell_annotation, p_adj_cutoff = 1e-5) {
 #' an additional one for global DEGs if performing differential analysis.
 #' @examples
 #' data(pbmc_tiny)
+#' pbmc_tiny$groups[pbmc_tiny$groups == "g2"] <- "Treat"
+#' pbmc_tiny$groups[pbmc_tiny$groups == "g1"] <- "Ctrl"
 #' pbmc_tiny$seurat_clusters <- 1
 #' pbmc_tiny$seurat_clusters[8:15] <- 2
 #' get_sc_markers(seu = pbmc_tiny, cond = "groups", DEG = TRUE, verbose = TRUE,
@@ -2031,8 +2033,8 @@ filter_sc_counts <- function(object, layers = "data", min_counts) {
 #' @param DEG_df DEG data frame to tag.
 #' @param p_val_cutoff Genes with an adjusted P-value higher than this argument
 #' will be tagged as high_pval.
-#' @param min_avg_log2FC Genes whose average log2FC is smaller than this value
-#' will be tagged as low_fc.
+#' @param min_avg_log2FC Genes whose average log2FC absolute value is smaller
+#' than this argument will be tagged as low_fc.
 #' @param min_cell_proportion Genes expressed in a percentage of cells smaller
 #' than this number in any of the two groups will be tagged as low_cell_pct.
 #' @returns A tagged DEG data frame.

@@ -76,6 +76,8 @@ conserved markers from a seurat object.
 }
 \examples{
 data(pbmc_tiny)
+pbmc_tiny$groups[pbmc_tiny$groups == "g2"] <- "Treat"
+pbmc_tiny$groups[pbmc_tiny$groups == "g1"] <- "Ctrl"
 pbmc_tiny$seurat_clusters <- 1
 pbmc_tiny$seurat_clusters[8:15] <- 2
 get_sc_markers(seu = pbmc_tiny, cond = "groups", DEG = TRUE, verbose = TRUE,

@@ -31,7 +31,8 @@ enrich_emap(
   size_edge = 1,
   advanced_opt = NULL,
   label_size = 2.5,
-  legend_pos = "side"
+  legend_pos = "side",
+  node_label = "group"
 )
 
 enrich_dotplot(input_obj, n_category = 30)

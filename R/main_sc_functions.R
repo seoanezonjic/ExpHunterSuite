@@ -235,7 +235,7 @@ main_annotate_sc <- function(seu, minqcfeats = 500, percentmt = 5,
 #' performed
 #' @param p_val_cutoff Adjusted p-val cutoff for significant DEGs.
 #' Default 5e-3.
-#' @param min_avg_log2FC Average log2fc cutoff for significant DEGs.
+#' @param min_avg_log2FC Average absolute log2fc cutoff for significant DEGs.
 #' Default 0.5.
 #' @param min_cell_proportion Minimum threshold of percentage of cells
 #' expressing DEG. Despite Seurat::FindMarkers being called "min.pct", it is
