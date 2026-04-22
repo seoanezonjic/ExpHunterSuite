@@ -75,7 +75,7 @@ if (opt$mirna) {
   table_to_annot[,opt$output_keytype] <- translated_ids
   if(any(is.na(table_to_annot$SYMBOL))) {
     NAs <- which(is.na(table_to_annot$SYMBOL))
-    warning(paste0(length(NAs), " ensembl_IDs could not be translated."))
+    warning(paste(length(NAs), opt$input_keytype, "IDs could not be translated."))
     table_to_annot$SYMBOL[NAs] <- ids_to_translate[NAs]
   }
 }
