@@ -4,7 +4,7 @@ option_list <- list(
         optparse::make_option(c("-i", "--input"), type= "character", default = NULL,
                 help = "Multimir RData to retrieve columns from"),
         optparse::make_option(c("-o","--output"), type = "character", default = ".",
-                help = "Set the output path."),
+                help = "Output file"),
         optparse::make_option(c("-c","--columns_of_interest"), type = "character", default = ".",
                 help = "Columns of interest to retrieve: r (RNA), m (miRNA), rm (RNA and miRNA) ")
 )
@@ -20,5 +20,5 @@ if(grepl("r", opt$columns_of_interest)) columns_to_retrieve <- c(columns_to_retr
 if(grepl("m", opt$columns_of_interest)) columns_to_retrieve <- c(columns_to_retrieve, "mature_mirna_acc") 
 
 unique_cols <- unique(multimir_summary[, columns_to_retrieve])
-write.table(unique_cols, file.path(opt$output, "multimir_data.tsv"), sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+write.table(unique_cols, opt$output, sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
