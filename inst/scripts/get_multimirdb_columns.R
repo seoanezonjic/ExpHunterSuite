@@ -12,7 +12,6 @@ option_list <- list(
 opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
 load(opt$input)
-dir.create(opt$output, recursive = TRUE)
 
 columns_to_retrieve <- NULL
 
