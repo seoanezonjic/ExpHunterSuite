@@ -14,12 +14,11 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 load(opt$input)
 dir.create(opt$output, recursive = TRUE)
 
-if (grepl("r", opt$columns_of_interest)){ 
-        target_list <- unique(multimir_summary$target_ensembl)
-        writeLines(target_list, file.path(opt$output, "mRNA.txt"))
-}
-if (grepl("m", opt$columns_of_interest)){
-        miRNA_list <- unique(multimir_summary$mature_mirna_acc)
-        writeLines(miRNA_list, file.path(opt$output, "miRNA.txt"))
-}
+columns_to_retrieve <- NULL
+
+if(grepl("r", opt$columns_of_interest)) columns_to_retrieve <- c(columns_to_retrieve, "target_ensembl") 
+if(grepl("m", opt$columns_of_interest)) columns_to_retrieve <- c(columns_to_retrieve, "mature_mirna_acc") 
+
+unique_cols <- unique(multimir_summary[, columns_to_retrieve])
+write.table(unique_cols, file.path(opt$output, "multimir_data.tsv"), sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
