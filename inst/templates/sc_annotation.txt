@@ -141,7 +141,7 @@
     plotter$hash_vars$seu@meta.data <- meta
 
     if(!is.null(plotter$hash_vars$SingleR_annotation)){
-        plotter$hash_vars$projection_seu <- subset_seurat(seu, column = "cell_type", value = "Pruned", operator = "!=")
+        plotter$hash_vars$projection_seu <- subset_seurat(plotter$hash_vars$seu, column = "cell_type", value = "Pruned", operator = "!=")
     } else plotter$hash_vars$projection_seu <- plotter$hash_vars$seu
 end.rcode-->
 
