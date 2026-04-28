@@ -9,7 +9,7 @@ load_file <- function(path, stranded) {
 	if(stranded == "no") {
 		res <- data.frame(file[, 2, drop = FALSE])
 	} else {
-		res <- as.data.frame(apply(file[, -1], 1, max))
+		res <- as.data.frame(apply(file[, -1], 1, max)) # https://groups.google.com/d/msg/rna-star/gZRJx3ElRNo/cDInEONVCAAJ #STAR author comment
 	}
 	colnames(res) <- NULL
 	return(res)
@@ -20,7 +20,7 @@ load_file <- function(path, stranded) {
 #################################################################################################
 
 option_list <- list(
-  optparse::make_option(c("-i", "--input_file PATH"), type="character", default=NULL,
+  optparse::make_option(c("-i", "--input_file"), type="character", default=NULL,
                         help="File to process"),
   optparse::make_option(c("-s", "--stranded"), type="character", default='no',
                         help="Strand attribute to select column counts. Default \'no\'")
