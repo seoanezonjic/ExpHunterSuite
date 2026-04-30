@@ -55,15 +55,15 @@
         sample_heatmap_overlay <- NULL
     }
 
-    if(!is.null(plotter$hash_vars$seu@meta.data$cell_type)) {
-	if(any(plotter$hash_vars$seu@meta.data$cell_type == "Pruned")) {
-          plotter$hash_vars$projection_seu <- subset_seurat(seu, column = "cell_type", value = "Pruned", operator = "!=")
-        }
-    } else plotter$hash_vars$projection_seu <- plotter$hash_vars$seu
     ident <- ifelse("cell_type" %in% colnames(plotter$hash_vars$seu@meta.data),
                     yes = "cell_type", no = "seurat_clusters")
-    Seurat::Idents(plotter$hash_vars$seu) <- seu@meta.data[[ident]]
-    Seurat::Idents(plotter$hash_vars$projection_seu) <- seu@meta.data[[ident]]
+    Seurat::Idents(plotter$hash_vars$seu) <- plotter$hash_vars$seu@meta.data[[ident]]
+
+    if(!is.null(plotter$hash_vars$seu@meta.data$cell_type)) {
+	if(any(plotter$hash_vars$seu@meta.data$cell_type == "Pruned")) {
+          plotter$hash_vars$projection_seu <- subset_seurat(plotter$hash_vars$seu, column = "cell_type", value = "Pruned", operator = "!=")
+        }
+    } else plotter$hash_vars$projection_seu <- plotter$hash_vars$seu
 end.rcode-->
 
 <h1><strong>SINGLE CELL RNA-SEQ QUERY EXPRESSION ANALYSIS</strong></h1>
