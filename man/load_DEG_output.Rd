@@ -21,7 +21,7 @@ load_DEG_output(
 
 \item{load_path}{Path where target executions will be found.}
 
-\item{min_avg_log2FC}{Average log2fc cutoff for significant DEGs.
+\item{min_avg_log2FC}{Average absolute log2fc cutoff for significant DEGs.
 Default 0.5.}
 
 \item{p_val_cutoff}{Adjusted p-val cutoff for significant DEGs.

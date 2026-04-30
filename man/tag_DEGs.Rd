@@ -17,8 +17,8 @@ tag_DEGs(
 \item{p_val_cutoff}{Genes with an adjusted P-value higher than this argument
 will be tagged as high_pval.}
 
-\item{min_avg_log2FC}{Genes whose average log2FC is smaller than this value
-will be tagged as low_fc.}
+\item{min_avg_log2FC}{Genes whose average log2FC absolute value is smaller
+than this argument will be tagged as low_fc.}
 
 \item{min_cell_proportion}{Genes expressed in a percentage of cells smaller
 than this number in any of the two groups will be tagged as low_cell_pct.}

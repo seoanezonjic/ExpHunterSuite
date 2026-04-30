@@ -36,7 +36,7 @@ groups is above this threshold. \code{simple_DEG_pct} corrects this behaviour.
 its default value, FALSE, triggers a check that removes DEGs where \emph{any}
 of the two groups is below the threshold.}
 
-\item{min_avg_log2FC}{Average log2fc cutoff for significant DEGs.
+\item{min_avg_log2FC}{Average absolute log2fc cutoff for significant DEGs.
 Default 0.5.}
 
 \item{min_counts}{An integer. Minimum gene counts to consider a gene as
