@@ -39,7 +39,6 @@ opt$input <- unlist(strsplit(opt$input, ","))
 #############################
 ## MAIN
 #############################
-save.image("Testing.RData")
 all_counts_tables <- lapply(opt$input, read.table, row.names = 1)
 all_counts_tables <- load_all_tables(opt$input)
 merged_tables <- merge_all_tables(all_counts_tables, opt$tags)
