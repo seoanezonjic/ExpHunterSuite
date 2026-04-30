@@ -4,8 +4,6 @@
 ######## INIT
 ######################################################
 
-library(optparse)
-
 CTRL <- 1
 TREAT <- 2
 
@@ -143,8 +141,9 @@ save_target <- function(target_name, treats, output_path, experiment_design, add
         features_by_sample <- c()
         
         for (additional_feature in additional_columns) {
-          if (!is.null(experiment_design[[sample]][[additional_feature]])) {
-            features_by_sample <- c(features_by_sample, experiment_design[[sample]][[additional_feature]])
+          ft_match <- experiment_design[experiment_design$sample == sample, additional_feature]
+          if (!is.null(ft_match)) {
+            features_by_sample <- c(features_by_sample, ft_match)
           }
         }
         
