@@ -768,13 +768,24 @@ translate_ensembl){
 #' miRNA_IDs <- c("MIMAT0000158")
 #' translate_miRNA_ids(miRNA_IDs)
 #' @export
-translate_miRNA_ids <- function(miRNA_IDs, miRBaseVersion = "VW-MIMAT-22.0") {
+translate_miRNA_ids <- function(miRNA_IDs, input_keytype = "VW-MIMAT-22.0",
+				output_keytype = "NAME") {
+    select_keytype <- input_keytype
+    match_column <- "ACCESSION"
+    output_column <- "NAME"
+    select_IDs <- miRNA_IDs
+    if(input_keytype == "NAME") {
+	    select_keytype <- output_keytype
+	    match_column <- "NAME"
+	    output_column <- "ACCESSION"
+	    select_IDs <- AnnotationDbi::keys(miRBaseVersions.db::miRBaseVersions.db, keytype = select_keytype)
+    }
     miRNA_tr_table <- AnnotationDbi::select(
                             miRBaseVersions.db::miRBaseVersions.db, 
-                            keys = miRNA_IDs, keytype = miRBaseVersion,
+                            keys = select_IDs, keytype = select_keytype,
                             columns = c("ACCESSION", "NAME"))
-    translated_miRNA <- miRNA_tr_table[match(miRNA_IDs, 
-                                        miRNA_tr_table$ACCESSION) ,"NAME"]
+    translate_rows <- match(miRNA_IDs, miRNA_tr_table[, match_column])
+    translated_miRNA <- miRNA_tr_table[translate_rows, output_column]
     return(translated_miRNA)
 }
 
