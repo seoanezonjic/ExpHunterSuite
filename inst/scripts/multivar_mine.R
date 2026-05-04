@@ -9,7 +9,7 @@ option_list <- list(
     help="Output path. Default=%default"),
   optparse::make_option(c("-A", "--act_des"), type="character", 
     default=NULL,
-    help="Indicate which files are ACTIVE using a comma seppatared string. 
+    help="Indicate which files are ACTIVE using a comma sepparated string. 
     The file name and the type of data must be sepparated by ':'. 
     The data types are 'c' (quantitative), 's' (quantitative that must be scaled) and 'n' (qualitative) Example: 'file1.txt:n,file2.txt:s,file3.txt:c'"),
   optparse::make_option(c("-S", "--supp_desc"), type="character", 
@@ -31,7 +31,9 @@ option_list <- list(
   optparse::make_option(c("--parallel"), type="logical", action = "store_true",
     default=FALSE, help="Activate parallelization. WARNING: factomineR greedily takes all available cores, regardless of limitations. Use only in exclusive nodes."),
   optparse::make_option(c("--time"), type="character",
-    default="10000L", help="A string indicating the loop condition. If it ends with s, it is interpreted as time. If it ends with L, it is interpreted as number of datasets.")
+    default="10000L", help="A string indicating the loop condition. If it ends with s, it is interpreted as time. If it ends with L, it is interpreted as number of datasets."),
+  optparse::make_option(c("--do_not_integrate"), type="logical", action = "store_true",
+    default = FALSE, help="Disable MFA, only perform individual analyses")
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
@@ -107,7 +109,7 @@ perform_individual_analysis(table_data = act_des[[2]], all_files = input_tables,
 
 pca_res$ind_analysis <- names(pca_res)
 
-if(length(act_des) > 1) {
+if(length(act_des) > 1 & !opt$do_not_integrate) {
   pca_res$mfa <- compute_mfa(act_des,supp_desc,input_tables, 
                           hcpc_consol = opt$hcpc_consol,
                           n_clusters = opt$n_clusters, time = opt$time,
