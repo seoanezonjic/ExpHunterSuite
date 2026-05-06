@@ -247,7 +247,7 @@ org_db=org_db,
 just_output_ids=FALSE){
   possible_ids <- AnnotationDbi::columns(org_db)
   if(! input_id %in% possible_ids) 
-    stop("gene keytype must be one of the following:", toString(possible_ids))
+    stop("gene keytype must be one of the following: ", toString(possible_ids))
     ids <- tryCatch(
       ids <- AnnotationDbi::select(org_db, keys=ids, column=output_id, 
                                   keytype=input_id),
