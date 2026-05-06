@@ -6,14 +6,14 @@
 #################################################################################################
 
 load_all_tables <- function(all_files) {
-	all_tables <- lapply(all_files, read.table, row.names = 1)
+	all_tables <- lapply(all_files, load_table)
 	return(all_tables)
 }
 
 load_table <- function(path) {
-        file <- read.table(path, sep = "\t", header = FALSE, row.names = 1)
+  file <- read.table(path, sep = "\t", header = FALSE, row.names = 1)
 	rownames(file) <- lapply(strsplit(rownames(file), "\\."), `[[`, 1) # Split rownames by . and retrieve first element of every resulting sublist (gene ID without version identifier)
-        return(file)
+  return(file)
 }
 
 merge_all_tables <- function(all_tables, tags) {
@@ -39,8 +39,10 @@ opt$input <- unlist(strsplit(opt$input, ","))
 #############################
 ## MAIN
 #############################
-all_counts_tables <- lapply(opt$input, read.table, row.names = 1)
 all_counts_tables <- load_all_tables(opt$input)
 merged_tables <- merge_all_tables(all_counts_tables, opt$tags)
-print(merged_tables)
+merged_tables <- rbind(colnames(merged_tables), merged_tables)
+merged_tables <- cbind(rownames(merged_tables), merged_tables)
+merged_tables[1, 1] <- "-"
+write.table(merged_tables, file = "", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 

@@ -6,10 +6,11 @@
 
 load_file <- function(path, stranded) {
 	file <- read.table(path, sep = "\t", header = FALSE, row.names = 1)
+	table <- file[-(1:4), ]
 	if(stranded == "no") {
-		res <- data.frame(file[, 2, drop = FALSE])
+		res <- data.frame(table[, 2, drop = FALSE])
 	} else {
-		res <- as.data.frame(apply(file[, -1], 1, max)) # https://groups.google.com/d/msg/rna-star/gZRJx3ElRNo/cDInEONVCAAJ #STAR author comment
+		res <- as.data.frame(apply(table[, -1], 1, max)) # https://groups.google.com/d/msg/rna-star/gZRJx3ElRNo/cDInEONVCAAJ #STAR author comment
 	}
 	colnames(res) <- NULL
 	return(res)
