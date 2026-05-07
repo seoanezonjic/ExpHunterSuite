@@ -24,17 +24,22 @@ load_list <- function(input) {
 load_table <- function(input_file, blacklist = NULL, whitelist = NULL, filter = NULL) {
   sample_table <- read.table(input_file, header= TRUE, quote="", sep="\t")
   if(!is.null(blacklist)){
-	sample_table <- sample_table[!sample_table[[1]] %in% blacklist,]
+    if(!any(blacklist %in% sample_table[[1]])) {
+      warning("None of the samples in blacklist appear in experiment design")
+    }
+	  sample_table <- sample_table[!sample_table[[1]] %in% blacklist,]
   }
   if(!is.null(whitelist)){
-	sample_table <- sample_table[sample_table[[1]] %in% whitelist,]
+	  sample_table <- sample_table[sample_table[[1]] %in% whitelist,]
+    if(!any(blacklist %in% sample_table[[1]])) {
+      stop("None of the samples in whitelist appear in experiment design")
+    }
   }
   if(!is.null(filter)){ # Keep records with a specific value in a given column
-	col_name <- filter[1]
-	select_value <- filter[2]
-	sample_table <- sample_table[which(sample_table[[col_name]] == select_value),]
+	  col_name <- filter[1]
+	  select_value <- filter[2]
+	  sample_table <- sample_table[which(sample_table[[col_name]] == select_value),]
   }
-   
   return(sample_table) # TODO: Adjust the output table for the remaining script. Originally was a nested list
 }
 
