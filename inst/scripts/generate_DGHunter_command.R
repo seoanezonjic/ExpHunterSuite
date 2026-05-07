@@ -100,7 +100,7 @@ parse_string_command <- function(cmd, mode) {
         callback = generate_callback("WGCNA_corType")),
       make_option("--multifactorial", type = "character",
         callback = generate_callback("multifactorial")),
-      make_option(c("-q", "--query_genes string"), type = "character",
+      make_option(c("-q", "--query_genes"), type = "character",
         callback = generate_callback("query_genes")),
       make_option("--seed", type = "integer",
         callback = generate_callback("seed")),
@@ -188,21 +188,16 @@ if(!is.null(additional_options)) {
   variables <- modifyList(variables, additional_options)
 }
 
-# additional_options <- Sys.getenv("ADD_OPTIONS")
-# if (additional_options != "") {
-#   variables <- overwrite_options(additional_options, opt$mode, variables)
-# }
-
-# if (opt$mode == 'degenes_Hunter') { # Parse auxiliary file for degenes_Hunter mode
-#   target_path_idx <- which(variables[,2] == "target_path")
-#   aux_path <- sub("\\.txt$", ".aux", variables[target_path_idx, 3])
-#   if(length(aux_path) > 1) {
-#     if(file.exists(aux_path)) {
-#       aux_content <- readLines(aux_path)
-#       variables <- overwrite_options(paste(aux_content, collapse = " "), opt$mode, variables)
-#     }
-#   }
-# }
+if (opt$mode == 'degenes_Hunter') { # Parse auxiliary file for degenes_Hunter mode
+  target_path <- strsplit(variables$target_path, " ")[[1]][2]
+  aux_path <- sub("\\.txt$", ".aux", target_path)
+  if(length(aux_path) > 0) {
+    if(file.exists(aux_path)) {
+      aux_content <- parse_string_command(readLines(aux_path), mode = opt$mode)
+      variables <- modifyList(variables, aux_content)
+    }
+  }
+}
 
 command <- generate_command(variables)
 cat(command)
