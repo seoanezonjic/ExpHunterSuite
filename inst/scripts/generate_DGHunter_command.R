@@ -7,8 +7,20 @@
 library(optparse)
 
 #####################################################
-## METHODS
+##################### METHODS #######################
+#####################################################
 
+generate_callback <- function(name, logical = FALSE) {
+  callback <- function(opt, flag, opt_val, parser) {
+    if(logical) {
+      opt <- flag
+    } else {
+      opt <- paste(flag, opt_val, sep = " ")
+    }
+    return(paste(name, opt, sep = " "))
+  }
+  return(callback)
+}
 
 parse_env_variables <- function(variables, mode) {
   get_env_var <- function(variable){ Sys.getenv(variable) }
@@ -26,31 +38,106 @@ fix_option <- function(option) {
 }
 
 parse_string_command <- function(cmd, mode) {
-  split_cmd <- unlist(strsplit(cmd, " "))
-  if (mode == 'degenes_Hunter') {
-    option_list <- list(
-    make_option(c("-p", "--p_val_cutoff"), type = "numeric", 
-      callback=function(opt, flag, opt_val, parser){return(paste("de_pvalue", flag, opt_val, sep=' '))}),
-    make_option(c("-m", "--modules"), type = "character",
-      callback=function(opt, flag, opt_val, parser){return(paste("de_packages", flag, opt_val, sep=' '))})
-    )
-  } else if (mode == 'functional_Hunter') {
-    print("jaja")
-  }
-  opt <- parse_args(OptionParser(option_list = option_list), args = split_cmd)
-  # fixed_options <- fix_option(opt[[1]])
-  fixed_opt <- list()
-  for(i in seq(1, length(opt) - 1)) {
-    new_element <- fix_option(opt[[i]])
-    fixed_opt[i] <- new_element
-    names(fixed_opt)[i] <- names(new_element)
+  if(cmd == "") {
+    fixed_opt <- NULL
+  } else {
+    split_cmd <- unlist(strsplit(cmd, " "))
+    if (mode == 'degenes_Hunter') {
+      option_list <- list(
+      make_option(c("-C", "--Control_columns"), type = "character",
+        callback = generate_callback("Control_columns")),
+      make_option(c("-T", "--Treatment_columns"), type = "character",
+        callback = generate_callback("Treatment_columns")),
+      make_option(c("-r", "--reads"), type = "integer",
+        callback = generate_callback("min_reads")),
+      make_option(c("-l", "--minlibraries"), type = "integer",
+        callback = generate_callback("min_libraries")),
+      make_option(c("-F", "--filter_type"), type = "character",
+        callback = generate_callback("filter_type")),
+      make_option(c("-p", "--p_val_cutoff"), type = "numeric", 
+        callback = generate_callback("de_pvalue")),
+      make_option(c("-f", "--lfc"), type = "numeric",
+        callback = generate_callback("de_logfc")),
+      make_option(c("-m", "--modules"), type = "character",
+        callback = generate_callback("de_packages")),
+      make_option(c("-c", "--minpack_common"), type = "integer",
+        callback = generate_callback("de_min_pack")),
+      make_option(c("-t", "--target_file"), type = "character",
+        callback = generate_callback("target_path")),
+      make_option(c("-e", "--external_DEA_file"), type = "character",
+        callback = generate_callback("external_DEA_file")),
+      make_option(c("-v", "--model_variables"), type = "character",
+        callback = generate_callback("de_add_factors")),
+      make_option(c("-S", "--string_factors"), type = "character",
+        callback = generate_callback("string_features")),
+      make_option(c("-N", "--numeric_factors"), type = "character",
+        callback = generate_callback("numeric_features")),
+      make_option(c("-b", "--WGCNA_memory"), type = "numeric",
+        callback = generate_callback("WGCNA_memory")),
+      make_option("--WGCNA_norm_method", type = "character",
+        callback = generate_callback("WGCNA_norm_method")),
+      make_option("--WGCNA_deepsplit", type = "integer",
+        callback = generate_callback("WGCNA_deepsplit")),
+      make_option("--WGCNA_min_genes_cluster", type = "integer",
+        callback = generate_callback("WGCNA_min_genes_cluster")),
+      make_option("--WGCNA_detectcutHeight", type = "integer",
+        callback = generate_callback("WGCNA_detectcutHeight")),
+      make_option("--WGCNA_mergecutHeight", type = "integer",
+        callback = generate_callback("WGCNA_mergecutHeight")),
+      make_option(c("-w", "--WGCNA_all"), type = "logical",
+        callback = generate_callback("WGCNA_ALL")),
+      make_option("--WGCNA_blockwiseNetworkType", type = "character",
+        callback = generate_callback("WGCNA_blockwiseNetworkType")),
+      make_option("--WGCNA_blockwiseTOMType", type = "character",
+        callback = generate_callback("WGCNA_blockwiseTOMType")),
+      make_option("--WGCNA_minCoreKME", type = "integer",
+        callback = generate_callback("WGCNA_minCoreKME")),
+      make_option("--WGCNA_minCoreKMESize", type = "integer",
+        callback = generate_callback("WGCNA_minCoreKMESize")),
+      make_option("--WGCNA_minKMEtoStay", type = "integer",
+        callback = generate_callback("WGCNA_minKMEtoStay")),
+      make_option("--WGCNA_corType", type = "character",
+        callback = generate_callback("WGCNA_corType")),
+      make_option("--multifactorial", type = "character",
+        callback = generate_callback("multifactorial")),
+      make_option(c("-q", "--query_genes string"), type = "character",
+        callback = generate_callback("query_genes")),
+      make_option("--seed", type = "integer",
+        callback = generate_callback("seed")),
+      make_option("--count_var_quantile", type = "numeric",
+        callback = generate_callback("count_var_quantile")),
+      make_option("--deseq2_var_quantile", type = "numeric",
+        callback = generate_callback("deseq2_var_quantile"))
+      )
+    } else if (mode == 'functional_Hunter') {
+      stop("If you see this, murder #alvaro")
+    }
+    opt <- parse_args(OptionParser(option_list = option_list), args = split_cmd)
+    # fixed_options <- fix_option(opt[[1]])
+    fixed_opt <- list()
+    for(i in seq(1, length(opt) - 1)) {
+      new_element <- fix_option(opt[[i]])
+      fixed_opt[i] <- new_element
+      names(fixed_opt)[i] <- names(new_element)
+    }
   }
   return(fixed_opt)
 }
 
 
 generate_command <- function(variables) {
-  command <- paste(unlist(variables), collapse = " ")
+  command <- character(0)
+  for(variable in variables) {
+    split_var <- unlist(strsplit(variable, " "))
+    if(length(split_var) < 2 | split_var[2] == "FALSE") next
+    if(is.null(split_var[2])) split_var[2] <- ""
+    if(split_var[2] == "TRUE"){
+      option <- split_var[1]
+    } else {
+      option <- paste(split_var, collapse = " ")
+    }
+    command <- paste(command, option, sep = " ")
+  }
   return(command)
 }
 
@@ -69,25 +156,12 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 ## MAIN
 ########################
 # we use matrix data to get a data structure that preserves variable name-flag relation clearly.
-de_variables <- list(de_pvalue = "-p", de_packages = "-m")
-#   "de_min_pack", "-c",
-#   "de_logfc", "-f",
-#   "WGCNA_mergecutHeight", "--WGCNA_mergecutHeight",
-#   "WGCNA_min_genes_cluster", "--WGCNA_min_genes_cluster",
-#   "WGCNA_detectcutHeight", "--WGCNA_detectcutHeight",
-#   "WGCNA_deepsplit", "--WGCNA_deepsplit",
-#   "min_reads", "-r",
-#   "filter_type", "--filter_type",
-#   "min_libraries", "-l",
-#   "string_features", "-S",
-#   "numeric_features", "-N",
-#   "target_path", "-t",
-#   "query_genes", "-q",
-#   "seed", "--seed",
-#   "count_var_quantile", "--count_var_quantile",
-#   "deseq2_var_quantile", "--deseq2_var_quantile"
-#   ), ncol = 2, byrow = TRUE 
-# )
+de_variables <- list(de_pvalue = "-p", de_packages = "-m", de_min_pack = "-c", de_logfc = "-f",
+                     WGCNA_mergecutHeight = "--WGCNA_mergecutHeight", WGCNA_min_genes_cluster = "--WGCNA_min_genes_cluster",
+                     WGCNA_detectcutHeight = "--WGCNA_detectcutHeight", WGCNA_deepsplit = "--WGCNA_deepsplit", min_reads = "-r",
+                     filter_type = "--filter_type", min_libraries = "-l", string_features = "-S", numeric_features = "-N",
+                     target_path = "-t", query_genes = "-q", seed = "--seed", count_var_quantile = "--count_var_quantile",
+                     deseq2_var_quantile = "--deseq2_var_quantile")
 
 # fun_variables <- matrix(c(
 #   "fun_remote_mode", "-r",
@@ -110,7 +184,9 @@ if (opt$mode == 'degenes_Hunter') {
 }
 variables <- parse_env_variables(var_pairs, opt$mode)
 additional_options <- parse_string_command(Sys.getenv("ADD_OPTIONS"), opt$mode)
-variables <- modifyList(variables, additional_options)
+if(!is.null(additional_options)) {
+  variables <- modifyList(variables, additional_options)
+}
 
 # additional_options <- Sys.getenv("ADD_OPTIONS")
 # if (additional_options != "") {
