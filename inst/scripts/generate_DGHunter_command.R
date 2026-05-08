@@ -10,19 +10,14 @@ library(optparse)
 ##################### METHODS #######################
 #####################################################
 
-generate_callback <- function(name, logical = FALSE) {
+generate_callback <- function(name) {
   callback <- function(opt, flag, opt_val, parser) {
-    if(logical) {
-      opt <- flag
-    } else {
-      opt <- paste(flag, opt_val, sep = " ")
-    }
-    return(paste(name, opt, sep = " "))
+    return(paste(name, flag, opt_val, sep = " "))
   }
   return(callback)
 }
 
-parse_env_variables <- function(variables, mode) {
+parse_env_variables <- function(variables) {
   get_env_var <- function(variable){ Sys.getenv(variable) }
   hunter_flag_values <- lapply(names(variables), get_env_var)
   var_flag_value <- paste(variables, hunter_flag_values, sep = " ")
@@ -110,7 +105,38 @@ parse_string_command <- function(cmd, mode) {
         callback = generate_callback("deseq2_var_quantile"))
       )
     } else if (mode == 'functional_Hunter') {
-      stop("If you see this, murder #alvaro")
+      option_list <- list(
+      make_option(c("-m", "--model_organism"), type = "character",
+        callback = generate_callback("fun_organism")),
+      make_option(c("-a", "--annot_file"), type = "character",
+        callback = generate_callback("annotation_list")),
+      make_option(c("-t", "--input_gene_id"), type = "character",
+        callback = generate_callback("input_gene_id")),
+      make_option(c("-f", "--func_annot_db"), type = "character",
+        callback = generate_callback("func_annot_db")),
+      make_option(c("-G", "--GO_subont"), type = "character",
+        callback = generate_callback("GO_subont")),
+      make_option(c("-C", "--custom"), type = "character",
+        callback = generate_callback("custom_nomenclature")),
+      make_option(c("-A", "--analysis_type"), type = "character",
+        callback = generate_callback("fun_an_performance")),
+      make_option(c("-r", "--remote"), type = "character",
+        callback = generate_callback("fun_remote_mode")),
+      make_option("--clean_parentals", type = "logical",
+        callback = generate_callback("clean_parentals")),
+      make_option(c("-P", "--pthreshold"), type = "logical",
+        callback = generate_callback("pthreshold")),
+      make_option(c("-Q", "--qthreshold"), type = "double",
+        callback = generate_callback("qthreshold")),
+      make_option("--max_genes_plot", type = "double",
+        callback = generate_callback("max_genes_plot")), 
+      make_option(c("-c", "--cores"), type = "integer",
+        callback = generate_callback("cores")),
+      make_option(c("-s", "--task_size"), type = "integer",
+        callback = generate_callback("task_size")),
+      make_option(c("-u", "--universe"), type = "character",
+        callback = generate_callback("universe"))
+      )
     }
     opt <- parse_args(OptionParser(option_list = option_list), args = split_cmd)
     # fixed_options <- fix_option(opt[[1]])
@@ -163,26 +189,16 @@ de_variables <- list(de_pvalue = "-p", de_packages = "-m", de_min_pack = "-c", d
                      target_path = "-t", query_genes = "-q", seed = "--seed", count_var_quantile = "--count_var_quantile",
                      deseq2_var_quantile = "--deseq2_var_quantile")
 
-# fun_variables <- matrix(c(
-#   "fun_remote_mode", "-r",
-#   "custom_nomenclature", "-C",
-#   "fun_an_type", "-f",
-#   "GO_modules", "-G",
-#   "fun_an_performance", "-A",
-#   "fun_pvalue", "-P",
-#   "fun_organism", "-m",
-#   "annotation_list", "-a",
-#   "universe", "-u",
-#   "clean_parentals", "--clean_parentals"
-#   ), ncol = 2, byrow = TRUE
-# )
+fun_variables <- list(fun_remote_mode = "-r", custom_nomenclature = "-C", fun_an_type = "-f", GO_modules = "-G",
+                      fun_an_performance = "-A", fun_pvalue = "-P", fun_organism = "-m", annotation_list = "-a",
+                      universe = "-u", clean_parentals = "--clean_parentals")
 
 if (opt$mode == 'degenes_Hunter') {
   var_pairs <- de_variables
 } else if (opt$mode == 'functional_Hunter') {
   var_pairs <- fun_variables
 }
-variables <- parse_env_variables(var_pairs, opt$mode)
+variables <- parse_env_variables(var_pairs)
 additional_options <- parse_string_command(Sys.getenv("ADD_OPTIONS"), opt$mode)
 if(!is.null(additional_options)) {
   variables <- modifyList(variables, additional_options)

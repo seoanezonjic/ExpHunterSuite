@@ -43,6 +43,6 @@ all_counts_tables <- load_all_tables(opt$input)
 merged_tables <- merge_all_tables(all_counts_tables, opt$tags)
 merged_tables <- rbind(colnames(merged_tables), merged_tables)
 merged_tables <- cbind(rownames(merged_tables), merged_tables)
-merged_tables[1, 1] <- "-"
+merged_tables[1, 1] <- "ID"
 write.table(merged_tables, file = "", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 

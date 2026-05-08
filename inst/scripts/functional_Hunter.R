@@ -104,6 +104,7 @@ option_list <- list(
   optparse::make_option(c("--node_label"), type="character", default="category",
     help="How nodes will be labeled. Possible values: \"category\" (the default), \"group\", \"all\", \"none\".")
 )
+
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
 #############################################

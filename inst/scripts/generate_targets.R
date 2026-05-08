@@ -172,7 +172,6 @@ save_target <- function(target_name, treats, output_path, experiment_design, add
 save_aux_options <- function(target_name, output_path, aux_options) {
   dir.create(output_path, showWarnings = FALSE, recursive = TRUE)
   aux_file <- file.path(output_path, paste0(target_name, "_target.aux"))
-  
   con <- file(aux_file, "w")
   writeLines(aux_options, con)
   close(con)
@@ -211,6 +210,9 @@ option_list <- list(
               help = "Set the output path")
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
+
+opt$aux_options <- gsub("\"", "", opt$aux_options)
+opt$aux_options <- gsub("'", "", opt$aux_options)
 
 ######################################################
 ######## MAIN
