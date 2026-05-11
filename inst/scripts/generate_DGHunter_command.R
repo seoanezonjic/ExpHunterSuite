@@ -210,7 +210,7 @@ if (opt$mode == 'degenes_Hunter') { # Parse auxiliary file for degenes_Hunter mo
   if(length(aux_path) > 0) {
     if(file.exists(aux_path)) {
       aux_content <- parse_string_command(readLines(aux_path), mode = opt$mode)
-      variables <- modifyList(variables, aux_content)
+      if(!is.null(aux_content)) variables <- modifyList(variables, aux_content)
     }
   }
 }
