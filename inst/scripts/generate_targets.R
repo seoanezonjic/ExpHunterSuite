@@ -240,14 +240,13 @@ target_name <- parsed$target_name
 target <- parsed$target
 
 target <- build_target(experiment_design, target)
-
-additional_features <- c()
-if (opt$additional_features != ",") {
+additional_features <- NULL
+if (opt$additional_features != "") {
   additional_features <- strsplit(opt$additional_features, ",")[[1]]
 }
 
 save_target(target_name, target, opt$output_path, experiment_design, additional_features)
 
-if (opt$aux_options != "-S  -N ") {
+if (opt$aux_options != "") {
   save_aux_options(target_name, opt$output_path, opt$aux_options)
 }
