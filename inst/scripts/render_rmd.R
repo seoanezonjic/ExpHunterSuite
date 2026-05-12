@@ -22,6 +22,7 @@ script_path <- tryCatch(normalizePath(parent.frame(2)$ofile),
                error=function(e) # works when using R CMD
               normalizePath(unlist(strsplit(commandArgs()[grep('^--file=', 
                 commandArgs())], '='))[2]))
+devtools::load_all(script_path)
 
 
 
@@ -57,8 +58,6 @@ if(!grepl(".html", actual_opt$output)){
 }
 
 load(actual_opt$input)
-source(file.path(dirname(script_path), 'lib', 'plotting_functions.R'))
-source(file.path(dirname(script_path), 'lib', 'functional_analysis_library.R'))
 ### load enviroment
 
 ### load template

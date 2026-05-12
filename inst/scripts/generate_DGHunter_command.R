@@ -49,7 +49,7 @@ parse_string_command <- function(cmd, mode) {
         callback = generate_callback("min_libraries")),
       make_option(c("-F", "--filter_type"), type = "character",
         callback = generate_callback("filter_type")),
-      make_option(c("-p", "--p_val_cutoff"), type = "numeric", 
+      make_option(c("-P", "--p_val_cutoff"), type = "numeric", 
         callback = generate_callback("de_pvalue")),
       make_option(c("-f", "--lfc"), type = "numeric",
         callback = generate_callback("de_logfc")),
@@ -182,7 +182,7 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 ## MAIN
 ########################
 # we use matrix data to get a data structure that preserves variable name-flag relation clearly.
-de_variables <- list(de_pvalue = "-p", de_packages = "-m", de_min_pack = "-c", de_logfc = "-f",
+de_variables <- list(de_pvalue = "-P", de_packages = "-m", de_min_pack = "-c", de_logfc = "-f",
                      WGCNA_mergecutHeight = "--WGCNA_mergecutHeight", WGCNA_min_genes_cluster = "--WGCNA_min_genes_cluster",
                      WGCNA_detectcutHeight = "--WGCNA_detectcutHeight", WGCNA_deepsplit = "--WGCNA_deepsplit", min_reads = "-r",
                      filter_type = "--filter_type", min_libraries = "-l", string_features = "-S", numeric_features = "-N",

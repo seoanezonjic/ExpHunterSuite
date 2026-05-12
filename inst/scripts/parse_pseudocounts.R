@@ -38,11 +38,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
   main_path_script <- dirname(full.fpath)
   root_path <- file.path(main_path_script, '..', '..')
   # Load custom libraries
-  custom_libraries <- c('main_parse_pseudocounts.R',
-    'general_functions.R')
-  for (lib in custom_libraries){
-    source(file.path(root_path, 'R', lib))
-  }
+  devtools::load_all(root_path)
 }else{
   require('ExpHunterSuite')
   root_path <- find.package('ExpHunterSuite')

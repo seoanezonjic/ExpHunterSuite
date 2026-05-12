@@ -124,13 +124,7 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
                     commandArgs())], '='))[2]))
     main_path_script <- dirname(full.fpath)
     root_path <- file.path(main_path_script, '..', '..')
-    custom_libraries <- c("plotting_functions.R", "write_report.R", 
-        "general_functions.R",  "statistics_functions.R", 
-        "miRNA_RNA_functions.R", "functional_analysis_library.R", 
-        "main_cormit.R", "mkinfer_modified.R")
-    for (lib in custom_libraries){
-        source(file.path(root_path, 'R', lib))
-      }
+    devtools::load_all(root_path)
     template_folder <- file.path(root_path, 'inst', 'templates')
     organism_table_path <- file.path(root_path,"inst","external_data", 
         "organism_table.txt")

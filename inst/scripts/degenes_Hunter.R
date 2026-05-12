@@ -41,7 +41,7 @@ option_list <- list(
   optparse::make_option(c("-o", "--output_files"), type="character", 
     default="hunter_DE_results",
     help="Output path. Default=%default"),
-  optparse::make_option(c("-p", "--p_val_cutoff"), type="double", default=0.05,
+  optparse::make_option(c("-P", "--p_val_cutoff"), type="double", default=0.05,
     help=paste0("Adjusted p-value cutoff for the differential expression",
       " analysis. Default=%default")),
   optparse::make_option(c("-f", "--lfc"), type="double", default=1,
