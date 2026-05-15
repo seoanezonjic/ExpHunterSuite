@@ -39,7 +39,7 @@ option_list <- list(
   optparse::make_option(c("-S", "--sim_thr"), type="double", default=0.7,
                         help="Similarity cutoff for grouping categories in Summary mode. Default=%default"),
   optparse::make_option(c("-U", "--universe"), ,type = "character", default=NULL,
-                        help="One column file listing the universe genes."), 
+                        help="One column file listing the universe genes. Functional analysis will be limited to this list of genes"), 
   optparse::make_option(c("-C", "--summary_common_name"), type="character", default="ancestor", 
                         help="Name of the term groups. 'significant' to use the most significant term of each group. 'ancestor' to use the common ancestor of the group"),
   optparse::make_option(c("-T", "--top_categories"), type="integer", default=100,
