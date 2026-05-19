@@ -312,24 +312,15 @@ end.rcode-->
 	
 	cat(plotter$create_title("<b>Sample coordinates</b>", "main_pc", 
 		hlevel = plotter$hash_vars$last_title + 2))
-	cat("This plot represents the coordinates of the samples on the two first Principal Components (Dim1 and Dim2) along with percentage of explained variance.")
-
-	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca))
-
-end.rcode-->
-
-
-<!--begin.rcode {{called_from}}_main_pca_hab, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$main_cat) && plotter$hash_vars$multivar_type == "pca" 
-	cat("This is a simplified plot of the samples displayed in the two main PCs. The color of the samples indicates their experimental condition.")
+	cat("<p>This plot represents the coordinates of the samples on the two first Principal Components (Dim1 and Dim2) along with percentage of explained variance.
+		The color of the samples indicates their experimental condition. </p>")
+	pca_data <- vector(mode = "list", length = 3)
+	pca_data[1] <- plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca)
 	main_cat <- plotter$hash_vars$main_cat
-	cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_pca_hab))
+	pca_data[2] <- plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_pca_hab)
+	cat(plotter$plot_grid(pca_data))
 	cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_pca_hab_no_label))
-end.rcode-->
-
-<!--begin.rcode {{called_from}}_main_mca_hab, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = !is.null(plotter$hash_vars$main_cat) && plotter$hash_vars$multivar_type == "mca"
-	main_cat <- plotter$hash_vars$main_cat
-	cat("This is a simplified plot of the samples displayed in the two main PCs. The color of the samples indicates their experimental condition.")
-	cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_mca_hab))
+	if(!is.null(plotter$hash_vars$main_cat) && plotter$hash_vars$multivar_type == "mca") cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_mca_hab))
 end.rcode-->
 
 <!--begin.rcode {{called_from}}_mfa_cor, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = plotter$hash_vars$multivar_type == "mfa"
