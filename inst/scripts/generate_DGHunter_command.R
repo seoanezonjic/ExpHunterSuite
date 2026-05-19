@@ -182,16 +182,35 @@ opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 ## MAIN
 ########################
 # we use matrix data to get a data structure that preserves variable name-flag relation clearly.
-de_variables <- list(de_pvalue = "-P", de_packages = "-m", de_min_pack = "-c", de_logfc = "-f",
-                     WGCNA_mergecutHeight = "--WGCNA_mergecutHeight", WGCNA_min_genes_cluster = "--WGCNA_min_genes_cluster",
-                     WGCNA_detectcutHeight = "--WGCNA_detectcutHeight", WGCNA_deepsplit = "--WGCNA_deepsplit", min_reads = "-r",
-                     filter_type = "--filter_type", min_libraries = "-l", string_features = "-S", numeric_features = "-N",
-                     target_path = "-t", query_genes = "-q", seed = "--seed", count_var_quantile = "--count_var_quantile",
+de_variables <- list(de_pvalue = "-P",
+                     de_packages = "-m",
+                     de_min_pack = "-c",
+                     de_logfc = "-f",
+                     WGCNA_mergecutHeight = "--WGCNA_mergecutHeight",
+                     WGCNA_min_genes_cluster = "--WGCNA_min_genes_cluster",
+                     WGCNA_detectcutHeight = "--WGCNA_detectcutHeight",
+                     WGCNA_deepsplit = "--WGCNA_deepsplit",
+                     min_reads = "-r",
+                     filter_type = "--filter_type",
+                     min_libraries = "-l",
+                     string_features = "-S",
+                     numeric_features = "-N",
+                     target_path = "-t",
+                     query_genes = "-q",
+                     seed = "--seed",
+                     count_var_quantile = "--count_var_quantile",
                      deseq2_var_quantile = "--deseq2_var_quantile")
 
-fun_variables <- list(fun_remote_mode = "-r", custom_nomenclature = "-C", fun_an_type = "-f", GO_modules = "-G",
-                      fun_an_performance = "-A", fun_pvalue = "-P", fun_organism = "-m", annotation_list = "-a",
-                      universe = "-u", clean_parentals = "--clean_parentals")
+fun_variables <- list(fun_remote_mode = "-r",
+                      custom_nomenclature = "-C",
+                      fun_an_type = "-f",
+                      GO_modules = "-G",
+                      fun_an_performance = "-A",
+                      fun_pvalue = "-P",
+                      fun_organism = "-m",
+                      annotation_list = "-a",
+                      universe = "-u",
+                      clean_parentals = "--clean_parentals")
 
 if (opt$mode == 'degenes_Hunter') {
   var_pairs <- de_variables
