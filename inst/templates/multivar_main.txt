@@ -57,7 +57,7 @@ for(i_multivar in seq(1, length(plotter$hash_vars$act_groups))){
 }
 
 end.rcode-->
-<!--begin.rcode eval=!individual_report & !is.null(plotter$hash_vars$multivar_res$mfa)
+<!--begin.rcode eval=!individual_report & !is.null(plotter$hash_vars$mfa)
     plotter$hash_vars$last_title <- 2
     plotter$hash_vars$pca_data <- plotter$hash_vars$mfa$pca_data
     plotter$hash_vars$dim_to_keep <- plotter$hash_vars$mfa$dim_to_keep

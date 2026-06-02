@@ -317,6 +317,7 @@ end.rcode-->
 	pca_data <- vector(mode = "list", length = 3)
 	pca_data[1] <- plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca)
 	main_cat <- plotter$hash_vars$main_cat
+	if(is.null(main_cat)) main_cat <- "none"
 	pca_data[2] <- plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_pca_hab)
 	cat(plotter$plot_grid(pca_data))
 	cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_pca_hab_no_label))
