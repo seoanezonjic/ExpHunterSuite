@@ -73,11 +73,11 @@ plot_pca_hab_no_label <- function(pca_data) {
 }
 
 plot_pca_qual <- function() {
-	plot(FactoMineR::plot.PCA(data_frame, title = ""))
+	plot(FactoMineR::plot.PCA(data_frame, title = "", label = label))
 }
 
 plot_mca_qual <- function() {
-	plot(FactoMineR::plot.MCA(data_frame, title = "", invisible = "var"))
+	plot(FactoMineR::plot.MCA(data_frame, title = "", invisible = "var", label = label))
 }
 
 plot_pca_quant <- function(pca_data) {
@@ -143,10 +143,8 @@ plot_mfa_ind_partial <- function(mfa_data) {
 }
 
 plot_mfa_quali <- function(mfa_data) {
-
-	factoextra::fviz_mfa_ind(mfa_data,  repel = TRUE)+ 
+	factoextra::fviz_mfa_ind(mfa_data, label = label, repel = TRUE)+ 
 	ggplot2::theme(legend.position = "bottom")
-
 }
 
 plot_mfa_quanti <- function(mfa_data) {
@@ -314,7 +312,7 @@ end.rcode-->
 		hlevel = plotter$hash_vars$last_title + 2))
 	cat("<p>This plot represents the coordinates of the samples on the two first Principal Components (Dim1 and Dim2) along with percentage of explained variance.
 		The color of the samples indicates their experimental condition. </p>")
-	pca_data <- vector(mode = "list", length = 3)
+	pca_data <- vector(mode = "list", length = 2)
 	pca_data[1] <- plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca)
 	main_cat <- plotter$hash_vars$main_cat
 	if(is.null(main_cat)) main_cat <- "none"
@@ -372,8 +370,12 @@ end.rcode-->
 	cat("This plot represent the coordinates of the samples and supplementary categories on the two first Principal Components (Dim1 and Dim2).
 		The samples and categories are represented in black and purple, respectively. 
 		The percentage of explained variance is given between brackets.<br>")
-	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca_qual, plot_type = "autoplot" ))
-
+	pca_data <- vector(mode = "list", length = 2)
+	label <<- c("ind", "ind.sup", "quali", "var", "quanti.sup")
+	pca_data[1] <- plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca_qual, plot_type = "autoplot" )
+	label <<- "quali"
+	pca_data[2] <- plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca_qual, plot_type = "autoplot" )
+	cat(plotter$plot_grid(pca_data))
 
 end.rcode-->
 
@@ -387,8 +389,12 @@ end.rcode-->
 	cat("This plot represent the coordinates of the samples and supplementary categories on the two first Principal Components (Dim1 and Dim2).
 		The samples and categories are represented in black and purple, respectively. 
 		The percentage of explained variance is given between brackets.<br>")
-	cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE , resizable = TRUE, plotting_function = plot_mca_qual, plot_type = "autoplot" ))
-
+	pca_data <- vector(mode = "list", length = 2)
+	label <<- c("ind", "ind.sup", "quali", "var", "quanti.sup")
+	pca_data[1] <- plotter$static_plot_main(id = "pca_data", custom_format = TRUE , resizable = TRUE, plotting_function = plot_mca_qual, plot_type = "autoplot" )
+	label <<- "quali"
+	pca_data[2] <- plotter$static_plot_main(id = "pca_data", custom_format = TRUE , resizable = TRUE, plotting_function = plot_mca_qual, plot_type = "autoplot" )
+	cat(plotter$plot_grid(pca_data))
 
 end.rcode-->
 
@@ -397,18 +403,22 @@ end.rcode-->
 
 
 <!--begin.rcode {{called_from}}_PCA_all, echo = FALSE,warning =FALSE, message=FALSE, results = 'asis', fig.width = 8, fig.height = 8, eval = !is.null(plotter$hash_vars$string_factors)
-	
-	cat(plotter$create_title("<b>Comparison of significant dimensions </b>", "all_pc", 
-			hlevel = plotter$hash_vars$last_title + 2))
-	
-	cat("This plot compare the position of samples and their distribution in the significant PCs. 
-		The color differenciate between the control (red) and treat (blue) samples.")
+	plotter$hash_vars$dim_comparison_counter <- plotter$hash_vars$din_comparison_counter + 1
+	t_id_counter <- paste0("dim_compare_", plotter$hash_vars$dim_comparison_counter)
+
+	compare_content <- vector(mode = "list", length = length(unlist(quali_names)) + 1)
+	names(compare_content) <- c("paragraph", unlist(quali_names))
+	compare_content[1] <- "<p>This plot compare the position of samples and their distribution in the significant PCs. 
+		The color differenciate between the control (red) and treat (blue) samples</p>"
 	dim_to_keep <- plotter$hash_vars$dim_to_keep 
 	for (cual_var in unlist(quali_names)) {
-
-		cat(plotter$static_plot_main(id = paste("dims", cual_var, sep = "_"), custom_format = TRUE ,resizable = TRUE, plot_type = "print", plotting_function = pairs_plot_pca))
+		compare_content[cual_var] <- plotter$static_plot_main(id = paste("dims", cual_var, sep = "_"), custom_format = TRUE ,resizable = TRUE, plot_type = "print", plotting_function = pairs_plot_pca)
 	}
+	compare_content <- paste(compare_content, collapse = "\n")
 
+	cat(plotter$create_title(id = "dim_compare", "<b>Comparison of significant dimensions</b>", hlevel = plotter$hash_vars$last_title + 2, indexable = FALSE,
+                clickable = TRUE, t_id = t_id_counter, clickable_text = ""))
+	cat(plotter$create_collapsable_container(id = t_id_counter, html_code = compare_content))
 
 end.rcode-->
 
@@ -419,7 +429,12 @@ end.rcode-->
 	cat("This plot represent the coordinates of the samples and supplementary categories on the two first Principal Components (Dim1 and Dim2).
 		The samples are represented in blue and the categories of each supplementary group have the same color.  
 		The percentage of explained variance is given between brackets.")
-	cat(plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_mfa_quali))
+	pca_data <- vector(mode = "list", length = 2)
+	label <<- c("ind", "ind.sup", "quali", "var", "quanti.sup")
+	pca_data[1] <- plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_mfa_quali)
+	label <<- "quali"
+	pca_data[2] <- plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_mfa_quali)
+	cat(plotter$plot_grid(pca_data))
 
 end.rcode-->
 
