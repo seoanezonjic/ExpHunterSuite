@@ -272,19 +272,20 @@ if (!is.null(plotter$hash_vars$dim_data_merged)){
 	plotter$hash_vars[["dim_data_qual_act"]] <- dim_data_qual_act
 
 
-	## dim data cat
+	## dim data cat, this is subset to only contain supplementary variables. Not including numeric, as this block is meant to be categories.
 	dim_data_cat <- plotter$hash_vars$dim_data_merged$qual_category
-	if (nrow(dim_data_cat) > 0 ) {
+	if (nrow(dim_data_cat) > 0) {
 		dim_data_cat$dimension <- gsub("Dim.", "PC", dim_data_cat$dimension)
 
 		dim_data_cat$significance <- ifelse(dim_data_cat$p.value < 0.001, "***",
 						                ifelse(dim_data_cat$p.value < 0.01, "**",
 					                    ifelse(dim_data_cat$p.value < 0.05, "*", "")))
 		dim_data_cat$text_estimate <- paste(round(dim_data_cat$Estimate, digits = 2),dim_data_cat$significance, sep = " ")
+		dim_cats <- unlist(lapply(strsplit(rownames(dim_data_cat), "="), `[[`, 1))
+		string_cats <- which(dim_cats %in% plotter$hash_vars$string_factors)
+		plotter$hash_vars$dim_data_cat <- dim_data_cat[string_cats, , drop = FALSE]
 	}
-	plotter$hash_vars[["dim_data_cat"]] <- dim_data_cat
 }
-
 
 end.rcode-->
 
@@ -419,6 +420,7 @@ end.rcode-->
 	cat(plotter$create_title(id = "dim_compare", "<b>Comparison of significant dimensions</b>", hlevel = plotter$hash_vars$last_title + 2, indexable = FALSE,
                 clickable = TRUE, t_id = t_id_counter, clickable_text = ""))
 	cat(plotter$create_collapsable_container(id = t_id_counter, html_code = compare_content))
+	plotter$hash_vars$t_id_counter <- plotter$hash_vars$t_id_counter + 1
 
 end.rcode-->
 
@@ -460,15 +462,15 @@ end.rcode-->
 
 <!--begin.rcode {{called_from}}_dim_cat , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5, eval = !is.null(plotter$hash_vars$string_factors)
 
-	cat(plotter$create_title("<b>Association between categories and PCs</b>", "main_pc_quant", 
+	cat(plotter$create_title("<b>Association between categories and PCs</b>", "main_pc_quant", # This graph should NOT include active variables
 			hlevel = plotter$hash_vars$last_title + 2))
-	cat("This plot represent the asociation between the categories of the qualitative variables and PCs. The association value is the mean coordinates of the samples within categories in PCs. 
+	cat("This plot represent the asociation between the categories of the qualitative supplementary variables and PCs. The association value is the mean coordinates of the samples within categories in PCs. 
 		The flags represent the significance measured with a Student's t test where *: 0.01 < P < 0.05; ** 0.001 < P < 0.1; *** P < 0.001.<br>")
 	
 	if (nrow(plotter$hash_vars$dim_data_cat) > 0 ) {
 		cat(plotter$static_plot_main(id = "dim_data_cat",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_cat_heat))
 	} else {
-		cat("None of the categories was significantly associated with any PC")
+		cat("None of the categories were significantly associated with any PC")
 	}
 
 end.rcode-->

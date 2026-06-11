@@ -1791,7 +1791,7 @@ process_sketch <- function(seu, sketch_method, sketch_pct, force_ncells, hvgs,
 #' @inheritParams get_clusters_distribution
 #' @inheritParams get_fc_vs_ncells
 #' @returns A list containing expression quality metrics and cluster
-#' distribution metrics.'
+#' distribution metrics.
 #' @examples
 #' data(pbmc_tiny)
 #' pbmc_tiny$seurat_clusters <- c(rep(1, 7), rep(2, 8))
