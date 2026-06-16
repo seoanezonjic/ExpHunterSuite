@@ -237,7 +237,7 @@ if (!is.null(opt$whitelist)) {
   whitelist <- load_list(opt$whitelist)
 }
 
-filter <- NULL
+filters <- NULL
 if (!is.null(opt$filter)) {
   filters <- parse_filter(opt$filter)
 }
