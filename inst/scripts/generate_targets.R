@@ -21,7 +21,7 @@ load_list <- function(input) {
 }
 
 
-load_table <- function(input_file, blacklist = NULL, whitelist = NULL, filter = NULL) {
+load_table <- function(input_file, blacklist = NULL, whitelist = NULL, filters = NULL) {
   sample_table <- read.table(input_file, header= TRUE, quote="", sep="\t")
   if(!is.null(blacklist)){
     if(!any(blacklist %in% sample_table[[1]])) {
@@ -35,10 +35,14 @@ load_table <- function(input_file, blacklist = NULL, whitelist = NULL, filter = 
       stop("None of the samples in whitelist appear in experiment design")
     }
   }
-  if(!is.null(filter)){ # Keep records with a specific value in a given column
-	  col_name <- filter[1]
-	  select_value <- filter[2]
-	  sample_table <- sample_table[which(sample_table[[col_name]] == select_value),]
+  if(!is.null(filters)){ # Keep records with a specific value in a given column
+	  col_names <- unlist(lapply(filters, `[[`, 1))
+	  select_values <- unlist(lapply(filters, `[[`, 2))
+    filter_list <- vector(mode = "list", length = length(col_names))
+    for(i in seq(filter_list)) {
+      filter_list[[i]] <- sample_table[[col_names[i]]] == select_values[i]
+    }
+	  sample_table <- sample_table[Reduce(`&`, filter_list), , drop = FALSE]
   }
   return(sample_table) # TODO: Adjust the output table for the remaining script. Originally was a nested list
 }
@@ -179,11 +183,15 @@ save_aux_options <- function(target_name, output_path, aux_options) {
 
 
 parse_filter <- function(string) {
-  parts <- strsplit(string, "=")[[1]]
-  feature_name <- parts[1]
-  features <- strsplit(parts[2], ",")[[1]]
-  filter <- c(feature_name, features)
-  return(filter)
+  filters <- unlist(strsplit(string, ";"))
+  parsed_filters <- vector(mode = "list", length = length(filters))
+  for(i in seq(filters)) {
+    parts <- strsplit(filters[i], "=")[[1]]
+    feature_name <- parts[1]
+    features <- strsplit(parts[2], ",")[[1]]
+    parsed_filters[[i]] <- c(feature_name, features)
+  }
+  return(parsed_filters)
 }
 
 
@@ -231,10 +239,10 @@ if (!is.null(opt$whitelist)) {
 
 filter <- NULL
 if (!is.null(opt$filter)) {
-  filter <- parse_filter(opt$filter)
+  filters <- parse_filter(opt$filter)
 }
 
-experiment_design <- load_table(opt$exp_file, blacklist, whitelist, filter)
+experiment_design <- load_table(opt$exp_file, blacklist, whitelist, filters)
 parsed <- parse_target(opt$target)
 target_name <- parsed$target_name
 target <- parsed$target

@@ -10,7 +10,6 @@
 
 end.rcode-->
 
-
 <!--begin.rcode eval=individual_report
 
 plotter$hash_vars <- c(plotter$hash_vars, plotter$hash_vars[[plotter$hash_vars$act_groups]])

@@ -143,7 +143,7 @@ compute_mca <- function(mca_data,
                drop = FALSE]
   } else {
     raw_mca_data <- mca_data
-  } 
+  }
   
   std_mca <- FactoMineR::MCA(raw_mca_data,  graph = FALSE)                                                     
 
