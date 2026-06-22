@@ -84,6 +84,7 @@ if (opt$mirna) {
     warning(id_warn)
     table_to_annot$SYMBOL[NAs] <- ids_to_translate[NAs]
   }
+  if(is.null(table_to_annot$SYMBOL)) table_to_annot$SYMBOL <- ids_to_translate
 }
 
 write.table(table_to_annot, sep = "\t", quote = FALSE, row.names = (opt$column == "rownames"), file = opt$output_file)
