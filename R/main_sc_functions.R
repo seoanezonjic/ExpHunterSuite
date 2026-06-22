@@ -387,6 +387,8 @@ write_annot_output <- function(final_results, opt = NULL, assay = "RNA",
       saveRDS(final_results$SingleR_annotation, file.path(opt$output,
               "SingleR_annotation.rds"))
     }
+    .save_loupe(counts = counts, clusters = metadata,
+      projections = reduction@cell.embeddings, output_dir = opt$output)
     message("Results saved to ", opt$output)
     return(invisible(NULL))
 }
