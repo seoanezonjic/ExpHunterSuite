@@ -76,7 +76,7 @@ if (opt$mirna) {
   translated_keytypes <- translate_ids_orgdb(ids = ids_to_translate, 
                       input_id=opt$input_keytype, output_id = opt$output_keytype, org_db=org_db)
   translated_ids <- translated_keytypes[match(ids_to_translate, 
-                                          translated_keytypes[,opt$input_keytype]) ,opt$output_keytype]
+                                          translated_keytypes[,opt$input_keytype]), opt$output_keytype]
   table_to_annot[,opt$output_keytype] <- translated_ids
   if(any(is.na(table_to_annot$SYMBOL))) {
     NAs <- which(is.na(table_to_annot$SYMBOL))
