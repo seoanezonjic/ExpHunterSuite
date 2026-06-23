@@ -80,7 +80,8 @@ compute_pca <- function(pca_data,
   } 
 
   raw_pca_data <- pca_data[!rownames(pca_data) %in% add_samples,
-               ! colnames(pca_data) %in% c(numeric_factors, string_factors)]
+                           !colnames(pca_data) %in% c(numeric_factors,
+                            string_factors), drop = FALSE]
 
   std_pca <- FactoMineR::PCA(raw_pca_data, scale.unit=TRUE, 
                   graph = FALSE)                                                     
