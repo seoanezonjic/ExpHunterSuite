@@ -1,5 +1,7 @@
 
 
+<p> <strong>WARNING</strong>: By default, ENSEMBL gene codes are translated to Symbol. This is not possible with non-canonical genes, such as non-coding transcripts or pseudogenes. These constitute a vast majority of total annotated features, so it is entirely possible for your results to contain mostly ENSEMBL codes of non-coding features </p>
+
 <h2> <strong>Data used in this analysis</strong></h2>
 <p>Specifically, in this experiment set, known experiment labels are:</p>
 
