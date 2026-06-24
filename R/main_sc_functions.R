@@ -564,7 +564,7 @@ write_sc_report <- function(final_results, analysis = "Single-Cell",
     dir.create(tmp_folder)
     container <- list(params = params, seu = final_results$seu,
     qc = final_results$qc, subset_by = opt$subset_by, use_canvas = use_canvas,
-    DEG_list = final_results$DEG_list, p_val_cutoff = opt$p_val_cutoff,
+    DEG_list = final_results$DEG_list, markers_p_adj_cutoff = opt$p_adj_cutoff,
     DEG_p_val_cutoff = opt$DEG_p_val_cutoff, markers = final_results$markers,
     query = paste(opt$target_genes, collapse = ", "), opt = opt,
     min_avg_log2FC = opt$min_avg_log2FC, tables = final_results$tables,
