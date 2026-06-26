@@ -139,7 +139,7 @@ end.rcode-->
 							 preset = "magic", justify = "left"))
 end.rcode-->
 
-<!--begin.rcode Venn_d, echo = FALSE, fig.height=12, fig.width=12
+<!--begin.rcode Venn_d, echo = FALSE, fig.height=12, fig.width=12, eval = plotter$hash_vars$opt$modules != ""
 	cat(plotter$create_title("Package DEG detection stats", hlevel = 3, id = "DEG_title", indexable = FALSE))
 	cat("<p>This is the Venn Diagram of all possible DE genes (DEGs) according to at least one of the
 		 selected DE detection packages</p>")
