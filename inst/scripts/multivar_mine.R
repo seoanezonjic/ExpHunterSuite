@@ -104,10 +104,6 @@ pca_res <- lapply(act_des, perform_individual_analysis,
                           n_clusters = opt$n_clusters, time = opt$time,
                           parallel = opt$parallel)
 
-perform_individual_analysis(table_data = act_des[[2]], all_files = input_tables, numeric_factors = numeric_factors, string_factors = string_factors, 
-                          target = merged_supp_tables, hcpc_consol = opt$hcpc_consol, n_clusters = opt$n_clusters, time = opt$time,
-                          parallel = opt$parallel)
-
 pca_res$ind_analysis <- names(pca_res)
 
 if(length(act_des) > 1 & !opt$do_not_integrate) {
