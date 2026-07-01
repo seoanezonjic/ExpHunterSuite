@@ -100,7 +100,7 @@ compute_pca <- function(pca_data,
                     graph = FALSE,
                     quanti.sup = numeric_factors, 
                     quali.sup=string_factors,
-                    ind.sup = add_samples_idx)  
+                    ind.sup = add_samples_idx)
   dim_data <- FactoMineR::dimdesc(pca_res, axes=seq(1, dim_to_keep))
   dim_data_merged <- merge_dim_tables(dim_data)
 
@@ -110,7 +110,8 @@ compute_pca <- function(pca_data,
               dim_to_keep = dim_to_keep,
               dim_data = dim_data,
               dim_data_merged = dim_data_merged,
-              res.hcpc = res.hcpc))
+              res.hcpc = res.hcpc,
+              raw_pca_data = raw_pca_data))
 }
 
 

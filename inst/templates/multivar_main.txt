@@ -33,6 +33,8 @@ for(i_multivar in seq(1, length(plotter$hash_vars$act_groups))){
     plotter$hash_vars$dim_data <- plotter$hash_vars[[an_name]]$dim_data
     plotter$hash_vars$dim_data_merged <- plotter$hash_vars[[an_name]]$dim_data_merged
     plotter$hash_vars$res.hcpc <- plotter$hash_vars[[an_name]]$res.hcpc
+    plotter$hash_vars$an_name <- an_name
+    plotter$hash_vars$an_type <- an_type
     title <- paste0("<b>", an_name," (", an_type, ")</b>")
     cat(plotter$create_title(title, paste0("ind_title_", an_name), 
             hlevel = 2, indexable = TRUE, clickable = TRUE, t_id = an_name, clickable_text =""))

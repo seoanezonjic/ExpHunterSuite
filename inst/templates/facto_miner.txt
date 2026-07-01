@@ -396,7 +396,8 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode {{called_from}}_PCA_all, echo = FALSE,warning =FALSE, message=FALSE, results = 'asis', fig.width = 8, fig.height = 8, eval = !is.null(plotter$hash_vars$string_factors)
-	plotter$hash_vars$dim_comparison_counter <- plotter$hash_vars$din_comparison_counter + 1
+	if(is.null(plotter$hash_vars$dim_comparison_counter)) plotter$hash_vars$dim_comparison_counter <- -1
+	plotter$hash_vars$dim_comparison_counter <- plotter$hash_vars$dim_comparison_counter + 1
 	t_id_counter <- paste0("dim_compare_", plotter$hash_vars$dim_comparison_counter)
 
 	compare_content <- vector(mode = "list", length = length(unlist(quali_names)) + 1)
@@ -412,7 +413,6 @@ end.rcode-->
 	cat(plotter$create_title(id = "dim_compare", "<b>Comparison of significant dimensions</b>", hlevel = plotter$hash_vars$last_title + 2, indexable = FALSE,
                 clickable = TRUE, t_id = t_id_counter, clickable_text = ""))
 	cat(plotter$create_collapsable_container(id = t_id_counter, html_code = compare_content))
-	plotter$hash_vars$t_id_counter <- plotter$hash_vars$t_id_counter + 1
 
 end.rcode-->
 
@@ -577,6 +577,16 @@ end.rcode-->
 		The samples are colored by their HCPC cluster.<br>")
 	cat(plotter$static_plot_main(id = "res.hcpc",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_hcpc_map, plot_type = "autoplot" ))
 	cat(plotter$static_plot_main(id = "res.hcpc",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_hcpc_map_no_label, plot_type = "autoplot" ))
+
+end.rcode-->
+
+<!--begin.rcode {{called_from}}_layer_heatmaps , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
+
+	cat(plotter$create_title(paste0("<b>Heatmap of layer", plotter$hash_vars$an_name, "</b>"), "main_pc_quant", 
+			hlevel = plotter$hash_vars$last_title + 2))
+	cat("This heatmaps represents the value for each category of layer ", plotter$hash_vars$an_name, "and each sample<br>")
+	cat(plotter$prettify_div(plotter$heatmap(list(id = "raw_pca_data", title = paste0(plotter$hash_vars$an_name, " PCA heatmap"), header = NULL, text = FALSE, row_names = NULL,
+		transpose = FALSE, xAxisTitle = "Values")), preset = "magic"))
 
 end.rcode-->
 
