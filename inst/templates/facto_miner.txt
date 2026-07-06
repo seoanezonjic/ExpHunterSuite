@@ -470,12 +470,13 @@ end.rcode-->
 	cat(plotter$create_title("<b>TOP active qualitative variables</b>", "main_pc_qual_act", 
 			hlevel = plotter$hash_vars$last_title + 2))
 	cat("This table summarizes the top 10 active qualitative variables associated with PCs.<br>")
-	
-	if (nrow(plotter$hash_vars$dim_data_qual_act) > 0 ) {
-		cat(plotter$prettify_div(plotter$table(list(id = "dim_data_qual_act", header = NULL, row_names = NULL, styled = "dt",
-								 text ="dynamic", table_rownames = F)), preset = "magic", justify = "left"))
-	} else {
-		cat("None of the categories was significantly associated with any PC")
+	if(!is.null(plotter$hash_vars$dim_data_qual_act)) {
+		if(nrow(plotter$hash_vars$dim_data_qual_act) > 0 ) {
+			cat(plotter$prettify_div(plotter$table(list(id = "dim_data_qual_act", header = NULL, row_names = NULL, styled = "dt",
+									 text ="dynamic", table_rownames = F)), preset = "magic", justify = "left"))
+		} else {
+			cat("None of the categories was significantly associated with any PC")
+		}
 	}
 
 end.rcode-->
@@ -581,12 +582,44 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode {{called_from}}_layer_heatmaps , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
-
-	cat(plotter$create_title(paste0("<b>Heatmap of layer", plotter$hash_vars$an_name, "</b>"), "main_pc_quant", 
-			hlevel = plotter$hash_vars$last_title + 2))
-	cat("This heatmaps represents the value for each category of layer ", plotter$hash_vars$an_name, "and each sample<br>")
-	cat(plotter$prettify_div(plotter$heatmap(list(id = "raw_pca_data", title = paste0(plotter$hash_vars$an_name, " PCA heatmap"), header = NULL, text = FALSE, row_names = NULL,
-		transpose = FALSE, xAxisTitle = "Values")), preset = "magic"))
+	if(!is.null(plotter$hash_vars$an_name)) {
+		block_name <- paste0("layer ", plotter$hash_vars$an_name)
+	} else block_name <- plotter$hash_vars$multivar_type
+	title <- paste0("<b>Heatmap of ", block_name, "</b>")
+	cat(plotter$create_title(title, "main_pc_quant", hlevel = plotter$hash_vars$last_title + 2))
+	cat("This heatmaps represents the value for each category of layer ", block_name, "and each sample<br>")
+	if(plotter$hash_vars$an_type == "pca") {
+		id <- "norm_pca_data"
+		MaxX <- NULL
+	} else if(plotter$hash_vars$an_type == "mca") {
+		id <- "raw_mca_data"
+		MaxX <- 10
+	} else if(plotter$hash_vars$an_type == "mfa") {
+		id <- "raw_mfa_data"
+	}
+	if(plotter$hash_vars$an_type == "pca") saveRDS(plotter, "plotter.rds")
+	plotter$hash_vars[[id]] <- plotter$hash_vars[[plotter$hash_vars$an_name]][[id]]
+	raw_tree <- plotter$hash_vars[[plotter$hash_vars$an_name]]$res.hcpc$call$t$tree
+	hcpc_tree <- ape::write.tree(ape::as.phylo(raw_tree))
+	supp_factors <- c(plotter$hash_vars$string_factors, plotter$hash_vars$numeric_factors)
+	supp_dims <- paste0("dims_", supp_factors)
+	names(supp_dims) <- names(supp_factors)
+	dim_overlays <- vector(mode = "list", length = length(supp_dims))
+	names(dim_overlays) <- names(supp_factors)
+	for(dim in names(supp_dims)) {
+		dim_data <- plotter$hash_vars[[supp_dims[dim]]]
+		dim_data <- dim_data[, c("names", supp_factors[dim])]
+		dim_order <- match(dim_data$names, rownames(plotter$hash_vars[[id]]))
+		dim_data <- dim_data[dim_order, , drop = FALSE]
+		dim_overlays[[dim]] <- dim_data[[dim]]
+	}
+	clust_data <- plotter$hash_vars[[plotter$hash_vars$an_name]]$res.hcpc$data.clust[, "clust", drop = FALSE]
+	clust_order <- match(rownames(clust_data), rownames(plotter$hash_vars[[id]]))
+	clust_data <- clust_data[clust_order, ]
+	dim_overlays <- c(dim_overlays, list(clust = clust_data))
+	cat(plotter$prettify_div(plotter$heatmap(list(id = id, title = paste0(plotter$hash_vars$multivar_type, " heatmap"),
+		header = NULL, text = FALSE, row_names = NULL, tree = hcpc_tree, inject_var_attr = dim_overlays, 
+		config = list(varOverlays = names(dim_overlays)), transpose = FALSE, xAxisTitle = "Values", setMaxX = MaxX)), preset = "magic"))
 
 end.rcode-->
 

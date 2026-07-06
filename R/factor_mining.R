@@ -40,15 +40,16 @@ merge_dim_tables <- function(dim_data_simp){
 get_PCA_dimensions <- function(pca_obj, min_dimensions = 2, time = "10000L",
                                parallel = FALSE) {
   # to avoid use parallel computation that greedy takes all cpu cores
-    ref <- FactoInvestigate::eigenRef(pca_obj, time = time,
-                                      parallel = parallel)
-    rand <- c(ref$inertia[1], diff(ref$inertia)) * 100
-    keep_dimensions <- FactoInvestigate::dimRestrict(pca_obj, rand = rand)
-    if(keep_dimensions < min_dimensions){
-      keep_dimensions <- min_dimensions
-      message('Significant axis are less than 2. The first two axis will be selected to continue the analysis')
-    }
-    return(keep_dimensions)
+  ref <- FactoInvestigate::eigenRef(pca_obj, time = time, parallel = parallel)
+  if(ref$datasets <= 50) warning("Fewer than 50 datasets processed in ", time)
+  rand <- c(ref$inertia[1], diff(ref$inertia)) * 100
+  keep_dimensions <- FactoInvestigate::dimRestrict(pca_obj, rand = rand)
+  if(keep_dimensions < min_dimensions){
+    keep_dimensions <- min_dimensions
+    message("Fewer than two significant axes detected. Selecting the first ",
+            "two to continue the analysis")
+  }
+  return(keep_dimensions)
 }
 
 #' @importFrom FactoMineR PCA dimdesc HCPC
@@ -60,7 +61,7 @@ compute_pca <- function(pca_data,
             add_samples = NULL,
             min_dimensions = 2,
             scale.unit = TRUE,
-            hcpc_consol = TRUE,
+            hcpc_consol = TRUE, force_ndims = NULL,
             n_clusters = -1, time = "10000L", parallel = FALSE) {
 
   if (transpose) 
@@ -77,17 +78,23 @@ compute_pca <- function(pca_data,
     if (!is.null(string_factors)) {
       pca_data <- merge_factors(pca_data, target, string_factors)
     }
-  } 
-
+  }
   raw_pca_data <- pca_data[!rownames(pca_data) %in% add_samples,
                            !colnames(pca_data) %in% c(numeric_factors,
                             string_factors), drop = FALSE]
+  norm_pca_data <- data.frame(apply(raw_pca_data, 2, function(row) { 
+                        return(row / max(row, na.rm = TRUE))
+                        })) # Normalise data for HCPC heatmap only
 
   std_pca <- FactoMineR::PCA(raw_pca_data, scale.unit=TRUE, 
-                  graph = FALSE)                                                     
-  dim_to_keep <- get_PCA_dimensions(std_pca, min_dimensions = min_dimensions,
+                  graph = FALSE)
+  message("Calculating significant dimensions for PCA data")
+  if(!is.null(force_ndims)) {
+    dim_to_keep <- force_ndims
+  } else {
+    dim_to_keep <- get_PCA_dimensions(std_pca, min_dimensions = min_dimensions,
                                     time = time, parallel = parallel)
-
+  }
   
   if (!is.null(add_samples)) {
     add_samples_idx <- match(add_samples, rownames(pca_data))
@@ -101,7 +108,7 @@ compute_pca <- function(pca_data,
                     quanti.sup = numeric_factors, 
                     quali.sup=string_factors,
                     ind.sup = add_samples_idx)
-  dim_data <- FactoMineR::dimdesc(pca_res, axes=seq(1, dim_to_keep))
+  dim_data <- FactoMineR::dimdesc(pca_res, axes=seq(1, dim_to_keep), proba = 1)
   dim_data_merged <- merge_dim_tables(dim_data)
 
   res.hcpc <- FactoMineR::HCPC(pca_res, graph = FALSE, consol = hcpc_consol, nb.clust = n_clusters)
@@ -111,7 +118,8 @@ compute_pca <- function(pca_data,
               dim_data = dim_data,
               dim_data_merged = dim_data_merged,
               res.hcpc = res.hcpc,
-              raw_pca_data = raw_pca_data))
+              norm_pca_data = norm_pca_data
+              ))
 }
 
 
@@ -123,7 +131,7 @@ compute_mca <- function(mca_data,
             transpose = TRUE,
             add_samples = NULL,
             min_dimensions = 2,
-            hcpc_consol = TRUE,
+            hcpc_consol = TRUE, force_ndims = NULL,
             n_clusters = -1, time = "10000L", parallel = FALSE) {
 
   if (transpose) 
@@ -147,11 +155,15 @@ compute_mca <- function(mca_data,
     raw_mca_data <- mca_data
   }
   
-  std_mca <- FactoMineR::MCA(raw_mca_data,  graph = FALSE)                                                     
-
-  dim_to_keep <- get_PCA_dimensions(std_mca, min_dimensions = min_dimensions,
+  std_mca <- FactoMineR::MCA(raw_mca_data, graph = FALSE)                                                     
+  # @NOTE: THIS SEEMS TO BE ONE OF THE SLOWEST STEPS BY FAR (MUCH FASTER IN PCA)
+  message("Calculating significant dimensions for MCA data")
+  if(!is.null(force_ndims)) {
+    dim_to_keep <- force_ndims
+  } else {
+    dim_to_keep <- get_PCA_dimensions(std_mca, min_dimensions = min_dimensions,
                                     time = time, parallel = parallel)
-
+  } 
   
   add_samples_idx <- NULL
   if (!is.null(add_samples)) {
@@ -165,7 +177,7 @@ compute_mca <- function(mca_data,
                     ind.sup = add_samples_idx)  
   dim_data <- NULL
   if(!is.null(target)){
-      dim_data <- FactoMineR::dimdesc(mca_res, axes=seq(1, dim_to_keep))
+      dim_data <- FactoMineR::dimdesc(res = mca_res, axes = seq(1, dim_to_keep), proba = 1)
   }
   dim_data_merged <- merge_dim_tables(dim_data)
   res.hcpc <- FactoMineR::HCPC(mca_res, graph = FALSE, consol = hcpc_consol, nb.clust = n_clusters)
@@ -174,7 +186,8 @@ compute_mca <- function(mca_data,
               dim_to_keep = dim_to_keep,
               dim_data = dim_data,
               dim_data_merged = dim_data_merged,
-              res.hcpc = res.hcpc))
+              res.hcpc = res.hcpc,
+              raw_mca_data = raw_mca_data))
 }
 
 
@@ -304,7 +317,7 @@ compute_mfa <- function(act_des,
                         supp_desc = NULL, 
                         all_files,
                         min_dimensions = 2,
-                        hcpc_consol = TRUE,
+                        hcpc_consol = TRUE, force_ndims = NULL,
                         n_clusters = -1, time = "10000L", parallel = FALSE){
  
   groups <- unlist(c(act_des[1, , drop = FALSE],
@@ -318,27 +331,30 @@ compute_mfa <- function(act_des,
   supp_groups_i <-NULL 
   if (!is.null(supp_desc))
     supp_groups_i <- seq(n_act + 1, length(groups))
-    
   std_mfa <- FactoMineR::MFA(merged_df,
                              group = group_lengths, 
                              type = data_types, 
-                             name.group= groups, 
-                             graph =FALSE, 
+                             name.group = groups, 
+                             graph = FALSE, 
                              num.group.sup = supp_groups_i)
-  dim_to_keep <- get_PCA_dimensions(std_mfa$global.pca, 
+  if(!is.null(force_ndims)) {
+    dim_to_keep <- force_ndims
+  } else {
+    dim_to_keep <- get_PCA_dimensions(std_mfa$global.pca, 
                                     min_dimensions = min_dimensions,
                                     time = time, parallel = parallel)
+  }
 
   res.mfa <- FactoMineR::MFA(merged_df, 
                              ncp = dim_to_keep,
                              group = group_lengths, 
                              type = data_types, 
-                             name.group= groups, 
-                             graph =FALSE, 
+                             name.group = groups, 
+                             graph = FALSE, 
                              num.group.sup = supp_groups_i)
 
   res.hcpc <- FactoMineR::HCPC(res.mfa, graph = FALSE, consol = hcpc_consol, nb.clust = n_clusters)
-  dim_data <-  FactoMineR::dimdesc(res.mfa, c(1,2))
+  dim_data <- FactoMineR::dimdesc(res.mfa, c(1,2))
 
   dim_data_merged <- merge_dim_tables(dim_data)
   return(list(pca_data =  res.mfa, 
@@ -356,7 +372,7 @@ perform_individual_analysis <- function(
   target = NULL, 
   add_samples = NULL, 
   min_dimensions = 2,
-  hcpc_consol = TRUE,
+  hcpc_consol = TRUE, force_ndims = NULL,
   n_clusters = -1, time = "10000L", parallel = FALSE
   ){
  
@@ -365,11 +381,11 @@ perform_individual_analysis <- function(
   
   if (analysis_type == "pca") {
       pca_res <- compute_pca(pca_data = input_file,
-                             transpose =FALSE,
+                             transpose = FALSE,
                              string_factors = string_factors, 
                              numeric_factors = numeric_factors,
                              add_samples = add_samples,
-                             target = target,
+                             target = target, force_ndims = force_ndims,
                              scale.unit = table_data[2] == "s",
                              hcpc_consol = hcpc_consol,
                              n_clusters = n_clusters, time = time,
@@ -382,7 +398,7 @@ perform_individual_analysis <- function(
                              string_factors = string_factors, 
                              numeric_factors = numeric_factors,
                              add_samples = add_samples,
-                             target = target,
+                             target = target, force_ndims = force_ndims,
                              hcpc_consol = hcpc_consol,
                              n_clusters = n_clusters, time = time,
                              parallel = parallel)
@@ -395,7 +411,7 @@ perform_individual_analysis <- function(
 
 #' Apply answer filters to selected variables for MFA analysis
 #'
-#' `filter_for_mfa` takes a list of data frames supplied for MFA analysis
+#' `.filter_for_mfa` takes a list of data frames supplied for MFA analysis
 #' and filters it by the number of valid fields.
 #' @param sample_data A data frame. Data to filter
 #' @param samples_threshold  A numeric between 0 and 100. Samples that have fewer
@@ -407,7 +423,7 @@ perform_individual_analysis <- function(
 #' stop('This function needs an example')
 #' @export
 
-filter_for_mfa <- function(pat_data, patients_threshold = 0, variables_threshold = 0) {
+.filter_for_mfa <- function(pat_data, patients_threshold = 0, variables_threshold = 0) {
   pat_heatmap <- -make_answer_heatmap(pat_data) # Flip it so valid answers turn to "1" instead of "-1" and we can use colSums and rowSums
   initial_vars <- ncol(pat_heatmap)
   initial_patients <- nrow(pat_heatmap)
@@ -426,7 +442,7 @@ filter_for_mfa <- function(pat_data, patients_threshold = 0, variables_threshold
   return(filtered_data)
 }
 
-filter_for_factors <- function(pat_data) {
+.filter_for_factors <- function(pat_data) {
   level_pass <- unlist(lapply(pat_data, function(x) return(length(unique(x)) > 1 ))) # Check that we have no factors with fewer than two levels
   valid_variables <- names(level_pass[level_pass == TRUE])
   if(any(level_pass != TRUE)) message(red$bold("WARNING: DISCARDING", sum(level_pass != TRUE), "FACTOR(S) THAT HAVE FEWER THAN TWO LEVELS AFTER REMOVING PATIENTS"))

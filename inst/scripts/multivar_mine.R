@@ -7,6 +7,8 @@ option_list <- list(
   optparse::make_option(c("-o", "--output_files"), type="character", 
     default=file.path(getwd(), "results"),
     help="Output path. Default=%default"),
+  optparse::make_option(c("-f", "--force_ndims"), type="integer", 
+    default=NULL, help="Force analysis to use a set number of dimensions, disabling automatic detection"),
   optparse::make_option(c("-A", "--act_des"), type="character", 
     default=NULL,
     help="Indicate which files are ACTIVE using a comma sepparated string. 
@@ -64,7 +66,8 @@ if(!file.exists(opt$output_files))
   dir.create(opt$output_files, recursive = TRUE)
 
 input_files <- split_str(opt$input_files, ",")
-input_tables <- lapply(input_files, read.table, header = TRUE, sep = "\t", check.names = FALSE, row.names = 1)
+input_tables <- lapply(input_files, read.table, header = TRUE, sep = "\t",
+                       check.names = FALSE, row.names = 1)
 names(input_tables) <- gsub("\\..*", "", basename(input_files))
 act_des <- parse_multivar_input(opt$act_des)
 colnames(act_des) <- act_des[1,]
@@ -94,7 +97,6 @@ if (!is.null(opt$supp_desc)){
   merged_supp_tables <- merge_all_df(unlist(supp_tables, recursive = FALSE))
   merged_supp_tables$sample <- rownames(merged_supp_tables)
 }
-
 pca_res <- lapply(act_des, perform_individual_analysis,
                           all_files = input_tables,
                           numeric_factors = numeric_factors,
@@ -102,7 +104,7 @@ pca_res <- lapply(act_des, perform_individual_analysis,
                           target = merged_supp_tables,
                           hcpc_consol = opt$hcpc_consol,
                           n_clusters = opt$n_clusters, time = opt$time,
-                          parallel = opt$parallel)
+                          parallel = opt$parallel, force_ndims = opt$force_ndims)
 
 pca_res$ind_analysis <- names(pca_res)
 
@@ -110,7 +112,7 @@ if(length(act_des) > 1 & !opt$do_not_integrate) {
   pca_res$mfa <- compute_mfa(act_des,supp_desc,input_tables, 
                           hcpc_consol = opt$hcpc_consol,
                           n_clusters = opt$n_clusters, time = opt$time,
-                          parallel = opt$parallel)
+                          parallel = opt$parallel, force_ndims = opt$force_ndims)
 }
 
 pca_output <- file.path(opt$output_files, "PCA_results")
@@ -120,7 +122,6 @@ pca_res$numeric_factors <- numeric_factors
 pca_res$string_factors <- string_factors
 dir.create(pca_output)
 save(pca_res,act_des, file = file.path(pca_output, "multivar_tmp.rdata"))
-
 for(ind_an in pca_res$ind_analysis){
   write_general_pca(pca_res[[ind_an]], pca_output, tag = paste0(ind_an, "_"))
 }
