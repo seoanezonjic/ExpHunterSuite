@@ -70,7 +70,7 @@ option_list <- list(
     help="Output path. Default=%default"),
   optparse::make_option(c("-R", "--report_modes"), type="character", 
     default="fci",
-    help="HTML report modes. 'f' for functional_report, 'c' for cluster_main_report and 'i' for individual module report. Default=%default"),
+    help="HTML report modes. 'f' for functional_report, 'c' for cluster_main_report and 'i' for individual module report (it only works if DESeq2 has been used). Default=%default"),
   optparse::make_option(c("--corr_threshold"), type = "double", default = 0.8,
      help = "Clusters with abslute correlation higher than this theshold are combined in clusters_main_report.html. Default: %default"), 
   optparse::make_option(c("-u", "--universe"), type="character", default=NULL, 
