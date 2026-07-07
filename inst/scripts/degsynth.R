@@ -235,7 +235,7 @@ if(opt$mode == "compcodeR") {
         effect_sizes = opt$effect_sizes, n.diffexp = opt$n.diffexp, repl.id = opt$repl.id, seqdepth = opt$seqdepth,
         fraction.upregulated = opt$fraction.upregulated, between.group.diffdisp = opt$between.group.diffdisp,
         filter.threshold.total = opt$filter.threshold.total, nDEGs = nDEGs, filter.threshold.mediancpm = opt$filter.threshold.mediancpm,
-        fraction.non.overdispersed = opt$fraction.non.overdispersed, output_dir = opt$output_dir, method = opt$method,
+        fraction.non.overdispersed = opt$fraction.non.overdispersed, output_dir = opt$output_dir, deg_method = opt$method,
         overlap_size = opt$overlap_size, condition_columns = opt$condition_columns, fixed_DEG_lists = opt$fixed_DEG_lists,
         fixed_upregulated_DEGs = opt$fixed_upregulated_DEGs, exp_design = opt$custom_exp_design)
 }
