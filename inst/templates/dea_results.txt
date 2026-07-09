@@ -240,6 +240,7 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode DEA_PCA, eval = !is.null(plotter$hash_vars$PCA_res$DEGs)
+	plotter$hash_vars$mode <- "DEGs"
 	child <- knitr::knit_expand(file.path(template_folder, "facto_miner.txt"))
 	cat(knitr::knit_child(text = child, quiet = TRUE), sep = "\n")
 end.rcode-->
