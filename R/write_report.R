@@ -920,7 +920,7 @@ render_multivar_report <- function(multivar_res, output_files, template_folder,
     plotter <- htmlreportR::htmlReport$new(title_doc = "PCA report", 
                 container = multivar_res, src = source_folder,
                 tmp_folder = file.path(normalizePath(output_files), "tmp"),
-                compress_obj = FALSE, type_index = "menu",
+                compress_obj = TRUE, type_index = "menu",
                 files_css = files_css)
     plotter$build(file.path(template_folder, 'multivar_main.txt'))
     plotter$write_report(file.path(opt$output_files, "PCA_report.html"))
