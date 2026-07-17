@@ -122,11 +122,12 @@ end.rcode-->
 	# Create genes barplot
 	barplot_df <- data.frame(total=c(
 			sum(plotter$hash_vars$DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG", "POSSIBLE_DEG", "NOT_DEG", "FILTERED_OUT")),
+			nrow(plotter$hash_vars$cpm_table[rowSums(plotter$hash_vars$cpm_table) > 0, ]),
 			sum(plotter$hash_vars$DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG", "POSSIBLE_DEG", "NOT_DEG")),
 			sum(plotter$hash_vars$DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG", "POSSIBLE_DEG")),
 			sum(plotter$hash_vars$DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG"))
 			),
-		  gene_type=c("Total genes", "Genes passing expression filter", "DEGs considered possible or prevalent", "Prevalent DEGs")
+		  gene_type=c("Total genes in reference", "Detected genes in dataset", "Genes passing expression filter", "DEGs considered possible or prevalent", "Prevalent DEGs")
 		)
 	barplot_df[,"gene_type"] <- factor(barplot_df[,"gene_type"], levels = barplot_df[,"gene_type"][order(barplot_df[,"total"])])
 	plotter$hash_vars$barplot_df <- barplot_df
@@ -199,7 +200,7 @@ end.rcode-->
 	} else {
 		cat(plotter$prettify_div(plotter$boxplot(list(id = "df_melted_FDR", header = NULL, text = FALSE, fields = c(1, 3:4),
 			format = "long", row_names = FALSE, transpose = TRUE, smp_attr = c(1, 4), group = "package_name",
-			showBoxplotOriginalData = TRUE, config = list(graphOrientation = "vertical", jitter = TRUE))), preset = "magic", justify = "left"))
+			showBoxplotOriginalData = TRUE, title = "", config = list(xAxisTitle = "FDR", graphOrientation = "vertical", jitter = TRUE))), preset = "magic", justify = "left"))
 	}
 end.rcode-->
 
@@ -220,7 +221,7 @@ end.rcode-->
 							ifelse(volcano_DE_all_genes$genes_tag == "POSSIBLE_DEG", 0, 3)) 
 	names(custom_shapes) <- volcano_DE_all_genes$genes_tag
 	plotter$hash_vars$volcano_DE_all_genes <- volcano_DE_all_genes
-	fc_thresholds <- c(0.01, 0.05,0.1, 0.2)
+	fc_thresholds <- c(0.01, 0.05,0.1, 0.2) # TODO: this makes no sense with the FDR values you usually get (up to 50 or so)
 	all_thresholds <- unique(c(plotter$hash_vars$opt$p_val_cutoff, fc_thresholds))
 	mean_wt = data.frame(FDR = all_thresholds, nlFDR = -log10(all_thresholds))
 	cat(plotter$static_plot_main("volcano_DE_all_genes", resizable = TRUE, custom_format = TRUE,
