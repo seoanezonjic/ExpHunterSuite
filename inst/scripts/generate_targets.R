@@ -22,7 +22,8 @@ load_list <- function(input) {
 
 
 load_table <- function(input_file, blacklist = NULL, whitelist = NULL, filters = NULL) {
-  sample_table <- read.table(input_file, header= TRUE, quote="", sep="\t")
+  sample_table <- read.table(input_file, header= TRUE, quote="", sep="\t",
+    check.names = FALSE)
   if(!is.null(blacklist)){
     if(!any(blacklist %in% sample_table[[1]])) {
       warning("None of the samples in blacklist appear in experiment design")
