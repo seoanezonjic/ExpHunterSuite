@@ -110,18 +110,43 @@ plot_hcpc_map_no_label <- function(){
 	plot(data_frame, axes=c(1,2), choice="map", draw.tree= FALSE, title="", label = "none")
 }
 
-plot_quant_heat <- function(data_frame){
+plot_quant_heat <- function(data_frame, p_val_correct = NULL){
+	if(!is.null(p_val_correct)) {
+		data_frame$adj.p.value <- stats::p.adjust(data_frame$p.value, method = p_val_correct)
+		data_frame$adj_signif <- ""
+		data_frame$adj_signif[data_frame$adj.p.value < 0.05] <- "*"
+		data_frame$adj_signif[data_frame$adj.p.value < 0.01] <- "**"
+		data_frame$adj_signif[data_frame$adj.p.value < 0.001] <- "***"
+		data_frame$text_corr <- paste(data_frame$correlation, data_frame$adj_signif, sep = " ")
+	}
 	gg_heatmap(data_frame, x_axis="dimension", y_axis="factor",fill = "correlation", 
 		text_plot="text_corr", text_size = 4,
 		col = c("#3b71ff", "#f1f1f1", "#ff3b3b"))
 }
 
-plot_qual_heat <- function(data_frame){
+plot_qual_heat <- function(data_frame, p_val_correct = NULL){
+	if(!is.null(p_val_correct)) {
+		data_frame$adj.p.value <- stats::p.adjust(data_frame$p.value, method = p_val_correct)
+		data_frame$adj_signif <- ""
+		data_frame$adj_signif[data_frame$adj.p.value < 0.05] <- "*"
+		data_frame$adj_signif[data_frame$adj.p.value < 0.01] <- "**"
+		data_frame$adj_signif[data_frame$adj.p.value < 0.001] <- "***"
+		data_frame$text_corr <- paste(data_frame$correlation, data_frame$adj_signif, sep = " ")
+	}
 	gg_heatmap(data_frame, x_axis="dimension", y_axis="factor",fill = "R2", text_plot="text_adjust", text_size = 4,
 		col = c("#3b71ff", "#f1f1f1", "#ff3b3b"))
 }
 
-plot_cat_heat <- function(data_frame){
+plot_cat_heat <- function(data_frame, p_val_correct = NULL){
+	
+	if(!is.null(p_val_correct)) {
+		data_frame$adj.p.value <- stats::p.adjust(data_frame$p.value, method = p_val_correct)
+		data_frame$adj_signif <- ""
+		data_frame$adj_signif[data_frame$adj.p.value < 0.05] <- "*"
+		data_frame$adj_signif[data_frame$adj.p.value < 0.01] <- "**"
+		data_frame$adj_signif[data_frame$adj.p.value < 0.001] <- "***"
+		data_frame$text_corr <- paste(data_frame$correlation, data_frame$adj_signif, sep = " ")
+	}
 	gg_heatmap(data_frame, x_axis="dimension", y_axis="factor",fill = "Estimate", text_plot="text_estimate", text_size = 4,
 		col = c("#3b71ff", "#f1f1f1", "#ff3b3b") )
 }
@@ -450,7 +475,7 @@ end.rcode-->
 		** 0.001 < P < 0.1
 		*** P < 0.001 <br>")
 	if (nrow(plotter$hash_vars$dim_data_qual) >0 ) {
-		cat(plotter$static_plot_main(id = "dim_data_qual",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_qual_heat))
+		cat(plotter$static_plot_main(id = "dim_data_qual", custom_format = TRUE, resizable = TRUE, plotting_function = plot_qual_heat))
 	} else {
 		cat("None of the factors was significantly associated with any PC")
 	}
@@ -464,10 +489,15 @@ end.rcode-->
 		The flags represent the significance measured with a Student's t test where *: 0.01 < P < 0.05; ** 0.001 < P < 0.1; *** P < 0.001.<br>")
 	if(!is.null(plotter$hash_vars$dim_data_cat)) {
 		if (nrow(plotter$hash_vars$dim_data_cat) > 0 ) {
-			cat(plotter$static_plot_main(id = "dim_data_cat",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_cat_heat))
+			cat(plotter$create_title("<b>Raw p-values</b>", "pc_quant_heat_raw", # This graph should NOT include active variables
+				hlevel = plotter$hash_vars$last_title + 3))
+			cat(plotter$static_plot_main(id = "dim_data_cat", custom_format = TRUE, resizable = TRUE, plotting_function = plot_cat_heat))
+			cat(plotter$create_title("<b>Adjusted p-values</b>", "pc_quant_heat_adj", # This graph should NOT include active variables
+				hlevel = plotter$hash_vars$last_title + 3))
+			cat(plotter$static_plot_main(id = "dim_data_cat", custom_format = TRUE, resizable = TRUE, plotting_function = plot_cat_heat, plotting_args = list(p_val_correct = "BH")))
 		} else {
 			cat("None of the categories were significantly associated with any PC")
-		}	
+		}
 	}
 
 end.rcode-->
@@ -534,9 +564,14 @@ end.rcode-->
 		hlevel = plotter$hash_vars$last_title + 2))
 	cat("This plot represent the asociation between the quantitative variables and PCs. 
 		The association value is the Pearson's correlation and the flags indicate the correspondant significance where *: 0.01 < P < 0.05; ** 0.001 < P < 0.1; *** P < 0.001.<br>")
-	
 	if (nrow(plotter$hash_vars$dim_data_quant) > 0 ) {
 		cat(plotter$static_plot_main(id = "dim_data_quant",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_quant_heat))
+		cat(plotter$create_title("<b>Raw p-values</b>", "main_pc_quant_heat_raw", # This graph should NOT include active variables
+				hlevel = plotter$hash_vars$last_title + 3))
+			cat(plotter$static_plot_main(id = "dim_data_cat", custom_format = TRUE, resizable = TRUE, plotting_function = plot_cat_heat))
+			cat(plotter$create_title("<b>Adjusted p-values</b>", "main_pc_quant_heat_adj", # This graph should NOT include active variables
+				hlevel = plotter$hash_vars$last_title + 3))
+			cat(plotter$static_plot_main(id = "dim_data_cat", custom_format = TRUE, resizable = TRUE, plotting_function = plot_cat_heat, plotting_args = list(p_val_correct = "BH")))
 	} else {
 		cat("None of the factors was significantly associated with any PC")
 	}
