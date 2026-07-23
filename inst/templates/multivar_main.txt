@@ -11,9 +11,10 @@
 end.rcode-->
 
 <!--begin.rcode eval=individual_report
-
 plotter$hash_vars <- c(plotter$hash_vars, plotter$hash_vars[[plotter$hash_vars$act_groups]])
 plotter$hash_vars$multivar_type <- names(plotter$hash_vars$act_groups)
+plotter$hash_vars$an_name <- plotter$hash_vars$act_groups
+plotter$hash_vars$an_type <- names(plotter$hash_vars$act_groups)
 called_from <- "multivar_ind"
 tmpl <- knitr::knit_expand(file.path(template_folder, "facto_miner.txt"))
 rendered_tmpl <- knitr::knit(text = tmpl, quiet = TRUE)
