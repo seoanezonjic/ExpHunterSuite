@@ -762,7 +762,8 @@ translate_ensembl){
 #' @importFrom miRBaseVersions.db miRBaseVersions.db
 #' @importFrom AnnotationDbi select
 #' @param miRNA_IDs Accession number IDs
-#' @param miRBaseVersion Version of miRBase to use
+#' @param input_keytype Input keytype
+#' @param output_keytype Output keytype
 #' @returns the miRNA names translate from the accession number IDs
 #' @examples
 #' miRNA_IDs <- c("MIMAT0000158")

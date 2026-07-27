@@ -2220,12 +2220,13 @@ get_DEG_table <- function(input_DEGs, col_vector = c("gene", "p_val",
 }
 
 .save_loupe <- function(counts, clusters, projections, output_dir) {
+  create_loupe <- get_unexported_function("loupeR", "create_loupe")
   feature_ids <- rownames(counts) 
   clusters <- data.frame(lapply(clusters, as.factor))
   columns_to_remove <- c("nCount_RNA", "nFeature_RNA", "ncount_rna",
                          "nfeature_rna", "percent.mt", "percent.rb")
   clusters <- clusters[, !colnames(clusters) %in% columns_to_remove]
-  loupe <- loupeR::create_loupe(count_mat = counts, clusters = clusters,
+  loupe <- create_loupe(count_mat = counts, clusters = clusters,
     projections = list(UMAP = projections), feature_ids = feature_ids,
     output_dir = output_dir)
 }

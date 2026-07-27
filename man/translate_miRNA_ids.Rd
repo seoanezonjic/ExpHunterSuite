@@ -4,12 +4,18 @@
 \alias{translate_miRNA_ids}
 \title{translate_miRNA_ids}
 \usage{
-translate_miRNA_ids(miRNA_IDs, miRBaseVersion = "VW-MIMAT-22.0")
+translate_miRNA_ids(
+  miRNA_IDs,
+  input_keytype = "VW-MIMAT-22.0",
+  output_keytype = "NAME"
+)
 }
 \arguments{
 \item{miRNA_IDs}{Accession number IDs}
 
-\item{miRBaseVersion}{Version of miRBase to use}
+\item{input_keytype}{Input keytype}
+
+\item{output_keytype}{Output keytype}
 }
 \value{
 the miRNA names translate from the accession number IDs

@@ -26,7 +26,7 @@ information. Default "sample", as per our workflow.}
 }
 \value{
 A list containing expression quality metrics and cluster
-distribution metrics.'
+distribution metrics.
 }
 \description{
 \code{get_expression_metrics} is a wrapper for the expression metrics extraction
