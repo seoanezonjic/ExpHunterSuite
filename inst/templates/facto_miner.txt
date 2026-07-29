@@ -58,16 +58,8 @@ pairs_plot_pca <- function(data_frame) {
   p
 }
 
-plot_pca <- function(pca_data) {
-	factoextra::fviz_pca_ind(pca_data, repel = TRUE)
-}
-
-plot_pca_hab <- function(pca_data) {
-	factoextra::fviz_pca_ind(pca_data, repel = TRUE, habillage = main_cat)
-}
-
-plot_pca_hab_no_label <- function(pca_data) {
-	factoextra::fviz_pca_ind(pca_data, repel = TRUE, habillage = main_cat, label = "none")
+plot_pca <- function(pca_data, habillage = "none", label = "all") {
+	factoextra::fviz_pca_ind(pca_data, repel = TRUE, habillage = habillage, label = label)
 }
 
 plot_pca_qual <- function() {
@@ -89,14 +81,9 @@ plot_biplot_quant <- function(pca_data) {
 
 }
 
-plot_mca <- function(pca_data) {
-	factoextra::fviz_mca_ind(pca_data, repel = TRUE)
+plot_mca <- function(pca_data, habillage = "none") {
+	factoextra::fviz_mca_ind(pca_data, repel = TRUE, habillage = habillage)
 }
-
-plot_mca_hab <- function(pca_data) {
-	factoextra::fviz_mca_ind(pca_data, repel = TRUE, habillage = main_cat)
-}
-
 
 plot_hcpc <- function(){
  plot(data_frame, choice="tree", title="")
@@ -110,7 +97,7 @@ plot_hcpc_map_no_label <- function(){
 	plot(data_frame, axes=c(1,2), choice="map", draw.tree= FALSE, title="", label = "none")
 }
 
-plot_quant_heat <- function(data_frame, p_val_correct = NULL){
+plot_heat <- function(data_frame, p_val_correct = NULL, fill, text_plot){
 	if(!is.null(p_val_correct)) {
 		data_frame$adj.p.value <- stats::p.adjust(data_frame$p.value, method = p_val_correct)
 		data_frame$adj_signif <- ""
@@ -119,36 +106,8 @@ plot_quant_heat <- function(data_frame, p_val_correct = NULL){
 		data_frame$adj_signif[data_frame$adj.p.value < 0.001] <- "***"
 		data_frame$text_corr <- paste(data_frame$correlation, data_frame$adj_signif, sep = " ")
 	}
-	gg_heatmap(data_frame, x_axis="dimension", y_axis="factor",fill = "correlation", 
-		text_plot="text_corr", text_size = 4,
+	gg_heatmap(data_frame, x_axis = "dimension", y_axis = "factor", fill = fill, text_plot = text_plot, text_size = 4,
 		col = c("#3b71ff", "#f1f1f1", "#ff3b3b"))
-}
-
-plot_qual_heat <- function(data_frame, p_val_correct = NULL){
-	if(!is.null(p_val_correct)) {
-		data_frame$adj.p.value <- stats::p.adjust(data_frame$p.value, method = p_val_correct)
-		data_frame$adj_signif <- ""
-		data_frame$adj_signif[data_frame$adj.p.value < 0.05] <- "*"
-		data_frame$adj_signif[data_frame$adj.p.value < 0.01] <- "**"
-		data_frame$adj_signif[data_frame$adj.p.value < 0.001] <- "***"
-		data_frame$text_corr <- paste(data_frame$correlation, data_frame$adj_signif, sep = " ")
-	}
-	gg_heatmap(data_frame, x_axis="dimension", y_axis="factor",fill = "R2", text_plot="text_adjust", text_size = 4,
-		col = c("#3b71ff", "#f1f1f1", "#ff3b3b"))
-}
-
-plot_cat_heat <- function(data_frame, p_val_correct = NULL){
-	
-	if(!is.null(p_val_correct)) {
-		data_frame$adj.p.value <- stats::p.adjust(data_frame$p.value, method = p_val_correct)
-		data_frame$adj_signif <- ""
-		data_frame$adj_signif[data_frame$adj.p.value < 0.05] <- "*"
-		data_frame$adj_signif[data_frame$adj.p.value < 0.01] <- "**"
-		data_frame$adj_signif[data_frame$adj.p.value < 0.001] <- "***"
-		data_frame$text_corr <- paste(data_frame$correlation, data_frame$adj_signif, sep = " ")
-	}
-	gg_heatmap(data_frame, x_axis="dimension", y_axis="factor",fill = "Estimate", text_plot="text_estimate", text_size = 4,
-		col = c("#3b71ff", "#f1f1f1", "#ff3b3b") )
 }
 
 plot_mfa_axes <- function(mfa_data) {
@@ -157,23 +116,9 @@ plot_mfa_axes <- function(mfa_data) {
 	ggplot2::theme(legend.position = "bottom")
 }
 
-plot_mfa_ind_partial <- function(mfa_data) {
-	plot <- FactoMineR::plot.MFA(mfa_data, choix = "ind", partial = "all", lab.par = FALSE,
-								 lab.var = FALSE, lab.col = FALSE, lab.grpe = FALSE, repel = TRUE) + 
-	ggplot2::theme(legend.position = "bottom") + ggplot2::scale_color_discrete(labels = plotter$hash_vars$ind)
-	return(plot)
-}
-
-plot_mfa_ind_partial_no_vectors <- function(mfa_data) {
-	plot <- FactoMineR::plot.MFA(mfa_data, choix = "ind", partial = NULL, lab.par = FALSE,
-								 lab.var = FALSE, lab.col = FALSE, lab.grpe = FALSE, repel = TRUE) + 
-	ggplot2::theme(legend.position = "bottom") + ggplot2::scale_color_discrete(labels = plotter$hash_vars$ind)
-	return(plot)
-}
-
-plot_mfa_ind_partial_no_names <- function(mfa_data) {
-	plot <- FactoMineR::plot.MFA(mfa_data, choix = "ind", partial = "all", lab.par = FALSE,
-		lab.var = FALSE, lab.col = FALSE, lab.grpe = FALSE, lab.ind = FALSE, repel = TRUE) + 
+plot_mfa_ind_partial <- function(mfa_data, partial = NULL, lab.ind = TRUE) {
+	plot <- FactoMineR::plot.MFA(mfa_data, choix = "ind", partial = partial, lab.par = FALSE,
+								 lab.var = FALSE, lab.col = FALSE, lab.grpe = FALSE, lab.ind = lab.ind, repel = TRUE) + 
 	ggplot2::theme(legend.position = "bottom") + ggplot2::scale_color_discrete(labels = plotter$hash_vars$ind)
 	return(plot)
 }
@@ -354,10 +299,10 @@ end.rcode-->
 	pca_data[1] <- plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_pca)
 	main_cat <- plotter$hash_vars$main_cat
 	if(is.null(main_cat)) main_cat <- "none"
-	pca_data[2] <- plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_pca_hab)
+	pca_data[2] <- plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_pca, plotting_args = list(habillage = main_cat))
 	cat(plotter$plot_grid(pca_data))
-	cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_pca_hab_no_label))
-	if(!is.null(plotter$hash_vars$main_cat) && plotter$hash_vars$multivar_type == "mca") cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_mca_hab))
+	cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_pca, plotting_args = list(habillage = main_cat, label = "none")))
+	if(!is.null(plotter$hash_vars$main_cat) && plotter$hash_vars$multivar_type == "mca") cat(plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_mca, plotting_args = list(habillage = main_cat)))
 
 end.rcode-->
 
@@ -372,7 +317,7 @@ end.rcode-->
 
 end.rcode-->
 
-<!--begin.rcode {{called_from}}_mfa_ind_partial, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = plotter$hash_vars$multivar_type == "mfa"
+<!--begin.rcode {{called_from}}_mfa_ind_partial, echo = FALSE, warning = FALSE, message = FALSE, results = 'asis', eval = plotter$hash_vars$multivar_type == "mfa"
 	
 	cat(plotter$create_title("<b>Representation of the sample coordinates on the two first integrated PCs</b>", "main_pc_mfa", 
 			hlevel = plotter$hash_vars$last_title + 2))
@@ -382,9 +327,9 @@ end.rcode-->
 		The variance summarized by the two first integrated PCs is shown between brackets. <br>")
 
 	mfa_ind <- vector(mode = "list", length = 3)
-	mfa_ind[1] <- plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_mfa_ind_partial)
-	mfa_ind[2] <- plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_mfa_ind_partial_no_vectors)
-	mfa_ind[3] <- plotter$static_plot_main(id = "pca_data",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_mfa_ind_partial_no_names)
+	mfa_ind[1] <- plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_mfa_ind_partial, plotting_args = list(partial = "all"))
+	mfa_ind[2] <- plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_mfa_ind_partial)
+	mfa_ind[3] <- plotter$static_plot_main(id = "pca_data", custom_format = TRUE, resizable = TRUE, plotting_function = plot_mfa_ind_partial, plotting_args = list(partial = "all", lab.ind = FALSE))
 	cat(plotter$plot_grid(mfa_ind))
 
 end.rcode-->
@@ -477,10 +422,10 @@ end.rcode-->
 	if (nrow(plotter$hash_vars$dim_data_qual) >0 ) {
 		cat(plotter$create_title("<b>Raw p-values</b>", "pc_qual_heat_raw", # This graph should NOT include active variables
 			hlevel = plotter$hash_vars$last_title + 3))
-		cat(plotter$static_plot_main(id = "dim_data_qual", custom_format = TRUE, resizable = TRUE, plotting_function = plot_qual_heat))
+		cat(plotter$static_plot_main(id = "dim_data_qual", custom_format = TRUE, resizable = TRUE, plotting_function = plot_heat, plotting_args = list(fill = "R2", text_plot = "text_adjust")))
 		cat(plotter$create_title("<b>Adjusted p-values (Benjamini-Hochberg)</b>", "pc_qual_heat_adj", # This graph should NOT include active variables
 			hlevel = plotter$hash_vars$last_title + 3))
-		cat(plotter$static_plot_main(id = "dim_data_qual", custom_format = TRUE, resizable = TRUE, plotting_function = plot_qual_heat, plotting_args = list(p_val_correct = "BH")))
+		cat(plotter$static_plot_main(id = "dim_data_qual", custom_format = TRUE, resizable = TRUE, plotting_function = plot_heat, plotting_args = list(p_val_correct = "BH", fill = "R2", text_plot = "text_adjust")))
 	} else {
 		cat("None of the factors was significantly associated with any PC")
 	}
@@ -496,10 +441,10 @@ end.rcode-->
 		if (nrow(plotter$hash_vars$dim_data_cat) > 0 ) {
 			cat(plotter$create_title("<b>Raw p-values</b>", "pc_quant_heat_raw", # This graph should NOT include active variables
 				hlevel = plotter$hash_vars$last_title + 3))
-			cat(plotter$static_plot_main(id = "dim_data_cat", custom_format = TRUE, resizable = TRUE, plotting_function = plot_cat_heat))
+			cat(plotter$static_plot_main(id = "dim_data_cat", custom_format = TRUE, resizable = TRUE, plotting_function = plot_heat, plotting_args = list(fill = "Estimate", text_plot = "text_estimate")))
 			cat(plotter$create_title("<b>Adjusted p-values (Benjamini-Hochberg) </b>", "pc_quant_heat_adj", # This graph should NOT include active variables
 				hlevel = plotter$hash_vars$last_title + 3))
-			cat(plotter$static_plot_main(id = "dim_data_cat", custom_format = TRUE, resizable = TRUE, plotting_function = plot_cat_heat, plotting_args = list(p_val_correct = "BH")))
+			cat(plotter$static_plot_main(id = "dim_data_cat", custom_format = TRUE, resizable = TRUE, plotting_function = plot_heat, plotting_args = list(p_val_correct = "BH", fill = "Estimate", text_plot = "text_estimate")))
 		} else {
 			cat("None of the categories were significantly associated with any PC")
 		}
@@ -572,10 +517,10 @@ end.rcode-->
 	if (nrow(plotter$hash_vars$dim_data_quant) > 0) {
 		cat(plotter$create_title("<b>Raw p-values</b>", "main_pc_quant_heat_raw", # This graph should NOT include active variables
 				hlevel = plotter$hash_vars$last_title + 3))
-		cat(plotter$static_plot_main(id = "dim_data_quant", custom_format = TRUE, resizable = TRUE, plotting_function = plot_quant_heat))
+		cat(plotter$static_plot_main(id = "dim_data_quant", custom_format = TRUE, resizable = TRUE, plotting_function = plot_heat, plotting_args = list(fill = "correlation", text_plot = "text_corr"))) 
 		cat(plotter$create_title("<b>Adjusted p-values (Benjamini-Hochberg)</b>", "main_pc_quant_heat_adj", # This graph should NOT include active variables
 			hlevel = plotter$hash_vars$last_title + 3))
-		cat(plotter$static_plot_main(id = "dim_data_quant", custom_format = TRUE, resizable = TRUE, plotting_function = plot_quant_heat, plotting_args = list(p_val_correct = "BH")))
+		cat(plotter$static_plot_main(id = "dim_data_quant", custom_format = TRUE, resizable = TRUE, plotting_function = plot_heat, plotting_args = list(p_val_correct = "BH", fill = "correlation", text_plot = "text_corr")))
 	} else {
 		cat("None of the factors was significantly associated with any PC")
 	}
