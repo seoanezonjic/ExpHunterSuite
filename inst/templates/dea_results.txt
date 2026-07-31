@@ -118,7 +118,9 @@ end.rcode-->
 end.rcode-->
 
 <!--begin.rcode qc, echo = FALSE
-	cat(paste0("<p>This barplot shows the total number of genes passing each stage of analysis - from the total number of genes in the input table of counts, to the genes surviving the expression filter, to the genes detected as DE by one package, to the genes detected by at least ", plotter$hash_vars$opt$minpack_common, " packages.</p>"))
+	cat(paste0("<p>This barplot shows the total number of genes passing each stage of analysis - from the total number of genes in the input table of counts, 
+		to the detected genes in dataset (sum of CPMs across all samples > 0), to the genes surviving the expression filter, 
+		to the genes detected as DE by one package, to the genes detected by at least ", plotter$hash_vars$opt$minpack_common, " packages.</p>"))
 	# Create genes barplot
 	barplot_df <- data.frame(total=c(
 			sum(plotter$hash_vars$DE_all_genes[, "genes_tag"] %in% c("PREVALENT_DEG", "POSSIBLE_DEG", "NOT_DEG", "FILTERED_OUT")),

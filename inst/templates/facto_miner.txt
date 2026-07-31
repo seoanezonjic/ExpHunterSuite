@@ -415,10 +415,10 @@ end.rcode-->
 			hlevel = plotter$hash_vars$last_title + 2))
 
 	cat("This plot represent the asociation between the qualitative variables and PCs. The association value is the R2 value. 
-		The flags represent the significance measured with an analysis of variance where :
-		* 0.01 < P < 0.05
-		** 0.001 < P < 0.1
-		*** P < 0.001 <br>")
+		The flags represent the significance measured with an analysis of variance where:
+		* P < 0.05;
+		** P < 0.01;
+		*** P < 0.001.<br>")
 	if (nrow(plotter$hash_vars$dim_data_qual) >0 ) {
 		cat(plotter$create_title("<b>Raw p-values</b>", "pc_qual_heat_raw", # This graph should NOT include active variables
 			hlevel = plotter$hash_vars$last_title + 3))
@@ -436,7 +436,7 @@ end.rcode-->
 	cat(plotter$create_title("<b>Association between categories and PCs</b>", "main_pc_quant", # This graph should NOT include active variables
 			hlevel = plotter$hash_vars$last_title + 2))
 	cat("This plot represent the asociation between the categories of the qualitative supplementary variables and PCs. The association value is the mean coordinates of the samples within categories in PCs. 
-		The flags represent the significance measured with a Student's t test where *: 0.01 < P < 0.05; ** 0.001 < P < 0.1; *** P < 0.001.<br>")
+		The flags represent the significance measured with a Student's t test where: * P < 0.05; ** P < 0.01; *** P < 0.001.<br>")
 	if(!is.null(plotter$hash_vars$dim_data_cat)) {
 		if (nrow(plotter$hash_vars$dim_data_cat) > 0 ) {
 			cat(plotter$create_title("<b>Raw p-values</b>", "pc_quant_heat_raw", # This graph should NOT include active variables
@@ -527,7 +527,7 @@ end.rcode-->
 
 end.rcode-->
 
-<!--begin.rcode {{called_from}}_dim_quant_act , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', fig.width = 5, fig.height = 5, eval = plotter$hash_vars$multivar_type %in% c("pca","mfa")
+<!--begin.rcode {{called_from}}_dim_quant_act, echo = FALSE, warning = FALSE, message = FALSE, results = 'asis', fig.width = 5, fig.height = 5, eval = plotter$hash_vars$multivar_type %in% c("pca","mfa")
 
 	cat(plotter$create_title("<b>TOP active quantitative variables</b>", "main_pc_quant_act", 
 			hlevel = plotter$hash_vars$last_title + 2))
@@ -542,7 +542,7 @@ end.rcode-->
 
 end.rcode-->
 
-<!--begin.rcode {{called_from}}_hcpc_main, echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
+<!--begin.rcode {{called_from}}_hcpc_main, echo = FALSE, warning = FALSE, message = FALSE, results = 'asis'
 
 	cat(plotter$create_title("<b>HCPC</b>", "hcpc", hlevel = plotter$hash_vars$last_title + 1, indexable = TRUE,
 							 clickable = FALSE, t_id = "hcpc", clickable_text =""))
@@ -551,34 +551,34 @@ end.rcode-->
 				For the HCPC only the ", plotter$hash_vars$dim_to_keep, " first relevant PCs where used.</b>"))
 end.rcode-->
 
-<!--begin.rcode {{called_from}}_HCPC , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
+<!--begin.rcode {{called_from}}_HCPC, echo = FALSE, warning = FALSE, message = FALSE, results = 'asis'
 
-	cat(plotter$create_title(paste0("<b>Hierarchical clustering of individuals", plotter$hash_vars$dim_to_keep, " significant PCs</b>"), "main_pc_quant", 
+	cat(plotter$create_title(paste0("<b>Hierarchical clustering of individuals (", plotter$hash_vars$dim_to_keep, " significant PCs)</b>"), "main_pc_quant", 
 			hlevel = plotter$hash_vars$last_title + 2))
 	cat("This plot represent the dendrogram of HCPC of the individuals. The groups of individuals have different colors and the inertia plot is showed at the top right.<br>")
 	cat(plotter$static_plot_main(id = "res.hcpc",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_hcpc, plot_type = "autoplot" ))
 
 end.rcode-->
 
-<!--begin.rcode {{called_from}}_HCPC_map , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis'
+<!--begin.rcode {{called_from}}_HCPC_map, echo = FALSE, warning = FALSE, message = FALSE, results = 'asis'
 
 	cat(plotter$create_title("<b>HCPC coordinates</b>", "main_pc_quant", 
 			hlevel = plotter$hash_vars$last_title + 2))
 	cat("This plot represent the coordinates of the samples in the two main Principal Components. 
 		The percentage of summarized variance is showed between brackets. 
 		The samples are colored by their HCPC cluster.<br>")
-	cat(plotter$static_plot_main(id = "res.hcpc",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_hcpc_map, plot_type = "autoplot" ))
-	cat(plotter$static_plot_main(id = "res.hcpc",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_hcpc_map_no_label, plot_type = "autoplot" ))
+	cat(plotter$static_plot_main(id = "res.hcpc", custom_format = TRUE, resizable = TRUE, plotting_function = plot_hcpc_map, plot_type = "autoplot"))
+	cat(plotter$static_plot_main(id = "res.hcpc", custom_format = TRUE, resizable = TRUE, plotting_function = plot_hcpc_map_no_label, plot_type = "autoplot"))
 
 end.rcode-->
 
-<!--begin.rcode {{called_from}}_layer_heatmaps , echo = FALSE, warning =FALSE, message=FALSE, results = 'asis', eval = plotter$hash_vars$an_type != "mfa"
+<!--begin.rcode {{called_from}}_layer_heatmaps, echo = FALSE, warning = FALSE, message = FALSE, results = 'asis', eval = plotter$hash_vars$an_type != "mfa"
 	if(!is.null(plotter$hash_vars$an_name)) {
 		block_name <- paste0("layer ", plotter$hash_vars$an_name)
 	} else block_name <- plotter$hash_vars$multivar_type
 	title <- paste0("<b>Heatmap of ", block_name, "</b>")
 	cat(plotter$create_title(title, paste0(plotter$hash_vars$an_name, "_heatmap"), hlevel = plotter$hash_vars$last_title + 2))
-	cat("This heatmaps represents the value for each category of layer ", block_name, "and each sample<br>")
+	cat("This heatmaps represents the value for each category of ", block_name, "and each sample<br>")
 	if(plotter$hash_vars$an_type == "pca") {
 		id <- "norm_pca_data"
 		MaxX <- NULL
@@ -658,7 +658,7 @@ end.rcode-->
 			dim_overlays[[dim]] <- dim_data[[supp_factors[dim]]]
 		}
 		block_name <- paste0("layer ", name)
-		title <- paste0("<b> MFA heatmap of layer", block_name, "</b>")
+		title <- paste0("<b> MFA heatmap of ", block_name, "</b>")
 		cat(plotter$create_title(title, paste0(name, "MFA_heatmap"), hlevel = plotter$hash_vars$last_title + 3))
 		clust_data <- plotter$hash_vars$mfa$res.hcpc$data.clust[, "clust", drop = FALSE]
 		clust_order <- match(rownames(clust_data), rownames(data))
