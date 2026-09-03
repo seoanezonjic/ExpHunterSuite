@@ -49,10 +49,10 @@ option_list <- list(
       " log2 scale, so a value of 1 would mean a 2 fold change.",
       " Default=%default")),
   optparse::make_option(c("-m", "--modules"), type="character", 
-    default=c("DELNW"), #D = DESeq2, E = edgeR, L = limma, N = NOISeq W = WGCNA.
+    default=c("DELNWR"), #D = DESeq2, E = edgeR, L = limma, N = NOISeq, W = WGCNA.
     help=paste0("Differential expression packages to able/disable ",
       "(D = DESeq2, E = edgeR, L = limma, N = NOISeq, W = WGCNA, P = PCIT,",
-      " X = diffcoexp, F = external_DEA_file.). By default the following ",
+      " X = diffcoexp, F = external_DEA_file, R = DEG_report.). By default the following ",
       "modules Default=%default are performed")),
   optparse::make_option(c("-c", "--minpack_common"), type="integer", default=4,
     help="Number of minimum package to consider a gene as a 'PREVALENT' DEG"),
@@ -280,4 +280,6 @@ final_results <- main_degenes_Hunter(
 # WRITE OUTPUT
 ###########################################################################
   write_expression_data(final_results, opt$output_files)
-  write_expression_report(final_results, opt$output_files, template_folder, opt)
+  if (grepl("R", opt$modules)) {
+    write_expression_report(final_results, opt$output_files, template_folder, opt)
+  }
