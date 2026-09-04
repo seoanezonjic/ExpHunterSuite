@@ -171,14 +171,15 @@ if (!is.null(plotter$hash_vars$string_factors)) {
 
 ## HCPC 
 all_factor_clusters <- get_cluster_string_assoc(plotter$hash_vars$res.hcpc, plotter$hash_vars$string_factors)
-all_factor_clusters <- all_factor_clusters[all_factor_clusters$FDR <= 0.05,]
+all_factor_clusters_significant <- all_factor_clusters[all_factor_clusters$FDR <= 0.05,]
 
-if (nrow(all_factor_clusters) > 0 ) {
-	all_factor_clusters$FDR <- format(all_factor_clusters$FDR, scientific = TRUE, digits = 3)
-	all_factor_clusters$fisher.test.pval <- format(all_factor_clusters$fisher.test.pval, scientific = TRUE, digits = 3)
-	all_factor_clusters <- all_factor_clusters[,c("Cluster","Category","fisher.test.pval", "FDR")]
+if (nrow(all_factor_clusters_significant) > 0 ) {
+	all_factor_clusters_significant$FDR <- format(all_factor_clusters_significant$FDR, scientific = TRUE, digits = 3)
+	all_factor_clusters_significant$fisher.test.pval <- format(all_factor_clusters_significant$fisher.test.pval, scientific = TRUE, digits = 3)
+	all_factor_clusters_significant <- all_factor_clusters_significant[,c("Cluster","Category","fisher.test.pval", "FDR")]
 }
 plotter$hash_vars[["all_factor_clusters"]] <- all_factor_clusters
+plotter$hash_vars[["all_factor_clusters_significant"]] <- all_factor_clusters_significant
 
 ## dim data quant
 if (!is.null(plotter$hash_vars$dim_data_merged)){
@@ -679,9 +680,9 @@ end.rcode-->
 
 	cat("Fisher's exact test is computed between clusters and experimental treats. Fisher's exact test P values and FDR are showed.<br>")
 
-	if (nrow(plotter$hash_vars$all_factor_clusters) > 0) {
+	if (nrow(plotter$hash_vars$all_factor_clusters_significant) > 0) {
 		# This is often full of NAs. Investigate where this is produced and ensure this never happens.
-		cat(plotter$table(list(id = "all_factor_clusters", header = NULL, row_names = NULL, styled = "dt", text = "dynamic", table_rownames = F)))
+		cat(plotter$table(list(id = "all_factor_clusters_significant", header = NULL, row_names = NULL, styled = "dt", text = "dynamic", table_rownames = F)))
 	} else {
 		cat("None of the clusters was significantly associated with any experimental group<br>")
 

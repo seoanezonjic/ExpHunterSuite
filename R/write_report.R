@@ -66,6 +66,8 @@ write_expression_report <- function(exp_results, output_files = getwd(),
     numeric_factors = exp_results[["numeric_factors"]],
     string_factors = exp_results[["string_factors"]],
     PCA_res = exp_results[["PCA_res"]],
+    HCPC_res_DEGs = exp_results[["PCA_res"]]$DEGs$res.hcpc,
+    HCPC_res_all = exp_results[["PCA_res"]]$all_genes$res.hcpc,
     library_sizes = exp_results[["library_sizes"]],
     target = exp_results[["target"]],
     WGCNA_results = exp_results[["WGCNA_results"]])
@@ -113,6 +115,22 @@ write_expression_data <- function(final_results, output_files){
 
   
   write_pca_data(final_results[['PCA_res']], output_files)
+  write_hcpc_data(final_results[["all_factor_clusters_all"]], 
+    final_results[["all_factor_clusters_degs"]], output_files)
+}
+
+write_hcpc_data <- function(all_factor_clusters_all, all_factor_clusters_degs, output_files) {
+  pca_output <- file.path(output_files, "PCA_results")
+  if (!is.null(all_factor_clusters_all)) {
+    all_factor_clusters_all$pca_type <- "all_genes"
+  }
+  if (!is.null(all_factor_clusters_degs)) {
+    all_factor_clusters_degs$pca_type <- "DEGs"
+  }
+  all_factor_clusters <- rbind(all_factor_clusters_all, all_factor_clusters_degs)
+
+  write.table(all_factor_clusters, file = file.path(pca_output, "hcpc_metrics.txt"), 
+    quote = FALSE, sep = "\t")
 }
 
 write_pca_data <- function(PCA_res, output_files){
@@ -155,7 +173,6 @@ write_general_pca <- function(pca_data, output_files, tag = ""){
     write.table(pca_data$pca_data$var$eta2, file = file.path(output_files,
         paste0(tag, "pca_vars.txt")), quote = FALSE, sep = "\t")
   }
-
 }
 
 merge_dim_table_metrics <- function(merged_dim_table){

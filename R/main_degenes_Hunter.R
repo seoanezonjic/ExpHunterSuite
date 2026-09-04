@@ -317,6 +317,17 @@ main_degenes_Hunter <- function(
     mean_counts_df <- get_mean_counts(cnts_mtx=raw, cpm_table=cpm_table, reads=reads, minlibraries=minlibraries)
     exp_genes_df <- get_gene_stats(cpm_table=cpm_table, reads=reads)
     variance_df <- get_variance_df(cpm_table = cpm_table, var_filter = var_filter)
+
+    HCPC_res_all <- PCA_res$all_genes$res.hcpc
+    HCPC_res_DEGs <- PCA_res$DEGs$res.hcpc
+    save(list = ls(all = TRUE), file = "/mnt/home/users/bio_267_uma/vcarayol/dev_R/Hunter_checks/exec_DEG_wf/degenes_Hunter.R_0000/Testing.RData")
+    all_factor_clusters_all <- get_cluster_string_assoc(res.hcpc = HCPC_res_all, string_factors = string_factors)
+    if(is.null(HCPC_res_DEGs)) {
+      all_factor_clusters_degs <- NULL
+    } else {
+      all_factor_clusters_degs <- get_cluster_string_assoc(res.hcpc = HCPC_res_DEGs, string_factors = string_factors)
+    }
+
  
     final_results <- list()
     final_results[['cpm_table']] <- cpm_table
@@ -338,6 +349,10 @@ main_degenes_Hunter <- function(
     final_results[["numeric_factors"]] <- numeric_factors
     final_results[["string_factors"]] <- string_factors
     final_results[["PCA_res"]] <- PCA_res
+    final_results[["HCPC_res_DEGs"]] <- HCPC_res_all
+    final_results[["HCPC_res_all"]] <- HCPC_res_DEGs
+    final_results[["all_factor_clusters_all"]] <- all_factor_clusters_all
+    final_results[["all_factor_clusters_degs"]] <- all_factor_clusters_degs
     final_results[["library_sizes"]] <- library_sizes
     
     if(!is.null(combinations_WGCNA)){
@@ -425,6 +440,7 @@ check_input_main_degenes_Hunter <- function(raw,
           active_modules <- active_modules - sum(grepl("[LN]", user_modules))
     if(minpack_common > active_modules){
       minpack_common <- active_modules
+      if(grep("R", modules)) minpack_common <- minpack_common - 1
       warning("The number of active modules is lower than the thresold",
         " for tag PREVALENT DEG. The thresold is set to the",
         " number of active modules.")
