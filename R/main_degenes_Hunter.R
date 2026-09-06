@@ -320,7 +320,7 @@ main_degenes_Hunter <- function(
 
     HCPC_res_all <- PCA_res$all_genes$res.hcpc
     HCPC_res_DEGs <- PCA_res$DEGs$res.hcpc
-    save(list = ls(all = TRUE), file = "/mnt/home/users/bio_267_uma/vcarayol/dev_R/Hunter_checks/exec_DEG_wf/degenes_Hunter.R_0000/Testing.RData")
+    #save(list = ls(all = TRUE), file = "/mnt/home/users/bio_267_uma/vcarayol/dev_R/Hunter_checks/exec_DEG_wf/degenes_Hunter.R_0000/Testing.RData")
     all_factor_clusters_all <- get_cluster_string_assoc(res.hcpc = HCPC_res_all, string_factors = string_factors)
     if(is.null(HCPC_res_DEGs)) {
       all_factor_clusters_degs <- NULL
