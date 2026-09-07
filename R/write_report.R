@@ -130,7 +130,7 @@ write_hcpc_data <- function(all_factor_clusters_all, all_factor_clusters_degs, o
   all_factor_clusters <- rbind(all_factor_clusters_all, all_factor_clusters_degs)
 
   write.table(all_factor_clusters, file = file.path(pca_output, "hcpc_metrics.txt"), 
-    quote = FALSE, sep = "\t")
+    quote = FALSE, sep = "\t", row.names = FALSE)
 }
 
 write_pca_data <- function(PCA_res, output_files){
