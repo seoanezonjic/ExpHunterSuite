@@ -86,15 +86,7 @@ plot_mca <- function(pca_data, habillage = "none") {
 }
 
 plot_hcpc <- function(){
- plot(data_frame, choice="tree", title="")
-}
-
-plot_hcpc_map <- function(){
-	plot(data_frame, axes=c(1,2), choice="map", draw.tree= FALSE, title="")
-}
-
-plot_hcpc_map_no_label <- function(){
-	plot(data_frame, axes=c(1,2), choice="map", draw.tree= FALSE, title="", label = "none")
+ 	plot(data_frame, choice = choice, axes = c(1, 2), draw.tree = draw.tree, label = label, title = "") 
 }
 
 plot_heat <- function(data_frame, p_val_correct = NULL, fill, text_plot){
@@ -557,7 +549,7 @@ end.rcode-->
 	cat(plotter$create_title(paste0("<b>Hierarchical clustering of individuals (", plotter$hash_vars$dim_to_keep, " significant PCs)</b>"), "main_pc_quant", 
 			hlevel = plotter$hash_vars$last_title + 2))
 	cat("This plot represent the dendrogram of HCPC of the individuals. The groups of individuals have different colors and the inertia plot is showed at the top right.<br>")
-	cat(plotter$static_plot_main(id = "res.hcpc",custom_format = TRUE ,resizable = TRUE, plotting_function = plot_hcpc, plot_type = "autoplot" ))
+	cat(plotter$static_plot_main(id = "res.hcpc", custom_format = TRUE, resizable = TRUE, plotting_function = plot_hcpc, plotting_args = list(choice = "tree", draw.tree = TRUE, label = NULL), plot_type = "autoplot"))
 
 end.rcode-->
 
@@ -568,8 +560,8 @@ end.rcode-->
 	cat("This plot represent the coordinates of the samples in the two main Principal Components. 
 		The percentage of summarized variance is showed between brackets. 
 		The samples are colored by their HCPC cluster.<br>")
-	cat(plotter$static_plot_main(id = "res.hcpc", custom_format = TRUE, resizable = TRUE, plotting_function = plot_hcpc_map, plot_type = "autoplot"))
-	cat(plotter$static_plot_main(id = "res.hcpc", custom_format = TRUE, resizable = TRUE, plotting_function = plot_hcpc_map_no_label, plot_type = "autoplot"))
+	cat(plotter$static_plot_main(id = "res.hcpc", custom_format = TRUE, resizable = TRUE, plotting_function = plot_hcpc, plotting_args = list(choice = "map", draw.tree = FALSE, label = NULL), plot_type = "autoplot"))
+	cat(plotter$static_plot_main(id = "res.hcpc", custom_format = TRUE, resizable = TRUE, plotting_function = plot_hcpc, plotting_args = list(choice = "map", draw.tree = FALSE, label ="none"), plot_type = "autoplot"))
 
 end.rcode-->
 
