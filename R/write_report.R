@@ -549,32 +549,6 @@ write_clusters_to_enrichment <- function(output_path="results",
             template_folder = template_folder, source_folder = source_folder,
             gene_attribute_name = gene_attribute_name, files_css = files_css)
       }
-      if (grepl("P", mode)) {
-        for (funsys in names(enrichments_ORA_merged)){
-            enrich <- enrichments_ORA_merged[[funsys]]
-            desc <- enrich@compareClusterResult$Description
-          if (length(unique(desc)) < 2 ) next
-          if (group_results == TRUE){
-            n_Cluster <- min(floor(nrow(enrich)/7), 20)
-            pp <- enrichplot::emapplot(enrich, showCategory= n_category,
-                                      pie="Count", layout = "nicely",
-                                      node_label = node_label,
-                                      nCluster = min(floor(nrow(enrich)/7), 20),
-                                                     repel = TRUE)
-          }else{
-            pp <- enrichplot::emapplot(enrich, showCategory= n_category,
-                                       pie="Count", layout = "nicely")
-          }
-          ggplot2::ggsave(filename = file.path(output_path,
-                            paste0("emaplot_", funsys, ".png")), pp, width = 30,
-                            height = 30, dpi = 300, units = "cm", device='png')
-          pp <- enrichplot::dotplot(enrich, showCategory= n_category,
-                                    label_format = 70)
-          ggplot2::ggsave(filename = file.path(output_path,
-                            paste0("dotplot_", funsys, ".png")), pp, width = 60,
-                            height = 40, dpi = 300, units = "cm", device='png')
-        }
-      }
       if (grepl("S", mode)) {
         summarized_merged_ora <- summarize_merged_ora(enrichments_ORA_merged,
                                        sim_thr, summary_common_name, pvalcutoff)
