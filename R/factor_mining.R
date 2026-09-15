@@ -3,6 +3,7 @@ merge_dim_tables <- function(dim_data_simp){
   quali_data <- data.frame()
   quanti_data <- data.frame()
   cat_data <- data.frame()
+  factor <- names(dim_data_simp$call$X)[length(dim_data_simp$call$X)]
   dim_data_simp$call <- NULL
   if(is.null(dim_data_simp))
     return(NULL)
@@ -11,19 +12,23 @@ merge_dim_tables <- function(dim_data_simp){
     
     dim_data <- dim_data_simp[[dimension]]
     if (!is.null(dim_data$quali)) {
-
-      quali_data_dim <- as.data.frame(dim_data$quali)
+      if (is.null(rownames(dim_data$quali))) {
+        quali_data_dim <- as.data.frame(t(dim_data$quali))
+        rownames(quali_data_dim) <- factor
+      } else {
+        quali_data_dim <- as.data.frame(dim_data$quali) # Obsolete as of R 4.6
+      }
       quali_data_dim$dimension <- dimension
       quali_data_dim$factor <- rownames(quali_data_dim)
       quali_data <- rbind(quali_data, quali_data_dim) 
-        }
-     if (!is.null(dim_data$quanti)){
+    }
+    if (!is.null(dim_data$quanti)) {
       quanti_data_dim <-  as.data.frame(dim_data$quanti)
       quanti_data_dim$dimension <- dimension
       quanti_data_dim$factor <- rownames(quanti_data_dim)
       quanti_data <- rbind(quanti_data, quanti_data_dim)  
     }
-    if (!is.null(dim_data$category)){
+    if (!is.null(dim_data$category)) {
       cat_data_dim <-  as.data.frame(dim_data$category)
       cat_data_dim$dimension <- dimension
       cat_data_dim$factor <- rownames(cat_data_dim)
@@ -62,8 +67,9 @@ compute_pca <- function(pca_data,
             min_dimensions = 2,
             scale.unit = TRUE,
             hcpc_consol = TRUE, force_ndims = NULL,
-            n_clusters = -1, time = "10000L", parallel = FALSE) {
-
+            n_clusters = -1, min_clusters = 1, 
+            time = "10000L", parallel = FALSE) {
+  
   if (transpose) 
     pca_data <- as.data.frame(t(pca_data))
    
@@ -111,8 +117,8 @@ compute_pca <- function(pca_data,
   dim_data <- FactoMineR::dimdesc(pca_res, axes=seq(1, dim_to_keep), proba = 1)
   dim_data_merged <- merge_dim_tables(dim_data)
 
-  res.hcpc <- FactoMineR::HCPC(pca_res, graph = FALSE, consol = hcpc_consol, nb.clust = n_clusters)
-
+  res.hcpc <- FactoMineR::HCPC(pca_res, graph = FALSE, consol = hcpc_consol, nb.clust = n_clusters, min = min_clusters) 
+  
   return(list(pca_data = pca_res,
               dim_to_keep = dim_to_keep,
               dim_data = dim_data,

@@ -113,7 +113,6 @@ write_expression_data <- function(final_results, output_files){
     "Common_results", "hunter_results_table.txt"), quote=FALSE, 
   row.names=TRUE, sep="\t")
 
-  
   write_pca_data(final_results[['PCA_res']], output_files)
   write_hcpc_data(final_results[["all_factor_clusters_all"]], 
     final_results[["all_factor_clusters_degs"]], output_files)
@@ -189,6 +188,10 @@ merge_dim_table_metrics <- function(merged_dim_table){
         quant$metric_type <- "correlation"
     } else { quant <- NULL}
     merged_dim_table$quantitative <- quant
+    if (!is.null(merged_dim_table$quantitative$n)) { # As of R 4.6, factominer adds the number
+      merged_dim_table$quantitative$n <- NULL # of samples to quantitative data, which then
+    } # breaks the merging in this function. We remove said column, as it is not
+      # needed
     cat <- merged_dim_table$qual_category
     if(nrow(cat) > 0) {
         names(cat)[names(cat) == "Estimate"] <- "metric"
