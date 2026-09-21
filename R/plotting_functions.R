@@ -358,9 +358,9 @@ enrich_emap <- function(input_obj, n_category = 30, size_category = 1,
 enrich_dotplot <- function(input_obj, n_category = 30) {
   p <- enrichplot::dotplot(input_obj, showCategory = n_category, label_format=100) +
   theme(
-    text = element_text(size = 10),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    axis.text.y = element_text(size = 10)
+    text = ggplot2::element_text(size = 10),
+    axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+    axis.text.y = ggplot2::element_text(size = 10)
   )
   return(p)
 }

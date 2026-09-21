@@ -44,7 +44,7 @@
           input_obj@result$Description,
      	  width = 100
  		)
-	  enrichplot::upsetplot(input_obj, n = n_category) +  theme(axis.text.y = element_text(lineheight = 0.6, size=200/n_category)
+	  enrichplot::upsetplot(input_obj, n = n_category) +  theme(axis.text.y = ggplot2::element_text(lineheight = 0.6, size=200/n_category)
     )
 	}
 	force_max_genes_enrobj <- function(enrich_obj, maxGenes = 200, showCategory = 30) {
