@@ -21,16 +21,17 @@ option_list <- list(
                 Eh = Anticorrelation between RNAseq modules Eigengene and miRNAseq hub genes, 
                 Ed = Anticorrelation between RNAseq modules Eigengene and miRNAseq DEG expression profiles, 
                 hd = Anticorrelation between RNAseq hub genes and miRNAseq DEG expression profiles, 
-                hE = Anticorrelation between RNAseq hub genes and miRNAseq modules Eigengene. ",
-            "Default : %default"),
+                hE = Anticorrelation between RNAseq hub genes and miRNAseq modules Eigengene. 
+                Default=%default"),
     optparse::make_option(c("-d", "--databases"), type="character", 
         default="targetscan,mirdb,diana_microt,elmmo,microcosm,miranda,pictar,pita",
         help = "Set prediction databases included on multiMiR to use as gold standard."),
      optparse::make_option(c("--add_databases"), type="character", 
         default=NA,
         help = "Comma sepparated files, containing 2 columns Genes\tmiRNA including additional databases. Default=%default."),
-    optparse::make_option("--tag_filter target_tag,miRNA_tag", type="character", 
+    optparse::make_option("--tag_filter", type="character", 
         default="putative,putative",
+        metavar = "target_tag,miRNA_tag",
         help = "Set filter type for RNAseq and miRNAseq input data by comma separated string. 
                 Available options are: 'prevalent' to use only PREVALENT_DEG. 
                 'all_possible' to use all PREVALENT_DEG and POSIBLE_DEG. 
@@ -46,8 +47,9 @@ option_list <- list(
     optparse::make_option(c("-p", "--p_val_cutoff"), type="double", 
         default=0.05,
         help="Correlation P value threshold. Default=%default"),
-    optparse::make_option("--corr_type TYPE", type="character", 
+    optparse::make_option("--corr_type", type="character", 
         default="lower",
+        metavar = "TYPE",
         help = "Set if correlations are [lower] or [higher] than the corr cutoff. Default=%default"),
     optparse::make_option(c("-c", "--corr_cutoffs"), type="character", 
         default="-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6,-0.55",
@@ -72,7 +74,7 @@ option_list <- list(
         help="This script reject genes with lower module membership to their modules. Default=%default"),
     optparse::make_option(c("-R", "--report"), ,type = "character", 
         default="miRNA_RNA_comparison.html",
-        help="Name of the html file. Default : %default"),
+        help="Name of the html file. Default=%default"),
     optparse::make_option(c("-t", "--translation_file"), type = "character", 
         default = NULL,
         help = 'Two columns (\t) file with miRNA names translation: 
