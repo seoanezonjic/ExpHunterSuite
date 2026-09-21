@@ -546,8 +546,8 @@ prepare_enrichment_KEGG <- function(enrichment_type, kegg_file) {
 
 
 
-
-enrichKEGG_user_data <- function (
+#' @importFrom enrichit ora_gson
+enrichKEGG_gson <- function (
   gene, 
   organism = "hsa", 
   keyType = "kegg", 
@@ -556,9 +556,9 @@ enrichKEGG_user_data <- function (
   universe, minGSSize = 10, 
   maxGSSize = 500,
   qvalueCutoff = 0.2, 
-  user_data, ...)
+  gson, ...)
 {
-  enr_int <- utils::getFromNamespace("enricher_internal", "clusterProfiler")
+  enr_int <- utils::getFromNamespace("ora_gson", "enrichit")
     res <- enr_int(gene, 
       pvalueCutoff = pvalueCutoff,
       pAdjustMethod = pAdjustMethod, 
@@ -566,7 +566,7 @@ enrichKEGG_user_data <- function (
       minGSSize = minGSSize,
       maxGSSize = maxGSSize, 
       qvalueCutoff = qvalueCutoff, 
-      USER_DATA = user_data,
+      gson = gson,
       ...)
     if (is.null(res))
         return(res)
@@ -593,7 +593,7 @@ enrichKEGG_user_data <- function (
 #' @param readable Whether output should include gene symbols
 #' @param return_all Whether to remove list items with no enrichment
 #' @param ... other arguments passed to the enrichment function
-#' @importFrom DOSE setReadable
+#' @importFrom enrichit setReadable
 #' @returns Enrichment results as a list
 #' @export
 multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL, 
@@ -639,9 +639,9 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL,
     } else if (funsys == "KEGG"){
       specific_params <- list(organism = organism_info$KeggCode[1])
       if (!is.null(kegg_file)){ 
-        enrf <- enrichKEGG_user_data 
-        ENRICH_DATA <- readRDS(kegg_file)
-        specific_params<- c(specific_params, list(user_data = ENRICH_DATA))
+        enrf <- enrichKEGG_gson 
+        ENRICH_DATA <- gson::read.gson(kegg_file)
+        specific_params<- c(specific_params, list(gson = ENRICH_DATA))
       } else {
           stop("kegg_file not found or not provided. 
           It can be downloaded using download_latest_kegg_db()")
@@ -675,7 +675,7 @@ multienricher_ora <- function(all_funsys=NULL, genes_list, universe=NULL,
     if(readable == TRUE) {
       enriched_cats <- lapply(enriched_cats, function(x) { 
         if(! is.null(x)) return(
-          DOSE::setReadable(x, OrgDb = org_db, 
+          enrichit::setReadable(x, OrgDb = org_db, 
           keyType="ENTREZID")
           )
         else return(data.frame())

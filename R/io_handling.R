@@ -154,16 +154,16 @@ load_WGCNA_results <- function(path, main_deg_table){
     return(info)
 }
 
-#' get path for KEGG db for downloading/usage
+#' Get path for KEGG db for downloading/usage
 #' @param kegg_data_file file path. if null, inst/kegg_data_files will be used
 #' @param current_organism_info information for the organism, including KEGG code
 #' @param root_path only necessary if using the DEVELOPMENT mode - installs in the code dir
-#' @return Path to download the KEGG db - differs if in DEVEL or normal mode
+#' @return Path to the KEGG db file - differs if in DEVEL or normal mode
 #' @export
 get_kegg_db_path <- function(kegg_data_file, current_organism_info, root_path){
   if(is.null(kegg_data_file)) {
     kegg_code <- current_organism_info$KeggCode[1]
-    kegg_data_file <- paste0(kegg_code, "_KEGG.rds")
+    kegg_data_file <- paste0(kegg_code, "_KEGG.gson")
 
     if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ) {
       # Root path must be defined outside function i.e. in script that calls it
@@ -176,16 +176,16 @@ get_kegg_db_path <- function(kegg_data_file, current_organism_info, root_path){
   return(kegg_data_file)
 }
 
-#' download kegg db for a given organism
+#' Download KEGG db for a given organism
 #' @param current_organism_info organism info for which to download the file
 #' @param file where to save the file
-#' @return The latest KEGG db
+#' @return The latest KEGG db as a GSON object
 #' @export
 download_latest_kegg_db <- function(current_organism_info, file) {
   organism <- current_organism_info$KeggCode[1]
-  prepare_KEGG <- get("prepare_KEGG", envir=asNamespace("clusterProfiler"), inherits = FALSE)
+  prepare_KEGG <- get("prepare_KEGG", envir = asNamespace("clusterProfiler"), inherits = FALSE)
   ENRICH_DATA <- prepare_KEGG(organism, "KEGG", "kegg")
-  saveRDS(ENRICH_DATA, file=file)
+  gson::write.gson(ENRICH_DATA, file = file)
 }
 
 write_table_ehs <- function(x, file) {

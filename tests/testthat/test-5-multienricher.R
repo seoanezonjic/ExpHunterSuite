@@ -17,10 +17,10 @@
     qvalueCutoff  = 0.2,
     readable = FALSE)
 
-  packet_res_GO <- DOSE::setReadable(packet_res_GO, OrgDb = "org.Mm.eg.db", 
+  packet_res_GO <- enrichit::setReadable(packet_res_GO, OrgDb = "org.Mm.eg.db", 
         keyType="ENTREZID")
 
-  packet_res_reactome <- DOSE::setReadable(packet_res_reactome, OrgDb = "org.Mm.eg.db", 
+  packet_res_reactome <- enrichit::setReadable(packet_res_reactome, OrgDb = "org.Mm.eg.db", 
         keyType="ENTREZID")
 
   organisms_table <- get_organism_table()
@@ -76,7 +76,7 @@ test_that("Multienricher gives same results as running packets separately using 
     pvalueCutoff  = 0.05, qvalueCutoff = 0.2, 
     readable = TRUE)
 
-  packet_res_GO <- DOSE::setReadable(packet_res_GO, OrgDb = "org.Mm.eg.db", 
+  packet_res_GO <- enrichit::setReadable(packet_res_GO, OrgDb = "org.Mm.eg.db", 
         keyType="ENTREZID")
 
 
@@ -87,7 +87,7 @@ test_that("Multienricher gives same results as running packets separately using 
     pAdjustMethod = "BH",
     qvalueCutoff  = 0.2,
     readable = TRUE)
-  packet_res_reactome <- DOSE::setReadable(packet_res_reactome, OrgDb = "org.Mm.eg.db", 
+  packet_res_reactome <- enrichit::setReadable(packet_res_reactome, OrgDb = "org.Mm.eg.db", 
         keyType="ENTREZID")
 
   testthat::expect_identical(object=packet_res_GO, expected=new_res_all[["BP"]][[1]])

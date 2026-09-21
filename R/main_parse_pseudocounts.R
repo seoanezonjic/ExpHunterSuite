@@ -13,7 +13,7 @@
 #'  }
 #' @export
 #' @keywords method
-#' @importFrom GenomicFeatures makeTxDbFromGFF
+#' @importFrom txdbmaker makeTxDbFromGFF
 #' @importFrom AnnotationDbi keys select
 #' @importFrom tximport tximport
 parse_pseudocounts <- function(input_folder, mapper, output_type, annotation_file){
@@ -32,7 +32,7 @@ parse_pseudocounts <- function(input_folder, mapper, output_type, annotation_fil
     
     tx2gene <- NULL
     if (mapper == "salmon") {
-        annot_txdb <- GenomicFeatures::makeTxDbFromGFF(annotation_file)
+        annot_txdb <- txdbmaker::makeTxDbFromGFF(annotation_file)
         db_keys <- AnnotationDbi::keys(annot_txdb,  keytype = "TXNAME")
         tx2gene <- AnnotationDbi::select(annot_txdb, db_keys, "GENEID", "TXNAME")
         tx2gene <- remove_pattern_from_df(tx2gene, "[.][0-9]+")

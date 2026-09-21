@@ -2,7 +2,7 @@
 % Please edit documentation in R/io_handling.R
 \name{download_latest_kegg_db}
 \alias{download_latest_kegg_db}
-\title{download kegg db for a given organism}
+\title{Download KEGG db for a given organism}
 \usage{
 download_latest_kegg_db(current_organism_info, file)
 }
@@ -12,8 +12,8 @@ download_latest_kegg_db(current_organism_info, file)
 \item{file}{where to save the file}
 }
 \value{
-The latest KEGG db
+The latest KEGG db as a GSON object
 }
 \description{
-download kegg db for a given organism
+Download KEGG db for a given organism
 }

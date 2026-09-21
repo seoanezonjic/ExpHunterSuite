@@ -2,7 +2,7 @@
 % Please edit documentation in R/io_handling.R
 \name{get_kegg_db_path}
 \alias{get_kegg_db_path}
-\title{get path for KEGG db for downloading/usage}
+\title{Get path for KEGG db for downloading/usage}
 \usage{
 get_kegg_db_path(kegg_data_file, current_organism_info, root_path)
 }
@@ -14,8 +14,8 @@ get_kegg_db_path(kegg_data_file, current_organism_info, root_path)
 \item{root_path}{only necessary if using the DEVELOPMENT mode - installs in the code dir}
 }
 \value{
-Path to download the KEGG db - differs if in DEVEL or normal mode
+Path to the KEGG db file - differs if in DEVEL or normal mode
 }
 \description{
-get path for KEGG db for downloading/usage
+Get path for KEGG db for downloading/usage
 }
