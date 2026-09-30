@@ -68,8 +68,8 @@ test_that("match_cell_types, draw between more than one cell type", {
   types <- c("type1", "type2", "type3")
   cell_annotation <- data.frame(markers = genes[1:12], type = types)
   expected_df <- test_markers_df
-  expected_df$cell_type <- c("1. type1 / type2 (a)", "2. type1 / type2 (b)",
-                             "3. type3", "4. type1 / type2 (c)")
+  expected_df$cell_type <- c("1. type1-type2 (a)", "2. type1-type2 (b)",
+                             "3. type3", "4. type1-type2 (c)")
   output_df <- match_cell_types(test_markers_df, cell_annotation)$stats_table
   expect_equal(output_df, expected_df)
 })
