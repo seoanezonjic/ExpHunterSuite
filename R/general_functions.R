@@ -307,6 +307,6 @@ write_opt <- function(opt, output = getwd()) {
 
 process_opt_booleans <- function(params) {
   bool_indices <- grep("TRUE|FALSE", params)
-  params[bool_indices] <- as.logical(bool_indices)
+  params[bool_indices] <- as.logical(params[bool_indices])
   return(params)
 }
