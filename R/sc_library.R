@@ -312,7 +312,7 @@ collapse_markers <- function(markers_list) {
     cluster_match <- "Unknown"
   } else {
     cluster_match <- names(scores[which(scores == max(scores))])
-    cluster_match <- paste0(cluster_match, collapse = " / ")
+    cluster_match <- paste0(cluster_match, collapse = "-")
   }
   subset$cell_type <- paste0(subset$seurat_clusters, ". ", cluster_match)
   return(subset)
@@ -1841,6 +1841,10 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   } else {
     params$target_genes <- ""
   }
+  if(!is.null(params$force_ncells)) {
+    params$force_ncells <- as.integer(params$force_ncells)
+    if(is.na(params$force_ncells)) params$force_ncells <- ""
+  }
   if(mode == "DEG") {
     params$extra_columns <- ""
     if(params$DE_method == "") params$DE_method <- "wilcox"
@@ -1928,6 +1932,7 @@ process_sc_params <- function(params = list(), mode = "annotation") {
   if(params$meta_file == "" & params$imported_counts != "") {
     params$meta_file <- file.path(params$imported_counts, "meta.tsv")
   }
+  params <- process_opt_booleans(params)
   return(list(opt = params, doublet_list = doublet_list,
               out_suffix = out_suffix))
 }
@@ -2219,7 +2224,7 @@ get_DEG_table <- function(input_DEGs, col_vector = c("gene", "p_val",
   return(invisible(NULL))
 }
 
-.save_loupe <- function(counts, clusters, projections, output_dir) {
+.save_loupe <- function(counts, clusters, projections, output_dir, force = TRUE) {
   create_loupe <- get_unexported_function("loupeR", "create_loupe")
   feature_ids <- rownames(counts) 
   clusters <- data.frame(lapply(clusters, as.factor))
@@ -2228,5 +2233,5 @@ get_DEG_table <- function(input_DEGs, col_vector = c("gene", "p_val",
   clusters <- clusters[, !colnames(clusters) %in% columns_to_remove]
   loupe <- create_loupe(count_mat = counts, clusters = clusters,
     projections = list(UMAP = projections), feature_ids = feature_ids,
-    output_dir = output_dir)
+    output_dir = output_dir, force = force)
 }

@@ -279,7 +279,7 @@ main_sc_Hunter <- function(DEG_target, seu, p_val_cutoff = 1e-3,
   DEGs <- get_sc_markers(seu = seu, cond = "deg_group", DEG = TRUE,
     logfc.threshold = 0.5, subset_by = subset_target, DE_method = DE_method,
     p_val_cutoff = 0.05, verbose = verbose, values = "Ctrl,Treat",
-    min.pct = 0.1)
+    min.pct = 0.1, simple_DEG_pct = simple_DEG_pct)
   DEGs$markers <- lapply(DEGs$markers, function(DEG_df) {
                    tag_DEGs(DEG_df = DEG_df, p_val_cutoff = p_val_cutoff,
                             min_cell_proportion = min_cell_proportion,

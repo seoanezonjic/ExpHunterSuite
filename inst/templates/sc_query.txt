@@ -59,11 +59,12 @@
                     yes = "cell_type", no = "seurat_clusters")
     Seurat::Idents(plotter$hash_vars$seu) <- plotter$hash_vars$seu@meta.data[[ident]]
 
+    plotter$hash_vars$projection_seu <- plotter$hash_vars$seu
     if(!is.null(plotter$hash_vars$seu@meta.data$cell_type)) {
-	if(any(plotter$hash_vars$seu@meta.data$cell_type == "Pruned")) {
+	    if(any(plotter$hash_vars$seu@meta.data$cell_type == "Pruned")) {
           plotter$hash_vars$projection_seu <- subset_seurat(plotter$hash_vars$seu, column = "cell_type", value = "Pruned", operator = "!=")
         }
-    } else plotter$hash_vars$projection_seu <- plotter$hash_vars$seu
+    }
 end.rcode-->
 
 <h1><strong>SINGLE CELL RNA-SEQ QUERY EXPRESSION ANALYSIS</strong></h1>

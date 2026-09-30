@@ -16,8 +16,8 @@ option_list <- list(
             help = "Avg log2fc cutoff for significant DEGs."),
   optparse::make_option("--min_cell_proportion", type = "numeric", default = 0.1,
             help = "Min percentage of cells expressing DEG in each group."),
-  optparse::make_option("--simple_DEG_pct", type = "logical", default = FALSE, action = "store_true",
-            help = "Do not override Seurat's default handling of min.pct argument (passed as min_cell_proportion in this script)."), 
+  optparse::make_option("--simple_DEG_pct", type = "character", default = "FALSE",
+            help = "Disable override of Seurat's default handling of min.pct argument (passed as min_cell_proportion in this script)."), 
   optparse::make_option("--top_N", type = "numeric", default = 10,
             help = "Top N DEGs to represent in certain plots"),
   optparse::make_option("--min_counts", type = "numeric", default = 10,
@@ -28,7 +28,7 @@ option_list <- list(
             help = "Directory containing processed single-cell counts and metadata."),
   optparse::make_option("--target_genes", type = "character", default = "",
             help = "Path to target genes table, or comma-separated list of target genes."),
-  optparse::make_option("--verbose", type = "logical", default = FALSE, action = "store_true",
+  optparse::make_option("--verbose", type = "character", default = "FALSE",
             help = "Verbosity of base Seurat and harmony function calls."),
   optparse::make_option("--cpu", type = "integer", default = 1,
             help = "Provided CPUs.")
@@ -102,7 +102,7 @@ if(length(DEG_targets) > 0) {
                             p_val_cutoff = opt$p_val_cutoff, min_avg_log2FC = opt$min_avg_log2FC,
                             min_cell_proportion = opt$min_cell_proportion, top = opt$top_N,
                             query = opt$target_genes, output_path = opt$output, DE_method = opt$DE_method,
-                            min_counts = opt$min_counts, verbose = opt$verbose)
+                            min_counts = opt$min_counts, verbose = opt$verbose, simple_DEG_pct = opt$simple_DEG_pct)
   names(DEG_list) <- unlist(strsplit(names(DEG_targets), "_target"))
   parallel_list(X = names(DEG_list), FUN = write_DEG_output, workers = opt$cpu, DEG_list = DEG_list, opt = opt)
   message("Execution successful. Writing parameters to ", params$output, "/execution_parameters.txt")

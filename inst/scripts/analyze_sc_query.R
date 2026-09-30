@@ -18,7 +18,7 @@ option_list <- list(
             help = "Output folder."),
   optparse::make_option("--cpu", type = "double", default = 1,
             help = "Provided CPUs."),
-  optparse::make_option("--verbose", type = "logical", default = FALSE, action = "store_true",
+  optparse::make_option("--verbose", type = "logical", default = FALSE,
             help = "Verbosity of base Seurat and harmony function calls."),
   optparse::make_option("--extra_columns", type = "character", default = "",
             help = "Comma-separated list of extra conditions to represent in certain plots."),
