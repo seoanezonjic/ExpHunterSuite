@@ -516,12 +516,12 @@ prepare_enrichment_Reactome <- function(enrichment_type, reactome_id) {
   if(enrichment_type == "ora") enrf <- ReactomePA::enrichPathway
   if(enrichment_type == "gsea") enrf <- ReactomePA::gsePathway
 
-  get_enr_data <- get("get_Reactome_DATA", envir = asNamespace("ReactomePA"), 
+  get_enr_data <- get("gson_Reactome", envir = asNamespace("ReactomePA"), 
     inherits = FALSE)
   ENRICH_DATA <- get_enr_data(reactome_id) 
-  pattern_to_remove <- "Reactome_DATA *<-"
+  pattern_to_remove <- "gson *<-"
   ltorem <- grep(pattern_to_remove, body(enrf))
-  body(enrf)[[ltorem]] <- substitute(Reactome_DATA <- ENRICH_DATA)
+  body(enrf)[[ltorem]] <- substitute(gson <- ENRICH_DATA)
   return(enrf)
 }
 
