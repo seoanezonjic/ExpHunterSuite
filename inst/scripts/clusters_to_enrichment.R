@@ -74,7 +74,6 @@ option_list <- list(
                         help="How nodes will be labeled. Possible values: \"category\" (the default), \"group\", \"all\", \"none\".")
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
-opt <- process_opt_booleans(opt)
 
 ##########################################
 ## LOAD LIBRARIES
@@ -102,8 +101,10 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
         "organism_table.txt")
 }
 
-##################################### INITIALIZE ##
 library(clusterProfiler)
+
+##################################### INITIALIZE ##
+opt <- process_opt_booleans(opt)
 output_path <- opt$output_path
 if (is.na(output_path)){
   output_path <- file.path(getwd(), "functional_enrichment")
