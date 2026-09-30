@@ -28,7 +28,7 @@ option_list <- list(
                         help="Comma separated path of custom enrichment sets."),
   optparse::make_option(c("--showCategories"), type="integer", default=30, 
                         help="Number of top categories to show on clusterProfiler dotplot and emaplot."),
-  optparse::make_option(c("-c", "--clean_parentals"), type="logical", default=FALSE, 
+  optparse::make_option(c("-c", "--clean_parentals"), type="character", default="FALSE", 
                         action = "store_true", help="Clean parentals GO terms that appears on the same clusters than child."),
   optparse::make_option(c("-s", "--simplify"), type="logical", default=FALSE, 
                         action = "store_true", help="Apply simplify function from cluster profiler to enrichment."),
@@ -74,6 +74,7 @@ option_list <- list(
                         help="How nodes will be labeled. Possible values: \"category\" (the default), \"group\", \"all\", \"none\".")
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
+opt <- process_opt_booleans(opt)
 
 ##########################################
 ## LOAD LIBRARIES
