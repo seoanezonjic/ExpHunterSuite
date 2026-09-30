@@ -304,3 +304,9 @@ write_opt <- function(opt, output = getwd()) {
   writeLines(text = exec_params, con = fileConn)
   close(fileConn)
 }
+
+process_opt_booleans <- function(params) {
+  bool_indices <- grep("TRUE|FALSE", params)
+  params[bool_indices] <- as.logical(bool_indices)
+  return(params)
+}
