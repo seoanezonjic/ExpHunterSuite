@@ -7,15 +7,15 @@ library(dplyr)
 library(stringr)
 
 option_list <- list(
-    optparse::make_option(c("-s", "--chunk_size"), type="integer",default=100,
-        help="Database chunks size"),
-    optparse::make_option(c("-o", "--output"), type="character",
-        help="Tabulated file with information about each sample"),
-    optparse::make_option(c("-O", "--organism"), type="character",
-        help="Tabulated file with information about each sample"),
-    optparse::make_option(c("-c", "--cache_mode"), type="logical", 
-        default=FALSE, action = "store_true",
-        help=paste0("In this mode each chunk wil be launched in a diferent",
+    optparse::make_option(c("-s", "--chunk_size"), type = "integer", default = 100,
+        help = "Database chunks size"),
+    optparse::make_option(c("-o", "--output"), type = "character",
+        help = "Tabulated file with information about each sample"),
+    optparse::make_option(c("-O", "--organism"), type = "character",
+        help = "Tabulated file with information about each sample"),
+    optparse::make_option(c("-c", "--cache_mode"), type = "logical", 
+        default = FALSE, 
+        help = paste0("In this mode each chunk wil be launched in a diferent",
             " job. You must launch this script many times as chunks you have",
             " divided the data. You can incorporate this mode inside a loop",
             " and check if output/temp/finished exist"))

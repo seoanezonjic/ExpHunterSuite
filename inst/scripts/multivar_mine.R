@@ -22,20 +22,20 @@ option_list <- list(
   optparse::make_option(c("-s", "--supp_samples"), type="character", 
     default=NULL,
     help="Comma seppatared list of samples to be used as supplementary samples/individuals"),
-  optparse::make_option(c("-c", "--hcpc_consol"), type="logical", action = "store_false",
-    default=TRUE,
-    help="Deactivate HCPC consolidation through k-means."),
+  optparse::make_option(c("-c", "--hcpc_consol"), type = "logical",
+    default = TRUE,
+    help = "Deactivate HCPC consolidation through k-means."),
   optparse::make_option(c("-n", "--n_clusters"), type="integer",
     default=-1,
     help="Number of HCPC clusters."),
   optparse::make_option(c("--seed"), type="character",
     default=NULL, help="Seed to define in degenes_Hunter.R script. Will affect PCA results. Leave empty (\"\") to use a random seed, else provide an integer."),
-  optparse::make_option(c("--parallel"), type="logical", action = "store_true",
-    default=FALSE, help="Activate parallelization. WARNING: factomineR greedily takes all available cores, regardless of limitations. Use only in exclusive nodes."),
+  optparse::make_option(c("--parallel"), type = "logical",
+    default = FALSE, help = "Activate parallelization. WARNING: factomineR greedily takes all available cores, regardless of limitations. Use only in exclusive nodes."),
   optparse::make_option(c("--time"), type="character",
-    default="10000L", help="A string indicating the loop condition. If it ends with s, it is interpreted as time. If it ends with L, it is interpreted as number of datasets."),
-  optparse::make_option(c("--do_not_integrate"), type="logical", action = "store_true",
-    default = FALSE, help="Disable MFA, only perform individual analyses")
+    default="10000L", help = "A string indicating the loop condition. If it ends with s, it is interpreted as time. If it ends with L, it is interpreted as number of datasets."),
+  optparse::make_option(c("--do_not_integrate"), type="logical",
+    default = FALSE, help = "Disable MFA, only perform individual analyses")
  )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 

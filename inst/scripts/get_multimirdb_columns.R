@@ -9,7 +9,7 @@ option_list <- list(
                 help = "Columns of interest to retrieve: r (RNA), m (miRNA), rm (RNA and miRNA) "),
 	optparse::make_option(c("-d","--databases"), type = "character", default = "",
                 help = "Comma-separated list of databases to consult. Call flag -l to list available databases"),
-	optparse::make_option(c("-l","--list_databases"), type = "logical", default = FALSE, action = "store_true",
+	optparse::make_option(c("-l","--list_databases"), type = "logical", default = FALSE, 
                 help = "List all available databases")
 )
 

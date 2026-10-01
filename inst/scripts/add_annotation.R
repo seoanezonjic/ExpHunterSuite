@@ -8,7 +8,7 @@ option_list <- list(
                         help="Define the output path. Default = %default"),
   optparse::make_option(c("-c", "--column"), type="character", default=1,
                         help="Column name or index or 'rownames' with IDs to translate. Default = %default"),
-  optparse::make_option(c("-m", "--mirna"), type= "logical", default = FALSE, action ="store_true",
+  optparse::make_option(c("-m", "--mirna"), type= "logical", default = FALSE, 
                         help= "Indicate if the ids to translate are miRNA (from miRBase to mature ID). If active, -O is assumed to be \"human\". Combine with -l to see valid keytypes. Set flag -I to \"NAME\" to translate names to output_keytype accession code"),
   optparse::make_option(c("-I", "--input_keytype"), type="character", default=NULL,
                         help="Set the input keytype (use flag -l to list valid keytypes), or \"NAME\". Default=%default: All valid keytypes will be printed"),
@@ -17,7 +17,7 @@ option_list <- list(
   optparse::make_option(c("-O", "--organism"), type="character", default="Human",
                         help="Set the model organism. Default = %default"),
   optparse::make_option(c("-l", "--list_keytypes"), type="logical", default=FALSE,
-                        action = "store_true", help="List valid keytypes and exit. Shows mRNA keytypes by default, combine with flag --mirna to see valid miRNA keytypes")
+                        help="List valid keytypes and exit. Shows mRNA keytypes by default, combine with flag --mirna to see valid miRNA keytypes")
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 

@@ -8,7 +8,7 @@ option_list <- list(
     help="QC counts file."),
   optparse::make_option(c("-g", "--genome_version"), type="character", default=NULL,
     help="Genome release in UCSC format."),
-  optparse::make_option(c("-a", "--add_af"), type="logical", default = FALSE, action = "store_true",
+  optparse::make_option(c("-a", "--add_af"), type = "logical", default = FALSE,
     help="Whether or not to add allelic frequency info sourced from gnomAD."),
   optparse::make_option(c("-x", "--max_af"), type="integer", default = 0.001,
     help="Max allelic frequency cutoff to consider as a rare variant."),

@@ -83,7 +83,7 @@ scale_r_score <- function(db_info, database){
 option_list <- list(
 	optparse::make_option(c("-i", "--input"), type= "character", default = ".", 
 		help = "Set input folder"),
-	optparse::make_option(c("-r", "--report_mode"), type= "logical", action = "store_true", default = FALSE, 
+	optparse::make_option(c("-r", "--report_mode"), type= "logical", default = FALSE, 
 		help = "Activate report mode, load input/parsed_[org].RData and print report."),
 	optparse::make_option(c("--organism"), type = "character", default = NULL, 
 		help = "Set the model organisms available on multimiR (hsa, mmu or rno)"),

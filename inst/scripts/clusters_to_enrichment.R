@@ -16,7 +16,7 @@ option_list <- list(
                         help="Cutoff for Q value for enrichments. Default=%default"),
   optparse::make_option(c("-t", "--task_size"), type="integer", default=1,
                         help="number of clusters per task. Default=%default"),
-  optparse::make_option(c("-F", "--force"), type="character", default="FALSE", 
+  optparse::make_option(c("-F", "--force"), type="logical", default=FALSE, 
                          help="Ignore temporal files"),
   optparse::make_option(c("-f", "--funsys"), type="character", default="BP,MF,CC,KEGG,Reactome", 
                         help="Funsys to execute: MF => GO Molecular Function, BP => GO Biological Process, CC => GO Celular Component, 
@@ -28,9 +28,9 @@ option_list <- list(
                         help="Comma separated path of custom enrichment sets."),
   optparse::make_option(c("--showCategories"), type="integer", default=30, 
                         help="Number of top categories to show on clusterProfiler dotplot and emaplot."),
-  optparse::make_option(c("-c", "--clean_parentals"), type="character", default="FALSE", 
+  optparse::make_option(c("-c", "--clean_parentals"), type="logical", default=FALSE, 
                          help="Clean parentals GO terms that appears on the same clusters than child."),
-  optparse::make_option(c("-s", "--simplify"), type="character", default="FALSE", 
+  optparse::make_option(c("-s", "--simplify"), type="logical", default=FALSE, 
                          help="Apply simplify function from cluster profiler to enrichment."),
   optparse::make_option(c("-O", "--model_organism"), type="character", default="Human", 
                         help="Model organism. Human or Mouse"),
@@ -52,7 +52,7 @@ option_list <- list(
                         help="What identifier is being used for the genes in the custom gmt file. Default=%default"),
   optparse::make_option(c("-g", "--gene_attribute_file"), type="character", default=NULL,
                         help="3 columns tabular file- Cluster - InputGeneID - NumericAttribute. Header must be indicated as cluster - geneid - [numeric_atribute]"),
-  optparse::make_option(c("-G", "--group_results"), type="character", default="FALSE", 
+  optparse::make_option(c("-G", "--group_results"), type="logical", default=FALSE, 
                          help="Functions are grouped in most frequent words in emaplots."),
   optparse::make_option("--max_genes_plot", type="integer", default=200, 
                         help="Number of genes to show on clusterProfiler cnet"),
@@ -104,7 +104,6 @@ if( Sys.getenv('DEGHUNTER_MODE') == 'DEVELOPMENT' ){
 library(clusterProfiler)
 
 ##################################### INITIALIZE ##
-opt <- process_opt_booleans(opt)
 output_path <- opt$output_path
 if (is.na(output_path)){
   output_path <- file.path(getwd(), "functional_enrichment")

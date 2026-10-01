@@ -28,12 +28,12 @@ option_list <- list(
   optparse::make_option(c("-T", "--test"), type="character", default = NULL,
     help=paste0("[OPTIONAL] Test dataset. If include 'Prediction' column stats",
                 " will be calculated")),
-  optparse::make_option(c("-s", "--save_session"), type="logical",
-    default = FALSE, action = "store_true",
-    help="Flag to activa SAVE SESSION mode"),
-  optparse::make_option(c("-v", "--verbose"), type="logical",
-    default = FALSE, action = "store_true",
-    help="Activate verbose mode"),
+  optparse::make_option(c("-s", "--save_session"), type = "logical",
+    default = FALSE, 
+    help = "Flag to activa SAVE SESSION mode"),
+  optparse::make_option(c("-v", "--verbose"), type = "logical",
+    default = FALSE, 
+    help = "Activate verbose mode"),
   optparse::make_option(c("-o", "--outfile"), type="character",
     help=paste0("Output file basenames"))
 )

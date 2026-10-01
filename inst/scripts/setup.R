@@ -6,9 +6,9 @@
 ##########################################
 
 option_list <- list(
-  optparse::make_option(c("-f", "--force"), type = "character", default = FALSE, action = "store_true",
+  optparse::make_option(c("-f", "--force"), type = "character", default = FALSE,
             help = "Force reinstallation of already-installed packages"),
-  optparse::make_option(c("-d", "--check_dependencies"), type = "character", default = FALSE, action = "store_true",
+  optparse::make_option(c("-d", "--check_dependencies"), type = "character", default = FALSE,
             help = "Update package dependencies")
 )
 
