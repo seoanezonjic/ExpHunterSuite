@@ -270,6 +270,8 @@ ht2logFCPlot <- function(ht,
 #' @importFrom igraph layout_nicely
 #' @importFrom ggtangle cnetplot geom_cnet_label
 #' @importFrom ggplot2 scale_color_gradient2
+#' @importFrom ggplot2 guides
+#' @importFrom ggplot2 guide_legend
 #' @inheritParams write_merged_cluster_report
 #' @param input_obj Enrichment results object
 #' @param advanced_opt Named list of advanced options

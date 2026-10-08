@@ -274,7 +274,7 @@ analysis_DESeq2 <- function(data, p_val_cutoff, target, model_formula_text,
            list(de_deseq2=all_DESeq2_genes, DESeq2_dataset=dds)))
 }
 
-#' @importFrom edgeR DGEList calcNormFactors estimateDisp exactTest glmQLFit 
+#' @importFrom edgeR DGEList normLibSizes estimateDisp exactTest glmQLFit 
 #' glmQLFTest topTags cpm
 #' @importFrom stats formula model.matrix
 analysis_edgeR <- function(data, target, model_formula_text, multifactorial){
@@ -282,7 +282,7 @@ analysis_edgeR <- function(data, target, model_formula_text, multifactorial){
     if(model_formula_text == "~ treat") {
     # Building edgeR object
         d_edgeR <- edgeR::DGEList(counts=data, group=as.character(target$treat))
-        d_edgeR <- edgeR::calcNormFactors(d_edgeR)
+        d_edgeR <- edgeR::normLibSizes(d_edgeR)
         d_edgeR <- edgeR::estimateDisp(d_edgeR)
         d_edgeR_DE <- edgeR::exactTest(d_edgeR, dispersion = "auto", 
                                    pair=c("Ctrl", "Treat"))
@@ -316,7 +316,7 @@ analysis_edgeR <- function(data, target, model_formula_text, multifactorial){
 }
 
 #' @importFrom limma voom eBayes topTable lmFit
-#' @importFrom edgeR DGEList calcNormFactors
+#' @importFrom edgeR DGEList normLibSizes
 #' @importFrom stats formula model.matrix
 analysis_limma <- function(data, target, model_formula_text, multifactorial){
     model_design <- stats::model.matrix(stats::formula(
@@ -326,7 +326,7 @@ analysis_limma <- function(data, target, model_formula_text, multifactorial){
     # Calculating differential expression
     DGE_List <- edgeR::DGEList(counts=data) # Building object (DGEList)
     # Calculation of the normalization factor
-  DGE_List <- edgeR::calcNormFactors(DGE_List)  
+  DGE_List <- edgeR::normLibSizes(DGE_List)  
   # Converting the read counts to log2-cpm
     log2_cpm <- limma::voom(DGE_List, model_design) 
     fit <- limma::lmFit(log2_cpm, model_design)

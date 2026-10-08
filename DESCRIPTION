@@ -97,7 +97,7 @@ Imports:
     annotatr (>= 1.38.0),
     ggridges (>= 0.5.7),
     FactoInvestigate (>= 1.9.1),
-    FactoMineR (>= 2.16),
+    FactoMineR (>= 2.18),
     cowplot (>= 1.2.0),
     S4Vectors (>= 0.50.2),
     OUTRIDER (>= 1.30.0),
@@ -116,6 +116,7 @@ Imports:
     HDF5Array (>= 1.40.0),
     scDblFinder (>= 1.26.7),
     compcodeR (>= 1.48.0),
-    enrichit (>= 0.2.1)
+    enrichit (>= 0.2.1),
+    gson (>= 0.2.1)
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.0

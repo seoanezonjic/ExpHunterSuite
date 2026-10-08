@@ -256,11 +256,11 @@ importFrom(data.table,
 importFrom(diffcoexp,diffcoexp)
 importFrom(edgeR,
   DGEList,
-  calcNormFactors,
   cpm,
   estimateDisp,
   exactTest,
-  glmQLFit
+  glmQLFit,
+  normLibSizes
 )
 importFrom(enrichit,
   ora_gson,
@@ -280,6 +280,8 @@ importFrom(ggplot2,
   geom_tile,
   ggplot,
   ggsave,
+  guide_legend,
+  guides,
   labs,
   scale_color_brewer,
   scale_color_gradient2,
