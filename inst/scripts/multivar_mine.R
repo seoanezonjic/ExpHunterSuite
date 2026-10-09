@@ -8,7 +8,7 @@ option_list <- list(
     default=file.path(getwd(), "results"),
     help="Output path. Default=%default"),
   optparse::make_option(c("-f", "--force_ndims"), type="integer", 
-    default=NULL, help="Force analysis to use a set number of dimensions, disabling automatic detection"),
+    default=0, help="Force analysis to use a set number of dimensions, disabling automatic detection"),
   optparse::make_option(c("-A", "--act_des"), type="character", 
     default=NULL,
     help="Indicate which files are ACTIVE using a comma sepparated string. 
@@ -21,7 +21,7 @@ option_list <- list(
       The data types are 'c' (quantitative) and 'n' (qualitative) Example: 'file1.txt:n,file2.txt:n,file3.txt:c'"),
   optparse::make_option(c("-s", "--supp_samples"), type="character", 
     default=NULL,
-    help="Comma seppatared list of samples to be used as supplementary samples/individuals"),
+    help="Comma separated list of samples to be used as supplementary samples/individuals"),
   optparse::make_option(c("-c", "--hcpc_consol"), type = "logical",
     default = TRUE,
     help = "Deactivate HCPC consolidation through k-means."),

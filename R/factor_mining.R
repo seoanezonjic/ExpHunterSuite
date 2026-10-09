@@ -66,7 +66,7 @@ compute_pca <- function(pca_data,
             add_samples = NULL,
             min_dimensions = 2,
             scale.unit = TRUE,
-            hcpc_consol = TRUE, force_ndims = NULL,
+            hcpc_consol = TRUE, force_ndims = 0,
             n_clusters = -1, min_clusters = 1, 
             time = "10000L", parallel = FALSE) {
   
@@ -94,10 +94,10 @@ compute_pca <- function(pca_data,
 
   std_pca <- FactoMineR::PCA(raw_pca_data, scale.unit=TRUE, 
                   graph = FALSE)
-  message("Calculating significant dimensions for PCA data")
-  if(!is.null(force_ndims)) {
+  if(force_ndims > 0) {
     dim_to_keep <- force_ndims
   } else {
+    message("Calculating significant dimensions for PCA data")
     dim_to_keep <- get_PCA_dimensions(std_pca, min_dimensions = min_dimensions,
                                     time = time, parallel = parallel)
   }
@@ -137,7 +137,7 @@ compute_mca <- function(mca_data,
             transpose = TRUE,
             add_samples = NULL,
             min_dimensions = 2,
-            hcpc_consol = TRUE, force_ndims = NULL,
+            hcpc_consol = TRUE, force_ndims = 0,
             n_clusters = -1, time = "10000L", parallel = FALSE) {
 
   if (transpose) 
@@ -163,10 +163,10 @@ compute_mca <- function(mca_data,
   
   std_mca <- FactoMineR::MCA(raw_mca_data, graph = FALSE)                                                     
   # @NOTE: THIS SEEMS TO BE ONE OF THE SLOWEST STEPS BY FAR (MUCH FASTER IN PCA)
-  message("Calculating significant dimensions for MCA data")
-  if(!is.null(force_ndims)) {
+  if(force_ndims > 0) {
     dim_to_keep <- force_ndims
   } else {
+    message("Calculating significant dimensions for MCA data")
     dim_to_keep <- get_PCA_dimensions(std_mca, min_dimensions = min_dimensions,
                                     time = time, parallel = parallel)
   } 
@@ -323,9 +323,8 @@ compute_mfa <- function(act_des,
                         supp_desc = NULL, 
                         all_files,
                         min_dimensions = 2,
-                        hcpc_consol = TRUE, force_ndims = NULL,
+                        hcpc_consol = TRUE, force_ndims = 0,
                         n_clusters = -1, time = "10000L", parallel = FALSE){
- 
   groups <- unlist(c(act_des[1, , drop = FALSE],
                      supp_desc[1, , drop = FALSE]))
   data_types <- unlist(c(act_des[2, , drop = FALSE],
@@ -335,15 +334,14 @@ compute_mfa <- function(act_des,
   n_act <- length(act_des[1,])
   
   supp_groups_i <-NULL 
-  if (!is.null(supp_desc))
-    supp_groups_i <- seq(n_act + 1, length(groups))
+  if (!is.null(supp_desc)) supp_groups_i <- seq(n_act + 1, length(groups))
   std_mfa <- FactoMineR::MFA(merged_df,
                              group = group_lengths, 
                              type = data_types, 
                              name.group = groups, 
                              graph = FALSE, 
                              num.group.sup = supp_groups_i)
-  if(!is.null(force_ndims)) {
+  if(force_ndims > 0) {
     dim_to_keep <- force_ndims
   } else {
     dim_to_keep <- get_PCA_dimensions(std_mfa$global.pca, 
@@ -378,7 +376,7 @@ perform_individual_analysis <- function(
   target = NULL, 
   add_samples = NULL, 
   min_dimensions = 2,
-  hcpc_consol = TRUE, force_ndims = NULL,
+  hcpc_consol = TRUE, force_ndims = 0,
   n_clusters = -1, time = "10000L", parallel = FALSE
   ){
  
