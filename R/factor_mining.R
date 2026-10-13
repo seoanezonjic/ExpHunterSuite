@@ -67,7 +67,7 @@ compute_pca <- function(pca_data,
             min_dimensions = 2,
             scale.unit = TRUE,
             hcpc_consol = TRUE, force_ndims = 0,
-            n_clusters = -1, min_clusters = 1, 
+            n_clusters = -1, min_clusters = 3, 
             time = "10000L", parallel = FALSE) {
   
   if (transpose) 
