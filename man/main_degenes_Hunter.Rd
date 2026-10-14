@@ -37,7 +37,9 @@ main_degenes_Hunter(
   WGCNA_minKMEtoStay = 0.2,
   WGCNA_corType = "pearson",
   multifactorial = "",
-  library_sizes = NULL
+  library_sizes = NULL,
+  force_ndims = NULL,
+  time = NULL
 )
 }
 \arguments{
@@ -109,6 +111,10 @@ a gene as significant}
 \item{multifactorial}{specify interaction/effect when multifactorial design}
 
 \item{library_sizes}{NULL or a dataframe with sample names and library sizes}
+
+\item{force_ndims}{Force analysis to use a set number of dimensions, disabling automatic detection}
+
+\item{time}{string indicating the loop condition. Values ending in "s" are interpreted as time, while values ending in "L" are interpreted as the number of datasets}
 }
 \value{
 expression analysis result object with studies performed

@@ -38,6 +38,8 @@
 #' @param WGCNA_corType see WGCNA package
 #' @param multifactorial specify interaction/effect when multifactorial design
 #' @param library_sizes NULL or a dataframe with sample names and library sizes
+#' @param force_ndims Force analysis to use a set number of dimensions, disabling automatic detection
+#' @param time string indicating the loop condition. Values ending in "s" are interpreted as time, while values ending in "L" are interpreted as the number of datasets
 #' @return expression analysis result object with studies performed
 #' @keywords method
 #' @importFrom rlang .data
@@ -81,7 +83,9 @@ main_degenes_Hunter <- function(
     WGCNA_minKMEtoStay = 0.2,
     WGCNA_corType = "pearson",
     multifactorial = "",
-    library_sizes = NULL
+    library_sizes = NULL,
+    force_ndims = NULL,
+    time = NULL
   ){
     Row.names <- NULL
     modified_input_args <- check_input_main_degenes_Hunter(raw, 
@@ -186,10 +190,14 @@ main_degenes_Hunter <- function(
     var_filter['thr'] <- count_var_quantile
 
     #computing PCA for all_genes
+
     full_pca <- compute_pca(pca_data = default_norm$default,
                             target = target,
                             string_factors = string_factors, 
-                            numeric_factors = numeric_factors)
+                            numeric_factors = numeric_factors,
+                            force_ndims = force_ndims,
+                            time = time
+                            )
     PCA_res <- list("all_genes" = full_pca)
     ############################################################
     ##             PERFORM EXPRESSION ANALYSIS                 ##
@@ -268,7 +276,9 @@ main_degenes_Hunter <- function(
         DEG_pca <- compute_pca(pca_data = pca_deg_data,
                               target = target,
                               string_factors = string_factors, 
-                              numeric_factors = numeric_factors)
+                              numeric_factors = numeric_factors,
+                              force_ndims = force_ndims,
+                              time = time)
       }
     }
     PCA_res[["DEGs"]] <- DEG_pca
