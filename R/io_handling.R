@@ -160,6 +160,9 @@ load_WGCNA_results <- function(path, main_deg_table){
 #' @param root_path only necessary if using the DEVELOPMENT mode - installs in the code dir
 #' @return Path to the KEGG db file - differs if in DEVEL or normal mode
 #' @export
+#' @examples
+#' organism_info <- data.frame(KeggCode = "hsa")
+#' get_kegg_db_path(kegg_data_file = "inst/kegg_data_files", current_organism_info = organism_info)
 get_kegg_db_path <- function(kegg_data_file, current_organism_info, root_path){
   if(is.null(kegg_data_file)) {
     kegg_code <- current_organism_info$KeggCode[1]
@@ -181,6 +184,12 @@ get_kegg_db_path <- function(kegg_data_file, current_organism_info, root_path){
 #' @param file where to save the file
 #' @return The latest KEGG db as a GSON object
 #' @export
+#' @examples
+#' \dontrun{
+#' organism_info <- data.frame(KeggCode = "hsa")
+#' output_file <- tempfile(fileext = ".gson")
+#' download_latest_kegg_db(current_organism_info = organism_info, file = output_file)
+#' }
 download_latest_kegg_db <- function(current_organism_info, file) {
   organism <- current_organism_info$KeggCode[1]
   prepare_KEGG <- get("prepare_KEGG", envir = asNamespace("clusterProfiler"), inherits = FALSE)

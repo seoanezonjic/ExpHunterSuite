@@ -17,3 +17,10 @@ The latest KEGG db as a GSON object
 \description{
 Download KEGG db for a given organism
 }
+\examples{
+\dontrun{
+organism_info <- data.frame(KeggCode = "hsa")
+output_file <- tempfile(fileext = ".gson")
+download_latest_kegg_db(current_organism_info = organism_info, file = output_file)
+}
+}

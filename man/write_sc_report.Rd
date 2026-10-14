@@ -55,6 +55,6 @@ invisible(NULL)
 write_sc_report
 Write integration HTML report
 }
-\keyword{preprocessing,}
+\keyword{preprocessing}
 \keyword{report}
-\keyword{write,}
+\keyword{write}

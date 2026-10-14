@@ -525,15 +525,11 @@ filter_count <- function(reads,
 #' that pass the variability threshold.
 #'
 #' @examples
-#' # counts: matrix of raw counts (genes x samples) with rownames = gene IDs
-#' # Keep genes above the 5th percentile of residual-variance robust z-scores
-#' # genes_to_keep <- select_variable_genes_vst(counts, q_thr = 0.05)
-#'
-#' # More stringent: keep only the top 10% most variable genes
-#' # genes_to_keep <- select_variable_genes_vst(counts, q_thr = 0.90)
-#'
-select_variable_genes_vst <- function(raw_counts,
-                                      q_thr = 0.05) {
+#' \dontrun{
+#' genes_to_keep <- ExpHunterSuite:::select_variable_genes_vst(raw_counts = counts, q_thr = 0.05)
+#' }
+
+select_variable_genes_vst <- function(raw_counts, q_thr = 0.05) {
   # TODO (FGC): We need to loof for a way of using an absolute value, and not just the quantile
   counts <- as.matrix(raw_counts)
   coldata <- data.frame(dummy = rep(1, ncol(counts)),

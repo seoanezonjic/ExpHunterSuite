@@ -525,7 +525,7 @@ write_dense_matrix <- function(counts, output) {
 #' @param files_css Path to css file to inject. By default it injects styles.css
 #' found in ExpHunterSuite's templates directory.
 #'
-#' @keywords preprocessing, write, report
+#' @keywords preprocessing write report
 #' 
 #' @returns invisible(NULL)
 #' @export

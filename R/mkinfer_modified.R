@@ -1,5 +1,5 @@
 #' @importFrom stats complete.cases pt qt quantile setNames
-boot.t.test.2 <- function(
+boot_t_test_2 <- function(
 x, 
 y = NULL, 
 alternative = c("two.sided", "less", "greater"), 

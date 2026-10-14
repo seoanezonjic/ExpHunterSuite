@@ -141,6 +141,10 @@ get_gene_lists_cl <- function(DEGH_results, fc_colname) {
 #' @export
 #' @keywords org_db
 #' @return org_db 
+#' @examplesIf requireNamespace("org.Hs.eg.db", quietly = TRUE) 
+#' organism_table <- get_organism_table()
+#' organism_info <- organism_table[organism_table$KeggCode == "hsa", , drop = FALSE]
+#' get_org_db(organism_info)
 get_org_db <- function(current_organism_info) {
   org_db <- current_organism_info$Bioconductor_DB[1]
   org_db <- eval(parse(text = paste0(org_db,"::",org_db)))
@@ -233,7 +237,7 @@ get_translation_tables_orgdb <- function(
 #' @return data.frame with input and output ids, or just vector of
 #' output ids if just_output_ids set to TRUE
 #' @export
-#' @examples
+#' @examplesIf requireNamespace("org.Hs.eg.db", quietly = TRUE) 
 #' translate_ids_orgdb(ids = c("ENSG00000197283", "ENSG00000141510"),
 #'                     input_id = "ENSEMBL",
 #'                     output_id = "ENTREZID",

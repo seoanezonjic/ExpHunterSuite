@@ -44,5 +44,5 @@ head(tag_qc(seu = seu, minqcfeats = 500, percentmt = 5,
 head(tag_qc(seu = seu, minqcfeats = 1, percentmt = 5, doublet_list = NULL,
             min_cells_per_sample = 5)) 
 }
-\keyword{preprocessing,}
+\keyword{preprocessing}
 \keyword{qc}

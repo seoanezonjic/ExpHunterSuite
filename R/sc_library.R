@@ -42,7 +42,7 @@ read_sc_counts <- function(name, input, mincells = 1, minfeats = 1, exp_design){
 #' @param min_cells_per_sample An integer. Samples with fewer than this value of
 #' cells will be tagged as low_cell.'
 #'
-#' @keywords preprocessing, qc
+#' @keywords preprocessing qc
 #' 
 #' @returns Seurat object with tagged metadata
 #' @examples
@@ -112,7 +112,7 @@ tag_doublets <- function(seu, doublet_list) {
 #' @param name Sample name
 #' @param exp_design Data frame containing experiment design
 #' 
-#' @keywords preprocessing, subsetting, integration
+#' @keywords preprocessing subsetting integration
 #' 
 #' @returns Seurat object with the experimental conditions added as metadata
 #' @examples
@@ -153,7 +153,7 @@ add_sc_design <- function(seu, name, exp_design){
 #' @param suffix Suffix to paste with main count_path. Avoids unnecessary
 #' globbing.
 #' 
-#' @keywords preprocessing, merging, integration
+#' @keywords preprocessing merging integration
 #' 
 #' @returns Merged Seurat object
 #' @examples
@@ -1414,7 +1414,7 @@ read_and_format_targets <- function(file) {
 #' `extract_metadata` extracts metadata dataframe from Seurat objects
 #' 
 #' @param seu Seurat object / list of Seurat objects 
-#' @keywords preprocessing, report, metadata
+#' @keywords preprocessing report metadata
 #' @returns Dataframe with metadata
 #' @examples 
 #' data(pbmc_tiny)

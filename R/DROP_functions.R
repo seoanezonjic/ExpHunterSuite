@@ -229,6 +229,16 @@ preprocess_gtf <- function(gtf) {
 #' @returns A data frame containing only samples with at least one aberrantly
 #' expressed genes and genes aberrantly expressed in at least one sample.
 #' @export
+#' @examples
+#' df <- data.frame(
+#'   sampleID = c("sample1", "sample2", "GTEX-001", "GTEX-002"),
+#'   geneID = c("GENE1", "GENE2", "GENE1", "GENE3"),
+#'   padjust = c(0.001, 0.2, 0.01, 0.03),
+#'   zScore = c(3.5, 1.2, -3.0, 2.8),
+#'   type = c("up", "up", "down", "up"),
+#'   altRatio = c(0.75, 0.60, 0.25, 0.70)
+#' )
+#' aberrants <- get_aberrants(df = df, z_score_cutoff = 2, p_adj_cutoff = 0.05)
 
 get_aberrants <- function(df, z_score_cutoff, p_adj_cutoff) {
   if(is.null(df)) {
@@ -263,6 +273,17 @@ get_aberrants <- function(df, z_score_cutoff, p_adj_cutoff) {
 #' @import data.table
 #' @importFrom methods is
 #' @export
+#' @examples
+#' input_table <- data.frame(
+#'   sampleID = c("sample1", "sample2"),
+#'   geneID = c("GENE1", "GENE2"),
+#'   padjust = c(0.01, 0.05),
+#'   type = c("SNV", "CNV"),
+#'   zScore = c(2.5, -1.8),
+#'   altRatio = c(0.75, 0.20),
+#'   extra_column = c("A", "B")
+#' )
+#' format_aberrants(input_table = input_table)
 
 format_aberrants <- function(input_table) {
   if(is.null(input_table)) {
@@ -599,6 +620,20 @@ merge_bam_stats <- function(ods, stats_path) {
 #' @param results Aberrant expression results data frame.
 #' @returns A table containing the merged bam stats.
 #' @export
+#' @examples
+#' results <- data.frame(
+#'   sampleID = c("sample1", "sample2", "GTEX-001", "GTEX-002"),
+#'   geneID = c("GENE1", "GENE2", "GENE1", "GENE3"),
+#'   padjust = c(0.001, 0.2, 0.01, 0.03),
+#'   zScore = c(3.5, 1.2, -3.0, 2.8),
+#'   type = c("up", "up", "down", "up"),
+#'   altRatio = c(0.75, 0.60, 0.25, 0.70)
+#' ) 
+#' formatted_results <- format_for_report(
+#'   results = results,
+#'   z_score_cutoff = 2,
+#'   p_adj_cutoff = 0.05
+#' )
 
 format_for_report <- function(results, z_score_cutoff, p_adj_cutoff) {
   data <- .processed_vs_imported(results)

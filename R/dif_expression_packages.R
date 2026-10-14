@@ -275,7 +275,7 @@ analysis_DESeq2 <- function(data, p_val_cutoff, target, model_formula_text,
 }
 
 #' @importFrom edgeR DGEList normLibSizes estimateDisp exactTest glmQLFit 
-#' glmQLFTest topTags cpm
+#'  glmQLFTest topTags cpm
 #' @importFrom stats formula model.matrix
 analysis_edgeR <- function(data, target, model_formula_text, multifactorial){
     # This is the default model_formula_text if nothing else is given.

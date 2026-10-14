@@ -32,9 +32,11 @@ output ids if just_output_ids set to TRUE
 Translates between gene IDs via orgdb
 }
 \examples{
+\dontshow{if (requireNamespace("org.Hs.eg.db", quietly = TRUE) ) withAutoprint(\{ # examplesIf}
 translate_ids_orgdb(ids = c("ENSG00000197283", "ENSG00000141510"),
                     input_id = "ENSEMBL",
                     output_id = "ENTREZID",
                     org_db = org.Hs.eg.db::org.Hs.eg.db
 )
+\dontshow{\}) # examplesIf}
 }

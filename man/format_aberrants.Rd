@@ -25,3 +25,15 @@ Function to format DROP results
 updates padjust column and takes its negative decimal logarithm, and renames
 it to p_padjust (as in -log(padjust)).
 }
+\examples{
+input_table <- data.frame(
+  sampleID = c("sample1", "sample2"),
+  geneID = c("GENE1", "GENE2"),
+  padjust = c(0.01, 0.05),
+  type = c("SNV", "CNV"),
+  zScore = c(2.5, -1.8),
+  altRatio = c(0.75, 0.20),
+  extra_column = c("A", "B")
+)
+format_aberrants(input_table = input_table)
+}

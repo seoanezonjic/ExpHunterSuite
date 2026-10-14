@@ -17,4 +17,11 @@ org_db
 Obtain an org_db object from a current_organism_info, obtained from
 subsetting the results of get_organism_table()
 }
+\examples{
+\dontshow{if (requireNamespace("org.Hs.eg.db", quietly = TRUE) ) withAutoprint(\{ # examplesIf}
+organism_table <- get_organism_table()
+organism_info <- organism_table[organism_table$KeggCode == "hsa", , drop = FALSE]
+get_org_db(organism_info)
+\dontshow{\}) # examplesIf}
+}
 \keyword{org_db}

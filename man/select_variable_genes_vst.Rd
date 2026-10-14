@@ -33,11 +33,7 @@ This function is intended for exploratory filtering / "cleaning" or feature sele
 prior to downstream analyses such as PCA or clustering.
 }
 \examples{
-# counts: matrix of raw counts (genes x samples) with rownames = gene IDs
-# Keep genes above the 5th percentile of residual-variance robust z-scores
-# genes_to_keep <- select_variable_genes_vst(counts, q_thr = 0.05)
-
-# More stringent: keep only the top 10\% most variable genes
-# genes_to_keep <- select_variable_genes_vst(counts, q_thr = 0.90)
-
+\dontrun{
+genes_to_keep <- ExpHunterSuite:::select_variable_genes_vst(raw_counts = counts, q_thr = 0.05)
+}
 }

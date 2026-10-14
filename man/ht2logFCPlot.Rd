@@ -35,6 +35,15 @@ Function to generate scatter plot for each gene in a hunter table
 and show logFC per package
 taking into account the variablity between them
 }
+\examples{
+ht <- data.frame(
+  logFC_DESeq2 = c(2.5, -1.2, 0.5, 3.0),
+  logFC_edgeR  = c(2.0, -1.0, 0.4, 1.0),
+  logFC_limma  = c(2.3, -1.1, 0.6, 2.5)
+)
+rownames(ht) <- c("Gen1", "Gen2", "Gen3", "Gen4")
+plot_test <- ht2logFCPlot(ht = ht)
+}
 \author{
 Fernando Moreno Jabato <jabato(at)uma(dot)com>
 }

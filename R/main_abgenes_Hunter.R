@@ -29,13 +29,13 @@
 #' @importFrom data.table fread
 #' @importFrom utils write.table
 #' @importFrom SummarizedExperiment SummarizedExperiment colData rowData
-#' rowRanges mcols
+#'  rowRanges mcols
 #' @importFrom OUTRIDER plotCountCorHeatmap plotCountGeneSampleHeatmap
 #' @importFrom AnnotationDbi loadDb
 #' @importFrom S4Vectors endoapply
 #' @importFrom ggplot2 labs scale_color_brewer aes geom_boxplot theme_bw
-#' geom_point ylim geom_histogram scale_x_log10 facet_wrap guides guide_legend
-#' theme element_rect
+#'  geom_point ylim geom_histogram scale_x_log10 facet_wrap guides guide_legend
+#'  theme element_rect
 #' @importFrom cowplot theme_cowplot background_grid plot_grid
 #' @importFrom MatrixGenerics rowQuantiles
 #' @examples

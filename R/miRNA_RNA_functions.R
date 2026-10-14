@@ -591,7 +591,7 @@ score_comparison <- function(databases, all_pairs, sample_size, strategy){
     res <- data.frame(p.value = 1, boot.p.value = 1)
     if (length(strat_scores) > 1) {
       # res <- stats::t.test(x = strat_scores, y = bckg_scores, 
-        res <- boot.t.test.2(x = strat_scores, y = bckg_scores, 
+        res <- boot_t_test_2(x = strat_scores, y = bckg_scores, 
           alternative = "greater", 
           vectorial = FALSE, 
           R = 1000,

@@ -39,7 +39,7 @@ Go to page https://cran.r-project.org and install the latest R version on your c
 To install DEgenes Hunter from console, we use the devtools utility to install R packages from GitHub. Please type the following commands:
 
 ``` bash
-    Rscript -e 'install.packages("devtools", repos="http://cran.us.r-project.org")'
+    Rscript -e 'install.packages("devtools", repos="https://cran.r-project.org")'
     Rscript -e 'devtools::install_github("seoanezonjic/ExpHunterSuite", dependencies=TRUE)'
 ```
 
@@ -447,7 +447,7 @@ write_functional_report(final_results, func_results) # Generate friendly html re
 
 Please cite DEgenes Hunter as:
 
-Isabel González Gayte, Rocío Bautista Moreno, Pedro Seoane Zonjic & Manuel G. Claros (2017). DEgenes Hunter - A Flexible R Pipeline for Automated RNA-seq Studies in Organisms without Reference Genome. Genomics And Computational Biology, 3(3), e31. doi:http://dx.doi.org/10.18547/gcb.2017.vol3.iss3.e31
+Isabel González Gayte, Rocío Bautista Moreno, Pedro Seoane Zonjic & Manuel G. Claros (2017). DEgenes Hunter - A Flexible R Pipeline for Automated RNA-seq Studies in Organisms without Reference Genome. Genomics And Computational Biology, 3(3), e31. doi:https://dx.doi.org/10.18547/gcb.2017.vol3.iss3.e31
 
 Fernando M. Jabato, José Córdoba-Caballero, Elena Rojano, Carlos Romá-Mateo, Pascual Sanz, Belén Pérez, Diana Gallego, Pedro Seoane, Juan A.G. Ranea y and James R. Perkins. Differential expression, co-expression and functional analysis of RNA-seq data using the DEgenes Hunter suite and its applicability to rare disease (in review). Briefings in Bioinformatics.
 

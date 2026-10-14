@@ -138,7 +138,7 @@ set_default_width <- function(enrich_obj,
 #' `gg_heatmap` Builds a ggplot2 heatmap from a data table.
 #'
 #' @importFrom ggplot2 ggplot aes_string geom_tile theme_minimal theme 
-#' element_blank element_text scale_fill_gradient2 geom_text
+#'  element_blank element_text scale_fill_gradient2 geom_text
 #' @param data_table Input data table.
 #' @param input Input string. Only used if it is equal to "matrix", in which
 #' case it will convert input data to a data frame.
@@ -219,9 +219,17 @@ gg_heatmap <- function(data_table, input = "", transpose = FALSE,
 #' @return plot ready to be rendered
 #' @author Fernando Moreno Jabato <jabato(at)uma(dot)com>
 #' @importFrom ggplot2 ggplot aes_string geom_point scale_shape_manual ylim 
-#' xlab ggtitle theme theme_classic element_blank
+#'  xlab ggtitle theme theme_classic element_blank
 #' @importFrom stats var
 #' @export
+#' @examples
+#' ht <- data.frame(
+#'   logFC_DESeq2 = c(2.5, -1.2, 0.5, 3.0),
+#'   logFC_edgeR  = c(2.0, -1.0, 0.4, 1.0),
+#'   logFC_limma  = c(2.3, -1.1, 0.6, 2.5)
+#' )
+#' rownames(ht) <- c("Gen1", "Gen2", "Gen3", "Gen4")
+#' plot_test <- ht2logFCPlot(ht = ht)
 ht2logFCPlot <- function(ht,
   var_filter = 0.001, 
   title = "Filtered logFC", 

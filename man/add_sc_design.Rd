@@ -27,5 +27,5 @@ exp_design <- data.frame(sample = c("sampleA", "sampleB", "sampleC"),
 add_sc_design(seu = pbmc_tiny, name = "sampleA", exp_design = exp_design)
 }
 \keyword{integration}
-\keyword{preprocessing,}
-\keyword{subsetting,}
+\keyword{preprocessing}
+\keyword{subsetting}

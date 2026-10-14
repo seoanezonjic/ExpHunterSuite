@@ -21,5 +21,5 @@ tiny_list <- list(pbmc_tiny1 = pbmc_tiny, pbmc_tiny2 = pbmc_tiny)
 extract_metadata(seu = tiny_list)
 }
 \keyword{metadata}
-\keyword{preprocessing,}
-\keyword{report,}
+\keyword{preprocessing}
+\keyword{report}

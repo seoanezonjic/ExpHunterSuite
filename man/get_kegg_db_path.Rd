@@ -19,3 +19,7 @@ Path to the KEGG db file - differs if in DEVEL or normal mode
 \description{
 Get path for KEGG db for downloading/usage
 }
+\examples{
+organism_info <- data.frame(KeggCode = "hsa")
+get_kegg_db_path(kegg_data_file = "inst/kegg_data_files", current_organism_info = organism_info)
+}

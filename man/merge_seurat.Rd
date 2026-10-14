@@ -30,5 +30,5 @@ seurat object.
  }
 }
 \keyword{integration}
-\keyword{merging,}
-\keyword{preprocessing,}
+\keyword{merging}
+\keyword{preprocessing}
