@@ -210,6 +210,10 @@ if (is.null(opt$external_DEA_file)) {
   }
 }
 
+if(!grepl("R", opt$modules)) {
+  message(crayon::red$bold("MODULE R IS NOT ACTIVE, NO REPORT WILL BE RENDERED"))
+}
+
 #############################################################################
 #EXPRESSION ANALYSIS
 ############################################################################
