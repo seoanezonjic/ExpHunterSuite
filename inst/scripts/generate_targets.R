@@ -1,13 +1,6 @@
 #!/usr/bin/env Rscript
 
 ######################################################
-######## INIT
-######################################################
-
-CTRL <- 1
-TREAT <- 2
-
-######################################################
 ######## FUNCTIONS
 ######################################################
 
@@ -51,42 +44,39 @@ load_table <- function(input_file, blacklist = NULL, whitelist = NULL, filters =
 
 parse_target <- function(target_string) {
   parsed_target <- list()
-  
+
   # Split by ">"
   target_parts <- strsplit(target_string, ">")[[1]]
   target_name <- target_parts[1]
   all_features <- strsplit(target_parts[2], ";")[[1]]
-  
+
   for (factor in all_features) {
     # Split by ":"
     feature_split <- strsplit(factor, ":")[[1]]
     feature_name <- feature_split[1]
     features <- strsplit(feature_split[2], ",")[[1]]
-    
+
     # Split each feature by "/"
-    features <- unlist(lapply(features, function(feature) {
-      strsplit(feature, "/")[[1]]
-    }))
-    
-    parsed_target[[feature_name]] <- features
+    ctrl_features <- strsplit(features[1], "/")[[1]]
+    treat_features <- strsplit(features[2], "/")[[1]]
+
+    parsed_target[[feature_name]] <- list(Ctrl = ctrl_features, Treat = treat_features)
   }
-  
+
   return(list(target_name = target_name, target = parsed_target))
 }
 
 
 build_target <- function(table, target) {
-  samples <- experiment_design$sample
+  samples <- table$sample
   target_ctrls <- target_treats <- TRUE
-  for(factor in names(target)) {
-    factor_ctrls <- experiment_design[factor] == target[[factor]][CTRL]
+  for (factor in names(target)) {
+    factor_ctrls <- table[[factor]] %in% target[[factor]]$Ctrl
+    factor_treats <- table[[factor]] %in% target[[factor]]$Treat
     target_ctrls <- target_ctrls & factor_ctrls
-    factor_treats <- experiment_design[factor] == target[[factor]][TREAT]
     target_treats <- target_treats & factor_treats
   }
-  ctrl_features <- samples[target_ctrls]
-  treat_features <- samples[target_treats]
-  new_target <- list(Ctrl = ctrl_features, Treat = treat_features)
+  new_target <- list(Ctrl = samples[target_ctrls], Treat = samples[target_treats])
   return(new_target)
 }
 
@@ -99,7 +89,6 @@ filter_features <- function(features, factor) {
     # factor is 0-based index in R (CTRL = 0, TREAT = 1)
     filtered_ft[[ft_name]] <- feature[[factor + 1]]
   }
-  
   return(filtered_ft)
 }
 
