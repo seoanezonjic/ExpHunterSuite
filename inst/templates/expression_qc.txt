@@ -35,11 +35,11 @@
   	}
 
    make_top_n_expression_table <- function(count_data, n = 5) {
-	    top_n_index <- order(rowSums(count_data), decreasing=TRUE)[1:n]
-	    sample_totals <- colSums(count_data)
+	    top_n_index <- order(rowSums(count_data), decreasing = TRUE)[1:n]
 	    top_n_count <- count_data[top_n_index, ]
-	    top_n_perc <- apply(top_n_count, 1,
-	    					function(x) round(x / sample_totals * 100, 3))
+	    sample_totals <- colSums(count_data)
+	    top_n_perc <- apply(top_n_count, 1, function(x) round(x / sample_totals * 100, 3))
+
 	    return(top_n_perc)
 	}
 
@@ -293,6 +293,7 @@ end.rcode-->
 
 <!--begin.rcode top_n_expression, results='asis', echo=FALSE, warning=FALSE, message=FALSE
 	cat(plotter$create_title("Percentages of reads per sample mapping to the most highly expressed genes",
-							 id = "pct_map", hlevel = 3, indexable = TRUE))
-	cat(plotter$table(list(id = "raw_filter", header = NULL, row_names = NULL, styled = "dt", func = make_top_n_expression_table, transpose = TRUE)))
+							 		id = "pct_map", hlevel = 3, indexable = TRUE))
+	cat(plotter$table(list(id = "raw_filter", header = NULL, row_names = NULL, styled = "dt", func = make_top_n_expression_table, transpose = TRUE,
+								   rownames_col = "gene")))
 end.rcode-->

@@ -284,10 +284,11 @@ final_results <- main_degenes_Hunter(
   force_ndims = opt$force_ndims,
   time = opt$time
 )
+
 ############################################################################
 # WRITE OUTPUT
 ###########################################################################
-  write_expression_data(final_results, opt$output_files)
-  if (grepl("R", opt$modules)) {
-    write_expression_report(final_results, opt$output_files, template_folder, opt)
-  }
+write_expression_data(final_results, opt$output_files)
+if (grepl("R", opt$modules)) {
+  write_expression_report(final_results, opt$output_files, template_folder, opt)
+}
