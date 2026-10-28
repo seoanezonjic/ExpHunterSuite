@@ -94,7 +94,7 @@ compute_pca <- function(pca_data,
 
   std_pca <- FactoMineR::PCA(raw_pca_data, scale.unit=TRUE, 
                   graph = FALSE)
-  if(force_ndims > 0) {
+  if(isTRUE(force_ndims > 0)) {
     dim_to_keep <- force_ndims
   } else {
     message("Calculating significant dimensions for PCA data")
@@ -163,7 +163,7 @@ compute_mca <- function(mca_data,
   
   std_mca <- FactoMineR::MCA(raw_mca_data, graph = FALSE)                                                     
   # @NOTE: THIS SEEMS TO BE ONE OF THE SLOWEST STEPS BY FAR (MUCH FASTER IN PCA)
-  if(force_ndims > 0) {
+  if(isTRUE(force_ndims > 0)) {
     dim_to_keep <- force_ndims
   } else {
     message("Calculating significant dimensions for MCA data")
@@ -341,7 +341,7 @@ compute_mfa <- function(act_des,
                              name.group = groups, 
                              graph = FALSE, 
                              num.group.sup = supp_groups_i)
-  if(force_ndims > 0) {
+  if(isTRUE(force_ndims > 0)) {
     dim_to_keep <- force_ndims
   } else {
     dim_to_keep <- get_PCA_dimensions(std_mfa$global.pca, 

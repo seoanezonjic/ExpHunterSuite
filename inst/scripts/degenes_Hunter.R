@@ -154,7 +154,7 @@ option_list <- list(
   optparse::make_option(c("--force_ndims"), type="integer",
     default=NULL, help="Force analysis to use a set number of dimensions, disabling automatic detection"),
   optparse::make_option(c("--time"), type="character",
-    default=NULL, help="A string indicating the loop condition. If it ends with s, it is interpreted as time. If it ends with L, it is interpreted as number of datasets.")
+    default="10000L", help="A string indicating the loop condition. If it ends with s, it is interpreted as time. If it ends with L, it is interpreted as number of datasets.")
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
