@@ -157,11 +157,7 @@ generate_command <- function(variables) {
     split_var <- unlist(strsplit(variable, " "))
     if(length(split_var) < 2 | split_var[2] == "FALSE") next
     if(is.null(split_var[2])) split_var[2] <- ""
-    if(split_var[2] == "TRUE"){
-      option <- split_var[1]
-    } else {
-      option <- paste(split_var, collapse = " ")
-    }
+    option <- paste(split_var, collapse = " ")
     command <- paste(command, option, sep = " ")
   }
   return(command)
