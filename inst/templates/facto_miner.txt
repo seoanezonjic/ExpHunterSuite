@@ -93,10 +93,10 @@ plot_heat <- function(data_frame, p_val_correct = NULL, fill, text_plot){
 	if(!is.null(p_val_correct)) {
 		data_frame$adj.p.value <- stats::p.adjust(data_frame$p.value, method = p_val_correct)
 		data_frame$adj_signif <- ""
-		data_frame$adj_signif[data_frame$adj.p.value < 0.05] <- "*"
-		data_frame$adj_signif[data_frame$adj.p.value < 0.01] <- "**"
-		data_frame$adj_signif[data_frame$adj.p.value < 0.001] <- "***"
-		data_frame$text_corr <- paste(data_frame$correlation, data_frame$adj_signif, sep = " ")
+		data_frame$adj_signif <- ifelse(data_frame$adj.p.value < 0.001, "***",
+			                     ifelse(data_frame$adj.p.value < 0.01, "**",
+			                     ifelse(data_frame$adj.p.value < 0.05, "*", "")))
+		data_frame[[text_plot]] <- paste(data_frame[, 1], data_frame$adj_signif, sep = " ")
 	}
 	gg_heatmap(data_frame, x_axis = "dimension", y_axis = "factor", fill = fill, text_plot = text_plot, text_size = 4,
 		col = c("#3b71ff", "#f1f1f1", "#ff3b3b"))
@@ -248,7 +248,7 @@ if (!is.null(plotter$hash_vars$dim_data_merged)){
 	dim_data_cat <- plotter$hash_vars$dim_data_merged$qual_category
 	if (nrow(dim_data_cat) > 0) {
 		dim_data_cat$dimension <- gsub("Dim.", "PC", dim_data_cat$dimension)
-
+		dim_data_cat$Estimate <- round(dim_data_cat$Estimate, digits = 2)
 		dim_data_cat$significance <- ifelse(dim_data_cat$p.value < 0.001, "***",
 						                ifelse(dim_data_cat$p.value < 0.01, "**",
 					                    ifelse(dim_data_cat$p.value < 0.05, "*", "")))
