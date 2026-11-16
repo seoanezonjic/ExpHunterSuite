@@ -45,4 +45,3 @@ merged_tables <- rbind(colnames(merged_tables), merged_tables)
 merged_tables <- cbind(rownames(merged_tables), merged_tables)
 merged_tables[1, 1] <- "ID"
 write.table(merged_tables, file = "", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-
