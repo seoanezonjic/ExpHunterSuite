@@ -166,63 +166,6 @@ main_degenes_Hunter <- function(
     # TODO: split normalization ffrom 'get_gene_variance' function?
     var_data <- get_gene_variance(raw_filter, target = target, type_of_normalization = type_of_normalization)
 
-    # usual <- get_gene_variance(
-    # raw_filter,
-    # target,
-    # "usual"
-    # )$deseq2_normalized_counts
-
-    # vst <- get_gene_variance(
-    # raw_filter,
-    # target,
-    # "vst"
-    # )$deseq2_normalized_counts
-
-    # rlog <- get_gene_variance(
-    # raw_filter,
-    # target,
-    # "rlog"
-    # )$deseq2_normalized_counts
-
-    # print("comparing matrices")
-    # print("VST")
-    # print(all.equal(usual, vst))
-    # print("RLOG")
-    # print(all.equal(usual, rlog))
-    # print("VS")
-    # print(all.equal(vst, rlog))
-
-
-    # print(cor(as.numeric(usual), as.numeric(vst)))
-    # print(cor(as.numeric(usual), as.numeric(rlog)))
-    # print(cor(as.numeric(vst), as.numeric(rlog)))
-
-
-    # usual_scaled <- scale(t(usual), center = TRUE, scale = TRUE)
-    # vst_scaled   <- scale(t(vst), center = TRUE, scale = TRUE)
-    # rlog_scaled  <- scale(t(rlog), center = TRUE, scale = TRUE)
-
-    # print("Correlación usual vs VST tras estandarizar")
-    # print(cor(
-    #   as.numeric(usual_scaled),
-    #   as.numeric(vst_scaled),
-    #   use = "complete.obs"
-    # ))
-
-    # print("Correlación usual vs rlog tras estandarizar")
-    # print(cor(
-    #   as.numeric(usual_scaled),
-    #   as.numeric(rlog_scaled),
-    #   use = "complete.obs"
-    # ))
-
-    # print("Correlación VST vs rlog tras estandarizar")
-    # print(cor(
-    #   as.numeric(vst_scaled),
-    #   as.numeric(rlog_scaled),
-    #   use = "complete.obs"
-    # ))
-
     if(deseq2_var_quantile > 0) {
       genes_to_keep <- select_variable_genes_vst(raw_filter, q_thr = deseq2_var_quantile)
       raw_filter <- raw_filter[rownames(raw_filter) %in% genes_to_keep, ]
@@ -635,21 +578,18 @@ get_gene_variance <- function(count_matrix, target, type_of_normalization){
       dds,
       normalized = TRUE
     )
-    print("I am in usual")
   } else if (type_of_normalization == "vst") {
     vsd <- DESeq2::varianceStabilizingTransformation(
       dds,
       blind = TRUE
     )
     normalized_counts <- SummarizedExperiment::assay(vsd)
-    print("I am in vsd")
   } else if (type_of_normalization == "rlog") {
     rld <- DESeq2::rlog(
       dds,
       blind = TRUE
     )
     normalized_counts <- SummarizedExperiment::assay(rld)
-    print("I am in rlog")
   } else {
     stop(
       "`type_of_normalization` must be NULL, 'vst' o 'rlog'."
