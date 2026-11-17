@@ -138,7 +138,7 @@ end.rcode-->
 	cat(plotter$prettify_div(plotter$barplot(list(id = "barplot_df", title = "DEG selection",
 											 row_names = TRUE, header = NULL, text = FALSE, fields = 2:1,
 											 transpose = FALSE, width = "1192px", config = list('xAxisTitle' = 'Number of genes',
-											 smpLabelImage = TRUE, showDataValues = TRUE, smpTextRotate = 90))),
+											 smpLabelImage = TRUE, showDataValues = TRUE, smpTextRotate = 90, graphOrientation = "horizontal"))),
 							 preset = "magic", justify = "left"))
 end.rcode-->
 
