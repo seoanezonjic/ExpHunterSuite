@@ -154,7 +154,9 @@ option_list <- list(
   optparse::make_option(c("--force_ndims"), type="integer",
     default=NULL, help="Force analysis to use a set number of dimensions, disabling automatic detection"),
   optparse::make_option(c("--time"), type="character",
-    default="10000L", help="A string indicating the loop condition. If it ends with s, it is interpreted as time. If it ends with L, it is interpreted as number of datasets.")
+    default="10000L", help="A string indicating the loop condition. If it ends with s, it is interpreted as time. If it ends with L, it is interpreted as number of datasets."),
+  optparse::make_option(c("--type_of_normalization"), type="character",
+    default="usual", help="vst, rlog or usual or NULL")
 )
 opt <- optparse::parse_args(optparse::OptionParser(option_list=option_list))
 
@@ -282,7 +284,8 @@ final_results <- main_degenes_Hunter(
   multifactorial = opt$multifactorial,
   library_sizes = library_sizes,
   force_ndims = opt$force_ndims,
-  time = opt$time
+  time = opt$time,
+  type_of_normalization = opt$type_of_normalization
 )
 
 ############################################################################
