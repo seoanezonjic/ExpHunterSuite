@@ -965,4 +965,3 @@ get_multimir_stats <- function(multimir){
     }
     return(sum_table)
 }
-

@@ -1,5 +1,6 @@
 
 <!--begin.rcode setup_expression_qc
+
 	custom_PerformanceAnalytics <- function() {
 		PerformanceAnalytics::chart.Correlation(R = data_frame, histogram = TRUE,
 			pch = 19, log = "xy")
@@ -33,15 +34,6 @@
   	df_for_lineplot <- function(df) {
   		rownames(df) <- xAxis
   	}
-
-   make_top_n_expression_table <- function(count_data, n = 5) {
-	    top_n_index <- order(rowSums(count_data), decreasing = TRUE)[1:n]
-	    top_n_count <- count_data[top_n_index, ]
-	    sample_totals <- colSums(count_data)
-	    top_n_perc <- apply(top_n_count, 1, function(x) round(x / sample_totals * 100, 3))
-
-	    return(top_n_perc)
-	}
 
 	plot_cpm_density <- function(ggplot_obj) { 
 	   ggplot_obj + ggplot2::aes(x = value, colour = variable) +
